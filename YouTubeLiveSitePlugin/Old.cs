@@ -677,6 +677,10 @@ namespace MultiCommentViewer.Model.YouTubeLive
         {
             SessionToken = a.xsrf_token;
             IsLoggedIn = a.YtInitialData.responseContext.Logged_in == "1";
+            var serviceEndpoint = a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint;
+            //2018/01/27
+            //IsLoggedInがfalseの時、serviceEndpointがnullになっている。これはコメント投稿時に必要なだけで、コメントを取得するだけなら本来は支障がない。
+            //しかし、これまでは未ログインが分かった時点で例外を投げてしまっていた。
             ClientIdPrefix = a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.sendLiveChatMessageEndpoint.clientIdPrefix;
 
             //前はコメント投稿時にbase64EncodedServiceEndpointが必要だったのだが、2017/03/23にこの値がhttps://www.youtube.com/live_chat?v={vid}から無くなった。

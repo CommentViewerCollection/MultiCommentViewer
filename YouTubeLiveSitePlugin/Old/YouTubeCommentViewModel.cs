@@ -51,15 +51,17 @@ namespace YouTubeLiveSitePlugin.Old
             _connectionName = connectionName;
             _options = options;
             _siteOptions = siteOptions;
-            connectionName.PropertyChanged += (s, e) =>
+            WeakEventManager<ConnectionName, PropertyChangedEventArgs>.AddHandler(_connectionName, nameof(_connectionName.PropertyChanged), ConnectionName_PropertyChanged);
+        }
+
+        private void ConnectionName_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
             {
-                switch (e.PropertyName)
-                {
-                    case nameof(connectionName.Name):
-                        RaisePropertyChanged();
-                        break;
-                }
-            };
+                case nameof(_connectionName.Name):
+                    RaisePropertyChanged(nameof(ConnectionName));
+                    break;
+            }
         }
 
         public Task AfterCommentAdded()

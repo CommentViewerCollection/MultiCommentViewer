@@ -42,15 +42,21 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="Old\CommentViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
+      <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
+      <Name>SitePlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj">
       <Project>{d3fd476c-9801-4861-8fa1-c3d57ff30c83}</Project>
       <Name>YouTubeLiveSitePlugin</Name>

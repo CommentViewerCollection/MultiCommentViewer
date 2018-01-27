@@ -7,10 +7,12 @@ using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using System.Windows.Input;
 using SitePlugin;
+using System.Threading;
 using System.Collections.ObjectModel;
 using Plugin;
 using ryu_s.BrowserCookie;
 using System.Diagnostics;
+using System.Windows.Threading;
 using System.Net;
 using System.Windows.Media;
 
@@ -117,13 +119,16 @@ namespace MultiCommentViewer
             get { return new SolidColorBrush(_options.VerticalGridLineColor); }
         }
         #endregion
-        private void Connection_CommentsReceived(object sender, List<ICommentViewModel> e)
+        private async void Connection_CommentsReceived(object sender, List<ICommentViewModel> e)
         {
             //TODO:Comments.AddRange()が欲しい
-            foreach (var comment in e)
+            await _dispatcher.BeginInvoke((Action)(() =>
             {
-                Comments.Add(comment);
-            }
+                foreach (var comment in e)
+                {
+                    Comments.Add(comment);
+                }
+            }), DispatcherPriority.Normal);
         }
         Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
@@ -191,9 +196,10 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
             }
         }
-
+        private readonly Dispatcher _dispatcher;
         public MainViewModel()
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             //読み込み
             IOptionsLoader optionsLoader = DiContainer.Instance.GetNewInstance<IOptionsLoader>();
             _options = optionsLoader.LoadOptions();

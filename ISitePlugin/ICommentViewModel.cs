@@ -34,6 +34,8 @@ namespace SitePlugin
         SolidColorBrush Foreground { get; }
         SolidColorBrush Background { get; }
 
+        bool IsVisible { get; }
+
         Task AfterCommentAdded();
     }
 }

@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 using System.Runtime.Serialization;
 using YoutubeLib;
 namespace YouTubeLiveSitePlugin.Old
-{    
+{
     using MultiCommentViewer.Model.YouTubeLive;
     //using YoutubeLib;
     public class YouTubeLiveSiteContext : IYouTubeSiteContext
@@ -205,6 +205,7 @@ namespace YouTubeLiveSitePlugin.Old
             _cc.Add(cookies);
 
             var _vid = await GetVid(input);
+            _cts = new CancellationTokenSource();
 
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36";
             //400が返ってくることがある
@@ -456,6 +457,12 @@ namespace YouTubeLiveSitePlugin.Old
                             foreach (var commentData in Actions2CommentData(chatData.Actions))
                             {
                                 //await _callback(new ReceiveCallback(new List<ICommentData> { commentData })).ConfigureAwait(false);
+                                var cvm = new YouTubeCommentViewModel(ConnectionName, _options, SiteOptions)
+                                {
+                                     NameItems = commentData.NameItems,
+                                     MessageItems = commentData.MessageItems,
+                                };
+                                CommentsReceived?.Invoke(this, new List<ICommentViewModel> { cvm });
                                 await Task.Delay(interval, ct).ConfigureAwait(false);
                             }
                         }
@@ -512,7 +519,10 @@ namespace YouTubeLiveSitePlugin.Old
         }
         public void Disconnect()
         {
-            throw new NotImplementedException();
+            if(_cts != null)
+            {
+                _cts.Cancel();
+            }
         }
 
         public List<ICommentViewModel> GetUserComments(IUser user)
@@ -539,7 +549,10 @@ namespace YouTubeLiveSitePlugin.Old
     }
     public class YouTubeSiteOptions : IYouTubeSiteOptions
     {
+        public YouTubeSiteOptions()
+        {
 
+        }
     }
 
 
@@ -678,22 +691,25 @@ namespace MultiCommentViewer.Model.YouTubeLive
             SessionToken = a.xsrf_token;
             IsLoggedIn = a.YtInitialData.responseContext.Logged_in == "1";
             var serviceEndpoint = a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint;
-            //2018/01/27
-            //IsLoggedInがfalseの時、serviceEndpointがnullになっている。これはコメント投稿時に必要なだけで、コメントを取得するだけなら本来は支障がない。
-            //しかし、これまでは未ログインが分かった時点で例外を投げてしまっていた。
-            ClientIdPrefix = a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.sendLiveChatMessageEndpoint.clientIdPrefix;
+            if (serviceEndpoint != null)
+            {
+                //2018/01/27
+                //IsLoggedInがfalseの時、serviceEndpointがnullになっている。これはコメント投稿時に必要なだけで、コメントを取得するだけなら本来は支障がない。
+                //しかし、これまでは未ログインが分かった時点で例外を投げてしまっていた。
+                ClientIdPrefix = a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.sendLiveChatMessageEndpoint.clientIdPrefix;
 
-            //前はコメント投稿時にbase64EncodedServiceEndpointが必要だったのだが、2017/03/23にこの値がhttps://www.youtube.com/live_chat?v={vid}から無くなった。
-            //また、se={base64EncodedServiceEndpoint}というパラメータを使ってコメントを投稿していたのだが、
-            //sej={serviceEndpointのJSON形式}という形に変更された。
-            if (a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.webSerializedServiceEndpointExtension != null)
-            {
-                Base64EncodedServiceEndpoint = a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.webSerializedServiceEndpointExtension.base64EncodedServiceEndpoint;
-            }
-            else
-            {
-                var sendButton = ExtractSej(a.Raw, "\"sendButton\":");//他のButtonにもserviceEndpointがあるため、まずこれだけ切り出す
-                Sej = ExtractSej(sendButton, "\"serviceEndpoint\":");
+                //前はコメント投稿時にbase64EncodedServiceEndpointが必要だったのだが、2017/03/23にこの値がhttps://www.youtube.com/live_chat?v={vid}から無くなった。
+                //また、se={base64EncodedServiceEndpoint}というパラメータを使ってコメントを投稿していたのだが、
+                //sej={serviceEndpointのJSON形式}という形に変更された。
+                if (a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.webSerializedServiceEndpointExtension != null)
+                {
+                    Base64EncodedServiceEndpoint = a.YtInitialData.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.webSerializedServiceEndpointExtension.base64EncodedServiceEndpoint;
+                }
+                else
+                {
+                    var sendButton = ExtractSej(a.Raw, "\"sendButton\":");//他のButtonにもserviceEndpointがあるため、まずこれだけ切り出す
+                    Sej = ExtractSej(sendButton, "\"serviceEndpoint\":");
+                }
             }
         }
         public void Set(YoutubeLib.RootObject a)

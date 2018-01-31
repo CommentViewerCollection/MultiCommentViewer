@@ -30,15 +30,42 @@ namespace MultiCommentViewer.Test
         /// </summary>
         public string SettingsDirPath { get; set; }
 
-        
-        
-        
-        
+        #region Info
+        private string _InfoForeColor = "#FF000000";
+        /// <summary>
+        /// 行グリッド線の色
+        /// </summary>
+        public Color InfoForeColor
+        {
+            get { return ColorFromArgb(_InfoForeColor); }
+            set
+            {
+                _InfoForeColor = ColorToArgb(value);
+                RaisePropertyChanged();
+            }
+        }
+        private string _InfoBackColor = "#FFFFFF00";
+        /// <summary>
+        /// 行グリッド線の色
+        /// </summary>
+        public Color InfoBackColor
+        {
+            get { return ColorFromArgb(_InfoBackColor); }
+            set
+            {
+                _InfoBackColor = ColorToArgb(value);
+                RaisePropertyChanged();
+            }
+        }
+        #endregion //Info
+
+
+
 
         private const double Default_MainViewHeight = 532;
         public double MainViewHeight { get; set; }
 
-        private const double Default_MainViewWidth = 490;
+        private const double Default_MainViewWidth = 773;
         public double MainViewWidth { get; set; }
 
         private const double DEFAULT_MainViewLeft = 0;
@@ -47,7 +74,36 @@ namespace MultiCommentViewer.Test
         private const double DEFAULT_MainViewTop = 0;        
         public double MainViewTop { get; set; }
 
+        private const double Default_ConnectionNameWidth = 100;
+        public double ConnectionNameWidth { get; set; }
 
+        private const double Default_ThumbnailWidth = 100;
+        public double ThumbnailWidth { get; set; }
+
+        private const double Default_CommentIdWidth = 100;
+        public double CommentIdWidth { get; set; }
+
+        private const double Default_UsernameWidth = 100;
+        public double UsernameWidth { get; set; }
+
+        private const double Default_MessageWidth = 100;
+        public double MessageWidth { get; set; }
+
+        private const double Default_InfoWidth = 100;
+        public double InfoWidth { get; set; }
+
+        public bool IsShowConnectionName { get; set; } = true;
+        public int ConnectionNameDisplayIndex { get; set; } = 0;
+        public int ThumbnailDisplayIndex { get; set; } = 1;
+        public bool IsShowThumbnail { get; set; } = true;
+        public int CommentIdDisplayIndex { get; set; } = 2;
+        public bool IsShowCommentId { get; set; } = true;
+        public bool IsShowUsername { get; set; } = true;
+        public int UsernameDisplayIndex { get; set; } = 3;
+        public bool IsShowMessage { get; set; } = true;
+        public int MessageDisplayIndex { get; set; } = 4;
+        public bool IsShowInfo { get; set; } = true;
+        public int InfoDisplayIndex { get; set; } = 5;
         private string _horizontalGridLineColor ="#FF000000";
         /// <summary>
         /// 行グリッド線の色
@@ -151,8 +207,10 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+
+
         #endregion
-        
+
         public OptionsTest()
         {
             Init();
@@ -163,6 +221,21 @@ namespace MultiCommentViewer.Test
                 MainViewWidth = Default_MainViewWidth;
             if (MainViewHeight <= 0)
                 MainViewHeight = Default_MainViewHeight;
+
+            if (ConnectionNameWidth <= 0)
+                ConnectionNameWidth = Default_ConnectionNameWidth;
+            if (ThumbnailWidth <= 0)
+                ThumbnailWidth = Default_ThumbnailWidth;
+            if (CommentIdWidth <= 0)
+                CommentIdWidth = Default_CommentIdWidth;
+            if (UsernameWidth <= 0)
+                UsernameWidth = Default_UsernameWidth;
+            if (MessageWidth <= 0)
+                MessageWidth = Default_MessageWidth;
+            if (InfoWidth <= 0)
+                InfoWidth = Default_InfoWidth;
+
+
         }
         public void Reset()
         {

@@ -61,8 +61,8 @@
                 </MenuItem.ItemContainerStyle>
             </MenuItem>-->
             <MenuItem Header="ヘルプ">
-                <MenuItem Header="配布サイト" Command="{Binding ShowWebSite}" />
-                <MenuItem Header="作者のTwitter" Command="{Binding ShowDevelopersTwitter}" />
+                <MenuItem Header="配布サイト" Command="{Binding ShowWebSiteCommand}" />
+                <MenuItem Header="作者のTwitter" Command="{Binding ShowDevelopersTwitterCommand}" />
                 <Separator />
                 <MenuItem Header="アップデートを確認" Command="{Binding CheckUpdateCommand}" />
             </MenuItem>
@@ -292,9 +292,9 @@
             </DataGrid.Resources>
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="接続先名" 
-                                            DisplayIndex="{Binding DataContext.SiteNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=0}"
-                                            Width="{Binding DataContext.SiteNameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                            Visibility="{Binding DataContext.IsShowSiteName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
+                                            DisplayIndex="{Binding DataContext.ConnectionNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=0}"
+                                            Width="{Binding DataContext.ConnectionNameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                            Visibility="{Binding DataContext.IsShowConnectionName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding ConnectionName}" Padding="5,0" />
@@ -324,9 +324,9 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="ユーザ名" 
-                                            DisplayIndex="{Binding DataContext.UserNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=3}"
-                                            Visibility="{Binding DataContext.IsShowUserName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
-                                            Width="{Binding DataContext.UserNameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                            DisplayIndex="{Binding DataContext.UsernameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=3}"
+                                            Visibility="{Binding DataContext.IsShowUsername, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
+                                            Width="{Binding DataContext.UsernameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                             >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

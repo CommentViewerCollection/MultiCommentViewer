@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiCommentViewerTests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YouTubeLiveSitePluginTests", "YouTubeLiveSitePluginTests\YouTubeLiveSitePluginTests.csproj", "{51B38AE6-BA27-439D-93CE-46F0691001F0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoSitePluginTests", "NicoSitePluginTests\NicoSitePluginTests.csproj", "{7D3D1D22-D547-4C6B-8396-681E54911F38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{51B38AE6-BA27-439D-93CE-46F0691001F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51B38AE6-BA27-439D-93CE-46F0691001F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51B38AE6-BA27-439D-93CE-46F0691001F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D3D1D22-D547-4C6B-8396-681E54911F38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D3D1D22-D547-4C6B-8396-681E54911F38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D3D1D22-D547-4C6B-8396-681E54911F38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D3D1D22-D547-4C6B-8396-681E54911F38}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

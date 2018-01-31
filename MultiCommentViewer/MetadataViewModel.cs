@@ -17,6 +17,36 @@ namespace MultiCommentViewer
                 RaisePropertyChanged();
             }
         }
+        private string _elapsed;
+        public string Elapsed
+        {
+            get { return _elapsed; }
+            set
+            {
+                _elapsed = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _CurrentViewers;
+        public string CurrentViewers
+        {
+            get { return _CurrentViewers; }
+            set
+            {
+                _CurrentViewers = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _TotalViewers;
+        public string TotalViewers
+        {
+            get { return _TotalViewers; }
+            set
+            {
+                _TotalViewers = value;
+                RaisePropertyChanged();
+            }
+        }
         private string _active;
         public string Active
         {
@@ -27,12 +57,23 @@ namespace MultiCommentViewer
                 RaisePropertyChanged();
             }
         }
+        private string _Others;
+        public string Others
+        {
+            get { return _Others; }
+            set
+            {
+                _Others = value;
+                RaisePropertyChanged();
+            }
+        }
 
         public string ConnectionName => _connectionName.Name;
         private readonly ConnectionName _connectionName;
         public MetadataViewModel(ConnectionName connectionName)
         {
             _connectionName = connectionName;
+            
             _connectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)

@@ -145,7 +145,7 @@ namespace MultiCommentViewer.Test
                 CanDisconnectChanged?.Invoke(this, EventArgs.Empty);
             }
         }
-
+        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<List<ICommentViewModel>> CommentsReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;

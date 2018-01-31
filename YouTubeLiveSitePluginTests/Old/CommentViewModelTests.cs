@@ -35,6 +35,26 @@ namespace YouTubeLiveSitePluginTests.Old
             public double MainViewTop { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public Color HorizontalGridLineColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public Color VerticalGridLineColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public Color InfoForeColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public Color InfoBackColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public double ConnectionNameWidth { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public double ThumbnailWidth { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public double CommentIdWidth { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public double UsernameWidth { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public double MessageWidth { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public double InfoWidth { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public bool IsShowConnectionName { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public int ConnectionNameDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public int ThumbnailDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public bool IsShowThumbnail { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public int CommentIdDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public bool IsShowCommentId { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public bool IsShowUsername { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public int UsernameDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public bool IsShowMessage { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public int MessageDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public bool IsShowInfo { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public int InfoDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         }
         
         [Test]

@@ -99,17 +99,10 @@
     <Compile Include="MetadataViewModel.cs" />
     <Compile Include="SiteViewModel.cs" />
     <Compile Include="Test\CommentViewModelTest.cs" />
-    <Compile Include="Test\NicoLive\NicoCommentProviderOld.cs" />
-    <Compile Include="Test\NicoLive\NicoOptionsPanel.xaml.cs">
-      <DependentUpon>NicoOptionsPanel.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Test\NicoLive\NicoOptionsTabPage.cs" />
-    <Compile Include="Test\PlayerStatusParser.cs" />
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\PluginLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
-    <Compile Include="Test\NicoSiteContextTest.cs" />
     <Compile Include="Test\OptionsTest.cs" />
     <Compile Include="Test\TestSite.cs" />
     <Compile Include="Test\TestSiteOptionsPagePanel.xaml.cs">
@@ -138,10 +131,6 @@
     <Page Include="OptionsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Test\NicoLive\NicoOptionsPanel.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Page Include="Test\TestSiteOptionsPagePanel.xaml">
       <SubType>Designer</SubType>

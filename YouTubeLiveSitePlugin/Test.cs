@@ -4,8 +4,91 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ryu_s.BrowserCookie;
+using SitePlugin;
+using System.Threading;
 namespace YouTubeLiveSitePlugin.Test
 {
+    public class YouTubeLiveCommentProvider : IYouTubeCommentProvider
+    {
+        private bool _canConnect;
+        public bool CanConnect
+        {
+            get { return _canConnect; }
+            private set
+            {
+                _canConnect = value;
+                CanConnectChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private bool _canDisconnect;
+        public bool CanDisconnect
+        {
+            get { return _canDisconnect; }
+            private set
+            {
+                _canDisconnect = value;
+                CanDisconnectChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
+        public event EventHandler<List<ICommentViewModel>> CommentsReceived;
+        public event EventHandler<IMetadata> MetadataUpdated;
+        public event EventHandler CanConnectChanged;
+        public event EventHandler CanDisconnectChanged;
+        private CancellationTokenSource _cts;
+        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        {
+            _cts = new CancellationTokenSource();
+            CanConnect = false;
+            CanDisconnect = true;
+            try
+            {
+                var vid = await GetVid(input);
+
+
+            }
+            finally
+            {
+                CanConnect = true;
+                CanDisconnect = false;
+            }
+        }
+
+        public Task<string> GetVid(string input)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Disconnect()
+        {
+            if (_cts != null)
+            {
+                _cts.Cancel();
+            }
+        }
+
+        public List<ICommentViewModel> GetUserComments(IUser user)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task PostCommentAsync(string text)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public interface IGetLiveChatResponse
+    {
+        IContinuationData ContinuationData { get; }
+        string Url { get; }
+    }
+    public class GetLiveChatResponse : IGetLiveChatResponse
+    {
+        public IContinuationData ContinuationData { get; set; }
+        public string Url { get; set; }
+    }
     public interface IYtInitialData
     {
         IContinuationData ContinuationData { get; }
@@ -24,6 +107,71 @@ namespace YouTubeLiveSitePlugin.Test
     }
     public interface ITimedContinuationData : IContinuationData { }
 
+    public class Photo
+    {
+        public string Url { get; }
+        public int Width { get; }
+        public int Height { get; }
+        public Photo(GetLiveChatLow.Thumbnail low)
+        {
+            Url = low.url;
+            Width = low.width;
+            Height = low.height;
+        }
+    }
+    public class TextMessage
+    {
+        public string Id { get; }
+        public string Message { get; }
+        public string Name { get; }
+        public Photo AuthorPhoto { get; }
+        /// <summary>
+        /// 投稿日時（マイクロ秒）
+        /// </summary>
+        public long TimestampUsec { get; }
+        public TextMessage(GetLiveChatLow.LiveChatTextMessageRenderer renderer)
+        {
+            Id = renderer.id;
+            Message = string.Join("", renderer.message.runs.Select(r => r.text));
+            TimestampUsec = long.Parse(renderer.timestampUsec);
+            Name = renderer.authorName.simpleText;
+            var exChannelId = renderer.authorExternalChannelId;
+            AuthorPhoto = new Photo(renderer.authorPhoto.thumbnails[0]);
+        }
+    }
+    public class PaidMessage
+    {
+        public string Id { get; }
+        public string Message { get; }
+        public string Name { get; }
+        public Photo AuthorPhoto { get; }
+        /// <summary>
+        /// 投稿日時（マイクロ秒）
+        /// </summary>
+        public long TimestampUsec { get; }
+        public long HeaderBackColor { get; }
+        public long HeaderTextColor { get; }
+        public long BodyBackColor { get; }
+        public long BodyTextColor { get; }
+        public string AuthorChannelId { get; }
+        public string PurchaseAmount { get; }
+        public PaidMessage(GetLiveChatLow.LiveChatPaidMessageRenderer renderer)
+        {
+            Id = renderer.id;
+            Message = string.Join("", renderer.message.runs.Select(r => r.text));
+            TimestampUsec = long.Parse(renderer.timestampUsec);
+            Name = renderer.authorName.ToString();
+            var exChannelId = renderer.authorExternalChannelId;
+            AuthorPhoto = new Photo(renderer.authorPhoto.thumbnails[0]);
+            AuthorChannelId = renderer.authorExternalChannelId;
+
+            HeaderBackColor = renderer.headerBackgroundColor;
+            HeaderTextColor = renderer.headerTextColor;
+            BodyBackColor = renderer.bodyBackgroundColor;
+            BodyTextColor = renderer.bodyTextColor;
+            PurchaseAmount = renderer.purchaseAmountText.ToString();
+        }
+    }
 
     public class YtInitialData : IYtInitialData
     {
@@ -53,6 +201,64 @@ namespace YouTubeLiveSitePlugin.Test
     }
     public static class Tests
     {
+        public static TextMessage ParseAddChatItemAction(string json)
+        {
+            var lowObject = JsonConvert.DeserializeObject<GetLiveChatLow.LiveChatTextMessageRenderer>(json,new JsonSerializerSettings
+            {
+                
+                 Error= (s, e) =>
+                 {
+                     e.ErrorContext.Handled = true;
+                 },
+            });
+            return new TextMessage(lowObject);
+        }
+        public static PaidMessage ParsePaidMessage(string json)
+        {
+            var lowObject = JsonConvert.DeserializeObject<GetLiveChatLow.LiveChatPaidMessageRenderer>(json);
+            return new PaidMessage(lowObject);
+        }
+        public static IGetLiveChatResponse ParseGetLiveChatResponse(string json)
+        {
+            var res = new GetLiveChatResponse();
+            var lowObject = JsonConvert.DeserializeObject<GetLiveChatLow.RootObject>(json);
+            res.Url = lowObject.url;
+            var continuations = lowObject.response.continuationContents.liveChatContinuation.continuations;
+            if (continuations == null || continuations.Count == 0)
+            {
+                throw new Exception($"continuationsがnull？？そんな状況見たこと無い。get_live_chat={json}");
+            }
+            if (continuations[0].invalidationContinuationData != null)
+            {
+                var icd = continuations[0].invalidationContinuationData;
+                res.ContinuationData = new InvalidContinuationData
+                {
+                    ClickTrackingParams = icd.clickTrackingParams,
+                    Continuation = icd.continuation,
+                    ObjectId = icd.invalidationId.objectId,
+                    ObjectSource = icd.invalidationId.objectSource,
+                    ProtoCreationTimestampMs = long.Parse(icd.invalidationId.protoCreationTimestampMs),
+                    TimeoutMs = icd.timeoutMs,
+                };
+            }
+            else if (continuations[0].timedContinuationData != null)
+            {
+                var tcd = continuations[0].timedContinuationData;
+                res.ContinuationData = new TimedContinualtionData
+                {
+                    ClickTrackingParams = tcd.clickTrackingParams,
+                    Continuation = tcd.continuation,
+                    TimeoutMs = tcd.timeoutMs,
+                };
+            }
+            else
+            {
+                throw new Exception("第3のcontinuationがあったとしてもデシリアライズするオブジェクトが無いからここには来ない。");
+            }
+            var actions = lowObject.response.continuationContents.liveChatContinuation.actions;
+            
+            return res;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -63,24 +269,24 @@ namespace YouTubeLiveSitePlugin.Test
             var ytInitialData = new YtInitialData();
             var lowObject = JsonConvert.DeserializeObject<YtInitialDataLow.RootObject>(ytInitialDataStr);
             var continuations = lowObject.contents.liveChatRenderer.continuations;
-            if(continuations == null || continuations.Count == 0)
+            if (continuations == null || continuations.Count == 0)
             {
                 throw new Exception($"continuationsがnull？？そんな状況見たこと無い。ytInitialDataStr={ytInitialDataStr}");
             }
-            if(continuations[0].invalidationContinuationData != null)
+            if (continuations[0].invalidationContinuationData != null)
             {
                 var icd = continuations[0].invalidationContinuationData;
                 ytInitialData.ContinuationData = new InvalidContinuationData
                 {
                     ClickTrackingParams = icd.clickTrackingParams,
-                     Continuation = icd.continuation,
-                      ObjectId = icd.invalidationId.objectId,
-                       ObjectSource = icd.invalidationId.objectSource,
-                        ProtoCreationTimestampMs = long.Parse(icd.invalidationId.protoCreationTimestampMs),
-                         TimeoutMs = icd.timeoutMs,
+                    Continuation = icd.continuation,
+                    ObjectId = icd.invalidationId.objectId,
+                    ObjectSource = icd.invalidationId.objectSource,
+                    ProtoCreationTimestampMs = long.Parse(icd.invalidationId.protoCreationTimestampMs),
+                    TimeoutMs = icd.timeoutMs,
                 };
             }
-            else if(continuations[0].timedContinuationData != null)
+            else if (continuations[0].timedContinuationData != null)
             {
                 var tcd = continuations[0].timedContinuationData;
                 ytInitialData.ContinuationData = new TimedContinualtionData
@@ -386,9 +592,17 @@ namespace YouTubeLiveSitePlugin.Test
             public string clickTrackingParams { get; set; }
         }
 
+        public class TimedContinuationData
+        {
+            public string clickTrackingParams { get; set; }
+            public string continuation { get; set; }
+            public int timeoutMs { get; set; }
+        }
+
         public class Continuation
         {
             public InvalidationContinuationData invalidationContinuationData { get; set; }
+            public TimedContinuationData timedContinuationData { get; set; }
         }
 
         public class Run10
@@ -404,6 +618,18 @@ namespace YouTubeLiveSitePlugin.Test
         public class AuthorName
         {
             public string simpleText { get; set; }
+            public List<Run> runs { get; set; }
+            public override string ToString()
+            {
+                if(runs != null)
+                {
+                    return string.Join("", runs.Select(r => r.text));
+                }
+                else
+                {
+                    return simpleText;
+                }
+            }
         }
 
         public class Thumbnail
@@ -437,7 +663,21 @@ namespace YouTubeLiveSitePlugin.Test
         {
             public AccessibilityData accessibilityData { get; set; }
         }
-
+        public class PurchaseAmountText
+        {
+            public List<Run> runs { get; set; }
+            public override string ToString()
+            {
+                if(runs != null)
+                {
+                    return string.Join("", runs.Select(r => r.text));
+                }
+                else
+                {
+                    return "";
+                }
+            }
+        }
         public class LiveChatTextMessageRenderer
         {
             public Message message { get; set; }
@@ -449,9 +689,27 @@ namespace YouTubeLiveSitePlugin.Test
             public string authorExternalChannelId { get; set; }
             public ContextMenuAccessibility contextMenuAccessibility { get; set; }
         }
-
+        public class LiveChatPaidMessageRenderer
+        {
+            public string id { get; set; }
+            public string timestampUsec { get; set; }
+            public AuthorName authorName { get; set; }
+            public AuthorPhoto authorPhoto { get; set; }
+            public PurchaseAmountText purchaseAmountText { get; set; }
+            public long headerBackgroundColor { get; set; }
+            public long headerTextColor { get; set; }
+            public long bodyBackgroundColor { get; set; }
+            public long bodyTextColor { get; set; }
+            public string authorExternalChannelId { get; set; }
+            public long authorNameTextColor { get; set; }
+            public ContextMenuEndpoint contextMenuEndpoint { get; set; }
+            public long timestampColor { get; set; }
+            public ContextMenuAccessibility contextMenuAccessibility { get; set; }
+            public Message message { get; set; }
+        }
         public class Item
         {
+            public LiveChatPaidMessageRenderer liveChatPaidMessageRenderer { get; set; }
             public LiveChatTextMessageRenderer liveChatTextMessageRenderer { get; set; }
         }
 

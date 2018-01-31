@@ -25,6 +25,8 @@ namespace MultiCommentViewer
         private SiteViewModel _selectedSite;
         private ICommentProvider _commentProvider=null;
         private readonly ConnectionName _connectionName;
+        public ICommand ConnectCommand { get; }
+        public ICommand DisconnectCommand { get; }
         public SiteViewModel SelectedSite
         {
             get { return _selectedSite; }
@@ -99,30 +101,33 @@ namespace MultiCommentViewer
             get { return _commentProvider.CanDisconnect; }
         }
         public string Input { get; set; }
-        RelayCommand _connectCommand;
-        public ICommand ConnectCommand
+        
+
+
+        private async void Connect()
         {
-            get
+            try
             {
-                if(_connectCommand == null)
-                {
-                    _connectCommand = new RelayCommand(async () =>
-                    {
-                        try
-                        {
-                            var input = Input;
-                            var browser = SelectedBrowser.Browser;
-                            await _commentProvider.ConnectAsync(input, browser);
+                var input = Input;
+                var browser = SelectedBrowser.Browser;
+                await _commentProvider.ConnectAsync(input, browser);
 
 
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine(ex.Message);
-                        }
-                    });
-                }
-                return _connectCommand;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
+        private void Disconnect()
+        {
+            try
+            {
+                _commentProvider.Disconnect();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
             }
         }
         public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers)
@@ -143,6 +148,8 @@ namespace MultiCommentViewer
             {
                 SelectedBrowser = Browsers[0];
             }
+            ConnectCommand = new RelayCommand(Connect);
+            DisconnectCommand = new RelayCommand(Disconnect);
         }
     }
 

@@ -14,7 +14,8 @@ namespace MultiCommentViewer.Test
             return new List<ISiteContext>
             {
                 //new TestSiteContext(options),
-                new YouTubeLiveSitePlugin.Old.YouTubeLiveSiteContext(options),
+                //new YouTubeLiveSitePlugin.Old.YouTubeLiveSiteContext(options),
+                new NicoSitePlugin.Test.NicoSiteContext(options),
             };
         }
     }

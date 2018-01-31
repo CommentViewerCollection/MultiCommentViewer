@@ -68,10 +68,28 @@ namespace YouTubeLiveSitePlugin.Old
         #endregion //Fields
 
 
-        public bool CanConnect => true;
+        private bool _canConnect;
+        public bool CanConnect
+        {
+            get { return _canConnect; }
+            private set
+            {
+                _canConnect = value;
+                CanConnectChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
 
-        public bool CanDisconnect => true;
-
+        private bool _canDisconnect;
+        public bool CanDisconnect
+        {
+            get { return _canDisconnect; }
+            private set
+            {
+                _canDisconnect = value;
+                CanDisconnectChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<List<ICommentViewModel>> CommentsReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;

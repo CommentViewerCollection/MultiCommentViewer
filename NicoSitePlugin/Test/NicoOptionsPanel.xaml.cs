@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using SitePlugin;
-namespace NicoSitePlugin
+namespace NicoSitePlugin.Test
 {
     /// <summary>
     /// Interaction logic for NicoOptionsPanel.xaml

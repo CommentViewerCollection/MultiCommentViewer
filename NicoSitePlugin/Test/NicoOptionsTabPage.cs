@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SitePlugin;
 using System.Windows.Controls;
-namespace MultiCommentViewer.Test.NicoLive
+namespace NicoSitePlugin.Test
 {
     public class NicoOptionsTabPage : IOptionsTabPage
     {

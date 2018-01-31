@@ -13,7 +13,14 @@ namespace SitePlugin
 {
     public interface ICommentProvider
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>棒読みちゃんに読ませないために必要</remarks>
+        event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         event EventHandler<List<ICommentViewModel>> CommentsReceived;
+
+        //event EventHandler<List<ICommentViewModel>> PastCommentsReceived;
         event EventHandler<IMetadata> MetadataUpdated;
         Task PostCommentAsync(string text);
         Task ConnectAsync(string input, IBrowserProfile browserProfile);

@@ -22,6 +22,9 @@ namespace SitePlugin
 
         bool IsInfo { get;  }
 
+        /// <summary>
+        /// このユーザの最初のコメント
+        /// </summary>
         bool IsFirstComment { get; }
 
         IEnumerable<IMessagePart> Thumbnail { get; }

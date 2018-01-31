@@ -4,19 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-namespace MultiCommentViewer.Test.Nico
-{
-    class PlayerStatusParser
-    {
-    }
-}
-   /* 
-    Licensed under the Apache License, Version 2.0
-    
-    http://www.apache.org/licenses/LICENSE-2.0
-    */
 
-namespace Xml2CSharp
+namespace NicoSitePlugin.Test.Low
 {
     [XmlRoot(ElementName = "press")]
     public class Press
@@ -203,7 +192,12 @@ namespace Xml2CSharp
         [XmlElement(ElementName = "thread")]
         public string Thread { get; set; }
     }
-
+    [XmlRoot(ElementName = "tid_list")]
+    public class Tid_list
+    {
+        [XmlElement(ElementName = "tid")]
+        public List<string> Tid { get; set; }
+    }
     [XmlRoot(ElementName = "ms_list")]
     public class Ms_list
     {
@@ -267,7 +261,7 @@ namespace Xml2CSharp
         [XmlElement(ElementName = "ms")]
         public Ms Ms { get; set; }
         [XmlElement(ElementName = "tid_list")]
-        public string Tid_list { get; set; }
+        public Tid_list Tid_list { get; set; }
         [XmlElement(ElementName = "ms_list")]
         public Ms_list Ms_list { get; set; }
         [XmlElement(ElementName = "twitter")]

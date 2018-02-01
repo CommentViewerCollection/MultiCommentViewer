@@ -31,6 +31,7 @@ namespace MultiCommentViewer
         public ICommand ShowWebSiteCommand { get; }
         public ICommand ShowDevelopersTwitterCommand { get; }
         public ICommand CheckUpdateCommand { get; }
+        public ICommand ShowUserInfoCommand { get; }
         #endregion //Commands
 
         #region Fields
@@ -260,7 +261,19 @@ namespace MultiCommentViewer
             get { return _options.InfoDisplayIndex; }
             set { _options.InfoDisplayIndex = value; }
         }
+        public Color SelectedRowBackColor
+        {
+            get { return _options.SelectedRowBackColor; }
+            set { _options.SelectedRowBackColor = value; }
+        }
+        public Color SelectedRowForeColor
+        {
+            get { return _options.SelectedRowForeColor; }
+            set { _options.SelectedRowForeColor = value; }
+        }
         #endregion
+
+        Dictionary<string, UserViewModel> _userDict = new Dictionary<string, UserViewModel>();
         private async void Connection_CommentsReceived(object sender, List<ICommentViewModel> e)
         {
             //TODO:Comments.AddRange()が欲しい
@@ -268,7 +281,15 @@ namespace MultiCommentViewer
             {
                 foreach (var comment in e)
                 {
+                    if(!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
+                    {
+                        var user = _userStore.Get(comment.UserId);
+                        uvm = new UserViewModel(user, _options);
+                        _userDict.Add(comment.UserId, uvm);
+                    }
+                    comment.User = uvm.User;
                     Comments.Add(comment);
+                    uvm.Comments.Add(comment);                    
                 }
             }), DispatcherPriority.Normal);
         }
@@ -286,7 +307,7 @@ namespace MultiCommentViewer
                     metaVm.Active = e.Active;
             }
         }
-        
+        private readonly IUserStore _userStore;
         
 
         public MainViewModel()
@@ -295,6 +316,7 @@ namespace MultiCommentViewer
             //読み込み
             IOptionsLoader optionsLoader = DiContainer.Instance.GetNewInstance<IOptionsLoader>();
             _options = optionsLoader.LoadOptions();
+            _userStore = DiContainer.Instance.GetNewInstance<IUserStore>();
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand(Closing);
@@ -304,6 +326,31 @@ namespace MultiCommentViewer
             ShowDevelopersTwitterCommand = new RelayCommand(ShowDevelopersTwitter);
             CheckUpdateCommand = new RelayCommand(CheckUpdate);
             AddNewConnectionCommand = new RelayCommand(AddNewConnection);
+            ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
+        }
+        private ICommentViewModel _selectedComment;
+        public ICommentViewModel SelectedComment
+        {
+            get { return _selectedComment; }
+            set
+            {
+                _selectedComment = value;
+            }
+        }
+        private void ShowUserInfo()
+        {
+            var current = SelectedComment;
+            try
+            {
+                Debug.Assert(current != null);
+                Debug.Assert(current is ICommentViewModel);
+                var uvm = _userDict[current.UserId];
+                MessengerInstance.Send(new ShowUserViewMessage(uvm));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
         private void CheckUpdate()
         {
@@ -353,5 +400,44 @@ namespace MultiCommentViewer
             return list;
         }
     }
-
+    public class UserViewModel : CommentDataGridViewModelBase
+    {
+        private readonly IUser _user;
+        public override bool IsShowThumbnail { get => false; set { } }
+        public override bool IsShowUsername { get => false; set { } }
+        public IUser User { get { return _user; } }
+        public UserViewModel(IUser user, IOptions option): base(option)
+        {
+            _user = user;
+        }
+    }
+    public interface IUserStore
+    {
+        IUser Get(string userid);
+    }
+    public class UserTest : IUser
+    {
+        public string UserId { get { return _userid; } }
+        public string ForeColorArgb { get; set; }
+        public string BackColorArgb { get; set; }
+        public string Nickname { get; set; }
+        private readonly string _userid;
+        public UserTest(string userId)
+        {
+            _userid = userId;
+        }
+    }
+    public class UserStoreTest : IUserStore
+    {
+        Dictionary<string, IUser> _dict = new Dictionary<string, IUser>();
+        public IUser Get(string userid)
+        {
+            if (!_dict.TryGetValue(userid, out IUser user))
+            {
+                user = new UserTest(userid);
+                _dict.Add(userid, user);
+            }
+            return user;
+        }
+    }
 }

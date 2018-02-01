@@ -21,6 +21,10 @@ namespace NicoSitePlugin.Test
 
         public string Nickname { get; set; }
 
+        public string UserId { get; set; }
+        
+        public IUser User { get; set; }
+
         public bool IsInfo { get; set; }
 
         public bool IsFirstComment { get; set; }
@@ -61,8 +65,8 @@ namespace NicoSitePlugin.Test
             _siteOptions = siteOptions;
             NameItems = new List<IMessagePart> { new MessageText { Text = chat.user_id } };
             MessageItems = new List<IMessagePart> { new MessageText { Text = chat.text } };
+            UserId = chat.user_id;
         }
-
         #region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;

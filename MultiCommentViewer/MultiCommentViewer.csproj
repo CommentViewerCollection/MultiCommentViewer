@@ -87,6 +87,10 @@
     </ApplicationDefinition>
     <Compile Include="BindableTextBlock.cs" />
     <Compile Include="BrowserViewModel.cs" />
+    <Compile Include="CommentDataGrid.xaml.cs">
+      <DependentUpon>CommentDataGrid.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CommentDataGridViewModelBase.cs" />
     <Compile Include="ConnectionViewModel.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="DiContainer.cs" />
@@ -108,6 +112,13 @@
     <Compile Include="Test\TestSiteOptionsPagePanel.xaml.cs">
       <DependentUpon>TestSiteOptionsPagePanel.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserView.xaml.cs">
+      <DependentUpon>UserView.xaml</DependentUpon>
+    </Compile>
+    <Page Include="CommentDataGrid.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainOptionsPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -133,6 +144,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Test\TestSiteOptionsPagePanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

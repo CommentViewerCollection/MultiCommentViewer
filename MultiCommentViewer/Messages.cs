@@ -12,4 +12,12 @@ namespace MultiCommentViewer
             Tabs = tabs;
         }
     }
+    class ShowUserViewMessage : MessageBase
+    {
+        public UserViewModel Uvm { get; }
+        public ShowUserViewMessage(UserViewModel uvm)
+        {
+            Uvm = uvm;
+        }
+    }
 }

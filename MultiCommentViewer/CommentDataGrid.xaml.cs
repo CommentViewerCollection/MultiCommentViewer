@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,78 +8,35 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using GalaSoft.MvvmLight.Messaging;
-using System.Diagnostics;
+
 namespace MultiCommentViewer
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for CommentDataGrid.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class CommentDataGrid : UserControl
     {
-        MainViewModel _vm;
-        public MainWindow()
+        public CommentDataGrid()
         {
             InitializeComponent();
             dataGrid.MouseRightButtonUp += DataGrid_MouseRightButtonUp;
-            Messenger.Default.Register<ShowOptionsViewMessage>(this, message =>
-            {
-                try
-                {
-                    var optionsView = new OptionsView();
-                    foreach (var tab in message.Tabs)
-                    {
-                        optionsView.AddTabPage(tab);
-                    }
-                    optionsView.Owner = this;
-                    optionsView.ShowDialog();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    Debugger.Break();
-                }
-            });
-            Messenger.Default.Register<ShowUserViewMessage>(this, message =>
-            {
-                try
-                {
-                    var uvm = message.Uvm;
-                    var userView = new UserView();
-                    userView.DataContext = uvm;
-                    userView.Show();
-                }catch(Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-            });
-
-            _vm = new MainViewModel();
-            DataContext = _vm;
         }
 
         private void DataGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
-            var w = Window.GetWindow(this);
-            var point = e.GetPosition(w);
-            var cell = dataGrid.InputHitTest(point);
-            if (cell != null)
-            {
-                //cell.
-                //DataGridを右クリックした時にその行を選択状態にしたい
 
-                var rowIndex = 0;
-                var row = dataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex) as DataGridRow;
-                if (row != null)
-                {
-                    row.IsSelected = true;
-                }
-            }
         }
 
+        //protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+        //{
+        //    dataGrid.get
+        //    //dataGrid.ItemContainerGenerator.ContainerFromIndex(e.)
+        //    base.OnMouseRightButtonUp(e);
+        //}
         private bool _addingCommentToTop;
         private bool bottom = true;
         //private bool neverTouch = true;
@@ -126,23 +84,6 @@ namespace MultiCommentViewer
         private bool Test(ScrollChangedEventArgs e)
         {
             return e.ViewportHeightChange > 0 || e.ExtentHeightChange > 0 || e.ViewportHeightChange < 0 || e.ExtentHeightChange < 0;
-        }
-    }
-    public static class DataGridBehavior
-    {
-        public static ScrollViewer GetScrollViewer(this DataGrid dataGrid)
-        {
-            return dataGrid.Template.FindName("DG_ScrollViewer", dataGrid) as ScrollViewer;
-        }
-    }
-    public static class ScrollViewerBehavior
-    {
-        public static bool IsBottom(this ScrollViewer sv)
-        {
-            //var b = (sv.VerticalOffset * 1.01) > sv.ScrollableHeight;
-            var b = (sv.VerticalOffset >= sv.ScrollableHeight
-                || sv.ExtentHeight < sv.ViewportHeight);
-            return b;
         }
     }
 }

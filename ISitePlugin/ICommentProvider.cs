@@ -34,7 +34,9 @@ namespace SitePlugin
     public interface IUser
     {
         string UserId { get; }
-        string Nickname { get; }
+        string Nickname { get; set; }
+        string ForeColorArgb { get; set; }
+        string BackColorArgb { get; set; }
     }
 
 

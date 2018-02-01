@@ -21,6 +21,7 @@ namespace MultiCommentViewer
             builder.RegisterType<SitePluginLoaderTest>().As<ISitePluginLoader>();
             builder.RegisterType<SitePluginManager>().As<ISitePluginManager>();
             builder.RegisterType<BrowserLoader>().As<IBrowserLoader>();
+            builder.RegisterType<UserStoreTest>().As<IUserStore>();
             //builder.RegisterType<>().As<>();
 
 #endif //DEBUG

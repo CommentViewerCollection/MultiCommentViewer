@@ -118,6 +118,26 @@ namespace MultiCommentViewer.Test
             }
         }
 
+        private string _SelectedRowBackColor;
+        public Color SelectedRowBackColor
+        {
+            get { return ColorFromArgb(_SelectedRowBackColor); }
+            set
+            {
+                _SelectedRowBackColor = ColorToArgb(value);
+                RaisePropertyChanged();
+            }
+        }
+        private string _SelectedRowForeColor;
+        public Color SelectedRowForeColor
+        {
+            get { return ColorFromArgb(_SelectedRowForeColor); }
+            set
+            {
+                _SelectedRowForeColor = ColorToArgb(value);
+                RaisePropertyChanged();
+            }
+        }
         //以下のようなことをやりたいが共変性とか反変性的に無理そう。どうにかならないかなぁ。
         //var list =new List<Test<object>>
         //{
@@ -235,6 +255,8 @@ namespace MultiCommentViewer.Test
             if (InfoWidth <= 0)
                 InfoWidth = Default_InfoWidth;
 
+            SelectedRowBackColor = SystemColors.HighlightColor;
+            SelectedRowForeColor = SystemColors.HighlightTextColor;
 
         }
         public void Reset()

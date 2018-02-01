@@ -55,6 +55,8 @@ namespace YouTubeLiveSitePluginTests.Old
             public int MessageDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public bool IsShowInfo { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public int InfoDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public Color SelectedRowBackColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public Color SelectedRowForeColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         }
         
         [Test]

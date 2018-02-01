@@ -312,6 +312,8 @@ namespace NicoSitePlugin.Test
 
         public IEnumerable<IMessagePart> MessageItems { get; }
 
+        public string UserId { get; }
+
         public string Info { get; set; }
 
         public string Id { get; set; }
@@ -321,6 +323,8 @@ namespace NicoSitePlugin.Test
         public bool IsInfo => true;
 
         public bool IsFirstComment => false;
+
+        public IUser User { get; set; }
 
         public IEnumerable<IMessagePart> Thumbnail => new List<IMessagePart>();
 

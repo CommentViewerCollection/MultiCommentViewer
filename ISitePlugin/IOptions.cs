@@ -32,7 +32,10 @@ namespace SitePlugin
         Color VerticalGridLineColor { get; set; }
         Color InfoForeColor { get; set; }
         Color InfoBackColor { get; set; }
-                
+        Color SelectedRowBackColor { get; set; }
+        Color SelectedRowForeColor { get; set; }
+
+
         double ConnectionNameWidth { get; set; }
         bool IsShowConnectionName { get; set; }
         int ConnectionNameDisplayIndex { get; set; }

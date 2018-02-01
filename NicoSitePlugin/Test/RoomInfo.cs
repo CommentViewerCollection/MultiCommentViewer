@@ -27,6 +27,18 @@
 
             return (c1.Addr == c2.Addr) && (c1.Port == c2.Port) && (c1.Thread == c2.Thread);
         }
+        public override bool Equals(object obj)
+        {
+            if (object.ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+            var c2 = obj as RoomInfo;
+            if (c2 == null)
+                return false;
+            var c1 = this;
+            return (c1.Addr == c2.Addr) && (c1.Port == c2.Port) && (c1.Thread == c2.Thread);
+        }
 
         public static bool operator !=(RoomInfo c1, RoomInfo c2)
         {

@@ -15,7 +15,7 @@ namespace MultiCommentViewer.Test
                 FontWeight = FontWeights.Normal,
                 FontSize = 14,
                 BackColorArgb = "#FFEFEFEF",
-                ForeColorArgb = "#FF00FFFF",
+                ForeColorArgb = "#FF000000",
             };
             return options;
         }

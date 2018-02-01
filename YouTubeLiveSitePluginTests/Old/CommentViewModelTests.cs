@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -57,6 +58,25 @@ namespace YouTubeLiveSitePluginTests.Old
             public int InfoDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public Color SelectedRowBackColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public Color SelectedRowForeColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            Color IOptions.BackColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            Color IOptions.ForeColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            public void Clone()
+            {
+                throw new NotImplementedException();
+            }
+
+            public void Set(IOptions options)
+            {
+                throw new NotImplementedException();
+            }
+
+            IOptions IOptions.Clone()
+            {
+                throw new NotImplementedException();
+            }
         }
         
         [Test]

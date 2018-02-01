@@ -60,7 +60,7 @@ namespace NicoSitePlugin.Test
             {
                 throw new InvalidOperationException();
             }
-            _stream.Close();
+            _stream?.Close();
             _stream = null;
         }
         private TcpClient _client;

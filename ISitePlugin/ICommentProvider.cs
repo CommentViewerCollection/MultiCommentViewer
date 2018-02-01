@@ -31,7 +31,7 @@ namespace SitePlugin
         event EventHandler CanConnectChanged;
         event EventHandler CanDisconnectChanged;
     }
-    public interface IUser
+    public interface IUser:INotifyPropertyChanged
     {
         string UserId { get; }
         string Nickname { get; set; }

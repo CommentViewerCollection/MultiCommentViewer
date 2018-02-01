@@ -5,9 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.ComponentModel;
 namespace SitePlugin
 {
-    public interface IOptions
+    public interface IOptions:INotifyPropertyChanged
     {
         FontFamily FontFamily { get; set; }
         FontStyle FontStyle { get; set; }
@@ -20,8 +21,8 @@ namespace SitePlugin
         
         string SettingsDirPath { get; set; }
 
-        Color BackColor { get; }
-        Color ForeColor { get; }
+        Color BackColor { get; set; }
+        Color ForeColor { get; set; }
 
         double MainViewHeight { get; set; }
         double MainViewWidth { get; set; }
@@ -59,5 +60,8 @@ namespace SitePlugin
         double InfoWidth { get; set; }
         bool IsShowInfo { get; set; }
         int InfoDisplayIndex { get; set; }
+
+        IOptions Clone();
+        void Set(IOptions options);
     }
 }

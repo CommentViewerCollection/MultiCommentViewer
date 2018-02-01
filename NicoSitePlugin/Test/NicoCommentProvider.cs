@@ -123,6 +123,8 @@ namespace NicoSitePlugin.Test
                                     taskList.Add(psRetriveTask);
 
 
+                                    //TODO:どっかの部屋でエラーが起きたりした時の処理をしっかりしないと。
+
                                     var t = await Task.WhenAny(taskList);
                                     if(t == psRetriveTask)
                                     {
@@ -175,6 +177,10 @@ namespace NicoSitePlugin.Test
                                             //途中で追い出しがあった場合はFull何てことも考えられる。
                                         }
 
+                                    }
+                                    else
+                                    {
+                                        await t;
                                     }
                                     if (_cts.IsCancellationRequested)
                                         break;
@@ -243,7 +249,7 @@ namespace NicoSitePlugin.Test
                     if (str.StartsWith("<chat "))
                     {
                         var chat = new chat(str);
-                        var cvm = new NicoCommentViewModel(_connectionName, chat, _options, _siteOptions);
+                        var cvm = new NicoCommentViewModel2(_connectionName, chat, _options, _siteOptions);
                         cvmList.Add(cvm);
                     }
                     else if (str.StartsWith("<thread "))

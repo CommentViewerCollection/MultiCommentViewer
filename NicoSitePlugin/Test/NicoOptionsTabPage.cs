@@ -9,22 +9,50 @@ namespace NicoSitePlugin.Test
 {
     public class NicoOptionsTabPage : IOptionsTabPage
     {
-        public NicoOptionsTabPage(string displayName, UserControl panel)
-        {
-            HeaderText = displayName;
-            TabPagePanel = panel;
-        }
-
         public string HeaderText { get; }
 
-        public UserControl TabPagePanel { get; }
+        public UserControl TabPagePanel => _panel;
 
         public void Apply()
         {
+            var optionsVm = _panel.GetViewModel();
+            optionsVm.OriginOptions.Set(optionsVm.ChangedOptions);
         }
 
         public void Cancel()
         {
         }
+        private readonly NicoOptionsPanel _panel;
+        public NicoOptionsTabPage(string displayName, NicoOptionsPanel panel)
+        {
+            HeaderText = displayName;
+            _panel = panel;
+        }
     }
 }
+/*
+     }
+    public class TestOptionsTabPage : IOptionsTabPage
+    {
+        public string HeaderText { get; }
+
+        private readonly TestSiteOptionsPagePanel _tabPagePanel;
+        public UserControl TabPagePanel { get { return _tabPagePanel; } }
+
+        public void Apply()
+        {
+            //TODO:なんかもっとすっきりとした実装にしたい
+            var optionsVm = _tabPagePanel.GetViewModel();
+            optionsVm.OriginOptions.Set(optionsVm.ChangedOptions);
+        }
+
+        public void Cancel()
+        {
+        }
+        public TestOptionsTabPage(string displayName, TestSiteOptionsPagePanel panel)
+        {
+            HeaderText = displayName;
+            _tabPagePanel = panel;
+        }
+    } 
+ */

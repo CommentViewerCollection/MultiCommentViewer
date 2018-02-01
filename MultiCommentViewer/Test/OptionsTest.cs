@@ -263,7 +263,36 @@ namespace MultiCommentViewer.Test
         {
 
         }
-
+        public OptionsTest Clone()
+        {
+            return (OptionsTest)this.MemberwiseClone();
+        }
+        IOptions IOptions.Clone()
+        {
+            return this.Clone();
+        }
+        void IOptions.Set(IOptions options)
+        {
+            var properties = options.GetType().GetProperties();
+            foreach (var property in properties)
+            {
+                if (property.SetMethod != null)
+                {
+                    property.SetValue(this, property.GetValue(options));
+                }
+            }
+        }
+        public void Set(OptionsTest changedOptions)
+        {
+            var properties = changedOptions.GetType().GetProperties();
+            foreach (var property in properties)
+            {
+                if (property.SetMethod != null)
+                {
+                    property.SetValue(this, property.GetValue(changedOptions));
+                }
+            }
+        }
         #region Converters
         private FontFamily FontFamilyFromString(string str)
         {

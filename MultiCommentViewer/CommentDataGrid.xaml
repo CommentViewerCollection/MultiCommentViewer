@@ -17,7 +17,10 @@
         <w:MessageConverter x:Key="messageConverter" />
         <w:NameConverter x:Key="nameConverter" />
     </UserControl.Resources>
-    <DataGrid x:Name="dataGrid" ItemsSource="{Binding Comments, IsAsync=True}"
+    <Grid>
+        <!--Element treeに属さないelementにDataContextを渡すためのdummy element-->
+        <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
+        <DataGrid x:Name="dataGrid" ItemsSource="{Binding Comments, IsAsync=True}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"                      
@@ -157,4 +160,5 @@
             </DataGridTemplateColumn>
         </DataGrid.Columns>
     </DataGrid>
+    </Grid>
 </UserControl>

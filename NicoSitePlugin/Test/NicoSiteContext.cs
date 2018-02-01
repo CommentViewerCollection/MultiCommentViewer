@@ -12,6 +12,7 @@ namespace NicoSitePlugin.Test
             get
             {
                 var panel = new NicoOptionsPanel();
+                panel.SetViewModel(new NicoSiteOptionsViewModel(_siteOptions));
                 return new NicoOptionsTabPage(DisplayName, panel);
             }
         }

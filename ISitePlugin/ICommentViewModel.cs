@@ -18,7 +18,6 @@ namespace SitePlugin
         IEnumerable<IMessagePart> MessageItems { get; }
         string Info { get; }
         string Id { get; }
-        string Nickname { get; }
         IUser User { get; set; }
         string UserId { get; }
 

@@ -115,6 +115,7 @@
     <Compile Include="UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserViewModel.cs" />
     <Page Include="CommentDataGrid.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -192,6 +193,10 @@
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">
       <Project>{cdbbbf25-ad0c-4eaf-b673-eb0bb198585a}</Project>
       <Name>BrowserCookieInterfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
+      <Name>Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\IPlugin\Plugin.csproj">
       <Project>{735cfeee-5b77-4d36-977b-4cd94a6f3cdb}</Project>

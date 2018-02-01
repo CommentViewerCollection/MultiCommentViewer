@@ -7,6 +7,58 @@ using System.Windows.Media;
 using SitePlugin;
 namespace NicoSitePlugin.Test
 {
+    public class NicoCommentViewModel2 : CommentViewModelBase, INicoCommentViewModel
+    {
+        //本当はIUserはコンストラクタから入れたい。でもIUserStoreにはサイト毎の実装はいらない（多分）だろうから共通の場所でやってる。
+        //NameItemsはそのユーザの全てのコメントに共通のはずだからcvm内ではなくIUserとかに持たせたい
+
+        private IUser _user;
+        public override IUser User
+        {
+            get { return _user; }
+            set
+            {
+                _user = value;
+                if (_user != null)
+                {
+                    _user.PropertyChanged += (s, e) =>
+                    {
+                        switch (e.PropertyName)
+                        {
+                            case nameof(_user.Nickname):
+                                SetName();
+                                break;
+                        }
+                    };
+                }
+            }
+        }
+        public override string UserId => _chat.user_id;
+        private readonly NicoSiteOptions _siteOptions;
+        private readonly chat _chat;
+        internal NicoCommentViewModel2(ConnectionName connectionName, chat chat, IOptions options, NicoSiteOptions siteOptions) 
+            : base(connectionName, options)
+        {
+            _siteOptions = siteOptions;
+            _chat = chat;
+
+            SetName();
+            MessageItems = new List<IMessagePart> { new MessageText { Text = _chat.text } };
+        }
+
+        private void SetName()
+        {
+            if (_user == null || string.IsNullOrEmpty(_user.Nickname))
+            {
+                NameItems = new List<IMessagePart> { new MessageText { Text = _chat.user_id } };
+            }
+            else
+            {
+                NameItems = new List<IMessagePart> { new MessageText { Text = _user.Nickname } };
+            }
+            RaisePropertyChanged(nameof(NameItems));
+        }
+    }
     public class NicoCommentViewModel : INicoCommentViewModel
     {
         public string ConnectionName => _connectionName.Name;
@@ -19,11 +71,38 @@ namespace NicoSitePlugin.Test
 
         public string Id { get; set; }
 
-        public string Nickname { get; set; }
+        public string UserId
+        {
+            get
+            {
+                return _chat.user_id;
+            }
+        }
 
-        public string UserId { get; set; }
-        
-        public IUser User { get; set; }
+        //本当はIUserはコンストラクタから入れたい。でもIUserStoreにはサイト毎の実装はいらない（多分）だろうから共通の場所でやってる。
+        //NameItemsはそのユーザの全てのコメントに共通のはずだからcvm内ではなくIUserとかに持たせたい
+
+        private IUser _user;
+        public IUser User
+        {
+            get { return _user; }
+            set
+            {
+                _user = value;
+                if (_user != null)
+                {
+                    _user.PropertyChanged += (s, e) =>
+                    {
+                        switch (e.PropertyName)
+                        {
+                            case nameof(_user.Nickname):                                
+                                SetName();
+                                break;
+                        }
+                    };
+                }
+            }
+        }
 
         public bool IsInfo { get; set; }
 
@@ -45,9 +124,9 @@ namespace NicoSitePlugin.Test
 
         public SolidColorBrush Background => new SolidColorBrush(_options.BackColor);
 
-        
-        
-        
+
+
+
         public Task AfterCommentAdded()
         {
             throw new NotImplementedException();
@@ -63,9 +142,21 @@ namespace NicoSitePlugin.Test
             _chat = chat;
             _options = options;
             _siteOptions = siteOptions;
-            NameItems = new List<IMessagePart> { new MessageText { Text = chat.user_id } };
+            SetName();
             MessageItems = new List<IMessagePart> { new MessageText { Text = chat.text } };
-            UserId = chat.user_id;
+
+        }
+        private void SetName()
+        {
+            if (_user == null || string.IsNullOrEmpty(_user.Nickname))
+            {
+                NameItems = new List<IMessagePart> { new MessageText { Text = _chat.user_id } };
+            }
+            else
+            {
+                NameItems = new List<IMessagePart> { new MessageText { Text = _user.Nickname } };
+            }
+            RaisePropertyChanged(nameof(NameItems));
         }
         #region INotifyPropertyChanged
         [NonSerialized]

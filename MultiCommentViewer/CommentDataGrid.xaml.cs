@@ -27,6 +27,12 @@ namespace MultiCommentViewer
             
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// https://social.msdn.microsoft.com/Forums/vstudio/en-US/63fa1e10-1050-4448-a2bc-62dfe0836f25/selecting-datagrid-row-when-right-mouse-button-is-pressed?forum=wpf
         private void DataGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             DependencyObject dep = (DependencyObject)e.OriginalSource;

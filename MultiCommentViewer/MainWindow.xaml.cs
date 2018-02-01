@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -23,6 +24,7 @@ namespace MultiCommentViewer
         public MainWindow()
         {
             InitializeComponent();
+            
             dataGrid.MouseRightButtonUp += DataGrid_MouseRightButtonUp;
             Messenger.Default.Register<ShowOptionsViewMessage>(this, message =>
             {
@@ -62,20 +64,31 @@ namespace MultiCommentViewer
 
         private void DataGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
-            var w = Window.GetWindow(this);
-            var point = e.GetPosition(w);
-            var cell = dataGrid.InputHitTest(point);
-            if (cell != null)
-            {
-                //cell.
-                //DataGridを右クリックした時にその行を選択状態にしたい
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
 
-                var rowIndex = 0;
-                var row = dataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex) as DataGridRow;
-                if (row != null)
+            //depがRunだと、VisualTreeHelper.GetParent()で下記の例外が投げられてしまう。
+            //'System.Windows.Documents.Run' is not a Visual or Visual3D' InvalidOperationException
+            if (e.OriginalSource is Run run)
+            {
+                dep = run.Parent;
+            }
+            while ((dep != null) && !(dep is DataGridCell))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            if (dep == null) return;
+
+            if (dep is DataGridCell)
+            {
+                DataGridCell cell = dep as DataGridCell;
+                cell.Focus();
+
+                while ((dep != null) && !(dep is DataGridRow))
                 {
-                    row.IsSelected = true;
+                    dep = VisualTreeHelper.GetParent(dep);
                 }
+                DataGridRow row = dep as DataGridRow;
+                dataGrid.SelectedItem = row.DataContext;
             }
         }
 

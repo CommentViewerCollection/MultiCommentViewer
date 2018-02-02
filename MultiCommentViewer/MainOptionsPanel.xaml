@@ -12,7 +12,7 @@
 
         <Common:ColorPicker SelectedColor="{Binding ForeColor, Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,40,0,0" VerticalAlignment="Top" Width="70"/>
         <Label Content="文字色" HorizontalAlignment="Left" Margin="45,40,0,0" VerticalAlignment="Top"/>
-        <Label Content="Label" HorizontalAlignment="Left" Margin="53,89,0,0" VerticalAlignment="Top"/>
+        <Label Content="背景色" HorizontalAlignment="Left" Margin="53,89,0,0" VerticalAlignment="Top"/>
         <Common:ColorPicker SelectedColor="{Binding BackColor,Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,89,0,0" VerticalAlignment="Top" Width="70"/>
 
     </Grid>

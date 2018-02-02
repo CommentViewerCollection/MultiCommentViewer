@@ -42,7 +42,7 @@
             </Popup.Resources>
             <Border Width="200" Height="100" BorderBrush="Black" BorderThickness="1" Background="{StaticResource BackBrush}">
                 <Grid>
-                    <TextBox x:Name="txtColorArgb" HorizontalAlignment="Left" Height="23" Margin="70,36,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                    <TextBox x:Name="PART_ColorArgb" HorizontalAlignment="Left" Height="23" Margin="70,36,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
                     <Label Content="ARGB" HorizontalAlignment="Left" Margin="25,33,0,0" VerticalAlignment="Top"/>
                 </Grid>
             </Border>

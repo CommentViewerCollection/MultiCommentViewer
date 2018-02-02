@@ -21,19 +21,18 @@ namespace Common
     /// </summary>
     public partial class ColorPicker : UserControl
     {
+        //TODO:PART_ColorArgbへ入力できる文字列の制限を加えたい
         public ColorPicker()
         {
             InitializeComponent();
-            txtColorArgb.TextChanged += TxtColorArgb_TextChanged;
+            PART_ColorArgb.TextChanged += PART_ColorArgb_TextChanged;
         }
 
-        private void TxtColorArgb_TextChanged(object sender, TextChangedEventArgs e)
+        private void PART_ColorArgb_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (TryParse(txtColorArgb.Text, out Color color))
+            if (TryParse(PART_ColorArgb.Text, out Color color))
             {
                 SelectedColor = color;
-                PART_ToggleButton.Background = new SolidColorBrush(SelectedColor);
-                Debug.WriteLine($"text={SelectedColor}");
             }
         }
         private bool TryParse(string argb, out Color color)
@@ -43,9 +42,8 @@ namespace Common
                 color = Colors.White;
                 return false;
             }
-            var pattern = "#(?<a>[0-9a-fA-F]{2})(?<r>[0-9a-fA-F]{2})(?<g>[0-9a-fA-F]{2})(?<b>[0-9a-fA-F]{2})";
+            const string pattern = "#(?<a>[0-9a-fA-F]{2})(?<r>[0-9a-fA-F]{2})(?<g>[0-9a-fA-F]{2})(?<b>[0-9a-fA-F]{2})";
             var match = System.Text.RegularExpressions.Regex.Match(argb, pattern, System.Text.RegularExpressions.RegexOptions.Compiled);
-
             if (!match.Success)
             {
                 color = Colors.White;
@@ -58,13 +56,14 @@ namespace Common
             color = Color.FromArgb(a, r, g, b);
             return true;
         }
+
+        #region SelectedColor
         public static readonly DependencyProperty SelectedColorProperty =
             DependencyProperty.Register(nameof(SelectedColor),
                                 typeof(Color),
                                 typeof(ColorPicker),
                                 new FrameworkPropertyMetadata(Colors.White, new PropertyChangedCallback(OnTitleChanged)));
-
-        // 2. CLI用プロパティを提供するラッパー
+        
         public Color SelectedColor
         {
             get { return (Color)GetValue(SelectedColorProperty); }
@@ -74,8 +73,42 @@ namespace Common
         {
             if (obj is ColorPicker picker)
             {
-
+                picker.PART_ToggleButton.Background = new SolidColorBrush(picker.SelectedColor);
+                picker.SelectedColorArgb = picker.SelectedColor.ToString();
+                picker.PART_ColorArgb.Text = picker.SelectedColorArgb;
             }
+        }
+        #endregion //SelectedColor
+
+        #region SelectedColorArgb
+        public static readonly DependencyProperty SelectedColorArgbProperty =
+    DependencyProperty.Register(nameof(SelectedColorArgb),
+                        typeof(string),
+                        typeof(ColorPicker),
+                        new FrameworkPropertyMetadata("#FF000000", new PropertyChangedCallback(OnSelectedColorArgbChanged)));
+
+        public string SelectedColorArgb
+        {
+            get { return (string)GetValue(SelectedColorArgbProperty); }
+            set { SetValue(SelectedColorArgbProperty, value); }
+        }
+        private static void OnSelectedColorArgbChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
+        {
+            if (obj is ColorPicker picker)
+            {
+                if(picker.TryParse(picker.SelectedColorArgb, out Color color))
+                {
+                    picker.SelectedColor = color;
+                    picker.PART_ColorArgb.Text = picker.SelectedColorArgb;
+                }
+            }
+        }
+        #endregion //SelectedColorArgb
+
+        private string ColorToArgb(Color color)
+        {
+            var argb = color.ToString();
+            return argb;
         }
     }
 }

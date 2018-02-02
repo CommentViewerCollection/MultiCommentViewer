@@ -42,9 +42,9 @@ namespace YouTubeLiveSitePlugin.Old
         public SolidColorBrush Background { get { return new SolidColorBrush(_options.BackColor); } }
 
         public bool IsVisible { get; set; } = true;
-        public IUser User { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IUser User { get; set; }
 
-        public string UserId => throw new NotImplementedException();
+        public string UserId => "";
 
         private readonly IOptions _options;
         private readonly YouTubeSiteOptions _siteOptions;

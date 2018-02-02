@@ -15,36 +15,6 @@ using YoutubeLib;
 namespace YouTubeLiveSitePlugin.Old
 {
     using MultiCommentViewer.Model.YouTubeLive;
-    //using YoutubeLib;
-    public class YouTubeLiveSiteContext : IYouTubeSiteContext
-    {
-        public Guid Guid => throw new NotImplementedException();
-
-        public string DisplayName => "YouTubeLive";
-
-        public IOptionsTabPage TabPanel => throw new NotImplementedException();
-
-        public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
-        {
-            return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-        }
-
-        public void LoadOptions(string path)
-        {
-            _siteOptions = new YouTubeSiteOptions();
-        }
-
-        public void SaveOptions(string path)
-        {
-            //throw new NotImplementedException();
-        }
-        private readonly IOptions _options;
-        private YouTubeSiteOptions _siteOptions;
-        public YouTubeLiveSiteContext(IOptions options)
-        {
-            _options = options;
-        }
-    }
     public class Metadata : IMetadata
     {
         public string Title { get; set; }
@@ -218,6 +188,9 @@ namespace YouTubeLiveSitePlugin.Old
         bool canComment = true;
         public async Task ConnectAsync(string input, ryu_s.BrowserCookie.IBrowserProfile browserProfile)
         {
+            CanConnect = false;
+            CanDisconnect = true;
+
             var cookies = browserProfile.GetCookieCollection("youtube.com");
             _cc = new CookieContainer();
             _cc.Add(cookies);
@@ -265,7 +238,18 @@ namespace YouTubeLiveSitePlugin.Old
             try
             {
                 var comments = Actions2CommentData(ChatData.ConvertAction(liveChatContext.YtInitialData.contents.liveChatRenderer.actions)).Cast<ICommentData>().ToList();
-                //await _callback(new InitialCallback();
+                var cvmList = new List<ICommentViewModel>();
+                foreach(var comment in comments)
+                {
+                    var cvm = new YouTubeCommentViewModel(ConnectionName, _options, SiteOptions)
+                    {
+                         MessageItems = comment.MessageItems,
+                         NameItems = comment.NameItems,
+                         Id = comment.Id,
+                    };
+                    cvmList.Add(cvm);
+                }
+                CommentsReceived?.Invoke(this, cvmList);
             }
             catch (ParseException ex)
             {
@@ -331,6 +315,9 @@ namespace YouTubeLiveSitePlugin.Old
                 _500msTimer.Enabled = false;
                 _cts.Dispose();
                 _cts = new CancellationTokenSource();
+
+                CanConnect = true;
+                CanDisconnect = false;
             }
 
 
@@ -563,6 +550,8 @@ namespace YouTubeLiveSitePlugin.Old
             _options = options;
             SiteOptions = siteOptions;
             _dataSource = new YoutubeLib.YoutubeServer();
+            CanConnect = true;
+            CanDisconnect = false;
         }
     }
     public class YouTubeSiteOptions : IYouTubeSiteOptions
@@ -570,6 +559,21 @@ namespace YouTubeLiveSitePlugin.Old
         public YouTubeSiteOptions()
         {
 
+        }
+        internal YouTubeSiteOptions Clone()
+        {
+            return (YouTubeSiteOptions)this.MemberwiseClone();
+        }
+        internal void Set(YouTubeSiteOptions changedOptions)
+        {
+            var properties = changedOptions.GetType().GetProperties();
+            foreach (var property in properties)
+            {
+                if (property.SetMethod != null)
+                {
+                    property.SetValue(this, property.GetValue(changedOptions));
+                }
+            }
         }
     }
 

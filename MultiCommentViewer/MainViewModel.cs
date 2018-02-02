@@ -32,6 +32,8 @@ namespace MultiCommentViewer
         public ICommand ShowDevelopersTwitterCommand { get; }
         public ICommand CheckUpdateCommand { get; }
         public ICommand ShowUserInfoCommand { get; }
+        public ICommand RemoveSelectedConnectionCommand { get; }
+        public ICommand AddNewConnectionCommand { get; }
         #endregion //Commands
 
         #region Fields
@@ -53,7 +55,17 @@ namespace MultiCommentViewer
             var mainOptionsPanel = new MainOptionsPanel();
             mainOptionsPanel.SetViewModel(new MainOptionsViewModel(_options));
             list.Add(new MainTabPage("一般", mainOptionsPanel));
-            list.AddRange(_siteContexts.Select(site => site.TabPanel));
+            foreach(var site in _siteContexts)
+            {
+                try
+                {
+                    list.Add(site.TabPanel);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
             MessengerInstance.Send(new ShowOptionsViewMessage(list));
         }
         private void ContentRendered()
@@ -106,7 +118,19 @@ namespace MultiCommentViewer
 
 
         
-        public ICommand AddNewConnectionCommand { get; }
+        private void RemoveSelectedConnection()
+        {
+            var toRemove = Connections.Where(conn => conn.IsSelected).ToList();
+            foreach (var conn in toRemove)
+            {
+                Connections.Remove(conn);
+                var meta = _metaDict[conn];
+                _metaDict.Remove(conn);
+                MetaCollection.Remove(meta);
+            }
+            //TODO:この接続に関連するコメントも全て消したい
+        }
+        
         private void AddNewConnection()
         {
             try
@@ -314,7 +338,12 @@ namespace MultiCommentViewer
         }
         private readonly IUserStore _userStore;
         
-
+        public ICommand ClearAllCommentsCommand { get; }
+        private void ClearAllComments()
+        {
+            Comments.Clear();
+            //個別ユーザのコメントはどうしようか
+        }
         public MainViewModel()
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
@@ -331,6 +360,8 @@ namespace MultiCommentViewer
             ShowDevelopersTwitterCommand = new RelayCommand(ShowDevelopersTwitter);
             CheckUpdateCommand = new RelayCommand(CheckUpdate);
             AddNewConnectionCommand = new RelayCommand(AddNewConnection);
+            RemoveSelectedConnectionCommand = new RelayCommand(RemoveSelectedConnection);
+            ClearAllCommentsCommand = new RelayCommand(ClearAllComments);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
         }
         private ICommentViewModel _selectedComment;

@@ -35,6 +35,8 @@ namespace MultiCommentViewer
         #endregion //Commands
 
         #region Fields
+        private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
+        private readonly ILogger _logger;
         private readonly IPluginManager _pluginManager;
         IOptions _options;
         IEnumerable<ISiteContext> _siteContexts;
@@ -142,15 +144,22 @@ namespace MultiCommentViewer
         }
         private void RemoveSelectedConnection()
         {
-            var toRemove = Connections.Where(conn => conn.IsSelected).ToList();
-            foreach (var conn in toRemove)
+            try
             {
-                Connections.Remove(conn);
-                var meta = _metaDict[conn];
-                _metaDict.Remove(conn);
-                MetaCollection.Remove(meta);
+                var toRemove = Connections.Where(conn => conn.IsSelected).ToList();
+                foreach (var conn in toRemove)
+                {
+                    Connections.Remove(conn);
+                    var meta = _metaDict[conn];
+                    _metaDict.Remove(conn);
+                    MetaCollection.Remove(meta);
+                }
+                //TODO:この接続に関連するコメントも全て消したい
+
+            }catch(Exception ex)
+            {
+                _logger.LogException(ex);
             }
-            //TODO:この接続に関連するコメントも全て消したい
         }
 
         private void AddNewConnection()
@@ -158,7 +167,7 @@ namespace MultiCommentViewer
             try
             {
                 var connectionName = new ConnectionName();//TODO:一意の名前を設定
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms);
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger);
                 connection.CommentsReceived += Connection_CommentsReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 var metaVm = new MetadataViewModel(connectionName);
@@ -178,22 +187,28 @@ namespace MultiCommentViewer
         #region EventHandler
         private async void Connection_CommentsReceived(object sender, List<ICommentViewModel> e)
         {
-            //TODO:Comments.AddRange()が欲しい
-            await _dispatcher.BeginInvoke((Action)(() =>
+            try
             {
-                foreach (var comment in e)
+                //TODO:Comments.AddRange()が欲しい
+                await _dispatcher.BeginInvoke((Action)(() =>
                 {
-                    if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
+                    foreach (var comment in e)
                     {
-                        var user = _userStore.Get(comment.UserId);
-                        uvm = new UserViewModel(user, _options);
-                        _userDict.Add(comment.UserId, uvm);
+                        if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
+                        {
+                            var user = _userStore.Get(comment.UserId);
+                            uvm = new UserViewModel(user, _options);
+                            _userDict.Add(comment.UserId, uvm);
+                        }
+                        comment.User = uvm.User;
+                        Comments.Add(comment);
+                        uvm.Comments.Add(comment);
                     }
-                    comment.User = uvm.User;
-                    Comments.Add(comment);
-                    uvm.Comments.Add(comment);
-                }
-            }), DispatcherPriority.Normal);
+                }), DispatcherPriority.Normal);
+            }catch(Exception ex)
+            {
+                _logger.LogException(ex);
+            }
             try
             {
                 _pluginManager.SetComments(e);
@@ -201,17 +216,24 @@ namespace MultiCommentViewer
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
             }
         }
         private void Connection_MetadataReceived(object sender, IMetadata e)
         {
-            if (sender is ConnectionViewModel connection)
+            try
             {
-                var metaVm = _metaDict[connection];
-                if (e.Title != null)
-                    metaVm.Title = e.Title;
-                if (e.Active != null)
-                    metaVm.Active = e.Active;
+                if (sender is ConnectionViewModel connection)
+                {
+                    var metaVm = _metaDict[connection];
+                    if (e.Title != null)
+                        metaVm.Title = e.Title;
+                    if (e.Active != null)
+                        metaVm.Active = e.Active;
+                }
+            }catch(Exception ex)
+            {
+                _logger.LogException(ex);
             }
         }
         #endregion //EventHandler
@@ -224,6 +246,7 @@ namespace MultiCommentViewer
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
+        public ICommentViewModel SelectedComment { get; set; }
         public string Title
         {
             get
@@ -371,15 +394,6 @@ namespace MultiCommentViewer
         }
         #endregion
 
-        
-
-
-        
-
-
-
-
-
         public MainViewModel()
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
@@ -402,24 +416,22 @@ namespace MultiCommentViewer
             ClearAllCommentsCommand = new RelayCommand(ClearAllComments);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
         }
-        private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
-        private readonly ILogger _logger;
+
         private void PluginManager_PluginAdded(object sender, IPlugin e)
         {
-            var vm = new PluginMenuItemViewModel(e);
-            _pluginMenuItemDict.Add(e, vm);
-            PluginMenuItemCollection.Add(vm);
-        }
-
-        private ICommentViewModel _selectedComment;
-        public ICommentViewModel SelectedComment
-        {
-            get { return _selectedComment; }
-            set
+            try
             {
-                _selectedComment = value;
+                var vm = new PluginMenuItemViewModel(e);
+                _pluginMenuItemDict.Add(e, vm);
+                PluginMenuItemCollection.Add(vm);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
             }
         }
+        
+        
         private void ShowUserInfo()
         {
             var current = SelectedComment;
@@ -433,6 +445,7 @@ namespace MultiCommentViewer
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
             }
         }
         private void CheckUpdate()

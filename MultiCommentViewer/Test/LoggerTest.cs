@@ -1,4 +1,5 @@
 ﻿using System;
+using SitePlugin;
 namespace MultiCommentViewer.Test
 {
     public class LoggerTest : ILogger

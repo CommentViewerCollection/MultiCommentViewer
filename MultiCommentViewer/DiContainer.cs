@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Autofac;
+using SitePlugin;
 #if DEBUG
 using MultiCommentViewer.Test;
 #endif //DEBUG

@@ -48,6 +48,7 @@
     <Compile Include="ConnectionName.cs" />
     <Compile Include="ICommentProvider.cs" />
     <Compile Include="ICommentViewModel.cs" />
+    <Compile Include="ILogger.cs" />
     <Compile Include="IMetadata.cs" />
     <Compile Include="IOptions.cs" />
     <Compile Include="IOptionsTabPage.cs" />

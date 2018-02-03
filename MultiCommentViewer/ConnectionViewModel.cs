@@ -41,9 +41,6 @@ namespace MultiCommentViewer
                     before.CanDisconnectChanged -= CommentProvider_CanDisconnectChanged;
                     before.CommentsReceived -= CommentProvider_CommentsReceived;
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
-                    //var beforeMetaVm = _metaDict[before];
-                    //_metaDict.Remove(before);
-                    //MetaCollection.Remove(beforeMetaVm);
                 }
                 _selectedSite = value;
                 var next = _commentProvider = _selectedSite.Site.CreateCommentProvider(_connectionName);
@@ -51,10 +48,6 @@ namespace MultiCommentViewer
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
                 next.CommentsReceived += CommentProvider_CommentsReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
-
-                //var metaVm = new MetadataViewModel();
-                //_metaDict.Add(next, metaVm);
-                //MetaCollection.Add(metaVm);
 
                 RaisePropertyChanged();
             }
@@ -128,10 +121,13 @@ namespace MultiCommentViewer
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
             }
         }
-        public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers)
+        private readonly ILogger _logger;
+        public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger)
         {
+            _logger = logger;
             _connectionName = connectionName ?? throw new ArgumentNullException(nameof(connectionName));
             if(sites == null)
             {

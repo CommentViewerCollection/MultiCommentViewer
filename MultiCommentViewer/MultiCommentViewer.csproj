@@ -99,7 +99,6 @@
     <Compile Include="Converter.cs" />
     <Compile Include="DiContainer.cs" />
     <Compile Include="GridColumnWidthReseterBehaviour.cs" />
-    <Compile Include="ILogger.cs" />
     <Compile Include="IOptionsLoader.cs" />
     <Compile Include="IpcPluginManager.cs" />
     <Compile Include="IPluginManager.cs" />

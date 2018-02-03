@@ -550,13 +550,11 @@ namespace MultiCommentViewer
     {
         public string Name { get; set; }
         public ObservableCollection<PluginMenuItemViewModel> Children { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        public ICommand Command { get; }
+        public ICommand ShowSettingViewCommand { get; }
         public PluginMenuItemViewModel(IPlugin plugin)// PluginContext plugin, string name, ICommand command)
         {
-            Name = plugin.Name;
-
-            //TODO:exeファイルを直接実行するとTest()が呼び出されるが、Visual Studioのデバッグモードだと呼び出されない。なぜ？？
-            Command = new Ttk.RelayCommand(()=>Test(plugin));
+            Name = plugin.Name;            
+            ShowSettingViewCommand = new Ttk.RelayCommand(() => Test(plugin));
         }
         private void Test(IPlugin plugin)
         {

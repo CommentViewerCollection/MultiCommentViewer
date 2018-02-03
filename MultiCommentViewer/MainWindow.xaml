@@ -54,7 +54,7 @@
                 <MenuItem.ItemContainerStyle>
                     <Style TargetType="MenuItem">
                         <Setter Property="Header" Value="{Binding Path=Name}" />
-                        <Setter Property="Command" Value="{Binding Path=Command}" />
+                        <Setter Property="Command" Value="{Binding Path=ShowSettingViewCommand}" />
                         <Setter Property="ItemsSource" Value="{Binding Path=Children}" />
                     </Style>
                 </MenuItem.ItemContainerStyle>

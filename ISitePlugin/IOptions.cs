@@ -10,6 +10,7 @@ namespace SitePlugin
 {
     public interface IOptions:INotifyPropertyChanged
     {
+        string PluginDir { get; }
         FontFamily FontFamily { get; set; }
         FontStyle FontStyle { get; set; }
         FontWeight FontWeight { get; set; }

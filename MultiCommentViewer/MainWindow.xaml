@@ -50,16 +50,15 @@
                 <MenuItem Header="オプション" Command="{Binding ShowOptionsWindowCommand}"/>
                 <!--<MenuItem Header="棒読みちゃん" Command="{Binding ShowBouyomiChanSettingsCommand}" />-->
             </MenuItem>
-            <!--<MenuItem Header="プラグイン" ItemsSource="{Binding PluginMenuCollection}">
+            <MenuItem Header="プラグイン" ItemsSource="{Binding PluginMenuItemCollection}">
                 <MenuItem.ItemContainerStyle>
                     <Style TargetType="MenuItem">
                         <Setter Property="Header" Value="{Binding Path=Name}" />
                         <Setter Property="Command" Value="{Binding Path=Command}" />
-                        <Setter Property="CommandParameter" Value="{Binding Info}" />
                         <Setter Property="ItemsSource" Value="{Binding Path=Children}" />
                     </Style>
                 </MenuItem.ItemContainerStyle>
-            </MenuItem>-->
+            </MenuItem>
             <MenuItem Header="ヘルプ">
                 <MenuItem Header="配布サイト" Command="{Binding ShowWebSiteCommand}" />
                 <MenuItem Header="作者のTwitter" Command="{Binding ShowDevelopersTwitterCommand}" />

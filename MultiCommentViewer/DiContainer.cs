@@ -15,13 +15,13 @@ namespace MultiCommentViewer
         private DiContainer()
         {
             var builder = new ContainerBuilder();
-#if DEBUG
-            builder.RegisterType<PluginLoaderTest>().As<IPluginLoader>();
+#if DEBUG            
             builder.RegisterType<OptionsLoaderTest>().As<IOptionsLoader>();
             builder.RegisterType<SitePluginLoaderTest>().As<ISitePluginLoader>();
             builder.RegisterType<SitePluginManager>().As<ISitePluginManager>();
             builder.RegisterType<BrowserLoader>().As<IBrowserLoader>();
             builder.RegisterType<UserStoreTest>().As<IUserStore>();
+            //builder.RegisterType<PluginManager>().As<IPluginManager>();
             //builder.RegisterType<>().As<>();
 
 #endif //DEBUG

@@ -3,26 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Data;
 namespace Plugin
 {
     public interface IPlugin
     {
         string Name { get; }
         string Description { get; }
-        void ReceiveComment(ICommentData commentData);
+        void OnCommentReceived(ICommentData commentData);
         //connectionが追加されたり削除されたりしたら通知される仕組みが欲しい
         //接続、切断情報も。
-
+        void OnLoaded();
+        void OnClosing();
+        void ShowSettingView();
+        IPluginHost Host { get; set; }
     }
-
-    public interface IHost
+    public interface IPluginHost
     {
         /// <summary>
         /// 設定を保存するディレクトリの絶対パス
         /// </summary>
         string SettingsDirPath { get; }
-
+        double MainViewLeft { get; }
+        double MainViewTop { get; }
     }
     public interface ICommentData
     {
@@ -31,8 +34,8 @@ namespace Plugin
         /// </summary>
         string Id { get; }        
         string UserId { get; }
-        string Name { get; }
-        string Message { get; }
-
+        string Nickname { get; }
+        string Comment { get; }
+        bool IsNgUser { get; }
     }
 }

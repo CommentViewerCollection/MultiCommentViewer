@@ -58,6 +58,9 @@ namespace YouTubeLiveSitePluginTests.Old
             public int InfoDisplayIndex { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public Color SelectedRowBackColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             public Color SelectedRowForeColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+            public string PluginDir => throw new NotImplementedException();
+
             Color IOptions.BackColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
             Color IOptions.ForeColor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 

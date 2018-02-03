@@ -10,6 +10,14 @@ namespace MultiCommentViewer.Test
 {
     public class OptionsTest : IOptions
     {
+        public string PluginDir
+        {
+            get
+            {
+                var currentDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                return System.IO.Path.Combine(currentDir, "Plugins");
+            }
+        }
         public FontFamily FontFamily { get; set; }
 
         public FontStyle FontStyle { get; set; }
@@ -28,7 +36,7 @@ namespace MultiCommentViewer.Test
         /// <summary>
         /// 各種設定ファイルが置かれるフォルダ
         /// </summary>
-        public string SettingsDirPath { get; set; }
+        public string SettingsDirPath { get; set; } = "settings";
 
         #region Info
         private string _InfoForeColor = "#FF000000";

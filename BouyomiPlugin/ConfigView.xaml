@@ -1,0 +1,30 @@
+﻿<Window x:Class="BouyomiPlugin.ConfigView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BouyomiPlugin"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance local:ConfigViewModel, IsDesignTimeCreatable=True}"
+        Title="棒読みちゃん連携プラグイン" Height="251.154" Width="416.195" Background="#F0F0F0">
+    <Grid>
+        <Grid Margin="10,30,10,18" IsEnabled="{Binding ElementName=checkBox, Path=IsChecked}">
+            <Label x:Name="label" Content="棒読みちゃんの場所" HorizontalAlignment="Left" Margin="10,87,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="10,118,0,0" TextWrapping="NoWrap" Text="{Binding ExeLocation}" VerticalAlignment="Top" Width="325"/>
+            <Button x:Name="button" Content="選択" Command="{Binding ShowFilePickerCommand}" HorizontalAlignment="Left" Margin="340,118,0,0" VerticalAlignment="Top" Width="37"/>
+            <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,146,0,0" TextWrapping="Wrap" VerticalAlignment="Top">
+                <Run>棒読みちゃんの実行ファイルを指定すると棒読みちゃんを自動的に起動します。</Run>
+            </TextBlock>
+            <GroupBox x:Name="groupBox" Header="読み上げ対象" HorizontalAlignment="Left" Margin="21,10,0,0" VerticalAlignment="Top">
+                <StackPanel Orientation="Vertical" Margin="5">
+                    <CheckBox Content="コテハン" IsChecked="{Binding IsReadHandleName}" Margin="0,2"/>
+                    <CheckBox Content="コメント" IsChecked="{Binding IsReadComment}" Margin="0,2" />
+                </StackPanel>
+            </GroupBox>
+            <CheckBox x:Name="checkBox1" Content="コテハンに敬称を付ける" IsChecked="{Binding IsAppendNickTitle}" HorizontalAlignment="Left" Margin="182,25,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="textBox1" IsEnabled="{Binding ElementName=checkBox1, Path=IsChecked}" HorizontalAlignment="Left" Height="23" Margin="215,45,0,0" TextWrapping="Wrap" Text="{Binding NickTitle}" VerticalAlignment="Top" Width="120"/>
+
+        </Grid>
+        <CheckBox x:Name="checkBox" Content="棒読みちゃんにコメントを読んでもらう" IsChecked="{Binding IsEnabled}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+    </Grid>
+</Window>

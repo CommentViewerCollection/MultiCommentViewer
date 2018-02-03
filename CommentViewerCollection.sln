@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiCommentViewer", "MultiCommentViewer\MultiCommentViewer.csproj", "{1CAA4971-6CB9-4FB5-AC5E-BFC6BED83C87}"
+	ProjectSection(ProjectDependencies) = postProject
+		{13A909DD-3791-4539-9C04-F72D9E755DCF} = {13A909DD-3791-4539-9C04-F72D9E755DCF}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitePlugin", "ISitePlugin\SitePlugin.csproj", "{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}"
 EndProject
@@ -24,6 +27,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoSitePluginTests", "NicoSitePluginTests\NicoSitePluginTests.csproj", "{7D3D1D22-D547-4C6B-8396-681E54911F38}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{66D18DE1-4D66-41A5-B0E2-47DF9975495A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouyomiPlugin", "BouyomiPlugin\BouyomiPlugin.csproj", "{13A909DD-3791-4539-9C04-F72D9E755DCF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +80,10 @@ Global
 		{66D18DE1-4D66-41A5-B0E2-47DF9975495A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66D18DE1-4D66-41A5-B0E2-47DF9975495A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66D18DE1-4D66-41A5-B0E2-47DF9975495A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

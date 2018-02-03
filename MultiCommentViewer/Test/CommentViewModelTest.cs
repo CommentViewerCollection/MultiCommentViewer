@@ -68,9 +68,9 @@ namespace MultiCommentViewer.Test
 
         public SolidColorBrush Background => new SolidColorBrush(_options.BackColor);
 
-        public IUser User { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IUser User { get; set; }
 
-        public string UserId => throw new NotImplementedException();
+        public string UserId => "abc";
 
         public Task AfterCommentAdded()
         {

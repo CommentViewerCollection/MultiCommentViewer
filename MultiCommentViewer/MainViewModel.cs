@@ -94,6 +94,10 @@ namespace MultiCommentViewer
                         new BrowserViewModel( new EmptyBrowserProfile()),
                     };
                 }
+
+                _pluginManager.LoadPlugins(new PluginHost(this, _options));
+
+                _pluginManager.OnLoaded();
             }
             catch (Exception ex)
             {
@@ -321,10 +325,18 @@ namespace MultiCommentViewer
                     uvm.Comments.Add(comment);                    
                 }
             }), DispatcherPriority.Normal);
+            try
+            {
+                _pluginManager.SetComments(e);
+            }catch(Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
         Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
 
+        public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         private void Connection_MetadataReceived(object sender, IMetadata e)
         {
             if (sender is ConnectionViewModel connection)
@@ -344,6 +356,7 @@ namespace MultiCommentViewer
             Comments.Clear();
             //個別ユーザのコメントはどうしようか
         }
+        private readonly IPluginManager _pluginManager;
         public MainViewModel()
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
@@ -351,6 +364,8 @@ namespace MultiCommentViewer
             IOptionsLoader optionsLoader = DiContainer.Instance.GetNewInstance<IOptionsLoader>();
             _options = optionsLoader.LoadOptions();
             _userStore = DiContainer.Instance.GetNewInstance<IUserStore>();
+            _pluginManager = new PluginManager(_options);
+            _pluginManager.PluginAdded += PluginManager_PluginAdded;
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand(Closing);
@@ -364,6 +379,14 @@ namespace MultiCommentViewer
             ClearAllCommentsCommand = new RelayCommand(ClearAllComments);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
         }
+        private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
+        private void PluginManager_PluginAdded(object sender, IPlugin e)
+        {
+            var vm = new PluginMenuItemViewModel(e);
+            _pluginMenuItemDict.Add(e, vm);
+            PluginMenuItemCollection.Add(vm);
+        }
+
         private ICommentViewModel _selectedComment;
         public ICommentViewModel SelectedComment
         {
@@ -404,6 +427,32 @@ namespace MultiCommentViewer
         {
 
         }
+    }
+    public class PluginHost : IPluginHost
+    {
+        public string SettingsDirPath => _options.SettingsDirPath;
+
+        public double MainViewLeft => _options.MainViewLeft;
+
+        public double MainViewTop => _options.MainViewTop;
+        private readonly MainViewModel _vm;
+        private readonly IOptions _options;
+        public PluginHost(MainViewModel vm, IOptions options)
+        {
+            _vm = vm;
+            _options = options;
+        }
+    }
+    public class CommentData : Plugin.ICommentData
+    {
+        public string Id { get; set; }
+
+        public string UserId { get; set; }
+
+        public string Nickname { get; set; }
+
+        public string Comment { get; set; }
+        public bool IsNgUser { get; set; }
     }
     public class EmptyBrowserProfile : IBrowserProfile
     {
@@ -495,6 +544,134 @@ namespace MultiCommentViewer
                 _dict.Add(userid, user);
             }
             return user;
+        }
+    }
+    public class PluginMenuItemViewModel
+    {
+        public string Name { get; set; }
+        public ObservableCollection<PluginMenuItemViewModel> Children { get; } = new ObservableCollection<PluginMenuItemViewModel>();
+        public ICommand Command { get; }
+        public PluginMenuItemViewModel(IPlugin plugin)// PluginContext plugin, string name, ICommand command)
+        {
+            Name = plugin.Name;
+
+            //TODO:exeファイルを直接実行するとTest()が呼び出されるが、Visual Studioのデバッグモードだと呼び出されない。なぜ？？
+            Command = new Ttk.RelayCommand(()=>Test(plugin));
+        }
+        private void Test(IPlugin plugin)
+        {
+            try
+            {
+                //var x = host.MainViewLeft;
+                //var y = host.MainViewTop;
+                //var width = host.MainViewWidth;
+                //var height = host.MainViewHeight;
+                plugin.ShowSettingView();// x, y, width, height);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
+    }
+}
+
+
+
+
+namespace Ttk
+{
+    using GalaSoft.MvvmLight.Helpers;
+    using System;
+    using System.Runtime.CompilerServices;
+    using System.Windows.Input;
+    /// <summary>
+    /// A command whose sole purpose is to relay its functionality to other
+    /// objects by invoking delegates. The default return value for the CanExecute
+    /// method is 'true'.  This class does not allow you to accept command parameters in the
+    /// Execute and CanExecute callback methods.
+    /// </summary>
+    /// <remarks>If you are using this class in WPF4.5 or above, you need to use the 
+    /// GalaSoft.MvvmLight.CommandWpf namespace (instead of GalaSoft.MvvmLight.Command).
+    /// This will enable (or restore) the CommandManager class which handles
+    /// automatic enabling/disabling of controls based on the CanExecute delegate.</remarks>
+    public class RelayCommand : ICommand
+    {
+        private readonly WeakAction _execute;
+
+        private readonly WeakFunc<bool> _canExecute;
+
+        /// <summary>
+        /// Occurs when changes occur that affect whether the command should execute.
+        /// </summary>
+        [method: CompilerGenerated]
+        [CompilerGenerated]
+        public event EventHandler CanExecuteChanged;
+
+        /// <summary>
+        /// Initializes a new instance of the RelayCommand class that 
+        /// can always execute.
+        /// </summary>
+        /// <param name="execute">The execution logic. IMPORTANT: Note that closures are not supported at the moment
+        /// due to the use of WeakActions (see http://stackoverflow.com/questions/25730530/). </param>
+        /// <exception cref="T:System.ArgumentNullException">If the execute argument is null.</exception>
+        public RelayCommand(Action execute) : this(execute, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the RelayCommand class.
+        /// </summary>
+        /// <param name="execute">The execution logic. IMPORTANT: Note that closures are not supported at the moment
+        /// due to the use of WeakActions (see http://stackoverflow.com/questions/25730530/). </param>
+        /// <param name="canExecute">The execution status logic.</param>
+        /// <exception cref="T:System.ArgumentNullException">If the execute argument is null. IMPORTANT: Note that closures are not supported at the moment
+        /// due to the use of WeakActions (see http://stackoverflow.com/questions/25730530/). </exception>
+        public RelayCommand(Action execute, Func<bool> canExecute)
+        {
+            if (execute == null)
+            {
+                throw new ArgumentNullException("execute");
+            }
+            this._execute = new WeakAction(execute);
+            if (canExecute != null)
+            {
+                this._canExecute = new WeakFunc<bool>(canExecute);
+            }
+        }
+
+        /// <summary>
+        /// Raises the <see cref="E:GalaSoft.MvvmLight.Command.RelayCommand.CanExecuteChanged" /> event.
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            EventHandler canExecuteChanged = this.CanExecuteChanged;
+            if (canExecuteChanged != null)
+            {
+                canExecuteChanged(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Defines the method that determines whether the command can execute in its current state.
+        /// </summary>
+        /// <param name="parameter">This parameter will always be ignored.</param>
+        /// <returns>true if this command can be executed; otherwise, false.</returns>
+        public bool CanExecute(object parameter)
+        {
+            return this._canExecute == null || ((this._canExecute.IsStatic || this._canExecute.IsAlive) && this._canExecute.Execute());
+        }
+
+        /// <summary>
+        /// Defines the method to be called when the command is invoked. 
+        /// </summary>
+        /// <param name="parameter">This parameter will always be ignored.</param>
+        public virtual void Execute(object parameter)
+        {
+            if (this.CanExecute(parameter) && this._execute != null && (this._execute.IsStatic || this._execute.IsAlive))
+            {
+                this._execute.Execute();
+            }
         }
     }
 }

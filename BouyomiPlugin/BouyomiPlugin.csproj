@@ -65,10 +65,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BouyomiChanClient.cs" />
-    <Compile Include="Class1.cs" />
-    <Compile Include="ConfigView.xaml.cs" />
-    <Compile Include="ConfigViewModel.cs" />
     <Compile Include="main.cs" />
+    <Compile Include="ConfigView.xaml.cs">
+      <DependentUpon>ConfigView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ConfigViewModel.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

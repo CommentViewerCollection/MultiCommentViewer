@@ -560,11 +560,7 @@ namespace MultiCommentViewer
         {
             try
             {
-                //var x = host.MainViewLeft;
-                //var y = host.MainViewTop;
-                //var width = host.MainViewWidth;
-                //var height = host.MainViewHeight;
-                plugin.ShowSettingView();// x, y, width, height);
+                plugin.ShowSettingView();
             }
             catch (Exception ex)
             {

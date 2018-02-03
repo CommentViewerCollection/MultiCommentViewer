@@ -1,121 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Media;
-using GalaSoft.MvvmLight;
-using System.Runtime.Serialization;
-namespace BeamCommentViewer.Plugin
+using System.ComponentModel;
+namespace BouyomiPlugin
 {
-    [DataContract]
-    public class Options
+    class Options : INotifyPropertyChanged
     {
-        [DataMember]
-        private bool _isEnabled;
-        public bool IsEnabled
-        {
-            get { return _isEnabled; }
-            set
-            {
-                _isEnabled = value;
-                RaisePropertyChanged();
-            }
-        }
-        [DataMember]
-        private string _bouyomiChanPath;
+        public bool IsEnabled { get; set; }
+        private string _BouyomiChanPath;
         public string BouyomiChanPath
         {
-            get { return _bouyomiChanPath; }
+            get { return _BouyomiChanPath; }
             set
             {
-                _bouyomiChanPath = value;
+                if (_BouyomiChanPath == value)
+                    return;
+                _BouyomiChanPath = value;
                 RaisePropertyChanged();
             }
         }
-        [DataMember]
-        private bool _isReadHandleName = true;
-        public bool IsReadHandleName
-        {
-            get { return _isReadHandleName; }
-            set
-            {
-                _isReadHandleName = value;
-                RaisePropertyChanged();
-            }
-        }
-        [DataMember]
-        private bool _isReadComment = true;
-        public bool IsReadComment
-        {
-            get { return _isReadComment; }
-            set
-            {
-                _isReadComment = value;
-                RaisePropertyChanged();
-            }
-        }
-        [DataMember]
-        private bool _isAppendNickTitle = true;
-        /// <summary>
-        /// コテハンに敬称を付加して読み上げるか
-        /// </summary>
-        public bool IsAppendNickTitle
-        {
-            get { return _isAppendNickTitle; }
-            set
-            {
-                _isAppendNickTitle = value;
-                RaisePropertyChanged();
-            }
-        }
-        [DataMember]
-        private string _nickTitle = "さん";
-        /// <summary>
-        /// コテハンに付加する敬称
-        /// </summary>
-        public string NickTitle
-        {
-            get { return _nickTitle; }
-            set
-            {
-                _nickTitle = value;
-                RaisePropertyChanged();
-            }
-        }
-
-        public static void Save(Options options, string filePath)
-        {
-            var serializer = new DataContractSerializer(typeof(Options));
-            using (var sw = System.Xml.XmlWriter.Create(filePath, new System.Xml.XmlWriterSettings { Indent = true }))
-            {
-                serializer.WriteObject(sw, options);
-            }
-        }
-        public static Options Load(string filePath)
-        {
-            Options options = null;
-            try
-            {
-                var serializer = new DataContractSerializer(typeof(Options));
-                using (var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open))
-                {
-                    options = serializer.ReadObject(fs) as Options;
-                }
-            }
-            catch (System.IO.FileNotFoundException) { }
-            catch (Exception)            {            }
-            finally
-            {
-                if (options == null)
-                {
-                    options = new Options();
-                }
-            }
-            return options;
-        }
+        public bool IsReadHandleName { get; set; }
+        public bool IsReadComment { get; set; }
+        public bool IsAppendNickTitle { get; set; }
+        public string NickTitle { get; set; } = "さん";
 
         #region INotifyPropertyChanged
         [NonSerialized]

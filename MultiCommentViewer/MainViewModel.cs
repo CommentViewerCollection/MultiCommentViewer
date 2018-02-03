@@ -575,5 +575,16 @@ namespace MultiCommentViewer
             }
         }
     }
+    public interface ILogger
+    {
+        void ExceptionLogging(Exception ex, string message, string detail);
+    }
+    public class LoggerTest:ILogger
+    {
+        public void ExceptionLogging(Exception ex, string message, string detail)
+        {
+
+        }
+    }
 }
 

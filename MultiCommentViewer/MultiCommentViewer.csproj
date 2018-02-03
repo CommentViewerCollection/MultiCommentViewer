@@ -245,7 +245,7 @@ powershell New-Item settings\placeholder -ItemType file
 
 :: BouyomiPluginのファイルを全部持ってくる
 mkdir plugins\Bouyomi
-copy ..\..\..\BouyomiPlugin\bin\Debug\* plugins\Bouyomi\
+copy "..\..\..\BouyomiPlugin\bin\Debug\*" "plugins\Bouyomi\"
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

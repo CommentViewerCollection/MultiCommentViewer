@@ -4,4 +4,4 @@
 IOptionのファイルへの読み込み、書き出し
 SQLiteUserStoreを実装する
 DataGridのDataVirtualization
-
+過去コメントの取得

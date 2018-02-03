@@ -9,11 +9,11 @@ namespace MultiCommentViewer.Test
 {
     public class SitePluginLoaderTest : ISitePluginLoader
     {
-        public IEnumerable<ISiteContext> LoadSitePlugins(IOptions options)
+        public IEnumerable<ISiteContext> LoadSitePlugins(IOptions options, ILogger logger)
         {
             return new List<ISiteContext>
             {
-                new TestSiteContext(options),
+                new TestSiteContext(options, logger),
                 //new YouTubeLiveSitePlugin.Old.YouTubeLiveSiteContext(options),
                 //new NicoSitePlugin.Test.NicoSiteContext(options),
             };

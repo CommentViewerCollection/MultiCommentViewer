@@ -18,9 +18,10 @@ namespace MultiCommentViewer
 #if DEBUG            
             builder.RegisterType<OptionsLoaderTest>().As<IOptionsLoader>();
             builder.RegisterType<SitePluginLoaderTest>().As<ISitePluginLoader>();
-            builder.RegisterType<SitePluginManager>().As<ISitePluginManager>();
+            //builder.RegisterType<SitePluginManager>().As<ISitePluginManager>();
             builder.RegisterType<BrowserLoader>().As<IBrowserLoader>();
             builder.RegisterType<UserStoreTest>().As<IUserStore>();
+            builder.RegisterType<LoggerTest>().As<ILogger>();
             //builder.RegisterType<PluginManager>().As<IPluginManager>();
             //builder.RegisterType<>().As<>();
 

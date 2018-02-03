@@ -15,10 +15,7 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using System.Net;
 using System.Windows.Media;
-
-//TODO:過去コメントの取得
-
-
+using System.Reflection;
 namespace MultiCommentViewer
 {
     public class MainViewModel: ViewModelBase
@@ -53,27 +50,43 @@ namespace MultiCommentViewer
         #region Methods
         private void ClearAllComments()
         {
-            Comments.Clear();
-            //個別ユーザのコメントはどうしようか
+            try
+            {
+                Comments.Clear();
+                //個別ユーザのコメントはどうしようか
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         private void ShowOptionsWindow()
         {
-            var list = new List<IOptionsTabPage>();
-            var mainOptionsPanel = new MainOptionsPanel();
-            mainOptionsPanel.SetViewModel(new MainOptionsViewModel(_options));
-            list.Add(new MainTabPage("一般", mainOptionsPanel));
-            foreach(var site in _siteContexts)
+            try
             {
-                try
+                var list = new List<IOptionsTabPage>();
+                var mainOptionsPanel = new MainOptionsPanel();
+                mainOptionsPanel.SetViewModel(new MainOptionsViewModel(_options));
+                list.Add(new MainTabPage("一般", mainOptionsPanel));
+                foreach (var site in _siteContexts)
                 {
-                    list.Add(site.TabPanel);
+                    try
+                    {
+                        list.Add(site.TabPanel);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                        Debug.WriteLine(ex.Message);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
+                MessengerInstance.Send(new ShowOptionsViewMessage(list));
             }
-            MessengerInstance.Send(new ShowOptionsViewMessage(list));
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         private void ContentRendered()
         {
@@ -84,7 +97,7 @@ namespace MultiCommentViewer
                 //ISitePluginManager _siteManager = DiContainer.Instance.GetNewInstance<ISitePluginManager>();
                 //_siteManager.LoadSitePlugins(_options);
                 ISitePluginLoader sitePluginLoader = DiContainer.Instance.GetNewInstance<ISitePluginLoader>();
-                _siteContexts = sitePluginLoader.LoadSitePlugins(_options);
+                _siteContexts = sitePluginLoader.LoadSitePlugins(_options, _logger);
                 foreach (var site in _siteContexts)
                 {
                     site.LoadOptions(_options.SettingsDirPath);
@@ -108,6 +121,7 @@ namespace MultiCommentViewer
             }
             catch (Exception ex)
             {
+                _logger.LogException(ex);
                 Debug.WriteLine(ex.Message);
             }
         }
@@ -122,6 +136,7 @@ namespace MultiCommentViewer
             }
             catch (Exception ex)
             {
+                _logger.LogException(ex);
                 Debug.WriteLine(ex.Message);
             }
         }
@@ -153,6 +168,7 @@ namespace MultiCommentViewer
             }
             catch (Exception ex)
             {
+                _logger.LogException(ex);
                 Debug.WriteLine(ex.Message);
                 Debugger.Break();
             }
@@ -373,7 +389,7 @@ namespace MultiCommentViewer
             _userStore = DiContainer.Instance.GetNewInstance<IUserStore>();
             _pluginManager = new PluginManager(_options);
             _pluginManager.PluginAdded += PluginManager_PluginAdded;
-
+            _logger = DiContainer.Instance.GetNewInstance<ILogger>();
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand(Closing);
             ShowOptionsWindowCommand = new RelayCommand(ShowOptionsWindow);
@@ -387,6 +403,7 @@ namespace MultiCommentViewer
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
         }
         private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
+        private readonly ILogger _logger;
         private void PluginManager_PluginAdded(object sender, IPlugin e)
         {
             var vm = new PluginMenuItemViewModel(e);
@@ -573,17 +590,6 @@ namespace MultiCommentViewer
             {
                 Debug.WriteLine(ex.Message);
             }
-        }
-    }
-    public interface ILogger
-    {
-        void ExceptionLogging(Exception ex, string message, string detail);
-    }
-    public class LoggerTest:ILogger
-    {
-        public void ExceptionLogging(Exception ex, string message, string detail)
-        {
-
         }
     }
 }

@@ -99,11 +99,13 @@
     <Compile Include="Converter.cs" />
     <Compile Include="DiContainer.cs" />
     <Compile Include="GridColumnWidthReseterBehaviour.cs" />
+    <Compile Include="ILogger.cs" />
     <Compile Include="IOptionsLoader.cs" />
     <Compile Include="IpcPluginManager.cs" />
     <Compile Include="IPluginManager.cs" />
     <Compile Include="ISitePluginLoader.cs" />
     <Compile Include="ISitePluginManager.cs" />
+    <Compile Include="Test\LoggerTest.cs" />
     <Compile Include="MetadataViewModel.cs" />
     <Compile Include="SiteViewModel.cs" />
     <Compile Include="Test\CommentViewModelTest.cs" />
@@ -178,7 +180,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="ClassDiagram1.cd" />
     <None Include="memo.md" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

@@ -46,9 +46,11 @@ namespace MultiCommentViewer.Test
         {
         }
         private readonly IOptions _options;
-        public TestSiteContext(IOptions options)
+        private readonly ILogger _logger;
+        public TestSiteContext(IOptions options, ILogger logger)
         {
             _options = options;
+            _logger = logger;
         }
     }
     public class TestSiteOptionsViewModel:ViewModelBase

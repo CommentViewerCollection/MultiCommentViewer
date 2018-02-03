@@ -1,3 +1,7 @@
 ﻿## 未実装
 各CommentProviderのConnectAsyncでInputの形式が正しいか評価し、不正であればInfoMessageで伝える
+アップデートチェック
+IOptionのファイルへの読み込み、書き出し
+SQLiteUserStoreを実装する
+DataGridのDataVirtualization
 

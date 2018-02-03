@@ -34,21 +34,28 @@ namespace MultiCommentViewer
         public ICommand ShowUserInfoCommand { get; }
         public ICommand RemoveSelectedConnectionCommand { get; }
         public ICommand AddNewConnectionCommand { get; }
+        public ICommand ClearAllCommentsCommand { get; }
         #endregion //Commands
 
         #region Fields
+        private readonly IPluginManager _pluginManager;
         IOptions _options;
         IEnumerable<ISiteContext> _siteContexts;
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
-
-        IEnumerable<IPlugin> _plugins;
-        ISitePluginManager _siteManager;
         private readonly Dispatcher _dispatcher;
+        private readonly IUserStore _userStore;
+        Dictionary<string, UserViewModel> _userDict = new Dictionary<string, UserViewModel>();
+        Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
         #endregion //Fields
 
 
         #region Methods
+        private void ClearAllComments()
+        {
+            Comments.Clear();
+            //個別ユーザのコメントはどうしようか
+        }
         private void ShowOptionsWindow()
         {
             var list = new List<IOptionsTabPage>();
@@ -118,10 +125,6 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
             }
         }
-        #endregion //Methods
-
-
-        
         private void RemoveSelectedConnection()
         {
             var toRemove = Connections.Where(conn => conn.IsSelected).ToList();
@@ -134,7 +137,7 @@ namespace MultiCommentViewer
             }
             //TODO:この接続に関連するコメントも全て消したい
         }
-        
+
         private void AddNewConnection()
         {
             try
@@ -154,9 +157,55 @@ namespace MultiCommentViewer
                 Debugger.Break();
             }
         }
+        #endregion //Methods
+
+        #region EventHandler
+        private async void Connection_CommentsReceived(object sender, List<ICommentViewModel> e)
+        {
+            //TODO:Comments.AddRange()が欲しい
+            await _dispatcher.BeginInvoke((Action)(() =>
+            {
+                foreach (var comment in e)
+                {
+                    if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
+                    {
+                        var user = _userStore.Get(comment.UserId);
+                        uvm = new UserViewModel(user, _options);
+                        _userDict.Add(comment.UserId, uvm);
+                    }
+                    comment.User = uvm.User;
+                    Comments.Add(comment);
+                    uvm.Comments.Add(comment);
+                }
+            }), DispatcherPriority.Normal);
+            try
+            {
+                _pluginManager.SetComments(e);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
+        private void Connection_MetadataReceived(object sender, IMetadata e)
+        {
+            if (sender is ConnectionViewModel connection)
+            {
+                var metaVm = _metaDict[connection];
+                if (e.Title != null)
+                    metaVm.Title = e.Title;
+                if (e.Active != null)
+                    metaVm.Active = e.Active;
+            }
+        }
+        #endregion //EventHandler
+
+
 
 
         #region Properties
+        public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
+        public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
         public string Title
@@ -306,57 +355,15 @@ namespace MultiCommentViewer
         }
         #endregion
 
-        Dictionary<string, UserViewModel> _userDict = new Dictionary<string, UserViewModel>();
-        private async void Connection_CommentsReceived(object sender, List<ICommentViewModel> e)
-        {
-            //TODO:Comments.AddRange()が欲しい
-            await _dispatcher.BeginInvoke((Action)(() =>
-            {
-                foreach (var comment in e)
-                {
-                    if(!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
-                    {
-                        var user = _userStore.Get(comment.UserId);
-                        uvm = new UserViewModel(user, _options);
-                        _userDict.Add(comment.UserId, uvm);
-                    }
-                    comment.User = uvm.User;
-                    Comments.Add(comment);
-                    uvm.Comments.Add(comment);                    
-                }
-            }), DispatcherPriority.Normal);
-            try
-            {
-                _pluginManager.SetComments(e);
-            }catch(Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-        }
-        Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
-        public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
-
-        public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        private void Connection_MetadataReceived(object sender, IMetadata e)
-        {
-            if (sender is ConnectionViewModel connection)
-            {
-                var metaVm = _metaDict[connection];
-                if (e.Title != null)
-                    metaVm.Title = e.Title;
-                if (e.Active != null)
-                    metaVm.Active = e.Active;
-            }
-        }
-        private readonly IUserStore _userStore;
         
-        public ICommand ClearAllCommentsCommand { get; }
-        private void ClearAllComments()
-        {
-            Comments.Clear();
-            //個別ユーザのコメントはどうしようか
-        }
-        private readonly IPluginManager _pluginManager;
+
+
+        
+
+
+
+
+
         public MainViewModel()
         {
             _dispatcher = Dispatcher.CurrentDispatcher;

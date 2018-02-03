@@ -232,7 +232,7 @@
   </Target>
   <PropertyGroup>
     <PreBuildEvent>if $(ConfigurationName) == Release (
-  powershell Remove-Item -Path $(TargetDir)* -recurse
+  powershell Remove-Item -Path "$(TargetDir)*" -recurse
 )
 if $(ConfigurationName) == Debug (
   if exist settings\placeholder   powershell Remove-Item -Path settings\placeholder

@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouyomiPlugin", "BouyomiPlugin\BouyomiPlugin.csproj", "{13A909DD-3791-4539-9C04-F72D9E755DCF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoCommentProviderTestClient", "NicoCommentProviderTestClient\NicoCommentProviderTestClient.csproj", "{2343FF96-F8FF-4E51-9B95-C8DF58C83D96}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -84,6 +86,10 @@ Global
 		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2343FF96-F8FF-4E51-9B95-C8DF58C83D96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2343FF96-F8FF-4E51-9B95-C8DF58C83D96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2343FF96-F8FF-4E51-9B95-C8DF58C83D96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2343FF96-F8FF-4E51-9B95-C8DF58C83D96}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

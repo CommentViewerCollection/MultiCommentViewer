@@ -2,10 +2,72 @@
 using System.Xml.Serialization;
 using System;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+
 namespace NicoSitePlugin.Test
 {
     public static class Tools
     {
+        /// <summary>
+        ///  例えば、4~10の数字があるとして、
+        ///  現在は5、2つ先は？となったら、7となる。
+        ///  現在、10、2つ先は5。
+        ///  そういう関数です。
+        /// </summary>
+        /// <param name="from">レンジの初め</param>
+        /// <param name="until">レンジの終わり</param>
+        /// <param name="start">最初の数字</param>
+        /// <param name="next">何個先の数字か。プラスでもマイナスでも可。適切な英単語が分からない。</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 2015/03/24 nextのマイナス値も一応対応。今のところ問題なし。ただしコードは汚い。
+        /// 2015/04/09 綺麗で分かりやすいコードにできたと思う
+        /// </remarks>
+        public static int ResolveLoopNext(int from, int until, int start, int next)
+        {
+            if (from > until)
+                throw new ArgumentException("from <= untilでなければならない");
+
+            var count = until - from + 1;
+            var r = (next >= 0) ? from : until;
+            var s = start - r;
+            var pos = (s + (next)) % count;
+            return pos + r;
+        }
+        /// <summary>
+        /// ResolveLoopNextに近い関数。ループの上限を超えて、下限に戻った回数。
+        /// next &lt; 0は未対応？
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="until"></param>
+        /// <param name="start"></param>
+        /// <param name="next">マイナスも可</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 2015/03/24 nextのマイナス値も一応対応。今のところ問題なし。ただしコードは汚い。
+        /// 2015/04/09 式を整理。
+        /// </remarks>
+        public static int ResolveLoopCount(int from, int until, int start, int next)
+        {
+            if (from > until)
+                throw new ArgumentException("from <= untilでなければならない");
+
+            var count = until - from + 1;
+            var r = (next >= 0) ? from : until;
+            var s = start - r;
+            return (s + (next)) / count;
+        }
+        public static string ErrorToMessage(ErrorCode code)
+        {
+            string msg = "";
+            switch (code)
+            {
+                case ErrorCode.full:
+                    msg = "満員のため席を取れませんでした";
+                    break;
+            }
+            return msg;
+        }
         public static RoomInfo[] GetRooms(RoomInfo current, ProviderType providerType, INicoSiteOptions siteOptions)
         {
             RoomResolverBase roomResolver;

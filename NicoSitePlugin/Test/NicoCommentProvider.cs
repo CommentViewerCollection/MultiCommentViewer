@@ -134,8 +134,19 @@ namespace NicoSitePlugin.Test
                                             var psN = psResponse.PlayerStatus;
                                             //取得済みの部屋との差分を取る。
                                             var kizon = dict.Select(kv => kv.Key).ToList();
-                                            var roomsN = Tools.GetRooms(new RoomInfo(psN.Ms, psN.RoomLabel), psN.ProviderType, _siteOptions);
 
+                                            RoomInfo[] roomsN;
+                                            //if(IsBroadcaster())
+                                            //{
+                                            //  
+                                            //}
+                                            //else
+                                            //{
+                                            ////リスナーの場合は、現在の部屋の情報から取れる
+                                                roomsN = Tools.GetRooms(new RoomInfo(psN.Ms, psN.RoomLabel), psN.ProviderType, _siteOptions);
+                                            //}
+
+                                            //一番最初は取得済みの部屋が何も無いから、全てがnewRoom
                                             var newRooms = GetSubtract(kizon, roomsN);
                                             foreach(var room in roomsN)
                                             {
@@ -166,6 +177,7 @@ namespace NicoSitePlugin.Test
                                                     catch (Exception ex)
                                                     {
                                                         Debug.WriteLine(ex.Message);
+                                                        
                                                     }
                                                 }
                                                 
@@ -236,6 +248,7 @@ namespace NicoSitePlugin.Test
             public int RetryCount { get; set; }
             public Task CommentReceivingTask { get; set; }
         }
+
         private async Task DoAsync(RoomInfo roomInfo, CancellationToken ct)
         {
             var res_from = 100;
@@ -380,6 +393,117 @@ namespace NicoSitePlugin.Test
             _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
         #endregion
+    }
+    class ChannelCommentProvider
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msList"></param>
+        /// <param name="arenaName">RoomLabelを設定するのにアリーナだけは情報が必要</param>
+        /// <returns></returns>
+        public static RoomInfo[] ConvertChannelMsList(IMs[] msList, string arenaName)
+        {
+            var list = new List<RoomInfo>();
+            int i = 0;
+            foreach (var ms in msList)
+            {
+                string roomLabel = i == 0 ? arenaName : $"立ち見{(char)('A' + i - 1)}列";
+                list.Add(new RoomInfo(ms, roomLabel));
+                i++;
+            }
+            return list.ToArray();
+        }
+        async Task<RoomInfo[]> GetInitialRooms()
+        {
+            //1,俺のサーバからPSの取得を試みる。
+            //2,取れたらそこにms_listがあるはずだから、それを元にRoomInfo[]を作成
+            //3,ニコ生サーバから取る。
+            //4,ms_listがあったら配信者と見做して俺のサーバにアップ。RoomInfo[]に変換
+            //5,無かったらリスナー。1で失敗した場合のみmsを元に各部屋の情報を計算して取得
+
+            IPlayerStatus myPs = null;
+            RoomInfo[] myRooms = null;
+            try
+            {
+                var myServerRes = await API.GetPlayerStatusFromUrlAsync(_dataServer, "http://int-main.net/playerstatus/" + _live_id, _cc);
+                if (myServerRes.Success)
+                {
+                    myPs = myServerRes.PlayerStatus;
+                    myRooms = ConvertChannelMsList(myPs.MsList, myPs.DefaultCommunity);
+                }
+            }
+            catch (Exception ex)
+            {
+                //_logger
+            }
+            var res = await API.GetPlayerStatusAsync(_dataServer, _live_id, _cc);
+            if (!res.Success)
+            {
+                //fullとかclosedとか。席取りはコメビュで面倒見るものじゃないと思うから、Infoを出して終了。
+                //TODO:Infoを送信
+                throw new Exception();//TODO:席取れなかったExceptionを作る
+            }
+            var ps = res.PlayerStatus;
+            if (ps.MsList != null)
+            {
+                //配信者と見做す
+                _isBroadcaster = true;
+                if (_siteOptions.CanUploadPlayerStatus)
+                {
+                    //俺のサーバにアップする。
+                    await _uploadServer.PostAsync("http://int-main.net/playerstatus/", _live_id + ".xml", ps.Raw);
+                }
+                var rooms = ConvertChannelMsList(ps.MsList, ps.DefaultCommunity);
+                return rooms;
+            }
+
+            //ここに来るのはリスナーだけ
+            if (myRooms != null)
+            {
+                return myRooms;
+            }
+            var list = new List<RoomInfo>();
+            //TODO:計算して他の部屋も取得する。
+            list.Add(new RoomInfo(ps.Ms, ps.RoomLabel));
+            return list.ToArray();
+        }
+        public async Task ReceiveComments()
+        {
+
+        }
+        private readonly string _live_id;
+        private readonly IDataSource _dataServer;
+        private readonly IUploadServer _uploadServer;
+        private readonly CookieContainer _cc;
+        private bool _isBroadcaster;
+        private readonly NicoSiteOptions _siteOptions;
+        public ChannelCommentProvider(IDataSource dataServer, IUploadServer uploadServer, string live_id, CookieContainer cc, NicoSiteOptions siteOptions)
+        {
+            _live_id = live_id;
+            _dataServer = dataServer;
+            _uploadServer = uploadServer;
+            _cc = cc;
+            _siteOptions = siteOptions;
+        }
+    }
+
+    public interface IUploadServer
+    {
+        Task PostAsync(string url, string filename, string data);
+    }
+    public class UploadServer : IUploadServer
+    {
+        public Task PostAsync(string url, string filename, string data)
+        {
+            HttpContent streamContent = new StringContent(data);
+            using (var client = new HttpClient())
+            using (var formData = new MultipartFormDataContent())
+            {
+                formData.Add(streamContent, "ps", filename);
+                return client.PostAsync(url, formData);
+            }
+        }
     }
     /// <summary>
     /// 

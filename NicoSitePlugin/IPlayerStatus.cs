@@ -9,6 +9,7 @@ namespace NicoSitePlugin.Test
         string Raw { get; }
         string Title { get; }
         string Description { get; }
+        string DefaultCommunity { get; }
         /// <summary>
         /// 配信者のUserID
         /// </summary>

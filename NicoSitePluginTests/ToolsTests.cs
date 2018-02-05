@@ -5,11 +5,24 @@ using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using NicoSitePlugin.Test;
+using Moq;
+
 namespace NicoSitePluginTests
 {
     [TestFixture]
     class ToolsTests
     {
+        [Test]
+        public void ConvertChannelMsList()
+        {   
+            var msMock = new Mock<IMs>().Object;
+            var list = new List<IMs>() { msMock, msMock, msMock };
+            var arenaName = "ch123";
+             var arr = ChannelCommentProvider.ConvertChannelMsList(list.ToArray(), arenaName).Select(info=>info.RoomLabel).ToArray();
+            Assert.AreEqual(arenaName, arr[0]);
+            Assert.AreEqual("立ち見A列", arr[1]);
+            Assert.AreEqual("立ち見B列", arr[2]);
+        }
         [Test]
         public void ConvertErrorCodeTest()
         {

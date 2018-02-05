@@ -12,5 +12,11 @@
             Thread = thread;
             Port = port;
         }
+        public MsTest(string addr, int port, string thread)
+        {
+            Addr = addr;
+            Thread = thread;
+            Port = port;
+        }
     }
 }

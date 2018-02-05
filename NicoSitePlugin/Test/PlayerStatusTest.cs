@@ -35,5 +35,7 @@
         public IMs Ms { get; set; }
 
         public IMs[] MsList { get; set; }
+
+        public string DefaultCommunity { get; set; }
     }
 }

@@ -10,14 +10,9 @@ namespace NicoSitePlugin.Test
 {
     public static class API
     {
-        public static async Task<IPlayerStatusResponse> GetPlayerStatusAsync(IDataSource dataSource, string live_id, CookieContainer cc)
+        public static async Task<IPlayerStatusResponse> GetPlayerStatusFromUrlAsync(IDataSource dataSource, string url, CookieContainer cc)
         {
-#if DEBUG
-            Debug.Assert(Regex.IsMatch(live_id, "lv\\d+"));
-#endif
-
-            PlayerStatusResponseTest ret = null;
-            var url = "http://live.nicovideo.jp/api/getplayerstatus?v=" + live_id;
+            PlayerStatusResponseTest ret = null;            
             string xml = null;
             xml = await dataSource.Get(url, cc);//500とかはcatchしない方が良いだろう
             try
@@ -29,13 +24,14 @@ namespace NicoSitePlugin.Test
                 {
                     ps = (Low.Getplayerstatus)serializer.Deserialize(ms);
                 }
-                if(ps.Status == "ok")
+                if (ps.Status == "ok")
                 {
                     var msList = ps.Ms_list?.Ms.Select(ms => new MsTest(ms.Addr, ms.Thread, int.Parse(ms.Port))).Cast<IMs>().ToArray();
                     var playerStatus = new PlayerStatusTest
                     {
                         Raw = xml,
                         Title = ps.Stream.Title,
+                        DefaultCommunity=ps.Stream.Default_community,
                         BaseTime = long.Parse(ps.Stream.Base_time),
                         Description = ps.Stream.Description,
                         EndTime = long.Parse(ps.Stream.End_time),
@@ -52,7 +48,7 @@ namespace NicoSitePlugin.Test
                     };
                     ret = new PlayerStatusResponseTest(playerStatus);
                 }
-                else if(ps.Status == "fail")
+                else if (ps.Status == "fail")
                 {
                     var doc = new XmlDocument();
                     doc.LoadXml(xml);
@@ -66,7 +62,7 @@ namespace NicoSitePlugin.Test
                     ret = new PlayerStatusResponseTest(new PlayerStatusError(ErrorCode.unknown));
                 }
             }
-            catch(InvalidOperationException ex)
+            catch (InvalidOperationException ex)
             {
                 Debug.WriteLine(ex.Message);
                 Debug.Assert(xml != null);
@@ -85,12 +81,20 @@ namespace NicoSitePlugin.Test
                     Debug.WriteLine(ex1.Message);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 //UnknownResponseException
                 Debug.WriteLine(ex.Message);
             }
             return ret;
+        }
+        public static Task<IPlayerStatusResponse> GetPlayerStatusAsync(IDataSource dataSource, string live_id, CookieContainer cc)
+        {
+#if DEBUG
+            Debug.Assert(Regex.IsMatch(live_id, "lv\\d+"));
+#endif
+            var url = "http://live.nicovideo.jp/api/getplayerstatus?v=" + live_id;
+            return GetPlayerStatusFromUrlAsync(dataSource, url, cc);
         }
     }
 }

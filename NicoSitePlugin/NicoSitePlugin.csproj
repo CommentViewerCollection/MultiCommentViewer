@@ -49,8 +49,11 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Test2\CommentProvider.cs" />
+    <Compile Include="Test\Class1.cs" />
     <Compile Include="Test\ErrorCode.cs" />
     <Compile Include="Test\EmbeddedDataLow.cs" />
+    <Compile Include="Test\LiveServerInfo.cs" />
     <Compile Include="Test\MsTest.cs" />
     <Compile Include="Test\DataSource.cs" />
     <Compile Include="Test\API.cs" />

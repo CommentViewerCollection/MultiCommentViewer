@@ -56,11 +56,11 @@ namespace NicoSitePlugin.Test
         }
         public void Disconnect()
         {
-            if (_client == null)
+            if (_client == null || _stream == null)
             {
                 throw new InvalidOperationException();
             }
-            _stream?.Close();
+            _stream.Close();
             _stream = null;
         }
         private TcpClient _client;

@@ -23,7 +23,6 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace NicoCommentProviderTestClient
 {

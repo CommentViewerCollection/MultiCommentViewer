@@ -38,7 +38,7 @@
         <DataGrid ItemsSource="{Binding RoomCollection}" Grid.Row="1" HorizontalAlignment="Stretch"  Margin="0" VerticalAlignment="Stretch" Width="Auto"/>
         <DataGrid ItemsSource="{Binding Comments}"
                   ScrollViewer.CanContentScroll="True"
-                  Grid.Row="2" HorizontalAlignment="Stretch" Height="Auto" Margin="0" VerticalAlignment="Stretch" Width="Auto" ScrollViewer.ScrollChanged="dataGrid_ScrollChanged"/>
+                  Grid.Row="2" HorizontalAlignment="Stretch" Height="Auto" Margin="0" VerticalAlignment="Stretch" Width="Auto" ScrollViewer.ScrollChanged="DataGrid_ScrollChanged"/>
 
     </Grid>
 </Window>

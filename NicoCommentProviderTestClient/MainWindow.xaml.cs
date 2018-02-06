@@ -38,7 +38,7 @@ namespace NicoCommentProviderTestClient
         }
         private bool bottom = true;
         //private bool neverTouch = true;
-        private void dataGrid_ScrollChanged(object sender, RoutedEventArgs e)
+        private void DataGrid_ScrollChanged(object sender, RoutedEventArgs e)
         {
             //if (_addingCommentToTop)
             //    return;
@@ -242,7 +242,7 @@ namespace NicoCommentProviderTestClient
             {
                 Comments.Add(new CommentViewModel(context));
             }), DispatcherPriority.Normal);
-            if (context.chat.text == "/disconnect" && !isDisconnectOffered)
+            if (context.Chat.text == "/disconnect" && !isDisconnectOffered)
             {
                 isDisconnectOffered = true;
                 await Task.Delay(1 * 60 * 1000);
@@ -259,7 +259,7 @@ namespace NicoCommentProviderTestClient
         {
             ThreadId = context.RoomInfo.Thread;
             RoomName = context.RoomInfo.RoomLabel;
-            Message = context.chat.text;
+            Message = context.Chat.text;
         }
     }
     public class RoomViewModel

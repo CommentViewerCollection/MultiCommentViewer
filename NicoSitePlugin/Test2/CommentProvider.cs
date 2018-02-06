@@ -9,7 +9,7 @@ namespace NicoSitePlugin.Test2
 {
     public class CommentContext
     {
-        public chat chat { get; set; }
+        public chat Chat { get; set; }
         public RoomInfo RoomInfo { get; set; }
     }
     /// <summary>
@@ -105,7 +105,7 @@ namespace NicoSitePlugin.Test2
             foreach (var comment in e)
             {
                 var chat = new chat(comment);
-                var commentContext = new CommentContext { chat = chat, RoomInfo = context.Info };
+                var commentContext = new CommentContext { Chat = chat, RoomInfo = context.Info };
                 CommentReceived?.Invoke(this, commentContext);
             }
         }

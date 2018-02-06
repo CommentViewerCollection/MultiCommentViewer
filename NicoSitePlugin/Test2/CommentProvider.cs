@@ -164,4 +164,63 @@ namespace NicoSitePlugin.Test2
             _res_from = res_from;
         }
     }
+    public interface IRoomInfoProvider
+    {
+        event EventHandler<RoomInfo[]> RoomAdded;
+        Task ReceiveAsync();
+        void Disconnect();
+    }
+    class ChannelRoomInfoProvider : IRoomInfoProvider
+    {
+        public event EventHandler<RoomInfo[]> RoomAdded;
+        public async Task ReceiveAsync()
+        {
+
+        }
+        public void Disconnect()
+        {
+
+        }
+        private readonly NicoSiteOptions _siteOptions;
+        public ChannelRoomInfoProvider(NicoSiteOptions siteOptions)
+        {
+            _siteOptions = siteOptions;
+        }
+    }
+    class CommunityRoomInfoProvider : IRoomInfoProvider
+    {
+        public event EventHandler<RoomInfo[]> RoomAdded;
+        public async Task ReceiveAsync()
+        {
+
+        }
+        public void Disconnect()
+        {
+
+        }
+        private readonly NicoSiteOptions _siteOptions;
+        public CommunityRoomInfoProvider(NicoSiteOptions siteOptions)
+        {
+            _siteOptions = siteOptions;
+        }
+    }
+    class OfficialRoomInfoProvider : IRoomInfoProvider
+    {
+        public event EventHandler<RoomInfo[]> RoomAdded;
+        public async Task ReceiveAsync()
+        {
+            //追加されることは無いから、最初取得したあとはDisconnect()されるまで待機ループ
+
+        }
+        public void Disconnect()
+        {
+
+        }
+        private readonly NicoSiteOptions _siteOptions;
+        public OfficialRoomInfoProvider(NicoSiteOptions siteOptions)
+        {
+            _siteOptions = siteOptions;
+        }
+    }
+
 }

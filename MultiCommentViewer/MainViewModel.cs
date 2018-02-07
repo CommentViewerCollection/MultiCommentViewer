@@ -168,7 +168,7 @@ namespace MultiCommentViewer
             {
                 var connectionName = new ConnectionName();//TODO:一意の名前を設定
                 var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger);
-                connection.CommentsReceived += Connection_CommentsReceived;
+                connection.CommentReceived += Connection_CommentReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 var metaVm = new MetadataViewModel(connectionName);
                 _metaDict.Add(connection, metaVm);
@@ -185,25 +185,23 @@ namespace MultiCommentViewer
         #endregion //Methods
 
         #region EventHandler
-        private async void Connection_CommentsReceived(object sender, List<ICommentViewModel> e)
+        private async void Connection_CommentReceived(object sender, ICommentViewModel e)
         {
             try
             {
                 //TODO:Comments.AddRange()が欲しい
                 await _dispatcher.BeginInvoke((Action)(() =>
                 {
-                    foreach (var comment in e)
+                    var comment = e;
+                    if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
                     {
-                        if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
-                        {
-                            var user = _userStore.Get(comment.UserId);
-                            uvm = new UserViewModel(user, _options);
-                            _userDict.Add(comment.UserId, uvm);
-                        }
-                        comment.User = uvm.User;
-                        Comments.Add(comment);
-                        uvm.Comments.Add(comment);
+                        var user = _userStore.Get(comment.UserId);
+                        uvm = new UserViewModel(user, _options);
+                        _userDict.Add(comment.UserId, uvm);
                     }
+                    comment.User = uvm.User;
+                    Comments.Add(comment);
+                    uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
             }catch(Exception ex)
             {

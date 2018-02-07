@@ -60,7 +60,7 @@ namespace YouTubeLiveSitePlugin.Old
             }
         }
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<List<ICommentViewModel>> CommentsReceived;
+        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;
@@ -237,8 +237,7 @@ namespace YouTubeLiveSitePlugin.Old
             };
             try
             {
-                var comments = Actions2CommentData(ChatData.ConvertAction(liveChatContext.YtInitialData.contents.liveChatRenderer.actions)).Cast<ICommentData>().ToList();
-                var cvmList = new List<ICommentViewModel>();
+                var comments = Actions2CommentData(ChatData.ConvertAction(liveChatContext.YtInitialData.contents.liveChatRenderer.actions)).Cast<ICommentData>().ToList();                
                 foreach(var comment in comments)
                 {
                     var cvm = new YouTubeCommentViewModel(ConnectionName, _options, SiteOptions)
@@ -247,9 +246,8 @@ namespace YouTubeLiveSitePlugin.Old
                          NameItems = comment.NameItems,
                          Id = comment.Id,
                     };
-                    cvmList.Add(cvm);
+                    CommentReceived?.Invoke(this, cvm);
                 }
-                CommentsReceived?.Invoke(this, cvmList);
             }
             catch (ParseException ex)
             {
@@ -467,7 +465,7 @@ namespace YouTubeLiveSitePlugin.Old
                                      NameItems = commentData.NameItems,
                                      MessageItems = commentData.MessageItems,
                                 };
-                                CommentsReceived?.Invoke(this, new List<ICommentViewModel> { cvm });
+                                CommentReceived?.Invoke(this, cvm);
                                 await Task.Delay(interval, ct).ConfigureAwait(false);
                             }
                         }

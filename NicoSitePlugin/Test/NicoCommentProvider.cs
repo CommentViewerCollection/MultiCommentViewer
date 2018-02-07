@@ -41,7 +41,7 @@ namespace NicoSitePlugin.Test
             }
         }
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<List<ICommentViewModel>> CommentsReceived;
+        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;
@@ -91,7 +91,7 @@ namespace NicoSitePlugin.Test
                             break;
                     }
                     var info = new InfoCommentViewModel(_connectionName, _options, errorMsg);
-                    CommentsReceived?.Invoke(this, new List<ICommentViewModel> { info });
+                    CommentReceived?.Invoke(this, info);
                     return;
                 }
                 else
@@ -256,14 +256,13 @@ namespace NicoSitePlugin.Test
             var socket = new StreamSocket(roomInfo.Addr, roomInfo.Port, 8192*16, new SplitBuffer2("\0"));
             socket.Received += (s, e) =>
             {
-                var cvmList = new List<ICommentViewModel>();
                 foreach (var str in e)
                 {
                     if (str.StartsWith("<chat "))
                     {
                         var chat = new chat(str);
                         var cvm = new NicoCommentViewModel2(_connectionName, chat, _options, _siteOptions);
-                        cvmList.Add(cvm);
+                        CommentReceived?.Invoke(this, cvm);                        
                     }
                     else if (str.StartsWith("<thread "))
                     {
@@ -275,7 +274,6 @@ namespace NicoSitePlugin.Test
                         }
                     }
                 }
-                CommentsReceived?.Invoke(this, cvmList);
             };
             _dict.Add(roomInfo, socket);
             await socket.ConnectAsync();

@@ -33,7 +33,7 @@ namespace YouTubeLiveSitePlugin.Test
             }
         }
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<List<ICommentViewModel>> CommentsReceived;
+        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;

@@ -13,7 +13,7 @@ namespace MultiCommentViewer
     {
         event EventHandler<IPlugin> PluginAdded;
         void LoadPlugins(IPluginHost host);
-        void SetComments(List<ICommentViewModel> comments);
+        void SetComments(ICommentViewModel comments);
         void OnLoaded();
         //event EventHandler<string> PostingCommentReceived;
     }
@@ -42,20 +42,17 @@ namespace MultiCommentViewer
                 PluginAdded?.Invoke(this, plugin);
             }
         }
-        public void SetComments(List<ICommentViewModel> comments)
+        public void SetComments(ICommentViewModel comment)
         {
-            foreach (var comment in comments)
-            {   
-                var pluginCommentData = new CommentData
-                {
-                    Comment = GetString(comment.MessageItems),
-                    IsNgUser = false,
-                    Nickname = GetString(comment.NameItems),
-                };
-                foreach (var plugin in _plugins)
-                {
-                    plugin.OnCommentReceived(pluginCommentData);
-                }
+            var pluginCommentData = new CommentData
+            {
+                Comment = GetString(comment.MessageItems),
+                IsNgUser = false,
+                Nickname = GetString(comment.NameItems),
+            };
+            foreach (var plugin in _plugins)
+            {
+                plugin.OnCommentReceived(pluginCommentData);
             }
         }
         private string GetString(IEnumerable<IMessagePart> items, string separator="")

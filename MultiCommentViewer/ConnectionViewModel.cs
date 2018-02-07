@@ -39,14 +39,14 @@ namespace MultiCommentViewer
                     Debug.Assert(before.CanConnect, "接続中に変更はできない");
                     before.CanConnectChanged -= CommentProvider_CanConnectChanged;
                     before.CanDisconnectChanged -= CommentProvider_CanDisconnectChanged;
-                    before.CommentsReceived -= CommentProvider_CommentsReceived;
+                    before.CommentReceived -= CommentProvider_CommentReceived;
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
                 }
                 _selectedSite = value;
                 var next = _commentProvider = _selectedSite.Site.CreateCommentProvider(_connectionName);
                 next.CanConnectChanged += CommentProvider_CanConnectChanged;
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
-                next.CommentsReceived += CommentProvider_CommentsReceived;
+                next.CommentReceived += CommentProvider_CommentReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
 
                 RaisePropertyChanged();
@@ -58,11 +58,11 @@ namespace MultiCommentViewer
             MetadataReceived?.Invoke(this, e);//senderはConnection
         }
 
-        public event EventHandler<List<ICommentViewModel>> CommentsReceived;
+        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataReceived;
-        private void CommentProvider_CommentsReceived(object sender, List<ICommentViewModel> e)
+        private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
         {
-            CommentsReceived?.Invoke(sender, e);
+            CommentReceived?.Invoke(sender, e);
         }
 
         private void CommentProvider_CanDisconnectChanged(object sender, EventArgs e)

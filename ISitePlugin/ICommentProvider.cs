@@ -18,7 +18,7 @@ namespace SitePlugin
         /// </summary>
         /// <remarks>棒読みちゃんに読ませないために必要</remarks>
         event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        event EventHandler<List<ICommentViewModel>> CommentsReceived;
+        event EventHandler<ICommentViewModel> CommentReceived;
 
         //event EventHandler<List<ICommentViewModel>> PastCommentsReceived;
         event EventHandler<IMetadata> MetadataUpdated;
@@ -30,6 +30,8 @@ namespace SitePlugin
         bool CanDisconnect { get; }
         event EventHandler CanConnectChanged;
         event EventHandler CanDisconnectChanged;
+        //TODO:どのアカウントでログインしているのかConnectionViewに表示したい
+        //Task<IMyInfo> GetMyInfo(IBrowserProfile browserProfile);
     }
     public interface IUser:INotifyPropertyChanged
     {

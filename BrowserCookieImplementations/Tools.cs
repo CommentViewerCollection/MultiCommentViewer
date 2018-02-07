@@ -2,7 +2,7 @@
 
 namespace ryu_s.BrowserCookie
 {
-    public static class Tools
+    internal static class Tools
     {
 
         /// <summary>

@@ -136,6 +136,22 @@ namespace TwitchSitePlugin
             }
             return result;
         }
+
+        //public static string GetRandomGuestUsername()
+        //{
+        //    //return "justinfan" + Math.floor(8e4 * Math.random() + 1e3)
+        //    //var random = new Random();
+        //    //random.Next()
+        //    return "justinfan12345";
+
+        //}
+
+        public static string GetRandomGuestUsername()
+        {
+            var random = new Random();
+            var n = random.Next(10000, 99999);
+            return "justinfan" + n;
+        }
     }
     public class Result
     {

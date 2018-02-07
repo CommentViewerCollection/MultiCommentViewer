@@ -36,6 +36,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwitchSitePlugin", "TwitchS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwitchSitePluginTests", "TwitchSitePluginTests\TwitchSitePluginTests.csproj", "{5C5D8468-1FA6-44DB-B196-003164FBB91A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwitchMessageProviderTestClient", "TwitchMessageProviderTestClient\TwitchMessageProviderTestClient.csproj", "{C0AEE3E3-9B2C-4364-9C14-2AC69EB059DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +104,10 @@ Global
 		{5C5D8468-1FA6-44DB-B196-003164FBB91A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C5D8468-1FA6-44DB-B196-003164FBB91A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C5D8468-1FA6-44DB-B196-003164FBB91A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0AEE3E3-9B2C-4364-9C14-2AC69EB059DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0AEE3E3-9B2C-4364-9C14-2AC69EB059DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0AEE3E3-9B2C-4364-9C14-2AC69EB059DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0AEE3E3-9B2C-4364-9C14-2AC69EB059DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

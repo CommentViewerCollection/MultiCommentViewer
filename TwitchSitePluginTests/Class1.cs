@@ -8,6 +8,16 @@ using NUnit.Framework;
 namespace TwitchSitePluginTests
 {
     [TestFixture]
+    public class ToolsTests
+    {
+        [Test]
+        public void GetRandomGuestUsernameTest()
+        {
+            var s = Tools.GetRandomGuestUsername();
+            Assert.IsTrue(System.Text.RegularExpressions.Regex.IsMatch(s, "justinfan\\d+"));
+        }
+    }
+    [TestFixture]
     public class CommandParseTests
     {
         [Test]

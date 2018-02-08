@@ -57,9 +57,6 @@ namespace MultiCommentViewer
                     Debug.WriteLine(ex.Message);
                 }
             });
-
-            _vm = new MainViewModel();
-            DataContext = _vm;
         }
 
         /// <summary>

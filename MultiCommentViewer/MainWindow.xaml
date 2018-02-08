@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:MultiCommentViewer"
         xmlns:w="clr-namespace:MultiCommentViewer"
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+        xmlns:command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
         mc:Ignorable="d"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
@@ -14,11 +15,18 @@
         Left="{Binding MainViewLeft, Mode=TwoWay}" Top="{Binding MainViewTop, Mode=TwoWay}"
         >
     <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Activated">
+            <i:InvokeCommandAction Command="{Binding ActivatedCommand}" />
+        </i:EventTrigger>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedCommand}" />
+        </i:EventTrigger>
         <i:EventTrigger EventName="ContentRendered">
             <i:InvokeCommandAction Command="{Binding MainViewContentRenderedCommand}" />
         </i:EventTrigger>
         <i:EventTrigger EventName="Closing">
-            <i:InvokeCommandAction Command="{Binding MainViewClosingCommand}" />
+            <!--<i:InvokeCommandAction Command="{Binding MainViewClosingCommand}" />-->
+            <command:EventToCommand Command="{Binding MainViewClosingCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.Resources>
@@ -238,7 +246,7 @@
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
                   VirtualizingStackPanel.ScrollUnit="Pixel"
-                  GridLinesVisibility="{Binding GridLinesVisibility}"
+                  GridLinesVisibility="All"
                   HorizontalGridLinesBrush="{Binding HorizontalGridLineBrush}"
                   VerticalGridLinesBrush="{Binding VerticalGridLineBrush}"
                   VerticalScrollBarVisibility="Visible"

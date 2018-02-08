@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using SitePlugin;
+using System.Runtime.Serialization;
+using System.Xml.Serialization;
 namespace MultiCommentViewer.Test
 {
+    [DataContract]
     public class OptionsTest : IOptions
     {
         public string PluginDir
@@ -18,27 +21,125 @@ namespace MultiCommentViewer.Test
                 return System.IO.Path.Combine(currentDir, "Plugins");
             }
         }
-        public FontFamily FontFamily { get; set; }
+        [DataMember]
+        private string _fontFamilyStr;
+        public FontFamily FontFamily
+        {
+            get { return FontFamilyFromString(_fontFamilyStr); }
+            set
+            {
+                var val = FontFamilyToString(value);
+                if (val == _fontFamilyStr)
+                    return;
+                _fontFamilyStr = val;
+                RaisePropertyChanged();
+            }
+        }
+        [DataMember]
+        private string _fontStyleStr;
+        public FontStyle FontStyle
+        {
+            get { return FontStyleFromString(_fontStyleStr); }
+            set
+            {
+                var val = FontStyleToString(value);
+                if (val == _fontStyleStr)
+                    return;
+                _fontStyleStr = val;
+                RaisePropertyChanged();
+            }
+        }
+        [DataMember]
+        private string _fontWeight;
+        public FontWeight FontWeight
+        {
+            get { return FontWeightFromString(_fontWeight); }
+            set
+            {
+                var val = FontWeightToString(value);
+                if (val == _fontWeight)
+                    return;
+                _fontWeight = val;
+                RaisePropertyChanged();
+            }
+        }
+        [DataMember]
+        private int _fontSize;
+        public int FontSize
+        {
+            get { return _fontSize; }
+            set
+            {
+                if (_fontSize == value)
+                    return;
+                _fontSize = value;
+                RaisePropertyChanged();
+            }
+        }
 
-        public FontStyle FontStyle { get; set; }
-
-        public FontWeight FontWeight { get; set; }
-
-        public int FontSize { get; set; }
-
-        public FontFamily FirstCommentFontFamily { get; set; }
-
-        public FontStyle FirstCommentFontStyle { get; set; }
-
-        public FontWeight FirstCommentFontWeight { get; set; }
-
-        public int FirstCommentFontSize { get; set; }
+        [DataMember]
+        private string _firstCommentFontFamilyStr;
+        public FontFamily FirstCommentFontFamily
+        {
+            get { return FontFamilyFromString(_firstCommentFontFamilyStr); }
+            set
+            {
+                var val = FontFamilyToString(value);
+                if (val == _firstCommentFontFamilyStr)
+                    return;
+                _firstCommentFontFamilyStr = val;
+                RaisePropertyChanged();
+            }
+        }
+        [DataMember]
+        private string _firstCommentFontStyleStr;
+        public FontStyle FirstCommentFontStyle
+        {
+            get { return FontStyleFromString(_firstCommentFontStyleStr); }
+            set
+            {
+                var val = FontStyleToString(value);
+                if (val == _firstCommentFontStyleStr)
+                    return;
+                _firstCommentFontStyleStr = val;
+                RaisePropertyChanged();
+            }
+        }
+        [DataMember]
+        private string _firstCommentFontWeight;
+        public FontWeight FirstCommentFontWeight
+        {
+            get { return FontWeightFromString(_firstCommentFontWeight); }
+            set
+            {
+                var val = FontWeightToString(value);
+                if (val == _firstCommentFontWeight)
+                    return;
+                _firstCommentFontWeight = val;
+                RaisePropertyChanged();
+            }
+        }
+        [DataMember]
+        private int _firstCommentFontSize;
+        public int FirstCommentFontSize
+        {
+            get { return _firstCommentFontSize; }
+            set
+            {
+                if (_firstCommentFontSize == value)
+                    return;
+                _firstCommentFontSize = value;
+                RaisePropertyChanged();
+            }
+        }
         /// <summary>
         /// 各種設定ファイルが置かれるフォルダ
         /// </summary>
+        [DataMember]
         public string SettingsDirPath { get; set; } = "settings";
 
         #region Info
+        [DataMember]
         private string _InfoForeColor = "#FF000000";
         /// <summary>
         /// 行グリッド線の色
@@ -48,10 +149,14 @@ namespace MultiCommentViewer.Test
             get { return ColorFromArgb(_InfoForeColor); }
             set
             {
-                _InfoForeColor = ColorToArgb(value);
+                var str = ColorToArgb(value);
+                if (_InfoForeColor == str)
+                    return;
+                _InfoForeColor = str;
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         private string _InfoBackColor = "#FFFFFF00";
         /// <summary>
         /// 行グリッド線の色
@@ -61,7 +166,10 @@ namespace MultiCommentViewer.Test
             get { return ColorFromArgb(_InfoBackColor); }
             set
             {
-                _InfoBackColor = ColorToArgb(value);
+                var str = ColorToArgb(value);
+                if (_InfoBackColor == str)
+                    return;
+                _InfoBackColor = str;
                 RaisePropertyChanged();
             }
         }
@@ -71,35 +179,46 @@ namespace MultiCommentViewer.Test
 
 
         private const double Default_MainViewHeight = 532;
+        [DataMember]
         public double MainViewHeight { get; set; }
 
         private const double Default_MainViewWidth = 773;
+        [DataMember]
         public double MainViewWidth { get; set; }
 
         private const double DEFAULT_MainViewLeft = 0;
+        [DataMember]
         public double MainViewLeft { get; set; }
 
-        private const double DEFAULT_MainViewTop = 0;        
+        private const double DEFAULT_MainViewTop = 0;
+        [DataMember]
         public double MainViewTop { get; set; }
 
         private const double Default_ConnectionNameWidth = 100;
+        [DataMember]
         public double ConnectionNameWidth { get; set; }
 
         private const double Default_ThumbnailWidth = 100;
+        [DataMember]
         public double ThumbnailWidth { get; set; }
 
         private const double Default_CommentIdWidth = 100;
+        [DataMember]
         public double CommentIdWidth { get; set; }
 
         private const double Default_UsernameWidth = 100;
+        [DataMember]
         public double UsernameWidth { get; set; }
 
         private const double Default_MessageWidth = 100;
+        [DataMember]
         public double MessageWidth { get; set; }
 
         private const double Default_InfoWidth = 100;
+        [DataMember]
         public double InfoWidth { get; set; }
-        
+
+        [DataMember]
         bool _IsShowConnectionName;
         public bool IsShowConnectionName
         {
@@ -110,8 +229,11 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         public int ConnectionNameDisplayIndex { get; set; } = 0;
+        [DataMember]
         public int ThumbnailDisplayIndex { get; set; } = 1;
+        [DataMember]
         private bool _IsShowThumbnail;
         public bool IsShowThumbnail
         {
@@ -122,7 +244,9 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         public int CommentIdDisplayIndex { get; set; } = 2;
+        [DataMember]
         private bool _IsShowCommentId;
         public bool IsShowCommentId
         {
@@ -133,6 +257,7 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         private bool _IsShowUsername;
         public bool IsShowUsername
         {
@@ -143,7 +268,9 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         public int UsernameDisplayIndex { get; set; } = 3;
+        [DataMember]
         private bool _IsShowMessage;
         public bool IsShowMessage
         {
@@ -154,7 +281,9 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         public int MessageDisplayIndex { get; set; } = 4;
+        [DataMember]
         private bool _IsShowInfo;
         public bool IsShowInfo
         {
@@ -165,7 +294,9 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         public int InfoDisplayIndex { get; set; } = 5;
+        [DataMember]
         private string _horizontalGridLineColor ="#FF000000";
         /// <summary>
         /// 行グリッド線の色
@@ -179,7 +310,7 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
-
+        [DataMember]
         private string _SelectedRowBackColor;
         public Color SelectedRowBackColor
         {
@@ -190,6 +321,7 @@ namespace MultiCommentViewer.Test
                 RaisePropertyChanged();
             }
         }
+        [DataMember]
         private string _SelectedRowForeColor;
         public Color SelectedRowForeColor
         {
@@ -230,7 +362,7 @@ namespace MultiCommentViewer.Test
         //        _defaultVal = defaultVal;
         //    }
         //}
-
+        [DataMember]
         private string _verticalGridLineColor="#FF000000";
         /// <summary>
         /// 列グリッド線の色
@@ -246,6 +378,7 @@ namespace MultiCommentViewer.Test
         }
 
         #region ForeColor
+        [DataMember]
         private string _foreColorArgb = "#FF000000";
         public string ForeColorArgb
         {
@@ -269,6 +402,7 @@ namespace MultiCommentViewer.Test
         #endregion
 
         #region BackColor
+        [DataMember]
         private string _backColorArgb = "#FFFFFFFF";
         public string BackColorArgb
         {

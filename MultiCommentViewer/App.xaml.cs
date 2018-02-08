@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using SitePlugin;
+using System.IO;
+using System.Reflection;
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -17,16 +19,31 @@ namespace MultiCommentViewer
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            _logger = new Test.LoggerTest();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-            IOptionsLoader optionsLoader = new Test.OptionsLoaderTest();
-            var options = optionsLoader.LoadOptions();
+            var currentDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
+            var optionsPath = Path.Combine(currentDir, "options.txt");
+            Test.IIo io = new Test.IOTest();
+
+            //OptionsはMainViewModelのContentRendered()で読み込みたい。しかし、その前にConnectionNameWidth等が参照されるため現状ではコンストラクタ以前に読み込む必要がある。
+            //実行される順番は
+            //ctor->ConnectionNameWidth->Activated->Loaded->ContentRendered
+            //理想は、とりあえずViewを表示して、そこに"読み込み中です"みたいな表示を出している間に必要なものを読み込むこと。
+            //しかし、それをやるにはViewの位置はデフォルト値になってしまう。それでも良いか。            
+            //これ↓が一番いいかも
+            //ここでOptionsのインスタンスを作成し、MainViewModelに渡す。とりあえずデフォルト値で初期化させ、ContentRenderedで保存されたOptionsを読み込み差し替える。
+            IOptionsSerializer optionsLoader = new Test.OptionsLoaderTest();
+            var optionsStr = io.ReadFile(optionsPath);
+            //var optionsStr = "";
+            var options = optionsLoader.DeserializeOptions(optionsStr);
+            
             ISitePluginLoader sitePluginLoader = new Test.SitePluginLoaderTest();
             IBrowserLoader browserLoader = new BrowserLoader();
             IUserStore userStore = new UserStoreTest();
 
-            _logger = new Test.LoggerTest();
-            var mainViewModel = new MainViewModel(_logger, options, sitePluginLoader,browserLoader, userStore);
+            
+            var mainViewModel = new MainViewModel(optionsPath, io, _logger, optionsLoader,options, sitePluginLoader,browserLoader, userStore);
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModels.ViewModelLocator;
             locator.Main = mainViewModel;

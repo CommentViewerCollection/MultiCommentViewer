@@ -16,11 +16,15 @@ using System.Windows.Threading;
 using System.Net;
 using System.Windows.Media;
 using System.Reflection;
+using System.ComponentModel;
+using MultiCommentViewer.Test;
 namespace MultiCommentViewer
 {
     public class MainViewModel: ViewModelBase
     {
         #region Commands
+        public ICommand ActivatedCommand { get; }
+        public ICommand LoadedCommand { get; }
         public ICommand MainViewContentRenderedCommand { get; }
         public ICommand MainViewClosingCommand { get; }
         public ICommand ShowOptionsWindowCommand { get; }
@@ -37,10 +41,13 @@ namespace MultiCommentViewer
         #region Fields
         private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
         private readonly ILogger _logger;
-        private readonly IPluginManager _pluginManager;
+        private IPluginManager _pluginManager;
         private readonly ISitePluginLoader _sitePluginLoader;
         private readonly IBrowserLoader _browserLoader;
+        private readonly IIo _io;
+        private readonly string _optionsPath;
         IOptions _options;
+        private readonly IOptionsSerializer _optionsLoader;
         IEnumerable<ISiteContext> _siteContexts;
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
@@ -53,6 +60,14 @@ namespace MultiCommentViewer
 
 
         #region Methods
+        private void Activated()
+        {
+
+        }
+        private void Loaded()
+        {
+
+        }
         private void ClearAllComments()
         {
             try
@@ -114,6 +129,8 @@ namespace MultiCommentViewer
                     };
                 }
 
+                _pluginManager = new PluginManager(_options);
+                _pluginManager.PluginAdded += PluginManager_PluginAdded;
                 _pluginManager.LoadPlugins(new PluginHost(this, _options));
 
                 _pluginManager.OnLoaded();
@@ -124,20 +141,28 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
             }
         }
-        private void Closing()
+        bool canClose = false;
+        private async void Closing(CancelEventArgs e)
         {
+            e.Cancel = !canClose;
+            if (canClose)
+                return;
             try
             {
                 foreach (var site in _siteContexts)
                 {
                     site.SaveOptions(_options.SettingsDirPath);
                 }
+                var optionsStr = _optionsLoader.SerializeOptions(_options);
+                await _io.WriteFileAsync(_optionsPath, optionsStr);
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
                 Debug.WriteLine(ex.Message);
             }
+            canClose = true;
+            App.Current.Shutdown();
         }
         private void RemoveSelectedConnection()
         {
@@ -412,21 +437,22 @@ namespace MultiCommentViewer
             }
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        public MainViewModel(ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
+        public MainViewModel(string optionsPath,IIo io,ILogger logger, IOptionsSerializer optionsLoader,IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
         {
+            _optionsPath = optionsPath;
+            _io = io;
             _dispatcher = Dispatcher.CurrentDispatcher;
-            //読み込み
-            //IOptionsLoader optionsLoader = DiContainer.Instance.GetNewInstance<IOptionsLoader>();
-            _options = options;// optionsLoader.LoadOptions();
-            _userStore = userStore;// DiContainer.Instance.GetNewInstance<IUserStore>();
-            _pluginManager = new PluginManager(_options);
-            _pluginManager.PluginAdded += PluginManager_PluginAdded;
-            _logger = logger;//= DiContainer.Instance.GetNewInstance<ILogger>();
+
+            _optionsLoader = optionsLoader;
+            _options = options;
+            _userStore = userStore;
+
+            _logger = logger;
             _sitePluginLoader = sitePluginLoader;
             _browserLoader = browserLoader;
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
-            MainViewClosingCommand = new RelayCommand(Closing);
+            MainViewClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
             ShowOptionsWindowCommand = new RelayCommand(ShowOptionsWindow);
             ExitCommand = new RelayCommand(Exit);
             ShowWebSiteCommand = new RelayCommand(ShowWebSite);
@@ -436,7 +462,8 @@ namespace MultiCommentViewer
             RemoveSelectedConnectionCommand = new RelayCommand(RemoveSelectedConnection);
             ClearAllCommentsCommand = new RelayCommand(ClearAllComments);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
-
+            ActivatedCommand = new RelayCommand(Activated);
+            LoadedCommand = new RelayCommand(Loaded);
             _options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -475,8 +502,7 @@ namespace MultiCommentViewer
             {
                 _logger.LogException(ex);
             }
-        }
-        
+        }        
         
         private void ShowUserInfo()
         {

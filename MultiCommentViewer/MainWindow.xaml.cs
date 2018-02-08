@@ -20,7 +20,6 @@ namespace MultiCommentViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        MainViewModel _vm;
         public MainWindow()
         {
             InitializeComponent();

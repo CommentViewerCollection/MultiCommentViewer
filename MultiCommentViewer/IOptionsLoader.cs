@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 using SitePlugin;
 namespace MultiCommentViewer
 {
-    public interface IOptionsLoader
+    public interface IOptionsSerializer
     {
-        IOptions LoadOptions();
+        IOptions DeserializeOptions(string optionsStr);
+        string SerializeOptions(IOptions options);
     }
 }

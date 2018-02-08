@@ -13,6 +13,8 @@ namespace TwitchSitePlugin
     /// <remarks>接続毎にインスタンスを作る</remarks>
     class MessageProvider
     {
+        public event EventHandler Opened;
+        
         public event EventHandler<Result> Received;
         WebSocket _ws;
         TaskCompletionSource<object> _tcs;
@@ -41,10 +43,11 @@ namespace TwitchSitePlugin
 
         private async void _ws_Opened(object sender, EventArgs e)
         {
-            await SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
-            await SendAsync("PASS SCHMOOPIIE");
-            await SendAsync("NICK " + _name);
-            await SendAsync($"USER {_name} 8 * :{_name}");
+            Opened?.Invoke(this, e);
+            //await SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
+            //await SendAsync("PASS SCHMOOPIIE");
+            //await SendAsync("NICK " + _name);
+            //await SendAsync($"USER {_name} 8 * :{_name}");
         }
 
         public async Task SendAsync(string s)
@@ -68,14 +71,12 @@ namespace TwitchSitePlugin
 
         public void Disconnect()
         {
-            _ws.Close();
+            _ws?.Close();
+            _ws = null;
         }
-        private string _name;
-        private string _channelName;
-        public MessageProvider(string name, string channelName)
+        public MessageProvider()
         {
-            _name = name;
-            _channelName = channelName;
+
         }
     }
 }

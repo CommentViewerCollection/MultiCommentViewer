@@ -10,6 +10,7 @@
         RPL_PRIVMSG,
         RPL_USERNOTICE,
         RPL_ROOMSTATE,
+        RPL_GLOBALUSERSTATE,
         RPL_001,
         RPL_002,
         RPL_003,

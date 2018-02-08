@@ -5,11 +5,33 @@ using System.Text;
 using System.Threading.Tasks;
 using TwitchSitePlugin;
 using NUnit.Framework;
+using ryu_s.BrowserCookie;
+using System.Net;
 namespace TwitchSitePluginTests
 {
     [TestFixture]
     public class ToolsTests
     {
+        [Test]
+        public void GetChannelNameTest()
+        {
+            Assert.AreEqual("#ryu123", Tools.GetChannelName("ryu123"));
+            Assert.AreEqual("#ryu123", Tools.GetChannelName("https://www.twitch.tv/ryu123"));
+            Assert.AreEqual("#ryu123", Tools.GetChannelName("https://www.twitch.tv/ryu123?abc"));
+            Assert.Throws<ArgumentException>(() => Tools.GetChannelName("test.net/ryu123"));
+        }
+        [Test]
+        public void ExtractCookiesTest()
+        {
+            var cookie = new Cookie("a", "b") { Domain = "int-main.net", Path = "/" };
+            var cc = new CookieContainer();
+            cc.Add(cookie);
+            var list = Tools.ExtractCookies(cc);
+            Assert.AreEqual("a", list[0].Name);
+            Assert.AreEqual("b", list[0].Value);
+            Assert.AreEqual("int-main.net", list[0].Domain);
+            Assert.AreEqual("/", list[0].Path);
+        }
         [Test]
         public void GetRandomGuestUsernameTest()
         {

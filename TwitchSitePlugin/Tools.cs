@@ -1,13 +1,172 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Net;
+using System.Collections;
+using System.Reflection;
+using SitePlugin;
 namespace TwitchSitePlugin
 {
-    public static class Tools
+    internal static class Tools
     {
+        class EmotContext
+        {
+            public string Id { get; set; }
+            public int StartAt { get; set; }
+            public int EndAt { get; set; }
+            public string Alt { get; set; }
+        }
+        class MessageContext
+        {
+            public string Message { get; set; }
+            public EmotContext Emot { get; set; }
+        }
+        public static List<IMessagePart> GetMessageItems(Result result)
+        {
+            var emotes = result.Tags["emotes"];
+            var message = result.Params[1];
+
+            if (string.IsNullOrEmpty(emotes))
+            {
+                return new List<IMessagePart> { new MessageText(message) };
+            }
+            var emote = emotes.Split('/');
+            var emoteList = new List<EmotContext>();         
+            foreach (var emo in emote)
+            {
+                var r = emo.IndexOf(':');
+                var id = emo.Substring(0, r);
+
+                var sub = emo.Substring(r + 1);
+                var poses = sub.Split(',');
+                foreach (var pos in poses)
+                {
+                    var po_s = pos.Split('-');
+
+                    var startAt = int.Parse(po_s[0]);
+                    var endAt = int.Parse(po_s[1]);
+
+                    var alt = message.Substring(startAt, endAt - startAt + 1);
+
+                    var context = new EmotContext
+                    {
+                        Id = id,
+                        StartAt = startAt,
+                        EndAt = endAt,
+                        Alt = alt
+                    };
+                    emoteList.Add(context);
+                }
+            }
+
+            //emotesに該当しない部分の抜き出し？
+            //EmoteContextのStartAt-EndAtどうしに重複は無いという前提で。
+            var starts = emoteList.Select(e => e.StartAt).ToList();
+            starts.Sort();
+            var ends = emoteList.Select(e => e.EndAt).ToList();
+            ends.Sort();
+
+            var messageContexts = new List<MessageContext>();
+            int n = 0;
+            for (; starts.Count > 0 && ends.Count > 0;)
+            {
+                var lowestStart = starts[0];
+                var s1 = message.Substring(n, lowestStart - n);
+                if (!string.IsNullOrEmpty(s1))
+                {
+                    messageContexts.Add(new MessageContext { Message = s1, Emot = null });
+                }
+                n += s1.Length;
+                var lowestEnd = ends[0];
+                var s2 = message.Substring(n, lowestEnd - n + 1);
+
+                var emot = emoteList.Where(e => e.StartAt == lowestStart).First();
+                if (!string.IsNullOrEmpty(s2))//ここが""は無いだろう。
+                {
+                    messageContexts.Add(new MessageContext { Message = s2, Emot = emot });
+                }
+                n += s2.Length;
+                starts.Remove(lowestStart);
+                ends.Remove(lowestEnd);
+            }
+            var s3 = message.Substring(n);
+            if (!string.IsNullOrEmpty(s3))
+            {
+                messageContexts.Add(new MessageContext { Message = s3 });
+            }
+
+            var actual = new List<IMessagePart>();
+            foreach (var m in messageContexts)
+            {
+                if (m.Emot == null)
+                {
+                    actual.Add(new MessageText(m.Message));
+                }
+                else
+                {
+                    actual.Add(new MessageImage { Url = $"https://static-cdn.jtvnw.net/emoticons/v1/{m.Emot.Id}/1.0", Alt = m.Message });
+                }
+            }
+            return actual;
+        }
+        public static string GetChannelName(string input)
+        {
+            var s = input;
+            //https://www.twitch.tv/stylishnoob4
+            
+            if(Regex.IsMatch(s, "^[^/:?]+$"))
+            {
+                return "#" + s;
+            }
+            var match = Regex.Match(s, "twitch.tv/([^/?]+)");
+            if (match.Success)
+            {
+                return "#" + match.Groups[1].Value;
+            }
+        
+            throw new ArgumentException();
+        }
+        public static List<Cookie> ExtractCookies(CookieContainer container)
+        {
+            var cookies = new List<Cookie>();
+
+            var table = (Hashtable)container.GetType().InvokeMember("m_domainTable",
+                                                                    BindingFlags.NonPublic |
+                                                                    BindingFlags.GetField |
+                                                                    BindingFlags.Instance,
+                                                                    null,
+                                                                    container,
+                                                                    new object[] { });
+
+            foreach (var key in table.Keys)
+            {
+
+                Uri uri = null;
+
+                var domain = key as string;
+
+                if (domain == null)
+                    continue;
+
+                if (domain.StartsWith("."))
+                    domain = domain.Substring(1);
+
+                var address = string.Format("http://{0}/", domain);
+
+                if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out uri) == false)
+                    continue;
+
+                foreach (Cookie cookie in container.GetCookies(uri))
+                {
+                    cookies.Add(cookie);
+                }
+            }
+
+            return cookies;
+        }
         public static Result Parse(string s)
         {
             //https://static.twitchcdn.net/assets/vendor-128c346a9442245620332c7c735c08c2.js を移植

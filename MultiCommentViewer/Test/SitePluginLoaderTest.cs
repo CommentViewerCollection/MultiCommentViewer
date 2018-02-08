@@ -13,6 +13,7 @@ namespace MultiCommentViewer.Test
         {
             return new List<ISiteContext>
             {
+                new TwitchSitePlugin.TwitchSiteContext(options, logger),
                 new TestSiteContext(options, logger),
                 //new YouTubeLiveSitePlugin.Old.YouTubeLiveSiteContext(options),
                 //new NicoSitePlugin.Test.NicoSiteContext(options),

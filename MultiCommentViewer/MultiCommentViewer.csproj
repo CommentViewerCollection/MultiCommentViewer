@@ -214,6 +214,10 @@
       <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
       <Name>NicoSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TwitchSitePlugin\TwitchSitePlugin.csproj">
+      <Project>{45c68e6e-3c4d-4b28-9b89-ff9f4ca467bf}</Project>
+      <Name>TwitchSitePlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj">
       <Project>{d3fd476c-9801-4861-8fa1-c3d57ff30c83}</Project>
       <Name>YouTubeLiveSitePlugin</Name>

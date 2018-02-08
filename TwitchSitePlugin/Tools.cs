@@ -107,7 +107,7 @@ namespace TwitchSitePlugin
                 }
                 else
                 {
-                    actual.Add(new MessageImage { Url = $"https://static-cdn.jtvnw.net/emoticons/v1/{m.Emot.Id}/1.0", Alt = m.Message });
+                    actual.Add(new MessageImage { Url = $"https://static-cdn.jtvnw.net/emoticons/v1/{m.Emot.Id}/1.0", Alt = m.Message, Height=28,Width=28 });
                 }
             }
             return actual;

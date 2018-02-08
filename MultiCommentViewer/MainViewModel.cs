@@ -402,7 +402,14 @@ namespace MultiCommentViewer
 
         public MainViewModel()
         {
+            if (IsInDesignMode)
+            {
 
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         public MainViewModel(ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)

@@ -13,6 +13,21 @@ namespace SitePlugin
     }
     public interface IMessageImage : IMessagePart
     {
+        int? Width { get; }
+        int? Height { get; }
+        string Url { get; }
+
+        string Alt { get; }
+    }
+    /// <summary>
+    /// 指定された画像の一部を描画する用
+    /// </summary>
+    public interface IMessageImagePortion:IMessagePart
+    {
+        int SrcX { get; }
+        int SrcY { get; }
+        int SrcWidth { get; }
+        int SrcHeight { get; }
         /// <summary>
         /// 表示時の幅
         /// </summary>
@@ -22,15 +37,5 @@ namespace SitePlugin
         /// </summary>
         int Height { get; }
         System.Drawing.Image Image { get; }
-    }
-    /// <summary>
-    /// 指定された画像の一部を描画する用
-    /// </summary>
-    public interface IMessageImagePortion : IMessageImage
-    {
-        int SrcX { get; }
-        int SrcY { get; }
-        int SrcWidth { get; }
-        int SrcHeight { get; }
     }
 }

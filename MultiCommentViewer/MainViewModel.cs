@@ -158,12 +158,23 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
-
+        private string GetDefaultName(IEnumerable<string> existingNames)
+        {
+            for (var n = 1; ; n++)
+            {
+                var testName = "#" + n;
+                if (!existingNames.Contains(testName))
+                {
+                    return testName;
+                }
+            }
+        }
         private void AddNewConnection()
         {
             try
             {
-                var connectionName = new ConnectionName();//TODO:一意の名前を設定
+                var name = GetDefaultName(Connections.Select(c => c.ConnectionName));
+                var connectionName = new ConnectionName { Name = name };
                 var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger);
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;

@@ -143,9 +143,6 @@ namespace TwitchSitePlugin
 
             foreach (var key in table.Keys)
             {
-
-                Uri uri = null;
-
                 var domain = key as string;
 
                 if (domain == null)
@@ -156,7 +153,7 @@ namespace TwitchSitePlugin
 
                 var address = string.Format("http://{0}/", domain);
 
-                if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out uri) == false)
+                if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out Uri uri) == false)
                     continue;
 
                 foreach (Cookie cookie in container.GetCookies(uri))

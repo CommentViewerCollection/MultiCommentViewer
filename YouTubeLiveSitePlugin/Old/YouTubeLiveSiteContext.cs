@@ -23,14 +23,14 @@ namespace YouTubeLiveSitePlugin.Old
             return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
         }
 
-        public void LoadOptions(string path)
+        public void LoadOptions(string siteOptionsStr)
         {
             _siteOptions = new YouTubeSiteOptions();
         }
 
-        public void SaveOptions(string path)
+        public string SaveOptions()
         {
-            //throw new NotImplementedException();
+            throw new NotImplementedException();
         }
         private readonly IOptions _options;
         private YouTubeSiteOptions _siteOptions;

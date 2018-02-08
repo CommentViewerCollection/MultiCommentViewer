@@ -37,13 +37,14 @@ namespace MultiCommentViewer.Test
             return new TestSiteCommentProvider(connectionName,_options, _siteOptions);
         }
         private TestSiteOptions _siteOptions;
-        public void LoadOptions(string path)
+        public void LoadOptions(string siteOptionsStr)
         {
             _siteOptions = new TestSiteOptions();
         }
 
-        public void SaveOptions(string path)
+        public string SaveOptions()
         {
+            throw new NotImplementedException();
         }
         private readonly IOptions _options;
         private readonly ILogger _logger;

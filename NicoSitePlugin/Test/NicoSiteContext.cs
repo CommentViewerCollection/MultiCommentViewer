@@ -22,13 +22,14 @@ namespace NicoSitePlugin.Test
             return new NicoCommentProvider(connectionName, _options, _siteOptions);
         }
 
-        public void LoadOptions(string path)
+        public void LoadOptions(string siteOptionsStr)
         {
             _siteOptions = new NicoSiteOptions();
         }
 
-        public void SaveOptions(string path)
+        public string SaveOptions()
         {
+            throw new NotImplementedException();
         }
         private NicoSiteOptions _siteOptions;
         private readonly IOptions _options;

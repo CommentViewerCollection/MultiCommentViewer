@@ -20,7 +20,7 @@ using System.ComponentModel;
 using MultiCommentViewer.Test;
 namespace MultiCommentViewer
 {
-    public class MainViewModel: ViewModelBase
+    public class MainViewModel : ViewModelBase
     {
         #region Commands
         public ICommand ActivatedCommand { get; }
@@ -118,7 +118,7 @@ namespace MultiCommentViewer
                     site.LoadOptions(_options.SettingsDirPath);
                 }
                 _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
-                
+
                 _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
                 //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
                 if (_browserVms.Count() == 0)
@@ -142,17 +142,31 @@ namespace MultiCommentViewer
             }
         }
         bool canClose = false;
+        private string GetSiteOptionsPath(ISiteContext site, IOptions options)
+        {
+            return System.IO.Path.Combine(options.SettingsDirPath, site.DisplayName + ".json");
+        }
         private async void Closing(CancelEventArgs e)
         {
             e.Cancel = !canClose;
             if (canClose)
                 return;
+
+            foreach (var site in _siteContexts)
+            {
+                try
+                {
+                    var siteOptionsStr = site.SaveOptions();
+                    await _io.WriteFileAsync(GetSiteOptionsPath(site, _options), siteOptionsStr);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                    Debug.WriteLine(ex.Message);
+                }
+            }
             try
             {
-                foreach (var site in _siteContexts)
-                {
-                    site.SaveOptions(_options.SettingsDirPath);
-                }
                 var optionsStr = _optionsLoader.SerializeOptions(_options);
                 await _io.WriteFileAsync(_optionsPath, optionsStr);
             }
@@ -178,7 +192,8 @@ namespace MultiCommentViewer
                 }
                 //TODO:この接続に関連するコメントも全て消したい
 
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
             }
@@ -236,7 +251,8 @@ namespace MultiCommentViewer
                     Comments.Add(comment);
                     uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
             }
@@ -262,7 +278,8 @@ namespace MultiCommentViewer
                     if (e.Active != null)
                         metaVm.Active = e.Active;
                 }
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
             }
@@ -437,7 +454,7 @@ namespace MultiCommentViewer
             }
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        public MainViewModel(string optionsPath,IIo io,ILogger logger, IOptionsSerializer optionsLoader,IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
+        public MainViewModel(string optionsPath, IIo io, ILogger logger, IOptionsSerializer optionsLoader, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
         {
             _optionsPath = optionsPath;
             _io = io;
@@ -502,8 +519,8 @@ namespace MultiCommentViewer
             {
                 _logger.LogException(ex);
             }
-        }        
-        
+        }
+
         private void ShowUserInfo()
         {
             var current = SelectedComment;
@@ -662,7 +679,7 @@ namespace MultiCommentViewer
         public ICommand ShowSettingViewCommand { get; }
         public PluginMenuItemViewModel(IPlugin plugin)// PluginContext plugin, string name, ICommand command)
         {
-            Name = plugin.Name;            
+            Name = plugin.Name;
             ShowSettingViewCommand = new RelayCommand(() => Test(plugin));
         }
         private void Test(IPlugin plugin)

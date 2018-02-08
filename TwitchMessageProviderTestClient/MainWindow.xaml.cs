@@ -50,10 +50,20 @@ namespace TwitchMessageProviderTestClient
         private MessageProvider _messageProvider;
         private async void Connect()
         {
-            _messageProvider = new MessageProvider("justinfan12345", ChannelName);
+            _messageProvider = new MessageProvider();// "justinfan12345", ChannelName);
+            _messageProvider.Opened += _messageProvider_Opened;
             _messageProvider.Received += CommentProvider_Received;
             await _messageProvider.ReceiveAsync();
 
+        }
+
+        private async void _messageProvider_Opened(object sender, EventArgs e)
+        {
+            var name = "justinfan12345";
+            await _messageProvider.SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
+            await _messageProvider.SendAsync("PASS SCHMOOPIIE");
+            await _messageProvider.SendAsync($"NICK {name}");
+            await _messageProvider.SendAsync($"USER {name} 8 * :{name}");
         }
 
         private async void CommentProvider_Received(object sender, Result result)

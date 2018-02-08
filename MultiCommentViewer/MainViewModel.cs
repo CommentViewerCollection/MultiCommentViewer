@@ -38,10 +38,13 @@ namespace MultiCommentViewer
         private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
         private readonly ILogger _logger;
         private readonly IPluginManager _pluginManager;
+        private readonly ISitePluginLoader _sitePluginLoader;
+        private readonly IBrowserLoader _browserLoader;
         IOptions _options;
         IEnumerable<ISiteContext> _siteContexts;
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
+
         private readonly Dispatcher _dispatcher;
         private readonly IUserStore _userStore;
         Dictionary<string, UserViewModel> _userDict = new Dictionary<string, UserViewModel>();
@@ -94,20 +97,14 @@ namespace MultiCommentViewer
         {
             try
             {
-
-
-                //ISitePluginManager _siteManager = DiContainer.Instance.GetNewInstance<ISitePluginManager>();
-                //_siteManager.LoadSitePlugins(_options);
-                ISitePluginLoader sitePluginLoader = DiContainer.Instance.GetNewInstance<ISitePluginLoader>();
-                _siteContexts = sitePluginLoader.LoadSitePlugins(_options, _logger);
+                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger);
                 foreach (var site in _siteContexts)
                 {
                     site.LoadOptions(_options.SettingsDirPath);
                 }
                 _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
-
-                IBrowserLoader browserLoader = DiContainer.Instance.GetNewInstance<IBrowserLoader>();
-                _browserVms = browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
+                
+                _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
                 //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
                 if (_browserVms.Count() == 0)
                 {
@@ -394,14 +391,22 @@ namespace MultiCommentViewer
 
         public MainViewModel()
         {
+
+        }
+        [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
+        public MainViewModel(ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
+        {
             _dispatcher = Dispatcher.CurrentDispatcher;
             //読み込み
-            IOptionsLoader optionsLoader = DiContainer.Instance.GetNewInstance<IOptionsLoader>();
-            _options = optionsLoader.LoadOptions();
-            _userStore = DiContainer.Instance.GetNewInstance<IUserStore>();
+            //IOptionsLoader optionsLoader = DiContainer.Instance.GetNewInstance<IOptionsLoader>();
+            _options = options;// optionsLoader.LoadOptions();
+            _userStore = userStore;// DiContainer.Instance.GetNewInstance<IUserStore>();
             _pluginManager = new PluginManager(_options);
             _pluginManager.PluginAdded += PluginManager_PluginAdded;
-            _logger = DiContainer.Instance.GetNewInstance<ILogger>();
+            _logger = logger;//= DiContainer.Instance.GetNewInstance<ILogger>();
+            _sitePluginLoader = sitePluginLoader;
+            _browserLoader = browserLoader;
+
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand(Closing);
             ShowOptionsWindowCommand = new RelayCommand(ShowOptionsWindow);
@@ -413,6 +418,31 @@ namespace MultiCommentViewer
             RemoveSelectedConnectionCommand = new RelayCommand(RemoveSelectedConnection);
             ClearAllCommentsCommand = new RelayCommand(ClearAllComments);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
+
+            _options.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(_options.IsShowThumbnail):
+                        RaisePropertyChanged(nameof(IsShowThumbnail));
+                        break;
+                    case nameof(_options.IsShowUsername):
+                        RaisePropertyChanged(nameof(IsShowUsername));
+                        break;
+                    case nameof(_options.IsShowConnectionName):
+                        RaisePropertyChanged(nameof(IsShowConnectionName));
+                        break;
+                    case nameof(_options.IsShowCommentId):
+                        RaisePropertyChanged(nameof(IsShowCommentId));
+                        break;
+                    case nameof(_options.IsShowMessage):
+                        RaisePropertyChanged(nameof(IsShowMessage));
+                        break;
+                    case nameof(_options.IsShowInfo):
+                        RaisePropertyChanged(nameof(IsShowInfo));
+                        break;
+                }
+            };
         }
 
         private void PluginManager_PluginAdded(object sender, IPlugin e)

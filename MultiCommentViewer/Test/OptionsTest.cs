@@ -99,18 +99,72 @@ namespace MultiCommentViewer.Test
 
         private const double Default_InfoWidth = 100;
         public double InfoWidth { get; set; }
-
-        public bool IsShowConnectionName { get; set; } = true;
+        
+        bool _IsShowConnectionName;
+        public bool IsShowConnectionName
+        {
+            get { return _IsShowConnectionName; }
+            set
+            {
+                _IsShowConnectionName = value;
+                RaisePropertyChanged();
+            }
+        }
         public int ConnectionNameDisplayIndex { get; set; } = 0;
         public int ThumbnailDisplayIndex { get; set; } = 1;
-        public bool IsShowThumbnail { get; set; } = true;
+        private bool _IsShowThumbnail;
+        public bool IsShowThumbnail
+        {
+            get { return _IsShowThumbnail; }
+            set
+            {
+                _IsShowThumbnail = value;
+                RaisePropertyChanged();
+            }
+        }
         public int CommentIdDisplayIndex { get; set; } = 2;
-        public bool IsShowCommentId { get; set; } = true;
-        public bool IsShowUsername { get; set; } = true;
+        private bool _IsShowCommentId;
+        public bool IsShowCommentId
+        {
+            get { return _IsShowCommentId;}
+            set
+            {
+                _IsShowCommentId = value;
+                RaisePropertyChanged();
+            }
+        }
+        private bool _IsShowUsername;
+        public bool IsShowUsername
+        {
+            get { return _IsShowUsername; }
+            set
+            {
+                _IsShowUsername = value;
+                RaisePropertyChanged();
+            }
+        }
         public int UsernameDisplayIndex { get; set; } = 3;
-        public bool IsShowMessage { get; set; } = true;
+        private bool _IsShowMessage;
+        public bool IsShowMessage
+        {
+            get { return _IsShowMessage; }
+            set
+            {
+                _IsShowMessage = value;
+                RaisePropertyChanged();
+            }
+        }
         public int MessageDisplayIndex { get; set; } = 4;
-        public bool IsShowInfo { get; set; } = true;
+        private bool _IsShowInfo;
+        public bool IsShowInfo
+        {
+            get { return _IsShowInfo; }
+            set
+            {
+                _IsShowInfo = value;
+                RaisePropertyChanged();
+            }
+        }
         public int InfoDisplayIndex { get; set; } = 5;
         private string _horizontalGridLineColor ="#FF000000";
         /// <summary>
@@ -265,7 +319,12 @@ namespace MultiCommentViewer.Test
 
             SelectedRowBackColor = SystemColors.HighlightColor;
             SelectedRowForeColor = SystemColors.HighlightTextColor;
-
+            IsShowConnectionName = true;
+            IsShowCommentId = true;
+            IsShowUsername = true;
+            IsShowThumbnail = true;
+            IsShowMessage = true;
+            IsShowInfo = true;
         }
         public void Reset()
         {

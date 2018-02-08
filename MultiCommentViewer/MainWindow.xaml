@@ -7,6 +7,7 @@
         xmlns:w="clr-namespace:MultiCommentViewer"
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         mc:Ignorable="d"
+        DataContext="{Binding Main, Source={StaticResource Locator}}"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
         Title="{Binding Title}" Topmost="{Binding Topmost}"
         Height="{Binding MainViewHeight, Mode=TwoWay}" Width="{Binding MainViewWidth, Mode=TwoWay}"
@@ -260,7 +261,7 @@
                     <Setter Property="FontFamily" Value="{Binding FontFamily}" />
                     <Setter Property="FontStyle" Value="{Binding FontStyle}" />
                     <Setter Property="FontWeight" Value="{Binding FontWeight}" />
-                    <!--<Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>-->
+                    <Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>
                     <Setter Property="Background" Value="{Binding Background}" />
                     <Setter Property="Foreground" Value="{Binding Foreground}" />
                     <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />
@@ -277,10 +278,11 @@
                     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                 </Style>
                 <ContextMenu x:Key="listViewHeaderContext" DataContext="{Binding DataContext, Source={x:Reference dummyElement}}">
-                    <MenuItem Header="サイト名" IsChecked="{Binding IsShowConnectionName, Mode=TwoWay}" IsCheckable="True" />
+                    <MenuItem Header="接続名" IsChecked="{Binding IsShowConnectionName, Mode=TwoWay}" IsCheckable="True" />
                     <MenuItem Header="サムネ" IsChecked="{Binding IsShowThumbnail, Mode=TwoWay}" IsCheckable="True" />
                     <MenuItem Header="コメントID" IsChecked="{Binding IsShowCommentId, Mode=TwoWay}" IsCheckable="True" />
                     <MenuItem Header="ユーザ名" IsChecked="{Binding IsShowUsername, Mode=TwoWay}" IsCheckable="True" />
+                    <MenuItem Header="情報" IsChecked="{Binding IsShowInfo, Mode=TwoWay}" IsCheckable="True" />
                     <!--<MenuItem Header="ユーザID" IsChecked="{Binding IsShowUserId, Mode=TwoWay}" IsCheckable="True" />-->
 
                     <!--<MenuItem Header="投稿時間" IsChecked="{Binding IsShowPostTime, Mode=TwoWay}" IsCheckable="True" />-->
@@ -291,7 +293,7 @@
                 </Style>
             </DataGrid.Resources>
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="接続先名" 
+                <DataGridTemplateColumn Header="接続名" 
                                             DisplayIndex="{Binding DataContext.ConnectionNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=0}"
                                             Width="{Binding DataContext.ConnectionNameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                             Visibility="{Binding DataContext.IsShowConnectionName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">

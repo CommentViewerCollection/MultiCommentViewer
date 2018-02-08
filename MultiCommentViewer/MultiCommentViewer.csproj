@@ -120,6 +120,7 @@
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserViewModel.cs" />
+    <Compile Include="ViewModels\ViewModelLocator.cs" />
     <Page Include="CommentDataGrid.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

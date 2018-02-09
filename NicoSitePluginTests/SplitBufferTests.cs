@@ -18,7 +18,7 @@ namespace NicoSitePluginTests
             _buf = new SplitBuffer2("\0");
         }
         [Test]
-        public void Test()
+        public void NicoLive_SplitBufferTest1()
         {
             var b1 = false;
             var s = "あいう\0えお\0";
@@ -35,7 +35,7 @@ namespace NicoSitePluginTests
             Assert.IsTrue(b1);
         }
         [Test]
-        public void Test2()
+        public void NicoLive_SplitBufferTest2()
         {
             var b1 = false;
             var s = "あ\0う";
@@ -51,7 +51,7 @@ namespace NicoSitePluginTests
             Assert.IsTrue(b1);
         }
         [Test]
-        public void SplitBuffer空文字あり()
+        public void NicoLive_SplitBuffer空文字あり()
         {
             var b1 = false;
             var b2 = false;

@@ -62,7 +62,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="DynamicOptionsTest.cs" />
     <Compile Include="MainViewModelTests.cs" />
+    <Compile Include="OptionsTest.cs" />
     <Compile Include="PluginMenuItemViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SitePluginTests.cs" />

@@ -430,14 +430,27 @@ namespace MultiCommentViewer.Test
         public OptionsTest()
         {
             Init();
+            Reset();
         }
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext ctx)
+        {
+            Init();
+            CheckValidation();
+        }
+        /// <summary>
+        /// constに出来ないDefaultValueを初期化する
+        /// </summary>
         private void Init()
+        {
+
+        }
+        private void CheckValidation()
         {
             if (MainViewWidth <= 0)
                 MainViewWidth = Default_MainViewWidth;
             if (MainViewHeight <= 0)
                 MainViewHeight = Default_MainViewHeight;
-
             if (ConnectionNameWidth <= 0)
                 ConnectionNameWidth = Default_ConnectionNameWidth;
             if (ThumbnailWidth <= 0)
@@ -450,7 +463,9 @@ namespace MultiCommentViewer.Test
                 MessageWidth = Default_MessageWidth;
             if (InfoWidth <= 0)
                 InfoWidth = Default_InfoWidth;
-
+        }
+        public void Reset()
+        {
             SelectedRowBackColor = SystemColors.HighlightColor;
             SelectedRowForeColor = SystemColors.HighlightTextColor;
             IsShowConnectionName = true;
@@ -459,10 +474,6 @@ namespace MultiCommentViewer.Test
             IsShowThumbnail = true;
             IsShowMessage = true;
             IsShowInfo = true;
-        }
-        public void Reset()
-        {
-
         }
         public OptionsTest Clone()
         {

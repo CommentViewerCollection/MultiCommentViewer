@@ -102,6 +102,7 @@
     <Compile Include="IPluginManager.cs" />
     <Compile Include="ISitePluginLoader.cs" />
     <Compile Include="ISitePluginManager.cs" />
+    <Compile Include="Test\DynamicOptionsTest.cs" />
     <Compile Include="Test\LoggerTest.cs" />
     <Compile Include="MetadataViewModel.cs" />
     <Compile Include="SiteViewModel.cs" />

@@ -5,3 +5,6 @@ IOptionのファイルへの読み込み、書き出し
 SQLiteUserStoreを実装する
 DataGridのDataVirtualization
 過去コメントの取得
+Mixer,Discord,Twicas,LINELIVEを実装
+各サイトプラグインのSiteOptions作成
+ネットにアクセスする時にUserAgentを設定する。形式は"MultiCommentViewer_v0.0.1"みたいな感じでいいだろう

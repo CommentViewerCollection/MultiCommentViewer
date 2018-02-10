@@ -33,6 +33,8 @@ namespace Common
         public void Deserialize(string s)
         {
             Reset();
+            if (string.IsNullOrEmpty(s))
+                return;
             var arr = s.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in arr)
             {

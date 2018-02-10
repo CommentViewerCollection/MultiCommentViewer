@@ -6,10 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Diagnostics;
 using SitePlugin;
+using Common;
 namespace MultiCommentViewer.Test
 {
-    class DynamicOptionsTest : IOptions
+    class DynamicOptionsTest : DynamicOptionsBase, IOptions
     {
         public string PluginDir => "plugins";
 
@@ -52,109 +54,33 @@ namespace MultiCommentViewer.Test
         public double InfoWidth { get => GetValue(); set => SetValue(value); }
         public bool IsShowInfo { get => GetValue(); set => SetValue(value); }
         public int InfoDisplayIndex { get => GetValue(); set => SetValue(value); }
+        protected override void Init()
+        {
+            Dict.Add(nameof(FontFamily), new Item { Value = new FontFamily("メイリオ"), DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
+            Dict.Add(nameof(FontStyle), new Item { Value = FontStyles.Normal, DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
+            Dict.Add(nameof(FontWeight), new Item { Value = FontWeights.Normal, DefaultValue = FontWeights.Normal, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
+            Dict.Add(nameof(FontSize), new Item { Value = 14, DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(FirstCommentFontFamily), new Item { Value = new FontFamily("メイリオ"), DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
+            Dict.Add(nameof(FirstCommentFontStyle), new Item { Value = FontStyles.Normal, DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
+            Dict.Add(nameof(FirstCommentFontWeight), new Item { Value = FontWeights.Bold, DefaultValue = FontWeights.Bold, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
+            Dict.Add(nameof(FirstCommentFontSize), new Item { Value = 14, DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(SettingsDirPath), new Item { Value = "settings", DefaultValue = "settings", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
+            Dict.Add(nameof(BackColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ForeColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MainViewHeight), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewLeft), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewTop), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(HorizontalGridLineColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(VerticalGridLineColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(InfoForeColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(InfoBackColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SelectedRowBackColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SelectedRowForeColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ConnectionNameWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionName), new Item { Value = true, DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(ConnectionNameDisplayIndex), new Item { Value = 0, DefaultValue = 0, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
 
-        Dictionary<string, Item> _dict;
-        private void Init()
-        {
-            _dict = new Dictionary<string, Item>
-            {
-                {nameof(FontFamily), new Item{Value=new FontFamily("メイリオ"), DefaultValue=new FontFamily("メイリオ"), Predicate=f=>true, Serializer=f=>FontFamilyToString(f), Deserializer=s=>FontFamilyFromString(s)} },
-                {nameof(FontStyle), new Item{ Value=FontStyles.Normal, DefaultValue=FontStyles.Normal, Predicate=f=>true, Serializer=f=>FontStyleToString(f), Deserializer=s=>FontStyleFromString(s)} },
-                {nameof(FontWeight), new Item{Value=FontWeights.Normal, DefaultValue=FontWeights.Normal, Predicate=f=>true, Serializer=f=>FontWeightToString(f), Deserializer=s=>FontWeightFromString(s)} },
-                {nameof(FontSize), new Item{Value=14, DefaultValue=14, Predicate=f=>f>0, Serializer=f=>f.ToString(), Deserializer=s=>int.Parse(s)} },
-                {nameof(FirstCommentFontFamily), new Item{Value=new FontFamily("メイリオ"), DefaultValue=new FontFamily("メイリオ"), Predicate=f=>true, Serializer=f=>FontFamilyToString(f), Deserializer=s=>FontFamilyFromString(s)} },
-                {nameof(FirstCommentFontStyle), new Item{ Value=FontStyles.Normal, DefaultValue=FontStyles.Normal, Predicate=f=>true, Serializer=f=>FontStyleToString(f), Deserializer=s=>FontStyleFromString(s)} },
-                {nameof(FirstCommentFontWeight), new Item{Value=FontWeights.Bold, DefaultValue=FontWeights.Bold, Predicate=f=>true, Serializer=f=>FontWeightToString(f), Deserializer=s=>FontWeightFromString(s)} },
-                {nameof(FirstCommentFontSize), new Item{Value=14, DefaultValue=14, Predicate=f=>f>0, Serializer=f=>f.ToString(), Deserializer=s=>int.Parse(s)} },
-                {nameof(SettingsDirPath), new Item{ Value="settings", DefaultValue="settings", Predicate=s=>!string.IsNullOrEmpty(s), Serializer=s=>s, Deserializer=s=>s} },
-                {nameof(BackColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                {nameof(ForeColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                { nameof(MainViewHeight), new Item{ Value=0, DefaultValue = 500, Predicate=n=>n >0, Serializer=n=>n.ToString(), Deserializer=s=>double.Parse(s) } },
-                { nameof(MainViewWidth), new Item{ Value=0, DefaultValue = 500, Predicate=n=>n >0, Serializer=n=>n.ToString(), Deserializer=s=>double.Parse(s) } },
-                { nameof(MainViewLeft), new Item{ Value=0, DefaultValue = 500, Predicate=n=>n >0, Serializer=n=>n.ToString(), Deserializer=s=>double.Parse(s) } },
-                { nameof(MainViewTop), new Item{ Value=0, DefaultValue = 500, Predicate=n=>n >0, Serializer=n=>n.ToString(), Deserializer=s=>double.Parse(s) } },
-                {nameof(HorizontalGridLineColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                { nameof(VerticalGridLineColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                { nameof(InfoForeColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                { nameof(InfoBackColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                { nameof(SelectedRowBackColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                { nameof(SelectedRowForeColor), new Item{Value=ColorFromArgb("#FF000000"), DefaultValue=ColorFromArgb("#FF000000"), Predicate = c=> true, Serializer=c => ColorToArgb(c), Deserializer=s=>ColorFromArgb(s) } },
-                { nameof(ConnectionNameWidth), new Item{ Value=0, DefaultValue = 500, Predicate=n=>n >0, Serializer=n=>n.ToString(), Deserializer=s=>double.Parse(s) } },
-                {nameof(IsShowConnectionName), new Item{Value=true, DefaultValue=true, Predicate=b=>b, Serializer=b=>b.ToString(), Deserializer=s=>bool.Parse(s)} },
-                { nameof(ConnectionNameDisplayIndex), new Item{ Value=0, DefaultValue = 0, Predicate=n=>n >0, Serializer=n=>n.ToString(), Deserializer=s=>int.Parse(s) } },
-
-
-            };
-        }
-        public string Serialize()
-        {
-            var sb = new StringBuilder();
-            foreach(var kv in _dict)
-            {
-                var k = kv.Key;
-                var v = kv.Value;
-                sb.Append(k);
-                sb.Append("=");
-                sb.Append(v.Serializer(v.Value));
-                sb.Append(Environment.NewLine);
-            }
-            return sb.ToString();
-        }
-        public void Deserialize(string s)
-        {
-            Reset();
-            var arr = s.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            foreach(var line in arr)
-            {
-                var kv = line.Split('=');
-                if (kv.Length != 2)
-                    continue;
-                var k = kv[0];
-                var v = kv[1];
-                if(_dict.TryGetValue(k, out Item item))
-                {
-                    item.Value = item.Deserializer(v);
-                }
-            }
-        }
-        private dynamic GetValue([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-        {
-            var item = _dict[propertyName];
-            return item.Value;
-        }
-        private void SetValue(dynamic d, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-        {
-            var item = _dict[propertyName];
-            item.Value = d;
-            RaisePropertyChanged(propertyName);
-        }
-        public DynamicOptionsTest()
-        {
-            Init();
-            Reset();
-        }
-        /// <summary>
-        /// すべての値を初期化する
-        /// </summary>
-        public void Reset()
-        {
-            foreach (var kv in _dict)
-            {
-                var v = kv.Value;
-                v.Value = v.DefaultValue;
-            }
-        }
-        private void CheckValidation()
-        {
-            foreach(var kv in _dict)
-            {
-                var k = kv.Key;
-                var v = kv.Value;
-                if (!v.Predicate(v.Value))
-                {
-                    v.Value = v.DefaultValue;
-                }
-            }
         }
         public IOptions Clone()
         {
@@ -163,9 +89,19 @@ namespace MultiCommentViewer.Test
 
         public void Set(IOptions options)
         {
+            var props = typeof(IOptions).GetProperties();
+            foreach(var prop in props)
+            {
+                if(prop.CanRead && prop.CanWrite)
+                {
+                    var item = Dict[prop.Name];
+                    var newVal = prop.GetValue(options);
+                    if(item.Predicate(newVal))
+                        item.Value = newVal;
+                }
+            }
             throw new NotImplementedException();
         }
-
         #region Converters
         private FontFamily FontFamilyFromString(string str)
         {
@@ -217,33 +153,5 @@ namespace MultiCommentViewer.Test
             return argb;
         }
         #endregion
-        #region INotifyPropertyChanged
-        [NonSerialized]
-        private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
-        /// <summary>
-        /// 
-        /// </summary>
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
-        {
-            add { _propertyChanged += value; }
-            remove { _propertyChanged -= value; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="propertyName"></param>
-        protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-        {
-            _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
-        }
-        #endregion
-    }
-    public class Item
-    {
-        public Predicate<dynamic> Predicate { get; set; }
-        public dynamic DefaultValue { get; set; }
-        public dynamic Value { get; set; }
-        public Func<dynamic, string> Serializer { get; set; }
-        public Func<string, dynamic> Deserializer { get; set; }
     }
 }

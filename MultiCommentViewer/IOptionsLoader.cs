@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SitePlugin;
+using MultiCommentViewer.Test;
 namespace MultiCommentViewer
 {
     public interface IOptionsSerializer
     {
-        IOptions DeserializeOptions(string optionsStr);
-        string SerializeOptions(IOptions options);
+        Task<IOptions> LoadAsync(string path, IIo io);
+        Task WriteAsync(string path, IIo io, IOptions options);
     }
 }

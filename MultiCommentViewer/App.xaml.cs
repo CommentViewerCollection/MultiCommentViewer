@@ -34,9 +34,8 @@ namespace MultiCommentViewer
             //これ↓が一番いいかも
             //ここでOptionsのインスタンスを作成し、MainViewModelに渡す。とりあえずデフォルト値で初期化させ、ContentRenderedで保存されたOptionsを読み込み差し替える。
             IOptionsSerializer optionsLoader = new Test.OptionsLoaderTest();
-            var optionsStr = io.ReadFile(optionsPath);
-            //var optionsStr = "";
-            var options = optionsLoader.DeserializeOptions(optionsStr);
+            
+            var options = new Test.DynamicOptionsTest();
             
             ISitePluginLoader sitePluginLoader = new Test.SitePluginLoaderTest();
             IBrowserLoader browserLoader = new BrowserLoader();

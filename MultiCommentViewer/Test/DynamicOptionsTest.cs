@@ -56,35 +56,53 @@ namespace MultiCommentViewer.Test
         public int InfoDisplayIndex { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
-            Dict.Add(nameof(FontFamily), new Item { Value = new FontFamily("メイリオ"), DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
-            Dict.Add(nameof(FontStyle), new Item { Value = FontStyles.Normal, DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
-            Dict.Add(nameof(FontWeight), new Item { Value = FontWeights.Normal, DefaultValue = FontWeights.Normal, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
-            Dict.Add(nameof(FontSize), new Item { Value = 14, DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
-            Dict.Add(nameof(FirstCommentFontFamily), new Item { Value = new FontFamily("メイリオ"), DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
-            Dict.Add(nameof(FirstCommentFontStyle), new Item { Value = FontStyles.Normal, DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
-            Dict.Add(nameof(FirstCommentFontWeight), new Item { Value = FontWeights.Bold, DefaultValue = FontWeights.Bold, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
-            Dict.Add(nameof(FirstCommentFontSize), new Item { Value = 14, DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
-            Dict.Add(nameof(SettingsDirPath), new Item { Value = "settings", DefaultValue = "settings", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
-            Dict.Add(nameof(BackColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(ForeColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(MainViewHeight), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(MainViewWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(MainViewLeft), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(MainViewTop), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(HorizontalGridLineColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(VerticalGridLineColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
+            Dict.Add(nameof(FontStyle), new Item {  DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
+            Dict.Add(nameof(FontWeight), new Item {  DefaultValue = FontWeights.Normal, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
+            Dict.Add(nameof(FontSize), new Item { DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(FirstCommentFontFamily), new Item { DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
+            Dict.Add(nameof(FirstCommentFontStyle), new Item {  DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
+            Dict.Add(nameof(FirstCommentFontWeight), new Item { DefaultValue = FontWeights.Bold, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
+            Dict.Add(nameof(FirstCommentFontSize), new Item { DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(SettingsDirPath), new Item { DefaultValue = "settings", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
+            Dict.Add(nameof(BackColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ForeColor), new Item {  DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MainViewHeight), new Item {  DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewWidth), new Item {DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewLeft), new Item {  DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewTop), new Item {  DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(HorizontalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(VerticalGridLineColor), new Item {  DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(InfoForeColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(InfoBackColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SelectedRowBackColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SelectedRowForeColor), new Item { Value = ColorFromArgb("#FF000000"), DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ConnectionNameWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(IsShowConnectionName), new Item { Value = true, DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(ConnectionNameDisplayIndex), new Item { Value = 0, DefaultValue = 0, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionNameDisplayIndex), new Item { Value = 0, DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+
+            Dict.Add(nameof(ThumbnailWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(CommentIdWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(UsernameWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MessageWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(InfoWidth), new Item { Value = 0, DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+
+            Dict.Add(nameof(ThumbnailDisplayIndex), new Item { Value = 1, DefaultValue = 1, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(CommentIdDisplayIndex), new Item { Value = 2, DefaultValue = 2, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(UsernameDisplayIndex), new Item { Value = 3, DefaultValue = 3, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(MessageDisplayIndex), new Item { Value = 4, DefaultValue = 4, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(InfoDisplayIndex), new Item { Value = 5, DefaultValue = 5, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+
+            Dict.Add(nameof(IsShowThumbnail), new Item { Value = true, DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowCommentId), new Item { Value = true, DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowUsername), new Item { Value = true, DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMessage), new Item { Value = true, DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowInfo), new Item { Value = true, DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
         }
         public IOptions Clone()
         {
-            throw new NotImplementedException();
+            return this.MemberwiseClone() as IOptions;
         }
 
         public void Set(IOptions options)
@@ -100,7 +118,6 @@ namespace MultiCommentViewer.Test
                         item.Value = newVal;
                 }
             }
-            throw new NotImplementedException();
         }
         #region Converters
         private FontFamily FontFamilyFromString(string str)

@@ -27,7 +27,7 @@ namespace MultiCommentViewer.Test
         {
             get { return FontFamilyFromString(_fontFamilyStr); }
             set
-            {
+            { 
                 var val = FontFamilyToString(value);
                 if (val == _fontFamilyStr)
                     return;

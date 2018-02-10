@@ -13,6 +13,7 @@ using Plugin;
 using ryu_s.BrowserCookie;
 using System.Diagnostics;
 using System.Windows.Threading;
+
 using System.Net;
 using System.Windows.Media;
 using System.Reflection;
@@ -108,32 +109,56 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
-        private void ContentRendered()
+        private string GetOptionsPath()
         {
+#if DEBUG
+            return "options.txt";
+#else
+            return System.IO.Path.Combine(_options.SettingsDirPath, "options.txt");
+#endif
+        }
+        private async void ContentRendered()
+        {
+            //なんか気持ち悪い書き方だけど一応動く。
+            //ここでawaitするとそれ以降が実行されないからこうするしかない。
             try
             {
-                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger);
-                foreach (var site in _siteContexts)
+                await _optionsLoader.LoadAsync(GetOptionsPath(), _io).ContinueWith( t =>
                 {
-                    site.LoadOptions(_options.SettingsDirPath);
-                }
-                _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
-
-                _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
-                //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
-                if (_browserVms.Count() == 0)
-                {
-                    _browserVms = new List<BrowserViewModel>
+                    try
                     {
-                        new BrowserViewModel( new EmptyBrowserProfile()),
-                    };
-                }
+                        var o = t.Result;
+                        if (o != null)
+                            _options.Set(o);
+                        _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger);
+                        foreach (var site in _siteContexts)
+                        {
+                            site.LoadOptions(_options.SettingsDirPath);
+                        }
+                        _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
 
-                _pluginManager = new PluginManager(_options);
-                _pluginManager.PluginAdded += PluginManager_PluginAdded;
-                _pluginManager.LoadPlugins(new PluginHost(this, _options));
+                        _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
+                        //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
+                        if (_browserVms.Count() == 0)
+                        {
+                            _browserVms = new List<BrowserViewModel>
+                            {
+                                new BrowserViewModel( new EmptyBrowserProfile()),
+                            };
+                        }
 
-                _pluginManager.OnLoaded();
+                        _pluginManager = new PluginManager(_options);
+                        _pluginManager.PluginAdded += PluginManager_PluginAdded;
+                        _pluginManager.LoadPlugins(new PluginHost(this, _options));
+
+                        _pluginManager.OnLoaded();
+
+                    }
+                    catch (AggregateException ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -167,8 +192,7 @@ namespace MultiCommentViewer
             }
             try
             {
-                var optionsStr = _optionsLoader.SerializeOptions(_options);
-                await _io.WriteFileAsync(_optionsPath, optionsStr);
+                await _optionsLoader.WriteAsync(GetOptionsPath(), _io, _options);
             }
             catch (Exception ex)
             {
@@ -230,9 +254,9 @@ namespace MultiCommentViewer
                 Debugger.Break();
             }
         }
-        #endregion //Methods
+#endregion //Methods
 
-        #region EventHandler
+#region EventHandler
         private async void Connection_CommentReceived(object sender, ICommentViewModel e)
         {
             try
@@ -284,12 +308,12 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
-        #endregion //EventHandler
+#endregion //EventHandler
 
 
 
 
-        #region Properties
+#region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
@@ -440,7 +464,7 @@ namespace MultiCommentViewer
             get { return _options.SelectedRowForeColor; }
             set { _options.SelectedRowForeColor = value; }
         }
-        #endregion
+#endregion
 
         public MainViewModel()
         {
@@ -511,9 +535,12 @@ namespace MultiCommentViewer
         {
             try
             {
-                var vm = new PluginMenuItemViewModel(e);
-                _pluginMenuItemDict.Add(e, vm);
-                PluginMenuItemCollection.Add(vm);
+                _dispatcher.Invoke(() =>
+                {
+                    var vm = new PluginMenuItemViewModel(e);
+                    _pluginMenuItemDict.Add(e, vm);
+                    PluginMenuItemCollection.Add(vm);
+                });
             }
             catch (Exception ex)
             {
@@ -638,7 +665,7 @@ namespace MultiCommentViewer
         {
             _userid = userId;
         }
-        #region INotifyPropertyChanged
+#region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
         /// <summary>
@@ -657,7 +684,7 @@ namespace MultiCommentViewer
         {
             _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
-        #endregion
+#endregion
     }
     public class UserStoreTest : IUserStore
     {

@@ -22,7 +22,7 @@ namespace MultiCommentViewerTests
             var optionsMock = new Mock<IOptions>();
             optionsMock.SetupSet(action).Raises(m => m.PropertyChanged += null, new PropertyChangedEventArgs(propertyName));
             var optionsSerializerMock = new Mock<IOptionsSerializer>();
-            optionsSerializerMock.Setup(m => m.DeserializeOptions(null)).Returns(optionsMock.Object);
+            optionsSerializerMock.Setup(m => m.LoadAsync("", ioMock.Object)).ReturnsAsync(optionsMock.Object);
             var browserLoaderMock = new Mock<IBrowserLoader>();
             var siteLoaderMock = new Mock<ISitePluginLoader>();
             var userStoreMock = new Mock<IUserStore>();

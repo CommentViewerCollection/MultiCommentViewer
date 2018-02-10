@@ -14,12 +14,12 @@ namespace MultiCommentViewer.Test
 {
     public interface IIo
     {
-        string ReadFile(string path);
+        Task<string> ReadFileAsync(string path);
         Task WriteFileAsync(string path, string s);
     }
     public class IOTest : IIo
     {
-        public string ReadFile(string path)
+        public async Task<string> ReadFileAsync(string path)
         {
             var totalWaitTime = 0;
             string s = null;
@@ -30,7 +30,7 @@ namespace MultiCommentViewer.Test
                     using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                     using (var sr = new StreamReader(fs))
                     {
-                        s = sr.ReadToEnd();
+                        s = await sr.ReadToEndAsync();
                     }
                     break;
                 }
@@ -87,7 +87,7 @@ namespace MultiCommentViewer.Test
             {
                 try
                 {
-                    using (var fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+                    using (var fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
                     {
                         fs.Write(bytes, 0, bytes.Length);
                     }
@@ -116,50 +116,21 @@ namespace MultiCommentViewer.Test
     }
     public class OptionsLoaderTest:IOptionsSerializer
     {
-        public IOptions DeserializeOptions(string optionsStr)
+        public async Task<IOptions> LoadAsync(string path, IIo io)
         {
-            OptionsTest options = null;
-            if (!string.IsNullOrEmpty(optionsStr))
-            {
-                try
-                {
-                    var ds = new DataContractSerializer(typeof(OptionsTest));
-                    using (var sr = new StringReader(optionsStr))
-                    {
-                        var stream = XmlTextReader.Create(sr);
-                        options = ds.ReadObject(stream) as OptionsTest;
-                    }
-                }
-                catch (Exception ex)
-                {
-
-                }
-            }
-            if (options == null)
-            {
-                options = new OptionsTest();
-            }
+            var options = new DynamicOptionsTest();
+            var s = await io.ReadFileAsync(path);
+            options.Deserialize(s);
             return options;
         }
-        public string SerializeOptions(IOptions options)
+        public async Task WriteAsync(string path, IIo io, IOptions options)
         {
-            
-            //BOMが付かないUTF-8で、書き込むファイルを開く
-            XmlWriterSettings settings = new XmlWriterSettings
+            var s = "";
+            if(options is DynamicOptionsTest dynamic)
             {
-                Encoding = new System.Text.UTF8Encoding(false),
-                Indent = true
-            };
-            var ms = new MemoryStream();
-            var serializer = new DataContractSerializer(typeof(OptionsTest));
-            using (XmlWriter xw = XmlWriter.Create(ms, settings))
-            {
-                serializer.WriteObject(xw, options);
+                s = dynamic.Serialize();
             }
-            
-            var bytes = ms.GetBuffer();
-            var s=Encoding.UTF8.GetString(bytes, 0, bytes.Length);
-            return s;
+            await io.WriteFileAsync(path, s);
         }
     }
 

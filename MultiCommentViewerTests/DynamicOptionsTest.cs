@@ -23,5 +23,13 @@ namespace MultiCommentViewerTests
             newOpt.Deserialize(s);
             Assert.AreEqual(Colors.Aqua, newOpt.BackColor);
         }
+        [Test]
+        public void MCV_DynamicOoptionsTest_PassInvalidArgumentTest()
+        {
+            var options = new DynamicOptionsTest();
+            options.BackColor = Colors.Aqua;            
+            options.Deserialize("BackColor=invalidarg");
+            Assert.IsTrue(options.BackColor != Colors.Aqua);
+        }
     }
 }

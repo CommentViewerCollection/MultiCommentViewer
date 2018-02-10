@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using System.Diagnostics;
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -27,6 +27,26 @@ namespace MultiCommentViewer
             
         }
 
+
+        public bool IsShowUserInfoMenuItem
+        {
+            get { return (bool)GetValue(IsShowUserInfoMenuItemProperty); }
+            set { SetValue(IsShowUserInfoMenuItemProperty, value); }
+        }
+                
+        public static readonly DependencyProperty IsShowUserInfoMenuItemProperty =
+            DependencyProperty.Register("IsShowUserInfoMenuItem", typeof(bool), typeof(CommentDataGrid), new PropertyMetadata(true, OnCurrentReadingChanged));
+
+        private static void OnCurrentReadingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if(d  is CommentDataGrid dataGrid)
+            {
+                var menu = dataGrid.dataGrid.Resources["commentContext"] as ContextMenu;
+                Debug.Assert(menu != null);
+                var userInfoMenuItem = LogicalTreeHelper.FindLogicalNode(menu, "UserInfoMenuItem") as MenuItem;
+                userInfoMenuItem.Visibility = (bool)e.NewValue ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
         /// <summary>
         /// 
         /// </summary>

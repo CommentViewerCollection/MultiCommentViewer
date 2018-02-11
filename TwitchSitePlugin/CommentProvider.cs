@@ -58,14 +58,7 @@ namespace TwitchSitePlugin
             CanDisconnect = true;
             try
             {
-                try
-                {
-                    _channelName = GetChannelName(input);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogException(ex);
-                }
+                _channelName = GetChannelName(input);
                 var cc = new CookieContainer();
 
                 try

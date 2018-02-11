@@ -64,5 +64,6 @@ namespace SitePlugin
 
         IOptions Clone();
         void Set(IOptions options);
+        void Reset();
     }
 }

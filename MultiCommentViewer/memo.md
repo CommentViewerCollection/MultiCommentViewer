@@ -37,6 +37,9 @@ https://www.youtube.com/user/liryu1973/live
 
 InvalidationContinuationに対応
 
+#### Twitch
+名前の後ろにbadgeを表示する
+
 #### ColorPicker
 
 #### FontPicker

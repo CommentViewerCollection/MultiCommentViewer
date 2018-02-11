@@ -1,5 +1,6 @@
 ﻿using System;
 using SitePlugin;
+using System.Diagnostics;
 using Common;
 namespace NicoSitePlugin.Test
 {
@@ -22,15 +23,29 @@ namespace NicoSitePlugin.Test
         {
             return new NicoCommentProvider(connectionName, _options, _siteOptions);
         }
-
-        public void LoadOptions(string siteOptionsStr, IIo io)
+        private string GetOptionsPath(string dir)
+        {
+            return System.IO.Path.Combine(dir, DisplayName + ".txt");
+        }
+        public void LoadOptions(string path, IIo io)
         {
             _siteOptions = new NicoSiteOptions();
+            try
+            {
+                var s = io.ReadFile(path);
+                
+                _siteOptions.Deserialize(s);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
 
-        public string SaveOptions()
+        public void SaveOptions(string path, IIo io)
         {
-            throw new NotImplementedException();
+            var s = _siteOptions.Serialize();
+            io.WriteFile(path, s);
         }
         private NicoSiteOptions _siteOptions;
         private readonly IOptions _options;

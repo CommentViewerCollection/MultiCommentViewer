@@ -42,9 +42,8 @@ namespace MultiCommentViewer.Test
             _siteOptions = new TestSiteOptions();
         }
 
-        public string SaveOptions()
+        public void SaveOptions(string path, IIo io)
         {
-            throw new NotImplementedException();
         }
         private readonly IOptions _options;
         private readonly ILogger _logger;

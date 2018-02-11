@@ -26,12 +26,12 @@ namespace TwitchSitePlugin
             return new TwitchCommentProvider(connectionName, new TwitchServer(), _logger, _options, _siteOptions);
         }
         private TwitchSiteOptions _siteOptions;
-        public void LoadOptions(string siteOptionsStr, IIo io)
+        public void LoadOptions(string dir, IIo io)
         {
             _siteOptions = new TwitchSiteOptions();
         }
 
-        public string SaveOptions()
+        public void SaveOptions(string path, IIo io)
         {
             throw new NotImplementedException();
         }

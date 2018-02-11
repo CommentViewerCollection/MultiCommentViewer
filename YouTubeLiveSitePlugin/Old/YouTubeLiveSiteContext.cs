@@ -29,9 +29,9 @@ namespace YouTubeLiveSitePlugin.Old
             _siteOptions = new YouTubeSiteOptions();
         }
 
-        public string SaveOptions()
+        public void SaveOptions(string path, IIo io)
         {
-            throw new NotImplementedException();
+
         }
         private readonly IOptions _options;
         private YouTubeSiteOptions _siteOptions;

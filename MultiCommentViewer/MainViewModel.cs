@@ -171,8 +171,7 @@ namespace MultiCommentViewer
             {
                 try
                 {
-                    var siteOptionsStr = site.SaveOptions();
-                    await _io.WriteFileAsync(GetSiteOptionsPath(site, _options), siteOptionsStr);
+                    site.SaveOptions(GetSiteOptionsPath(site, _options), _io);
                 }
                 catch (Exception ex)
                 {

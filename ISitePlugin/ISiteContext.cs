@@ -15,8 +15,8 @@ namespace SitePlugin
         Guid Guid { get; }
         string DisplayName { get; }
         IOptionsTabPage TabPanel { get; }
-        string SaveOptions();
-        void LoadOptions(string siteOptionsStr, IIo io);        
+        void SaveOptions(string dir, IIo io);
+        void LoadOptions(string dir, IIo io);        
         ICommentProvider CreateCommentProvider(ConnectionName connectionName);
     }
 }

@@ -1,14 +1,17 @@
-﻿namespace NicoSitePlugin.Test
+﻿using System;
+using Common;
+namespace NicoSitePlugin.Test
 {
-    internal class NicoSiteOptions : INicoSiteOptions
+    internal class NicoSiteOptions : DynamicOptionsBase, INicoSiteOptions
     {
-        public bool CanUploadPlayerStatus { get; set; }
-        public int OfficialRoomsRetrieveCount { get; set; }
-        public NicoSiteOptions()
-        {
-            OfficialRoomsRetrieveCount = 3;
+        public int OfficialRoomsRetrieveCount { get => GetValue(); set => SetValue(value); }
+        public bool CanUploadPlayerStatus { get => GetValue(); set => SetValue(value); }
 
-            CanUploadPlayerStatus = true;
+        protected override void Init()
+        {
+            Dict.Add(nameof(OfficialRoomsRetrieveCount), new Item { DefaultValue = 3, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(CanUploadPlayerStatus), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
         }
         internal NicoSiteOptions Clone()
         {
@@ -16,13 +19,10 @@
         }
         internal void Set(NicoSiteOptions changedOptions)
         {
-            var properties = changedOptions.GetType().GetProperties();
-            foreach (var property in properties)
+            foreach (var src in changedOptions.Dict)
             {
-                if (property.SetMethod != null)
-                {
-                    property.SetValue(this, property.GetValue(changedOptions));
-                }
+                var v = src.Value;
+                SetValue(v.Value, src.Key);
             }
         }
     }

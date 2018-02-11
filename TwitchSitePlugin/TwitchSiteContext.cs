@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using SitePlugin;
+using Common;
 namespace TwitchSitePlugin
 {
     public class TwitchSiteContext : ISiteContext
@@ -25,7 +26,7 @@ namespace TwitchSitePlugin
             return new TwitchCommentProvider(connectionName, new TwitchServer(), _logger, _options, _siteOptions);
         }
         private TwitchSiteOptions _siteOptions;
-        public void LoadOptions(string siteOptionsStr)
+        public void LoadOptions(string siteOptionsStr, IIo io)
         {
             _siteOptions = new TwitchSiteOptions();
         }

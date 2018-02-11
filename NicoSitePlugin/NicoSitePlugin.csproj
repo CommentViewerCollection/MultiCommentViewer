@@ -91,6 +91,10 @@
       <Project>{CDBBBF25-AD0C-4EAF-B673-EB0BB198585A}</Project>
       <Name>BrowserCookieInterfaces</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>

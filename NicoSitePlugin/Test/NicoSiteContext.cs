@@ -1,5 +1,6 @@
 ﻿using System;
 using SitePlugin;
+using Common;
 namespace NicoSitePlugin.Test
 {
     public class NicoSiteContext : ISiteContext
@@ -22,7 +23,7 @@ namespace NicoSitePlugin.Test
             return new NicoCommentProvider(connectionName, _options, _siteOptions);
         }
 
-        public void LoadOptions(string siteOptionsStr)
+        public void LoadOptions(string siteOptionsStr, IIo io)
         {
             _siteOptions = new NicoSiteOptions();
         }

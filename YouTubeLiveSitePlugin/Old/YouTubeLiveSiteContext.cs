@@ -1,5 +1,6 @@
 ﻿using System;
 using SitePlugin;
+using Common;
 namespace YouTubeLiveSitePlugin.Old
 {
     public class YouTubeLiveSiteContext : IYouTubeSiteContext
@@ -23,7 +24,7 @@ namespace YouTubeLiveSitePlugin.Old
             return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
         }
 
-        public void LoadOptions(string siteOptionsStr)
+        public void LoadOptions(string siteOptionsStr, IIo io)
         {
             _siteOptions = new YouTubeSiteOptions();
         }

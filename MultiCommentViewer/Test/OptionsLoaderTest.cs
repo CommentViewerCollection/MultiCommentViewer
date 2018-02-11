@@ -9,16 +9,42 @@ using System.Runtime.Serialization;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading;
-
+using Common;
 namespace MultiCommentViewer.Test
 {
-    public interface IIo
-    {
-        Task<string> ReadFileAsync(string path);
-        Task WriteFileAsync(string path, string s);
-    }
+
     public class IOTest : IIo
     {
+        public string ReadFile(string path)
+        {
+            var totalWaitTime = 0;
+            string s = null;
+            while (totalWaitTime < 5000)
+            {
+                try
+                {
+                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                    using (var sr = new StreamReader(fs))
+                    {
+                        s = sr.ReadToEnd();
+                    }
+                    break;
+                }
+                catch (FileNotFoundException)
+                {
+                    break;
+                }
+                catch (IOException ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    var waitTime = GetRandomLong(10, 500);
+                    Debug.WriteLine($"読み込みに失敗したため{waitTime}ミリ秒待ちます");
+                    Thread.Sleep(waitTime);
+                    totalWaitTime += waitTime;
+                }
+            }
+            return s;
+        }
         public async Task<string> ReadFileAsync(string path)
         {
             var totalWaitTime = 0;
@@ -116,6 +142,13 @@ namespace MultiCommentViewer.Test
     }
     public class OptionsLoaderTest:IOptionsSerializer
     {
+        public IOptions Load(string path, IIo io)
+        {
+            var options = new DynamicOptionsTest();
+            var s = io.ReadFile(path);
+            options.Deserialize(s);
+            return options;
+        }
         public async Task<IOptions> LoadAsync(string path, IIo io)
         {
             var options = new DynamicOptionsTest();

@@ -62,6 +62,10 @@
       <Project>{cdbbbf25-ad0c-4eaf-b673-eb0bb198585a}</Project>
       <Name>BrowserCookieInterfaces</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{66d18de1-4d66-41a5-b0e2-47df9975495a}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -8,6 +8,7 @@ using MultiCommentViewer;
 using NUnit.Framework;
 using Moq;
 using System.ComponentModel;
+using Common;
 using MultiCommentViewer.Test;
 namespace MultiCommentViewerTests
 {

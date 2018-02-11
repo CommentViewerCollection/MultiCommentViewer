@@ -12,7 +12,7 @@ using System.Threading;
 using GalaSoft.MvvmLight;
 using System.Windows.Media;
 using System.Windows;
-
+using Common;
 namespace MultiCommentViewer.Test
 {
 
@@ -37,7 +37,7 @@ namespace MultiCommentViewer.Test
             return new TestSiteCommentProvider(connectionName,_options, _siteOptions);
         }
         private TestSiteOptions _siteOptions;
-        public void LoadOptions(string siteOptionsStr)
+        public void LoadOptions(string siteOptionsStr, IIo io)
         {
             _siteOptions = new TestSiteOptions();
         }

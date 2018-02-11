@@ -111,7 +111,6 @@
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
-    <Compile Include="Test\OptionsTest.cs" />
     <Compile Include="Test\TestSite.cs" />
     <Compile Include="Test\TestSiteOptionsPagePanel.xaml.cs">
       <DependentUpon>TestSiteOptionsPagePanel.xaml</DependentUpon>

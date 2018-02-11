@@ -33,9 +33,9 @@
         </ControlTemplate>
     </UserControl.Resources>
     <Grid>
-        <ToggleButton  x:Name="PART_ToggleButton" Template="{DynamicResource ButtonBaseControlTemplate1}">
+        <ToggleButton  x:Name="PART_ToggleButton"  Checked="PART_ToggleButton_Checked" Template="{DynamicResource ButtonBaseControlTemplate1}">
         </ToggleButton>
-        <Popup HorizontalOffset="1" VerticalOffset="1" PlacementTarget="{Binding ElementName=PART_ToggleButton}" Placement="Bottom"
+        <Popup x:Name="PART_POPUP" HorizontalOffset="1" VerticalOffset="1" PlacementTarget="{Binding ElementName=PART_ToggleButton}" Placement="Bottom"
            AllowsTransparency="True" StaysOpen="False" Focusable="False" IsOpen="{Binding IsChecked, ElementName=PART_ToggleButton}">
             <Popup.Resources>
                 <SolidColorBrush x:Key="BackBrush"  Color="#FFEFEFEF" />

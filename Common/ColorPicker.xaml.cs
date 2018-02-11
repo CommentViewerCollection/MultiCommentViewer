@@ -110,5 +110,11 @@ namespace Common
             var argb = color.ToString();
             return argb;
         }
+        bool isOpen;
+        private void PART_ToggleButton_Checked(object sender, RoutedEventArgs e)
+        {
+            isOpen = !isOpen;
+            PART_POPUP.IsOpen = isOpen;
+        }
     }
 }

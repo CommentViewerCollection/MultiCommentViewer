@@ -112,6 +112,12 @@ namespace TwitchSitePlugin
             }
             return actual;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <exception cref="ArgumentException"></exception>
+        /// <returns></returns>
         public static string GetChannelName(string input)
         {
             var s = input;

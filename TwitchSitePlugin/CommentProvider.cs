@@ -8,6 +8,7 @@ using System.Text;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
+using Common;
 namespace TwitchSitePlugin
 {
 
@@ -154,6 +155,7 @@ namespace TwitchSitePlugin
         public async Task PostCommentAsync(string text)
         {
             var s = $"PRIVMSG {_channelName} :{text}";
+            await Task.FromResult<object>(null);
         }
         private readonly IDataServer _server;
         private readonly ILogger _logger;

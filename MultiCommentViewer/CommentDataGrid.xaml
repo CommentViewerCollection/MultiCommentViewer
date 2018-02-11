@@ -92,7 +92,7 @@
             </Style>
         </DataGrid.Resources>
         <DataGrid.Columns>
-            <DataGridTemplateColumn Header="接続先名" 
+            <DataGridTemplateColumn Header="接続名" 
                                             DisplayIndex="{Binding DataContext.ConnectionNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=0}"
                                             Width="{Binding DataContext.ConnectionNameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                             Visibility="{Binding DataContext.IsShowConnectionName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">

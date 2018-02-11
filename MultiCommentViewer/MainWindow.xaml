@@ -206,7 +206,7 @@
                       VerticalAlignment="Stretch"
                       >
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="接続先名" Binding="{Binding ConnectionName}">
+                        <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}">
                         </DataGridTextColumn>
                         <DataGridTextColumn Header="タイトル" Binding="{Binding Title}">
                         </DataGridTextColumn>

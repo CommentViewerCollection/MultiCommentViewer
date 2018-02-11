@@ -13,6 +13,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using GalaSoft.MvvmLight.Messaging;
 using System.Diagnostics;
+using Common.AutoUpdate;
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -54,6 +55,28 @@ namespace MultiCommentViewer
                 }catch(Exception ex)
                 {
                     Debug.WriteLine(ex.Message);
+                }
+            });
+            Messenger.Default.Register<Common.AutoUpdate.ShowUpdateDialogMessage>(this, message =>
+            {
+                var logger = message.Logger;
+                try
+                {
+                    var updateView = new Common.AutoUpdate.UpdateView();
+                    var showPos = Tools.GetShowPos(Tools.GetMousePos(), updateView);
+                    updateView.Left = showPos.X;
+                    updateView.Top = showPos.Y;
+                    //updateView.DataContext = new ViewModel.OptionsViewModel(message.Options);
+                    updateView.IsUpdateExists = message.IsUpdateExists;
+                    updateView.CurrentVersion = message.CurrentVersion;
+                    updateView.LatestVersionInfo = message.LatestVersionInfo;
+                    updateView.Logger = message.Logger;
+                    updateView.Owner = this;
+                    updateView.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogException(ex);
                 }
             });
         }

@@ -61,7 +61,7 @@ namespace SitePlugin
         double InfoWidth { get; set; }
         bool IsShowInfo { get; set; }
         int InfoDisplayIndex { get; set; }
-
+        bool IsAutoCheckIfUpdateExists { get; set; }
         IOptions Clone();
         void Set(IOptions options);
         void Reset();

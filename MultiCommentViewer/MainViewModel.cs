@@ -117,7 +117,7 @@ namespace MultiCommentViewer
             return System.IO.Path.Combine(_options.SettingsDirPath, "options.txt");
 #endif
         }
-        private void ContentRendered()
+        private async void ContentRendered()
         {
             //なんか気持ち悪い書き方だけど一応動く。
             //ここでawaitするとそれ以降が実行されないからこうするしかない。
@@ -148,8 +148,12 @@ namespace MultiCommentViewer
 
                 _pluginManager.OnLoaded();
 
-      
-        }
+                if (_options.IsAutoCheckIfUpdateExists)
+                {
+                    await CheckIfUpdateExists(true);
+                }
+                Debug.WriteLine("この文字列は表示される？");
+            }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
@@ -243,9 +247,56 @@ namespace MultiCommentViewer
                 Debugger.Break();
             }
         }
-#endregion //Methods
+        string Name
+        {
+            get { return "MultiCommentViewer"; }
+        }
+        string Fullname
+        {
+            get { return $""; }
+        }
+        void SetInfo(string message)
+        {
 
-#region EventHandler
+        }
+        private async Task CheckIfUpdateExists(bool isAutoCheck)
+        {
+            //新しいバージョンがあるか確認
+            Common.AutoUpdate.LatestVersionInfo latestVersionInfo;            
+            try
+            {
+                latestVersionInfo = await Common.AutoUpdate.Tools.GetLatestVersionInfo(Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                if (!isAutoCheck)
+                {
+                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。");
+                }
+                return;
+            }
+
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var myVer = asm.GetName().Version;
+            if (myVer < latestVersionInfo.Version)
+            {
+                //新しいバージョンがあった
+                MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger));
+            }
+            else
+            {
+                //自動チェックの時は、アップデートが無ければ何も表示しない
+                if (!isAutoCheck)
+                {
+                    //アップデートはありません
+                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger));
+                }
+            }
+        }
+        #endregion //Methods
+
+        #region EventHandler
         private async void Connection_CommentReceived(object sender, ICommentViewModel e)
         {
             try
@@ -297,12 +348,12 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
-#endregion //EventHandler
+        #endregion //EventHandler
 
 
 
 
-#region Properties
+        #region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
@@ -453,7 +504,7 @@ namespace MultiCommentViewer
             get { return _options.SelectedRowForeColor; }
             set { _options.SelectedRowForeColor = value; }
         }
-#endregion
+        #endregion
 
         public MainViewModel()
         {
@@ -666,7 +717,7 @@ namespace MultiCommentViewer
         {
             _userid = userId;
         }
-#region INotifyPropertyChanged
+        #region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
         /// <summary>
@@ -685,7 +736,7 @@ namespace MultiCommentViewer
         {
             _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
-#endregion
+        #endregion
     }
     public class UserStoreTest : IUserStore
     {

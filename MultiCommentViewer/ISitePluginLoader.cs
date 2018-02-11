@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SitePlugin;
+using Common;
 namespace MultiCommentViewer
 {
     public interface ISitePluginLoader

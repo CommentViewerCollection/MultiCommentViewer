@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using MultiCommentViewer.Test;
 using SitePlugin;
 namespace MultiCommentViewer
 {
@@ -58,10 +59,10 @@ namespace MultiCommentViewer
         {
             if (GalaSoft.MvvmLight.ViewModelBase.IsInDesignModeStatic)
             {
-                _origin = new Test.OptionsTest
+                _origin = new DynamicOptionsTest
                 {
-                    ForeColorArgb = "#FFFF0000",
-                    BackColorArgb = "#FFFF00FF",
+                    ForeColor = Colors.Red,
+                    BackColor = Colors.Black,
                 };
                 changed = _origin.Clone();
             }

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MultiCommentViewer"
-        xmlns:w="clr-namespace:MultiCommentViewer"
+        xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         xmlns:command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
         mc:Ignorable="d"
@@ -34,8 +34,8 @@
         <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
         <w:IntToFontSizeConverter x:Key="intToFontConverter" />
         <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
-        <w:MessageConverter x:Key="messageConverter" />
-        <w:NameConverter x:Key="nameConverter" />
+        <local:MessageConverter x:Key="messageConverter" />
+        <local:NameConverter x:Key="nameConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>

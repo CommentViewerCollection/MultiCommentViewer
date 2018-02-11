@@ -1,5 +1,5 @@
 ﻿using SitePlugin;
-
+using MultiCommentViewer.Test;
 
 namespace MultiCommentViewer
 {
@@ -23,7 +23,7 @@ namespace MultiCommentViewer
         {
             _user = user;
         }
-        public UserViewModel() : base(new Test.OptionsTest())
+        public UserViewModel() : base(new DynamicOptionsTest())
         {
             if (IsInDesignMode)
             {

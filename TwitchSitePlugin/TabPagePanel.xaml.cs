@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
+using Common;
 namespace TwitchSitePlugin
 {
     /// <summary>
@@ -68,13 +69,9 @@ namespace TwitchSitePlugin
         }
         #endregion
     }
-    class ITwitchSiteOptions
+    internal class TwitchSiteOptions : DynamicOptionsBase
     {
-
-    }
-    internal class TwitchSiteOptions : ITwitchSiteOptions
-    {
-        public TwitchSiteOptions()
+        protected override void Init()
         {
         }
         internal TwitchSiteOptions Clone()
@@ -83,13 +80,10 @@ namespace TwitchSitePlugin
         }
         internal void Set(TwitchSiteOptions changedOptions)
         {
-            var properties = changedOptions.GetType().GetProperties();
-            foreach (var property in properties)
+            foreach (var src in changedOptions.Dict)
             {
-                if (property.SetMethod != null)
-                {
-                    property.SetValue(this, property.GetValue(changedOptions));
-                }
+                var v = src.Value;
+                SetValue(v.Value, src.Key);
             }
         }
     }

@@ -54,6 +54,7 @@ namespace MultiCommentViewer.Test
         public double InfoWidth { get => GetValue(); set => SetValue(value); }
         public bool IsShowInfo { get => GetValue(); set => SetValue(value); }
         public int InfoDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public bool IsAutoCheckIfUpdateExists { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
@@ -98,6 +99,8 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(IsShowUsername), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowMessage), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowInfo), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(IsAutoCheckIfUpdateExists), new Item { DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
         }
         public IOptions Clone()

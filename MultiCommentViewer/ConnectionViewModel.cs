@@ -6,9 +6,7 @@ using System.Windows.Input;
 using SitePlugin;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-
-//TODO:過去コメントの取得
-
+using Common;
 
 namespace MultiCommentViewer
 {

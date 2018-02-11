@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using SitePlugin;
+using System.Diagnostics;
 using Common;
 namespace TwitchSitePlugin
 {
@@ -33,7 +34,17 @@ namespace TwitchSitePlugin
 
         public void SaveOptions(string path, IIo io)
         {
-            throw new NotImplementedException();
+            _siteOptions = new TwitchSiteOptions();
+            try
+            {
+                var s = io.ReadFile(path);
+
+                _siteOptions.Deserialize(s);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
         private readonly IOptions _options;
         private readonly ILogger _logger;

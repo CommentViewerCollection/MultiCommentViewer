@@ -11,7 +11,7 @@ namespace MultiCommentViewer.Test
         }
         public string GetExceptions()
         {
-            throw new NotImplementedException();
+            return "test";
         }
         class ExceptionContext
         {

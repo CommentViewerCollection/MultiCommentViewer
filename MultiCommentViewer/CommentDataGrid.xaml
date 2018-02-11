@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MultiCommentViewer"
-             xmlns:w="clr-namespace:MultiCommentViewer"
+             xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
              xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
@@ -14,8 +14,8 @@
         <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
         <w:IntToFontSizeConverter x:Key="intToFontConverter" />
         <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
-        <w:MessageConverter x:Key="messageConverter" />
-        <w:NameConverter x:Key="nameConverter" />
+        <local:MessageConverter x:Key="messageConverter" />
+        <local:NameConverter x:Key="nameConverter" />
     </UserControl.Resources>
     <Grid>
         <!--Element treeに属さないelementにDataContextを渡すためのdummy element-->

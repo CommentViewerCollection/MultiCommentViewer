@@ -637,7 +637,7 @@ namespace MultiCommentViewer
         {
             try
             {
-                System.Diagnostics.Process.Start("https://ryu-s.github.io/");
+                System.Diagnostics.Process.Start("https://ryu-s.github.io/app/multicommentviewer");
             }catch(Exception ex)
             {
                 _logger.LogException(ex);

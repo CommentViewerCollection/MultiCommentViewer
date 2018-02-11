@@ -33,10 +33,16 @@ URLにgamingとかchannelとか沢山種類があるからenum UrlTypeがある�
 URLの形式一覧
 https://gaming.youtube.com/channel/UCEwvS8JGjGFHuopjeiukYtg/live
 https://gaming.youtube.com/watch?v=Rn9VTh-oCHY​
+https://www.youtube.com/user/liryu1973/live
+
+InvalidationContinuationに対応
 
 #### ColorPicker
 
 #### FontPicker
+
+#### プラグイン
+プラグインメニューから項目をクリックしてもプラグインの設定画面が表示されないことがある
 
 
 ## 不安とか悩みとか

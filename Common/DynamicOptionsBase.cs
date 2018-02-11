@@ -55,7 +55,10 @@ namespace Common
                         //最初にReset()しているから、ここに来たらitem.Value==item.DefaultValue
                     }
                     if (!item.Predicate(item.Value))
+                    {
                         item.Value = item.DefaultValue;
+                        RaisePropertyChanged(k);
+                    }
                 }
             }
         }
@@ -67,7 +70,8 @@ namespace Common
         protected void SetValue(dynamic d, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
         {
             var item = _dict[propertyName];
-            item.Value = d;
+            if(item.Predicate(d))
+                item.Value = d;
             RaisePropertyChanged(propertyName);
         }
         public DynamicOptionsBase()
@@ -82,8 +86,10 @@ namespace Common
         {
             foreach (var kv in _dict)
             {
+                var k = kv.Key;
                 var v = kv.Value;
                 v.Value = v.DefaultValue;
+                RaisePropertyChanged(k);
             }
         }
         private void CheckValidation()

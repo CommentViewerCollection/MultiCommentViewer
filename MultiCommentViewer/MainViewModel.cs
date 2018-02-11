@@ -129,7 +129,13 @@ namespace MultiCommentViewer
                     {
                         var o = t.Result;
                         if (o != null)
+                        {
                             _options.Set(o);
+                        }
+                        else
+                        {
+                            _options.Reset();
+                        }
                         _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger);
                         foreach (var site in _siteContexts)
                         {
@@ -509,6 +515,18 @@ namespace MultiCommentViewer
             {
                 switch (e.PropertyName)
                 {
+                    case nameof(_options.MainViewLeft):
+                        RaisePropertyChanged(nameof(MainViewLeft));
+                        break;
+                    case nameof(_options.MainViewTop):
+                        RaisePropertyChanged(nameof(MainViewTop));
+                        break;
+                    case nameof(_options.MainViewHeight):
+                        RaisePropertyChanged(nameof(MainViewHeight));
+                        break;
+                    case nameof(_options.MainViewWidth):
+                        RaisePropertyChanged(nameof(MainViewWidth));
+                        break;
                     case nameof(_options.IsShowThumbnail):
                         RaisePropertyChanged(nameof(IsShowThumbnail));
                         break;

@@ -66,10 +66,10 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(FirstCommentFontWeight), new Item { DefaultValue = FontWeights.Bold, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
             Dict.Add(nameof(FirstCommentFontSize), new Item { DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
             Dict.Add(nameof(SettingsDirPath), new Item { DefaultValue = "settings", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
-            Dict.Add(nameof(BackColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(ForeColor), new Item {  DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(MainViewHeight), new Item {  DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(MainViewWidth), new Item {DefaultValue = 500, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(BackColor), new Item { DefaultValue = ColorFromArgb("#FFEFEFEF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ForeColor), new Item {  DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MainViewHeight), new Item {  DefaultValue = 550, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewWidth), new Item {DefaultValue = 716, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MainViewLeft), new Item {  DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MainViewTop), new Item {  DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(HorizontalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
@@ -94,7 +94,7 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(InfoDisplayIndex), new Item {  DefaultValue = 5, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
 
             Dict.Add(nameof(IsShowConnectionName), new Item { DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowThumbnail), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowThumbnail), new Item {  DefaultValue = false, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowCommentId), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowUsername), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowMessage), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

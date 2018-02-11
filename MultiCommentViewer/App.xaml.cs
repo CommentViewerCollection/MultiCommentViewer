@@ -8,7 +8,10 @@ using System.Windows;
 using SitePlugin;
 using System.IO;
 using System.Reflection;
+using System.Text;
+using System.Net;
 using Common;
+using System.Net.Http;
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -24,7 +27,7 @@ namespace MultiCommentViewer
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             var currentDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
-            var optionsPath = Path.Combine(currentDir, "options.txt");
+            var optionsPath = Path.Combine(currentDir, "settings", "options.txt");
             IIo io = new Test.IOTest();
 
             //OptionsはMainViewModelのContentRendered()で読み込みたい。しかし、その前にConnectionNameWidth等が参照されるため現状ではコンストラクタ以前に読み込む必要がある。
@@ -47,6 +50,26 @@ namespace MultiCommentViewer
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModels.ViewModelLocator;
             locator.Main = mainViewModel;
+        }
+        protected override void OnExit(ExitEventArgs e)
+        {
+            var s = _logger.GetExceptions();
+            HttpContent fileStreamContent = new StreamContent(new System.IO.MemoryStream(Encoding.UTF8.GetBytes(s)));
+            using (var client = new HttpClient())
+            using (var formData = new MultipartFormDataContent())
+            {
+                formData.Add(fileStreamContent, "error", "MultiCommentViewer" + "_" + "error.txt");
+                var t = client.PostAsync("http://int-main.net/upload", formData);
+                var response = t.Result;
+                if (!response.IsSuccessStatusCode)
+                {
+                }
+                else
+                {
+                }
+            }
+
+            base.OnExit(e);
         }
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {

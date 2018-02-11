@@ -111,11 +111,7 @@ namespace MultiCommentViewer
         }
         private string GetOptionsPath()
         {
-#if DEBUG
-            return "options.txt";
-#else
             return System.IO.Path.Combine(_options.SettingsDirPath, "options.txt");
-#endif
         }
         private async void ContentRendered()
         {
@@ -152,7 +148,6 @@ namespace MultiCommentViewer
                 {
                     await CheckIfUpdateExists(true);
                 }
-                Debug.WriteLine("この文字列は表示される？");
             }
             catch (Exception ex)
             {
@@ -583,16 +578,16 @@ namespace MultiCommentViewer
             };
         }
 
-        private void PluginManager_PluginAdded(object sender, IPlugin e)
+        private async void PluginManager_PluginAdded(object sender, IPlugin e)
         {
             try
             {
-                _dispatcher.Invoke(() =>
+                await _dispatcher.BeginInvoke((Action)(() =>
                 {
                     var vm = new PluginMenuItemViewModel(e);
                     _pluginMenuItemDict.Add(e, vm);
                     PluginMenuItemCollection.Add(vm);
-                });
+                }), DispatcherPriority.Normal);
             }
             catch (Exception ex)
             {
@@ -616,17 +611,37 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
-        private void CheckUpdate()
+        private async void CheckUpdate()
         {
-
+            try
+            {
+                await CheckIfUpdateExists(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         private void ShowDevelopersTwitter()
         {
-
+            try
+            {
+                System.Diagnostics.Process.Start("https://twitter.com/kv510k");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         private void ShowWebSite()
         {
-
+            try
+            {
+                System.Diagnostics.Process.Start("https://ryu-s.github.io/");
+            }catch(Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         private void Exit()
         {
@@ -751,15 +766,27 @@ namespace MultiCommentViewer
             return user;
         }
     }
-    public class PluginMenuItemViewModel
+    public class PluginMenuItemViewModel:ViewModelBase
     {
         public string Name { get; set; }
         public ObservableCollection<PluginMenuItemViewModel> Children { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        public ICommand ShowSettingViewCommand { get; }
+        private RelayCommand _show;
+        public ICommand ShowSettingViewCommand
+        {
+            get
+            {
+                if(_show == null)
+                {
+                    _show = new RelayCommand(()=> Test(_plugin));
+                }
+                return _show;
+            }
+        }
+        private readonly IPlugin _plugin;
         public PluginMenuItemViewModel(IPlugin plugin)// PluginContext plugin, string name, ICommand command)
         {
             Name = plugin.Name;
-            ShowSettingViewCommand = new RelayCommand(() => Test(plugin));
+            _plugin = plugin;
         }
         private void Test(IPlugin plugin)
         {

@@ -773,6 +773,7 @@ namespace MultiCommentViewer
         private RelayCommand _show;
         public ICommand ShowSettingViewCommand
         {
+            //以前はコンストラクタ中でICommandに代入していたが、項目をクリックしてもTest()が呼ばれないことがあった。今の状態に書き換えたら問題なくなった。何故だ？IPluginを保持するようにしたから？GCで無くなっちゃってたとか？
             get
             {
                 if(_show == null)

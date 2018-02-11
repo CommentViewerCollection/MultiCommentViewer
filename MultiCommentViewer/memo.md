@@ -13,6 +13,12 @@
 #### Mixer,Discord,Twicas,LINELIVE,ふわっちを実装
 #### 各サイトプラグインのSiteOptions作成
 #### ネットにアクセスする時にUserAgentを設定する。形式は"MultiCommentViewer_v0.0.1"みたいな感じでいいだろう
+#### コメント投稿
+各サイトプラグインにコメント投稿パネルを持たせる  
+
+#### URLの自動認識
+・InputにURLを入力すると自動でサイトを選択する。
+
 #### コメントの保存、読み込み
 コメントの読み込みは全てのConnectionが非接続時に可能とする。  
 読み込まれたコメントのConnectionのInputや接続、切断ボタンはIsEnabled=false  

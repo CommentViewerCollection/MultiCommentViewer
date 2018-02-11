@@ -43,7 +43,7 @@ namespace MultiCommentViewer.Test
                     Debug.WriteLine(ex.Message);
                     var waitTime = GetRandomLong(10, 500);
                     Debug.WriteLine($"読み込みに失敗したため{waitTime}ミリ秒待ちます");
-                    Thread.Sleep(waitTime);
+                    await Task.Delay(waitTime);
                     totalWaitTime += waitTime;
                 }
             }

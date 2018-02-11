@@ -1,4 +1,9 @@
-﻿## 未実装
+﻿## 初期リリースまでにすべきこと
+自動アップデート
+エラーリポート
+
+
+## 未実装
 #### 各CommentProviderのConnectAsyncでInputの形式が正しいか評価し、不正であればInfoMessageで伝える
 #### アップデートチェック
 #### IOptionのファイルへの読み込み、書き出し
@@ -29,6 +34,9 @@ URLの形式一覧
 https://gaming.youtube.com/channel/UCEwvS8JGjGFHuopjeiukYtg/live
 https://gaming.youtube.com/watch?v=Rn9VTh-oCHY​
 
+#### ColorPicker
+
+#### FontPicker
 
 
 ## 不安とか悩みとか

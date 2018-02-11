@@ -41,13 +41,9 @@ namespace TwitchSitePlugin
             _tcs.SetException(e.Exception);
         }
 
-        private async void _ws_Opened(object sender, EventArgs e)
+        private void _ws_Opened(object sender, EventArgs e)
         {
             Opened?.Invoke(this, e);
-            //await SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
-            //await SendAsync("PASS SCHMOOPIIE");
-            //await SendAsync("NICK " + _name);
-            //await SendAsync($"USER {_name} 8 * :{_name}");
         }
 
         public async Task SendAsync(string s)

@@ -13,12 +13,12 @@ using Plugin;
 using ryu_s.BrowserCookie;
 using System.Diagnostics;
 using System.Windows.Threading;
-
 using System.Net;
 using System.Windows.Media;
 using System.Reflection;
 using System.ComponentModel;
 using MultiCommentViewer.Test;
+using Common;
 namespace MultiCommentViewer
 {
     public class MainViewModel : ViewModelBase
@@ -117,55 +117,39 @@ namespace MultiCommentViewer
             return System.IO.Path.Combine(_options.SettingsDirPath, "options.txt");
 #endif
         }
-        private async void ContentRendered()
+        private void ContentRendered()
         {
             //なんか気持ち悪い書き方だけど一応動く。
             //ここでawaitするとそれ以降が実行されないからこうするしかない。
             try
             {
-                await _optionsLoader.LoadAsync(GetOptionsPath(), _io).ContinueWith( t =>
+                //Observable.Interval()
+                //_optionsLoader.LoadAsync().
+                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger);
+                foreach (var site in _siteContexts)
                 {
-                    try
-                    {
-                        var o = t.Result;
-                        if (o != null)
-                        {
-                            _options.Set(o);
-                        }
-                        else
-                        {
-                            _options.Reset();
-                        }
-                        _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger);
-                        foreach (var site in _siteContexts)
-                        {
-                            site.LoadOptions(_options.SettingsDirPath);
-                        }
-                        _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
+                    site.LoadOptions(_options.SettingsDirPath, _io);
+                }
+                _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
 
-                        _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
-                        //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
-                        if (_browserVms.Count() == 0)
-                        {
-                            _browserVms = new List<BrowserViewModel>
+                _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
+                //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
+                if (_browserVms.Count() == 0)
+                {
+                    _browserVms = new List<BrowserViewModel>
                             {
                                 new BrowserViewModel( new EmptyBrowserProfile()),
                             };
-                        }
+                }
 
-                        _pluginManager = new PluginManager(_options);
-                        _pluginManager.PluginAdded += PluginManager_PluginAdded;
-                        _pluginManager.LoadPlugins(new PluginHost(this, _options));
+                _pluginManager = new PluginManager(_options);
+                _pluginManager.PluginAdded += PluginManager_PluginAdded;
+                _pluginManager.LoadPlugins(new PluginHost(this, _options));
 
-                        _pluginManager.OnLoaded();
+                _pluginManager.OnLoaded();
 
-                    }
-                    catch (AggregateException ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                });
-            }
+      
+        }
             catch (Exception ex)
             {
                 _logger.LogException(ex);

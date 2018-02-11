@@ -37,11 +37,27 @@ namespace NicoSitePlugin.Test
     }
     public class NicoSiteOptionsViewModel : INotifyPropertyChanged
     {
+        public int OfficialRoomsRetrieveCount
+        {
+            get { return changed.OfficialRoomsRetrieveCount; }
+            set { changed.OfficialRoomsRetrieveCount = value; }
+        }
+        public bool CanUploadPlayerStatus
+        {
+            get { return changed.CanUploadPlayerStatus; }
+            set { changed.CanUploadPlayerStatus = value; }
+        }
         private readonly NicoSiteOptions _origin;
         private readonly NicoSiteOptions changed;
         internal NicoSiteOptions OriginOptions { get { return _origin; } }
         internal NicoSiteOptions ChangedOptions { get { return changed; } }
 
+        public NicoSiteOptionsViewModel()
+        {
+            //if(IsInDesigner)
+            changed = new NicoSiteOptions { CanUploadPlayerStatus = true, OfficialRoomsRetrieveCount = 5 };
+
+        }
         internal NicoSiteOptionsViewModel(NicoSiteOptions siteOptions)
         {
             _origin = siteOptions;

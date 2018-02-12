@@ -244,7 +244,19 @@ if $(ConfigurationName) == Release (
 )
 </PreBuildEvent>
   </PropertyGroup>
+  <Target Name="PostBuildMacros">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="Targets" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <VersionNumber Include="$([System.Text.RegularExpressions.Regex]::Replace(&quot;%(Targets.Version)&quot;, &quot;^([^\.]+)\.([^\.]+)\.([^\.]+)(.*)$&quot;, &quot;$1.$2.$3&quot;))" />
+    </ItemGroup>
+  </Target>
   <PropertyGroup>
+    <PostBuildEventDependsOn>
+      $(PostBuildEventDependsOn);
+      PostBuildMacros;
+    </PostBuildEventDependsOn>
     <PostBuildEvent>:: settingsディレクトリを作成
 if not exist settings mkdir settings
 :: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある

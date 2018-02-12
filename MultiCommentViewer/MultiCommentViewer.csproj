@@ -238,21 +238,28 @@
     <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.106.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.106.0\build\net46\System.Data.SQLite.Core.targets'))" />
   </Target>
   <PropertyGroup>
-    <PreBuildEvent>if $(ConfigurationName) == Release (
+    <PreBuildEvent>:: 余分なファイルをリリースしてしまわないように一旦全部消す
+if $(ConfigurationName) == Release (
   powershell Remove-Item -Path "$(TargetDir)*" -recurse
-)
-if $(ConfigurationName) == Debug (
-  if exist settings\placeholder   powershell Remove-Item -Path settings\placeholder
 )
 </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>if not exist settings mkdir settings
+    <PostBuildEvent>:: settingsディレクトリを作成
+if not exist settings mkdir settings
+:: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある
 powershell New-Item settings\placeholder -ItemType file
 
 :: BouyomiPluginのファイルを全部持ってくる
 mkdir plugins\Bouyomi
 copy "..\..\..\BouyomiPlugin\bin\Debug\*" "plugins\Bouyomi\"
-</PostBuildEvent>
+
+:: 自動アップデートに必要なlist.txtを作成
+powershell.exe -ExecutionPolicy Unrestricted -file $(ProjectDir)\updateFileList.ps1 -targetDir $(TargetDir)
+
+::zip化
+if $(ConfigurationName) == Release (
+  powershell compress-archive  -Path  $(TargetDir)* -DestinationPath $(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip -Force
+)</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -3,8 +3,8 @@ $dllDirName = "dll"
 $pluginDirName = "plugins"
 $dllDir = $targetDir + "\" + $dllDirName
 
-Remove-Item -Recurse -Force $dllDir -ErrorAction Ignore
-New-Item $dllDir -type directory
+Remove-Item -Recurse -Force "$dllDir" -ErrorAction Ignore
+New-Item "$dllDir" -type directory
 
 $Files = Get-ChildItem -Path "$targetDir"  -Exclude "$targetName.*" | where {! $_.PSIsContainer}
 ForEach ($file in $Files)

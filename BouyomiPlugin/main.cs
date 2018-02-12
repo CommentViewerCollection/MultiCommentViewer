@@ -16,11 +16,17 @@ namespace BouyomiPlugin
 
         public void OnLoaded()
         {
-            _options = _OptionsLoader.Load(GetSettingsFilePath());
+            try
+            {
+                var s = Host.LoadOptions(GetSettingsFilePath());
+                _options.Deserialize(s);
+            }
+            catch (System.IO.FileNotFoundException) { }
         }
         public void OnClosing()
         {
-            _OptionsLoader.Save(_options, GetSettingsFilePath());
+            var s = _options.Serialize();
+            Host.SaveOptions(GetSettingsFilePath(), s);
         }
         public void OnCommentReceived(ICommentData data)
         {
@@ -80,11 +86,10 @@ namespace BouyomiPlugin
             };
             view.Show();
         }
-        private readonly OptionsLoader _OptionsLoader;
         public BouyomiPlugin()
         {
             _bouyomiChanClient = new FNF.Utility.BouyomiChanClient();
-            _OptionsLoader = new OptionsLoader();
+            _options = new Options();
         }
 
         #region IDisposable Support

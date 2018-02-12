@@ -33,6 +33,7 @@ namespace Common.AutoUpdate
             var wc = new WebClient();
             wc.DownloadProgressChanged += Wc_DownloadProgressChanged;
             var url = _latest.Url;
+            //TODO:ここでWebExceptionが発生した場合の対応
             await wc.DownloadFileTaskAsync(url, zipFilePath);
 
             //list.txtに記載されているファイル全てに.oldを付加            

@@ -26,6 +26,18 @@ namespace Plugin
         string SettingsDirPath { get; }
         double MainViewLeft { get; }
         double MainViewTop { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pluginName"></param>
+        /// <param name="s">serialized options</param>
+        void SaveOptions(string path, string s);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pluginName"></param>
+        /// <returns>serialized options</returns>
+        string LoadOptions(string path);
     }
     public interface ICommentData
     {

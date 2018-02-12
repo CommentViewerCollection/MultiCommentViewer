@@ -140,7 +140,7 @@ namespace MultiCommentViewer
 
                 _pluginManager = new PluginManager(_options);
                 _pluginManager.PluginAdded += PluginManager_PluginAdded;
-                _pluginManager.LoadPlugins(new PluginHost(this, _options));
+                _pluginManager.LoadPlugins(new PluginHost(this, _options, _io));
 
                 _pluginManager.OnLoaded();
 
@@ -655,12 +655,25 @@ namespace MultiCommentViewer
         public double MainViewLeft => _options.MainViewLeft;
 
         public double MainViewTop => _options.MainViewTop;
+        public string LoadOptions(string path)
+        {
+            var s = _io.ReadFile(path);
+            return s;
+        }
+
+        public void SaveOptions(string path, string s)
+        {
+            _io.WriteFile(path, s);
+        }
+
         private readonly MainViewModel _vm;
         private readonly IOptions _options;
-        public PluginHost(MainViewModel vm, IOptions options)
+        private readonly IIo _io;
+        public PluginHost(MainViewModel vm, IOptions options, IIo io)
         {
             _vm = vm;
             _options = options;
+            _io = io;
         }
     }
     public class CommentData : Plugin.ICommentData

@@ -267,11 +267,11 @@ mkdir plugins\Bouyomi
 copy "..\..\..\BouyomiPlugin\bin\Debug\*" "plugins\Bouyomi\"
 
 :: 自動アップデートに必要なlist.txtを作成
-powershell.exe -ExecutionPolicy Unrestricted -file $(ProjectDir)\updateFileList.ps1 -targetDir $(TargetDir)
+powershell.exe -ExecutionPolicy Unrestricted -file "$(ProjectDir)\updateFileList.ps1" -targetDir $(TargetDir)
 
 ::zip化
 if $(ConfigurationName) == Release (
-  powershell compress-archive  -Path  "$(TargetDir)*" -DestinationPath $(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip -Force
+  powershell compress-archive  -Path  "$(TargetDir)*" -DestinationPath "$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip" -Force
 )</PostBuildEvent>
   </PropertyGroup>
 </Project>

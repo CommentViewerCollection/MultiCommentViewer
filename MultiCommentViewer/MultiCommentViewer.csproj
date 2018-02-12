@@ -240,7 +240,7 @@
   <PropertyGroup>
     <PreBuildEvent>:: 余分なファイルをリリースしてしまわないように一旦全部消す
 if $(ConfigurationName) == Release (
-  powershell Remove-Item -Path '$(TargetDir)*' -Recurse -ErrorAction Ignore
+  rd /s /q "$(TargetDir)"
 )
 </PreBuildEvent>
   </PropertyGroup>

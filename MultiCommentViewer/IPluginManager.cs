@@ -5,6 +5,7 @@ using Plugin;
 using SitePlugin;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
+using System.Diagnostics;
 using System.Linq;
 using System.IO;
 namespace MultiCommentViewer
@@ -15,6 +16,7 @@ namespace MultiCommentViewer
         void LoadPlugins(IPluginHost host);
         void SetComments(ICommentViewModel comments);
         void OnLoaded();
+        void OnClosing();
         //event EventHandler<string> PostingCommentReceived;
     }
     public class PluginManager:IPluginManager
@@ -70,6 +72,20 @@ namespace MultiCommentViewer
             foreach(var plugin in _plugins)
             {
                 plugin.OnLoaded();
+            }
+        }
+        public void OnClosing()
+        {
+            foreach (var plugin in _plugins)
+            {
+                try
+                {
+                    plugin.OnClosing();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
             }
         }
         private readonly IOptions _options;

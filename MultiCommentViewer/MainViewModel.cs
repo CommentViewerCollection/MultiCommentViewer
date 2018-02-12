@@ -178,6 +178,7 @@ namespace MultiCommentViewer
                     Debug.WriteLine(ex.Message);
                 }
             }
+            _pluginManager.OnClosing();
             try
             {
                 await _optionsLoader.WriteAsync(GetOptionsPath(), _io, _options);

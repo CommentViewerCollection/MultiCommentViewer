@@ -257,7 +257,11 @@ if $(ConfigurationName) == Release (
       $(PostBuildEventDependsOn);
       PostBuildMacros;
     </PostBuildEventDependsOn>
-    <PostBuildEvent>:: settingsディレクトリを作成
+    <PostBuildEvent>:: フォルダがごちゃごちゃしていると実行ファイルを見つけにくいからdllディレクトリを作成し、全部突っ込む
+if $(ConfigurationName) == Release (
+  powershell.exe -ExecutionPolicy Unrestricted -file "$(ProjectDir)\postbuild.ps1" -targetDir $(TargetDir) -targetName $(TargetName)
+)
+:: settingsディレクトリを作成
 if not exist settings mkdir settings
 :: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある
 powershell New-Item settings\placeholder -ItemType file

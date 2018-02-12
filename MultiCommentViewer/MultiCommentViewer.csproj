@@ -240,7 +240,7 @@
   <PropertyGroup>
     <PreBuildEvent>:: 余分なファイルをリリースしてしまわないように一旦全部消す
 if $(ConfigurationName) == Release (
-  powershell Remove-Item -Path "$(TargetDir)*" -recurse
+  powershell Remove-Item -Path '$(TargetDir)*' -Recurse -ErrorAction Ignore
 )
 </PreBuildEvent>
   </PropertyGroup>
@@ -259,23 +259,23 @@ if $(ConfigurationName) == Release (
     </PostBuildEventDependsOn>
     <PostBuildEvent>:: フォルダがごちゃごちゃしていると実行ファイルを見つけにくいからdllディレクトリを作成し、全部突っ込む
 if $(ConfigurationName) == Release (
-  powershell.exe -ExecutionPolicy Unrestricted -file "$(ProjectDir)\postbuild.ps1" -targetDir $(TargetDir) -targetName $(TargetName)
+  powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\postbuild.ps1" -TargetDir "$(TargetDir) "  -TargetName "$(TargetName)"
 )
 :: settingsディレクトリを作成
 if not exist settings mkdir settings
 :: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある
-powershell New-Item settings\placeholder -ItemType file
+if not exist settings\placeholder powershell New-Item settings\placeholder -ItemType file
 
 :: BouyomiPluginのファイルを全部持ってくる
 mkdir plugins\Bouyomi
 copy "..\..\..\BouyomiPlugin\bin\Debug\*" "plugins\Bouyomi\"
 
 :: 自動アップデートに必要なlist.txtを作成
-powershell.exe -ExecutionPolicy Unrestricted -file "$(ProjectDir)\updateFileList.ps1" -targetDir $(TargetDir)
+powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList.ps1" -TargetDir "$(TargetDir)\"
 
 ::zip化
 if $(ConfigurationName) == Release (
-  powershell compress-archive  -Path  "$(TargetDir)*" -DestinationPath "$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip" -Force
+  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip' -Force
 )</PostBuildEvent>
   </PropertyGroup>
 </Project>

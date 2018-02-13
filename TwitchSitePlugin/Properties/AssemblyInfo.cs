@@ -38,3 +38,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("TwitchMessageProviderTestClient")]
 [assembly:InternalsVisibleTo("TwitchSitePluginTests")]
 [assembly:InternalsVisibleTo("TwitchTestClient")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

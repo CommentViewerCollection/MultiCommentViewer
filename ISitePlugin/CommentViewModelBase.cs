@@ -29,13 +29,49 @@ namespace SitePlugin
 
         public virtual IEnumerable<IMessagePart> Thumbnail => null;
 
-        public FontFamily FontFamily { get { return _options.FontFamily; } }
+        public FontFamily FontFamily
+        {
+            get
+            {
+                if (IsFirstComment)
+                    return _options.FirstCommentFontFamily;
+                else
+                    return _options.FontFamily;
+            }
+        }
 
-        public FontStyle FontStyle { get { return _options.FontStyle; } }
+        public FontStyle FontStyle
+        {
+            get
+            {
+                if (IsFirstComment)
+                    return _options.FirstCommentFontStyle;
+                else
+                    return _options.FontStyle;
+            }
+        }
 
-        public FontWeight FontWeight { get { return _options.FontWeight; } }
+        public FontWeight FontWeight
+        {
+            get
+            {
+                if (IsFirstComment)
+                    return _options.FirstCommentFontWeight;
+                else
+                    return _options.FontWeight;
+            }
+        }
 
-        public int FontSize { get { return _options.FontSize; } }
+        public int FontSize
+        {
+            get
+            {
+                if (IsFirstComment)
+                    return _options.FirstCommentFontSize;
+                else
+                    return _options.FontSize;
+            }
+        }
 
         public SolidColorBrush Foreground => new SolidColorBrush(_options.ForeColor);
 

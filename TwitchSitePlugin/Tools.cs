@@ -28,7 +28,10 @@ namespace TwitchSitePlugin
         {
             var emotes = result.Tags["emotes"];
             var message = result.Params[1];
-
+            return GetMessageItems(message, emotes);
+        }
+        public static List<IMessagePart> GetMessageItems(string message, string emotes)
+        { 
             if (string.IsNullOrEmpty(emotes))
             {
                 return new List<IMessagePart> { new MessageText(message) };

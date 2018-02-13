@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Media;
 using Common;
 using System.Linq;
+using System.Diagnostics;
 using System.Windows.Threading;
 using System.Collections.ObjectModel;
 namespace TwitchSitePlugin
@@ -191,14 +192,18 @@ namespace TwitchSitePlugin
             CanDisconnect = false;
         }
     }
-    class CommentData
+    class CommentData : ICommentData
     {
         public string UserId { get; }
         public string Username { get; }
+        public string Message { get; }
+        public string Emotes { get; }
         public CommentData(Result result)
         {
             if (result == null)
                 throw new ArgumentNullException(nameof(result));
+            Debug.Assert(result.Command == "PRIVMSG");
+
             if (!result.Tags.TryGetValue("username", out string name))
             {
                 if (!result.Tags.TryGetValue("login", out name))
@@ -211,6 +216,7 @@ namespace TwitchSitePlugin
             {
                 UserId = userId;
             }
+            Message = result.Params[1];
         }
     }
     class MyWebClient : WebClient

@@ -80,6 +80,7 @@
   <ItemGroup>
     <Compile Include="Command.cs" />
     <Compile Include="CommentProvider.cs" />
+    <Compile Include="ICommentData.cs" />
     <Compile Include="Me.cs" />
     <Compile Include="MessageProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

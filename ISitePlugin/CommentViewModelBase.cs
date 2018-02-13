@@ -25,7 +25,7 @@ namespace SitePlugin
 
         public bool IsInfo { get; }
 
-        public bool IsFirstComment { get; }
+        public bool IsFirstComment { get; protected set; }
 
         public virtual IEnumerable<IMessagePart> Thumbnail => null;
 

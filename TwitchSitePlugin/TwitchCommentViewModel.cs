@@ -8,10 +8,12 @@ namespace TwitchSitePlugin
         public override string UserId { get; }
         private readonly IOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
-        public TwitchCommentViewModel(ConnectionName connectionName, IOptions options, TwitchSiteOptions siteOptions, Result result, LowObject.Emoticons emoticons) : base(connectionName, options)
+        public TwitchCommentViewModel(ConnectionName connectionName, IOptions options, TwitchSiteOptions siteOptions,
+            Result result, LowObject.Emoticons emoticons, bool isFirstComment) : base(connectionName, options)
         {
             _options = options;
             _siteOptions = siteOptions;
+            IsFirstComment = isFirstComment;
 
             Debug.Assert(result.Command == "PRIVMSG");
 

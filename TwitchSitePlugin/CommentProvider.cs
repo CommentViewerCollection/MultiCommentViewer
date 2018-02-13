@@ -9,6 +9,9 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using Common;
+using System.Linq;
+using System.Windows.Threading;
+using System.Collections.ObjectModel;
 namespace TwitchSitePlugin
 {
 
@@ -100,14 +103,29 @@ namespace TwitchSitePlugin
         LowObject.Emoticons _emotIcons;
         private async void Provider_Received(object sender, Result e)
         {
-            switch (e.Command)
+            var result = e;
+            switch (result.Command)
             {
                 case "GLOBALUSERSTATE":
                     await _provider.SendAsync($"JOIN " + _channelName);
                     break;
                 case "PRIVMSG":
-                    var cvm = new TwitchCommentViewModel(_connectionName, _options, _siteOptions, e, _emotIcons);
-                    CommentReceived?.Invoke(this, cvm);
+                    {
+                        var commentData = new CommentData(result);
+                        var user = _userStore.GetUser(commentData.UserId);
+                        if(!_userCommentDict.TryGetValue(user, out ObservableCollection<TwitchCommentViewModel> userComments))
+                        {
+                            userComments = new ObservableCollection<TwitchCommentViewModel>();
+                            _userCommentDict.Add(user, userComments);
+                        }
+                        var isFirstComment = userComments.Count == 0;
+                        var cvm = new TwitchCommentViewModel(_connectionName, _options, _siteOptions, result, _emotIcons, isFirstComment);
+                        await _dispatcher.BeginInvoke((Action)(() =>
+                        {   
+                            userComments.Add(cvm);
+                        }));
+                        CommentReceived?.Invoke(this, cvm);
+                    }
                     break;
             }
         }
@@ -140,9 +158,10 @@ namespace TwitchSitePlugin
             _provider.Disconnect();
         }
 
-        public List<ICommentViewModel> GetUserComments(IUser user)
+        public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
-            throw new NotImplementedException();
+            var comments = _userCommentDict[user];
+            return comments;
         }
 
         public async Task PostCommentAsync(string text)
@@ -150,13 +169,15 @@ namespace TwitchSitePlugin
             var s = $"PRIVMSG {_channelName} :{text}";
             await Task.FromResult<object>(null);
         }
+        private readonly Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>>();
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
-        public TwitchCommentProvider(ConnectionName connectionName, IDataServer server, ILogger logger, IOptions options, TwitchSiteOptions siteOptions, IUserStore userStore)
+        private readonly Dispatcher _dispatcher;
+        public TwitchCommentProvider(ConnectionName connectionName, IDataServer server, ILogger logger, IOptions options, TwitchSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
         {
             _connectionName = connectionName;
             _server = server;
@@ -164,9 +185,32 @@ namespace TwitchSitePlugin
             _options = options;
             _siteOptions = siteOptions;
             _userStore = userStore;
+            _dispatcher = dispacher;
 
             CanConnect = true;
             CanDisconnect = false;
+        }
+    }
+    class CommentData
+    {
+        public string UserId { get; }
+        public string Username { get; }
+        public CommentData(Result result)
+        {
+            if (result == null)
+                throw new ArgumentNullException(nameof(result));
+            if (!result.Tags.TryGetValue("username", out string name))
+            {
+                if (!result.Tags.TryGetValue("login", out name))
+                {
+                    name = result.Prefix.Split('!')[0];
+                }
+            }
+            Username = name;
+            if (result.Tags.TryGetValue("user-id", out string userId))
+            {
+                UserId = userId;
+            }
         }
     }
     class MyWebClient : WebClient

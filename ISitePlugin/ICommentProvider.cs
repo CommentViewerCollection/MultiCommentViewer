@@ -25,7 +25,7 @@ namespace SitePlugin
         Task PostCommentAsync(string text);
         Task ConnectAsync(string input, IBrowserProfile browserProfile);
         void Disconnect();
-        List<ICommentViewModel> GetUserComments(IUser user);
+        IEnumerable<ICommentViewModel> GetUserComments(IUser user);
         bool CanConnect { get; }
         bool CanDisconnect { get; }
         event EventHandler CanConnectChanged;

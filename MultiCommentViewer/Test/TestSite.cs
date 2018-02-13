@@ -231,7 +231,7 @@ namespace MultiCommentViewer.Test
             }
         }
 
-        public List<ICommentViewModel> GetUserComments(IUser user)
+        public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
             throw new NotImplementedException();
         }

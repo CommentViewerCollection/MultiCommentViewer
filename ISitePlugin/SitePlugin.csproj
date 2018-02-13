@@ -53,6 +53,7 @@
     <Compile Include="IOptions.cs" />
     <Compile Include="IOptionsTabPage.cs" />
     <Compile Include="ISiteContext.cs" />
+    <Compile Include="IUserStore.cs" />
     <Compile Include="MessagePart.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SiteType.cs" />

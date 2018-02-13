@@ -155,13 +155,15 @@ namespace TwitchSitePlugin
         private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
-        public TwitchCommentProvider(ConnectionName connectionName, IDataServer server, ILogger logger, IOptions options, TwitchSiteOptions siteOptions)
+        private readonly IUserStore _userStore;
+        public TwitchCommentProvider(ConnectionName connectionName, IDataServer server, ILogger logger, IOptions options, TwitchSiteOptions siteOptions, IUserStore userStore)
         {
             _connectionName = connectionName;
             _server = server;
             _logger = logger;
             _options = options;
             _siteOptions = siteOptions;
+            _userStore = userStore;
 
             CanConnect = true;
             CanDisconnect = false;

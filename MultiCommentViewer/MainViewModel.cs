@@ -121,7 +121,7 @@ namespace MultiCommentViewer
             {
                 //Observable.Interval()
                 //_optionsLoader.LoadAsync().
-                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger);
+                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dispatcher);
                 foreach (var site in _siteContexts)
                 {
                     site.LoadOptions(_options.SettingsDirPath, _io);
@@ -303,7 +303,7 @@ namespace MultiCommentViewer
                     var comment = e;
                     if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
                     {
-                        var user = _userStore.Get(comment.UserId);
+                        var user = _userStore.GetUser(comment.UserId);
                         uvm = new UserViewModel(user, _options);
                         _userDict.Add(comment.UserId, uvm);
                     }
@@ -719,10 +719,6 @@ namespace MultiCommentViewer
             return list;
         }
     }
-    public interface IUserStore
-    {
-        IUser Get(string userid);
-    }
     public class UserTest : IUser
     {
         public string UserId { get { return _userid; } }
@@ -770,7 +766,7 @@ namespace MultiCommentViewer
     public class UserStoreTest : IUserStore
     {
         Dictionary<string, IUser> _dict = new Dictionary<string, IUser>();
-        public IUser Get(string userid)
+        public IUser GetUser(string userid)
         {
             if (!_dict.TryGetValue(userid, out IUser user))
             {
@@ -778,6 +774,16 @@ namespace MultiCommentViewer
                 _dict.Add(userid, user);
             }
             return user;
+        }
+
+        public void Init()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(IUser user)
+        {
+            throw new NotImplementedException();
         }
     }
     public class PluginMenuItemViewModel:ViewModelBase

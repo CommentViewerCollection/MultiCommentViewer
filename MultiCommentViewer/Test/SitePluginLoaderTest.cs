@@ -5,15 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 using SitePlugin;
 using Common;
+using System.Windows.Threading;
 namespace MultiCommentViewer.Test
 {
     public class SitePluginLoaderTest : ISitePluginLoader
     {
-        public IEnumerable<ISiteContext> LoadSitePlugins(IOptions options, ILogger logger)
+        public IEnumerable<ISiteContext> LoadSitePlugins(IOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
         {
             return new List<ISiteContext>
             {
-                new TwitchSitePlugin.TwitchSiteContext(options, logger),
+                new TwitchSitePlugin.TwitchSiteContext(options, logger, userStore, dispatcher),
                 //new TestSiteContext(options, logger),
                 new YouTubeLiveSitePlugin.Old.YouTubeLiveSiteContext(options),
                 //new NicoSitePlugin.Test.NicoSiteContext(options),

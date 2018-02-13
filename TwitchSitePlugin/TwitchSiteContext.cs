@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using SitePlugin;
 using System.Diagnostics;
+using System.Windows.Threading;
 using Common;
 namespace TwitchSitePlugin
 {
@@ -24,7 +25,7 @@ namespace TwitchSitePlugin
 
         public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
         {
-            return new TwitchCommentProvider(connectionName, new TwitchServer(), _logger, _options, _siteOptions);
+            return new TwitchCommentProvider(connectionName, new TwitchServer(), _logger, _options, _siteOptions,_userStore);
         }
         private TwitchSiteOptions _siteOptions;
         public void LoadOptions(string dir, IIo io)
@@ -48,10 +49,14 @@ namespace TwitchSitePlugin
         }
         private readonly IOptions _options;
         private readonly ILogger _logger;
-        public TwitchSiteContext(IOptions options, ILogger logger)
+        private readonly IUserStore _userStore;
+        private readonly Dispatcher _dispatcher;
+        public TwitchSiteContext(IOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
         {
             _options = options;
             _logger = logger;
+            _userStore = userStore;
+            _dispatcher = dispatcher;
         }
     }
 }

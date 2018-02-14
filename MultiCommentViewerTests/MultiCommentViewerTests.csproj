@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="ConnectionViewModelTests.cs" />
     <Compile Include="DynamicOptionsTest.cs" />
     <Compile Include="LoggerTestTests.cs" />
     <Compile Include="MainViewModelTests.cs" />

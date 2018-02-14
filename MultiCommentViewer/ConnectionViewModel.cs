@@ -12,7 +12,8 @@ namespace MultiCommentViewer
 {
     public class ConnectionViewModel:ViewModelBase
     {
-        public string ConnectionName
+        public ConnectionName ConnectionName => _connectionName;
+        public string Name
         {
             get { return _connectionName.Name; }
             set { _connectionName.Name = value; }
@@ -55,7 +56,7 @@ namespace MultiCommentViewer
         {
             MetadataReceived?.Invoke(this, e);//senderはConnection
         }
-
+        public event EventHandler<RenamedEventArgs> Renamed;
         public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataReceived;
         private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
@@ -122,11 +123,25 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
+        string _beforeName;
         private readonly ILogger _logger;
         public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger)
         {
             _logger = logger;
             _connectionName = connectionName ?? throw new ArgumentNullException(nameof(connectionName));
+            _beforeName = _connectionName.Name;
+            _connectionName.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(_connectionName.Name):
+                        var newName = _connectionName.Name;
+                        Renamed?.Invoke(this, new RenamedEventArgs(_beforeName, newName));
+                        _beforeName = newName;
+                        break;
+                }
+            };
+
             if(sites == null)
             {
                 throw new ArgumentNullException(nameof(sites));
@@ -143,8 +158,17 @@ namespace MultiCommentViewer
                 SelectedBrowser = Browsers[0];
             }
             ConnectCommand = new RelayCommand(Connect);
-            DisconnectCommand = new RelayCommand(Disconnect);
+            DisconnectCommand = new RelayCommand(Disconnect);            
         }
     }
-
+    public class RenamedEventArgs : EventArgs
+    {
+        public string NewValue { get; }
+        public string OldValue { get; }
+        public RenamedEventArgs(string oldValue, string newValue)
+        {
+            OldValue = oldValue;
+            NewValue = newValue;
+        }
+    }
 }

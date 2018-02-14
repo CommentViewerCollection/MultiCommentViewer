@@ -137,7 +137,7 @@
                                     </GridViewColumn.Header>
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBox Text="{Binding ConnectionName, UpdateSourceTrigger=LostFocus}" Width="50" />
+                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="50" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

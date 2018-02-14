@@ -202,6 +202,7 @@ namespace MultiCommentViewer
                     var meta = _metaDict[conn];
                     _metaDict.Remove(conn);
                     MetaCollection.Remove(meta);
+                    OnConnectionDeleted(conn.ConnectionName);
                 }
                 //TODO:この接続に関連するコメントも全て消したい
 
@@ -226,15 +227,17 @@ namespace MultiCommentViewer
         {
             try
             {
-                var name = GetDefaultName(Connections.Select(c => c.ConnectionName));
+                var name = GetDefaultName(Connections.Select(c => c.Name));
                 var connectionName = new ConnectionName { Name = name };
                 var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger);
+                connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 var metaVm = new MetadataViewModel(connectionName);
                 _metaDict.Add(connection, metaVm);
                 MetaCollection.Add(metaVm);
                 Connections.Add(connection);
+                OnConnectionAdded(connectionName);
             }
             catch (Exception ex)
             {
@@ -242,6 +245,23 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
                 Debugger.Break();
             }
+        }
+
+        private void Connection_Renamed(object sender, RenamedEventArgs e)
+        {
+            //TODO:プラグインに通知
+            Debug.WriteLine($"ConnectionRenamed:{e.OldValue}→{e.NewValue}");
+        }
+
+        private void OnConnectionAdded(ConnectionName connectionName)
+        {
+            //TODO:プラグインに通知
+            Debug.WriteLine($"ConnectionAdded:{connectionName.Guid}");
+        }
+        private void OnConnectionDeleted(ConnectionName connectionName)
+        {
+            //TODO:プラグインに通知
+            Debug.WriteLine($"ConnectionDeleted:{connectionName.Guid}");
         }
         string Name
         {

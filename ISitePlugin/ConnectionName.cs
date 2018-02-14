@@ -5,6 +5,7 @@ namespace SitePlugin
 {
     public class ConnectionName:INotifyPropertyChanged
     {
+        public Guid Guid { get; }
         private string _name;
         public string Name
         {
@@ -17,7 +18,7 @@ namespace SitePlugin
         }
         public ConnectionName()
         {
-
+            Guid = Guid.NewGuid();
         }
 
         #region INotifyPropertyChanged

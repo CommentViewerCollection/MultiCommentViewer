@@ -113,6 +113,11 @@ namespace MultiCommentViewer
         {
             return System.IO.Path.Combine(_options.SettingsDirPath, "options.txt");
         }
+        private string GetSiteOptionsPath(ISiteContext site)
+        {
+            var path = System.IO.Path.Combine(_options.SettingsDirPath, site.DisplayName + ".txt");
+            return path;
+        }
         private async void ContentRendered()
         {
             //なんか気持ち悪い書き方だけど一応動く。
@@ -124,7 +129,8 @@ namespace MultiCommentViewer
                 _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dispatcher);
                 foreach (var site in _siteContexts)
                 {
-                    site.LoadOptions(_options.SettingsDirPath, _io);
+                    var path = GetSiteOptionsPath(site);
+                    site.LoadOptions(path, _io);
                 }
                 _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
 
@@ -156,10 +162,6 @@ namespace MultiCommentViewer
             }
         }
         bool canClose = false;
-        private string GetSiteOptionsPath(ISiteContext site, IOptions options)
-        {
-            return System.IO.Path.Combine(options.SettingsDirPath, site.DisplayName + ".json");
-        }
         private async void Closing(CancelEventArgs e)
         {
             e.Cancel = !canClose;
@@ -170,7 +172,8 @@ namespace MultiCommentViewer
             {
                 try
                 {
-                    site.SaveOptions(GetSiteOptionsPath(site, _options), _io);
+                    var path = GetSiteOptionsPath(site);
+                    site.SaveOptions(path, _io);
                 }
                 catch (Exception ex)
                 {

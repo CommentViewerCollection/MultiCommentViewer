@@ -11,6 +11,7 @@ namespace TwitchSitePlugin
         public TwitchCommentViewModel(ConnectionName connectionName, IOptions options, TwitchSiteOptions siteOptions,
             ICommentData commentData, LowObject.Emoticons emoticons, bool isFirstComment) : base(connectionName, options)
         {
+            Id = commentData.Id;
             UserId = commentData.UserId;
             NameItems = new List<IMessagePart> { new MessageText(commentData.Username) };
             MessageItems = Tools.GetMessageItems(commentData.Message, commentData.Emotes);
@@ -24,7 +25,6 @@ namespace TwitchSitePlugin
             IsFirstComment = isFirstComment;
 
             Debug.Assert(result.Command == "PRIVMSG");
-
             if (!result.Tags.TryGetValue("username", out string name))
             {
                 if (!result.Tags.TryGetValue("login", out name))

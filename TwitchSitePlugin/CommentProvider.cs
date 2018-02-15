@@ -198,6 +198,7 @@ namespace TwitchSitePlugin
         public string Username { get; }
         public string Message { get; }
         public string Emotes { get; }
+        public string Id { get; }
         public CommentData(Result result)
         {
             if (result == null)
@@ -212,6 +213,10 @@ namespace TwitchSitePlugin
                 }
             }
             Username = name;
+            if (result.Tags.TryGetValue("id", out string id))
+            {
+                Id = id;
+            }
             if (result.Tags.TryGetValue("user-id", out string userId))
             {
                 UserId = userId;

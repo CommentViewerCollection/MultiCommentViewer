@@ -108,7 +108,6 @@ namespace TwitchSitePlugin
             switch (result.Command)
             {
                 case "GLOBALUSERSTATE":
-                    await _provider.SendAsync($"JOIN " + _channelName);
                     break;
                 case "PRIVMSG":
                     {
@@ -148,6 +147,7 @@ namespace TwitchSitePlugin
                 await _provider.SendAsync($"NICK {name}");
                 await _provider.SendAsync($"USER {name} 8 * :{name}");
             }
+            await _provider.SendAsync($"JOIN " + _channelName);
         }
         private bool IsLoggedIn()
         {

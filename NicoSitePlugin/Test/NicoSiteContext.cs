@@ -2,6 +2,7 @@
 using SitePlugin;
 using System.Diagnostics;
 using Common;
+using System.Text.RegularExpressions;
 namespace NicoSitePlugin.Test
 {
     public class NicoSiteContext : ISiteContext
@@ -46,6 +47,12 @@ namespace NicoSitePlugin.Test
         {
             var s = _siteOptions.Serialize();
             io.WriteFile(path, s);
+        }
+
+        public bool IsValidInput(string input)
+        {
+            var b = Regex.IsMatch(input, "lv\\d+");
+            return b;
         }
         private NicoSiteOptions _siteOptions;
         private readonly IOptions _options;

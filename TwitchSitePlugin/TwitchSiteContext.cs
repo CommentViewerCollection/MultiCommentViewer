@@ -5,6 +5,7 @@ using SitePlugin;
 using System.Diagnostics;
 using System.Windows.Threading;
 using Common;
+using System.Text.RegularExpressions;
 namespace TwitchSitePlugin
 {
     public class TwitchSiteContext : ISiteContext
@@ -46,6 +47,13 @@ namespace TwitchSitePlugin
             {
                 Debug.WriteLine(ex.Message);
             }
+        }
+        public bool IsValidInput(string input)
+        {
+            //チャンネル名だけ来られても他のサイトのものの可能性があるからfalse
+            //"twitch.tv/"の後に文字列があったらtrueとする。
+            var b = Regex.IsMatch(input, "twitch\\.tv/[a-zA-Z0-9_]+");
+            return b;
         }
         private readonly IOptions _options;
         private readonly ILogger _logger;

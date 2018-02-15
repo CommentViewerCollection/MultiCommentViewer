@@ -6,6 +6,7 @@ using System.Windows.Input;
 using SitePlugin;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using Common;
 
 namespace MultiCommentViewer
@@ -31,6 +32,8 @@ namespace MultiCommentViewer
             get { return _selectedSite; }
             set
             {
+                if (_selectedSite == value)
+                    return;
                 //一番最初は_commentProviderはnull
                 var before = _commentProvider;
                 if (before != null)
@@ -47,7 +50,7 @@ namespace MultiCommentViewer
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
                 next.CommentReceived += CommentProvider_CommentReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
-
+                
                 RaisePropertyChanged();
             }
         }
@@ -92,7 +95,23 @@ namespace MultiCommentViewer
         {
             get { return _commentProvider.CanDisconnect; }
         }
-        public string Input { get; set; }
+        private string _input;
+        public string Input
+        {
+            get { return _input; }
+            set
+            {
+                if (_input == value)
+                    return;
+                _input = value;
+                var sc = _sites.FirstOrDefault(site => site.IsValidInput(_input));
+                if(sc != null)
+                {
+                    var vm = _siteVmDict[sc];
+                    SelectedSite = vm;
+                }
+            }
+        }
         
 
 
@@ -125,6 +144,8 @@ namespace MultiCommentViewer
         }
         string _beforeName;
         private readonly ILogger _logger;
+        private readonly IEnumerable<ISiteContext> _sites;
+        private readonly Dictionary<ISiteContext, SiteViewModel> _siteVmDict = new Dictionary<ISiteContext, SiteViewModel>();
         public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger)
         {
             _logger = logger;
@@ -146,7 +167,14 @@ namespace MultiCommentViewer
             {
                 throw new ArgumentNullException(nameof(sites));
             }
-            Sites = new ObservableCollection<SiteViewModel>(sites);
+            _sites = sites.Select(m => m.Site);
+            Sites = new ObservableCollection<SiteViewModel>();
+            foreach(var siteVm in sites)
+            {
+                _siteVmDict.Add(siteVm.Site, siteVm);
+                Sites.Add(siteVm);
+            }
+            //Sites = new ObservableCollection<SiteViewModel>(sites);
             if(Sites.Count > 0)
             {
                 SelectedSite = Sites[0];

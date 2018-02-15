@@ -31,7 +31,11 @@ namespace MultiCommentViewer.Test
                 return new TestOptionsTabPage(DisplayName, panel);
             }
         }
-
+        public bool IsValidInput(string input)
+        {
+            //always true
+            return true;
+        }
         public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
         {
             return new TestSiteCommentProvider(connectionName,_options, _siteOptions);

@@ -33,6 +33,12 @@ namespace YouTubeLiveSitePlugin.Old
         {
 
         }
+
+        public bool IsValidInput(string input)
+        {
+            return false;
+        }
+
         private readonly IOptions _options;
         private YouTubeSiteOptions _siteOptions;
         public YouTubeLiveSiteContext(IOptions options)

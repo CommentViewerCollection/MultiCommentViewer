@@ -1,0 +1,15 @@
+﻿<Window x:Class="TwicasCommentProviderTestClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TwicasCommentProviderTestClient"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Button Content="接続" Command="{Binding ConnectCommand}" IsEnabled="{Binding CanConnect}" HorizontalAlignment="Left" Margin="300,55,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Content="切断" Command="{Binding DisconnectCommand}" IsEnabled="{Binding CanDisconnect}" HorizontalAlignment="Left" Margin="405,55,0,0" VerticalAlignment="Top" Width="75"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="30,27,0,0" TextWrapping="Wrap" Text="{Binding BroadcasterId}" VerticalAlignment="Top" Width="325"/>
+
+    </Grid>
+</Window>

@@ -104,11 +104,30 @@ namespace MultiCommentViewer
                 if (_input == value)
                     return;
                 _input = value;
-                var sc = _sites.FirstOrDefault(site => site.IsValidInput(_input));
+
+                ISiteContext sc = null;
+                foreach (var site in _sites)
+                {
+                    try
+                    {
+                        site.IsValidInput(_input);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex, "", _input);
+                    }
+                }
                 if(sc != null)
                 {
-                    var vm = _siteVmDict[sc];
-                    SelectedSite = vm;
+                    try
+                    {
+                        var vm = _siteVmDict[sc];
+                        SelectedSite = vm;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
                 }
             }
         }

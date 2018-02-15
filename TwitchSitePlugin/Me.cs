@@ -57,6 +57,13 @@ namespace TwitchSitePlugin
             var low = JsonConvert.DeserializeObject<LowObject.Emoticons>(s);
             return low;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="server"></param>
+        /// <param name="cc"></param>
+        /// <returns></returns>
+        /// <exception cref="NotLoggedInException"></exception>
         public static async Task<IMe> GetMeAsync(IDataServer server, CookieContainer cc)
         {
             var cookieList = Tools.ExtractCookies(cc);

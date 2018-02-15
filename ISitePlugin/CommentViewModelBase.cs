@@ -11,23 +11,23 @@ namespace SitePlugin
     {
         public string ConnectionName { get { return _connectionName.Name; } }
 
-        public virtual IEnumerable<IMessagePart> NameItems { get; set; }
+        public virtual IEnumerable<IMessagePart> NameItems { get; protected set; }
 
-        public virtual IEnumerable<IMessagePart> MessageItems { get; set; }
+        public virtual IEnumerable<IMessagePart> MessageItems { get; protected set; }
 
-        public virtual string Info => null;
+        public virtual string Info { get; protected set; }
 
-        public virtual string Id => null;
+        public virtual string Id { get; protected set; }
 
         public virtual IUser User { get; set; }
 
         public abstract string UserId { get; }
 
-        public bool IsInfo { get; }
+        public bool IsInfo { get; protected set; }
 
         public bool IsFirstComment { get; protected set; }
 
-        public virtual IEnumerable<IMessagePart> Thumbnail => null;
+        public virtual IEnumerable<IMessagePart> Thumbnail { get; protected set; }
 
         public FontFamily FontFamily
         {

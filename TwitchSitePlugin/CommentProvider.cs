@@ -79,6 +79,7 @@ namespace TwitchSitePlugin
                 {
                     _me = await API.GetMeAsync(_server, cc);
                 }
+                catch (NotLoggedInException){ }
                 catch (Exception ex)
                 {
                     _logger.LogException(ex);

@@ -110,7 +110,11 @@ namespace MultiCommentViewer
                 {
                     try
                     {
-                        site.IsValidInput(_input);
+                        if (site.IsValidInput(_input))
+                        {
+                            sc = site;
+                            break;
+                        }
                     }
                     catch (Exception ex)
                     {

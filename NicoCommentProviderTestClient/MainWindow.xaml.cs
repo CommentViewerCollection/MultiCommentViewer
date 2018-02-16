@@ -16,13 +16,14 @@ using System.Windows.Shapes;
 using NicoSitePlugin.Test2;
 using System.Net;
 using ryu_s.BrowserCookie;
-using NicoSitePlugin.Test;
+using NicoSitePlugin.Old;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Threading;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
+using Common;
 
 namespace NicoCommentProviderTestClient
 {
@@ -217,10 +218,13 @@ namespace NicoCommentProviderTestClient
         }
         private readonly CommentProvider _provider;
         private readonly Dispatcher _dispatcher;
+        private readonly ILogger _logger;
+
         public MainViewModel()
         {
+            _logger = new Logger();
             _dispatcher = Dispatcher.CurrentDispatcher;
-            _provider = new CommentProvider(100);
+            _provider = new CommentProvider(100, _logger);
             _provider.CommentReceived += _provider_CommentReceived;
             _provider.InitialCommentsReceived += _provider_InitialCommentsReceived;
             AddCommand = new RelayCommand(Add);
@@ -248,6 +252,23 @@ namespace NicoCommentProviderTestClient
                 await Task.Delay(1 * 60 * 1000);
                 _provider.Disconnect();
             }
+        }
+    }
+    public class Logger : ILogger
+    {
+        public string GetExceptions()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void LogException(Exception ex, string message = "", string detail = "")
+        {
+            Debug.WriteLine("{");
+            Debug.WriteLine("\t" + ex.Message);
+            Debug.WriteLine("\t" + ex.StackTrace);
+            Debug.WriteLine("\t" + message);
+            Debug.WriteLine("\t" + detail);
+            Debug.WriteLine("}");
         }
     }
     public class CommentViewModel

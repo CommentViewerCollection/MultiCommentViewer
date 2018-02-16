@@ -1,4 +1,4 @@
-﻿namespace NicoSitePlugin.Test
+﻿namespace NicoSitePlugin.Old
 {
     public enum ProviderType
     {

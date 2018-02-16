@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SitePlugin;
 using System.Windows.Controls;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public class NicoOptionsTabPage : IOptionsTabPage
     {

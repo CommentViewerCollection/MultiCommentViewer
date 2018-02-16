@@ -14,13 +14,13 @@ namespace MultiCommentViewer.Test
         {
             return new List<ISiteContext>
             {
-                new TwitchSitePlugin.TwitchSiteContext(options, logger, userStore, dispatcher),                
-                new YouTubeLiveSitePlugin.Old.YouTubeLiveSiteContext(options),
-                new NicoSitePlugin.Test.NicoSiteContext(options),
-                new TwicasSitePlugin.TwicasSiteContext(options,logger, userStore, dispatcher),
-#if DEBUG
-                new TestSiteContext(options, logger),
-#endif
+//                new TwitchSitePlugin.TwitchSiteContext(options, logger, userStore, dispatcher),                
+//                new YouTubeLiveSitePlugin.Old.YouTubeLiveSiteContext(options),
+                new NicoSitePlugin.Old.NicoSiteContext(options, logger, userStore),
+//                new TwicasSitePlugin.TwicasSiteContext(options,logger, userStore, dispatcher),
+//#if DEBUG
+//                new TestSiteContext(options, logger),
+//#endif
             };
         }
     }

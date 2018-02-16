@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 using SitePlugin;
 using System.ComponentModel;
 
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     /// <summary>
     /// Interaction logic for NicoOptionsPanel.xaml

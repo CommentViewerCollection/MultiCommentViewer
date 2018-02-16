@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public class ResolverOptions
     {
@@ -194,8 +194,25 @@ namespace NicoSitePlugin.Test
             switch (providerType)
             {
                 case ProviderType.Community:
+                {
+                    //コミュニティ
+                    var communityInfo = await API.GetCommunityInfo(dataSource, defaultCommunity);
+                    var roomCount = Tools.GetCommunityRoomCount(communityInfo.nicovideo_community_response.community.Level);
+                    var currentOffset = GetCommunityCurrentOffset(defaultCommunity, roomLabel);
+                    var roomLabels = GetCommunityRoomLabels(defaultCommunity, roomCount);
+                    var arenaThread = (int.Parse(ms.Thread) - currentOffset).ToString();
+                    var addrPortArr = LiveServerInfo.CommunityAddrPortArr;
+                    var currentPos = LiveServerInfo.GetAddrPortArrPos(addrPortArr, (string)ms.Addr, ms.Port);
+                    var arenaPos = Tools.ResolveLoopNext(0, addrPortArr.Length - 1, currentPos, -currentOffset);
 
-                    break;
+                    for (int i = 0; i < roomCount; i++)
+                    {
+                        var pos =Tools.ResolveLoopNext(0, addrPortArr.Length - 1, arenaPos, i);
+                        var addrPort = addrPortArr[pos];
+                        rooms.Add(new RoomInfo(new MsTest(addrPort.Addr + ".live.nicovideo.jp", (int.Parse(arenaThread) + i).ToString(), addrPort.Port), roomLabels[i]));
+                    }
+                }
+                break;
                 case ProviderType.Channel:
                     {
                         if (roomLabel == defaultCommunity || Regex.IsMatch(roomLabel, "^立ち見[A-Z]列$"))

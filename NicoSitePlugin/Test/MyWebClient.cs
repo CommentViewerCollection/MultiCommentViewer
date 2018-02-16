@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     class MyWebClient : System.Net.WebClient
     {

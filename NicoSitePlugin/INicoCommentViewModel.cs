@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SitePlugin;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public interface INicoCommentViewModel : ICommentViewModel
     {

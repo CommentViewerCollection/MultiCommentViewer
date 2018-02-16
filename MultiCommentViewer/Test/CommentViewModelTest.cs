@@ -72,6 +72,14 @@ namespace MultiCommentViewer.Test
 
         public string UserId => "abc";
 
+        public ICommentProvider CommentProvider
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public Task AfterCommentAdded()
         {
             throw new NotImplementedException();

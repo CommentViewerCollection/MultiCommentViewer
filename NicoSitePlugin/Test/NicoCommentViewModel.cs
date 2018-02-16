@@ -5,48 +5,39 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using SitePlugin;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
-    public class NicoCommentViewModel2 : CommentViewModelBase, INicoCommentViewModel
+    internal class NicoCommentViewModel2 : CommentViewModelBase, INicoCommentViewModel
     {
         //本当はIUserはコンストラクタから入れたい。でもIUserStoreにはサイト毎の実装はいらない（多分）だろうから共通の場所でやってる。
         //NameItemsはそのユーザの全てのコメントに共通のはずだからcvm内ではなくIUserとかに持たせたい
-
-        private IUser _user;
-        public override IUser User
-        {
-            get { return _user; }
-            set
-            {
-                _user = value;
-                if (_user != null)
-                {
-                    _user.PropertyChanged += (s, e) =>
-                    {
-                        switch (e.PropertyName)
-                        {
-                            case nameof(_user.Nickname):
-                                SetName();
-                                break;
-                        }
-                    };
-                }
-            }
-        }
+        
         public override string UserId => _chat.user_id;
         private readonly NicoSiteOptions _siteOptions;
         private readonly chat _chat;
-        internal NicoCommentViewModel2(ConnectionName connectionName, chat chat, IOptions options, NicoSiteOptions siteOptions) 
+        [Obsolete]
+        public NicoCommentViewModel2(ConnectionName connectionName, chat chat, IOptions options, NicoSiteOptions siteOptions) 
             : base(connectionName, options)
         {
             _siteOptions = siteOptions;
             _chat = chat;
 
-            SetName();
+            SetName(null);
             MessageItems = new List<IMessagePart> { new MessageText { Text = _chat.text } };
         }
-
-        private void SetName()
+        public NicoCommentViewModel2(ConnectionName connectionName, IOptions options, NicoSiteOptions siteOptions, 
+            chat chat, RoomInfo roomInfo, IUser user, ICommentProvider commentProvider, bool isFirstComment)
+            :base(connectionName, options)
+        {
+            _siteOptions = siteOptions;
+            _chat = chat;
+            IsFirstComment = isFirstComment;
+            CommentProvider = commentProvider;
+            SetName(user);
+            Id = $"{roomInfo.RoomLabel}:{chat.no}";
+            MessageItems = new List<IMessagePart> { new MessageText { Text = _chat.text } };
+        }
+        private void SetName(IUser _user)
         {
             if (_user == null || string.IsNullOrEmpty(_user.Nickname))
             {
@@ -124,8 +115,7 @@ namespace NicoSitePlugin.Test
 
         public SolidColorBrush Background => new SolidColorBrush(_options.BackColor);
 
-
-
+        public ICommentProvider CommentProvider { get; }
 
         public Task AfterCommentAdded()
         {

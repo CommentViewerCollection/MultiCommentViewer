@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public static class API
     {
@@ -44,7 +44,7 @@ namespace NicoSitePlugin.Test
                         UserId = ps.User.User_id,
                         RoomSeetNo = int.Parse(ps.User.Room_seetno),
                         RoomLabel = ps.User.Room_label,
-                        MsList = msList,
+                        MsList = msList ?? new IMs[0],
                     };
                     ret = new PlayerStatusResponseTest(playerStatus);
                 }
@@ -95,6 +95,18 @@ namespace NicoSitePlugin.Test
 #endif
             var url = "http://live.nicovideo.jp/api/getplayerstatus?v=" + live_id;
             return GetPlayerStatusFromUrlAsync(dataSource, url, cc);
+        }
+        public static async Task<Low.CommunityInfo> GetCommunityInfo(IDataSource dataSource, string communityId)
+        {
+            var url = $"http://api.ce.nicovideo.jp/api/v1/community.info?id={communityId}&__format=json";
+            var str = await dataSource.Get(url, null);
+
+            //C#的に不要なエスケープを削除
+            str = str.Replace("\"@key\":\"", "\"key\":\"");
+            str = str.Replace("\"@status\":\"", "\"status\":\"");
+
+            var communityInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<Low.CommunityInfo>(str);
+            return communityInfo;
         }
     }
 }

@@ -15,7 +15,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public class NicoCommentProvider : INicoCommentProvider
     {
@@ -280,7 +280,7 @@ namespace NicoSitePlugin.Test
             await socket.SendAsync(xml);
             await socket.ReceiveAsync();
         }
-        Dictionary<RoomInfo, StreamSocket> _dict = new Dictionary<RoomInfo, StreamSocket>();
+        Dictionary<RoomInfo, IStreamSocket> _dict = new Dictionary<RoomInfo, IStreamSocket>();
         
         bool IsDisconnectOffered = false;
         public void Disconnect()
@@ -358,6 +358,14 @@ namespace NicoSitePlugin.Test
         public SolidColorBrush Foreground => new SolidColorBrush(_options.InfoForeColor);
 
         public SolidColorBrush Background => new SolidColorBrush(_options.InfoBackColor);
+
+        public ICommentProvider CommentProvider
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         public Task AfterCommentAdded()
         {

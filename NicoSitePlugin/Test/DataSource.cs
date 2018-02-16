@@ -1,6 +1,6 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public class DataSource : IDataSource
     {

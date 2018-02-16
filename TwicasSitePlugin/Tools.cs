@@ -221,6 +221,8 @@ namespace TwicasSitePlugin
 
         internal static string ExtractBroadcasterId(string input)
         {
+            if (string.IsNullOrEmpty(input))
+                throw new ArgumentNullException(nameof(input));
             var match0 = Regex.Match(input, "twitcasting\\.tv/([a-zA-Z0-9:_]+)");
             if (match0.Success)
             {

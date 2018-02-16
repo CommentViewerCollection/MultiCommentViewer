@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public interface IPlayerStatus
     {

@@ -3,7 +3,7 @@ using SitePlugin;
 using System.Diagnostics;
 using Common;
 using System.Text.RegularExpressions;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public class NicoSiteContext : ISiteContext
     {
@@ -22,7 +22,8 @@ namespace NicoSitePlugin.Test
 
         public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
         {
-            return new NicoCommentProvider(connectionName, _options, _siteOptions);
+            //return new NicoCommentProvider(connectionName, _options, _siteOptions);
+            return new Test2.NicoCommentProvider3(connectionName,_options,_siteOptions, new Test2.CommentProvider2(_siteOptions.ResNum), new DataSource(), _logger, _userStore);
         }
         private string GetOptionsPath(string dir)
         {
@@ -56,9 +57,14 @@ namespace NicoSitePlugin.Test
         }
         private NicoSiteOptions _siteOptions;
         private readonly IOptions _options;
-        public NicoSiteContext(IOptions options)
+        private readonly ILogger _logger;
+        private readonly IUserStore _userStore;
+
+        public NicoSiteContext(IOptions options, ILogger logger, IUserStore userStore)
         {
             _options = options;
+            _logger = logger;
+            _userStore = userStore;
         }
     }
 }

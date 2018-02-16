@@ -4,9 +4,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Net.Sockets;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
-    class StreamSocket :IDisposable
+    class StreamSocket : IDisposable, IStreamSocket
     {
         public event EventHandler Connected;
         public event EventHandler<List<string>> Received;
@@ -34,7 +34,7 @@ namespace NicoSitePlugin.Test
                 int n = 0;
                 try
                 {
-                    n = await _stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
+                    n = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -42,7 +42,7 @@ namespace NicoSitePlugin.Test
                 }
                 if (n <= 0)
                     break;
-                _buffer.Add(receiveBuffer, 0, n);
+                _buffer.Add(_receiveBuffer, 0, n);
             }
         }
         public async Task SendAsync(string s)
@@ -66,14 +66,14 @@ namespace NicoSitePlugin.Test
         private TcpClient _client;
         private readonly string _host;
         private readonly int _port;
-        private byte[] receiveBuffer;
+        private byte[] _receiveBuffer;
         private readonly ISplitBuffer2 _buffer;
         public StreamSocket(string host, int port, int bufferSize, ISplitBuffer2 buffer)
         {
             _host = host;
             _port = port;
 
-            receiveBuffer = new byte[bufferSize];
+            _receiveBuffer = new byte[bufferSize];
             _buffer = buffer;
             _buffer.Added += _buffer_Added;
         }
@@ -92,7 +92,7 @@ namespace NicoSitePlugin.Test
             {
                 if (disposing)
                 {
-                    receiveBuffer = null;
+                    _receiveBuffer = null;
                 }
                 if (_client != null)
                 {

@@ -4,8 +4,55 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
+namespace NicoSitePlugin.Old.Low
+{
+    public class OptionFlagDetails
+    {
+        public string community_priv_user_auth { get; set; }
+        public string community_icon_upload { get; set; }
+    }
 
-namespace NicoSitePlugin.Test.Low
+    public class Community
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string description { get; set; }
+        public string channel_id { get; set; }
+        public string @public { get; set; }
+        public string type { get; set; }
+        public string official { get; set; }
+        public string option_flag { get; set; }
+        public string hidden { get; set; }
+        public string user_id { get; set; }
+        public string create_time { get; set; }
+        public string global_id { get; set; }
+        public string user_max { get; set; }
+        public string user_count { get; set; }
+        [JsonProperty("level")]
+        private string _level = "";
+        public int Level { get { return int.Parse(_level); } }
+
+        public object option { get; set; }//""の場合と、{"adult_flag":"0","allow_display_vast":"0"}のような値の場合がある
+        public string thumbnail { get; set; }
+        public string thumbnail_small { get; set; }
+        public OptionFlagDetails option_flag_details { get; set; }
+        public string top_url { get; set; }
+        public string @key { get; set; }
+    }
+
+    public class NicovideoCommunityResponse
+    {
+        public Community community { get; set; }
+        public string @status { get; set; }
+    }
+
+    public class CommunityInfo
+    {
+        public NicovideoCommunityResponse nicovideo_community_response { get; set; }
+    }
+}
+namespace NicoSitePlugin.Old.Low
 {
     [XmlRoot(ElementName = "press")]
     public class Press

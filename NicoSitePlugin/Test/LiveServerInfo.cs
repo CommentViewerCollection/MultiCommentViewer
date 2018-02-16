@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public static class LiveServerInfo
     {

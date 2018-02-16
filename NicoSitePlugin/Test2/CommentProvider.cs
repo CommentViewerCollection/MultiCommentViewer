@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NicoSitePlugin.Test;
+using NicoSitePlugin.Old;
 using System.Threading;
+using Common;
+using System.Diagnostics;
+
 namespace NicoSitePlugin.Test2
 {
     public class CommentContext
@@ -12,15 +15,154 @@ namespace NicoSitePlugin.Test2
         public chat Chat { get; set; }
         public RoomInfo RoomInfo { get; set; }
     }
+    public class RoomStatusChangedEventArgs
+    {
+        public RoomInfo RoomInfo { get; set; }
+        public string Status { get; set; }
+    }
+    class RoomCommentProvider
+    {
+        bool _isInitialCommentsBeingSent;
+        bool _isThreadReceived;
+        bool _isExpectedDisconnect;
+        public void Disconnect()
+        {
+            _isExpectedDisconnect = true;
+            _socket.Disconnect();
+        }
+        int _retryCount;
+        /// <summary>
+        /// 意図的な切断時以外は終了しない
+        /// </summary>
+        /// <returns></returns>
+        public async Task ReceiveAsync()
+        {
+            //接続が切れる要因
+            //・ユーザによる切断 => Disconnect()
+            //・"/disconnect"が送られてきた => このクラスのクライアントにDisconnect()を呼んでもらう
+            //・ネットワークの不調 => reconnectの一番の原因だろう。
+            //・resultcode="0"のthreadが送られてきた => 内部からDisconnect()
+            _retryCount = 0;
+            while (true)
+            {
+                int res_from;
+                if (_retryCount == 0)
+                {
+                    _isInitialCommentsBeingSent = true;
+                    res_from = _res_from;
+                }
+                else
+                {
+                    res_from = 0;
+                }
+                _isThreadReceived = false;
+                _isExpectedDisconnect = false;
+                await CallConnectAsync();
+                await CallSendXmlAsync(res_from);
+                await _socket.ReceiveAsync();
+                if (_isExpectedDisconnect)
+                {
+                    break;
+                }
+                else if(_retryCount > 10)
+                {
+                    break;
+                }
+                _retryCount++;
+            }
+        }
+        protected virtual async Task CallConnectAsync()
+        {
+            await _socket.ConnectAsync();
+        }
+        protected virtual async Task CallSendXmlAsync(int res_from)
+        {
+            var xml = $"<thread thread=\"{_thread}\" version=\"20061206\" res_from=\"-{res_from}\" scores=\"1\" />\0";
+            await _socket.SendAsync(xml);
+        }
+
+        private readonly string _addr;
+        private readonly int _port;
+        private readonly string _thread;
+        private readonly string _roomName;
+        private readonly int _res_from;
+        private readonly IStreamSocket _socket;
+        public RoomCommentProvider(RoomInfo info, int res_from, IStreamSocket socket)
+            : this(info.Addr, info.Port, info.Thread, info.RoomLabel, res_from, socket)
+        {
+        }
+        public RoomCommentProvider(string addr, int port, string thread, string roomName,int res_from, IStreamSocket socket)
+        {
+            this._addr = addr;
+            this._port = port;
+            this._thread = thread;
+            this._roomName = roomName;
+            _res_from = res_from;
+            _socket = socket;
+            _socket.Received += Socket_Received;
+        }
+
+        private void Socket_Received(object sender, List<string> e)
+        {
+            var list = e;
+            if (!_isThreadReceived)
+            {
+                var threadStr = list[0];
+                var thread = new thread(threadStr);
+                _isThreadReceived = true;
+                if(thread.resultcode == 0)
+                {
+                    //ok
+                    _retryCount = 0;
+                    list.RemoveAt(0);
+                    if (list.Count == 0) return;
+                }
+                else
+                {
+                    Disconnect();
+                    return;
+                }
+            }
+            if (_isInitialCommentsBeingSent)
+            {
+                if(list.Count > 3)
+                {
+                    InitialCommentsReceived?.Invoke(this, list.Select(s => new chat(s)).ToList());
+                }
+                else
+                {
+                    _isInitialCommentsBeingSent = false;
+                }
+            }
+            foreach (var chatStr in list)
+            {
+                var chat = new chat(chatStr);
+                CommentReceived?.Invoke(this, chat);
+            }
+        }
+        public event EventHandler<chat> CommentReceived;
+        public event EventHandler<List<chat>> InitialCommentsReceived;
+    }
     /// <summary>
     /// コメントを取得する機構はCommunity,Channel,Official問わず全て同じ。違うのはRoomInfoの取得方法。
     /// よって、このクラスでは共通項であるコメント取得機構を提供する
     /// </summary>
+    [Obsolete]
     class CommentProvider
     {
         //とりあえずstring。のちのちchat+RoomInfoとかにしたい
         public event EventHandler<CommentContext> CommentReceived;
         public event EventHandler<List<string>> InitialCommentsReceived;
+
+        protected virtual IStreamSocket CreateStreamSocket(string addr, int port)
+        {
+            return new StreamSocket(addr, port, 8192, new SplitBuffer2("\0"));
+        }
+        protected virtual void OnRoomAdded(RoomInfo info, IStreamSocket socket)
+        {
+
+        }
+
         public async Task ReceiveAsync()
         {
             _isDisconnectOffered = false;
@@ -43,8 +185,12 @@ namespace NicoSitePlugin.Test2
                         foreach(var room in _roomDict.Select(kv => kv.Value))
                         {
                             room.Socket.Disconnect();
+                            OnDisconnected(room.Info);
+                            
                         }
                         //await room.ReceiveTask;するべきだろう。
+                        _roomDict.Clear();
+                        
                         break;
                     }
                     else if(_newRooms != null)
@@ -52,12 +198,15 @@ namespace NicoSitePlugin.Test2
                         //新しい部屋を追加
                         foreach(var newRoom in _newRooms)
                         {
-                            var socket = new StreamSocket(newRoom.Addr, newRoom.Port, 8192, new SplitBuffer2("\0"));
+                            var socket = CreateStreamSocket(newRoom.Addr, newRoom.Port);
                             socket.Received += Socket_Received;
+
                             await socket.ConnectAsync();
                             var xml = $"<thread thread=\"{newRoom.Thread}\" version=\"20061206\" res_from=\"-{_res_from}\" scores=\"1\" />\0";
                             await socket.SendAsync(xml);
-                            _roomDict.Add(newRoom, new RoomContext { Info = newRoom, Socket = socket, ReceiveTask = socket.ReceiveAsync() });
+                            var context = new RoomContext { Info = newRoom, Socket = socket, ReceiveTask = socket.ReceiveAsync() };
+                            AddContext(context);
+                            OnRoomAdded(context.Info, context.Socket);                            
                         }
                         _newRooms = null;
                     }
@@ -65,6 +214,25 @@ namespace NicoSitePlugin.Test2
                 else
                 {
                     var context = _roomDict.Where(kv => kv.Value.ReceiveTask == t).First().Value;
+                    //この時点でサーバとの接続はどうなってる？切断されていない可能性を考えてDisconnectしてみる
+                    try
+                    {
+                        var oldSocket = context.Socket;
+                        oldSocket.Disconnect();
+                        oldSocket.Received -= Socket_Received;
+                        context.Socket = null;
+                        if (context.IsExpectedDisconnect)
+                        {
+                            RemoveContext(context);
+                            continue;
+                        }
+                        OnUnexpectedDisconnected(context.Info);
+                    }
+                    catch (Exception ex)
+                    {
+                        OnUnexpectedDisconnectedAndExceptionThrown(context.Info);
+                        _logger.LogException(ex, "大事なエラー", "サーバとの接続状況を調査したい");
+                    }
                     //どっかの部屋がエラーで終了した
                     //"/disconnect"無しに終了した場合もここで処理することになるだろう。
                     //"/disconnect"が送られてきた場合はこのクラスが直接感知するのではなく、このクラスのユーザがDisconnect()を呼び出すことになる。
@@ -74,23 +242,91 @@ namespace NicoSitePlugin.Test2
 
                     //いつRetryCountを0に戻せば良いんだ？？
                     if (context.RetryCount < 3)
-                    {
+                    {                        
                         context.RetryCount++;
+                        Debug.WriteLine($"再接続{context.RetryCount}回目");
+                        OnReconnecting(context.Info);
+                        
+                        context.IsInitialCommentsBeingSent = true;
+                        var addr = context.Info.Addr;
+                        var port = context.Info.Port;
+                        var socket = CreateStreamSocket(addr, port);
+                        context.Socket = socket;
+                        socket.Received += Socket_Received;
+                        context.IsExpectedDisconnect = false;
+                        await socket.ConnectAsync();
+                        var xml = $"<thread thread=\"{context.Info.Thread}\" version=\"20061206\" res_from=\"-{0}\" scores=\"1\" />\0";
+                        await socket.SendAsync(xml);
+                        context.ReceiveTask = socket.ReceiveAsync();
                     }
                     else
                     {
-                        _roomDict.Remove(context.Info);
+                        RemoveContext(context);
+                        OnRemoved(context.Info);
                     }
                 }
-
             }
         }
 
+        protected virtual void OnDisconnected(RoomInfo info)
+        {
+        }
+
+        protected virtual void OnReconnecting(RoomInfo info)
+        {
+        }
+
+        protected virtual void OnUnexpectedDisconnectedAndExceptionThrown(RoomInfo info)
+        {
+        }
+
+        protected virtual void OnUnexpectedDisconnected(RoomInfo info)
+        {
+        }
+
+        private void AddContext(RoomContext context)
+        {
+            _roomDict.Add(context.Info, context);
+        }
+        private void RemoveContext(RoomContext context)
+        {
+            _roomDict.Remove(context.Info);
+        }
         private void Socket_Received(object sender, List<string> e)
         {
             var context = _roomDict.Where(kv => kv.Value.Socket == sender).First().Value;
             if(context.IsInitialCommentsBeingSent)
             {
+                if(e[0].StartsWith("<thread "))
+                {
+                    var thread = new thread(e[0]);
+                    if(thread.resultcode == 0)
+                    {
+                        //接続が成功したからRetryCountを0にする
+                        OnReceiveSuccessThread(context.Info);
+                        
+                        context.RetryCount = 0;
+                    }
+                    else
+                    {
+                        //この部屋は存在しない
+                        
+                        OnReceiveFailedThread(context.Info);
+                        context.IsExpectedDisconnect = true;
+                        var socket = context.Socket;
+                        socket.Disconnect();
+                        //RemoveContext(context);
+                        //OnRemoved(context.Info);
+                        
+
+                        //socket.Received -= Socket_Received;
+                        return;
+                    }
+                    e.RemoveAt(0);
+                    if (e.Count == 0)
+                        return;
+                }
+
                 if (e.Count >= 3)
                 {
                     //最初コメント数が3つ以上送られてくる間はInitialCommentsとする。
@@ -104,22 +340,46 @@ namespace NicoSitePlugin.Test2
             }
             foreach (var comment in e)
             {
-                var chat = new chat(comment);
-                var commentContext = new CommentContext { Chat = chat, RoomInfo = context.Info };
-                CommentReceived?.Invoke(this, commentContext);
+
+                try
+                {
+                    var chat = new chat(comment);
+                    var commentContext = new CommentContext { Chat = chat, RoomInfo = context.Info };
+                    CommentReceived?.Invoke(this, commentContext);
+                }catch(Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
             }
+        }
+
+        protected virtual void OnRemoved(RoomInfo info)
+        {
+        }
+
+        protected virtual void OnReceiveFailedThread(RoomInfo info)
+        {
+        }
+
+        protected virtual void OnReceiveSuccessThread(RoomInfo info)
+        {
+
         }
 
         class RoomContext
         {
             public RoomInfo Info { get; set; }
-            public StreamSocket Socket { get; set; }
+            public IStreamSocket Socket { get; set; }
             public Task ReceiveTask { get; set; }
             /// <summary>
             /// InitialCommentsが送られてきている
             /// </summary>
             public bool IsInitialCommentsBeingSent { get; set; } = true;
             public int RetryCount { get; set; }
+            /// <summary>
+            /// 意図的な切断であるか
+            /// </summary>
+            public bool IsExpectedDisconnect { get; set; }
         }
         Dictionary<RoomInfo, RoomContext> _roomDict = new Dictionary<RoomInfo, RoomContext>();
         bool _isDisconnectOffered;
@@ -159,9 +419,11 @@ namespace NicoSitePlugin.Test2
 
         }
         int _res_from;
-        public CommentProvider(int res_from)
+        private readonly ILogger _logger;
+        public CommentProvider(int res_from, ILogger logger)
         {
             _res_from = res_from;
+            _logger = logger;
         }
     }
     public interface IRoomInfoProvider

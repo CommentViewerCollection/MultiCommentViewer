@@ -79,6 +79,8 @@ namespace SitePlugin
 
         public virtual bool IsVisible { get; } = true;
 
+        public ICommentProvider CommentProvider { get; protected set; }
+
         private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         public CommentViewModelBase(ConnectionName connectionName, IOptions options)

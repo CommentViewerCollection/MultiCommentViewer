@@ -4,7 +4,7 @@ using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public static class Tools
     {
@@ -67,6 +67,48 @@ namespace NicoSitePlugin.Test
                     break;
             }
             return msg;
+        }
+        /// <summary>
+        /// 部屋数を取得する
+        /// </summary>
+        /// <param name="communityLevel"></param>
+        /// <returns></returns>
+        public static int GetCommunityRoomCount(int communityLevel)
+        {
+            int roomCount;
+            if (communityLevel >= 50 && communityLevel <= 69)
+            {
+                roomCount = 3;//ア,A,B
+            }
+            else if (communityLevel >= 70 && communityLevel <= 104)
+            {
+                roomCount = 4;//ア,A,B,C
+            }
+            else if (communityLevel >= 105 && communityLevel <= 149)
+            {
+                roomCount = 5;//ア,A,B,C,D
+            }
+            else if (communityLevel >= 150 && communityLevel <= 189)
+            {
+                roomCount = 6;//ア,A,B,C,D,E
+            }
+            else if (communityLevel >= 190 && communityLevel <= 229)
+            {
+                roomCount = 7;//ア,A,B,C,D,E,F
+            }
+            else if (communityLevel >= 230 && communityLevel <= 255)
+            {
+                roomCount = 8;//ア,A,B,C,D,E,F,G
+            }
+            else if (communityLevel == 256)
+            {
+                roomCount = 10;//ア,A,B,C,D,E,F,G,H,I
+            }
+            else
+            {
+                roomCount = 2;//ア,A
+            }
+            return roomCount;
         }
         public static RoomInfo[] GetRooms(RoomInfo current, ProviderType providerType, INicoSiteOptions siteOptions)
         {

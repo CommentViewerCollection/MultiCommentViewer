@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 /// <summary>
 /// http://live2.nicovideo.jp/watch/lv\d+ のdata-propsをデシリアライズするためのクラス群
 /// </summary>
-namespace NicoSitePlugin.Test.EmbeddedDataLow
+namespace NicoSitePlugin.Old.EmbeddedDataLow
 {
     public class TrackingParams
     {

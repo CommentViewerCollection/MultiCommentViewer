@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using System.Net.Sockets;
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     /// <summary>
     /// 

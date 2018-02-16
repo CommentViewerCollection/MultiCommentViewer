@@ -55,7 +55,6 @@ namespace MultiCommentViewer
 
         private readonly Dispatcher _dispatcher;
         private readonly IUserStore _userStore;
-        Dictionary<string, UserViewModel> _userDict = new Dictionary<string, UserViewModel>();
         Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
         #endregion //Fields
 
@@ -324,15 +323,15 @@ namespace MultiCommentViewer
                 await _dispatcher.BeginInvoke((Action)(() =>
                 {
                     var comment = e;
-                    if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
-                    {
-                        var user = _userStore.GetUser(comment.UserId);
-                        uvm = new UserViewModel(user, _options);
-                        _userDict.Add(comment.UserId, uvm);
-                    }
-                    comment.User = uvm.User;
+                    //if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
+                    //{
+                    //    var user = _userStore.GetUser(comment.UserId);
+                    //    uvm = new UserViewModel(user, _options);
+                    //    _userDict.Add(comment.UserId, uvm);
+                    //}
+                    //comment.User = uvm.User;
                     Comments.Add(comment);
-                    uvm.Comments.Add(comment);
+                    //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
             }
             catch (Exception ex)
@@ -626,7 +625,10 @@ namespace MultiCommentViewer
             {
                 Debug.Assert(current != null);
                 Debug.Assert(current is ICommentViewModel);
-                var uvm = _userDict[current.UserId];
+                //ICommentProviderが必要。。。
+                ICommentProvider commentProvider = current.CommentProvider;
+                var s = commentProvider.GetUserComments(current.User);
+                var uvm = new UserViewModel(current.User, _options);
                 MessengerInstance.Send(new ShowUserViewMessage(uvm));
             }
             catch (Exception ex)

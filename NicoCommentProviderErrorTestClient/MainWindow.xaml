@@ -1,0 +1,45 @@
+﻿<Window x:Class="NicoCommentProviderErrorTestClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NicoCommentProviderErrorTestClient"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Button Content="接続" Command="{Binding ConnectCommand}" HorizontalAlignment="Left" Margin="20,25,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Content="切断" Command="{Binding DisconnectCommand}" HorizontalAlignment="Left" Margin="20,70,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button Content="部屋を追加" Command="{Binding AddNewRoomCommand}" HorizontalAlignment="Left" Margin="135,25,0,0" VerticalAlignment="Top" Width="75"/>
+        <DataGrid ItemsSource="{Binding Rooms}" AutoGenerateColumns="False" HorizontalAlignment="Stretch" Height="Auto" Width="Auto" Margin="10,160,7,5" VerticalAlignment="Stretch">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Addr" Binding="{Binding Addr}" />
+
+                <DataGridTextColumn Header="Port" Binding="{Binding Port}" />
+                <DataGridTextColumn Header="Thread" Binding="{Binding Thread}" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" />
+                <DataGridTemplateColumn Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="ReceiveThread0" Command="{Binding ReceiveThreadCode0Command}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="ReceiveThread1" Command="{Binding ReceiveThreadCode1Command}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="DisconnectUnexpected" Command="{Binding DisconnectUnexpectedCommand}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+    </Grid>
+</Window>

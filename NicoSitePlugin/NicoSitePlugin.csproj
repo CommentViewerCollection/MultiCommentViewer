@@ -50,9 +50,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Test2\CommentProvider.cs" />
+    <Compile Include="Test2\CommentProvider2.cs" />
+    <Compile Include="Test2\ICommentProvider2.cs" />
+    <Compile Include="Test2\NicoCommentProvider3.cs" />
+    <Compile Include="Test2\PlayerStatusProvider.cs" />
     <Compile Include="Test\Class1.cs" />
     <Compile Include="Test\ErrorCode.cs" />
     <Compile Include="Test\EmbeddedDataLow.cs" />
+    <Compile Include="Test\IStreamSocket.cs" />
     <Compile Include="Test\LiveServerInfo.cs" />
     <Compile Include="Test\MsTest.cs" />
     <Compile Include="Test\DataSource.cs" />

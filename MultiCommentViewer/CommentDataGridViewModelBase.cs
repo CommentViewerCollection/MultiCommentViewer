@@ -22,7 +22,7 @@ namespace MultiCommentViewer
     /// </summary>
     public abstract class CommentDataGridViewModelBase : ViewModelBase
     {
-        public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
+        public ObservableCollection<ICommentViewModel> Comments { get; }
         public Brush HorizontalGridLineBrush
         {
             get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
@@ -138,6 +138,11 @@ namespace MultiCommentViewer
         public CommentDataGridViewModelBase(IOptions options)
         {
             _options = options;
+            Comments = new ObservableCollection<ICommentViewModel>();
+        }
+        public CommentDataGridViewModelBase(IOptions options, ObservableCollection<ICommentViewModel> comments)
+        {
+            Comments = comments;
         }
     }
 }

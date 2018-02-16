@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NicoSitePlugin.Test
+namespace NicoSitePlugin.Old
 {
     public interface INicoSiteOptions
     {
@@ -14,5 +14,7 @@ namespace NicoSitePlugin.Test
         int OfficialRoomsRetrieveCount { get; set; }
 
         bool CanUploadPlayerStatus { get; set; }
+
+        int ResNum { get; set; }
     }
 }

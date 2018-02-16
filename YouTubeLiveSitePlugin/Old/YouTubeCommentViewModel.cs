@@ -46,6 +46,14 @@ namespace YouTubeLiveSitePlugin.Old
 
         public string UserId => "";
 
+        public ICommentProvider CommentProvider
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         private readonly IOptions _options;
         private readonly YouTubeSiteOptions _siteOptions;
         private readonly ConnectionName _connectionName;

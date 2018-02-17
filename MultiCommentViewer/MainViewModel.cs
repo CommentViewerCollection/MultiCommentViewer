@@ -359,6 +359,12 @@ namespace MultiCommentViewer
                         metaVm.Title = e.Title;
                     if (e.Active != null)
                         metaVm.Active = e.Active;
+                    if (e.CurrentViewers != null)
+                        metaVm.CurrentViewers = e.CurrentViewers;
+                    if (e.TotalViewers != null)
+                        metaVm.TotalViewers = e.TotalViewers;
+                    if (e.Elapsed != null)
+                        metaVm.Elapsed = e.Elapsed;
                 }
             }
             catch (Exception ex)

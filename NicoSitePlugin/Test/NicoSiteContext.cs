@@ -39,15 +39,24 @@ namespace NicoSitePlugin.Old
                 _siteOptions.Deserialize(s);
             }
             catch (Exception ex)
-            {
+            {                
                 Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", path);
             }
         }
 
         public void SaveOptions(string path, IIo io)
         {
-            var s = _siteOptions.Serialize();
-            io.WriteFile(path, s);
+            try
+            {
+                var s = _siteOptions.Serialize();
+                io.WriteFile(path, s);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", path);
+            }
         }
 
         public bool IsValidInput(string input)

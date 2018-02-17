@@ -73,7 +73,12 @@ namespace MultiCommentViewer
         public MetadataViewModel(ConnectionName connectionName)
         {
             _connectionName = connectionName;
-            
+            Title = "-";
+            Elapsed = "-";
+            CurrentViewers = "-";
+            TotalViewers = "-";
+            Active = "-";
+            Others = "-";
             _connectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)

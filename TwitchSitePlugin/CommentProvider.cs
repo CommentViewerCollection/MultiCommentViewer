@@ -120,7 +120,7 @@ namespace TwitchSitePlugin
                             _userCommentDict.Add(user, userComments);
                         }
                         var isFirstComment = userComments.Count == 0;
-                        var cvm = new TwitchCommentViewModel(_connectionName, _options, _siteOptions, commentData, _emotIcons, isFirstComment,this);
+                        var cvm = new TwitchCommentViewModel(_connectionName, _options, _siteOptions, commentData, _emotIcons, isFirstComment, this, user);
                         await _dispatcher.BeginInvoke((Action)(() =>
                         {   
                             userComments.Add(cvm);

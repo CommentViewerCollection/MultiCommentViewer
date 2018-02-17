@@ -29,12 +29,7 @@ namespace TwitchSitePlugin
             return new TwitchCommentProvider(connectionName, new TwitchServer(), _logger, _options, _siteOptions,_userStore, _dispatcher);
         }
         private TwitchSiteOptions _siteOptions;
-        public void LoadOptions(string dir, IIo io)
-        {
-            _siteOptions = new TwitchSiteOptions();
-        }
-
-        public void SaveOptions(string path, IIo io)
+        public void LoadOptions(string path, IIo io)
         {
             _siteOptions = new TwitchSiteOptions();
             try
@@ -46,6 +41,21 @@ namespace TwitchSitePlugin
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", $"path={path}");
+            }
+        }
+
+        public void SaveOptions(string path, IIo io)
+        {
+            try
+            {
+                var s = _siteOptions.Serialize();
+                io.WriteFile(path, s);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", $"path={path}");
             }
         }
         public bool IsValidInput(string input)

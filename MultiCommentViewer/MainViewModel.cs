@@ -625,7 +625,9 @@ namespace MultiCommentViewer
             {
                 Debug.Assert(current != null);
                 Debug.Assert(current is ICommentViewModel);
-                //ICommentProviderが必要。。。
+                //ICommentProviderが必要。。。ConnectionViewModel経由で取れないだろうか。
+                //Connectionを切断したり、サイトを変更してもコメントは残る。残ったコメントのユーザ情報を見ようとした時にConnectionViewModel経由で取るのは無理だろう。
+                //やっぱりCommentViewModelにICommentProviderを持たせるしかなさそう。
                 ICommentProvider commentProvider = current.CommentProvider;
                 var s = commentProvider.GetUserComments(current.User);
                 var uvm = new UserViewModel(current.User, _options);

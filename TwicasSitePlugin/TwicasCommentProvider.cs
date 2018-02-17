@@ -96,7 +96,9 @@ namespace TwicasSitePlugin
         {
             foreach (var data in e)
             {
-                var cvm = new TwicasCommentViewModel(_connectionName, _options, data);
+                var userId = data.UserId;
+                var user = _userStore.GetUser(userId);
+                var cvm = new TwicasCommentViewModel(_connectionName, _options, data, user);
                 CommentReceived?.Invoke(this, cvm);
             }
         }

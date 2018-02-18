@@ -20,7 +20,8 @@ namespace YouTubeLiveSitePluginTests.Old
         {
             var optionsMock = new Mock<IOptions>();
             var connectionName = new ConnectionName() { Name = "a" };
-            var cvm = new YouTubeCommentViewModel(connectionName, optionsMock.Object, new YouTubeSiteOptions());
+            var commentProviderMock = new Mock<ICommentProvider>();
+            var cvm = new YouTubeCommentViewModel(connectionName, optionsMock.Object, new YouTubeSiteOptions(),commentProviderMock.Object);
             var b = false;
             cvm.PropertyChanged += (s, e) =>
             {

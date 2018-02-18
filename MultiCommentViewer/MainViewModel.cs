@@ -234,6 +234,7 @@ namespace MultiCommentViewer
                 var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger);
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
+                connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 var metaVm = new MetadataViewModel(connectionName);
                 _metaDict.Add(connection, metaVm);
@@ -315,6 +316,25 @@ namespace MultiCommentViewer
         #endregion //Methods
 
         #region EventHandler
+        private async void Connection_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
+        {
+            try
+            {
+                //TODO:Comments.AddRange()が欲しい
+                await _dispatcher.BeginInvoke((Action)(() =>
+                {
+                    foreach (var comment in e)
+                    {
+                        Comments.Add(comment);
+                    }
+                }), DispatcherPriority.Normal);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            //TODO:Pluginに渡す
+        }
         private async void Connection_CommentReceived(object sender, ICommentViewModel e)
         {
             try

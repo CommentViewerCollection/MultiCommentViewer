@@ -42,6 +42,7 @@ namespace MultiCommentViewer
                     before.CanConnectChanged -= CommentProvider_CanConnectChanged;
                     before.CanDisconnectChanged -= CommentProvider_CanDisconnectChanged;
                     before.CommentReceived -= CommentProvider_CommentReceived;
+                    before.InitialCommentsReceived -= CommentProvider_InitialCommentsReceived;
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
                 }
                 _selectedSite = value;
@@ -49,24 +50,31 @@ namespace MultiCommentViewer
                 next.CanConnectChanged += CommentProvider_CanConnectChanged;
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
                 next.CommentReceived += CommentProvider_CommentReceived;
+                next.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
                 
                 RaisePropertyChanged();
             }
         }
-        
+
+
+
         private void CommentProvider_MetadataUpdated(object sender, IMetadata e)
         {
             MetadataReceived?.Invoke(this, e);//senderはConnection
         }
         public event EventHandler<RenamedEventArgs> Renamed;
         public event EventHandler<ICommentViewModel> CommentReceived;
+        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<IMetadata> MetadataReceived;
         private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
         {
             CommentReceived?.Invoke(sender, e);
         }
-
+        private void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
+        {
+            InitialCommentsReceived?.Invoke(this, e);
+        }
         private void CommentProvider_CanDisconnectChanged(object sender, EventArgs e)
         {
             RaisePropertyChanged(nameof(CanDisconnect));
@@ -106,19 +114,22 @@ namespace MultiCommentViewer
                 _input = value;
 
                 ISiteContext sc = null;
-                foreach (var site in _sites)
+                if (!string.IsNullOrWhiteSpace(_input))
                 {
-                    try
+                    foreach (var site in _sites)
                     {
-                        if (site.IsValidInput(_input))
+                        try
                         {
-                            sc = site;
-                            break;
+                            if (site.IsValidInput(_input))
+                            {
+                                sc = site;
+                                break;
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex, "", _input);
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex, "", _input);
+                        }
                     }
                 }
                 if(sc != null)

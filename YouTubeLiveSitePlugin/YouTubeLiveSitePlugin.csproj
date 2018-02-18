@@ -72,6 +72,7 @@
     </Compile>
     <Compile Include="Test2\Tools.cs" />
     <Compile Include="Test2\YouTubeLiveCommentViewModel.cs" />
+    <Compile Include="Test2\YouTubeLiveSiteContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">

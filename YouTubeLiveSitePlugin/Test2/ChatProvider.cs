@@ -5,38 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using Newtonsoft.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
-using Codeplex.Data;
 using SitePlugin;
 using Common;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    [Serializable]
-    public class ReloadException : Exception
-    {
-        public ReloadException() { }
-    }
-    [Serializable]
-    public class ContinuationContentsNullException : Exception
-    {
-        public ContinuationContentsNullException() { }
-    }
-
-    [Serializable]
-    public class ParseException : Exception
-    {
-        public ParseException() { }
-        public ParseException(string message) : base(message) { }
-        public ParseException(string message, Exception inner) : base(message, inner) { }
-    }
-
-    [Serializable]
-    public class NoContinuationException : Exception
-    {
-        public NoContinuationException() { }
-    }
     class ChatProvider
     {
         public event EventHandler<List<CommentData>> InitialActionsReceived;
@@ -141,263 +115,6 @@ reconnect:
         public string TimestampUsec { get; internal set; }
         public string Id { get; internal set; }
     }
-    static class Tools
-    {
-        public static string ExtractYtInitialData(string liveChatHtml)
-        {
-            var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+});\\s*</script>", RegexOptions.Singleline);
-            if (!match.Success)
-            {
-                throw new Exception("仕様変更？");
-            }
-            var ytInitialData = match.Groups[1].Value;
-            return ytInitialData;
-        }
-        public static (IContinuation continuation, List<CommentData> actions) ParseYtInitialData(string s)
-        {
-            var json = DynamicJson.Parse(s);
-            if (!json.contents.liveChatRenderer.IsDefined("continuations"))
-            {
-                throw new Exception("Continuations無し");
-            }
-
-            IContinuation continuation;
-            var lowContinuations = json.contents.liveChatRenderer.continuations;
-            if (lowContinuations[0].IsDefined("invalidationContinuationData"))
-            {
-                var data = lowContinuations[0].invalidationContinuationData;
-                var inv = new InvalidationContinuation();
-                inv.Continuation = data.continuation;
-                inv.TimeoutMs = (int)data.timeoutMs;
-                inv.ObjectId = data.invalidationId.objectId;
-                continuation = inv;
-            }
-            else
-            {
-                var data = lowContinuations[0].timedContinuationData;
-                var timed = new TimedContinuation()
-                {
-                    Continuation = data.continuation,
-                    TimeoutMs = (int)data.timeoutMs,
-                };
-                continuation = timed;
-            }
-            
-            var actionList = new List<IAction>();
-            var dataList = new List<CommentData>();
-            if (json.contents.liveChatRenderer.IsDefined("actions"))
-            {
-                foreach(var action in json.contents.liveChatRenderer.actions)
-                {
-                    if (action.IsDefined("addChatItemAction"))
-                    {
-                        var item = action.addChatItemAction.item;
-                        if (item.IsDefined("liveChatTextMessageRenderer"))
-                        {
-                            dataList.Add(GetCommandData(item.liveChatTextMessageRenderer));
-                        }
-                        else if (item.IsDefined("liveChatPaidMessageRenderer"))
-                        {
-                            var ren = item.liveChatPaidMessageRenderer;
-                            var commentData = GetCommandData(ren);
-                            var purchaseAmount = ren.purchaseAmountText.simpleText;
-                            commentData.MessageItems.Insert(0, new MessageText(purchaseAmount));
-                            dataList.Add(commentData);
-                        }
-                    }
-                }
-            }
-
-            //var actions = lowLiveChat.contents.liveChatRenderer.actions;
-            //var actionList = new List<IAction>();
-            //foreach(var action in actions)
-            //{
-            //    if(action.addChatItemAction != null)
-            //    {
-            //        if(action.addChatItemAction.item.liveChatTextMessageRenderer != null)
-            //        {
-            //            actionList.Add(new TextMessage(action.addChatItemAction.item.liveChatTextMessageRenderer));
-            //        }
-            //        else if(action.addChatItemAction.item.liveChatPaidMessageRenderer != null)
-            //        {
-            //            actionList.Add(new PaidMessage(action.addChatItemAction.item.liveChatPaidMessageRenderer));
-            //        }
-            //    }
-            //}
-            return (continuation, dataList);
-        }
-
-        public static CommentData GetCommandData(dynamic ren)
-        {
-            var commentData = new CommentData();
-            commentData.UserId = ren.authorExternalChannelId;
-            commentData.TimestampUsec = ren.timestampUsec;
-            commentData.Id = ren.id;
-            //authorPhoto
-            {
-                var authorPhoto = new List<IMessagePart>();
-                var thumbnail = ren.authorPhoto.thumbnails[0];
-                var url = thumbnail.url;
-                var width = (int)thumbnail.width;
-                var height = (int)thumbnail.height;
-                authorPhoto.Add(new MessageImage { Url = url, Width = width, Height = height });
-            }
-            //message
-            {
-                var messageItems = new List<IMessagePart>();
-                commentData.MessageItems = messageItems;
-                if (ren.message.IsDefined("runs"))
-                {
-                    foreach (var r in ren.message.runs)
-                    {
-                        if (r.IsDefined("text"))
-                        {
-                            var text = r.text;
-                            messageItems.Add(new MessageText(text));
-                        }
-                        else if (r.IsDefined("emoji"))
-                        {
-                            var emoji = r.emoji;
-                            var thumbnail = emoji.image.thumbnails[0];
-                            var emojiUrl = thumbnail.url;
-                            var emojiWidth = (int)thumbnail.width;
-                            var emojiHeight = (int)thumbnail.height;
-                            var emojiAlt = emoji.image.accessibility.accessibilityData.label;
-                            messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
-                        }
-                        else
-                        {
-                            throw new ParseException();
-                        }
-                    }
-                }
-                else
-                {
-                    throw new ParseException();
-                }
-            }
-            //name
-            {
-                var nameItems = new List<IMessagePart>();
-                commentData.NameItems = nameItems;
-                nameItems.Add(new MessageText(ren.authorName.simpleText));
-                if (ren.IsDefined("authorBadges"))
-                {
-                    foreach (var badge in ren.authorBadges)
-                    {
-                        if (badge.liveChatAuthorBadgeRenderer.IsDefined("customThumbnail"))
-                        {
-                            var url = badge.liveChatAuthorBadgeRenderer.customThumbnail.thumbnails[0].url;
-                            var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                            nameItems.Add(new MessageImage { Url = url, Alt = alt, Width = 16, Height = 16 });
-                        }
-                        else if (badge.liveChatAuthorBadgeRenderer.IsDefined("icon"))
-                        {
-                            var iconType = badge.liveChatAuthorBadgeRenderer.icon.iconType;
-                            var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        }
-                        else
-                        {
-                            throw new ParseException();
-                        }
-                    }
-                }
-            }
-            return commentData;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="getLiveChatJson"></param>
-        /// <returns></returns>
-        /// <exception cref="ContinuationContentsNullException"></exception>
-        /// <exception cref="NoContinuationException">放送終了</exception>
-        public static (IContinuation, List<CommentData>) ParseGetLiveChat(string getLiveChatJson)
-        {
-            var json = DynamicJson.Parse(getLiveChatJson);
-            if (!json.response.IsDefined("continuationContents"))
-            {
-                throw new ContinuationContentsNullException();
-            }
-            
-            if (!json.response.continuationContents.liveChatContinuation.IsDefined("continuations"))
-            {
-                throw new NoContinuationException();
-            }
-
-            IContinuation continuation;
-            var continuations = json.response.continuationContents.liveChatContinuation.continuations;
-            if (continuations[0].IsDefined("invalidationContinuationData"))
-            {
-                var invalidation = continuations[0].invalidationContinuationData;
-                var inv = new InvalidationContinuation
-                {
-                    Continuation = invalidation.continuation,
-                    TimeoutMs = (int)invalidation.timeoutMs,
-                    ObjectId = invalidation.invalidationId.objectId,
-                    ObjectSource = (int)invalidation.invalidationId.objectSource,
-                    ProtoCreationTimestampMs = invalidation.invalidationId.protoCreationTimestampMs
-                };
-                continuation = inv;
-            }
-            else
-            {
-                var timed = continuations[0].timedContinuationData;
-                var inv = new TimedContinuation
-                {
-                    Continuation = timed.continuation,
-                    TimeoutMs = (int)timed.timeoutMs,
-                };
-                continuation = inv;
-            }
-
-            var dataList = new List<CommentData>();
-            if (json.response.continuationContents.liveChatContinuation.IsDefined("actions"))
-            {
-                var actions = json.response.continuationContents.liveChatContinuation.actions;
-                foreach (var action in actions)
-                {
-                    if (action.IsDefined("addChatItemAction"))
-                    {
-                        var item = action.addChatItemAction.item;
-                        if (item.IsDefined("liveChatTextMessageRenderer"))
-                        {
-                            dataList.Add(GetCommandData(item.liveChatTextMessageRenderer));
-                        }
-                        else if (item.IsDefined("liveChatPaidMessageRenderer"))
-                        {
-                            var ren = item.liveChatPaidMessageRenderer;
-                            var commentData = GetCommandData(ren);
-                            var purchaseAmount = ren.purchaseAmountText.simpleText;
-                            commentData.MessageItems.Insert(0, new MessageText(purchaseAmount));
-                            dataList.Add(commentData);
-                        }
-                    }
-                }
-            }
-            //var actions = lowLiveChat.response.continuationContents.liveChatContinuation.actions;
-            //var actionList = new List<IAction>();
-            //if (actions != null)
-            //{
-            //    foreach (var action in actions)
-            //    {
-            //        if (action.addChatItemAction != null)
-            //        {
-            //            if (action.addChatItemAction.item.liveChatTextMessageRenderer != null)
-            //            {
-            //                actionList.Add(new TextMessage(action.addChatItemAction.item.liveChatTextMessageRenderer));
-            //            }
-            //            else if (action.addChatItemAction.item.liveChatPaidMessageRenderer != null)
-            //            {
-            //                actionList.Add(new PaidMessage(action.addChatItemAction.item.liveChatPaidMessageRenderer));
-            //            }
-            //        }
-            //    }
-            //}
-            //return (continuation, actionList);
-            return (continuation, dataList);
-        }
-    }
     interface IContinuation
     {
         string Continuation { get; }
@@ -414,41 +131,11 @@ reconnect:
     }
     public class TimedContinuation : ITimedContinuation
     {
-        public TimedContinuation() { }
-        public TimedContinuation(Low.LiveChat.TimedContinuationData data)
-        {
-            Continuation = data.continuation;
-            TimeoutMs = data.timeoutMs;
-        }
-        public TimedContinuation(Low.GetLiveChat.TimedContinuationData data)
-        {
-            Continuation = data.continuation;
-            TimeoutMs = data.timeoutMs;
-        }
-
         public string Continuation { get; set; }
         public int TimeoutMs { get; set; }
     }
     public class InvalidationContinuation : IInvalidationContinuation
     {
-        public InvalidationContinuation() { }
-        public InvalidationContinuation(Low.LiveChat.InvalidationContinuationData data)
-        {
-            Continuation = data.continuation;
-            TimeoutMs = data.timeoutMs;
-            ObjectSource = data.invalidationId.objectSource;
-            ProtoCreationTimestampMs = data.invalidationId.protoCreationTimestampMs;
-            ObjectId = data.invalidationId.objectId;
-        }
-        public InvalidationContinuation(Low.GetLiveChat.InvalidationContinuationData data)
-        {
-            Continuation = data.continuation;
-            TimeoutMs = data.timeoutMs;
-            ObjectSource = data.invalidationId.objectSource;
-            ProtoCreationTimestampMs = data.invalidationId.protoCreationTimestampMs;
-            ObjectId = data.invalidationId.objectId;
-        }
-
         public string Continuation { get; set; }
         public int TimeoutMs { get; set; }
         public int ObjectSource { get; set; }
@@ -468,217 +155,50 @@ reconnect:
         public int Width { get; set; }
         public int Height { get; set; }
     }
-    interface IAction { }
-    interface ITextMessage:IAction
+    public class YouTubeLiveSiteContext : IYouTubeSiteContext
     {
-        string Id { get; }
-        Photo Thumbnail { get; }
-        string Name { get; }
-        long TimestampUsec { get; }
-        string Message { get; }
-        string UserId { get; }
-        List<Badge> Badges { get; }
-    }
-    interface IPaidMessage: IAction
-    {
-        string Id { get; }
-        Photo Thumbnail { get; }
-        string Name { get; }
-        long TimestampUsec { get; }
-        string Message { get; }
-        string UserId { get; }
-        List<Badge> Badges { get; }
-        string PurchaseAmount { get; }
+        public Guid Guid => new Guid("F1631B64-6572-4530-ABAF-21707F15D893");
 
-        //背景色とかもあるけど後回し
-    }
+        public string DisplayName => "YouTubeLive";
 
-    class TextMessage : ITextMessage
-    {
-        public string Id { get; set; }
-
-        public Photo Thumbnail { get; set; }
-
-        public string Name { get; set; }
-
-        public long TimestampUsec { get; set; }
-
-        public string Message { get; set; }
-
-        public string UserId { get; set; }
-
-        public List<Badge> Badges { get; set; } = new List<Badge>();
-        public TextMessage(Low.GetLiveChat.LiveChatTextMessageRenderer textMessage)
+        public IOptionsTabPage TabPanel
         {
-            if (textMessage == null)
+            get
             {
-                throw new ArgumentNullException(nameof(textMessage));
-            }
-            Id = textMessage.id;
-            if (textMessage.authorPhoto.thumbnails.Count > 0)
-            {
-                var thumbnail = textMessage.authorPhoto.thumbnails[0];
-                Thumbnail = new Photo { Url = thumbnail.url, Height = thumbnail.height, Width = thumbnail.width };
-            }
-            foreach (var r in textMessage.message.runs)
-            {
-                Message += r.text;
-            }
-            UserId = textMessage.authorExternalChannelId;
-            Name = textMessage.authorName.simpleText;
-            TimestampUsec = long.Parse(textMessage.timestampUsec);
-            if (textMessage.authorBadges != null && textMessage.authorBadges.Count > 0)
-            {
-                foreach (var badge in textMessage.authorBadges)
-                {
-                    if (badge.liveChatAuthorBadgeRenderer.customThumbnail != null)
-                    {
-                        var url = badge.liveChatAuthorBadgeRenderer.customThumbnail.thumbnails[0].url;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        Badges.Add(new Badge { Url = url, Alt = alt, Width = 16, Height = 16 });
-                    }
-                    else
-                    {
-                        //var iconType = badge.liveChatAuthorBadgeRenderer.icon.iconType;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        //TODO:どうやって画像を取る？
-                    }
-                }
+                var panel = new YouTubeLiveOptionsPanel();
+                panel.SetViewModel(new YouTubeLiveOptionsViewModel(_siteOptions));
+                return new YouTubeListOptionsTabPage(DisplayName, panel);
             }
         }
 
-        public TextMessage(Low.LiveChat.LiveChatTextMessageRenderer textMessage)
+        public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
         {
-            if (textMessage == null)
-            {
-                throw new ArgumentNullException(nameof(textMessage));
-            }
-            Id = textMessage.id;
-            if(textMessage.authorPhoto.thumbnails.Count > 0)
-            {
-                var thumbnail = textMessage.authorPhoto.thumbnails[0];
-                Thumbnail = new Photo { Url = thumbnail.url, Height = thumbnail.height, Width = thumbnail.width };
-            }
-            foreach(var r in textMessage.message.runs)
-            {
-                Message += r.text;
-            }
-            UserId = textMessage.authorExternalChannelId;
-            Name = textMessage.authorName.simpleText;
-            TimestampUsec = long.Parse(textMessage.timestampUsec);
-            if (textMessage.authorBadges != null && textMessage.authorBadges.Count > 0)
-            {
-                foreach (var badge in textMessage.authorBadges)
-                {
-                    if (badge.liveChatAuthorBadgeRenderer.customThumbnail != null)
-                    {
-                        var url = badge.liveChatAuthorBadgeRenderer.customThumbnail.thumbnails[0].url;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        Badges.Add(new Badge { Url = url, Alt = alt, Width = 16, Height = 16 });
-                    }
-                    else
-                    {
-                        var iconType = badge.liveChatAuthorBadgeRenderer.icon.iconType;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        //TODO:どうやって画像を取る？
-                    }
-                }
-            }
+            //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
+            return new Test2.CommentProvider(connectionName, _options, _siteOptions, _logger);
         }
-    }
-    class PaidMessage : IPaidMessage
-    {
-        public string Id { get; set; }
-        public Photo Thumbnail { get; set; }
-        public string Name { get; set; }
-        public long TimestampUsec { get; set; }
-        public string Message { get; set; }
-        public string UserId { get; set; }
-        public List<Badge> Badges { get; set; } = new List<Badge>();
-        public string PurchaseAmount { get; set; }
-        public PaidMessage(Low.GetLiveChat.LiveChatPaidMessageRenderer paidMessage)
+
+        public void LoadOptions(string siteOptionsStr, IIo io)
         {
-            if (paidMessage == null)
-            {
-                throw new ArgumentNullException(nameof(paidMessage));
-            }
-            Id = paidMessage.id;
-            if (paidMessage.authorPhoto.thumbnails.Count > 0)
-            {
-                var thumbnail = paidMessage.authorPhoto.thumbnails[0];
-                Thumbnail = new Photo { Url = thumbnail.url, Height = thumbnail.height, Width = thumbnail.width };
-            }
-            foreach (var r in paidMessage.message.runs)
-            {
-                Message += r.text;
-            }
-            UserId = paidMessage.authorExternalChannelId;
-            //Name = paidMessage.authorName.simpleText;
-            TimestampUsec = long.Parse(paidMessage.timestampUsec);
-            if (paidMessage.authorBadges != null && paidMessage.authorBadges.Count > 0)
-            {
-                foreach (var badge in paidMessage.authorBadges)
-                {
-                    if (badge.liveChatAuthorBadgeRenderer.customThumbnail != null)
-                    {
-                        var url = badge.liveChatAuthorBadgeRenderer.customThumbnail.thumbnails[0].url;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        Badges.Add(new Badge { Url = url, Alt = alt, Width = 16, Height = 16 });
-                    }
-                    else
-                    {
-                        //var iconType = badge.liveChatAuthorBadgeRenderer.icon.iconType;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        //TODO:どうやって画像を取る？
-                    }
-                }
-            }
-            foreach (var r in paidMessage.purchaseAmountText.runs)
-            {
-                PurchaseAmount += r.text;
-            }
+            _siteOptions = new YouTubeLiveSiteOptions();
         }
-        public PaidMessage(Low.LiveChat.LiveChatPaidMessageRenderer paidMessage)
+
+        public void SaveOptions(string path, IIo io)
         {
-            if (paidMessage == null)
-            {
-                throw new ArgumentNullException(nameof(paidMessage));
-            }
-            Id = paidMessage.id;
-            if (paidMessage.authorPhoto.thumbnails.Count > 0)
-            {
-                var thumbnail = paidMessage.authorPhoto.thumbnails[0];
-                Thumbnail = new Photo { Url = thumbnail.url, Height = thumbnail.height, Width = thumbnail.width };
-            }
-            foreach (var r in paidMessage.message.runs)
-            {
-                Message += r.text;
-            }
-            UserId = paidMessage.authorExternalChannelId;
-            //Name = paidMessage.authorName.simpleText;
-            TimestampUsec = long.Parse(paidMessage.timestampUsec);
-            if (paidMessage.authorBadges != null && paidMessage.authorBadges.Count > 0)
-            {
-                foreach (var badge in paidMessage.authorBadges)
-                {
-                    if (badge.liveChatAuthorBadgeRenderer.customThumbnail != null)
-                    {
-                        var url = badge.liveChatAuthorBadgeRenderer.customThumbnail.thumbnails[0].url;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        Badges.Add(new Badge { Url = url, Alt = alt, Width = 16, Height = 16 });
-                    }
-                    else
-                    {
-                        var iconType = badge.liveChatAuthorBadgeRenderer.icon.iconType;
-                        var alt = badge.liveChatAuthorBadgeRenderer.tooltip;
-                        //TODO:どうやって画像を取る？
-                    }
-                }
-            }
-            foreach (var r in paidMessage.purchaseAmountText.runs)
-            {
-                PurchaseAmount += r.text;
-            }
+
+        }
+
+        public bool IsValidInput(string input)
+        {
+            return false;
+        }
+
+        private readonly IOptions _options;
+        private readonly ILogger _logger;
+        private Test2.YouTubeLiveSiteOptions _siteOptions;
+        public YouTubeLiveSiteContext(IOptions options, ILogger logger)
+        {
+            _options = options;
+            _logger = logger;
         }
     }
 }

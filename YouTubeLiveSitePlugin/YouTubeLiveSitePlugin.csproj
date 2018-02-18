@@ -53,24 +53,25 @@
   <ItemGroup>
     <Compile Include="Class1.cs" />
     <Compile Include="DynamicJson.cs" />
-    <Compile Include="Old\Old.cs" />
-    <Compile Include="Old\YouTubeCommentViewModel.cs" />
-    <Compile Include="Old\YouTubeListOptionsTabPage.cs" />
-    <Compile Include="Old\YouTubeLiveOptionsPanel.xaml.cs">
+    <Compile Include="Test2\YouTubeListOptionsTabPage.cs" />
+    <Compile Include="Test2\YouTubeLiveOptionsPanel.xaml.cs">
       <DependentUpon>YouTubeLiveOptionsPanel.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Old\YouTubeLiveSiteContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Test.cs" />
     <Compile Include="Test2\ChatProvider.cs" />
     <Compile Include="Test2\CommentProvider.cs" />
+    <Compile Include="Test2\Exceptions.cs" />
     <Compile Include="Test2\GetLiveChatLowObjects.cs" />
     <Compile Include="Test2\InputType.cs" />
     <Compile Include="Test2\LiveChatLowObjects.cs" />
+    <Compile Include="Test2\MessageImage.cs" />
+    <Compile Include="Test2\MessageText.cs" />
+    <Compile Include="Test2\Metadata.cs" />
     <Compile Include="Test2\MetadataProvider.cs" />
     <Compile Include="Test2\MyWebClient.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Test2\Tools.cs" />
     <Compile Include="Test2\YouTubeLiveCommentViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -92,7 +93,7 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Page Include="Old\YouTubeLiveOptionsPanel.xaml">
+    <Page Include="Test2\YouTubeLiveOptionsPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

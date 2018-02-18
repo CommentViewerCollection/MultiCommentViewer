@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
-namespace YouTubeLiveSitePlugin.Old
+namespace YouTubeLiveSitePlugin.Test2
 {
     /// <summary>
     /// Interaction logic for YouTubeLiveOptionsPanel.xaml
@@ -35,12 +35,12 @@ namespace YouTubeLiveSitePlugin.Old
     }
     public class YouTubeLiveOptionsViewModel : INotifyPropertyChanged
     {
-        private readonly YouTubeSiteOptions _origin;
-        private readonly YouTubeSiteOptions changed;
-        internal YouTubeSiteOptions OriginOptions { get { return _origin; } }
-        internal YouTubeSiteOptions ChangedOptions { get { return changed; } }
+        private readonly YouTubeLiveSiteOptions _origin;
+        private readonly YouTubeLiveSiteOptions changed;
+        internal YouTubeLiveSiteOptions OriginOptions { get { return _origin; } }
+        internal YouTubeLiveSiteOptions ChangedOptions { get { return changed; } }
 
-        internal YouTubeLiveOptionsViewModel(YouTubeSiteOptions siteOptions)
+        internal YouTubeLiveOptionsViewModel(YouTubeLiveSiteOptions siteOptions)
         {
             _origin = siteOptions;
             changed = siteOptions.Clone();

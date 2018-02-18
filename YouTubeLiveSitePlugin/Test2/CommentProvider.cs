@@ -8,6 +8,24 @@ using Common;
 using System.Diagnostics;
 namespace YouTubeLiveSitePlugin.Test2
 {
+    internal class YouTubeLiveSiteOptions : DynamicOptionsBase
+    {
+        protected override void Init()
+        {
+        }
+        internal YouTubeLiveSiteOptions Clone()
+        {
+            return (YouTubeLiveSiteOptions)this.MemberwiseClone();
+        }
+        internal void Set(YouTubeLiveSiteOptions changedOptions)
+        {
+            foreach (var src in changedOptions.Dict)
+            {
+                var v = src.Value;
+                SetValue(v.Value, src.Key);
+            }
+        }
+    }
     class CommentProvider : ICommentProvider
     {
         private bool _canConnect;
@@ -45,7 +63,7 @@ namespace YouTubeLiveSitePlugin.Test2
         CookieContainer _cc;
         private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
-        private readonly Old.YouTubeSiteOptions _siteOptions;
+        private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
         ChatProvider chatProvider;
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
@@ -113,7 +131,7 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             throw new NotImplementedException();
         }
-        public CommentProvider(ConnectionName connectionName, IOptions options, Old.YouTubeSiteOptions siteOptions, ILogger logger)
+        public CommentProvider(ConnectionName connectionName, IOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger)
         {
             _connectionName = connectionName;
             _options = options;
@@ -122,58 +140,6 @@ namespace YouTubeLiveSitePlugin.Test2
 
             CanConnect = true;
             CanDisconnect = false;
-        }
-    }
-    class MessageText : IMessageText
-    {
-        public string Text { get; }
-        public MessageText(string text)
-        {
-            Text = text;
-        }
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-            {
-                return false;
-            }
-            if (obj is MessageText text)
-            {
-                return this.Text.Equals(text.Text);
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return Text.GetHashCode();
-        }
-    }
-    public class MessageImage : IMessageImage
-    {
-        public int? Width { get; set; }
-
-        public int? Height { get; set; }
-
-        public string Url { get; set; }
-
-        public string Alt { get; set; }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-            {
-                return false;
-            }
-            if (obj is MessageImage image)
-            {
-                return this.Url.Equals(image.Url) && this.Alt.Equals(image.Alt);
-            }
-            return false;
-        }
-        public override int GetHashCode()
-        {
-            return Url.GetHashCode() ^ Alt.GetHashCode();
         }
     }
 }

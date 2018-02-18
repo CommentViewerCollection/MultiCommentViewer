@@ -1,6 +1,6 @@
 ﻿using SitePlugin;
 using System.Windows.Controls;
-namespace YouTubeLiveSitePlugin.Old
+namespace YouTubeLiveSitePlugin.Test2
 {
     public class YouTubeListOptionsTabPage : IOptionsTabPage
     {

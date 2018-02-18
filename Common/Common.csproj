@@ -82,13 +82,16 @@
     <Compile Include="AutoUpdate\UpdateView.xaml.cs">
       <DependentUpon>UpdateView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="CommentViewModelBase.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="ColorPicker.xaml.cs">
       <DependentUpon>ColorPicker.xaml</DependentUpon>
     </Compile>
     <Compile Include="DynamicOptionsBase.cs" />
-    <Compile Include="IIo.cs" />
+    <Compile Include="InfoCommentViewModel.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="MessageImage.cs" />
+    <Compile Include="MessageText.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ValueConverterGroup.cs" />
   </ItemGroup>
@@ -116,6 +119,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
+      <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
+      <Name>SitePlugin</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

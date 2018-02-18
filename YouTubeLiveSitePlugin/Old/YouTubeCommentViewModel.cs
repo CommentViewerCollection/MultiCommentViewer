@@ -44,24 +44,20 @@ namespace YouTubeLiveSitePlugin.Old
         public bool IsVisible { get; set; } = true;
         public IUser User { get; set; }
 
-        public string UserId => "";
+        public string UserId { get; set; }
 
-        public ICommentProvider CommentProvider
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public ICommentProvider CommentProvider => _commentProvider;
 
         private readonly IOptions _options;
         private readonly YouTubeSiteOptions _siteOptions;
+        private readonly ICommentProvider _commentProvider;
         private readonly ConnectionName _connectionName;
-        public YouTubeCommentViewModel(ConnectionName connectionName, IOptions options, YouTubeSiteOptions siteOptions)
+        public YouTubeCommentViewModel(ConnectionName connectionName, IOptions options, YouTubeSiteOptions siteOptions, ICommentProvider commentProvider)
         {
             _connectionName = connectionName;
             _options = options;
             _siteOptions = siteOptions;
+            _commentProvider = commentProvider;
             WeakEventManager<ConnectionName, PropertyChangedEventArgs>.AddHandler(_connectionName, nameof(_connectionName.PropertyChanged), ConnectionName_PropertyChanged);
         }
 

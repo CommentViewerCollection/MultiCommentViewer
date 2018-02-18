@@ -240,11 +240,12 @@ namespace YouTubeLiveSitePlugin.Old
                 var comments = Actions2CommentData(ChatData.ConvertAction(liveChatContext.YtInitialData.contents.liveChatRenderer.actions)).Cast<ICommentData>().ToList();                
                 foreach(var comment in comments)
                 {
-                    var cvm = new YouTubeCommentViewModel(ConnectionName, _options, SiteOptions)
+                    var cvm = new YouTubeCommentViewModel(ConnectionName, _options, SiteOptions, this)
                     {
                          MessageItems = comment.MessageItems,
                          NameItems = comment.NameItems,
                          Id = comment.Id,
+                         UserId=comment.UserId,
                     };
                     CommentReceived?.Invoke(this, cvm);
                 }
@@ -460,13 +461,14 @@ namespace YouTubeLiveSitePlugin.Old
                             foreach (var commentData in Actions2CommentData(chatData.Actions))
                             {
                                 //await _callback(new ReceiveCallback(new List<ICommentData> { commentData })).ConfigureAwait(false);
-                                var cvm = new YouTubeCommentViewModel(ConnectionName, _options, SiteOptions)
+                                var cvm = new YouTubeCommentViewModel(ConnectionName, _options, SiteOptions, this)
                                 {
-                                     NameItems = commentData.NameItems,
-                                     MessageItems = commentData.MessageItems,
+                                    NameItems = commentData.NameItems,
+                                    MessageItems = commentData.MessageItems,
+                                    UserId = commentData.UserId,
                                 };
                                 CommentReceived?.Invoke(this, cvm);
-                                await Task.Delay(interval, ct).ConfigureAwait(false);
+                                //await Task.Delay(interval, ct).ConfigureAwait(false);
                             }
                         }
                         else
@@ -1919,10 +1921,10 @@ namespace YoutubeLib
             var headers = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("User-Agent", context.UserAgent),//User-Agentが無いとお使いのブラウザは古いようですというHTMLが返って来てしまう。
-                new KeyValuePair<string, string>("X-YouTube-Client-Name", "1"),//必須
-                new KeyValuePair<string, string>("X-YouTube-Client-Version", context.ClientVersion),//必須
-                new KeyValuePair<string, string>("X-YouTube-Identity-Token", context.Identity_Token),//必須
-                new KeyValuePair<string, string>("X-YouTube-Page-CL", context.Page_CL),//必須
+                //new KeyValuePair<string, string>("X-YouTube-Client-Name", "1"),//必須
+                //new KeyValuePair<string, string>("X-YouTube-Client-Version", context.ClientVersion),//必須
+                //new KeyValuePair<string, string>("X-YouTube-Identity-Token", context.Identity_Token),//必須
+                //new KeyValuePair<string, string>("X-YouTube-Page-CL", context.Page_CL),//必須
                 //new KeyValuePair<string, string>("X-YouTube-Page-Label", context.Page_Label),
                 //new KeyValuePair<string, string>("X-YouTube-Variants-Checksum", context.Variants_Checksum),
             };

@@ -353,13 +353,6 @@ namespace MultiCommentViewer
                     Comments.Add(comment);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
-            try
-            {
                 _pluginManager.SetComments(e);
             }
             catch (Exception ex)

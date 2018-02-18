@@ -25,27 +25,15 @@ namespace YouTubeLiveSitePlugin.Test2
                 _cts.Cancel();
             }
         }
-        public async Task ReceiveAsync(string vid, CookieContainer cc)
+        public async Task ReceiveAsync(string vid,IContinuation initialContinuation, CookieContainer cc)
         {
             _cts = new CancellationTokenSource();
-            var reconnectCount = 0;
-reconnect:
-            var wc = new MyWebClient(cc);
-            wc.Headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.2924.87 Safari/537.36";
-            var liveChatUrl = $"https://www.youtube.com/live_chat?v={vid}&is_popout=1";
-            var bytes =await wc.DownloadDataTaskAsync(liveChatUrl);
-            var liveChatHtml = Encoding.UTF8.GetString(bytes);
-            var ytInitialDataJson = Tools.ExtractYtInitialData(liveChatHtml);
-            var (initialContinuation, initialCommentData) = Tools.ParseYtInitialData(ytInitialDataJson);
-            if (reconnectCount == 0)//InitialActionsを送るのは最初だけ
-            {
-                InitialActionsReceived?.Invoke(this, initialCommentData);
-            }
 
             var continuation = initialContinuation;
             while (!_cts.IsCancellationRequested)
             {
                 var getLiveChatUrl = $"https://www.youtube.com/live_chat/get_live_chat?continuation={continuation.Continuation}&pbj=1";
+                var wc = new MyWebClient(cc);
                 wc.Headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.2924.87 Safari/537.36";
                 string getLiveChatJson = null;
                 try
@@ -84,12 +72,6 @@ reconnect:
                 catch (TaskCanceledException)
                 {
                     break;
-                }
-                catch (ReloadException)
-                {
-                    reconnectCount++;
-                    if(!_cts.IsCancellationRequested)
-                        goto reconnect;
                 }
                 catch (ContinuationContentsNullException)
                 {

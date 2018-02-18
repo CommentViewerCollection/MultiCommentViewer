@@ -3,11 +3,24 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Codeplex.Data;
 using SitePlugin;
-
+using Common;
 namespace YouTubeLiveSitePlugin.Test2
 {
     static class Tools
     {
+        public static string ExtractYtcfg(string liveChatHtml)
+        {
+            //正規表現だけだとうまくいかないから、まずメインのytcfgのケツ以降を切り捨てる
+            var n = liveChatHtml.IndexOf("});\n");
+            var sub = liveChatHtml.Substring(0, n+5);
+            var match = Regex.Match(sub, "ytcfg\\.set\\(({.+})\\);", RegexOptions.Singleline);
+            if (!match.Success)
+            {
+                throw new ParseException("仕様変更？");
+            }
+            var ytCfg = match.Groups[1].Value;
+            return ytCfg;
+        }
         public static string ExtractYtInitialData(string liveChatHtml)
         {
             var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+});\\s*</script>", RegexOptions.Singleline);

@@ -55,19 +55,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 CanDisconnectChanged?.Invoke(this, EventArgs.Empty);
             }
         }
-        public string GetVid(string url)
-        {
-            if(Regex.IsMatch(url, "^[^/?=:]+$"))
-            {
-                return url;
-            }
-            var match = Regex.Match(url, "youtube\\.com/watch?v=([^?=/]+)");
-            if (match.Success)
-            {
-                return match.Groups[1].Value;
-            }
-            throw new Exception("");
-        }
+
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
@@ -81,6 +69,10 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly ILogger _logger;
         ChatProvider chatProvider;
         MetadataProvider _metaProvider;
+        private void SendInfo(string message)
+        {
+            CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, message));
+        }
         private void BeforeConnect()
         {
             CanConnect = false;
@@ -99,10 +91,12 @@ namespace YouTubeLiveSitePlugin.Test2
             var retryCount = 0;
             try
             {
-                vid = GetVid(input);
+                vid = Tools.GetVid(input);
             }
-            catch (Exception)
+            catch (ArgumentException ex)
             {
+                SendInfo("入力したURLは未対応の形式です");
+                _logger.LogException(ex, "不正な入力値");
                 AfterConnect();
                 throw;
             }

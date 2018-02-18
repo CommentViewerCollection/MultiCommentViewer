@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using SitePlugin;
+using Common;
 namespace NicoSitePlugin.Old
 {
     internal class NicoCommentViewModel2 : CommentViewModelBase, INicoCommentViewModel

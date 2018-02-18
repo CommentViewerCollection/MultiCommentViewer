@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using SitePlugin;
+using Common;
 namespace YouTubeLiveSitePlugin.Test2
 {
     class YouTubeLiveCommentViewModel : CommentViewModelBase

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using SitePlugin;
 using System.Diagnostics;
+using Common;
 namespace TwitchSitePlugin
 {
     class TwitchCommentViewModel : CommentViewModelBase

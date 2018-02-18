@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using SitePlugin;
-
+using Common;
 namespace TwicasSitePlugin
 {
     class TwicasCommentViewModel : CommentViewModelBase

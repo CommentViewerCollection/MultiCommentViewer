@@ -143,11 +143,15 @@ reload:
                 }
                 if(initialComments.Count > 0)
                     InitialCommentsReceived?.Invoke(this, initialComments);
+
+                Task chatTask = null;
+                Task metaTask = null;
+
                 chatProvider = new ChatProvider(_logger);
                 chatProvider.InitialActionsReceived += ChatProvider_InitialActionsReceived;
                 chatProvider.ActionsReceived += ChatProvider_ActionsReceived;
-                var t = chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
-
+                chatTask = chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
+                tasks.Add(chatTask);
 
                 string ytCfg = null;
                 try
@@ -160,12 +164,24 @@ reload:
                 }
                 if (!string.IsNullOrEmpty(ytCfg))
                 {
-                    _metaProvider = new MetadataProvider();
+                    _metaProvider = new MetadataProvider(_logger);
                     _metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
-                    var metaTask = _metaProvider.ReceiveAsync(ytCfg: ytCfg, vid: vid, cc: _cc);
+                    metaTask = _metaProvider.ReceiveAsync(ytCfg: ytCfg, vid: vid, cc: _cc);
                     tasks.Add(metaTask);
                 }
-                await Task.WhenAll(tasks);
+                var t = await Task.WhenAny(tasks);
+                if(t == metaTask)
+                {
+                    //metaTask内でParseExceptionもしくはDisconnect()
+                    //metaTaskは終わっても良い。
+                    await chatTask;
+                }
+                else
+                {
+                    //chatTaskが終わったらmetaTaskも終了させる
+                    _metaProvider.Disconnect();
+                    await metaTask;
+                }
             }
             catch (ReloadException)
             {

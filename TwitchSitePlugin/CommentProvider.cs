@@ -108,6 +108,9 @@ namespace TwitchSitePlugin
             var result = e;
             switch (result.Command)
             {
+                case "PING":
+                    await _provider.SendAsync("PONG");
+                    break;
                 case "GLOBALUSERSTATE":
                     break;
                 case "PRIVMSG":
@@ -128,27 +131,38 @@ namespace TwitchSitePlugin
                         CommentReceived?.Invoke(this, cvm);
                     }
                     break;
+                default:
+                    Debug.WriteLine(result.Command);
+                    break;
             }
         }
 
         private async void Provider_Opened(object sender, EventArgs e)
         {
-            if (IsLoggedIn())
+            try
             {
-                await _provider.SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
-                await _provider.SendAsync($"PASS oauth:{_me.ChatOauthToken}");
-                await _provider.SendAsync($"NICK {_me.Name}");
-                await _provider.SendAsync($"USER {_me.Name} 8 * :{_me.Name}");
+                if (IsLoggedIn())
+                {
+                    await _provider.SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
+                    await _provider.SendAsync($"PASS oauth:{_me.ChatOauthToken}");
+                    await _provider.SendAsync($"NICK {_me.Name}");
+                    await _provider.SendAsync($"USER {_me.Name} 8 * :{_me.Name}");
+                }
+                else
+                {
+                    var name = Tools.GetRandomGuestUsername();
+                    await _provider.SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
+                    await _provider.SendAsync($"PASS SCHMOOPIIE");
+                    await _provider.SendAsync($"NICK {name}");
+                    await _provider.SendAsync($"USER {name} 8 * :{name}");
+                }
+                await _provider.SendAsync($"JOIN " + _channelName);
             }
-            else
+            catch (Exception ex)
             {
-                var name = Tools.GetRandomGuestUsername();
-                await _provider.SendAsync("CAP REQ :twitch.tv/tags twitch.tv/commands");
-                await _provider.SendAsync($"PASS SCHMOOPIIE");
-                await _provider.SendAsync($"NICK {name}");
-                await _provider.SendAsync($"USER {name} 8 * :{name}");
+                _logger.LogException(ex);
+                CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, ""));
             }
-            await _provider.SendAsync($"JOIN " + _channelName);
         }
         private bool IsLoggedIn()
         {

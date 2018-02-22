@@ -45,6 +45,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="5"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="100" />
         </Grid.RowDefinitions>
         <Menu HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="0">
             <MenuItem Header="ファイル">
@@ -370,5 +371,13 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <ComboBox Grid.Column="0" Margin="10" Height="30" />
+            <Grid x:Name="PostCommentPanelPlaceHolder" Grid.Column="2" />
+        </Grid>
     </Grid>
 </Window>

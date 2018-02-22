@@ -10,6 +10,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Net;
+using System.Diagnostics;
 using Common;
 using System.Net.Http;
 namespace MultiCommentViewer
@@ -53,8 +54,24 @@ namespace MultiCommentViewer
         }
         protected override void OnExit(ExitEventArgs e)
         {
-            var s = _logger.GetExceptions();
-            HttpContent fileStreamContent = new StreamContent(new System.IO.MemoryStream(Encoding.UTF8.GetBytes(s)));
+            try
+            {
+                var s = _logger.GetExceptions();
+                SendErrorReport(s);
+            }catch(Exception ex)
+            {
+                //ここで例外が起きても送れない・・・。
+                Debug.WriteLine(ex.Message);
+            }
+            base.OnExit(e);
+        }
+        private void SendErrorReport(string errorData)
+        {
+            if (string.IsNullOrEmpty(errorData))
+            {
+                return;
+            }
+            var fileStreamContent = new StreamContent(new System.IO.MemoryStream(Encoding.UTF8.GetBytes(errorData)));
             using (var client = new HttpClient())
             using (var formData = new MultipartFormDataContent())
             {
@@ -68,8 +85,6 @@ namespace MultiCommentViewer
                 {
                 }
             }
-
-            base.OnExit(e);
         }
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {

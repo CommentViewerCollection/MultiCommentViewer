@@ -8,25 +8,23 @@ namespace YouTubeLiveSitePlugin.Test2
 {
     static class Tools
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        public static string GetVid(string url)
+        public static bool TryGetVid(string input, out string vid)
         {
-            if (Regex.IsMatch(url, "^[^/?=:]+$"))
+            if (Regex.IsMatch(input, "^[^/?=:]+$"))
             {
-                return url;
+                vid = input;
+                return true;
             }
-            var match = Regex.Match(url, "youtube\\.com/watch?v=([^?=/]+)");
+            var match = Regex.Match(input, "youtube\\.com/watch?v=([^?=/]+)");
             if (match.Success)
             {
-                return match.Groups[1].Value;
+                vid = match.Groups[1].Value;
+                return true;
             }
-            throw new ArgumentException("invalid url:" + url);
+            vid = null;
+            return false;
         }
+
         public static string ExtractYtcfg(string liveChatHtml)
         {
             //正規表現だけだとうまくいかないから、まずメインのytcfgのケツ以降を切り捨てる

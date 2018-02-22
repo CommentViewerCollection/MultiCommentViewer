@@ -58,8 +58,7 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public bool IsValidInput(string input)
         {
-            var vid = Tools.GetVid(input);
-            return !string.IsNullOrEmpty(vid);
+            return Tools.TryGetVid(input, out string vid);
         }
 
         private readonly IOptions _options;

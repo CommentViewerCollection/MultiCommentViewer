@@ -89,16 +89,10 @@ namespace YouTubeLiveSitePlugin.Test2
             BeforeConnect();
             string vid;
             var retryCount = 0;
-            try
+            if (!Tools.TryGetVid(input, out vid))
             {
-                vid = Tools.GetVid(input);
-            }
-            catch (ArgumentException ex)
-            {
-                SendInfo("入力したURLは未対応の形式です");
-                _logger.LogException(ex, "不正な入力値");
-                AfterConnect();
-                throw;
+                CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, "入力されたURLは無効な値です"));
+                return;
             }
             try
             {

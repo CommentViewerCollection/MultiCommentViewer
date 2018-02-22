@@ -55,6 +55,7 @@ namespace YouTubeLiveSitePlugin.Test2
                     
                     if (d.code != "SUCCESS")
                     {
+                        //{"code":"ERROR","error":"不明なエラーです。"}
                         throw new Exception(res);
                     }
                     if (d.data.continuation.IsDefined("invalidationContinuationData"))

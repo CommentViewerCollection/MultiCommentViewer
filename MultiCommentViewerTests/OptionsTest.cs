@@ -27,6 +27,16 @@ namespace MultiCommentViewerTests
             _options.MainViewWidth = 256;
             Assert.AreEqual(256, _options.MainViewWidth);
         }
+        [Test]
+        public void IsShowThumbnailTest()
+        {
+            var b = _options.IsShowThumbnail;
+            _options.IsShowThumbnail = !b;
+            Assert.AreNotEqual(b, _options.IsShowThumbnail);
+
+            _options.IsShowThumbnail = b;
+            Assert.AreEqual(b, _options.IsShowThumbnail);
+        }
     }
 
 }

@@ -93,12 +93,12 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(MessageDisplayIndex), new Item {  DefaultValue = 4, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
             Dict.Add(nameof(InfoDisplayIndex), new Item {  DefaultValue = 5, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
 
-            Dict.Add(nameof(IsShowConnectionName), new Item { DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowThumbnail), new Item {  DefaultValue = false, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowCommentId), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowUsername), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowMessage), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowInfo), new Item {  DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionName), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowThumbnail), new Item {  DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowCommentId), new Item {  DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowUsername), new Item {  DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMessage), new Item {  DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowInfo), new Item {  DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             Dict.Add(nameof(IsAutoCheckIfUpdateExists), new Item { DefaultValue = true, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 

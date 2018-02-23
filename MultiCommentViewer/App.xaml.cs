@@ -65,6 +65,14 @@ namespace MultiCommentViewer
             }
             base.OnExit(e);
         }
+        private string GetUserAgent()
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var ver = asm.GetName().Version;
+            var title = asm.GetName().Name;
+            var s = $"{title} v{ver.Major}.{ver.Minor}.{ver.Build}";
+            return s;
+        }
         private void SendErrorReport(string errorData)
         {
             if (string.IsNullOrEmpty(errorData))
@@ -75,6 +83,7 @@ namespace MultiCommentViewer
             using (var client = new HttpClient())
             using (var formData = new MultipartFormDataContent())
             {
+                client.DefaultRequestHeaders.Add("User-Agent", GetUserAgent());
                 formData.Add(fileStreamContent, "error", "MultiCommentViewer" + "_" + "error.txt");
                 var t = client.PostAsync("http://int-main.net/upload", formData);
                 var response = t.Result;

@@ -2,6 +2,7 @@
 using Common;
 using System.Windows.Threading;
 using SitePlugin;
+using System.Windows.Controls;
 
 namespace TwicasSitePlugin
 {
@@ -56,6 +57,12 @@ namespace TwicasSitePlugin
         {
 
         }
+
+        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        {
+            return null;
+        }
+
         private readonly IOptions _options;
         private readonly ILogger _logger;
         private readonly IUserStore _userStore;

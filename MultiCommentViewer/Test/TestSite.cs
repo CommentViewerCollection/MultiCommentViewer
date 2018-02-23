@@ -49,6 +49,12 @@ namespace MultiCommentViewer.Test
         public void SaveOptions(string path, IIo io)
         {
         }
+
+        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        {
+            throw new NotImplementedException();
+        }
+
         private readonly IOptions _options;
         private readonly ILogger _logger;
         public TestSiteContext(IOptions options, ILogger logger)
@@ -194,6 +200,8 @@ namespace MultiCommentViewer.Test
                 CanConnect = true;
                 CanDisconnect = false;
                 _metaTimer.Enabled = false;
+                _cts.Dispose();
+                _cts = null;
             }
         }
 

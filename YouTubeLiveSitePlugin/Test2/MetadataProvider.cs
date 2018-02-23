@@ -10,6 +10,7 @@ using System.Web;
 using System.Text.RegularExpressions;
 using Common;
 using System.Threading;
+using System.Diagnostics;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -97,6 +98,14 @@ namespace YouTubeLiveSitePlugin.Test2
                         }
                     }
                     MetadataReceived?.Invoke(this, metadata);
+                }
+                catch(WebException ex)
+                {
+                    if (ex.Response is HttpWebResponse http)
+                    {
+                        throw;
+                    }
+                    Debug.WriteLine(ex.Message);
                 }
                 catch(ParseException ex)
                 {

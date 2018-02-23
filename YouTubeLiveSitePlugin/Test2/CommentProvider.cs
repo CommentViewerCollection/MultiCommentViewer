@@ -8,6 +8,8 @@ using Common;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using Codeplex.Data;
+using System.Web;
 namespace YouTubeLiveSitePlugin.Test2
 {
     internal class YouTubeLiveSiteOptions : DynamicOptionsBase
@@ -55,7 +57,18 @@ namespace YouTubeLiveSitePlugin.Test2
                 CanDisconnectChanged?.Invoke(this, EventArgs.Empty);
             }
         }
-
+        public event EventHandler LoggedInStateChanged;
+        private bool _IsLoggedIn;
+        public bool IsLoggedIn
+        {
+            get { return _IsLoggedIn; }
+            set
+            {
+                if (_IsLoggedIn == value) return;
+                _IsLoggedIn = value;
+                LoggedInStateChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
@@ -69,6 +82,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly ILogger _logger;
         ChatProvider chatProvider;
         MetadataProvider _metaProvider;
+
         private void SendInfo(string message)
         {
             CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, message));
@@ -87,13 +101,46 @@ namespace YouTubeLiveSitePlugin.Test2
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnect();
-            string vid;
+            string vid = null;
             var retryCount = 0;
-            if (!Tools.TryGetVid(input, out vid))
+            var resolver = new VidResolver();
+            try
             {
-                CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, "入力されたURLは無効な値です"));
+                var result = await resolver.GetVid(_server, input);
+                if(result is MultiVidsResult multi)
+                {
+                    SendInfo("このチャンネルでは複数のライブが配信中です。");
+                    foreach(var v in multi.Vids)
+                    {
+                        SendInfo(v);//titleも欲しい
+                    }
+                }
+                else if(result is VidResult vidResult)
+                {
+                    vid = vidResult.Vid;
+                }
+                else if(result is NoVidResult no)
+                {
+                    SendInfo("");
+                }
+                else
+                {
+                    throw new NotSupportedException();
+                }
+            }
+            catch (Exception ex)
+            {
+                CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, "入力されたURLは存在しないか無効な値です"));
+                _logger.LogException(ex, "Invalid input", "input=" + input);
+                AfterConnect();
                 return;
             }
+            if (string.IsNullOrEmpty(vid))
+            {
+                AfterConnect();
+                return;
+            }
+
             try
             {
                 var cookies = browserProfile.GetCookieCollection("youtube.com");
@@ -137,6 +184,21 @@ reload:
                 }
                 if(initialComments.Count > 0)
                     InitialCommentsReceived?.Invoke(this, initialComments);
+                initialComments = null;
+
+                //コメント投稿に必要なものの準備
+                var liveChatContext = Tools.GetLiveChatContext(liveChatHtml);
+                IsLoggedIn = liveChatContext.IsLoggedIn;
+                if(Tools.TryExtractSendButtonServiceEndpoint(ytInitialData, out string serviceEndPoint))
+                {
+                    var json = DynamicJson.Parse(serviceEndPoint);
+                    _postCommentContext = new PostCommentContext
+                    {
+                        ClientIdPrefix = json.sendLiveChatMessageEndpoint.clientIdPrefix,
+                        SessionToken = liveChatContext.XsrfToken,
+                        Sej = serviceEndPoint,
+                    };
+                }
 
                 Task chatTask = null;
                 Task metaTask = null;
@@ -144,6 +206,14 @@ reload:
                 chatProvider = new ChatProvider(_logger);
                 chatProvider.InitialActionsReceived += ChatProvider_InitialActionsReceived;
                 chatProvider.ActionsReceived += ChatProvider_ActionsReceived;
+                chatProvider.SessionTokenUpdated += (s, e) =>
+                {
+                    var token = e;
+                    if(_postCommentContext != null)
+                    {
+                        _postCommentContext.SessionToken = token;
+                    }
+                };
                 chatTask = chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
                 tasks.Add(chatTask);
 
@@ -226,20 +296,103 @@ reload:
         {
             throw new NotImplementedException();
         }
-
-        public Task PostCommentAsync(string text)
+        bool CanPostComment => _postCommentContext != null;
+        PostCommentContext _postCommentContext;
+        int _commentPostCount;
+        public async Task PostCommentAsync(string text)
         {
-            throw new NotImplementedException();
+            if (CanPostComment)
+            {
+                try
+                {
+                    var clientMessageId = _postCommentContext.ClientIdPrefix + _commentPostCount;
+                    var s = "{\"text_segments\":[{\"text\":\"" + text + "\"}]}";
+                    var sej = _postCommentContext.Sej.Replace("\r\n", "").Replace("\t", "").Replace(" ", "");
+                    var sessionToken = _postCommentContext.SessionToken;
+                    var data = $"client_message_id={UrlEncode(clientMessageId)}&rich_message={UrlEncode(s)}&sej={UrlEncode(sej)}&session_token={UrlEncode(sessionToken)}";
+                    var url = "https://www.youtube.com/service_ajax?name=sendLiveChatMessageEndpoint";
+                    var resBytes = await _server.PostAsync(url, data, _cc);
+                    _commentPostCount++;
+
+                }
+                catch(WebException ex)
+                {
+                    var res = ex.Response as HttpWebResponse;
+                    using (var sr = new System.IO.StreamReader(res.GetResponseStream()))
+                    {
+                        var s = sr.ReadToEnd();
+                        Debug.WriteLine(s);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
+            }
         }
+        private string UrlEncode(string s)
+        {
+            var lower = HttpUtility.UrlEncode(s);
+            Regex reg = new Regex(@"%[a-f0-9]{2}");
+            string upper = reg.Replace(lower, m => m.Value.ToUpperInvariant());
+            return upper;
+        }
+        IYouTubeLibeServer _server;
         public CommentProvider(ConnectionName connectionName, IOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger)
         {
             _connectionName = connectionName;
             _options = options;
             _siteOptions = siteOptions;
             _logger = logger;
+            _server = new YouTubeLiveServer();
 
             CanConnect = true;
             CanDisconnect = false;
+        }
+    }
+    class PostCommentContext
+    {
+        public string SessionToken { get; set; }
+        public string Sej { get; set; }
+        public string ClientIdPrefix { get; set; }
+    }
+    internal interface IYouTubeLibeServer
+    {
+        Task<string> GetAsync(string url);
+        Task<string> GetEnAsync(string url);
+        Task<string> PostAsync(string url, string data, CookieContainer cc);
+    }
+    internal class YouTubeLiveServer : IYouTubeLibeServer
+    {
+        public async Task<string> GetAsync(string url)
+        {
+            var wc = new WebClient();
+            wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0";
+            wc.Headers["origin"] = "https://www.youtube.com";
+            var bytes = await wc.DownloadDataTaskAsync(url);
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        public async Task<string> GetEnAsync(string url)
+        {
+            var wc = new WebClient();
+            wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0";
+            wc.Headers["origin"] = "https://www.youtube.com";
+            wc.Headers[HttpRequestHeader.AcceptLanguage] = "en-US,en;q=0.5";
+            var bytes = await wc.DownloadDataTaskAsync(url);
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        public async Task<string> PostAsync(string url, string data, CookieContainer cc)
+        {
+            var wc = new MyWebClient(cc);
+            wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0";
+            wc.Headers["origin"] = "https://www.youtube.com";
+            wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+            wc.Headers[HttpRequestHeader.Accept] = "*/*";
+            var payload = Encoding.UTF8.GetBytes(data);
+            var bytes = await wc.UploadDataTaskAsync(url, payload);
+            return Encoding.UTF8.GetString(bytes);
         }
     }
 }

@@ -3,6 +3,8 @@ using SitePlugin;
 using System.Diagnostics;
 using Common;
 using System.Text.RegularExpressions;
+using System.Windows.Controls;
+
 namespace NicoSitePlugin.Old
 {
     public class NicoSiteContext : ISiteContext
@@ -64,6 +66,12 @@ namespace NicoSitePlugin.Old
             var b = Regex.IsMatch(input, "lv\\d+");
             return b;
         }
+
+        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        {
+            return null;
+        }
+
         private NicoSiteOptions _siteOptions;
         private readonly IOptions _options;
         private readonly ILogger _logger;

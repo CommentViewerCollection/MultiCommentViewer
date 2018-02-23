@@ -4,10 +4,84 @@ using System.Text.RegularExpressions;
 using Codeplex.Data;
 using SitePlugin;
 using Common;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
+
 namespace YouTubeLiveSitePlugin.Test2
 {
+    class LiveChatContext
+    {
+        public string XsrfToken { get; set; }
+        public bool IsLoggedIn { get; set; }
+    }
     static class Tools
     {
+        public static LiveChatContext GetLiveChatContext(string liveChatHtml)
+        {
+            var context = new LiveChatContext();
+                        
+            var html = liveChatHtml;
+
+            //XSRF_TOKEN
+            {
+                var match = Regex.Match(html, "\"XSRF_TOKEN\":\"([^\"]+)\"");
+                if (match.Success)
+                {
+                    context.XsrfToken = match.Groups[1].Value;
+                }
+            }
+            //LOGGED_IN
+            {
+                var match = Regex.Match(html, "\"LOGGED_IN\":([a-zA-Z]+)");
+                if (match.Success)
+                {
+                    var s = match.Groups[1].Value;
+                    context.IsLoggedIn = s == "true";
+                }
+            }
+            return context;
+        }
+        public static PostCommentContext GetPostCommentContext(string ytInitialData)
+        {
+            if (!Tools.TryExtractSendButtonServiceEndpoint(ytInitialData, out string serviceEndpoint))
+            {
+
+            }
+            throw new NotImplementedException();
+        }
+        public static bool TryExtractSendButtonServiceEndpoint(string ytInitialData, out string serviceEndPoint)
+        {
+            var arr = new[]
+            {
+                "contents",
+                "liveChatRenderer",
+                //"continuationContents",
+                //"liveChatContinuation",
+                "actionPanel",
+                "liveChatMessageInputRenderer",
+                "sendButton",
+                "buttonRenderer",
+                "serviceEndpoint",
+            };
+            var data = (JObject)JsonConvert.DeserializeObject(ytInitialData);
+            var temp = data[arr[0]];
+            for(int i = 1;i<arr.Length;i++)
+            {
+                var s = arr[i];
+                temp = temp[s];
+                if(temp == null)
+                {
+                    Debug.WriteLine("次の要素がない:" + s);
+                    serviceEndPoint = null;
+                    return false;
+                }
+            }
+            serviceEndPoint = temp.ToString();
+            return true;
+        }
         public static bool TryGetVid(string input, out string vid)
         {
             if (Regex.IsMatch(input, "^[^/?=:]+$"))
@@ -15,7 +89,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 vid = input;
                 return true;
             }
-            var match = Regex.Match(input, "youtube\\.com/watch?v=([^?=/]+)");
+            var match = Regex.Match(input, "youtube\\.com/watch\\?v=([^?=/]+)");
             if (match.Success)
             {
                 vid = match.Groups[1].Value;
@@ -101,6 +175,8 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                 }
             }
+
+
 
             //var actions = lowLiveChat.contents.liveChatRenderer.actions;
             //var actionList = new List<IAction>();
@@ -206,7 +282,7 @@ namespace YouTubeLiveSitePlugin.Test2
         /// <returns></returns>
         /// <exception cref="ContinuationContentsNullException"></exception>
         /// <exception cref="NoContinuationException">放送終了</exception>
-        public static (IContinuation, List<CommentData>) ParseGetLiveChat(string getLiveChatJson)
+        public static (IContinuation, List<CommentData>, string sessionToken) ParseGetLiveChat(string getLiveChatJson)
         {
             var json = DynamicJson.Parse(getLiveChatJson);
             if (!json.response.IsDefined("continuationContents"))
@@ -269,6 +345,7 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                 }
             }
+            var sessionToken = json.xsrf_token;
             //var actions = lowLiveChat.response.continuationContents.liveChatContinuation.actions;
             //var actionList = new List<IAction>();
             //if (actions != null)
@@ -289,7 +366,7 @@ namespace YouTubeLiveSitePlugin.Test2
             //    }
             //}
             //return (continuation, actionList);
-            return (continuation, dataList);
+            return (continuation, dataList, sessionToken);
         }
     }
 }

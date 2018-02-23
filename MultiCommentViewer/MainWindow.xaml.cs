@@ -26,6 +26,26 @@ namespace MultiCommentViewer
             InitializeComponent();
             
             dataGrid.MouseRightButtonUp += DataGrid_MouseRightButtonUp;
+            Messenger.Default.Register<SetPostCommentPanel>(this, message =>
+            {
+                PostCommentPanelPlaceHolder.Children.Clear();
+                
+                var newPanel = message.Panel;
+                if(newPanel == null)
+                {
+                    PostCommentPanelPlaceHolder.IsEnabled = false;
+                }
+                else
+                {
+                    PostCommentPanelPlaceHolder.IsEnabled = true;
+                    newPanel.Margin = new Thickness(0);
+                    newPanel.VerticalAlignment = VerticalAlignment.Stretch;
+                    newPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+                    newPanel.Width = double.NaN;
+                    newPanel.Height = double.NaN;
+                    PostCommentPanelPlaceHolder.Children.Add(newPanel);
+                }
+            });
             Messenger.Default.Register<ShowOptionsViewMessage>(this, message =>
             {
                 try

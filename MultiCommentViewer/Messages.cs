@@ -2,6 +2,8 @@
 using GalaSoft.MvvmLight.Messaging;
 using System.Collections.Generic;
 using SitePlugin;
+using System.Windows.Controls;
+
 namespace MultiCommentViewer
 {
     class ShowOptionsViewMessage: MessageBase
@@ -18,6 +20,14 @@ namespace MultiCommentViewer
         public ShowUserViewMessage(UserViewModel uvm)
         {
             Uvm = uvm;
+        }
+    }
+    class SetPostCommentPanel : MessageBase
+    {
+        public UserControl Panel { get; }
+        public SetPostCommentPanel(UserControl panel)
+        {
+            Panel = panel;
         }
     }
 }

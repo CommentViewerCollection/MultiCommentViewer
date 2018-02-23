@@ -353,7 +353,10 @@ namespace MultiCommentViewer
                     Comments.Add(comment);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
-                _pluginManager.SetComments(e);
+                if (!e.IsInfo)
+                {
+                    _pluginManager.SetComments(e);
+                }
             }
             catch (Exception ex)
             {
@@ -396,6 +399,17 @@ namespace MultiCommentViewer
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
         public ICommentViewModel SelectedComment { get; set; }
+        private ConnectionViewModel _selectedConnection;
+        public ConnectionViewModel SelectedConnection
+        {
+            get { return _selectedConnection; }
+            set
+            {
+                _selectedConnection = value;
+                MessengerInstance.Send(new SetPostCommentPanel(_selectedConnection.CommentPostPanel));
+                RaisePropertyChanged();
+            }
+        }
         public string Title
         {
             get

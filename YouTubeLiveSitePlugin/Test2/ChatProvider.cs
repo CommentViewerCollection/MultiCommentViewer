@@ -15,6 +15,7 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         public event EventHandler<List<CommentData>> InitialActionsReceived;
         public event EventHandler<List<CommentData>> ActionsReceived;
+        public event EventHandler<string> SessionTokenUpdated;
         CancellationTokenSource _cts;
         private readonly ILogger _logger;
 
@@ -40,7 +41,8 @@ namespace YouTubeLiveSitePlugin.Test2
                 {
                     var getLiveChatBytes = await wc.DownloadDataTaskAsync(getLiveChatUrl);
                     getLiveChatJson = Encoding.UTF8.GetString(getLiveChatBytes);
-                    var (c, a) = Tools.ParseGetLiveChat(getLiveChatJson);
+                    var (c, a, sessionToken) = Tools.ParseGetLiveChat(getLiveChatJson);
+                    SessionTokenUpdated?.Invoke(this, sessionToken);
                     continuation = c;
                     if (a.Count > 0)
                     {

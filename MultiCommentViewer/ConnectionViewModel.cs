@@ -52,12 +52,34 @@ namespace MultiCommentViewer
                 next.CommentReceived += CommentProvider_CommentReceived;
                 next.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
-                
+
+                System.Windows.Controls.UserControl commentPanel;
+                try
+                {
+                    commentPanel = _selectedSite.Site.GetCommentPostPanel(next);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                    commentPanel = null;
+                }
+                CommentPostPanel = commentPanel;
+
                 RaisePropertyChanged();
             }
         }
 
-
+        private System.Windows.Controls.UserControl _commentPostPanel;
+        public System.Windows.Controls.UserControl CommentPostPanel
+        {
+            get { return _commentPostPanel; }
+            set
+            {
+                if (_commentPostPanel == value) return;
+                _commentPostPanel = value;
+                RaisePropertyChanged();
+            }
+        }
 
         private void CommentProvider_MetadataUpdated(object sender, IMetadata e)
         {

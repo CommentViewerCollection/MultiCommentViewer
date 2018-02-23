@@ -24,6 +24,7 @@ namespace SitePlugin
         /// <param name="input"></param>
         /// <returns></returns>
         bool IsValidInput(string input);
+        UserControl GetCommentPostPanel(ICommentProvider commentProvider);
     }
 }
 

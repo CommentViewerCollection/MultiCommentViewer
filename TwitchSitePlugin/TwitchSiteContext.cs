@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using Common;
 using System.Text.RegularExpressions;
+using System.Windows.Controls;
+
 namespace TwitchSitePlugin
 {
     public class TwitchSiteContext : ISiteContext
@@ -65,6 +67,12 @@ namespace TwitchSitePlugin
             var b = Regex.IsMatch(input, "twitch\\.tv/[a-zA-Z0-9_]+");
             return b;
         }
+
+        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        {
+            return null;
+        }
+
         private readonly IOptions _options;
         private readonly ILogger _logger;
         private readonly IUserStore _userStore;

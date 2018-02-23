@@ -2,6 +2,8 @@
 using SitePlugin;
 using Common;
 using System.Diagnostics;
+using System.Windows.Controls;
+
 namespace YouTubeLiveSitePlugin.Test2
 {
     public class YouTubeLiveSiteContext : IYouTubeSiteContext
@@ -58,7 +60,24 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public bool IsValidInput(string input)
         {
-            return Tools.TryGetVid(input, out string vid);
+            var resolver = new VidResolver();
+            return resolver.IsValidInput(input);
+        }
+
+        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        {
+            var youtubeCommentProvider = commentProvider as CommentProvider;
+            Debug.Assert(youtubeCommentProvider != null);
+            if (youtubeCommentProvider == null)
+                return null;
+
+            var vm = new CommentPostPanelViewModel(youtubeCommentProvider);
+            var panel = new CommentPostPanel
+            {
+                //IsEnabled = false,
+                DataContext = vm
+            };
+            return panel;
         }
 
         private readonly IOptions _options;

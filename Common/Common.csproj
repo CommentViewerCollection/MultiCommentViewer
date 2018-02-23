@@ -82,14 +82,20 @@
     <Compile Include="AutoUpdate\UpdateView.xaml.cs">
       <DependentUpon>UpdateView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="BindableTextBlock.cs" />
     <Compile Include="CommentViewModelBase.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="ColorPicker.xaml.cs">
       <DependentUpon>ColorPicker.xaml</DependentUpon>
     </Compile>
     <Compile Include="DynamicOptionsBase.cs" />
+    <Compile Include="FontSelectorView.xaml.cs">
+      <DependentUpon>FontSelectorView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="FontSelectorViewModel.cs" />
     <Compile Include="InfoCommentViewModel.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="LoggerTest.cs" />
     <Compile Include="MessageImage.cs" />
     <Compile Include="MessageText.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -115,6 +121,10 @@
     <Page Include="ColorPicker.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="FontSelectorView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>

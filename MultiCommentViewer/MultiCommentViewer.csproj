@@ -189,7 +189,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BrowserCookieImplementations\BrowserCookieImplementations.csproj">
@@ -262,7 +264,7 @@ if $(ConfigurationName) == Release (
     </PostBuildEventDependsOn>
     <PostBuildEvent>:: フォルダがごちゃごちゃしていると実行ファイルを見つけにくいからdllディレクトリを作成し、全部突っ込む
 if $(ConfigurationName) == Release (
-  powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\postbuild.ps1" -TargetDir "$(TargetDir) "  -TargetName "$(TargetName)"
+  powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)\postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)
 )
 :: settingsディレクトリを作成
 if not exist settings mkdir settings
@@ -271,7 +273,7 @@ if not exist settings\placeholder powershell New-Item settings\placeholder -Item
 
 :: BouyomiPluginのファイルを全部持ってくる
 mkdir plugins\Bouyomi
-copy "..\..\..\BouyomiPlugin\bin\Debug\*" "plugins\Bouyomi\"
+copy "..\..\..\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
 
 :: 自動アップデートに必要なlist.txtを作成
 powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList.ps1" -TargetDir "$(TargetDir)\"

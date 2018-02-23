@@ -6,7 +6,7 @@ $dllDir = "$targetDir" + "\" + $dllDirName
 Remove-Item -Recurse -Force $dllDir -ErrorAction Ignore
 New-Item "$dllDir" -type directory
 
-$Files = Get-ChildItem -Path $targetDir  -Exclude "$targetName.*" | where {! $_.PSIsContainer}
+$Files = Get-ChildItem -Path "$targetDir"  -Exclude "$targetName.*" | where {! $_.PSIsContainer}
 ForEach ($file in $Files)
 {
     Move-Item -Path "$File" -Destination "$dllDir"

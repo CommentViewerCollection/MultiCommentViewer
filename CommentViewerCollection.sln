@@ -48,6 +48,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasCommentProviderTestCl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoCommentProviderErrorTestClient", "NicoCommentProviderErrorTestClient\NicoCommentProviderErrorTestClient.csproj", "{601BB5E7-557C-43FD-9FD4-136447473A56}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YouTubeLiveCommentViewer", "YouTubeLiveCommentViewer\YouTubeLiveCommentViewer.csproj", "{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -138,6 +140,10 @@ Global
 		{601BB5E7-557C-43FD-9FD4-136447473A56}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{601BB5E7-557C-43FD-9FD4-136447473A56}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{601BB5E7-557C-43FD-9FD4-136447473A56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

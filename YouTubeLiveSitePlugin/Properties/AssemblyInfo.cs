@@ -37,3 +37,4 @@ using System.Runtime.InteropServices;
 
 [assembly:InternalsVisibleTo("YouTubeLiveSitePluginTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+[assembly:InternalsVisibleTo("YouTubeLiveCommentViewer")]

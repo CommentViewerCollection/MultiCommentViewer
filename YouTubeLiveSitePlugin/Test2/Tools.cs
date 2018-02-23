@@ -216,34 +216,37 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 var messageItems = new List<IMessagePart>();
                 commentData.MessageItems = messageItems;
-                if (ren.message.IsDefined("runs"))
+                if (ren.IsDefined("message"))//PaidMessageではコメント無しも可能
                 {
-                    foreach (var r in ren.message.runs)
+                    if (ren.message.IsDefined("runs"))
                     {
-                        if (r.IsDefined("text"))
+                        foreach (var r in ren.message.runs)
                         {
-                            var text = r.text;
-                            messageItems.Add(new MessageText(text));
-                        }
-                        else if (r.IsDefined("emoji"))
-                        {
-                            var emoji = r.emoji;
-                            var thumbnail = emoji.image.thumbnails[0];
-                            var emojiUrl = thumbnail.url;
-                            var emojiWidth = (int)thumbnail.width;
-                            var emojiHeight = (int)thumbnail.height;
-                            var emojiAlt = emoji.image.accessibility.accessibilityData.label;
-                            messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
-                        }
-                        else
-                        {
-                            throw new ParseException();
+                            if (r.IsDefined("text"))
+                            {
+                                var text = r.text;
+                                messageItems.Add(new MessageText(text));
+                            }
+                            else if (r.IsDefined("emoji"))
+                            {
+                                var emoji = r.emoji;
+                                var thumbnail = emoji.image.thumbnails[0];
+                                var emojiUrl = thumbnail.url;
+                                var emojiWidth = (int)thumbnail.width;
+                                var emojiHeight = (int)thumbnail.height;
+                                var emojiAlt = emoji.image.accessibility.accessibilityData.label;
+                                messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
+                            }
+                            else
+                            {
+                                throw new ParseException();
+                            }
                         }
                     }
-                }
-                else
-                {
-                    throw new ParseException();
+                    else
+                    {
+                        throw new ParseException();
+                    }
                 }
             }
             //name

@@ -1,0 +1,19 @@
+﻿<UserControl x:Class="YouTubeLiveCommentViewer.MainOptionsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:YouTubeLiveCommentViewer"
+             xmlns:Common="clr-namespace:Common;assembly=Common" 
+             mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}"
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid>
+
+        <Common:ColorPicker SelectedColor="{Binding ForeColor, Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,40,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label Content="文字色" HorizontalAlignment="Left" Margin="45,40,0,0" VerticalAlignment="Top"/>
+        <Label Content="背景色" HorizontalAlignment="Left" Margin="53,89,0,0" VerticalAlignment="Top"/>
+        <Common:ColorPicker SelectedColor="{Binding BackColor,Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,89,0,0" VerticalAlignment="Top" Width="70"/>
+
+    </Grid>
+</UserControl>

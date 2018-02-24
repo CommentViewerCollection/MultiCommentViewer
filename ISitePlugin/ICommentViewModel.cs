@@ -29,7 +29,7 @@ namespace SitePlugin
         /// </summary>
         bool IsFirstComment { get; }
 
-        IEnumerable<IMessagePart> Thumbnail { get; }
+        IMessageImage Thumbnail { get; }
 
         FontFamily FontFamily { get; }
         FontStyle FontStyle { get; }

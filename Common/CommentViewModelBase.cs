@@ -29,7 +29,7 @@ namespace Common
 
         public bool IsFirstComment { get; protected set; }
 
-        public virtual IEnumerable<IMessagePart> Thumbnail { get; protected set; }
+        public virtual IMessageImage Thumbnail { get; protected set; }
 
         public FontFamily FontFamily
         {

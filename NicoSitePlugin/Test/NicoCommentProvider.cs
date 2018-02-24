@@ -343,7 +343,7 @@ namespace NicoSitePlugin.Old
 
         public IUser User { get; set; }
 
-        public IEnumerable<IMessagePart> Thumbnail => new List<IMessagePart>();
+        public IMessageImage Thumbnail => null;
 
         public FontFamily FontFamily => _options.FontFamily;
 

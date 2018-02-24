@@ -53,7 +53,7 @@ namespace MultiCommentViewer.Test
 
         public bool IsFirstComment { get; set; }
 
-        public IEnumerable<IMessagePart> Thumbnail => new List<IMessagePart>();
+        public IMessageImage Thumbnail => null;
 
         public FontFamily FontFamily => _options.FontFamily;
 

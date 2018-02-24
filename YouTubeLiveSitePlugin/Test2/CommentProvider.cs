@@ -149,14 +149,53 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             catch { }
 reload:
+
+            string liveChatHtml = null;
+
             try
             {
                 //live_chatを取得する。この中にこれから必要なytInitialDataとytcfgがある
-                var wc = new MyWebClient(_cc);
-                wc.Headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.2924.87 Safari/537.36";
-                var liveChatUrl = $"https://www.youtube.com/live_chat?v={vid}&is_popout=1";
-                var bytes = await wc.DownloadDataTaskAsync(liveChatUrl);
-                var liveChatHtml = Encoding.UTF8.GetString(bytes);
+                using (var wc = new MyWebClient(_cc))
+                {
+                    wc.Headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.2924.87 Safari/537.36";
+                    var liveChatUrl = $"https://www.youtube.com/live_chat?v={vid}&is_popout=1";
+                    var bytes = await wc.DownloadDataTaskAsync(liveChatUrl);
+                    liveChatHtml = Encoding.UTF8.GetString(bytes);
+                }
+            }
+            catch(WebException ex) when(ex.Status == WebExceptionStatus.ProtocolError)
+            {
+                if(ex.Response is HttpWebResponse http)
+                {
+                    switch (http.StatusCode)
+                    {
+                        case HttpStatusCode.BadRequest:
+                            SendInfo("入力されたURLは存在しない可能性があります");
+                            break;
+                        case HttpStatusCode.InternalServerError:
+                            SendInfo("サーバでエラーが発生しました");
+                            break;
+                        case HttpStatusCode.ServiceUnavailable:
+                            SendInfo("サーバが落ちています");
+                            break;
+                    }
+                    //http.StatusCode
+                }
+                AfterConnect();
+                return;
+            }
+            catch(Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            if (string.IsNullOrEmpty(liveChatHtml))
+            {
+                await Task.Delay(3000);
+                goto reload;
+            }
+            try
+            {
+
 
                 var tasks = new List<Task>();
 

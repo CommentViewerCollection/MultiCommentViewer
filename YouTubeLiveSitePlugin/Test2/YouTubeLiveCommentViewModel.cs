@@ -16,6 +16,7 @@ namespace YouTubeLiveSitePlugin.Test2
             MessageItems = commentData.MessageItems;
             Id = commentData.Id;
             UserId = commentData.UserId;
+            Thumbnail = commentData.Thumbnail;
             //Timestamp
 
             //Thumbnail = commentData.Thumbnail;

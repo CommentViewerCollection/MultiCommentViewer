@@ -205,12 +205,12 @@ namespace YouTubeLiveSitePlugin.Test2
             commentData.Id = ren.id;
             //authorPhoto
             {
-                var authorPhoto = new List<IMessagePart>();
                 var thumbnail = ren.authorPhoto.thumbnails[0];
                 var url = thumbnail.url;
                 var width = (int)thumbnail.width;
                 var height = (int)thumbnail.height;
-                authorPhoto.Add(new MessageImage { Url = url, Width = width, Height = height });
+                var authorPhoto = new MessageImage { Url = url, Width = width, Height = height };
+                commentData.Thumbnail = authorPhoto;
             }
             //message
             {

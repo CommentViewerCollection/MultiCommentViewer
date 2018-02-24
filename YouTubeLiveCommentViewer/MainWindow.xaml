@@ -31,6 +31,7 @@
         <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
         <w:MessageConverter x:Key="messageConverter" />
         <w:NameConverter x:Key="nameConverter" />
+        <w:ThumbnailConverter x:Key="thumbnailConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -40,7 +41,7 @@
         <Menu Width="Auto" Height="20" Grid.Row="0">
             <MenuItem Header="ファイル">
                 <Separator />
-                <MenuItem Header="終了" Command="{Binding ExitCommand}" />
+                <MenuItem Header="終了" Command="{Binding CloseCommand}" />
             </MenuItem>
             <MenuItem Header="表示">
                 <MenuItem Header="放送情報" IsChecked="{Binding IsShowLiveInfo}" IsCheckable="True" />
@@ -81,7 +82,7 @@
                     </RowDefinition.Style>
                 </RowDefinition>
                 <RowDefinition Height="*" />
-                <RowDefinition Height="50" />
+                <RowDefinition Height="60" />
             </Grid.RowDefinitions>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -132,10 +133,10 @@
                       ScrollViewer.ScrollChanged="dataGrid_ScrollChanged"                      
                       Margin="5" Grid.Row="2">
                 <DataGrid.Resources>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding SelectedRowColor}"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding SelectedRowTextColor}" />
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding SelectedRowColor}"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{Binding SelectedRowTextColor}"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}"/>
                     <ContextMenu x:Key="commentContext" DataContext="{Binding}">
                         <MenuItem Header="コメントをコピー" Command="{Binding CommentCopyCommand}" />
                         <MenuItem Header="URLを開く" IsEnabled="{Binding ContainsUrl}" Command="{Binding OpenUrlCommand}" />
@@ -151,7 +152,6 @@
                         <Setter Property="Foreground" Value="{Binding Foreground}" />
                         <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />
                         <Setter Property="BorderBrush" Value="{Binding Background}" />
-                        <Setter Property="BorderThickness" Value="{Binding RowBorderThickness}"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsVisible}" Value="False">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -164,7 +164,7 @@
                     </Style>
                     <ContextMenu x:Key="listViewHeaderContext" DataContext="{Binding DataContext, Source={x:Reference dummyElement}}">
                         <MenuItem Header="サムネ" IsChecked="{Binding IsShowThumbnail, Mode=TwoWay}" IsCheckable="True" />
-                        <MenuItem Header="ユーザ名" IsChecked="{Binding IsShowUserName, Mode=TwoWay}" IsCheckable="True" />
+                        <MenuItem Header="ユーザ名" IsChecked="{Binding IsShowUsername, Mode=TwoWay}" IsCheckable="True" />
                         <MenuItem Header="ユーザID" IsChecked="{Binding IsShowUserId, Mode=TwoWay}" IsCheckable="True" />
                         <!--<MenuItem Header="コメ番" IsChecked="{Binding IsShowNum, Mode=TwoWay}" IsCheckable="True" />-->
                         <MenuItem Header="投稿時間" IsChecked="{Binding IsShowPostTime, Mode=TwoWay}" IsCheckable="True" />
@@ -175,26 +175,25 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="サムネ" 
+                    <DataGridTemplateColumn Header="ｻﾑﾈ" 
                                             DisplayIndex="{Binding DataContext.ThumbnailDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=0}"
                                             Width="{Binding DataContext.ThumbnailWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                             Visibility="{Binding DataContext.IsShowThumbnail, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate DataType="Ellipse">
-                                <!--<Image w:LazyImageBehavior.LazySource="{Binding ThumbnailUrl}" />-->
-                                <Image Source="{Binding Thumbnail}" />
+                            <DataTemplate>
+                                <w:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding Thumbnail, Converter={StaticResource thumbnailConverter}}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="ユーザ名" 
-                                            DisplayIndex="{Binding DataContext.UserNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=1}"
-                                            Visibility="{Binding DataContext.IsShowUserName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
-                                            Width="{Binding DataContext.UserNameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                            DisplayIndex="{Binding DataContext.UsernameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=1}"
+                                            Visibility="{Binding DataContext.IsShowUsername, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
+                                            Width="{Binding DataContext.UsernameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                             >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <w:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding NameItems, Converter={StaticResource nameConverter}}"
-                                                  Padding="5,0" />
+                                                  Margin="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -234,7 +233,7 @@
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
-            <Grid x:Name="PostCommentPanelPlaceHolder" Grid.Row="3" />
+            <Grid x:Name="PostCommentPanelPlaceHolder" Grid.Row="3" Margin="5" />
         </Grid>
     </Grid>
 </Window>

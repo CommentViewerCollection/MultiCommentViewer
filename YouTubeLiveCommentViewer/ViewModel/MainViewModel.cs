@@ -16,6 +16,7 @@ using System.ComponentModel;
 using GalaSoft.MvvmLight.Command;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
+using System.Windows.Data;
 
 namespace YouTubeLiveCommentViewer.ViewModel
 {
@@ -27,7 +28,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
         public ICommand MainViewContentRenderedCommand { get; }
         public ICommand MainViewClosingCommand { get; }
         public ICommand ShowOptionsWindowCommand { get; }
-        public ICommand ExitCommand { get; }
+        public ICommand CloseCommand { get; }
         public ICommand ShowWebSiteCommand { get; }
         public ICommand ShowDevelopersTwitterCommand { get; }
         public ICommand CheckUpdateCommand { get; }
@@ -42,7 +43,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
         private readonly ILogger _logger;
         private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
         private IPluginManager _pluginManager;
-        private readonly IIo _io;        
+        private readonly IIo _io;
         public ObservableCollection<BrowserViewModel> BrowserCollection { get; } = new ObservableCollection<BrowserViewModel>();
         private readonly IBrowserLoader _browserLoader;
 
@@ -121,26 +122,108 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 return s;
             }
         }
-        public bool IsShowCommentId
+        #region Thumbnail
+        public int ThumbnailDisplayIndex
         {
-            get { return _options.IsShowCommentId; }
-            set { _options.IsShowCommentId = value; }
+            get { return _options.ThumbnailDisplayIndex; }
+            set { _options.ThumbnailDisplayIndex = value; }
+        }
+        public double ThumbnailWidth
+        {
+            get { return _options.ThumbnailWidth; }
+            set { _options.ThumbnailWidth = value; }
+        }
+        public bool IsShowThumbnail
+        {
+            get { return _options.IsShowThumbnail; }
+            set { _options.IsShowThumbnail = value; }
+        }
+        #endregion
+
+        #region Username
+        public int UsernameDisplayIndex
+        {
+            get { return _options.UsernameDisplayIndex; }
+            set { _options.UsernameDisplayIndex = value; }
+        }
+        public double UsernameWidth
+        {
+            get { return _options.UsernameWidth; }
+            set { _options.UsernameWidth = value; }
         }
         public bool IsShowUsername
         {
             get { return _options.IsShowUsername; }
             set { _options.IsShowUsername = value; }
         }
+        #endregion
+
+        #region UserId
+        public int UserIdDisplayIndex
+        {
+            get { return _options.UserIdDisplayIndex; }
+            set { _options.UserIdDisplayIndex = value; }
+        }
+        public double UserIdWidth
+        {
+            get { return _options.UserIdWidth; }
+            set { _options.UserIdWidth = value; }
+        }
         public bool IsShowUserId
         {
             get { return _options.IsShowUserId; }
             set { _options.IsShowUserId = value; }
+        }
+        #endregion
+
+        #region PostTime
+        public int PostTimeDisplayIndex
+        {
+            get { return _options.PostTimeDisplayIndex; }
+            set { _options.PostTimeDisplayIndex = value; }
+        }
+        public double PostTimeWidth
+        {
+            get { return _options.PostTimeWidth; }
+            set { _options.PostTimeWidth = value; }
         }
         public bool IsShowPostTime
         {
             get { return _options.IsShowPostTime; }
             set { _options.IsShowPostTime = value; }
         }
+        #endregion
+
+        #region Message
+        public int MessageDisplayIndex
+        {
+            get { return _options.MessageDisplayIndex; }
+            set { _options.MessageDisplayIndex = value; }
+        }
+        public double MessageWidth
+        {
+            get { return _options.MessageWidth; }
+            set { _options.MessageWidth = value; }
+        }
+        #endregion
+
+        public bool IsShowCommentId
+        {
+            get { return _options.IsShowCommentId; }
+            set { _options.IsShowCommentId = value; }
+        }
+
+        public Color SelectedRowBackColor
+        {
+            get { return _options.SelectedRowBackColor; }
+        }
+        public Color SelectedRowForeColor
+        {
+            get { return _options.SelectedRowForeColor; }
+        }
+
+        public IValueConverter ThumbnailConverter { get; } = new Common.Wpf.ThumbnailConverter();
+
         private string GetSiteOptionsPath(ISiteContext site)
         {
             var path = System.IO.Path.Combine(_options.SettingsDirPath, site.DisplayName + ".txt");
@@ -152,9 +235,12 @@ namespace YouTubeLiveCommentViewer.ViewModel
             //ここでawaitするとそれ以降が実行されないからこうするしかない。
             try
             {
+                MessengerInstance.Send(new SetPostCommentPanel(_siteContext.GetCommentPostPanel(commentProvider)));
+
                 var siteOptionsPath = GetSiteOptionsPath(_siteContext);
                 _siteContext.LoadOptions(siteOptionsPath, _io);
-                 var browsers = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
+
+                var browsers = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
                 //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
                 if (browsers.Count() == 0)
                 {
@@ -163,7 +249,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
                                 new BrowserViewModel( new EmptyBrowserProfile()),
                             };
                 }
-                foreach(var browser in browsers)
+                foreach (var browser in browsers)
                 {
                     BrowserCollection.Add(browser);
                 }
@@ -175,10 +261,10 @@ namespace YouTubeLiveCommentViewer.ViewModel
 
                 _pluginManager.OnLoaded();
 
-                //if (_options.IsAutoCheckIfUpdateExists)
-                //{
-                //    await CheckIfUpdateExists(true);
-                //}
+                if (_options.IsAutoCheckIfUpdateExists)
+                {
+                    await CheckIfUpdateExists(true);
+                }
             }
             catch (Exception ex)
             {
@@ -194,8 +280,8 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 return;
             try
             {
-                //var path = GetSiteOptionsPath(site);
-                //_siteContext.SaveOptions(path, _io);
+                var path = GetSiteOptionsPath(_siteContext);
+                _siteContext.SaveOptions(path, _io);
             }
             catch (Exception ex)
             {
@@ -203,15 +289,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 Debug.WriteLine(ex.Message);
             }
             _pluginManager.OnClosing();
-            try
-            {
-                //await _optionsLoader.WriteAsync(GetOptionsPath(), _io, _options);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                Debug.WriteLine(ex.Message);
-            }
+
             canClose = true;
             App.Current.Shutdown();
         }
@@ -303,9 +381,9 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 _logger.LogException(ex);
             }
         }
-        private void Exit()
+        private void Close()
         {
-
+            MessengerInstance.Send(new MainViewCloseMessage());
         }
         private readonly IYouTubeSiteContext _siteContext;
 
@@ -317,30 +395,16 @@ namespace YouTubeLiveCommentViewer.ViewModel
         public ICommand DisconnectCommand { get; }
 
         #region CanConnect
-        private bool _CanConnect;
         public bool CanConnect
         {
-            get { return _CanConnect; }
-            set
-            {
-                if (_CanConnect == value) return;
-                _CanConnect = value;
-                RaisePropertyChanged();
-            }
+            get { return IsValidInput && commentProvider.CanConnect; }
         }
         #endregion //CanConnect
 
-        #region CanDisconnect
-        private bool  _CanDisconnect;
-        public bool  CanDisconnect
+        #region CanDisconnect        
+        public bool CanDisconnect
         {
-            get { return _CanDisconnect; }
-            set
-            {
-                if (_CanDisconnect == value) return;
-                _CanDisconnect = value;
-                RaisePropertyChanged();
-            }
+            get { return IsValidInput && commentProvider.CanDisconnect; }
         }
         #endregion //CanDisconnect
 
@@ -385,39 +449,71 @@ namespace YouTubeLiveCommentViewer.ViewModel
         //TODO:後々IOptionsに変更するけど、下手にIOptionsを書き換えたくないから型をDynamicOptionsTestにしておく
         DynamicOptionsTest _options;
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        internal MainViewModel(IYouTubeSiteContext siteContext, DynamicOptionsTest options, IIo io)
+        internal MainViewModel(IYouTubeSiteContext siteContext, DynamicOptionsTest options, IIo io, ILogger logger)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _siteContext = siteContext;
             _browserLoader = new BrowserLoader();
             _options = options;
             _io = io;
+            _logger = logger;
+
             var connectionName = new ConnectionName();
             commentProvider = siteContext.CreateCommentProvider(connectionName);
             commentProvider.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
             commentProvider.CommentReceived += CommentProvider_CommentReceived;
             commentProvider.MetadataUpdated += CommentProvider_MetadataUpdated;
+            commentProvider.CanConnectChanged += (s, e) =>
+            {
+                RaisePropertyChanged(nameof(CanConnect));
+                RaisePropertyChanged(nameof(CanDisconnect));
+            };
+            commentProvider.CanDisconnectChanged += (s, e) =>
+            {
+                RaisePropertyChanged(nameof(CanConnect));
+                RaisePropertyChanged(nameof(CanDisconnect));
+            };
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
             ShowOptionsWindowCommand = new RelayCommand(ShowOptionsWindow);
-            ExitCommand = new RelayCommand(Exit);
+            CloseCommand = new RelayCommand(Close);
             ShowWebSiteCommand = new RelayCommand(ShowWebSite);
             ShowDevelopersTwitterCommand = new RelayCommand(ShowDevelopersTwitter);
             CheckUpdateCommand = new RelayCommand(CheckUpdate);
             //ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
             ConnectCommand = new RelayCommand(Connect);
             DisconnectCommand = new RelayCommand(Disconnect);
-
+            options.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(options.IsTopmost):
+                        RaisePropertyChanged(nameof(Topmost));
+                        break;
+                    case nameof(options.IsShowThumbnail):
+                        RaisePropertyChanged(nameof(IsShowThumbnail));
+                        break;
+                    case nameof(options.IsShowUsername):
+                        RaisePropertyChanged(nameof(IsShowUsername));
+                        break;
+                    case nameof(options.IsShowUserId):
+                        RaisePropertyChanged(nameof(IsShowUserId));
+                        break;
+                    case nameof(options.IsShowPostTime):
+                        RaisePropertyChanged(nameof(IsShowPostTime));
+                        break;
+                }
+            };
         }
 
         private void CommentProvider_MetadataUpdated(object sender, IMetadata e)
         {
-            if(e.Title != null)
+            if (e.Title != null)
             {
                 LiveTitle = e.Title;
             }
-            if(e.CurrentViewers != null)
+            if (e.CurrentViewers != null)
             {
                 LiveViewers = e.CurrentViewers;
             }
@@ -425,7 +521,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
 
         private void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
         {
-            foreach(var comment in e)
+            foreach (var comment in e)
             {
                 Comments.Add(comment);
             }
@@ -463,7 +559,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 //plugin
             }
         }
-
+        bool IsValidInput { get; set; }
         private string _input;
         public string Input
         {
@@ -472,32 +568,24 @@ namespace YouTubeLiveCommentViewer.ViewModel
             {
                 if (_input == value) return;
                 _input = value;
-                if (_siteContext.IsValidInput(_input))
-                {
-                    CanConnect = true;
-                    CanDisconnect = false;
-                }
-                else
-                {
-                    CanConnect = false;
-                    CanDisconnect = false;
-                }
-                RaisePropertyChanged();
+                IsValidInput = _siteContext.IsValidInput(_input);
+                RaisePropertyChanged(nameof(CanConnect));
+                RaisePropertyChanged(nameof(CanDisconnect));
             }
         }
         private async void Connect()
         {
             var selectedBrowser = SelectedBrowserViewModel.Browser;
             var input = Input;
+            Comments.Clear();
             try
             {
                 await commentProvider.ConnectAsync(input, selectedBrowser);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
             }
-            CanConnect = true;
-            CanDisconnect = false;
         }
         private void Disconnect()
         {

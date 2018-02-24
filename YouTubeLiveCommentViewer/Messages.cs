@@ -9,6 +9,8 @@ using System.Windows.Controls;
 
 namespace YouTubeLiveCommentViewer
 {
+    internal class MainViewCloseMessage : MessageBase { }
+
     class ShowOptionsViewMessage : MessageBase
     {
         public IEnumerable<IOptionsTabPage> Tabs { get; }

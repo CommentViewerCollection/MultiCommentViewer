@@ -26,6 +26,10 @@ namespace YouTubeLiveCommentViewer.View
         public MainWindow()
         {
             InitializeComponent();
+            Messenger.Default.Register<MainViewCloseMessage>(this, message =>
+            {
+                this.Close();
+            });
             Messenger.Default.Register<SetPostCommentPanel>(this, message =>
             {
                 PostCommentPanelPlaceHolder.Children.Clear();

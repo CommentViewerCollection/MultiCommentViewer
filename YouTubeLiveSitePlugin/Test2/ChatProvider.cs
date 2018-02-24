@@ -98,6 +98,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public string UserId { get; set; }
         public string TimestampUsec { get; internal set; }
         public string Id { get; internal set; }
+        public IMessageImage Thumbnail { get; set; }
     }
     interface IContinuation
     {

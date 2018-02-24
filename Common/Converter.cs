@@ -17,6 +17,58 @@ using System.Windows.Media.Imaging;
 
 namespace Common.Wpf
 {
+    internal static class Tools
+    {
+        public static Inline Convert(IMessageImage remoteIcon)
+        {
+            var uri = remoteIcon.Url;
+            var wc = new System.Net.WebClient { CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.CacheIfAvailable) };
+            var bi = new BitmapImage();
+            Image image = null;
+            try
+            {
+                bi.BeginInit();
+                bi.StreamSource = new System.IO.MemoryStream(wc.DownloadData(uri));
+                bi.EndInit();
+                bi.Freeze();
+                image = new Image()
+                {
+                    Width = remoteIcon.Width ?? bi.Width,
+                    Height = remoteIcon.Height ?? bi.Height,
+                    Source = bi,
+                    ToolTip = remoteIcon.Alt,
+                };
+            }
+            catch (System.Net.WebException)
+            {
+
+            }
+            catch (System.IO.IOException) { }
+            catch (InvalidOperationException) { }
+            finally
+            {
+                wc.Dispose();
+            }
+            var container = new InlineUIContainer(image);
+            return container;
+        }
+    }
+    public class ThumbnailConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var image = value as IMessageImage;
+            if (image == null)
+                return null;
+            var inline = Tools.Convert(image);
+            return new ObservableCollection<Inline> { inline };
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
     public class NameConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -43,6 +95,7 @@ namespace Common.Wpf
             throw new NotImplementedException();
         }
     }
+
     public class MessageConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

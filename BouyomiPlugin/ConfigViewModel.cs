@@ -1,6 +1,7 @@
 ﻿using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using System;
+using System.Diagnostics;
 using System.Windows.Input;
 namespace BouyomiPlugin
 {
@@ -37,26 +38,25 @@ namespace BouyomiPlugin
             get { return _options.NickTitle; }
             set { _options.NickTitle = value; }
         }
-        private RelayCommand _showFilePickerCommand;
-        public ICommand ShowFilePickerCommand
+        public ICommand ShowFilePickerCommand { get; }
+        private void ShowFilePicker()
         {
-            get
+            try
             {
-                if(_showFilePickerCommand == null)
+                var fileDialog = new System.Windows.Forms.OpenFileDialog
                 {
-                    _showFilePickerCommand = new RelayCommand(() =>
-                    {
-                        var fileDialog = new System.Windows.Forms.OpenFileDialog();
-                        fileDialog.Title = "棒読みちゃんの実行ファイル（BouyomiChan.exe）を選択してください";
-                        fileDialog.Filter = "棒読みちゃん | BouyomiChan.exe";
-                        var result = fileDialog.ShowDialog();
-                        if(result == System.Windows.Forms.DialogResult.OK)
-                        {
-                            this.ExeLocation = fileDialog.FileName;
-                        }
-                    });
+                    Title = "棒読みちゃんの実行ファイル（BouyomiChan.exe）を選択してください",
+                    Filter = "棒読みちゃん | BouyomiChan.exe"
+                };
+                var result = fileDialog.ShowDialog();
+                if (result == System.Windows.Forms.DialogResult.OK)
+                {
+                    this.ExeLocation = fileDialog.FileName;
                 }
-                return _showFilePickerCommand;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
             }
         }
         public ConfigViewModel()
@@ -91,6 +91,7 @@ namespace BouyomiPlugin
                         break;
                 }
             };
+            ShowFilePickerCommand = new RelayCommand(ShowFilePicker);
         }
     }
 }

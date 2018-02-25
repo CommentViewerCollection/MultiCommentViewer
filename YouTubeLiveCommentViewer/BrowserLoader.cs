@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ryu_s.BrowserCookie;
 
 namespace YouTubeLiveCommentViewer
@@ -8,14 +9,22 @@ namespace YouTubeLiveCommentViewer
         public IEnumerable<IBrowserProfile> LoadBrowsers()
         {
             var list = new List<IBrowserProfile>();
-            var chromeManger = new ChromeManager();
-            list.AddRange(chromeManger.GetProfiles());
+            var managers = new List<IBrowserManager>
+            {
+                new ChromeManager(),
+                new FirefoxManager(),
+                new OperaManager(),
+            };
+            foreach(var manager in managers)
+            {
+                try
+                {
+                    list.AddRange(manager.GetProfiles());
+                }catch(Exception ex)
+                {
 
-            var firefoxManager = new FirefoxManager();
-            list.AddRange(firefoxManager.GetProfiles());
-
-            var operaManager = new OperaManager();
-            list.AddRange(operaManager.GetProfiles());
+                }
+            }
             return list;
         }
     }

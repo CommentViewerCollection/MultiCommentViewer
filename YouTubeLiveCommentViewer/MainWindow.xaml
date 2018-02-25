@@ -192,7 +192,7 @@
                                             >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <w:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding NameItems, Converter={StaticResource nameConverter}}"
+                                <w:BindableTextBlock TextWrapping="{Binding UserNameWrapping, Mode=OneWay}" InlineList="{Binding NameItems, Converter={StaticResource nameConverter}}"
                                                   Margin="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>

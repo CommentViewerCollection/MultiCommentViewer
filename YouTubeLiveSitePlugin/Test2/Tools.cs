@@ -125,6 +125,10 @@ namespace YouTubeLiveSitePlugin.Test2
         public static (IContinuation continuation, List<CommentData> actions) ParseYtInitialData(string s)
         {
             var json = DynamicJson.Parse(s);
+            if (!json.contents.IsDefined("liveChatRenderer"))
+            {
+                throw new ChatUnavailableException();
+            }
             if (!json.contents.liveChatRenderer.IsDefined("continuations"))
             {
                 throw new Exception("Continuations無し");

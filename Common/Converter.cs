@@ -17,7 +17,7 @@ using System.Windows.Media.Imaging;
 
 namespace Common.Wpf
 {
-    internal static class Tools
+    internal static class ConverterTools
     {
         public static Inline Convert(IMessageImage remoteIcon)
         {
@@ -60,7 +60,7 @@ namespace Common.Wpf
             var image = value as IMessageImage;
             if (image == null)
                 return null;
-            var inline = Tools.Convert(image);
+            var inline = ConverterTools.Convert(image);
             return new ObservableCollection<Inline> { inline };
         }
 

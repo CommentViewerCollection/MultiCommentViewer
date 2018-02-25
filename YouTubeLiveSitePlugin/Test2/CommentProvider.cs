@@ -10,12 +10,20 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Codeplex.Data;
 using System.Web;
+using System.Windows.Media;
+using System.Windows;
+using System.Linq;
+
 namespace YouTubeLiveSitePlugin.Test2
 {
     internal class YouTubeLiveSiteOptions : DynamicOptionsBase
     {
+        public Color PaidCommentBackColor { get => GetValue(); set => SetValue(value); }
+        public Color PaidCommentForeColor { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
+            Dict.Add(nameof(PaidCommentBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(PaidCommentForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
         }
         internal YouTubeLiveSiteOptions Clone()
         {
@@ -29,6 +37,57 @@ namespace YouTubeLiveSitePlugin.Test2
                 SetValue(v.Value, src.Key);
             }
         }
+        #region Converters
+        private FontFamily FontFamilyFromString(string str)
+        {
+            return new FontFamily(str);
+        }
+        private string FontFamilyToString(FontFamily family)
+        {
+            return family.FamilyNames.Values.First();
+        }
+        private FontStyle FontStyleFromString(string str)
+        {
+            return (FontStyle)new FontStyleConverter().ConvertFromString(str);
+        }
+        private string FontStyleToString(FontStyle style)
+        {
+            return new FontStyleConverter().ConvertToString(style);
+        }
+        private FontWeight FontWeightFromString(string str)
+        {
+            return (FontWeight)new FontWeightConverter().ConvertFromString(str);
+        }
+        private string FontWeightToString(FontWeight weight)
+        {
+            return new FontWeightConverter().ConvertToString(weight);
+        }
+        private Color ColorFromArgb(string argb)
+        {
+            if (argb == null)
+                throw new ArgumentNullException("argb");
+            var pattern = "#(?<a>[0-9a-fA-F]{2})(?<r>[0-9a-fA-F]{2})(?<g>[0-9a-fA-F]{2})(?<b>[0-9a-fA-F]{2})";
+            var match = System.Text.RegularExpressions.Regex.Match(argb, pattern, System.Text.RegularExpressions.RegexOptions.Compiled);
+
+            if (!match.Success)
+            {
+                throw new ArgumentException("形式が不正");
+            }
+            else
+            {
+                var a = byte.Parse(match.Groups["a"].Value, System.Globalization.NumberStyles.HexNumber);
+                var r = byte.Parse(match.Groups["r"].Value, System.Globalization.NumberStyles.HexNumber);
+                var g = byte.Parse(match.Groups["g"].Value, System.Globalization.NumberStyles.HexNumber);
+                var b = byte.Parse(match.Groups["b"].Value, System.Globalization.NumberStyles.HexNumber);
+                return Color.FromArgb(a, r, g, b);
+            }
+        }
+        private string ColorToArgb(Color color)
+        {
+            var argb = color.ToString();
+            return argb;
+        }
+        #endregion
     }
     class CommentProvider : ICommentProvider
     {
@@ -290,6 +349,10 @@ reload:
             {
                 retryCount++;
                 goto reload;
+            }
+            catch(ChatUnavailableException)
+            {
+                SendInfo("放送が終了しているかチャットが無効な放送です");
             }
             catch (Exception ex)
             {

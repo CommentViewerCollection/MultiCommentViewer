@@ -4,16 +4,34 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:YouTubeLiveCommentViewer"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:Common="clr-namespace:Common;assembly=Common" 
              mc:Ignorable="d"
-    d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}"
-             d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
+    d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}" Height="340" Width="420">
+    <Grid Background="#FFE5E5E5">
+        <Label Content="フォント" HorizontalAlignment="Left" Margin="37,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.458,-1.972"/>
+        <xctk:ColorPicker x:Name="ClrPcker_Background"  SelectedColor="{Binding BackColor}" Margin="134,89,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="3.467,1.727" />
+        <TextBlock HorizontalAlignment="Left" Margin="105,10,0,0" TextWrapping="Wrap" Text="{Binding CommentFont, Mode=OneWay}" VerticalAlignment="Top" Width="117"/>
+        <Button x:Name="button" Content="フォントを変更" HorizontalAlignment="Left" Margin="243,10,0,0" VerticalAlignment="Top" Width="75" Command="{Binding ShowFontSelectorCommand}"/>
+        <Label x:Name="label" Content="背景色" HorizontalAlignment="Left" Margin="37,87,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" HorizontalAlignment="Left" Margin="39,290,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label7" Content="変更後、コメビュを再起動してください" Foreground="Red" HorizontalAlignment="Left" Margin="202,287,0,0" VerticalAlignment="Top"/>
 
-        <Common:ColorPicker SelectedColor="{Binding ForeColor, Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,40,0,0" VerticalAlignment="Top" Width="70"/>
-        <Label Content="文字色" HorizontalAlignment="Left" Margin="45,40,0,0" VerticalAlignment="Top"/>
-        <Label Content="背景色" HorizontalAlignment="Left" Margin="53,89,0,0" VerticalAlignment="Top"/>
-        <Common:ColorPicker SelectedColor="{Binding BackColor,Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,89,0,0" VerticalAlignment="Top" Width="70"/>
+        <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="39,255,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker  SelectedColor="{Binding SelectedRowBackColor}" Margin="134,116,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.32,0.045" />
+        <xctk:ColorPicker  SelectedColor="{Binding SelectedRowForeColor}" Margin="134,147,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label x:Name="label10" Content="選択行の背景色" HorizontalAlignment="Left" Margin="37,112,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="label11" Content="選択行の文字色" HorizontalAlignment="Left" Margin="37,143,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+        <Label x:Name="label8" Content="行グリッド線の色" HorizontalAlignment="Left" Margin="228,177,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" Margin="322,181,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label x:Name="label9" Content="列グリッド線の色" HorizontalAlignment="Left" Margin="228,208,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" Margin="322,208,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
+        <Label x:Name="label4_Copy" Content="情報背景色" HorizontalAlignment="Left" Margin="243,64,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.743,0.423"/>
+        <Label x:Name="label5_Copy" Content="情報文字色" HorizontalAlignment="Left" Margin="243,93,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.843,0.462"/>
+        <xctk:ColorPicker x:Name="ClrPcker_InfoBackground"  SelectedColor="{Binding NoticeCommentBackColor}" Margin="322,65,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.24,-0.227" />
+        <xctk:ColorPicker x:Name="ClrPcker_InfoForeground"  SelectedColor="{Binding NoticeCommentForeColor}" Margin="322,96,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label  Content="文字色" Margin="39,56,337,0" VerticalAlignment="Top" RenderTransformOrigin="0.795,0.846"/>
+        <xctk:ColorPicker x:Name="ClrPcker_Foreground"  SelectedColor="{Binding ForeColor}" Margin="134,63,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
     </Grid>
 </UserControl>

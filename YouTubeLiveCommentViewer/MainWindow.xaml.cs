@@ -30,6 +30,10 @@ namespace YouTubeLiveCommentViewer.View
             {
                 this.Close();
             });
+            Messenger.Default.Register<SetAddingCommentDirection>(this, message =>
+            {
+                _addingCommentToTop = message.IsTop;
+            });
             Messenger.Default.Register<SetPostCommentPanel>(this, message =>
             {
                 PostCommentPanelPlaceHolder.Children.Clear();
@@ -60,6 +64,9 @@ namespace YouTubeLiveCommentViewer.View
                         optionsView.AddTabPage(tab);
                     }
                     optionsView.Owner = this;
+                    var showPos = Tools.GetShowPos(Tools.GetMousePos(), optionsView);
+                    optionsView.Left = showPos.X;
+                    optionsView.Top = showPos.Y;
                     optionsView.ShowDialog();
                 }
                 catch (Exception ex)
@@ -68,14 +75,31 @@ namespace YouTubeLiveCommentViewer.View
                     Debugger.Break();
                 }
             });
+            Messenger.Default.Register<Common.AutoUpdate.ShowUpdateDialogMessage>(this, message =>
+            {
+                try
+                {
+                    var updateView = new Common.AutoUpdate.UpdateView();
+                    var showPos = Tools.GetShowPos(Tools.GetMousePos(), updateView);
+                    updateView.Left = showPos.X;
+                    updateView.Top = showPos.Y;
+                    updateView.IsUpdateExists = message.IsUpdateExists;
+                    updateView.CurrentVersion = message.CurrentVersion;
+                    updateView.LatestVersionInfo = message.LatestVersionInfo;
+                    updateView.Owner = this;
+                    updateView.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            });
         }
         private bool _addingCommentToTop;
         private bool bottom = true;
         //private bool neverTouch = true;
         private void dataGrid_ScrollChanged(object sender, RoutedEventArgs e)
         {
-            //if (_addingCommentToTop)
-            //    return;
             if (sender == null)
                 return;
             ScrollViewer scrollViewer;
@@ -93,6 +117,18 @@ namespace YouTubeLiveCommentViewer.View
             }
             var a = e as ScrollChangedEventArgs;
 
+            if (_addingCommentToTop)
+            {
+                if (a.VerticalOffset - a.VerticalChange <= 0 && a.ExtentHeightChange != 0)
+                {
+                    scrollViewer.ScrollToVerticalOffset(0);
+                }
+                else if (a.ExtentHeightChange != 0)
+                {
+                    scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset + a.ExtentHeightChange);
+                }
+                return;
+            }
 
             //2017/09/11
             //ExtentHeightは表示されていない部分も含めた全てのコンテントの高さ。

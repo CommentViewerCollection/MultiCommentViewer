@@ -30,4 +30,10 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         public NoContinuationException() { }
     }
+
+    [Serializable]
+    public class ChatUnavailableException : Exception
+    {
+        public ChatUnavailableException() { }
+    }
 }

@@ -37,7 +37,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 SimpleIoc.Default.Register<MainViewModel>();
             }
 
-            //SimpleIoc.Default.Register<FontSelectorViewModel>(true);
+            SimpleIoc.Default.Register<FontSelectorViewModel>(true);
         }
 
         public MainViewModel Main

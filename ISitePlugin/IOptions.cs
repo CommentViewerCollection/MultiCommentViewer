@@ -53,6 +53,7 @@ namespace SitePlugin
         double UsernameWidth { get; set; }
         bool IsShowUsername { get; set; }
         int UsernameDisplayIndex { get; set; }
+        bool IsUserNameWrapping { get; set; }
 
         double MessageWidth { get; set; }
         bool IsShowMessage { get; set; }
@@ -62,6 +63,8 @@ namespace SitePlugin
         bool IsShowInfo { get; set; }
         int InfoDisplayIndex { get; set; }
         bool IsAutoCheckIfUpdateExists { get; set; }
+        bool IsAddingNewCommentTop { get; set; }
+
         IOptions Clone();
         void Set(IOptions options);
         void Reset();

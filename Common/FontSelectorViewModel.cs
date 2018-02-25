@@ -11,6 +11,8 @@ using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Messaging;
 using System.Windows.Markup;
+using System.Windows.Data;
+
 namespace Common.Wpf
 {
     public class ShowFontSelectorViewOkMessage : MessageBase { }
@@ -375,6 +377,20 @@ namespace Common.Wpf
             var viewModel = value as FontWeightViewModel;
             return viewModel.FontWeight;
 
+        }
+    }
+    public class FontFamilyToJpStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var fontFamily = value as FontFamily;
+            return Utils.ConvertFontFamilyToName(fontFamily, culture);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var familyName = value as string;
+            return new FontFamily(familyName);
         }
     }
 }

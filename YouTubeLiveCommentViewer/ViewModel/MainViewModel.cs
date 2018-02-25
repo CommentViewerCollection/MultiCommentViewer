@@ -46,6 +46,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
         private readonly IIo _io;
         public ObservableCollection<BrowserViewModel> BrowserCollection { get; } = new ObservableCollection<BrowserViewModel>();
         private readonly IBrowserLoader _browserLoader;
+        private bool _isAddingNewCommentTop;
 
         private BrowserViewModel _selectedBrowserViewModel;
         public BrowserViewModel SelectedBrowserViewModel
@@ -236,6 +237,8 @@ namespace YouTubeLiveCommentViewer.ViewModel
             try
             {
                 MessengerInstance.Send(new SetPostCommentPanel(_siteContext.GetCommentPostPanel(commentProvider)));
+                MessengerInstance.Send(new SetAddingCommentDirection { IsTop = _options.IsAddingNewCommentTop });
+                _isAddingNewCommentTop = _options.IsAddingNewCommentTop;
 
                 var siteOptionsPath = GetSiteOptionsPath(_siteContext);
                 _siteContext.LoadOptions(siteOptionsPath, _io);
@@ -245,9 +248,9 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 if (browsers.Count() == 0)
                 {
                     browsers = new List<BrowserViewModel>
-                            {
-                                new BrowserViewModel( new EmptyBrowserProfile()),
-                            };
+                    {
+                        new BrowserViewModel( new EmptyBrowserProfile()),
+                    };
                 }
                 foreach (var browser in browsers)
                 {
@@ -523,7 +526,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
         {
             foreach (var comment in e)
             {
-                Comments.Add(comment);
+                AddComment(comment);
             }
         }
         private async void PluginManager_PluginAdded(object sender, IPlugin e)
@@ -544,19 +547,30 @@ namespace YouTubeLiveCommentViewer.ViewModel
         }
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
+        private void AddComment(ICommentViewModel cvm)
+        {
+            if (_isAddingNewCommentTop)
+            {
+                Comments.Insert(0, cvm);
+            }
+            else
+            {
+                Comments.Add(cvm);
+            }
+        }
         private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
         {
             try
             {
-                Comments.Add(e);
+                AddComment(e);
             }
             catch (Exception ex)
             {
-
+                Debug.WriteLine(ex.Message);
             }
             if (!e.IsInfo)
             {
-                //plugin
+                _pluginManager.SetComments(e);
             }
         }
         bool IsValidInput { get; set; }

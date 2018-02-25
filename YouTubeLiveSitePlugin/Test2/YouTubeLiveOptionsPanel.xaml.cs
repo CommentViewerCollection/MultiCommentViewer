@@ -35,6 +35,16 @@ namespace YouTubeLiveSitePlugin.Test2
     }
     public class YouTubeLiveOptionsViewModel : INotifyPropertyChanged
     {
+        public Color PaidCommentBackColor
+        {
+            get { return ChangedOptions.PaidCommentBackColor; }
+            set { ChangedOptions.PaidCommentBackColor = value; }
+        }
+        public Color PaidCommentForeColor
+        {
+            get { return ChangedOptions.PaidCommentForeColor; }
+            set { ChangedOptions.PaidCommentForeColor = value; }
+        }
         private readonly YouTubeLiveSiteOptions _origin;
         private readonly YouTubeLiveSiteOptions changed;
         internal YouTubeLiveSiteOptions OriginOptions { get { return _origin; } }

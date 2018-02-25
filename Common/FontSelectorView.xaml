@@ -10,11 +10,11 @@
         ResizeMode="NoResize"
         Title="{Binding Title}" Height="377.624" Width="470.116">
     <Window.Resources>
-        <!--<local:FontFamilyToJpStringConverter x:Key="fontFamilyConverter" />
+        <local:FontFamilyToJpStringConverter x:Key="fontFamilyConverter" />
         <local:IntToFontSizeConverter x:Key="intToFontSizeConverter" />
         <local:FontFamilyToFontFamilyViewModelConverter x:Key="fontFamilyViewModelConverter" />
         <vm:FontStyleToFontStyleViewModelConverter x:Key="fontStyleViewModelConverter" />
-        <vm:FontWeightToFontWeightViewModelConverter x:Key="fontWeightViewModelConverter" />-->
+        <vm:FontWeightToFontWeightViewModelConverter x:Key="fontWeightViewModelConverter" />
     </Window.Resources>
     <Grid Background="{Binding Background}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
         <TextBlock x:Name="textBox" TextAlignment="Center" HorizontalAlignment="Left" Margin="21,40,0,0" TextWrapping="Wrap" Text="{Binding SelectedFontFamily, Converter={StaticResource fontFamilyConverter}}" VerticalAlignment="Top" Width="132"/>

@@ -13,6 +13,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using SitePlugin;
 using System.Diagnostics;
+using GalaSoft.MvvmLight.Messaging;
+using Common.Wpf;
+
 namespace YouTubeLiveCommentViewer
 {
     /// <summary>
@@ -24,13 +27,37 @@ namespace YouTubeLiveCommentViewer
         public OptionsView()
         {
             InitializeComponent();
+            Messenger.Default.Register<ShowFontSelectorViewOkMessage>(this, _ =>
+            {
+                FontSelectorView fontSelector = null;
+                try
+                {
+                    fontSelector = new FontSelectorView();
+                    var resource = Application.Current.Resources;
+                    var locator = resource["Locator"] as ViewModel.ViewModelLocator;
+                    fontSelector.DataContext = locator.Font;
+                    var showPos = Tools.GetShowPos(Tools.GetMousePos(), fontSelector);
+                    fontSelector.Owner = this;
+                    fontSelector.Left = showPos.X;
+                    fontSelector.Top = showPos.Y;
+                    fontSelector.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+                finally
+                {
+                    fontSelector = null;
+                }
+            });
         }
         public void AddTabPage(IOptionsTabPage page)
         {
             var tabPage = new TabItem()
             {
                 Header = page.HeaderText,
-                Content = page.TabPagePanel,    
+                Content = page.TabPagePanel,
             };
             tabControl.Items.Add(tabPage);
             _pagePanels.Add(page);

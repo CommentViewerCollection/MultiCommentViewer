@@ -228,6 +228,10 @@ if not exist settings\placeholder powershell New-Item settings\placeholder -Item
 mkdir plugins\Bouyomi
 copy "..\..\..\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
 
+:: CommentGeneratorPluginのファイルを全部持ってくる
+mkdir plugins\CommentGenerator
+copy "..\..\..\CommentGeneratorPlugin\bin\$(ConfigurationName)\*" "plugins\CommentGenerator\"
+
 :: 自動アップデートに必要なlist.txtを作成
 powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList.ps1" -TargetDir "$(TargetDir)\"
 

@@ -74,6 +74,16 @@ namespace Common
                     return _options.FontSize;
             }
         }
+        public TextWrapping UserNameWrapping
+        {
+            get
+            {
+                if (_options.IsUserNameWrapping)
+                    return TextWrapping.Wrap;
+                else
+                    return TextWrapping.NoWrap;
+            }
+        }
 
         public SolidColorBrush Foreground => new SolidColorBrush(_options.ForeColor);
 
@@ -115,6 +125,9 @@ namespace Common
                     break;
                 case nameof(_options.FontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.IsUserNameWrapping):
+                    RaisePropertyChanged(nameof(UserNameWrapping));
                     break;
             }
         }

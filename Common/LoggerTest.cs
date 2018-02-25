@@ -4,6 +4,11 @@ using Common;
 using System.Xml.Serialization;
 using System.Text;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Net;
+using System.Diagnostics;
+
 namespace Common
 {
     public class LoggerTest : ILogger
@@ -35,10 +40,11 @@ namespace Common
         [Serializable]
         public class Error
         {
-            public string Message { get; }
-            public string StackTrace { get; }
-            public string Timestamp { get; }
-            public Error[] InnerError { get; }
+            public string Message { get; private set; }
+            public string StackTrace { get; private set; }
+            public string Timestamp { get; private set; }
+            public Error[] InnerError { get; private set; }
+            public Dictionary<string, string> Properties { get; private set; } = new Dictionary<string, string>();
             public Error()
             {
                 Timestamp = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
@@ -47,11 +53,43 @@ namespace Common
             {
                 Message = ex.Message;
                 StackTrace = ex.StackTrace;
+                SetProperties(ex);
 
                 if (ex.InnerException != null)
                 {
                     InnerError = new Error[1];
                     InnerError[0] = new Error(ex.InnerException);
+                }
+            }
+            public Error(WebException ex) : this((Exception)ex)
+            {
+                if (ex.Response is HttpWebResponse http)
+                {
+                    using (var sr = new System.IO.StreamReader(http.GetResponseStream()))
+                    {
+                        var s = sr.ReadToEnd();
+                        Properties.Add("Response", s.Replace("\"", "\\\""));
+                    }
+                }
+            }
+            private void SetProperties(Exception ex)
+            {
+                try
+                {
+                    var properties = ex.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    foreach (var property in properties)
+                    {
+                        if (property.PropertyType == typeof(string))
+                        {
+                            var get = property.GetGetMethod();
+                            var name = property.Name;
+                            var s = (string)get.Invoke(ex, null);
+                            Properties.Add(name, s);
+                        }
+                    }
+                }catch(Exception ex1)
+                {
+                    Debug.WriteLine(ex1.Message);
                 }
             }
             public Error(AggregateException ex) : this()

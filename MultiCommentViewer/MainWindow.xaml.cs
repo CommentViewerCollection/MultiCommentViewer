@@ -13,7 +13,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using GalaSoft.MvvmLight.Messaging;
 using System.Diagnostics;
-using Common.AutoUpdate;
+using Common.Wpf;
 namespace MultiCommentViewer
 {
     /// <summary>

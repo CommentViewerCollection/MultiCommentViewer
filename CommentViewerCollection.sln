@@ -50,8 +50,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoCommentProviderErrorTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YouTubeLiveCommentViewer", "YouTubeLiveCommentViewer\YouTubeLiveCommentViewer.csproj", "{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}"
 	ProjectSection(ProjectDependencies) = postProject
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3} = {88B68D39-41A4-4C10-B942-0F3BE976D7A3}
 		{13A909DD-3791-4539-9C04-F72D9E755DCF} = {13A909DD-3791-4539-9C04-F72D9E755DCF}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentGeneratorPlugin", "CommentGeneratorPlugin\CommentGeneratorPlugin.csproj", "{88B68D39-41A4-4C10-B942-0F3BE976D7A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -147,6 +150,10 @@ Global
 		{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

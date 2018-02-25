@@ -298,7 +298,8 @@ namespace YouTubeLiveCommentViewer.ViewModel
         }
         void SetInfo(string message)
         {
-
+            var cvm = new InfoCommentViewModel(new ConnectionName(), _options, message);
+            AddComment(cvm);
         }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
         {
@@ -601,6 +602,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
             {
                 _logger.LogException(ex);
             }
+            SetInfo("切断されました");
         }
         private void Disconnect()
         {

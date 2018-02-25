@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Threading;
 using SitePlugin;
 using Common;
+using System.Diagnostics;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -16,9 +17,15 @@ namespace YouTubeLiveSitePlugin.Test2
         public event EventHandler<List<CommentData>> InitialActionsReceived;
         public event EventHandler<List<CommentData>> ActionsReceived;
         public event EventHandler<string> SessionTokenUpdated;
+        public event EventHandler<string> Noticed;
         CancellationTokenSource _cts;
         private readonly ILogger _logger;
+        public int IntervalAfterWebException { get; set; } = 5000;
 
+        private void SendNotice(string message)
+        {
+            Noticed?.Invoke(this, message);
+        }
         public void Disconnect()
         {
             if(_cts != null)
@@ -67,6 +74,29 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                     
                 }
+                catch(WebException ex) when(ex.Status == WebExceptionStatus.ProtocolError)
+                {
+                    var httpRes = (HttpWebResponse)ex.Response;
+                    var code = httpRes.StatusCode;
+                    //
+                    SendNotice(ex.Message);
+
+                    if (code == HttpStatusCode.BadRequest || code == HttpStatusCode.ServiceUnavailable)
+                    {
+                        //回復の見込みが無いと判断
+                        break;
+                    }
+                    else
+                    {
+                        await Task.Delay(IntervalAfterWebException);
+                    }
+                }
+                catch(WebException ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    SendNotice(ex.Message);
+                    await Task.Delay(IntervalAfterWebException);
+                }
                 catch(ParseException ex)
                 {
                     _logger.LogException(ex, "get_live_chatのパースに失敗", getLiveChatJson);
@@ -93,6 +123,8 @@ namespace YouTubeLiveSitePlugin.Test2
     }
     class CommentData
     {
+        public bool IsPaidMessage => !string.IsNullOrEmpty(PurchaseAmount);
+        public string PurchaseAmount { get; set; }
         public List<IMessagePart> MessageItems { get; set; }
         public List<IMessagePart> NameItems { get; set; }
         public string UserId { get; set; }

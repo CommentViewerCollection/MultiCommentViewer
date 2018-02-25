@@ -161,21 +161,27 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 foreach(var action in json.contents.liveChatRenderer.actions)
                 {
-                    if (action.IsDefined("addChatItemAction"))
+                    try
                     {
-                        var item = action.addChatItemAction.item;
-                        if (item.IsDefined("liveChatTextMessageRenderer"))
+                        if (action.IsDefined("addChatItemAction"))
                         {
-                            dataList.Add(GetCommandData(item.liveChatTextMessageRenderer));
+                            var item = action.addChatItemAction.item;
+                            if (item.IsDefined("liveChatTextMessageRenderer"))
+                            {
+                                dataList.Add(GetCommandData(item.liveChatTextMessageRenderer));
+                            }
+                            else if (item.IsDefined("liveChatPaidMessageRenderer"))
+                            {
+                                var ren = item.liveChatPaidMessageRenderer;
+                                var commentData = GetCommandData(ren);
+                                var purchaseAmount = ren.purchaseAmountText.simpleText;
+                                commentData.PurchaseAmount = purchaseAmount;
+                                dataList.Add(commentData);
+                            }
                         }
-                        else if (item.IsDefined("liveChatPaidMessageRenderer"))
-                        {
-                            var ren = item.liveChatPaidMessageRenderer;
-                            var commentData = GetCommandData(ren);
-                            var purchaseAmount = ren.purchaseAmountText.simpleText;
-                            commentData.MessageItems.Insert(0, new MessageText(purchaseAmount));
-                            dataList.Add(commentData);
-                        }
+                    }catch(ParseException ex)
+                    {
+                        throw new ParseException(s, ex);
                     }
                 }
             }

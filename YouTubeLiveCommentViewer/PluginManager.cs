@@ -5,6 +5,7 @@ using Plugin;
 using SitePlugin;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
+using System.ComponentModel.Composition.Primitives;
 using System.Diagnostics;
 using System.Linq;
 using System.IO;
@@ -22,14 +23,28 @@ namespace YouTubeLiveCommentViewer
             var dir = _options.PluginDir;
             var pluginDirs = Directory.GetDirectories(dir);
             var list = new List<DirectoryCatalog>();
+            var def = new ImportDefinition(d => d.ContractName == typeof(IPlugin).FullName, "", ImportCardinality.ExactlyOne, false, false);
+            var plugins = new List<IPlugin>();
             foreach (var pluginDir in pluginDirs)
             {
+                var files = Directory.GetFiles(pluginDir).Where(s => s.EndsWith("Plugin.dll"));//ファイル名がPlugin.dllで終わるアセンブリだけ探す
+                foreach(var file in files)
+                {
+                    try
+                    {
+                        var catalog = new AssemblyCatalog(file);
+                        var con = new CompositionContainer(catalog);
+                        var plugin = con.GetExport<IPlugin>().Value;
+                        plugins.Add(plugin);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                    }
+                }
                 list.Add(new DirectoryCatalog(pluginDir));
             }
-            var aggCat = new AggregateCatalog(list);
-
-            var container = new CompositionContainer(aggCat);
-            _plugins = container.GetExports<IPlugin>().Select(p => p.Value).ToList();
+            _plugins = plugins;
             foreach (var plugin in _plugins)
             {
                 plugin.Host = host;
@@ -61,6 +76,10 @@ namespace YouTubeLiveCommentViewer
         }
         public void OnLoaded()
         {
+            if(_plugins == null)
+            {
+                throw new InvalidOperationException("最初にLoadPlugins()を実行すること");
+            }
             foreach (var plugin in _plugins)
             {
                 plugin.OnLoaded();
@@ -68,6 +87,8 @@ namespace YouTubeLiveCommentViewer
         }
         public void OnClosing()
         {
+            if (_plugins == null)
+                return;
             foreach (var plugin in _plugins)
             {
                 try

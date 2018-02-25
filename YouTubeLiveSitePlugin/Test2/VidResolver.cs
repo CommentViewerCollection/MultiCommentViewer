@@ -225,6 +225,11 @@ namespace YouTubeLiveSitePlugin.Test2
 
                 foreach (var content in contents)
                 {
+                    //"このチャンネルには動画がありません"のとき、videoRendererがnull
+                    if (content.itemSectionRenderer.contents[0].videoRenderer == null)
+                    {
+                        continue;
+                    }
                     var videoId = content.itemSectionRenderer.contents[0].videoRenderer.videoId;
 
                     //badgesの中に"ライブ配信中"などと表示するデータが入っているが、アーカイブ等だとnullになる
@@ -237,7 +242,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             catch (Exception ex)
             {
-                throw new SpecChangedException("", ex);
+                throw new SpecChangedException("", ex) { Raw = html };
             }
             return list;
         }
@@ -246,6 +251,7 @@ namespace YouTubeLiveSitePlugin.Test2
     [Serializable]
     public class SpecChangedException : Exception
     {
+        public string Raw { get; set; }
         public SpecChangedException() { }
         public SpecChangedException(string message) : base(message) { }
         public SpecChangedException(string message, Exception inner) : base(message, inner) { }

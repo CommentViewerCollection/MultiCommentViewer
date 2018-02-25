@@ -9,6 +9,8 @@ using System.Windows.Media;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System;
+using System.Net.Http;
+using System.Text;
 
 namespace YouTubeLiveCommentViewer
 {
@@ -19,12 +21,14 @@ namespace YouTubeLiveCommentViewer
     {
         DynamicOptionsTest options;
         IOTest io;
+        ILogger _logger;
         private string GetOptionsPath()
         {
             return @"settings\options.txt";
         }
         protected override void OnStartup(StartupEventArgs e)
         {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             base.OnStartup(e);
             io = new IOTest();
 
@@ -39,14 +43,17 @@ namespace YouTubeLiveCommentViewer
                 Debug.WriteLine(ex.Message);
             }
 
-            var logger = new LoggerTest();
-            var siteContext = new YouTubeLiveSiteContext(options, logger);
+            _logger = new LoggerTest();
+            var siteContext = new YouTubeLiveSiteContext(options, _logger);
 
-            var vm = new ViewModel.MainViewModel(siteContext, options, io, logger);
+            var vm = new ViewModel.MainViewModel(siteContext, options, io, _logger);
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModel.ViewModelLocator;
             locator.Main = vm;
         }
+
+
+
         protected override void OnExit(ExitEventArgs e)
         {
             try
@@ -60,6 +67,47 @@ namespace YouTubeLiveCommentViewer
             }
 
             base.OnExit(e);
+        }
+        private string GetUserAgent()
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var ver = asm.GetName().Version;
+            var title = asm.GetName().Name;
+            var s = $"{title} v{ver.Major}.{ver.Minor}.{ver.Build}";
+            return s;
+        }
+        private void SendErrorReport(string errorData)
+        {
+            if (string.IsNullOrEmpty(errorData))
+            {
+                return;
+            }
+            var fileStreamContent = new StreamContent(new System.IO.MemoryStream(Encoding.UTF8.GetBytes(errorData)));
+            using (var client = new HttpClient())
+            using (var formData = new MultipartFormDataContent())
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", GetUserAgent());
+                formData.Add(fileStreamContent, "error",  GetUserAgent() + "_" + "error.txt");
+                var t = client.PostAsync("http://int-main.net/upload", formData);
+                var response = t.Result;
+                if (!response.IsSuccessStatusCode)
+                {
+                }
+                else
+                {
+                }
+            }
+        }
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            var ex = e.ExceptionObject as Exception;
+
+            _logger.LogException(ex, "UnhandledException");
+            var s = _logger.GetExceptions();
+            using(var sw=new System.IO.StreamWriter("error.txt", true))
+            {
+                sw.WriteLine(s);
+            }
         }
     }
 }

@@ -19,6 +19,11 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly ILogger _logger;
 
         public event EventHandler<IMetadata> MetadataReceived;
+        public event EventHandler<string> Noticed;
+        private void SendNotice(string message)
+        {
+            Noticed?.Invoke(this, message);
+        }
         public async Task ReceiveAsync(string ytCfg, string vid, CookieContainer cc)
         {
             _cts = new CancellationTokenSource();
@@ -99,12 +104,15 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                     MetadataReceived?.Invoke(this, metadata);
                 }
+                catch(WebException ex)when(ex.Status== WebExceptionStatus.ProtocolError)
+                {
+                    var httpRes = (HttpWebResponse)ex.Response;
+                    var code = httpRes.StatusCode;
+                    SendNotice($"メタデータの取得でエラーが発生 ({code})");
+                }
                 catch(WebException ex)
                 {
-                    if (ex.Response is HttpWebResponse http)
-                    {
-                        throw;
-                    }
+                    SendNotice($"メタデータの取得でエラーが発生 ({ex.Status})");
                     Debug.WriteLine(ex.Message);
                 }
                 catch(ParseException ex)

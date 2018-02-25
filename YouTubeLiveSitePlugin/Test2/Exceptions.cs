@@ -20,9 +20,13 @@ namespace YouTubeLiveSitePlugin.Test2
     [Serializable]
     public class ParseException : Exception
     {
+        public string Raw { get; }
         public ParseException() { }
-        public ParseException(string message) : base(message) { }
-        public ParseException(string message, Exception inner) : base(message, inner) { }
+        public ParseException(string raw)
+        {
+            Raw = raw;
+        }
+        public ParseException(string raw, Exception inner) : base("", inner) { }
     }
 
     [Serializable]

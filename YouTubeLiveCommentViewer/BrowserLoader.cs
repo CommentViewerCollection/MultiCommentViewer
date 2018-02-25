@@ -8,7 +8,14 @@ namespace YouTubeLiveCommentViewer
         public IEnumerable<IBrowserProfile> LoadBrowsers()
         {
             var list = new List<IBrowserProfile>();
-            list.AddRange(new ChromeManager().GetProfiles());
+            var chromeManger = new ChromeManager();
+            list.AddRange(chromeManger.GetProfiles());
+
+            var firefoxManager = new FirefoxManager();
+            list.AddRange(firefoxManager.GetProfiles());
+
+            var operaManager = new OperaManager();
+            list.AddRange(operaManager.GetProfiles());
             return list;
         }
     }

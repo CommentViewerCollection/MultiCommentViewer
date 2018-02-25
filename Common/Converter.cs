@@ -49,19 +49,20 @@ namespace Common.Wpf
             {
                 wc.Dispose();
             }
-            var container = new InlineUIContainer(image);
-            return container;
+            return new InlineUIContainer(image);
         }
     }
     public class ThumbnailConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            var items = new ObservableCollection<Inline>();
             var image = value as IMessageImage;
             if (image == null)
-                return null;
+                return items;//nullを返したらDataGridでVirtualizationModeをRecyclingにしている場合に他の画像が表示されてしまう
             var inline = ConverterTools.Convert(image);
-            return new ObservableCollection<Inline> { inline };
+            items.Add(inline);
+            return items;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

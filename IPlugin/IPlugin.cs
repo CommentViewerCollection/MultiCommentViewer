@@ -16,6 +16,7 @@ namespace Plugin
         void OnLoaded();
         void OnClosing();
         void ShowSettingView();
+        void OnTopmostChanged(bool isTopmost);
         IPluginHost Host { get; set; }
     }
     public interface IPluginHost
@@ -26,6 +27,7 @@ namespace Plugin
         string SettingsDirPath { get; }
         double MainViewLeft { get; }
         double MainViewTop { get; }
+        bool IsTopmost { get; }
         /// <summary>
         /// 
         /// </summary>

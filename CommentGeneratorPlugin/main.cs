@@ -205,16 +205,20 @@ namespace CommentViewer.Plugin
             _deleteTimer.Stop();
             Options.Save(_options, GetSettingsFilePath());
         }
-
+        SettingsView _settingsView;
         public void ShowSettingView()
         {
             var left = Host.MainViewLeft;
             var top = Host.MainViewTop;
-            var view = new SettingsView();
-            view.Left = left;
-            view.Top = top;
-            view.DataContext = new ConfigViewModel(_options);
-            view.Show();
+            if (_settingsView == null)
+            {
+                _settingsView = new SettingsView();
+                _settingsView.DataContext = new ConfigViewModel(_options);
+            }
+            _settingsView.Topmost = Host.IsTopmost;
+            _settingsView.Left = left;
+            _settingsView.Top = top;
+            _settingsView.Show();
         }
 
         public string GetSettingsFilePath()
@@ -230,6 +234,14 @@ namespace CommentViewer.Plugin
         {
             _writeTimer.Dispose();
             _deleteTimer.Dispose();
+        }
+
+        public void OnTopmostChanged(bool isTopmost)
+        {
+            if (_settingsView != null)
+            {
+                _settingsView.Topmost = isTopmost;
+            }
         }
     }
 }

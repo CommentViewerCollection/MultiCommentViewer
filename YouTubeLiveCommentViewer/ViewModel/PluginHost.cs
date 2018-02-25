@@ -10,6 +10,8 @@ namespace YouTubeLiveCommentViewer.ViewModel
         public double MainViewLeft => _options.MainViewLeft;
 
         public double MainViewTop => _options.MainViewTop;
+
+        public bool IsTopmost => _options.IsTopmost;
         public string LoadOptions(string path)
         {
             var s = _io.ReadFile(path);

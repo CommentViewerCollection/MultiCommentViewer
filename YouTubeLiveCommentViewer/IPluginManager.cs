@@ -10,6 +10,7 @@ namespace YouTubeLiveCommentViewer
         void SetComments(ICommentViewModel comments);
         void OnLoaded();
         void OnClosing();
+        void ForeachPlugin(Action<IPlugin> p);
         //event EventHandler<string> PostingCommentReceived;
     }
 }

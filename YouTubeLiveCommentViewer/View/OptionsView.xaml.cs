@@ -63,7 +63,6 @@ namespace YouTubeLiveCommentViewer
         {
             var tabPage = new TabItem()
             {
-                Template = null,
                 Header = page.HeaderText,
                 Content = page.TabPagePanel,
             };

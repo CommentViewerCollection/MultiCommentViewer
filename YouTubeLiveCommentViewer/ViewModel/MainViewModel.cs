@@ -493,6 +493,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 {
                     case nameof(options.IsTopmost):
                         RaisePropertyChanged(nameof(Topmost));
+                        _pluginManager.ForeachPlugin(p => p.OnTopmostChanged(options.IsTopmost));
                         break;
                     case nameof(options.IsShowThumbnail):
                         RaisePropertyChanged(nameof(IsShowThumbnail));

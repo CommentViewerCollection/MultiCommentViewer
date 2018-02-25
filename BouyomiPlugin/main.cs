@@ -13,7 +13,13 @@ namespace BouyomiPlugin
         public string Name => "棒読みちゃん連携";
 
         public string Description => "棒読みソフトとうまく連携できるか試してみるプラグインです。";
-
+        public void OnTopmostChanged(bool isTopmost)
+        {
+            if(settingsView != null)
+            {
+                settingsView.Topmost = isTopmost;
+            }
+        }
         public void OnLoaded()
         {
             try
@@ -76,15 +82,21 @@ namespace BouyomiPlugin
             var dir = Host.SettingsDirPath;
             return System.IO.Path.Combine(dir, $"{Name}.xml");
         }
+        ConfigView settingsView;
         public void ShowSettingView()
         {
-            var view = new ConfigView
+            if(settingsView == null)
             {
-                Left = Host.MainViewLeft,
-                Top = Host.MainViewTop,
-                DataContext = new ConfigViewModel(_options)
-            };
-            view.Show();
+                settingsView = new ConfigView
+                {
+                    DataContext = new ConfigViewModel(_options)
+                };
+            }
+            settingsView.Topmost = Host.IsTopmost;
+            settingsView.Left = Host.MainViewLeft;
+            settingsView.Top = Host.MainViewTop;
+            
+            settingsView.Show();
         }
         public BouyomiPlugin()
         {

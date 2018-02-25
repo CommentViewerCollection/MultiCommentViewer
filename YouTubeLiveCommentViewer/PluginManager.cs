@@ -80,6 +80,22 @@ namespace YouTubeLiveCommentViewer
                 }
             }
         }
+
+        public void ForeachPlugin(Action<IPlugin> p)
+        {
+            foreach (var plugin in _plugins)
+            {
+                try
+                {
+                    p(plugin);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
+        }
+
         private readonly IOptions _options;
         public PluginManager(IOptions options)
         {

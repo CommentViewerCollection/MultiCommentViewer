@@ -65,6 +65,8 @@ namespace SitePlugin
         bool IsAutoCheckIfUpdateExists { get; set; }
         bool IsAddingNewCommentTop { get; set; }
 
+        bool IsTopmost { get; set; }
+
         IOptions Clone();
         void Set(IOptions options);
         void Reset();

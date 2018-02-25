@@ -23,6 +23,7 @@ namespace YouTubeLiveCommentViewer.View
     /// </summary>
     public partial class MainWindow : Window
     {
+        OptionsView optionsView;
         public MainWindow()
         {
             InitializeComponent();
@@ -58,16 +59,21 @@ namespace YouTubeLiveCommentViewer.View
             {
                 try
                 {
-                    var optionsView = new OptionsView();
+                    if (optionsView == null)
+                    {
+                        optionsView = new OptionsView();
+                        optionsView.Owner = this;
+                    }
+                    optionsView.Clear();
                     foreach (var tab in message.Tabs)
                     {
                         optionsView.AddTabPage(tab);
                     }
-                    optionsView.Owner = this;
+                    
                     var showPos = Tools.GetShowPos(Tools.GetMousePos(), optionsView);
                     optionsView.Left = showPos.X;
                     optionsView.Top = showPos.Y;
-                    optionsView.ShowDialog();
+                    optionsView.Show();
                 }
                 catch (Exception ex)
                 {

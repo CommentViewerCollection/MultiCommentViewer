@@ -15,6 +15,7 @@ using SitePlugin;
 using System.Diagnostics;
 using GalaSoft.MvvmLight.Messaging;
 using Common.Wpf;
+using System.ComponentModel;
 
 namespace YouTubeLiveCommentViewer
 {
@@ -24,20 +25,26 @@ namespace YouTubeLiveCommentViewer
     public partial class OptionsView : Window
     {
         List<IOptionsTabPage> _pagePanels = new List<IOptionsTabPage>();
+        FontSelectorView fontSelector;
         public OptionsView()
         {
             InitializeComponent();
             Messenger.Default.Register<ShowFontSelectorViewOkMessage>(this, _ =>
             {
-                FontSelectorView fontSelector = null;
+                //FontSelectorView fontSelector = null;
                 try
                 {
-                    fontSelector = new FontSelectorView();
+                    if (fontSelector == null)
+                    {
+                        fontSelector = new FontSelectorView();
+                        fontSelector.Owner = this;
+                    }
                     var resource = Application.Current.Resources;
                     var locator = resource["Locator"] as ViewModel.ViewModelLocator;
                     fontSelector.DataContext = locator.Font;
                     var showPos = Tools.GetShowPos(Tools.GetMousePos(), fontSelector);
-                    fontSelector.Owner = this;
+                    
+                    //fontSelector.Owner = this;
                     fontSelector.Left = showPos.X;
                     fontSelector.Top = showPos.Y;
                     fontSelector.ShowDialog();
@@ -56,13 +63,24 @@ namespace YouTubeLiveCommentViewer
         {
             var tabPage = new TabItem()
             {
+                Template = null,
                 Header = page.HeaderText,
                 Content = page.TabPagePanel,
             };
             tabControl.Items.Add(tabPage);
             _pagePanels.Add(page);
         }
-
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            e.Cancel = true;
+            this.Visibility = Visibility.Hidden;
+            base.OnClosing(e);
+        }
+        public void Clear()
+        {
+            tabControl.Items.Clear();
+            _pagePanels.Clear();
+        }
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             try

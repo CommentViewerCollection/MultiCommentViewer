@@ -35,8 +35,10 @@ namespace Common.Wpf
         }
         protected override void OnClosing(CancelEventArgs e)
         {
-            Messenger.Default.Unregister<FontSelectorViewOkMessage>(this);
-            Messenger.Default.Unregister<FontSelectorViewCancelMessage>(this);
+            e.Cancel = true;
+            Visibility = Visibility.Hidden;
+            //Messenger.Default.Unregister<FontSelectorViewOkMessage>(this);
+            //Messenger.Default.Unregister<FontSelectorViewCancelMessage>(this);
             base.OnClosing(e);
         }
     }

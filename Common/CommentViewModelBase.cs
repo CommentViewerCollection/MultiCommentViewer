@@ -85,9 +85,35 @@ namespace Common
             }
         }
 
-        public SolidColorBrush Foreground => new SolidColorBrush(_options.ForeColor);
+        public virtual SolidColorBrush Foreground
+        {
+            get
+            {
+                if (IsInfo)
+                {
+                    return new SolidColorBrush(_options.InfoForeColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_options.ForeColor);
+                }
+            }
+        }
 
-        public SolidColorBrush Background => new SolidColorBrush(_options.BackColor);
+        public virtual SolidColorBrush Background
+        {
+            get
+            {
+                if (IsInfo)
+                {
+                    return new SolidColorBrush(_options.InfoBackColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_options.BackColor);
+                }
+            }
+        }
 
         public virtual bool IsVisible { get; } = true;
 

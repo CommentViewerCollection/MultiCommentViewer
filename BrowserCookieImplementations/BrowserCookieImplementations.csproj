@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Chrome.cs" />
     <Compile Include="Firefox.cs" />
+    <Compile Include="IE.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Opera.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

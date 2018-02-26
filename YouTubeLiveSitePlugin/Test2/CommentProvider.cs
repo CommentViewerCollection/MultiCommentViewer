@@ -10,85 +10,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Codeplex.Data;
 using System.Web;
-using System.Windows.Media;
-using System.Windows;
-using System.Linq;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    internal class YouTubeLiveSiteOptions : DynamicOptionsBase
-    {
-        public Color PaidCommentBackColor { get => GetValue(); set => SetValue(value); }
-        public Color PaidCommentForeColor { get => GetValue(); set => SetValue(value); }
-        protected override void Init()
-        {
-            Dict.Add(nameof(PaidCommentBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(PaidCommentForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-        }
-        internal YouTubeLiveSiteOptions Clone()
-        {
-            return (YouTubeLiveSiteOptions)this.MemberwiseClone();
-        }
-        internal void Set(YouTubeLiveSiteOptions changedOptions)
-        {
-            foreach (var src in changedOptions.Dict)
-            {
-                var v = src.Value;
-                SetValue(v.Value, src.Key);
-            }
-        }
-        #region Converters
-        private FontFamily FontFamilyFromString(string str)
-        {
-            return new FontFamily(str);
-        }
-        private string FontFamilyToString(FontFamily family)
-        {
-            return family.FamilyNames.Values.First();
-        }
-        private FontStyle FontStyleFromString(string str)
-        {
-            return (FontStyle)new FontStyleConverter().ConvertFromString(str);
-        }
-        private string FontStyleToString(FontStyle style)
-        {
-            return new FontStyleConverter().ConvertToString(style);
-        }
-        private FontWeight FontWeightFromString(string str)
-        {
-            return (FontWeight)new FontWeightConverter().ConvertFromString(str);
-        }
-        private string FontWeightToString(FontWeight weight)
-        {
-            return new FontWeightConverter().ConvertToString(weight);
-        }
-        private Color ColorFromArgb(string argb)
-        {
-            if (argb == null)
-                throw new ArgumentNullException("argb");
-            var pattern = "#(?<a>[0-9a-fA-F]{2})(?<r>[0-9a-fA-F]{2})(?<g>[0-9a-fA-F]{2})(?<b>[0-9a-fA-F]{2})";
-            var match = System.Text.RegularExpressions.Regex.Match(argb, pattern, System.Text.RegularExpressions.RegexOptions.Compiled);
-
-            if (!match.Success)
-            {
-                throw new ArgumentException("形式が不正");
-            }
-            else
-            {
-                var a = byte.Parse(match.Groups["a"].Value, System.Globalization.NumberStyles.HexNumber);
-                var r = byte.Parse(match.Groups["r"].Value, System.Globalization.NumberStyles.HexNumber);
-                var g = byte.Parse(match.Groups["g"].Value, System.Globalization.NumberStyles.HexNumber);
-                var b = byte.Parse(match.Groups["b"].Value, System.Globalization.NumberStyles.HexNumber);
-                return Color.FromArgb(a, r, g, b);
-            }
-        }
-        private string ColorToArgb(Color color)
-        {
-            var argb = color.ToString();
-            return argb;
-        }
-        #endregion
-    }
     class CommentProvider : ICommentProvider
     {
         private bool _canConnect;
@@ -457,44 +381,5 @@ reload:
         public string SessionToken { get; set; }
         public string Sej { get; set; }
         public string ClientIdPrefix { get; set; }
-    }
-    internal interface IYouTubeLibeServer
-    {
-        Task<string> GetAsync(string url);
-        Task<string> GetEnAsync(string url);
-        Task<string> PostAsync(string url, string data, CookieContainer cc);
-    }
-    internal class YouTubeLiveServer : IYouTubeLibeServer
-    {
-        public async Task<string> GetAsync(string url)
-        {
-            var wc = new WebClient();
-            wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0";
-            wc.Headers["origin"] = "https://www.youtube.com";
-            var bytes = await wc.DownloadDataTaskAsync(url);
-            return Encoding.UTF8.GetString(bytes);
-        }
-
-        public async Task<string> GetEnAsync(string url)
-        {
-            var wc = new WebClient();
-            wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0";
-            wc.Headers["origin"] = "https://www.youtube.com";
-            wc.Headers[HttpRequestHeader.AcceptLanguage] = "en-US,en;q=0.5";
-            var bytes = await wc.DownloadDataTaskAsync(url);
-            return Encoding.UTF8.GetString(bytes);
-        }
-
-        public async Task<string> PostAsync(string url, string data, CookieContainer cc)
-        {
-            var wc = new MyWebClient(cc);
-            wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0";
-            wc.Headers["origin"] = "https://www.youtube.com";
-            wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-            wc.Headers[HttpRequestHeader.Accept] = "*/*";
-            var payload = Encoding.UTF8.GetBytes(data);
-            var bytes = await wc.UploadDataTaskAsync(url, payload);
-            return Encoding.UTF8.GetString(bytes);
-        }
     }
 }

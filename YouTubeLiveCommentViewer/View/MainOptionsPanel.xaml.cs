@@ -146,6 +146,11 @@ namespace YouTubeLiveCommentViewer
             get { return ChangedOptions.IsAddingNewCommentTop; }
             set { ChangedOptions.IsAddingNewCommentTop = value; }
         }
+        public bool IsAutoCheckIfUpdateExists
+        {
+            get { return ChangedOptions.IsAutoCheckIfUpdateExists; }
+            set { ChangedOptions.IsAutoCheckIfUpdateExists = value; }
+        }
 
         private readonly IOptions _origin;
         private readonly IOptions changed;

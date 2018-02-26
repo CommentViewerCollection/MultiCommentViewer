@@ -33,5 +33,6 @@
         <xctk:ColorPicker x:Name="ClrPcker_InfoForeground"  SelectedColor="{Binding NoticeCommentForeColor}" Margin="322,96,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label  Content="文字色" Margin="39,56,337,0" VerticalAlignment="Top" RenderTransformOrigin="0.795,0.846"/>
         <xctk:ColorPicker x:Name="ClrPcker_Foreground"  SelectedColor="{Binding ForeColor}" Margin="134,63,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="39,320,0,0" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>

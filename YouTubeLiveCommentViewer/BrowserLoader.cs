@@ -20,6 +20,7 @@ namespace YouTubeLiveCommentViewer
             {
                 new ChromeManager(),
                 new FirefoxManager(),
+                new IEManager(),
                 new OperaManager(),
             };
             foreach(var manager in managers)

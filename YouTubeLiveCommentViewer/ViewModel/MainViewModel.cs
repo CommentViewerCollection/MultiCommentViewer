@@ -457,7 +457,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _siteContext = siteContext;
-            _browserLoader = new BrowserLoader();
+            _browserLoader = new BrowserLoader(logger);
             _options = options;
             _io = io;
             _logger = logger;

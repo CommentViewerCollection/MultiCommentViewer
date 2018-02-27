@@ -236,7 +236,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
             //ここでawaitするとそれ以降が実行されないからこうするしかない。
             try
             {
-                MessengerInstance.Send(new SetPostCommentPanel(_siteContext.GetCommentPostPanel(commentProvider)));
+                MessengerInstance.Send(new SetPostCommentPanel(_siteContext.GetCommentPostPanel(_commentProvider)));
                 MessengerInstance.Send(new SetAddingCommentDirection { IsTop = _options.IsAddingNewCommentTop });
                 _isAddingNewCommentTop = _options.IsAddingNewCommentTop;
 
@@ -275,11 +275,11 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 Debug.WriteLine(ex.Message);
             }
         }
-        bool canClose = false;
+        bool _canClose = false;
         private async void Closing(CancelEventArgs e)
         {
-            e.Cancel = !canClose;
-            if (canClose)
+            e.Cancel = !_canClose;
+            if (_canClose)
                 return;
             try
             {
@@ -293,7 +293,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
             }
             _pluginManager.OnClosing();
 
-            canClose = true;
+            _canClose = true;
             App.Current.Shutdown();
         }
         void SetInfo(string message)
@@ -401,40 +401,40 @@ namespace YouTubeLiveCommentViewer.ViewModel
         #region CanConnect
         public bool CanConnect
         {
-            get { return IsValidInput && commentProvider.CanConnect; }
+            get { return IsValidInput && _commentProvider.CanConnect; }
         }
         #endregion //CanConnect
 
         #region CanDisconnect        
         public bool CanDisconnect
         {
-            get { return IsValidInput && commentProvider.CanDisconnect; }
+            get { return IsValidInput && _commentProvider.CanDisconnect; }
         }
         #endregion //CanDisconnect
 
         #region LiveViewers
-        private string _LiveViewers;
+        private string _liveViewers;
         public string LiveViewers
         {
-            get { return _LiveViewers; }
+            get { return _liveViewers; }
             set
             {
-                if (_LiveViewers == value) return;
-                _LiveViewers = value;
+                if (_liveViewers == value) return;
+                _liveViewers = value;
                 RaisePropertyChanged();
             }
         }
         #endregion //LiveViewers
 
         #region LiveTitle
-        private string _LiveTitle;
+        private string _liveTitle;
         public string LiveTitle
         {
-            get { return _LiveTitle; }
+            get { return _liveTitle; }
             set
             {
-                if (_LiveTitle == value) return;
-                _LiveTitle = value;
+                if (_liveTitle == value) return;
+                _liveTitle = value;
                 RaisePropertyChanged();
             }
         }
@@ -449,7 +449,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
             get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
         }
 
-        ICommentProvider commentProvider;
+        ICommentProvider _commentProvider;
         IOptions _options;
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         internal MainViewModel(IYouTubeSiteContext siteContext, IOptions options, IIo io, ILogger logger)
@@ -461,16 +461,16 @@ namespace YouTubeLiveCommentViewer.ViewModel
             _io = io;
             _logger = logger;
             
-            commentProvider = siteContext.CreateCommentProvider();
-            commentProvider.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
-            commentProvider.CommentReceived += CommentProvider_CommentReceived;
-            commentProvider.MetadataUpdated += CommentProvider_MetadataUpdated;
-            commentProvider.CanConnectChanged += (s, e) =>
+            _commentProvider = siteContext.CreateCommentProvider();
+            _commentProvider.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
+            _commentProvider.CommentReceived += CommentProvider_CommentReceived;
+            _commentProvider.MetadataUpdated += CommentProvider_MetadataUpdated;
+            _commentProvider.CanConnectChanged += (s, e) =>
             {
                 RaisePropertyChanged(nameof(CanConnect));
                 RaisePropertyChanged(nameof(CanDisconnect));
             };
-            commentProvider.CanDisconnectChanged += (s, e) =>
+            _commentProvider.CanDisconnectChanged += (s, e) =>
             {
                 RaisePropertyChanged(nameof(CanConnect));
                 RaisePropertyChanged(nameof(CanDisconnect));
@@ -594,7 +594,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
             Comments.Clear();
             try
             {
-                await commentProvider.ConnectAsync(input, selectedBrowser);
+                await _commentProvider.ConnectAsync(input, selectedBrowser);
             }
             catch (Exception ex)
             {
@@ -604,7 +604,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
         }
         private void Disconnect()
         {
-            commentProvider.Disconnect();
+            _commentProvider.Disconnect();
         }
     }
 }

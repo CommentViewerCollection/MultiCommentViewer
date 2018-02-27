@@ -16,7 +16,7 @@ namespace ryu_s.BrowserCookie
         {
             var profileFileName = "profiles.ini";
 
-            var profiles = FirefoxProfile.GetProfiles(moz_path, profileFileName);
+            var profiles = FirefoxProfile.GetProfiles(_moz_path, profileFileName);
 
             var list = new List<IBrowserProfile>();
             foreach (var profile in profiles)
@@ -122,14 +122,14 @@ namespace ryu_s.BrowserCookie
 
             public FirefoxCookie(FirefoxProfile profile)
             {
-                Path = profile.path + "\\" + cookieFilename;
+                Path = profile.path + "\\" + _cookieFilename;
                 ProfileName = profile.Name;
                 Type = BrowserType.Firefox;
             }
 
-            private readonly string cookieFilename = "cookies.sqlite";
+            private readonly string _cookieFilename = "cookies.sqlite";
         }
-        private readonly string moz_path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Mozilla\Firefox";
+        private readonly string _moz_path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Mozilla\Firefox";
     }
 }
 

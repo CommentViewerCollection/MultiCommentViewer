@@ -11,12 +11,12 @@ namespace NicoSitePlugin.Test2
 {
     class ChatReceivedEventArgs : EventArgs
     {
-        public chat Chat { get; set; }
+        public Chat Chat { get; set; }
         public RoomInfo RoomInfo { get; set; }
     }
     class InitialChatsReceivedEventArgs : EventArgs
     {
-        public List<chat> Chat { get; set; }
+        public List<Chat> Chat { get; set; }
         public RoomInfo RoomInfo { get; set; }
     }
     class CommentProvider2 : ICommentProvider
@@ -88,14 +88,14 @@ namespace NicoSitePlugin.Test2
             }
         }
 
-        private void Room_InitialCommentsReceived(object sender, List<chat> e)
+        private void Room_InitialCommentsReceived(object sender, List<Chat> e)
         {
             var pair = _roomDict.Where(kv => kv.Value.RoomCommentProvider == sender).First();
             var roomInfo = pair.Key;
             InitialCommentsReceived?.Invoke(this, new InitialChatsReceivedEventArgs { Chat = e, RoomInfo = roomInfo });
         }
 
-        private void Room_CommentReceived(object sender, chat e)
+        private void Room_CommentReceived(object sender, Chat e)
         {
             var pair = _roomDict.Where(kv => kv.Value.RoomCommentProvider == sender).First();
             var roomInfo = pair.Key;

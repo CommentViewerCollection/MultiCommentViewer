@@ -24,8 +24,8 @@ namespace Common.Wpf
     {
         #region Data
 
-        private readonly ObservableCollection<IValueConverter> converters = new ObservableCollection<IValueConverter>();
-        private readonly Dictionary<IValueConverter, ValueConversionAttribute> cachedAttributes = new Dictionary<IValueConverter, ValueConversionAttribute>();
+        private readonly ObservableCollection<IValueConverter> _converters = new ObservableCollection<IValueConverter>();
+        private readonly Dictionary<IValueConverter, ValueConversionAttribute> _cachedAttributes = new Dictionary<IValueConverter, ValueConversionAttribute>();
 
         #endregion // Data
 
@@ -33,7 +33,7 @@ namespace Common.Wpf
 
         public ValueConverterGroup()
         {
-            this.converters.CollectionChanged += this.OnConvertersCollectionChanged;
+            this._converters.CollectionChanged += this.OnConvertersCollectionChanged;
         }
 
         #endregion // Constructor
@@ -45,7 +45,7 @@ namespace Common.Wpf
         /// </summary>
         public ObservableCollection<IValueConverter> Converters
         {
-            get { return this.converters; }
+            get { return this._converters; }
         }
 
         #endregion // Converters
@@ -126,7 +126,7 @@ namespace Common.Wpf
 
             if (nextConverter != null)
             {
-                ValueConversionAttribute conversionAttribute = cachedAttributes[nextConverter];
+                ValueConversionAttribute conversionAttribute = _cachedAttributes[nextConverter];
 
                 // If the Convert method is going to be called, we need to use the SourceType of the next 
                 // converter in the list.  If ConvertBack is called, use the TargetType.
@@ -155,12 +155,12 @@ namespace Common.Wpf
             else if (e.Action == NotifyCollectionChangedAction.Remove)
             {
                 foreach (IValueConverter converter in e.OldItems)
-                    this.cachedAttributes.Remove(converter);
+                    this._cachedAttributes.Remove(converter);
             }
             else if (e.Action == NotifyCollectionChangedAction.Reset)
             {
-                this.cachedAttributes.Clear();
-                convertersToProcess = this.converters;
+                this._cachedAttributes.Clear();
+                convertersToProcess = this._converters;
             }
 
             if (convertersToProcess != null && convertersToProcess.Count > 0)
@@ -172,7 +172,7 @@ namespace Common.Wpf
                     if (attributes.Length != 1)
                         throw new InvalidOperationException("All value converters added to a ValueConverterGroup must be decorated with the ValueConversionAttribute attribute exactly once.");
 
-                    this.cachedAttributes.Add(converter, attributes[0] as ValueConversionAttribute);
+                    this._cachedAttributes.Add(converter, attributes[0] as ValueConversionAttribute);
                 }
             }
         }

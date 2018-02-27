@@ -14,7 +14,6 @@ namespace YouTubeLiveSitePlugin.Test2
 {
     class ChatProvider
     {
-        public event EventHandler<List<CommentData>> InitialActionsReceived;
         public event EventHandler<List<CommentData>> ActionsReceived;
         public event EventHandler<string> SessionTokenUpdated;
         public event EventHandler<string> Noticed;

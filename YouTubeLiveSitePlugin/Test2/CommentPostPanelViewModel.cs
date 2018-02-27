@@ -8,14 +8,14 @@ namespace YouTubeLiveSitePlugin.Test2
     class CommentPostPanelViewModel:ViewModelBase
     {
 
-        private bool _CanPostComment;
+        private bool _canPostComment;
         public bool CanPostComment
         {
-            get { return _CanPostComment; }
+            get { return _canPostComment; }
             set
             {
-                if (_CanPostComment == value) return;
-                _CanPostComment = value;
+                if (_canPostComment == value) return;
+                _canPostComment = value;
                 RaisePropertyChanged();
             }
         }
@@ -30,16 +30,16 @@ namespace YouTubeLiveSitePlugin.Test2
                 CanPostComment = true;
             }
         }
-        private string _Comment;
+        private string _comment;
         private readonly CommentProvider _commentProvider;
 
         public string Comment
         {
-            get { return _Comment; }
+            get { return _comment; }
             set
             {
-                if (_Comment == value) return;
-                _Comment = value;
+                if (_comment == value) return;
+                _comment = value;
                 RaisePropertyChanged();
             }
         }

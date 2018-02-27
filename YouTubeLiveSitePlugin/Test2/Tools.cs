@@ -7,7 +7,6 @@ using Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
 
 namespace YouTubeLiveSitePlugin.Test2
@@ -139,10 +138,12 @@ namespace YouTubeLiveSitePlugin.Test2
             if (lowContinuations[0].IsDefined("invalidationContinuationData"))
             {
                 var data = lowContinuations[0].invalidationContinuationData;
-                var inv = new InvalidationContinuation();
-                inv.Continuation = data.continuation;
-                inv.TimeoutMs = (int)data.timeoutMs;
-                inv.ObjectId = data.invalidationId.objectId;
+                var inv = new InvalidationContinuation
+                {
+                    Continuation = data.continuation,
+                    TimeoutMs = (int)data.timeoutMs,
+                    ObjectId = data.invalidationId.objectId
+                };
                 continuation = inv;
             }
             else
@@ -209,10 +210,12 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public static CommentData GetCommandData(dynamic ren)
         {
-            var commentData = new CommentData();
-            commentData.UserId = ren.authorExternalChannelId;
-            commentData.TimestampUsec = ren.timestampUsec;
-            commentData.Id = ren.id;
+            var commentData = new CommentData
+            {
+                UserId = ren.authorExternalChannelId,
+                TimestampUsec = ren.timestampUsec,
+                Id = ren.id
+            };
             //authorPhoto
             {
                 var thumbnail = ren.authorPhoto.thumbnails[0];

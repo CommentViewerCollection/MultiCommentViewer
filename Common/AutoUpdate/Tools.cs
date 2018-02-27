@@ -14,9 +14,9 @@ namespace Common.AutoUpdate
     {
         private class VersionInfo
         {
-            public string name { get; set; }
-            public string version { get; set; }
-            public string url { get; set; }
+            public string Name { get; set; }
+            public string Version { get; set; }
+            public string Url { get; set; }
         }
         public static async Task<LatestVersionInfo> GetLatestVersionInfo(string name)
         {
@@ -32,7 +32,7 @@ namespace Common.AutoUpdate
 
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
             var ver = asm.GetName().Version;
-            return new LatestVersionInfo(json.version, json.url);
+            return new LatestVersionInfo(json.Version, json.Url);
         }
     }
 }

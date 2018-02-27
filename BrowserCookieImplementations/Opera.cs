@@ -14,7 +14,7 @@ namespace ryu_s.BrowserCookie
         public List<IBrowserProfile> GetProfiles()
         {
             var list = new List<IBrowserProfile>();
-            var defaultDbFilePath = Path.Combine(ChromeSettingsDirPath, DbFilename);
+            var defaultDbFilePath = Path.Combine(ChromeSettingsDirPath, _dbFilename);
             if (System.IO.File.Exists(defaultDbFilePath))
             {
                 list.Add(new OperaProfile(defaultDbFilePath));
@@ -22,7 +22,7 @@ namespace ryu_s.BrowserCookie
             return list;
         }
         #endregion
-        private readonly string DbFilename = "Cookies";
+        private readonly string _dbFilename = "Cookies";
         string ChromeSettingsDirPath => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Opera Software\Opera Stable";
 
         public OperaManager()

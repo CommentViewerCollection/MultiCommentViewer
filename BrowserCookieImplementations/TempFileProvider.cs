@@ -56,11 +56,11 @@ namespace ryu_s.BrowserCookie
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool _disposedValue = false; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -71,7 +71,7 @@ namespace ryu_s.BrowserCookie
                 Delete();
                 // set large fields to null.
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 

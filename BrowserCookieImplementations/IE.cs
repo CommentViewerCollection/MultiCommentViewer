@@ -182,9 +182,11 @@ namespace ryu_s.BrowserCookie
                             //The Value of a Cookie must not be null. The following characters are reserved and cannot be used for this property: semicolon, comma.
                             if (ieCookie.value.Contains(';') || ieCookie.value.Contains(','))
                                 continue;
-                            var cookie = new Cookie(ieCookie.name, ieCookie.value, ieCookie.path, ieCookie.domain);
-                            //UTCになってるっぽいから+9時間
-                            cookie.Expires = FromFileTime(long.Parse(ieCookie.ExpirationTimeHigh), long.Parse(ieCookie.ExpirationTimeLow)).AddHours(9);
+                            var cookie = new Cookie(ieCookie.name, ieCookie.value, ieCookie.path, ieCookie.domain)
+                            {
+                                //UTCになってるっぽいから+9時間
+                                Expires = FromFileTime(long.Parse(ieCookie.ExpirationTimeHigh), long.Parse(ieCookie.ExpirationTimeLow)).AddHours(9)
+                            };
                             cookie.Expired = (cookie.Expires < DateTime.Now);
                             yield return cookie;
                         }

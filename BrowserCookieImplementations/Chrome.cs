@@ -13,27 +13,27 @@ namespace ryu_s.BrowserCookie
         public List<IBrowserProfile> GetProfiles()
         {
             var list = new List<IBrowserProfile>();
-            var defaultDbFilePath = ChromeSettingsDirPath + DefaultProfileName + "\\" + DbFilename;
+            var defaultDbFilePath = ChromeSettingsDirPath + _defaultProfileName + "\\" + _dbFilename;
             if (System.IO.File.Exists(defaultDbFilePath))
             {
-                list.Add(new ChromeProfile(defaultDbFilePath, DefaultProfileName));
+                list.Add(new ChromeProfile(defaultDbFilePath, _defaultProfileName));
             }
             var dirs = System.IO.Directory.GetDirectories(ChromeSettingsDirPath);
             foreach (var dir in dirs)
             {
                 var dirName = System.IO.Path.GetFileName(dir);
-                var testPath = dir + "\\" + DbFilename;
+                var testPath = dir + "\\" + _dbFilename;
                 if (dirName.StartsWith("Profile", StringComparison.CurrentCultureIgnoreCase) && System.IO.File.Exists(testPath))
                 {
                     var profileName = dirName;
-                    list.Add(new ChromeProfile(ChromeSettingsDirPath + profileName + "\\" + DbFilename, profileName));
+                    list.Add(new ChromeProfile(ChromeSettingsDirPath + profileName + "\\" + _dbFilename, profileName));
                 }
             }
             return list;
         }
         #endregion
-        private readonly string DbFilename = "Cookies";
-        private readonly string DefaultProfileName = "Default";
+        private readonly string _dbFilename = "Cookies";
+        private readonly string _defaultProfileName = "Default";
         string ChromeSettingsDirPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\"; } }
 
         public ChromeManager()

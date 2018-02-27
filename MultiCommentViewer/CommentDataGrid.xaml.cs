@@ -90,9 +90,9 @@ namespace MultiCommentViewer
         //    base.OnMouseRightButtonUp(e);
         //}
         private bool _addingCommentToTop;
-        private bool bottom = true;
+        private bool _bottom = true;
         //private bool neverTouch = true;
-        private void dataGrid_ScrollChanged(object sender, RoutedEventArgs e)
+        private void DataGridScrollChanged(object sender, RoutedEventArgs e)
         {
             //if (_addingCommentToTop)
             //    return;
@@ -121,14 +121,14 @@ namespace MultiCommentViewer
             if (a.ExtentHeightChange == 0)
             {
                 //ユーザが手動でスクロールした
-                bottom = scrollViewer.IsBottom();
+                _bottom = scrollViewer.IsBottom();
                 //neverTouch = false;
             }
 
             //2017/09/11全体の高さが表示部に収まる間はスクロールがBottomにあるとみなすと、表示部に収まらなくなった瞬間にもBottomにあると判定されて、最初のスクロールが上手くいくかも。
 
             //if (bottom && a.ExtentHeightChange != 0)
-            if (bottom && Test(a))
+            if (_bottom && Test(a))
             {
                 scrollViewer.ScrollToBottom();
             }

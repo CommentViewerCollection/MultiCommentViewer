@@ -246,7 +246,7 @@ namespace NicoCommentProviderTestClient
             {
                 Comments.Add(new CommentViewModel(context));
             }), DispatcherPriority.Normal);
-            if (context.Chat.text == "/disconnect" && !isDisconnectOffered)
+            if (context.Chat.Text == "/disconnect" && !isDisconnectOffered)
             {
                 isDisconnectOffered = true;
                 await Task.Delay(1 * 60 * 1000);
@@ -280,7 +280,7 @@ namespace NicoCommentProviderTestClient
         {
             ThreadId = context.RoomInfo.Thread;
             RoomName = context.RoomInfo.RoomLabel;
-            Message = context.Chat.text;
+            Message = context.Chat.Text;
         }
     }
     public class RoomViewModel

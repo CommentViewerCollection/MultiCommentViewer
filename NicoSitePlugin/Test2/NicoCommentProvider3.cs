@@ -185,9 +185,9 @@ namespace NicoSitePlugin.Test2
             CanConnect = true;
             CanDisconnect = false;
         }
-        private bool IsKickCommand(chat chat)
+        private bool IsKickCommand(Chat chat)
         {
-            return (chat.text.StartsWith("/hb ifseetno ") && (chat.premium == 2 || chat.premium == 3));
+            return (chat.Text.StartsWith("/hb ifseetno ") && (chat.Premium == 2 || chat.Premium == 3));
         }
         private void _commentProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
         {
@@ -196,7 +196,7 @@ namespace NicoSitePlugin.Test2
             {
                 if (IsKickCommand(chat))
                     continue;
-                var user = _userStore.GetUser(chat.user_id);
+                var user = _userStore.GetUser(chat.UserId);
                 if (!_userCommentDict.TryGetValue(user, out ObservableCollection<NicoCommentViewModel2> userComments))
                 {
                     userComments = new ObservableCollection<NicoCommentViewModel2>();
@@ -216,7 +216,7 @@ namespace NicoSitePlugin.Test2
             {
                 return;
             }
-            var user = _userStore.GetUser(chat.user_id);
+            var user = _userStore.GetUser(chat.UserId);
             if (!_userCommentDict.TryGetValue(user, out ObservableCollection<NicoCommentViewModel2> userComments))
             {
                 userComments = new ObservableCollection<NicoCommentViewModel2>();

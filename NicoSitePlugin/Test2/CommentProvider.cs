@@ -12,7 +12,7 @@ namespace NicoSitePlugin.Test2
 {
     public class CommentContext
     {
-        public chat Chat { get; set; }
+        public Chat Chat { get; set; }
         public RoomInfo RoomInfo { get; set; }
     }
     public class RoomStatusChangedEventArgs
@@ -108,9 +108,9 @@ namespace NicoSitePlugin.Test2
             if (!_isThreadReceived)
             {
                 var threadStr = list[0];
-                var thread = new thread(threadStr);
+                var thread = new Old.Thread(threadStr);
                 _isThreadReceived = true;
-                if(thread.resultcode == 0)
+                if(thread.Resultcode == 0)
                 {
                     //ok
                     _retryCount = 0;
@@ -127,7 +127,7 @@ namespace NicoSitePlugin.Test2
             {
                 if(list.Count > 3)
                 {
-                    InitialCommentsReceived?.Invoke(this, list.Select(s => new chat(s)).ToList());
+                    InitialCommentsReceived?.Invoke(this, list.Select(s => new Chat(s)).ToList());
                 }
                 else
                 {
@@ -136,12 +136,12 @@ namespace NicoSitePlugin.Test2
             }
             foreach (var chatStr in list)
             {
-                var chat = new chat(chatStr);
+                var chat = new Chat(chatStr);
                 CommentReceived?.Invoke(this, chat);
             }
         }
-        public event EventHandler<chat> CommentReceived;
-        public event EventHandler<List<chat>> InitialCommentsReceived;
+        public event EventHandler<Chat> CommentReceived;
+        public event EventHandler<List<Chat>> InitialCommentsReceived;
     }
     /// <summary>
     /// コメントを取得する機構はCommunity,Channel,Official問わず全て同じ。違うのはRoomInfoの取得方法。
@@ -299,8 +299,8 @@ namespace NicoSitePlugin.Test2
             {
                 if(e[0].StartsWith("<thread "))
                 {
-                    var thread = new thread(e[0]);
-                    if(thread.resultcode == 0)
+                    var thread = new Old.Thread(e[0]);
+                    if(thread.Resultcode == 0)
                     {
                         //接続が成功したからRetryCountを0にする
                         OnReceiveSuccessThread(context.Info);
@@ -343,7 +343,7 @@ namespace NicoSitePlugin.Test2
 
                 try
                 {
-                    var chat = new chat(comment);
+                    var chat = new Chat(comment);
                     var commentContext = new CommentContext { Chat = chat, RoomInfo = context.Info };
                     CommentReceived?.Invoke(this, commentContext);
                 }catch(Exception ex)

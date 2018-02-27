@@ -65,16 +65,16 @@ namespace MultiCommentViewer.Test
     }
     public class TestSiteOptionsViewModel:ViewModelBase
     {
-        public bool IsCheckBox { get { return changed.IsCheckBox; } set { changed.IsCheckBox = value; } }
-        public string TextBoxText { get { return changed.TextBoxText; } set { changed.TextBoxText = value; } }
+        public bool IsCheckBox { get { return _changed.IsCheckBox; } set { _changed.IsCheckBox = value; } }
+        public string TextBoxText { get { return _changed.TextBoxText; } set { _changed.TextBoxText = value; } }
         private readonly TestSiteOptions _origin;
-        private readonly TestSiteOptions changed;
+        private readonly TestSiteOptions _changed;
         public TestSiteOptions OriginOptions { get { return _origin; } }
-        public TestSiteOptions ChangedOptions { get { return changed; } }
+        public TestSiteOptions ChangedOptions { get { return _changed; } }
         public TestSiteOptionsViewModel(TestSiteOptions siteOptions)
         {
             _origin = siteOptions;
-            changed = siteOptions.Clone();
+            _changed = siteOptions.Clone();
         }
     }
     public class TestSiteOptions
@@ -250,22 +250,22 @@ namespace MultiCommentViewer.Test
         {
             throw new NotImplementedException();
         }
-        private static Random random = new Random();
+        private static Random _random = new Random();
         public static string RandomString()
         {
-            return RandomString(random.Next(2, 40));
+            return RandomString(_random.Next(2, 40));
         }
         public static string RandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\n";
             return new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[random.Next(s.Length)]).ToArray());
+              .Select(s => s[_random.Next(s.Length)]).ToArray());
         }
         public static int RandomNum(int length)
         {
             const string chars = "0123456789";
             var str = new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[random.Next(s.Length)]).ToArray());
+              .Select(s => s[_random.Next(s.Length)]).ToArray());
             return int.Parse(str);
         }
     }

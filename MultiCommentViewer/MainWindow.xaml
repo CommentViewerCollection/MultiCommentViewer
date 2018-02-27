@@ -252,7 +252,7 @@
                   VerticalGridLinesBrush="{Binding VerticalGridLineBrush}"
                   VerticalScrollBarVisibility="Visible"
                   ScrollViewer.CanContentScroll="True"
-                  ScrollViewer.ScrollChanged="dataGrid_ScrollChanged"
+                  ScrollViewer.ScrollChanged="DataGridScrollChanged"
                   ScrollViewer.IsDeferredScrollingEnabled="True"
                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                   Margin="5" Grid.Row="5">

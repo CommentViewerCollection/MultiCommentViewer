@@ -94,13 +94,13 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="BindableTextBlock.cs" />
-    <Compile Include="BrowserViewModel.cs" />
+    <Compile Include="ViewModels\BrowserViewModel.cs" />
     <Compile Include="CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
     </Compile>
     <Compile Include="CommentDataGridViewModelBase.cs" />
     <Compile Include="ConnectionName.cs" />
-    <Compile Include="ConnectionViewModel.cs" />
+    <Compile Include="ViewModels\ConnectionViewModel.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="GridColumnWidthReseterBehaviour.cs" />
     <Compile Include="IOptions.cs" />
@@ -108,11 +108,11 @@
     <Compile Include="IPluginManager.cs" />
     <Compile Include="ISitePluginLoader.cs" />
     <Compile Include="ISitePluginManager.cs" />
-    <Compile Include="McvCommentViewModel.cs" />
+    <Compile Include="ViewModels\McvCommentViewModel.cs" />
     <Compile Include="Test\DynamicOptionsTest.cs" />
     <Compile Include="Test\LoggerTest.cs" />
-    <Compile Include="MetadataViewModel.cs" />
-    <Compile Include="SiteViewModel.cs" />
+    <Compile Include="ViewModels\MetadataViewModel.cs" />
+    <Compile Include="ViewModels\SiteViewModel.cs" />
     <Compile Include="Test\CommentViewModelTest.cs" />
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
@@ -124,7 +124,7 @@
     <Compile Include="UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserViewModel.cs" />
+    <Compile Include="ViewModels\UserViewModel.cs" />
     <Compile Include="ViewModels\ViewModelLocator.cs" />
     <Page Include="CommentDataGrid.xaml">
       <SubType>Designer</SubType>
@@ -145,7 +145,7 @@
     <Compile Include="MainOptionsPanel.xaml.cs">
       <DependentUpon>MainOptionsPanel.xaml</DependentUpon>
     </Compile>
-    <Compile Include="MainViewModel.cs" />
+    <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

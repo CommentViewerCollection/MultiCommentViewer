@@ -86,9 +86,11 @@ namespace NicoSitePlugin.Old
             {
                 return myRooms;
             }
-            var list = new List<RoomInfo>();
-            //TODO:計算して他の部屋も取得する。
-            list.Add(new RoomInfo(ps.Ms, ps.RoomLabel));
+            var list = new List<RoomInfo>
+            {
+                //TODO:計算して他の部屋も取得する。
+                new RoomInfo(ps.Ms, ps.RoomLabel)
+            };
             return list.ToArray();
         }
         public async Task ReceiveComments()
@@ -132,17 +134,16 @@ namespace NicoSitePlugin.Old
     /// 
     /// </summary>
     [Serializable]
-    public class chat
+    public class Chat
     {
-        public string thread { get; private set; }
-        public int? no { get; private set; }
+        public string Thread { get; private set; }
+        public int? No { get; private set; }
         private string _vpos_str;
-        public long? vpos
+        public long? Vpos
         {
             get
             {
-                long vpos;
-                if (long.TryParse(_vpos_str, out vpos))
+                if (long.TryParse(_vpos_str, out long vpos))
                 {
                     return vpos;
                 }
@@ -150,24 +151,23 @@ namespace NicoSitePlugin.Old
                     return null;
             }
         }
-        public string date_str { get; private set; }
-        public DateTime date
+        public string DateStr { get; private set; }
+        public DateTime Date
         {
             get
             {
-                return FromUnixTime(long.Parse(date_str));
+                return FromUnixTime(long.Parse(DateStr));
             }
         }
         private static DateTime FromUnixTime(long unix)
         {
             return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(unix).ToLocalTime();
         }
-        public long? date_usec
+        public long? DateUsec
         {
             get
             {
-                long _date_usec;
-                if (long.TryParse(date_usec_str, out _date_usec))
+                if (long.TryParse(_date_usec_str, out long _date_usec))
                 {
                     return _date_usec;
                 }
@@ -175,47 +175,43 @@ namespace NicoSitePlugin.Old
                     return null;
             }
         }
-        private string date_usec_str;
-        public string mail { get; private set; }
-        public string user_id { get; private set; }
-        public int? premium { get; private set; }
-        public int? anonymity { get; private set; }
-        public string locale { get; private set; }
-        public int? score { get; private set; }
-        public string text { get; private set; }
-        public bool yourpost { get; private set; }
-        public string origin { get; private set; }
-        public bool IsBsp { get { return text.StartsWith("/press show "); } }
+        private string _date_usec_str;
+        public string Mail { get; private set; }
+        public string UserId { get; private set; }
+        public int? Premium { get; private set; }
+        public int? Anonymity { get; private set; }
+        public string Locale { get; private set; }
+        public int? Score { get; private set; }
+        public string Text { get; private set; }
+        public bool Yourpost { get; private set; }
+        public string Origin { get; private set; }
+        public bool IsBsp { get { return Text.StartsWith("/press show "); } }
         public string Raw { get; private set; }
-        public chat(string strChat)
+        public Chat(string strChat)
         {
             Raw = strChat;
             using (var xmlReader = XmlReader.Create(new System.IO.StringReader($"<root>{strChat}</root>")))
             {
                 xmlReader.ReadToFollowing("chat");
-                int no_;
-                if (int.TryParse(xmlReader.GetAttribute("no"), out no_))
-                    no = no_;
+                if (int.TryParse(xmlReader.GetAttribute("no"), out int no_))
+                    No = no_;
                 _vpos_str = xmlReader.GetAttribute("vpos");
-                thread = xmlReader.GetAttribute("thread");
-                date_str = xmlReader.GetAttribute("date");
-                date_usec_str = xmlReader.GetAttribute("date_usec");
-                mail = xmlReader.GetAttribute("mail");
-                user_id = xmlReader.GetAttribute("user_id");
-                int premium_;
-                if (int.TryParse(xmlReader.GetAttribute("premium"), out premium_))
-                    premium = premium_;
-                int anonymity_;
-                if (int.TryParse(xmlReader.GetAttribute("anonymity"), out anonymity_))
-                    anonymity = anonymity_;
-                locale = xmlReader.GetAttribute("locale");
-                int score_;
-                if (int.TryParse(xmlReader.GetAttribute("score"), out score_))
-                    score = score_;
-                yourpost = !string.IsNullOrWhiteSpace(xmlReader.GetAttribute("yourpost"));
-                origin = xmlReader.GetAttribute("origin");
+                Thread = xmlReader.GetAttribute("thread");
+                DateStr = xmlReader.GetAttribute("date");
+                _date_usec_str = xmlReader.GetAttribute("date_usec");
+                Mail = xmlReader.GetAttribute("mail");
+                UserId = xmlReader.GetAttribute("user_id");
+                if (int.TryParse(xmlReader.GetAttribute("premium"), out int premium_))
+                    Premium = premium_;
+                if (int.TryParse(xmlReader.GetAttribute("anonymity"), out int anonymity_))
+                    Anonymity = anonymity_;
+                Locale = xmlReader.GetAttribute("locale");
+                if (int.TryParse(xmlReader.GetAttribute("score"), out int score_))
+                    Score = score_;
+                Yourpost = !string.IsNullOrWhiteSpace(xmlReader.GetAttribute("yourpost"));
+                Origin = xmlReader.GetAttribute("origin");
                 //以前はHtmlConverter.Decode()をしていたけど、ここでは一切加工しないことに。
-                text = xmlReader.ReadElementContentAsString();
+                Text = xmlReader.ReadElementContentAsString();
             }
         }
     }
@@ -223,7 +219,7 @@ namespace NicoSitePlugin.Old
     /// <summary>
     /// 
     /// </summary>
-    public class thread
+    public class Thread
     {
         //<thread resultcode="0" thread="1389881167" last_res="6006" ticket="0x32b22900" revision="1" server_time="1414839575"/>
         /// <summary>
@@ -232,33 +228,29 @@ namespace NicoSitePlugin.Old
         /// 0:問題なし
         /// 1:失敗
         /// 3:threadにversionを入れずにサーバに送ったら帰ってきた。
-        public int? resultcode { get; private set; }
-        public string thread_id { get; private set; }
-        public int? last_res { get; private set; }
-        public string ticket { get; private set; }
-        public int? revision { get; private set; }
-        public long? server_time { get; private set; }
+        public int? Resultcode { get; private set; }
+        public string ThreadId { get; private set; }
+        public int? LastRes { get; private set; }
+        public string Ticket { get; private set; }
+        public int? Revision { get; private set; }
+        public long? ServerTime { get; private set; }
         public string Raw { get; private set; }
-        public thread(string strThread)
+        public Thread(string strThread)
         {
             Raw = strThread;
             using (var xmlReader = XmlReader.Create(new System.IO.StringReader($"<root>{strThread}</root>")))
             {
                 xmlReader.ReadToFollowing("thread");
-                int resultcode_;
-                if (int.TryParse(xmlReader.GetAttribute("resultcode"), out resultcode_))
-                    resultcode = resultcode_;
-                thread_id = xmlReader.GetAttribute("thread");
-                int last_res_;
-                if (int.TryParse(xmlReader.GetAttribute("last_res"), out last_res_))
-                    last_res = last_res_;
-                ticket = xmlReader.GetAttribute("ticket");
-                int revision_;
-                if (int.TryParse(xmlReader.GetAttribute("revision"), out revision_))
-                    revision = revision_;
-                long server_time_;
-                if (long.TryParse(xmlReader.GetAttribute("server_time"), out server_time_))
-                    server_time = server_time_;
+                if (int.TryParse(xmlReader.GetAttribute("resultcode"), out int resultcode_))
+                    Resultcode = resultcode_;
+                ThreadId = xmlReader.GetAttribute("thread");
+                if (int.TryParse(xmlReader.GetAttribute("last_res"), out int last_res_))
+                    LastRes = last_res_;
+                Ticket = xmlReader.GetAttribute("ticket");
+                if (int.TryParse(xmlReader.GetAttribute("revision"), out int revision_))
+                    Revision = revision_;
+                if (long.TryParse(xmlReader.GetAttribute("server_time"), out long server_time_))
+                    ServerTime = server_time_;
             }
         }
     }

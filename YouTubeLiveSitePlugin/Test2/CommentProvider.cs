@@ -41,14 +41,14 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
         public event EventHandler LoggedInStateChanged;
-        private bool _IsLoggedIn;
+        private bool _isLoggedIn;
         public bool IsLoggedIn
         {
-            get { return _IsLoggedIn; }
+            get { return _isLoggedIn; }
             set
             {
-                if (_IsLoggedIn == value) return;
-                _IsLoggedIn = value;
+                if (_isLoggedIn == value) return;
+                _isLoggedIn = value;
                 LoggedInStateChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -62,7 +62,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly ICommentOptions _options;
         private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
-        ChatProvider chatProvider;
+        ChatProvider _chatProvider;
         IMetadataProvider _metaProvider;
 
         private void SendInfo(string message)
@@ -76,7 +76,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         private void AfterConnect()
         {
-            chatProvider = null;
+            _chatProvider = null;
             CanConnect = true;
             CanDisconnect = false;
         }
@@ -224,10 +224,9 @@ reload:
                 Task chatTask = null;
                 Task metaTask = null;
 
-                chatProvider = new ChatProvider(_logger);
-                chatProvider.InitialActionsReceived += ChatProvider_InitialActionsReceived;
-                chatProvider.ActionsReceived += ChatProvider_ActionsReceived;
-                chatProvider.SessionTokenUpdated += (s, e) =>
+                _chatProvider = new ChatProvider(_logger);
+                _chatProvider.ActionsReceived += ChatProvider_ActionsReceived;
+                _chatProvider.SessionTokenUpdated += (s, e) =>
                 {
                     var token = e;
                     if(_postCommentContext != null)
@@ -235,8 +234,8 @@ reload:
                         _postCommentContext.SessionToken = token;
                     }
                 };
-                chatProvider.Noticed += ChatProvider_Noticed;
-                chatTask = chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
+                _chatProvider.Noticed += ChatProvider_Noticed;
+                chatTask = _chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
                 tasks.Add(chatTask);
 
                 string ytCfg = null;
@@ -330,20 +329,9 @@ reload:
             }
         }
 
-        private void ChatProvider_InitialActionsReceived(object sender, List<CommentData> e)
-        {
-            var list = new List<ICommentViewModel>();
-            foreach(var commentData in e)
-            {
-                var cvm = new YouTubeLiveCommentViewModel(_options, commentData, this);
-                list.Add(cvm);
-            }
-            InitialCommentsReceived?.Invoke(this, list);
-        }
-
         public void Disconnect()
         {
-            chatProvider?.Disconnect();
+            _chatProvider?.Disconnect();
         }
 
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)

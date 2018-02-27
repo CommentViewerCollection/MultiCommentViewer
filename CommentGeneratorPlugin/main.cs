@@ -16,7 +16,7 @@ namespace CommentViewer.Plugin
     public class CommentGeneratorPlugin: IPlugin,IDisposable
     {
         private Options _options;
-        string hcgPath = "";
+        string _hcgPath = "";
         private System.Timers.Timer _writeTimer;
         private System.Timers.Timer _deleteTimer;
         private SynchronizedCollection<ICommentData> _commentCollection = new SynchronizedCollection<ICommentData>();
@@ -25,7 +25,7 @@ namespace CommentViewer.Plugin
         {
             get
             {
-                return hcgPath + "\\comment.xml";
+                return _hcgPath + "\\comment.xml";
             }
         }
         public string Name
@@ -56,13 +56,17 @@ namespace CommentViewer.Plugin
         {
             _options = Options.Load(GetSettingsFilePath());
 
-            _writeTimer = new System.Timers.Timer();
-            _writeTimer.Interval = 500;
+            _writeTimer = new System.Timers.Timer
+            {
+                Interval = 500
+            };
             _writeTimer.Elapsed += _writeTimer_Elapsed;
             _writeTimer.Start();
 
-            _deleteTimer = new System.Timers.Timer();
-            _deleteTimer.Interval = 5 * 60 * 1000;
+            _deleteTimer = new System.Timers.Timer
+            {
+                Interval = 5 * 60 * 1000
+            };
             _deleteTimer.Elapsed += _deleteTimer_Elapsed;
             _deleteTimer.Start();
         }
@@ -133,9 +137,9 @@ namespace CommentViewer.Plugin
                 return;
 
             //TODO:各ファイルが存在しなかった時のエラー表示
-            if (string.IsNullOrEmpty(hcgPath) && File.Exists(_options.HcgSettingFilePath))
+            if (string.IsNullOrEmpty(_hcgPath) && File.Exists(_options.HcgSettingFilePath))
             {
-                hcgPath = GetHcgPath(_options.HcgSettingFilePath);
+                _hcgPath = GetHcgPath(_options.HcgSettingFilePath);
                 //TODO:パスがxmlファイルで無かった場合の対応。ディレクトリの可能性も。
             }
             if (!File.Exists(CommentXmlPath))
@@ -212,8 +216,10 @@ namespace CommentViewer.Plugin
             var top = Host.MainViewTop;
             if (_settingsView == null)
             {
-                _settingsView = new SettingsView();
-                _settingsView.DataContext = new ConfigViewModel(_options);
+                _settingsView = new SettingsView
+                {
+                    DataContext = new ConfigViewModel(_options)
+                };
             }
             _settingsView.Topmost = Host.IsTopmost;
             _settingsView.Left = left;

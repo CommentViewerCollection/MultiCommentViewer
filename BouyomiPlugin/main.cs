@@ -15,9 +15,9 @@ namespace BouyomiPlugin
         public string Description => "棒読みソフトとうまく連携できるか試してみるプラグインです。";
         public void OnTopmostChanged(bool isTopmost)
         {
-            if(settingsView != null)
+            if(_settingsView != null)
             {
-                settingsView.Topmost = isTopmost;
+                _settingsView.Topmost = isTopmost;
             }
         }
         public void OnLoaded()
@@ -82,21 +82,21 @@ namespace BouyomiPlugin
             var dir = Host.SettingsDirPath;
             return System.IO.Path.Combine(dir, $"{Name}.xml");
         }
-        ConfigView settingsView;
+        ConfigView _settingsView;
         public void ShowSettingView()
         {
-            if(settingsView == null)
+            if(_settingsView == null)
             {
-                settingsView = new ConfigView
+                _settingsView = new ConfigView
                 {
                     DataContext = new ConfigViewModel(_options)
                 };
             }
-            settingsView.Topmost = Host.IsTopmost;
-            settingsView.Left = Host.MainViewLeft;
-            settingsView.Top = Host.MainViewTop;
+            _settingsView.Topmost = Host.IsTopmost;
+            _settingsView.Left = Host.MainViewLeft;
+            _settingsView.Top = Host.MainViewTop;
             
-            settingsView.Show();
+            _settingsView.Show();
         }
         public BouyomiPlugin()
         {
@@ -105,11 +105,11 @@ namespace BouyomiPlugin
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool _disposedValue = false; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
@@ -120,7 +120,7 @@ namespace BouyomiPlugin
                     _bouyomiChanProcess.Close();
                     _bouyomiChanProcess = null;
                 }
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
         

@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 namespace YouTubeLiveSitePlugin.Test2
 {
     [Serializable]
+    public class FatalException : Exception
+    {
+        public FatalException() { }
+        public FatalException(string message, Exception innterException) : base(message, innterException) { }
+    }
+    [Serializable]
     public class ReloadException : Exception
     {
         public ReloadException() { }

@@ -64,7 +64,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
         ChatProvider chatProvider;
-        MetadataProvider _metaProvider;
+        IMetadataProvider _metaProvider;
 
         private void SendInfo(string message)
         {
@@ -236,6 +236,7 @@ reload:
                         _postCommentContext.SessionToken = token;
                     }
                 };
+                chatProvider.Noticed += ChatProvider_Noticed;
                 chatTask = chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
                 tasks.Add(chatTask);
 
@@ -250,14 +251,32 @@ reload:
                 }
                 if (!string.IsNullOrEmpty(ytCfg))
                 {
-                    _metaProvider = new MetadataProvider(_logger);
+                    //"service_ajax?name=updatedMetadataEndpoint"はIEには対応していないらしく、400が返って来てしまう。
+                    //そこで、IEの場合のみ旧版の"youtubei"を使うようにした。
+                    if (browserProfile.Type == BrowserType.IE)
+                    {
+                        _metaProvider = new MetaDataYoutubeiProvider(_logger);
+                    }
+                    else
+                    {
+                        _metaProvider = new MetadataProvider(_logger);
+                    }
                     _metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
+                    _metaProvider.Noticed += _metaProvider_Noticed;
                     metaTask = _metaProvider.ReceiveAsync(ytCfg: ytCfg, vid: vid, cc: _cc);
                     tasks.Add(metaTask);
                 }
                 var t = await Task.WhenAny(tasks);
                 if(t == metaTask)
                 {
+                    try
+                    {
+                        await metaTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex, "metaTaskが終了した原因");
+                    }
                     //metaTask内でParseExceptionもしくはDisconnect()
                     //metaTaskは終わっても良い。
                     await chatTask;
@@ -286,6 +305,16 @@ reload:
             {
                 AfterConnect();
             }
+        }
+
+        private void _metaProvider_Noticed(object sender, string e)
+        {
+            SendInfo(e);
+        }
+
+        private void ChatProvider_Noticed(object sender, string e)
+        {
+            SendInfo(e);
         }
 
         private void MetaProvider_MetadataReceived(object sender, IMetadata e)

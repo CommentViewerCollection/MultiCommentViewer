@@ -90,7 +90,7 @@ namespace NicoSitePlugin.Old
                             errorMsg = "エラーが発生したため、コメントが取得できませんでした。";
                             break;
                     }
-                    var info = new InfoCommentViewModel(_connectionName, _options, errorMsg);
+                    var info = new InfoCommentViewModel(_options, errorMsg);
                     CommentReceived?.Invoke(this, info);
                     return;
                 }
@@ -261,7 +261,7 @@ namespace NicoSitePlugin.Old
                     if (str.StartsWith("<chat "))
                     {
                         var chat = new chat(str);
-                        var cvm = new NicoCommentViewModel2(_connectionName, chat, _options, _siteOptions);
+                        var cvm = new NicoCommentViewModel2(chat, _options, _siteOptions);
                         CommentReceived?.Invoke(this, cvm);                        
                     }
                     else if (str.StartsWith("<thread "))
@@ -305,14 +305,12 @@ namespace NicoSitePlugin.Old
         {
             throw new NotImplementedException();
         }
-        private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         private readonly NicoSiteOptions _siteOptions;
         private readonly IDataSource _dataSource;
         private CancellationTokenSource _cts;
-        internal NicoCommentProvider(ConnectionName connectionName, IOptions options, NicoSiteOptions siteOptions)
+        internal NicoCommentProvider(IOptions options, NicoSiteOptions siteOptions)
         {
-            _connectionName = connectionName;
             _options = options;
             _siteOptions = siteOptions;
             _dataSource = new DataSource();
@@ -323,8 +321,6 @@ namespace NicoSitePlugin.Old
     }
     public class InfoCommentViewModel : ICommentViewModel
     {
-        public string ConnectionName => _connectionName.Name;
-
         public IEnumerable<IMessagePart> NameItems { get; }
 
         public IEnumerable<IMessagePart> MessageItems { get; }
@@ -372,10 +368,8 @@ namespace NicoSitePlugin.Old
             throw new NotImplementedException();
         }
         private readonly IOptions _options;
-        private readonly ConnectionName _connectionName;
-        public InfoCommentViewModel(ConnectionName connectionName, IOptions options, string message)
+        public InfoCommentViewModel(IOptions options, string message)
         {
-            _connectionName = connectionName;
             _options = options;
             MessageItems = new List<IMessagePart> { new MessageText { Text = message } };
         }

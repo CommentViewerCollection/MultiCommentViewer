@@ -36,9 +36,9 @@ namespace MultiCommentViewer.Test
             //always true
             return true;
         }
-        public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
+        public ICommentProvider CreateCommentProvider()
         {
-            return new TestSiteCommentProvider(connectionName,_options, _siteOptions);
+            return new TestSiteCommentProvider(_options, _siteOptions);
         }
         private TestSiteOptions _siteOptions;
         public void LoadOptions(string siteOptionsStr, IIo io)
@@ -190,7 +190,7 @@ namespace MultiCommentViewer.Test
                 {
                     new MessageTextTest(RandomString()),
                 };
-                    var comment = new TestSiteCommentViewModel(ConnectionName, name, message, _options, SiteOptions);
+                    var comment = new TestSiteCommentViewModel(name, message, _options, SiteOptions);
                     CommentReceived?.Invoke(this, comment );
                     await Task.Delay(500);
                 }
@@ -220,12 +220,10 @@ namespace MultiCommentViewer.Test
         }
 
         private readonly System.Timers.Timer _metaTimer = new System.Timers.Timer();
-        public ConnectionName ConnectionName { get; set; }
         public TestSiteOptions SiteOptions { get; set; }
         private readonly IOptions _options;
-        public TestSiteCommentProvider(ConnectionName connectionName, IOptions options, TestSiteOptions siteOptions)
+        public TestSiteCommentProvider(IOptions options, TestSiteOptions siteOptions)
         {
-            ConnectionName = connectionName;
             _options = options;
             SiteOptions = siteOptions;
         }

@@ -98,7 +98,7 @@ namespace TwicasSitePlugin
             {
                 var userId = data.UserId;
                 var user = _userStore.GetUser(userId);
-                var cvm = new TwicasCommentViewModel(_connectionName, _options, data, user);
+                var cvm = new TwicasCommentViewModel(_options, data, user);
                 CommentReceived?.Invoke(this, cvm);
             }
         }
@@ -123,14 +123,12 @@ namespace TwicasSitePlugin
         private readonly Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>>();
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         private readonly TwicasSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
         private readonly Dispatcher _dispatcher;
-        public TwicasCommentProvider(ConnectionName connectionName, IDataServer server, ILogger logger, IOptions options, TwicasSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
+        public TwicasCommentProvider(IDataServer server, ILogger logger, IOptions options, TwicasSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
         {
-            _connectionName = connectionName;
             _server = server;
             _logger = logger;
             _options = options;

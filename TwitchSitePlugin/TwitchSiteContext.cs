@@ -26,9 +26,9 @@ namespace TwitchSitePlugin
             }
         }
 
-        public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
+        public ICommentProvider CreateCommentProvider()
         {
-            return new TwitchCommentProvider(connectionName, new TwitchServer(), _logger, _options, _siteOptions,_userStore, _dispatcher);
+            return new TwitchCommentProvider(new TwitchServer(), _logger, _options, _siteOptions,_userStore, _dispatcher);
         }
         private TwitchSiteOptions _siteOptions;
         public void LoadOptions(string path, IIo io)

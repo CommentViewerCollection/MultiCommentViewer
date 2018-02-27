@@ -14,30 +14,15 @@ namespace MultiCommentViewer.Test
 
     public class TestSiteCommentViewModel : ViewModelBase, ICommentViewModel
     {
-        private readonly ConnectionName _connectionName;
         private readonly TestSiteOptions _siteOptions;
         private readonly IOptions _options;
-        public TestSiteCommentViewModel(ConnectionName connectionName, IEnumerable<IMessagePart> name, IEnumerable<IMessagePart> message, IOptions options, TestSiteOptions siteOptions)
+        public TestSiteCommentViewModel(IEnumerable<IMessagePart> name, IEnumerable<IMessagePart> message, IOptions options, TestSiteOptions siteOptions)
         {
-            _connectionName = connectionName;
             NameItems = name;
             MessageItems = message;
             _options = options;
             _siteOptions = siteOptions;
-            connectionName.PropertyChanged += ConnectionName_PropertyChanged;
         }
-
-        private void ConnectionName_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(SitePlugin.ConnectionName.Name):
-                    base.RaisePropertyChanged(nameof(ConnectionName));
-                    break;
-            }
-        }
-
-        public string ConnectionName => _connectionName.Name;
 
         public IEnumerable<IMessagePart> NameItems { get; }
 

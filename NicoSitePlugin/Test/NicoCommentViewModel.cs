@@ -17,8 +17,8 @@ namespace NicoSitePlugin.Old
         private readonly NicoSiteOptions _siteOptions;
         private readonly chat _chat;
         [Obsolete]
-        public NicoCommentViewModel2(ConnectionName connectionName, chat chat, IOptions options, NicoSiteOptions siteOptions) 
-            : base(connectionName, options)
+        public NicoCommentViewModel2(chat chat, IOptions options, NicoSiteOptions siteOptions) 
+            : base(options)
         {
             _siteOptions = siteOptions;
             _chat = chat;
@@ -26,9 +26,9 @@ namespace NicoSitePlugin.Old
             SetName(null);
             MessageItems = new List<IMessagePart> { new MessageText { Text = _chat.text } };
         }
-        public NicoCommentViewModel2(ConnectionName connectionName, IOptions options, NicoSiteOptions siteOptions, 
+        public NicoCommentViewModel2(IOptions options, NicoSiteOptions siteOptions, 
             chat chat, RoomInfo roomInfo, IUser user, ICommentProvider commentProvider, bool isFirstComment)
-            :base(connectionName, options)
+            :base(options)
         {
             _siteOptions = siteOptions;
             _chat = chat;
@@ -53,8 +53,6 @@ namespace NicoSitePlugin.Old
     }
     public class NicoCommentViewModel : INicoCommentViewModel
     {
-        public string ConnectionName => _connectionName.Name;
-
         public IEnumerable<IMessagePart> NameItems { get; set; }
 
         public IEnumerable<IMessagePart> MessageItems { get; set; }
@@ -122,14 +120,12 @@ namespace NicoSitePlugin.Old
         {
             throw new NotImplementedException();
         }
-
-        private readonly ConnectionName _connectionName;
+        
         private readonly chat _chat;
         private readonly IOptions _options;
         private readonly NicoSiteOptions _siteOptions;
-        internal NicoCommentViewModel(ConnectionName connectionName, chat chat, IOptions options, NicoSiteOptions siteOptions)
+        internal NicoCommentViewModel(chat chat, IOptions options, NicoSiteOptions siteOptions)
         {
-            _connectionName = connectionName;
             _chat = chat;
             _options = options;
             _siteOptions = siteOptions;

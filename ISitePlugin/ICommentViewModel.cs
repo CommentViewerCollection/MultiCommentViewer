@@ -13,7 +13,6 @@ namespace SitePlugin
 {
     public interface ICommentViewModel : INotifyPropertyChanged
     {
-        string ConnectionName { get;  }
         IEnumerable<IMessagePart> NameItems { get; }
         IEnumerable<IMessagePart> MessageItems { get; }
         string Info { get; }
@@ -27,7 +26,7 @@ namespace SitePlugin
         /// <summary>
         /// このユーザの最初のコメント
         /// </summary>
-        bool IsFirstComment { get; }
+        //bool IsFirstComment { get; }
 
         IMessageImage Thumbnail { get; }
 

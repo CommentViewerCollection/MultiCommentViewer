@@ -45,7 +45,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommentViewModelBase.cs" />
-    <Compile Include="ConnectionName.cs" />
     <Compile Include="ICommentProvider.cs" />
     <Compile Include="ICommentViewModel.cs" />
     <Compile Include="IIo.cs" />

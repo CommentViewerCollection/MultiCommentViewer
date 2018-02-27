@@ -19,6 +19,7 @@ using System.Reflection;
 using System.ComponentModel;
 using MultiCommentViewer.Test;
 using Common;
+
 namespace MultiCommentViewer
 {
     public class MainViewModel : ViewModelBase
@@ -314,10 +315,17 @@ namespace MultiCommentViewer
             }
         }
         #endregion //Methods
-
+        
+        private void AddComment(ICommentViewModel cvm, ConnectionName connectionName)
+        {
+            var mcvCvm = new McvCommentViewModel(cvm, connectionName);
+            Comments.Add(mcvCvm);
+        }
         #region EventHandler
         private async void Connection_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
         {
+            var connectionViewModel = sender as ConnectionViewModel;
+            Debug.Assert(connectionViewModel != null);
             try
             {
                 //TODO:Comments.AddRange()が欲しい
@@ -325,7 +333,7 @@ namespace MultiCommentViewer
                 {
                     foreach (var comment in e)
                     {
-                        Comments.Add(comment);
+                        AddComment(comment, connectionViewModel.ConnectionName);
                     }
                 }), DispatcherPriority.Normal);
             }
@@ -337,6 +345,8 @@ namespace MultiCommentViewer
         }
         private async void Connection_CommentReceived(object sender, ICommentViewModel e)
         {
+            var connectionViewModel = sender as ConnectionViewModel;
+            Debug.Assert(connectionViewModel != null);
             try
             {
                 //TODO:Comments.AddRange()が欲しい
@@ -350,7 +360,7 @@ namespace MultiCommentViewer
                     //    _userDict.Add(comment.UserId, uvm);
                     //}
                     //comment.User = uvm.User;
-                    Comments.Add(comment);
+                    AddComment(comment, connectionViewModel.ConnectionName);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
                 if (!e.IsInfo)
@@ -396,7 +406,7 @@ namespace MultiCommentViewer
         #region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
+        public ObservableCollection<McvCommentViewModel> Comments { get; } = new ObservableCollection<McvCommentViewModel>();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
         public ICommentViewModel SelectedComment { get; set; }
         private ConnectionViewModel _selectedConnection;

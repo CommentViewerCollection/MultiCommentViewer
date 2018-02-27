@@ -7,8 +7,8 @@ namespace TwicasSitePlugin
     class TwicasCommentViewModel : CommentViewModelBase
     {
         public override string UserId { get; }
-        public TwicasCommentViewModel(ConnectionName connectionName, IOptions options, ICommentData data, IUser user) :
-            base(connectionName, options)
+        public TwicasCommentViewModel(IOptions options, ICommentData data, IUser user) :
+            base(options)
         {
             UserId = data.UserId;
             Id = data.Id.ToString();

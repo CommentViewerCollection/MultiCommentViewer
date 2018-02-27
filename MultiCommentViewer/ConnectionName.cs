@@ -1,9 +1,8 @@
-﻿using System.ComponentModel;
-using System.Runtime.Serialization;
-using System;
-namespace SitePlugin
+﻿using System;
+using System.ComponentModel;
+namespace MultiCommentViewer
 {
-    public class ConnectionName:INotifyPropertyChanged
+    public class ConnectionName : INotifyPropertyChanged
     {
         public Guid Guid { get; }
         private string _name;
@@ -13,7 +12,7 @@ namespace SitePlugin
             set
             {
                 _name = value;
-                RaisePropertyChanged();        
+                RaisePropertyChanged();
             }
         }
         public ConnectionName()

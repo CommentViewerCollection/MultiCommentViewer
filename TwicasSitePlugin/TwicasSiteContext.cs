@@ -36,9 +36,9 @@ namespace TwicasSitePlugin
 
         public IOptionsTabPage TabPanel => throw new NotImplementedException();
 
-        public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
+        public ICommentProvider CreateCommentProvider()
         {
-            return new TwicasCommentProvider(connectionName, new TwicasServer(), _logger, _options, _siteOptions, _userStore, _dispatcher);
+            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStore, _dispatcher);
         }
 
         public bool IsValidInput(string input)

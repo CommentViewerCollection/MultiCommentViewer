@@ -7,8 +7,8 @@ namespace Common
     public class InfoCommentViewModel : CommentViewModelBase
     {
         public override string UserId => "-";
-        public InfoCommentViewModel(ConnectionName connectionName, IOptions options, string message)
-            :base(connectionName, options)
+        public InfoCommentViewModel(IOptions options, string message)
+            :base(options)
         {
             IsInfo = true;
             MessageItems = new List<IMessagePart>

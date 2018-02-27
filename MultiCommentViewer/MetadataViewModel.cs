@@ -83,7 +83,7 @@ namespace MultiCommentViewer
             {
                 switch (e.PropertyName)
                 {
-                    case nameof(SitePlugin.ConnectionName.Name):
+                    case nameof(_connectionName.Name):
                         base.RaisePropertyChanged(nameof(ConnectionName));
                         break;
                 }

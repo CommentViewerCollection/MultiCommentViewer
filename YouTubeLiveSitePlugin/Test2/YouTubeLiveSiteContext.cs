@@ -22,10 +22,10 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
 
-        public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
+        public ICommentProvider CreateCommentProvider()
         {
             //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-            return new Test2.CommentProvider(connectionName, _options, _siteOptions, _logger);
+            return new Test2.CommentProvider(_options, _siteOptions, _logger);
         }
 
         public void LoadOptions(string path, IIo io)

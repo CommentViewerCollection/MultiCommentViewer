@@ -172,11 +172,10 @@ namespace NicoSitePlugin.Test2
             }
         }
 
-        public NicoCommentProvider3(ConnectionName connectionName, IOptions options, NicoSiteOptions siteOptions, ICommentProvider commentProvider,IDataSource nicoServer, ILogger logger, IUserStore userStore)
+        public NicoCommentProvider3(IOptions options, NicoSiteOptions siteOptions, ICommentProvider commentProvider,IDataSource nicoServer, ILogger logger, IUserStore userStore)
         {
             _logger = logger;
             _userStore = userStore;
-            _connectionName = connectionName;
             _options = options;
             _siteOptions = siteOptions;
             _commentProvider = commentProvider;
@@ -199,7 +198,7 @@ namespace NicoSitePlugin.Test2
                     _userCommentDict.Add(user, userComments);
                 }
                 var isFirstComment = userComments.Count == 0;
-                var cvm = new Old.NicoCommentViewModel2(_connectionName, _options, _siteOptions, chat, e.RoomInfo, user, this, isFirstComment);
+                var cvm = new Old.NicoCommentViewModel2(_options, _siteOptions, chat, e.RoomInfo, user, this, isFirstComment);
                 list.Add(cvm);
             }
             InitialCommentsReceived?.Invoke(this, list);
@@ -215,12 +214,11 @@ namespace NicoSitePlugin.Test2
                 _userCommentDict.Add(user, userComments);
             }
             var isFirstComment = userComments.Count == 0;
-            var cvm = new Old.NicoCommentViewModel2(_connectionName, _options, _siteOptions, chat, e.RoomInfo, user, this, isFirstComment);
+            var cvm = new Old.NicoCommentViewModel2(_options, _siteOptions, chat, e.RoomInfo, user, this, isFirstComment);
             CommentReceived?.Invoke(this, cvm);
         }
 
         private IPlayerStatusProvider _psProvider;
-        private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         private readonly NicoSiteOptions _siteOptions;
         private readonly ICommentProvider _commentProvider;

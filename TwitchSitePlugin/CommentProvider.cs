@@ -123,7 +123,7 @@ namespace TwitchSitePlugin
                             _userCommentDict.Add(user, userComments);
                         }
                         var isFirstComment = userComments.Count == 0;
-                        var cvm = new TwitchCommentViewModel(_connectionName, _options, _siteOptions, commentData, _emotIcons, isFirstComment, this, user);
+                        var cvm = new TwitchCommentViewModel(_options, _siteOptions, commentData, _emotIcons, isFirstComment, this, user);
                         await _dispatcher.BeginInvoke((Action)(() =>
                         {   
                             userComments.Add(cvm);
@@ -161,7 +161,7 @@ namespace TwitchSitePlugin
             catch (Exception ex)
             {
                 _logger.LogException(ex);
-                CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, ""));
+                CommentReceived?.Invoke(this, new InfoCommentViewModel(_options, ""));
             }
         }
         private bool IsLoggedIn()
@@ -188,14 +188,12 @@ namespace TwitchSitePlugin
         private readonly Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>>();
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
         private readonly Dispatcher _dispatcher;
-        public TwitchCommentProvider(ConnectionName connectionName, IDataServer server, ILogger logger, IOptions options, TwitchSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
+        public TwitchCommentProvider( IDataServer server, ILogger logger, IOptions options, TwitchSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
         {
-            _connectionName = connectionName;
             _server = server;
             _logger = logger;
             _options = options;

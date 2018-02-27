@@ -22,10 +22,10 @@ namespace NicoSitePlugin.Old
             }
         }
 
-        public ICommentProvider CreateCommentProvider(ConnectionName connectionName)
+        public ICommentProvider CreateCommentProvider()
         {
             //return new NicoCommentProvider(connectionName, _options, _siteOptions);
-            return new Test2.NicoCommentProvider3(connectionName,_options,_siteOptions, new Test2.CommentProvider2(_siteOptions.ResNum), new DataSource(), _logger, _userStore);
+            return new Test2.NicoCommentProvider3(_options,_siteOptions, new Test2.CommentProvider2(_siteOptions.ResNum), new DataSource(), _logger, _userStore);
         }
         private string GetOptionsPath(string dir)
         {

@@ -298,7 +298,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
         }
         void SetInfo(string message)
         {
-            var cvm = new InfoCommentViewModel(new ConnectionName(), _options, message);
+            var cvm = new InfoCommentViewModel(_options, message);
             AddComment(cvm);
         }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
@@ -461,9 +461,8 @@ namespace YouTubeLiveCommentViewer.ViewModel
             _options = options;
             _io = io;
             _logger = logger;
-
-            var connectionName = new ConnectionName();
-            commentProvider = siteContext.CreateCommentProvider(connectionName);
+            
+            commentProvider = siteContext.CreateCommentProvider();
             commentProvider.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
             commentProvider.CommentReceived += CommentProvider_CommentReceived;
             commentProvider.MetadataUpdated += CommentProvider_MetadataUpdated;

@@ -46,7 +46,7 @@ namespace MultiCommentViewer
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
                 }
                 _selectedSite = value;
-                var next = _commentProvider = _selectedSite.Site.CreateCommentProvider(_connectionName);
+                var next = _commentProvider = _selectedSite.Site.CreateCommentProvider();
                 next.CanConnectChanged += CommentProvider_CanConnectChanged;
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
                 next.CommentReceived += CommentProvider_CommentReceived;
@@ -91,7 +91,7 @@ namespace MultiCommentViewer
         public event EventHandler<IMetadata> MetadataReceived;
         private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
         {
-            CommentReceived?.Invoke(sender, e);
+            CommentReceived?.Invoke(this, e);
         }
         private void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
         {

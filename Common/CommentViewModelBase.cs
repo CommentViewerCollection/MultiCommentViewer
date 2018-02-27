@@ -11,8 +11,6 @@ namespace Common
 {
     public abstract class CommentViewModelBase : ICommentViewModel
     {
-        public string ConnectionName { get { return _connectionName.Name; } }
-
         public virtual IEnumerable<IMessagePart> NameItems { get; protected set; }
 
         public virtual IEnumerable<IMessagePart> MessageItems { get; protected set; }
@@ -118,16 +116,11 @@ namespace Common
         public virtual bool IsVisible { get; } = true;
 
         public ICommentProvider CommentProvider { get; protected set; }
-
-        private readonly ConnectionName _connectionName;
+        
         private readonly IOptions _options;
-        public CommentViewModelBase(ConnectionName connectionName, IOptions options)
+        public CommentViewModelBase(IOptions options)
         {
-            _connectionName = connectionName;
             _options = options;
-            WeakEventManager<ConnectionName, PropertyChangedEventArgs>.AddHandler(_connectionName, nameof(_connectionName.PropertyChanged), ConnectionName_PropertyChanged);
-            //WeakEventManager<IOptions, PropertyChangedEventArgs>.AddHandler(_options, nameof(_options.PropertyChanged), Options_PropertyChanged);
-            _options.PropertyChanged += Options_PropertyChanged;
         }
 
         private void Options_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -154,16 +147,6 @@ namespace Common
                     break;
                 case nameof(_options.IsUserNameWrapping):
                     RaisePropertyChanged(nameof(UserNameWrapping));
-                    break;
-            }
-        }
-
-        private void ConnectionName_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(_connectionName.Name):
-                    RaisePropertyChanged(nameof(ConnectionName));
                     break;
             }
         }

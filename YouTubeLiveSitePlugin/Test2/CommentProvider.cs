@@ -59,7 +59,6 @@ namespace YouTubeLiveSitePlugin.Test2
         public event EventHandler CanDisconnectChanged;
 
         CookieContainer _cc;
-        private readonly ConnectionName _connectionName;
         private readonly IOptions _options;
         private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
@@ -68,7 +67,7 @@ namespace YouTubeLiveSitePlugin.Test2
 
         private void SendInfo(string message)
         {
-            CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, message));
+            CommentReceived?.Invoke(this, new InfoCommentViewModel( _options, message));
         }
         private void BeforeConnect()
         {
@@ -113,7 +112,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             catch (Exception ex)
             {
-                CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, "入力されたURLは存在しないか無効な値です"));
+                CommentReceived?.Invoke(this, new InfoCommentViewModel(_options, "入力されたURLは存在しないか無効な値です"));
                 _logger.LogException(ex, "Invalid input", "input=" + input);
                 AfterConnect();
                 return;
@@ -194,14 +193,14 @@ reload:
                 if (string.IsNullOrEmpty(ytInitialData))
                 {
                     //これが無いとコメントが取れないから終了
-                    CommentReceived?.Invoke(this, new InfoCommentViewModel(_connectionName, _options, "ytInitialDataの取得に失敗しました"));
+                    CommentReceived?.Invoke(this, new InfoCommentViewModel(_options, "ytInitialDataの取得に失敗しました"));
                     return;
                 }
                 var (initialContinuation, initialCommentData) = Tools.ParseYtInitialData(ytInitialData);
                 var initialComments = new List<ICommentViewModel>();
                 foreach(var data in initialCommentData)
                 {
-                    var cvm = new YouTubeLiveCommentViewModel(_connectionName, _options, data, this);
+                    var cvm = new YouTubeLiveCommentViewModel(_options, data, this);
                     initialComments.Add(cvm);
                 }
                 if(initialComments.Count > 0)
@@ -326,7 +325,7 @@ reload:
         {
             foreach (var action in e)
             {
-                var cvm = new YouTubeLiveCommentViewModel(_connectionName, _options, action, this);
+                var cvm = new YouTubeLiveCommentViewModel(_options, action, this);
                 CommentReceived?.Invoke(this, cvm);
             }
         }
@@ -336,7 +335,7 @@ reload:
             var list = new List<ICommentViewModel>();
             foreach(var commentData in e)
             {
-                var cvm = new YouTubeLiveCommentViewModel(_connectionName, _options, commentData, this);
+                var cvm = new YouTubeLiveCommentViewModel(_options, commentData, this);
                 list.Add(cvm);
             }
             InitialCommentsReceived?.Invoke(this, list);
@@ -393,9 +392,8 @@ reload:
             return upper;
         }
         IYouTubeLibeServer _server;
-        public CommentProvider(ConnectionName connectionName, IOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger)
+        public CommentProvider(IOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger)
         {
-            _connectionName = connectionName;
             _options = options;
             _siteOptions = siteOptions;
             _logger = logger;

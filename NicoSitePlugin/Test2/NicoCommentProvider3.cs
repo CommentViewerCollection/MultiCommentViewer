@@ -185,12 +185,17 @@ namespace NicoSitePlugin.Test2
             CanConnect = true;
             CanDisconnect = false;
         }
-
+        private bool IsKickCommand(chat chat)
+        {
+            return (chat.text.StartsWith("/hb ifseetno ") && (chat.premium == 2 || chat.premium == 3));
+        }
         private void _commentProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
         {
             var list = new List<ICommentViewModel>();
             foreach (var chat in e.Chat)
             {
+                if (IsKickCommand(chat))
+                    continue;
                 var user = _userStore.GetUser(chat.user_id);
                 if (!_userCommentDict.TryGetValue(user, out ObservableCollection<NicoCommentViewModel2> userComments))
                 {
@@ -207,6 +212,10 @@ namespace NicoSitePlugin.Test2
         private void _commentProvider_CommentReceived(object sender, ChatReceivedEventArgs e)
         {
             var chat = e.Chat;
+            if (IsKickCommand(chat))
+            {
+                return;
+            }
             var user = _userStore.GetUser(chat.user_id);
             if (!_userCommentDict.TryGetValue(user, out ObservableCollection<NicoCommentViewModel2> userComments))
             {

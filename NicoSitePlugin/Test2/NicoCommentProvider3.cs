@@ -215,6 +215,7 @@ namespace NicoSitePlugin.Test2
             }
             var isFirstComment = userComments.Count == 0;
             var cvm = new Old.NicoCommentViewModel2(_options, _siteOptions, chat, e.RoomInfo, user, this, isFirstComment);
+            userComments.Add(cvm);
             CommentReceived?.Invoke(this, cvm);
         }
 

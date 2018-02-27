@@ -46,5 +46,11 @@ namespace YouTubeLiveCommentViewer
         bool IsAddingNewCommentTop { get; set; }
 
         bool IsTopmost { get; set; }
+        int UserIdDisplayIndex { get; set; }
+        double UserIdWidth { get; set; }
+        bool IsShowUserId { get; set; }
+        int PostTimeDisplayIndex { get; set; }
+        double PostTimeWidth { get; set; }
+        bool IsShowPostTime { get; set; }
     }
 }

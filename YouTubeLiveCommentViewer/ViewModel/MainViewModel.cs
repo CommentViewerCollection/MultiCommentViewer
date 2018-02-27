@@ -450,10 +450,9 @@ namespace YouTubeLiveCommentViewer.ViewModel
         }
 
         ICommentProvider commentProvider;
-        //TODO:後々IOptionsに変更するけど、下手にIOptionsを書き換えたくないから型をDynamicOptionsTestにしておく
-        DynamicOptionsTest _options;
+        IOptions _options;
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        internal MainViewModel(IYouTubeSiteContext siteContext, DynamicOptionsTest options, IIo io, ILogger logger)
+        internal MainViewModel(IYouTubeSiteContext siteContext, IOptions options, IIo io, ILogger logger)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _siteContext = siteContext;

@@ -8,9 +8,8 @@ using System.Windows.Media;
 using System.ComponentModel;
 namespace SitePlugin
 {
-    public interface IOptions:INotifyPropertyChanged
+    public interface ICommentOptions : INotifyPropertyChanged
     {
-        string PluginDir { get; }
         FontFamily FontFamily { get; set; }
         FontStyle FontStyle { get; set; }
         FontWeight FontWeight { get; set; }
@@ -19,16 +18,9 @@ namespace SitePlugin
         FontStyle FirstCommentFontStyle { get; set; }
         FontWeight FirstCommentFontWeight { get; set; }
         int FirstCommentFontSize { get; set; }
-        
-        string SettingsDirPath { get; set; }
 
         Color BackColor { get; set; }
         Color ForeColor { get; set; }
-
-        double MainViewHeight { get; set; }
-        double MainViewWidth { get; set; }
-        double MainViewLeft { get; set; }
-        double MainViewTop { get; set; }
 
         Color HorizontalGridLineColor { get; set; }
         Color VerticalGridLineColor { get; set; }
@@ -36,39 +28,11 @@ namespace SitePlugin
         Color InfoBackColor { get; set; }
         Color SelectedRowBackColor { get; set; }
         Color SelectedRowForeColor { get; set; }
-
-
-        double ConnectionNameWidth { get; set; }
-        bool IsShowConnectionName { get; set; }
-        int ConnectionNameDisplayIndex { get; set; }
-        
-        double ThumbnailWidth { get; set; }
-        int ThumbnailDisplayIndex { get; set; }
-        bool IsShowThumbnail { get; set; }
-
-        double CommentIdWidth { get; set; }
-        int CommentIdDisplayIndex { get; set; }
-        bool IsShowCommentId { get; set; }
-
-        double UsernameWidth { get; set; }
-        bool IsShowUsername { get; set; }
-        int UsernameDisplayIndex { get; set; }
         bool IsUserNameWrapping { get; set; }
 
-        double MessageWidth { get; set; }
-        bool IsShowMessage { get; set; }
-        int MessageDisplayIndex { get; set; }
-
-        double InfoWidth { get; set; }
-        bool IsShowInfo { get; set; }
-        int InfoDisplayIndex { get; set; }
-        bool IsAutoCheckIfUpdateExists { get; set; }
-        bool IsAddingNewCommentTop { get; set; }
-
-        bool IsTopmost { get; set; }
-
-        IOptions Clone();
-        void Set(IOptions options);
+        ICommentOptions Clone();
+        void Set(ICommentOptions options);
         void Reset();
     }
+
 }

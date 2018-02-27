@@ -159,7 +159,7 @@ namespace YouTubeLiveCommentViewer
         public MainOptionsViewModel(IOptions options)
         {
             _origin = options;
-            changed = options.Clone();
+            changed = options.Clone() as IOptions;
             ShowFontSelectorCommand = new RelayCommand(ShowFontSelector);
         }
         public MainOptionsViewModel()
@@ -177,7 +177,7 @@ namespace YouTubeLiveCommentViewer
                     VerticalGridLineColor = Colors.Green,
                     HorizontalGridLineColor = Colors.LightGray,
                 };
-                changed = _origin.Clone();
+                changed = _origin.Clone() as IOptions;
             }
             else
             {

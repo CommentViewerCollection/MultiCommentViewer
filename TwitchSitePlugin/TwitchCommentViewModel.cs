@@ -8,7 +8,7 @@ namespace TwitchSitePlugin
     {
         public override string UserId { get; }
         private readonly TwitchSiteOptions _siteOptions;
-        public TwitchCommentViewModel(IOptions options, TwitchSiteOptions siteOptions,
+        public TwitchCommentViewModel(ICommentOptions options, TwitchSiteOptions siteOptions,
             ICommentData commentData, LowObject.Emoticons emoticons, bool isFirstComment, ICommentProvider commentProvider, IUser user) : base(options)
         {
             _siteOptions = siteOptions;

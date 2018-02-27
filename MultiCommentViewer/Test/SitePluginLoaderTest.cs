@@ -10,7 +10,7 @@ namespace MultiCommentViewer.Test
 {
     public class SitePluginLoaderTest : ISitePluginLoader
     {
-        public IEnumerable<ISiteContext> LoadSitePlugins(IOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
+        public IEnumerable<ISiteContext> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
         {
             return new List<ISiteContext>
             {

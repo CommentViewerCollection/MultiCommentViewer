@@ -172,7 +172,7 @@ namespace NicoSitePlugin.Test2
             }
         }
 
-        public NicoCommentProvider3(IOptions options, NicoSiteOptions siteOptions, ICommentProvider commentProvider,IDataSource nicoServer, ILogger logger, IUserStore userStore)
+        public NicoCommentProvider3(ICommentOptions options, NicoSiteOptions siteOptions, ICommentProvider commentProvider,IDataSource nicoServer, ILogger logger, IUserStore userStore)
         {
             _logger = logger;
             _userStore = userStore;
@@ -229,7 +229,7 @@ namespace NicoSitePlugin.Test2
         }
 
         private IPlayerStatusProvider _psProvider;
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly NicoSiteOptions _siteOptions;
         private readonly ICommentProvider _commentProvider;
         private readonly IDataSource _nicoServer;

@@ -117,8 +117,8 @@ namespace Common
 
         public ICommentProvider CommentProvider { get; protected set; }
         
-        private readonly IOptions _options;
-        public CommentViewModelBase(IOptions options)
+        private readonly ICommentOptions _options;
+        public CommentViewModelBase(ICommentOptions options)
         {
             _options = options;
         }

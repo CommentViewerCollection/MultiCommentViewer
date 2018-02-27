@@ -73,11 +73,11 @@ namespace NicoSitePlugin.Old
         }
 
         private NicoSiteOptions _siteOptions;
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly ILogger _logger;
         private readonly IUserStore _userStore;
 
-        public NicoSiteContext(IOptions options, ILogger logger, IUserStore userStore)
+        public NicoSiteContext(ICommentOptions options, ILogger logger, IUserStore userStore)
         {
             _options = options;
             _logger = logger;

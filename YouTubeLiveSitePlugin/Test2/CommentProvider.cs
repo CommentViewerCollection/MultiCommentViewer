@@ -59,7 +59,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public event EventHandler CanDisconnectChanged;
 
         CookieContainer _cc;
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
         ChatProvider chatProvider;
@@ -392,7 +392,7 @@ reload:
             return upper;
         }
         IYouTubeLibeServer _server;
-        public CommentProvider(IOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger)
+        public CommentProvider(ICommentOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger)
         {
             _options = options;
             _siteOptions = siteOptions;

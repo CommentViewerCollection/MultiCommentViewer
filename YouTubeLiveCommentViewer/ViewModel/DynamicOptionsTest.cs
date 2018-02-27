@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Common;
+using SitePlugin;
+using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using Common;
-using SitePlugin;
-using System.Linq;
+
 namespace YouTubeLiveCommentViewer
 {
     class DynamicOptionsTest : DynamicOptionsBase, IOptions
@@ -126,14 +127,14 @@ namespace YouTubeLiveCommentViewer
             Dict.Add(nameof(IsShowCommentId), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowInfo), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
-        public IOptions Clone()
+        public ICommentOptions Clone()
         {
-            return this.MemberwiseClone() as IOptions;
+            return this.MemberwiseClone() as ICommentOptions;
         }
 
-        public void Set(IOptions options)
+        public void Set(ICommentOptions options)
         {
-            var props = typeof(IOptions).GetProperties();
+            var props = typeof(ICommentOptions).GetProperties();
             foreach (var prop in props)
             {
                 if (prop.CanRead && prop.CanWrite)

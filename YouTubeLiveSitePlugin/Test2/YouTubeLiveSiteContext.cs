@@ -80,10 +80,10 @@ namespace YouTubeLiveSitePlugin.Test2
             return panel;
         }
 
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly ILogger _logger;
         private Test2.YouTubeLiveSiteOptions _siteOptions;
-        public YouTubeLiveSiteContext(IOptions options, ILogger logger)
+        public YouTubeLiveSiteContext(ICommentOptions options, ILogger logger)
         {
             _options = options;
             _logger = logger;

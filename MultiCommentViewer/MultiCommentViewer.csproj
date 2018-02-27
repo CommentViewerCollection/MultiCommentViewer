@@ -103,6 +103,7 @@
     <Compile Include="ConnectionViewModel.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="GridColumnWidthReseterBehaviour.cs" />
+    <Compile Include="IOptions.cs" />
     <Compile Include="IOptionsLoader.cs" />
     <Compile Include="IPluginManager.cs" />
     <Compile Include="ISitePluginLoader.cs" />

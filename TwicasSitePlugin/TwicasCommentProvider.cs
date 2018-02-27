@@ -123,11 +123,11 @@ namespace TwicasSitePlugin
         private readonly Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>>();
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly TwicasSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
         private readonly Dispatcher _dispatcher;
-        public TwicasCommentProvider(IDataServer server, ILogger logger, IOptions options, TwicasSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
+        public TwicasCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, TwicasSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
         {
             _server = server;
             _logger = logger;

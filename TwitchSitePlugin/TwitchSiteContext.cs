@@ -73,11 +73,11 @@ namespace TwitchSitePlugin
             return null;
         }
 
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly ILogger _logger;
         private readonly IUserStore _userStore;
         private readonly Dispatcher _dispatcher;
-        public TwitchSiteContext(IOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
+        public TwitchSiteContext(ICommentOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
         {
             _options = options;
             _logger = logger;

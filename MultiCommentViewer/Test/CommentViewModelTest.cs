@@ -15,8 +15,8 @@ namespace MultiCommentViewer.Test
     public class TestSiteCommentViewModel : ViewModelBase, ICommentViewModel
     {
         private readonly TestSiteOptions _siteOptions;
-        private readonly IOptions _options;
-        public TestSiteCommentViewModel(IEnumerable<IMessagePart> name, IEnumerable<IMessagePart> message, IOptions options, TestSiteOptions siteOptions)
+        private readonly ICommentOptions _options;
+        public TestSiteCommentViewModel(IEnumerable<IMessagePart> name, IEnumerable<IMessagePart> message, ICommentOptions options, TestSiteOptions siteOptions)
         {
             NameItems = name;
             MessageItems = message;

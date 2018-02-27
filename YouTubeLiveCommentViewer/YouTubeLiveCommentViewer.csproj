@@ -99,6 +99,7 @@
     </ApplicationDefinition>
     <Compile Include="BrowserLoader.cs" />
     <Compile Include="BrowserViewModel.cs" />
+    <Compile Include="Class1.cs" />
     <Compile Include="CommentData.cs" />
     <Compile Include="EmptyBrowserProfile.cs" />
     <Compile Include="IBrowserLoader.cs" />

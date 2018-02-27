@@ -7,7 +7,7 @@ namespace Common
     public class InfoCommentViewModel : CommentViewModelBase
     {
         public override string UserId => "-";
-        public InfoCommentViewModel(IOptions options, string message)
+        public InfoCommentViewModel(ICommentOptions options, string message)
             :base(options)
         {
             IsInfo = true;

@@ -188,11 +188,11 @@ namespace TwitchSitePlugin
         private readonly Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>>();
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
         private readonly Dispatcher _dispatcher;
-        public TwitchCommentProvider( IDataServer server, ILogger logger, IOptions options, TwitchSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
+        public TwitchCommentProvider( IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
         {
             _server = server;
             _logger = logger;

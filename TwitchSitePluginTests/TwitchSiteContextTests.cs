@@ -16,7 +16,7 @@ namespace TwitchSitePluginTests
         [Test]
         public void TwitchSite_IsValdUrlTest()
         {
-            var optionsMock = new Mock<IOptions>();
+            var optionsMock = new Mock<ICommentOptions>();
             var loggerMock = new Mock<ILogger>();
             var userStoreMock = new Mock<IUserStore>();
             var dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;

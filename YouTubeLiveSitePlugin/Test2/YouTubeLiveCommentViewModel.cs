@@ -17,7 +17,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 return base.Background;
             }
         }
-        public YouTubeLiveCommentViewModel(IOptions options, CommentData commentData, ICommentProvider commentProvider)
+        public YouTubeLiveCommentViewModel(ICommentOptions options, CommentData commentData, ICommentProvider commentProvider)
             : base(options)
         {
             CommentProvider = commentProvider;

@@ -55,9 +55,9 @@ namespace MultiCommentViewer.Test
             throw new NotImplementedException();
         }
 
-        private readonly IOptions _options;
+        private readonly ICommentOptions _options;
         private readonly ILogger _logger;
-        public TestSiteContext(IOptions options, ILogger logger)
+        public TestSiteContext(ICommentOptions options, ILogger logger)
         {
             _options = options;
             _logger = logger;
@@ -221,8 +221,8 @@ namespace MultiCommentViewer.Test
 
         private readonly System.Timers.Timer _metaTimer = new System.Timers.Timer();
         public TestSiteOptions SiteOptions { get; set; }
-        private readonly IOptions _options;
-        public TestSiteCommentProvider(IOptions options, TestSiteOptions siteOptions)
+        private readonly ICommentOptions _options;
+        public TestSiteCommentProvider(ICommentOptions options, TestSiteOptions siteOptions)
         {
             _options = options;
             SiteOptions = siteOptions;

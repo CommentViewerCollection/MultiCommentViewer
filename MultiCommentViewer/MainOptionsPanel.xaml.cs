@@ -53,7 +53,7 @@ namespace MultiCommentViewer
         public MainOptionsViewModel(IOptions options)
         {
             _origin = options;
-            changed = options.Clone();
+            changed = options.Clone() as IOptions;
         }
         public MainOptionsViewModel()
         {
@@ -64,7 +64,7 @@ namespace MultiCommentViewer
                     ForeColor = Colors.Red,
                     BackColor = Colors.Black,
                 };
-                changed = _origin.Clone();
+                changed = _origin.Clone() as IOptions;
             }
             else
             {

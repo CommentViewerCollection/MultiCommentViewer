@@ -109,14 +109,14 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(IsUserNameWrapping), new Item { DefaultValue = false, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTopmost), new Item { DefaultValue = false, Predicate = b => b, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
-        public IOptions Clone()
+        public ICommentOptions Clone()
         {
-            return this.MemberwiseClone() as IOptions;
+            return this.MemberwiseClone() as ICommentOptions;
         }
 
-        public void Set(IOptions options)
+        public void Set(ICommentOptions options)
         {
-            var props = typeof(IOptions).GetProperties();
+            var props = typeof(ICommentOptions).GetProperties();
             foreach(var prop in props)
             {
                 if(prop.CanRead && prop.CanWrite)

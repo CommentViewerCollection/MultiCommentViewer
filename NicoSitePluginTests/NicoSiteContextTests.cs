@@ -16,7 +16,7 @@ namespace NicoSitePluginTests
         [Test]
         public void NicoSite_IsValidUrlTest()
         {
-            var optionsMock = new Mock<IOptions>();
+            var optionsMock = new Mock<ICommentOptions>();
             var loggerMock = new Mock<ILogger>();
             var userStoreMock = new Mock<IUserStore>();
             var site = new NicoSiteContext(optionsMock.Object, loggerMock.Object, userStoreMock.Object);

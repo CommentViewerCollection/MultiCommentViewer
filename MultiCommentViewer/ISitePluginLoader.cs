@@ -10,6 +10,6 @@ namespace MultiCommentViewer
 {
     public interface ISitePluginLoader
     {
-        IEnumerable<ISiteContext> LoadSitePlugins(IOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher);
+        IEnumerable<ISiteContext> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher);
     }
 }

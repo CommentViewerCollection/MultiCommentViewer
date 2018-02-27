@@ -67,7 +67,7 @@ namespace YouTubeLiveSitePlugin.Test2
         
         public bool IsValidInput(string input)
         {
-            return IsVid(input) || IsWatch(input) || IsUser(input) || IsChannel(input) || IsCustomChannel(input);
+            return IsWatch(input) || IsUser(input) || IsChannel(input) || IsCustomChannel(input);
         }
         
         internal bool TryVid(string input, out string vid)

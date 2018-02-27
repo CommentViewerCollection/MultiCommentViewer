@@ -836,13 +836,14 @@ namespace MultiCommentViewer
     }
     public class UserStoreTest : IUserStore
     {
-        Dictionary<string, IUser> _dict = new Dictionary<string, IUser>();
+        //Dictionary<string, IUser> _dict = new Dictionary<string, IUser>();
+        System.Collections.Concurrent.ConcurrentDictionary<string, IUser> _dict = new System.Collections.Concurrent.ConcurrentDictionary<string, IUser>();
         public IUser GetUser(string userid)
         {
             if (!_dict.TryGetValue(userid, out IUser user))
             {
                 user = new UserTest(userid);
-                _dict.Add(userid, user);
+                _dict.AddOrUpdate(userid, user, (_,u)=>u);
             }
             return user;
         }

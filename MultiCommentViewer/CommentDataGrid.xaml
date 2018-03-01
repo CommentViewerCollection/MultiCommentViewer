@@ -131,7 +131,7 @@
                                             >
                 <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
-                        <local:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding NameItems, Converter={StaticResource nameConverter}}"
+                        <w:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding NameItems, Converter={StaticResource nameConverter}}"
                                                   Padding="5,0" />
                     </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
@@ -143,7 +143,7 @@
                                             >
                 <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
-                        <local:BindableTextBlock TextWrapping="Wrap"
+                        <w:BindableTextBlock TextWrapping="Wrap"
                                                   InlineList="{Binding MessageItems, Converter={StaticResource messageConverter}, ConverterParameter=true}" Padding="5,0" />
                     </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>

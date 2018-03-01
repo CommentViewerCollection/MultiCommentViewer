@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Common;
+﻿using Common;
 using ryu_s.BrowserCookie;
+using System;
+using System.Collections.Generic;
 
-namespace YouTubeLiveCommentViewer
+namespace CommonImples
 {
     public class BrowserLoader : IBrowserLoader
     {
@@ -23,12 +23,13 @@ namespace YouTubeLiveCommentViewer
                 new IEManager(),
                 new OperaManager(),
             };
-            foreach(var manager in managers)
+            foreach (var manager in managers)
             {
                 try
                 {
                     list.AddRange(manager.GetProfiles());
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     _logger.LogException(ex);
                 }

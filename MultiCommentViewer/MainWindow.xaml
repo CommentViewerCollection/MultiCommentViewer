@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MultiCommentViewer"
+        xmlns:c="clr-namespace:Common;assembly=Common"
         xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         xmlns:command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
@@ -343,7 +344,7 @@
                                             >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <local:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding NameItems, Converter={StaticResource nameConverter}}"
+                            <w:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding NameItems, Converter={StaticResource nameConverter}}"
                                                   Padding="5,0" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -355,7 +356,7 @@
                                             >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <local:BindableTextBlock TextWrapping="Wrap"
+                            <w:BindableTextBlock TextWrapping="Wrap"
                                                   InlineList="{Binding MessageItems, Converter={StaticResource messageConverter}, ConverterParameter=true}" Padding="5,0" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

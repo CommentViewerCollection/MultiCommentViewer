@@ -111,8 +111,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="BindableTextBlock.cs" />
-    <Compile Include="ViewModels\BrowserViewModel.cs" />
     <Compile Include="CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
     </Compile>

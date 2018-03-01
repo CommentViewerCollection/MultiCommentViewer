@@ -790,19 +790,6 @@ namespace MultiCommentViewer
             return new CookieCollection();
         }
     }
-    public interface IBrowserLoader
-    {
-        IEnumerable<IBrowserProfile> LoadBrowsers();
-    }
-    public class BrowserLoader : IBrowserLoader
-    {
-        public IEnumerable<IBrowserProfile> LoadBrowsers()
-        {
-            var list = new List<IBrowserProfile>();
-            list.AddRange(new ChromeManager().GetProfiles());
-            return list;
-        }
-    }
     public class UserTest : IUser
     {
         public string UserId { get { return _userid; } }

@@ -142,6 +142,7 @@ namespace MultiCommentViewer
         }
         public CommentDataGridViewModelBase(IOptions options, ObservableCollection<ICommentViewModel> comments)
         {
+            _options = options;
             Comments = comments;
         }
     }

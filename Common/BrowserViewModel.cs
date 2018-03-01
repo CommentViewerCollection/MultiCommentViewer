@@ -1,6 +1,6 @@
 ﻿using ryu_s.BrowserCookie;
 
-namespace YouTubeLiveCommentViewer
+namespace Common
 {
     public class BrowserViewModel
     {

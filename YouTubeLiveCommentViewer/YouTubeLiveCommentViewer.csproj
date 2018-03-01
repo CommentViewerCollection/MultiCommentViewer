@@ -97,11 +97,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="BrowserLoader.cs" />
-    <Compile Include="BrowserViewModel.cs" />
     <Compile Include="CommentData.cs" />
     <Compile Include="EmptyBrowserProfile.cs" />
-    <Compile Include="IBrowserLoader.cs" />
     <Compile Include="IOptions.cs" />
     <Compile Include="IOTest.cs" />
     <Compile Include="IPluginManager.cs" />

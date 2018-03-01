@@ -13,6 +13,7 @@ using System.Net;
 using System.Diagnostics;
 using Common;
 using System.Net.Http;
+
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -43,7 +44,7 @@ namespace MultiCommentViewer
             var options = optionsLoader.Load(optionsPath, io);
             
             ISitePluginLoader sitePluginLoader = new Test.SitePluginLoaderTest();
-            IBrowserLoader browserLoader = new BrowserLoader();
+            IBrowserLoader browserLoader = new BrowserLoader(_logger);
             IUserStore userStore = new UserStoreTest();
 
             

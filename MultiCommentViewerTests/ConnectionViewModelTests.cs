@@ -8,6 +8,8 @@ using Moq;
 using System.ComponentModel;
 using SitePlugin;
 using NUnit.Framework;
+using Common;
+
 namespace MultiCommentViewerTests
 {
     [TestFixture]

@@ -53,6 +53,10 @@ namespace NicoSitePlugin.Test2
             }
             throw new ArgumentException();
         }
+        private void SendInfo(string message)
+        {
+            CommentReceived?.Invoke(this, new InfoCommentViewModel(_options, message));
+        }
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             CanConnect = false;
@@ -74,7 +78,7 @@ namespace NicoSitePlugin.Test2
                 if (!response.Success)
                 {
                     //TODO:
-                    Debug.WriteLine(response.Error.Code);
+                    SendInfo($"放送情報を取得できませんでした ({response.Error.Code})");
                     return;
                 }
                 else
@@ -129,7 +133,6 @@ namespace NicoSitePlugin.Test2
                 CanDisconnect = false;
             }
         }
-
         public void Disconnect()
         {
             _commentProvider?.Disconnect();
@@ -139,7 +142,7 @@ namespace NicoSitePlugin.Test2
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
             var comments = _userCommentDict[user];
-            return comments;
+            return comments.Cast<ICommentViewModel>() as ObservableCollection<ICommentViewModel>;
         }
 
         public Task PostCommentAsync(string text)

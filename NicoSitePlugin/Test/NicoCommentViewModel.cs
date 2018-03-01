@@ -32,6 +32,7 @@ namespace NicoSitePlugin.Old
         {
             _siteOptions = siteOptions;
             _chat = chat;
+            User = user;
             IsFirstComment = isFirstComment;
             CommentProvider = commentProvider;
             SetName(user);

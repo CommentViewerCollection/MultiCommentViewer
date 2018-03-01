@@ -128,6 +128,7 @@ namespace NicoSitePlugin.Test2
                 if(list.Count > 3)
                 {
                     InitialCommentsReceived?.Invoke(this, list.Select(s => new Chat(s)).ToList());
+                    return;
                 }
                 else
                 {
@@ -136,8 +137,21 @@ namespace NicoSitePlugin.Test2
             }
             foreach (var chatStr in list)
             {
-                var chat = new Chat(chatStr);
-                CommentReceived?.Invoke(this, chat);
+                if(chatStr.StartsWith("<chat "))
+                {
+                    var chat = new Chat(chatStr);
+                    CommentReceived?.Invoke(this, chat);
+                }
+                else
+                {
+                    //<leave_thread thread="1622163911" reason="2"/>
+#if DEBUG
+                    using (var sw = new System.IO.StreamWriter("nico_unknownData.txt", true))
+                    {
+                        sw.WriteLine(chatStr);
+                    }
+#endif
+                }
             }
         }
         public event EventHandler<Chat> CommentReceived;

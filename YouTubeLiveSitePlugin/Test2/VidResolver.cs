@@ -91,7 +91,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 var channelId = match.Groups[1].Value;
                 return channelId;
             }
-            throw new ParseException();
+            throw new ParseException(html);
         }
         internal bool TryWatch(string input, out string vid)
         {
@@ -119,34 +119,6 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
             }
             return (null, "");
-        }
-        internal async Task<(string vid, string reason)> TryChannel(IYouTubeLibeServer server, string input)
-        {
-            var match = Regex.Match(input, "youtube\\.com/channel/([^?#:/]+)");
-            if (!match.Success)
-            {
-                return (input, null);
-            }
-            var channelId = match.Groups[1].Value;
-            var url = $"https://www.youtube.com/channel/{channelId}/videos?flow=list&view=2";
-            string html;
-            try
-            {
-                html = await server.GetAsync(url);
-            }
-            catch (WebException)
-            {
-                //throw new YtException("入力されたchannelIdは存在しない");
-                return (null, "入力されたchannelIdは存在しない");
-            }
-            var match1 = Regex.Match(html, "href=\"\\/watch\\?v=(?<vid>[^\"]+)\"");
-            if (match.Success)
-            {
-                var vid = match.Groups["vid"].Value;
-                return (vid, null);
-            }
-            //throw new YtException("放送IDが見つからなかった");//放送中ではないもしくは仕様変更
-            return (null, "放送IDが見つからなかった");
         }
         internal string ExtractChannelId(string input)
         {
@@ -185,7 +157,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 var channelId = ExtractChannelId(input);
                 return await GetResultFromChannelId(server, channelId);
             }
-            throw new ParseException();
+            throw new ParseException(input);
         }
         internal async Task<IVidResult> GetResultFromChannelId(IYouTubeLibeServer server, string channelId)
         {

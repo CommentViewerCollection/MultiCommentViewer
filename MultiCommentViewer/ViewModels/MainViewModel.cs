@@ -94,7 +94,10 @@ namespace MultiCommentViewer
                 {
                     try
                     {
-                        list.Add(site.TabPanel);
+                        var tabPanel = site.TabPanel;
+                        if (tabPanel == null)
+                            continue;
+                        list.Add(tabPanel);
                     }
                     catch (Exception ex)
                     {
@@ -454,6 +457,16 @@ namespace MultiCommentViewer
         {
             get { return _options.MainViewTop; }
             set { _options.MainViewTop = value; }
+        }
+        public double ConnectionViewHeight
+        {
+            get { return _options.ConnectionViewHeight; }
+            set { _options.ConnectionViewHeight = value; }
+        }
+        public double MetadataViewHeight
+        {
+            get { return _options.MetadataViewHeight; }
+            set { _options.MetadataViewHeight = value; }
         }
         public Brush HorizontalGridLineBrush
         {

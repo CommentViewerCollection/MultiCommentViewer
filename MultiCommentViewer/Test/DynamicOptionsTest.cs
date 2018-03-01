@@ -30,6 +30,8 @@ namespace MultiCommentViewer.Test
         public double MainViewWidth { get => GetValue(); set => SetValue(value); }
         public double MainViewLeft { get => GetValue(); set => SetValue(value); }
         public double MainViewTop { get => GetValue(); set => SetValue(value); }
+        public double ConnectionViewHeight { get => GetValue(); set => SetValue(value); }
+        public double MetadataViewHeight { get => GetValue(); set => SetValue(value); }
         public Color HorizontalGridLineColor { get => GetValue(); set => SetValue(value); }
         public Color VerticalGridLineColor { get => GetValue(); set => SetValue(value); }
         public Color InfoForeColor { get => GetValue(); set => SetValue(value); }
@@ -75,6 +77,9 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(MainViewWidth), new Item {DefaultValue = 716, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MainViewLeft), new Item {  DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MainViewTop), new Item {  DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(ConnectionViewHeight), new Item { DefaultValue = 150, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MetadataViewHeight), new Item { DefaultValue = 100, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+
             Dict.Add(nameof(HorizontalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(VerticalGridLineColor), new Item {  DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(InfoForeColor), new Item {  DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });

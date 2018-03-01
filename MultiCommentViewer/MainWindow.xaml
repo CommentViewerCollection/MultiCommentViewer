@@ -34,15 +34,16 @@
         <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
         <w:IntToFontSizeConverter x:Key="intToFontConverter" />
         <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
+        <w:GridLengthConverter x:Key="gridLengthConverter" />
         <local:MessageConverter x:Key="messageConverter" />
         <local:NameConverter x:Key="nameConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="{Binding ConnectionViewHeight, Mode=TwoWay, Converter={StaticResource gridLengthConverter}}"/>
             <RowDefinition Height="5"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="{Binding MetadataViewHeight, Mode=TwoWay, Converter={StaticResource gridLengthConverter}}"/>
             <RowDefinition Height="5"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="80" />

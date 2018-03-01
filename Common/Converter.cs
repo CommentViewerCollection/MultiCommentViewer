@@ -232,6 +232,20 @@ namespace Common.Wpf
             return length.Value;
         }
     }
+    public class GridLengthConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var converter = new System.Windows.GridLengthConverter();
+            return converter.ConvertFrom(value);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var length = (GridLength)value;
+            return length.Value;
+        }
+    }
     public class ColorBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

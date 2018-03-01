@@ -14,6 +14,9 @@ namespace MultiCommentViewer
         double MainViewLeft { get; set; }
         double MainViewTop { get; set; }
 
+        double ConnectionViewHeight { get; set; }
+        double MetadataViewHeight { get; set; }
+
         double ConnectionNameWidth { get; set; }
         bool IsShowConnectionName { get; set; }
         int ConnectionNameDisplayIndex { get; set; }

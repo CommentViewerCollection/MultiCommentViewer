@@ -11,6 +11,18 @@ using Common;
 
 namespace MultiCommentViewer
 {
+    public class ConnectionContext
+    {
+        public ConnectionName ConnectionName { get; set; }
+        public ICommentProvider CommentProvider { get; set; }
+        public ISiteContext SiteContext { get; set; }
+    }
+    public class SelectedSiteChangedEventArgs : EventArgs
+    {
+        public ConnectionName ConnectionName { get; set; }
+        public ConnectionContext OldValue { get; set; }
+        public ConnectionContext NewValue { get; set; }
+    }
     public class ConnectionViewModel : ViewModelBase
     {
         public ConnectionName ConnectionName => _connectionName;
@@ -27,6 +39,10 @@ namespace MultiCommentViewer
         private readonly ConnectionName _connectionName;
         public ICommand ConnectCommand { get; }
         public ICommand DisconnectCommand { get; }
+        public event EventHandler<SelectedSiteChangedEventArgs> SelectedSiteChanged;
+
+        private ConnectionContext _beforeContext;
+        private ConnectionContext _currentContext;
         public SiteViewModel SelectedSite
         {
             get { return _selectedSite; }
@@ -65,7 +81,20 @@ namespace MultiCommentViewer
                 }
                 CommentPostPanel = commentPanel;
 
+                _beforeContext = _currentContext;
+                _currentContext = new ConnectionContext
+                {
+                     ConnectionName = this.ConnectionName,
+                      CommentProvider = next,
+                       SiteContext = _selectedSite.Site,
+                };
                 RaisePropertyChanged();
+                SelectedSiteChanged?.Invoke(this, new SelectedSiteChangedEventArgs
+                {
+                    ConnectionName = this.ConnectionName,
+                    OldValue = _beforeContext,
+                    NewValue = _currentContext
+                });
             }
         }
 

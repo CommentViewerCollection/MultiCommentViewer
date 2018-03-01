@@ -98,7 +98,7 @@
                                             Visibility="{Binding DataContext.IsShowConnectionName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
                 <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding ConnectionName}" Padding="5,0" />
+                        <TextBlock Text="{Binding ConnectionName.Name}" Padding="5,0" />
                     </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>

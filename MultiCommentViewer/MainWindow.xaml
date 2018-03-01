@@ -229,9 +229,8 @@
             </Grid>
         </Expander>
         <GridSplitter Grid.Row="4" Height="5" HorizontalAlignment="Stretch" />
-        <!--Element treeに属さないelementにDataContextを渡すためのdummy element-->
-        <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
-        <DataGrid x:Name="dataGrid" ItemsSource="{Binding Comments, IsAsync=True}"
+        <local:CommentDataGrid IsShowUserInfoMenuItem="True" Margin="5" Grid.Row="5" />
+        <!--<DataGrid x:Name="dataGrid" ItemsSource="{Binding Comments, IsAsync=True}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"                      
@@ -277,7 +276,7 @@
                     <Setter Property="Background" Value="{Binding Background}" />
                     <Setter Property="Foreground" Value="{Binding Foreground}" />
                     <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />
-                    <!--<Setter Property="IsSelected" Value="{Binding IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />-->
+                    --><!--<Setter Property="IsSelected" Value="{Binding IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />--><!--
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsVisible}" Value="False">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -295,10 +294,10 @@
                     <MenuItem Header="コメントID" IsChecked="{Binding IsShowCommentId, Mode=TwoWay}" IsCheckable="True" />
                     <MenuItem Header="ユーザ名" IsChecked="{Binding IsShowUsername, Mode=TwoWay}" IsCheckable="True" />
                     <MenuItem Header="情報" IsChecked="{Binding IsShowInfo, Mode=TwoWay}" IsCheckable="True" />
-                    <!--<MenuItem Header="ユーザID" IsChecked="{Binding IsShowUserId, Mode=TwoWay}" IsCheckable="True" />-->
+                    --><!--<MenuItem Header="ユーザID" IsChecked="{Binding IsShowUserId, Mode=TwoWay}" IsCheckable="True" />-->
 
                     <!--<MenuItem Header="投稿時間" IsChecked="{Binding IsShowPostTime, Mode=TwoWay}" IsCheckable="True" />-->
-                    <!--<MenuItem Header="経過時間" IsChecked="{Binding IsShowPostElapsed, Mode=TwoWay}" IsCheckable="True" />-->
+                    <!--<MenuItem Header="経過時間" IsChecked="{Binding IsShowPostElapsed, Mode=TwoWay}" IsCheckable="True" />--><!--
                 </ContextMenu>
                 <Style TargetType="{x:Type DataGridColumnHeader}">
                     <Setter Property="ContextMenu" Value="{StaticResource listViewHeaderContext}" />
@@ -321,7 +320,7 @@
                                             Visibility="{Binding DataContext.IsShowThumbnail, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate DataType="Ellipse">
-                            <!--<Image w:LazyImageBehavior.LazySource="{Binding ThumbnailUrl}" />-->
+                            --><!--<Image w:LazyImageBehavior.LazySource="{Binding ThumbnailUrl}" />--><!--
                             <Image Source="{Binding Thumbnail}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -372,7 +371,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
-        </DataGrid>
+        </DataGrid>-->
         <Grid Grid.Row="6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100" />

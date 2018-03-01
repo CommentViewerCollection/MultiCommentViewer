@@ -25,7 +25,7 @@ namespace MultiCommentViewer
         {
             InitializeComponent();
             
-            dataGrid.MouseRightButtonUp += DataGrid_MouseRightButtonUp;
+            //dataGrid.MouseRightButtonUp += DataGrid_MouseRightButtonUp;
             Messenger.Default.Register<SetPostCommentPanel>(this, message =>
             {
                 PostCommentPanelPlaceHolder.Children.Clear();
@@ -135,7 +135,7 @@ namespace MultiCommentViewer
                     dep = VisualTreeHelper.GetParent(dep);
                 }
                 DataGridRow row = dep as DataGridRow;
-                dataGrid.SelectedItem = row.DataContext;
+                //dataGrid.SelectedItem = row.DataContext;
             }
         }
 

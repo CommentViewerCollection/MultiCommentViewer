@@ -15,6 +15,9 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using System.Net;
 using System.Windows.Media;
+using System.ComponentModel;
+using System.Windows.Data;
+
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -22,7 +25,7 @@ namespace MultiCommentViewer
     /// </summary>
     public abstract class CommentDataGridViewModelBase : ViewModelBase
     {
-        public ObservableCollection<ICommentViewModel> Comments { get; }
+        public ICollectionView Comments { get; }
         public Brush HorizontalGridLineBrush
         {
             get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
@@ -133,14 +136,15 @@ namespace MultiCommentViewer
             get { return _options.SelectedRowForeColor; }
             set { _options.SelectedRowForeColor = value; }
         }
-
+        public McvCommentViewModel SelectedComment { get; set; }
         private readonly IOptions _options;
+
         public CommentDataGridViewModelBase(IOptions options)
         {
             _options = options;
-            Comments = new ObservableCollection<ICommentViewModel>();
+            Comments = CollectionViewSource.GetDefaultView(new ObservableCollection<ICommentViewModel>());
         }
-        public CommentDataGridViewModelBase(IOptions options, ObservableCollection<ICommentViewModel> comments)
+        public CommentDataGridViewModelBase(IOptions options,ICollectionView comments)
         {
             _options = options;
             Comments = comments;

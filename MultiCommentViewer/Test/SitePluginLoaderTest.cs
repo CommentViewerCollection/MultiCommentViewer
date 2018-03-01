@@ -10,9 +10,10 @@ namespace MultiCommentViewer.Test
 {
     public class SitePluginLoaderTest : ISitePluginLoader
     {
-        public IEnumerable<ISiteContext> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
+        public IEnumerable<ISiteContext> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStore userStore,Dictionary<ISiteContext, IUserStore> userStoreDict, Dispatcher dispatcher)
         {
-            return new List<ISiteContext>
+
+            var list = new List<ISiteContext>
             {
                 new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, logger),
                 new TwitchSitePlugin.TwitchSiteContext(options, logger, userStore, dispatcher),
@@ -22,6 +23,11 @@ namespace MultiCommentViewer.Test
                 new TestSiteContext(options, logger),
 #endif
             };
+            foreach(var site in list)
+            {
+                userStoreDict.Add(site, userStore);
+            }
+            return list;
         }
     }
 }

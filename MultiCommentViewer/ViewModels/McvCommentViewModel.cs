@@ -27,7 +27,7 @@ namespace MultiCommentViewer
             };
         }
 
-        public string ConnectionName => _connectionName.Name;
+        public ConnectionName ConnectionName => _connectionName;
 
         public IEnumerable<IMessagePart> NameItems => _cvm.NameItems;
 

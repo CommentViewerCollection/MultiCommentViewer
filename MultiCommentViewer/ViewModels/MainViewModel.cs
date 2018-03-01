@@ -19,10 +19,11 @@ using System.Reflection;
 using System.ComponentModel;
 using MultiCommentViewer.Test;
 using Common;
+using System.Windows.Data;
 
 namespace MultiCommentViewer
 {
-    public class MainViewModel : ViewModelBase
+    public class MainViewModel : CommentDataGridViewModelBase
     {
         #region Commands
         public ICommand ActivatedCommand { get; }
@@ -73,7 +74,7 @@ namespace MultiCommentViewer
         {
             try
             {
-                Comments.Clear();
+                //Comments.Clear();
                 //個別ユーザのコメントはどうしようか
 
             }
@@ -129,7 +130,7 @@ namespace MultiCommentViewer
             {
                 //Observable.Interval()
                 //_optionsLoader.LoadAsync().
-                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dispatcher);
+                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dic1, _dispatcher);
                 foreach (var site in _siteContexts)
                 {
                     var path = GetSiteOptionsPath(site);
@@ -240,6 +241,7 @@ namespace MultiCommentViewer
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
+                connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
                 var metaVm = new MetadataViewModel(connectionName);
                 _metaDict.Add(connection, metaVm);
                 MetaCollection.Add(metaVm);
@@ -252,6 +254,15 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
                 Debugger.Break();
             }
+        }
+        /// <summary>
+        /// 将来的にSiteContext毎に別のIUserStoreを使い分ける可能性を考えて今のうちに。
+        /// </summary>
+        Dictionary<ISiteContext, IUserStore> _dic1 = new Dictionary<ISiteContext, IUserStore>();
+        //Dictionary<ConnectionName, >
+        private void Connection_SelectedSiteChanged(object sender, SelectedSiteChangedEventArgs e)
+        {
+
         }
 
         private void Connection_Renamed(object sender, RenamedEventArgs e)
@@ -322,7 +333,7 @@ namespace MultiCommentViewer
         private void AddComment(ICommentViewModel cvm, ConnectionName connectionName)
         {
             var mcvCvm = new McvCommentViewModel(cvm, connectionName);
-            Comments.Add(mcvCvm);
+            _comments.Add(mcvCvm);
         }
         #region EventHandler
         private async void Connection_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
@@ -409,9 +420,10 @@ namespace MultiCommentViewer
         #region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        public ObservableCollection<McvCommentViewModel> Comments { get; } = new ObservableCollection<McvCommentViewModel>();
+        private readonly ObservableCollection<McvCommentViewModel> _comments = new ObservableCollection<McvCommentViewModel>();
+        public ICollectionView Comments { get; }
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
-        public ICommentViewModel SelectedComment { get; set; }
+
         private ConnectionViewModel _selectedConnection;
         public ConnectionViewModel SelectedConnection
         {
@@ -468,119 +480,119 @@ namespace MultiCommentViewer
             get { return _options.MetadataViewHeight; }
             set { _options.MetadataViewHeight = value; }
         }
-        public Brush HorizontalGridLineBrush
-        {
-            get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
-        }
-        public Brush VerticalGridLineBrush
-        {
-            get { return new SolidColorBrush(_options.VerticalGridLineColor); }
-        }
-        public double ConnectionNameWidth
-        {
-            get { return _options.ConnectionNameWidth; }
-            set { _options.ConnectionNameWidth = value; }
-        }
-        public bool IsShowConnectionName
-        {
-            get { return _options.IsShowConnectionName; }
-            set { _options.IsShowConnectionName = value; }
-        }
-        public int ConnectionNameDisplayIndex
-        {
-            get { return _options.ConnectionNameDisplayIndex; }
-            set { _options.ConnectionNameDisplayIndex = value; }
-        }
-        public double ThumbnailWidth
-        {
-            get { return _options.ThumbnailWidth; }
-            set { _options.ThumbnailWidth = value; }
-        }
-        public bool IsShowThumbnail
-        {
-            get { return _options.IsShowThumbnail; }
-            set { _options.IsShowThumbnail = value; }
-        }
-        public int ThumbnailDisplayIndex
-        {
-            get { return _options.ThumbnailDisplayIndex; }
-            set { _options.ThumbnailDisplayIndex = value; }
-        }
-        public double CommentIdWidth
-        {
-            get { return _options.CommentIdWidth; }
-            set { _options.CommentIdWidth = value; }
-        }
-        public bool IsShowCommentId
-        {
-            get { return _options.IsShowCommentId; }
-            set { _options.IsShowCommentId = value; }
-        }
-        public int CommentIdDisplayIndex
-        {
-            get { return _options.CommentIdDisplayIndex; }
-            set { _options.CommentIdDisplayIndex = value; }
-        }
-        public double UsernameWidth
-        {
-            get { return _options.UsernameWidth; }
-            set { _options.UsernameWidth = value; }
-        }
-        public bool IsShowUsername
-        {
-            get { return _options.IsShowUsername; }
-            set { _options.IsShowUsername = value; }
-        }
-        public int UsernameDisplayIndex
-        {
-            get { return _options.UsernameDisplayIndex; }
-            set { _options.UsernameDisplayIndex = value; }
-        }
+        //public Brush HorizontalGridLineBrush
+        //{
+        //    get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
+        //}
+        //public Brush VerticalGridLineBrush
+        //{
+        //    get { return new SolidColorBrush(_options.VerticalGridLineColor); }
+        //}
+        //public double ConnectionNameWidth
+        //{
+        //    get { return _options.ConnectionNameWidth; }
+        //    set { _options.ConnectionNameWidth = value; }
+        //}
+        //public bool IsShowConnectionName
+        //{
+        //    get { return _options.IsShowConnectionName; }
+        //    set { _options.IsShowConnectionName = value; }
+        //}
+        //public int ConnectionNameDisplayIndex
+        //{
+        //    get { return _options.ConnectionNameDisplayIndex; }
+        //    set { _options.ConnectionNameDisplayIndex = value; }
+        //}
+        //public double ThumbnailWidth
+        //{
+        //    get { return _options.ThumbnailWidth; }
+        //    set { _options.ThumbnailWidth = value; }
+        //}
+        //public bool IsShowThumbnail
+        //{
+        //    get { return _options.IsShowThumbnail; }
+        //    set { _options.IsShowThumbnail = value; }
+        //}
+        //public int ThumbnailDisplayIndex
+        //{
+        //    get { return _options.ThumbnailDisplayIndex; }
+        //    set { _options.ThumbnailDisplayIndex = value; }
+        //}
+        //public double CommentIdWidth
+        //{
+        //    get { return _options.CommentIdWidth; }
+        //    set { _options.CommentIdWidth = value; }
+        //}
+        //public bool IsShowCommentId
+        //{
+        //    get { return _options.IsShowCommentId; }
+        //    set { _options.IsShowCommentId = value; }
+        //}
+        //public int CommentIdDisplayIndex
+        //{
+        //    get { return _options.CommentIdDisplayIndex; }
+        //    set { _options.CommentIdDisplayIndex = value; }
+        //}
+        //public double UsernameWidth
+        //{
+        //    get { return _options.UsernameWidth; }
+        //    set { _options.UsernameWidth = value; }
+        //}
+        //public bool IsShowUsername
+        //{
+        //    get { return _options.IsShowUsername; }
+        //    set { _options.IsShowUsername = value; }
+        //}
+        //public int UsernameDisplayIndex
+        //{
+        //    get { return _options.UsernameDisplayIndex; }
+        //    set { _options.UsernameDisplayIndex = value; }
+        //}
 
-        public double MessageWidth
-        {
-            get { return _options.MessageWidth; }
-            set { _options.MessageWidth = value; }
-        }
-        public bool IsShowMessage
-        {
-            get { return _options.IsShowMessage; }
-            set { _options.IsShowMessage = value; }
-        }
-        public int MessageDisplayIndex
-        {
-            get { return _options.MessageDisplayIndex; }
-            set { _options.MessageDisplayIndex = value; }
-        }
+        //public double MessageWidth
+        //{
+        //    get { return _options.MessageWidth; }
+        //    set { _options.MessageWidth = value; }
+        //}
+        //public bool IsShowMessage
+        //{
+        //    get { return _options.IsShowMessage; }
+        //    set { _options.IsShowMessage = value; }
+        //}
+        //public int MessageDisplayIndex
+        //{
+        //    get { return _options.MessageDisplayIndex; }
+        //    set { _options.MessageDisplayIndex = value; }
+        //}
 
-        public double InfoWidth
-        {
-            get { return _options.InfoWidth; }
-            set { _options.InfoWidth = value; }
-        }
-        public bool IsShowInfo
-        {
-            get { return _options.IsShowInfo; }
-            set { _options.IsShowInfo = value; }
-        }
-        public int InfoDisplayIndex
-        {
-            get { return _options.InfoDisplayIndex; }
-            set { _options.InfoDisplayIndex = value; }
-        }
-        public Color SelectedRowBackColor
-        {
-            get { return _options.SelectedRowBackColor; }
-            set { _options.SelectedRowBackColor = value; }
-        }
-        public Color SelectedRowForeColor
-        {
-            get { return _options.SelectedRowForeColor; }
-            set { _options.SelectedRowForeColor = value; }
-        }
+        //public double InfoWidth
+        //{
+        //    get { return _options.InfoWidth; }
+        //    set { _options.InfoWidth = value; }
+        //}
+        //public bool IsShowInfo
+        //{
+        //    get { return _options.IsShowInfo; }
+        //    set { _options.IsShowInfo = value; }
+        //}
+        //public int InfoDisplayIndex
+        //{
+        //    get { return _options.InfoDisplayIndex; }
+        //    set { _options.InfoDisplayIndex = value; }
+        //}
+        //public Color SelectedRowBackColor
+        //{
+        //    get { return _options.SelectedRowBackColor; }
+        //    set { _options.SelectedRowBackColor = value; }
+        //}
+        //public Color SelectedRowForeColor
+        //{
+        //    get { return _options.SelectedRowForeColor; }
+        //    set { _options.SelectedRowForeColor = value; }
+        //}
         #endregion
 
-        public MainViewModel()
+        public MainViewModel():base(new DynamicOptionsTest())
         {
             if (IsInDesignMode)
             {
@@ -593,6 +605,7 @@ namespace MultiCommentViewer
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         public MainViewModel(string optionsPath, IIo io, ILogger logger, IOptionsSerializer optionsLoader, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
+            :base(options)
         {
             _optionsPath = optionsPath;
             _io = io;
@@ -605,6 +618,8 @@ namespace MultiCommentViewer
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;
             _browserLoader = browserLoader;
+
+            Comments = CollectionViewSource.GetDefaultView(_comments);
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
@@ -680,13 +695,34 @@ namespace MultiCommentViewer
             try
             {
                 Debug.Assert(current != null);
-                Debug.Assert(current is ICommentViewModel);
+                Debug.Assert(current is McvCommentViewModel);
+
+                var userId = current.UserId;
+                var view = new CollectionViewSource { Source = _comments }.View;
+                view.Filter = obj =>
+                {
+                    if(!(obj is McvCommentViewModel cvm))
+                    {
+                        return false;
+                    }
+                    return cvm.UserId == userId;
+                };
                 //ICommentProviderが必要。。。ConnectionViewModel経由で取れないだろうか。
                 //Connectionを切断したり、サイトを変更してもコメントは残る。残ったコメントのユーザ情報を見ようとした時にConnectionViewModel経由で取るのは無理だろう。
                 //やっぱりCommentViewModelにICommentProviderを持たせるしかなさそう。
                 ICommentProvider commentProvider = current.CommentProvider;
-                var s = commentProvider.GetUserComments(current.User);
-                var uvm = new UserViewModel(current.User, _options);
+                //var s = commentProvider.GetUserComments(current.User) as ObservableCollection<ICommentViewModel>;
+                //var collection = new ObservableCollection<McvCommentViewModel>(s.Select(m => new McvCommentViewModel(m, current.ConnectionName));
+
+                //s.CollectionChanged += (sender, e) =>
+                //{
+                //    switch (e.Action)
+                //    {
+                //        case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+                //            break;
+                //    }
+                //};
+                var uvm = new UserViewModel(current.User, _options, view);
                 MessengerInstance.Send(new ShowUserViewMessage(uvm));
             }
             catch (Exception ex)

@@ -1,6 +1,8 @@
 ﻿using SitePlugin;
 using MultiCommentViewer.Test;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+
 namespace MultiCommentViewer
 {
     public class UserViewModel : CommentDataGridViewModelBase
@@ -23,7 +25,7 @@ namespace MultiCommentViewer
         {
             _user = user;
         }
-        public UserViewModel(IUser user, IOptions option, ObservableCollection<ICommentViewModel> comments) 
+        public UserViewModel(IUser user, IOptions option, ICollectionView comments) 
             : base(option, comments)
         {
             _user = user;

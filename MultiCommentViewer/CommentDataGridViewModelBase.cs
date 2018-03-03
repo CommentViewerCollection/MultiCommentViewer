@@ -26,6 +26,20 @@ namespace MultiCommentViewer
     public abstract class CommentDataGridViewModelBase : ViewModelBase
     {
         public ICollectionView Comments { get; }
+        public System.Windows.Controls.ScrollUnit ScrollUnit
+        {
+            get
+            {
+                if(_options.IsPixelScrolling)
+                {
+                    return System.Windows.Controls.ScrollUnit.Pixel;
+                }
+                else
+                {
+                    return System.Windows.Controls.ScrollUnit.Item;
+                }
+            }
+        }
         public Brush HorizontalGridLineBrush
         {
             get { return new SolidColorBrush(_options.HorizontalGridLineColor); }

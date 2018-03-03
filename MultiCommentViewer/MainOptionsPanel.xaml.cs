@@ -188,6 +188,11 @@ namespace MultiCommentViewer
                 }
             }
         }
+        public bool IsPixelScrolling
+        {
+            get { return ChangedOptions.IsPixelScrolling; }
+            set { ChangedOptions.IsPixelScrolling = value; }
+        }
         private readonly IOptions _origin;
         private readonly IOptions _changed;
         public IOptions OriginOptions { get { return _origin; } }
@@ -222,6 +227,7 @@ namespace MultiCommentViewer
                     VerticalGridLineColor = Colors.Green,
                     HorizontalGridLineColor = Colors.LightGray,
                     FontFamily = new FontFamily("メイリオ"),
+                     IsPixelScrolling = false,
                 };
                 _changed = _origin.Clone() as IOptions;
                 IsBold = true;

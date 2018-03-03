@@ -44,6 +44,7 @@ namespace MultiCommentViewer
         bool IsAddingNewCommentTop { get; set; }
 
         bool IsTopmost { get; set; }
+        bool IsPixelScrolling { get; set; }
     }
 }
 

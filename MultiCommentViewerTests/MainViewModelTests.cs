@@ -17,17 +17,14 @@ namespace MultiCommentViewerTests
     {
         public void Test(Action<IOptions> action, string propertyName)
         {
-            var optionsPath = "";
             var ioMock = new Mock<IIo>();
             var loggerMock = new Mock<ILogger>();
             var optionsMock = new Mock<IOptions>();
             optionsMock.SetupSet(action).Raises(m => m.PropertyChanged += null, new PropertyChangedEventArgs(propertyName));
-            var optionsSerializerMock = new Mock<IOptionsSerializer>();
-            optionsSerializerMock.Setup(m => m.LoadAsync("", ioMock.Object)).ReturnsAsync(optionsMock.Object);
             var browserLoaderMock = new Mock<IBrowserLoader>();
             var siteLoaderMock = new Mock<ISitePluginLoader>();
             var userStoreMock = new Mock<IUserStore>();
-            var vm = new MainViewModel(optionsPath, ioMock.Object, loggerMock.Object, optionsSerializerMock.Object,optionsMock.Object, siteLoaderMock.Object, browserLoaderMock.Object, userStoreMock.Object);
+            var vm = new MainViewModel(ioMock.Object, loggerMock.Object, optionsMock.Object, siteLoaderMock.Object, browserLoaderMock.Object, userStoreMock.Object);
             vm.MainViewContentRenderedCommand.Execute(null);
             bool b = false;
             vm.PropertyChanged += (s, e) =>

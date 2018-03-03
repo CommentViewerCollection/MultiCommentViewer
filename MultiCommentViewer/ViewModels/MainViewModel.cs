@@ -48,9 +48,7 @@ namespace MultiCommentViewer
         private readonly ISitePluginLoader _sitePluginLoader;
         private readonly IBrowserLoader _browserLoader;
         private readonly IIo _io;
-        private readonly string _optionsPath;
         IOptions _options;
-        private readonly IOptionsSerializer _optionsLoader;
         IEnumerable<ISiteContext> _siteContexts;
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
@@ -165,38 +163,25 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
             }
         }
-        bool _canClose = false;
-        private async void Closing(CancelEventArgs e)
+        private void Closing(CancelEventArgs e)
         {
-            e.Cancel = !_canClose;
-            if (_canClose)
-                return;
-
-            foreach (var site in _siteContexts)
+            if (_siteContexts != null)
             {
-                try
+                foreach (var site in _siteContexts)
                 {
-                    var path = GetSiteOptionsPath(site);
-                    site.SaveOptions(path, _io);
+                    try
+                    {
+                        var path = GetSiteOptionsPath(site);
+                        site.SaveOptions(path, _io);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                        Debug.WriteLine(ex.Message);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogException(ex);
-                    Debug.WriteLine(ex.Message);
-                }
             }
-            _pluginManager.OnClosing();
-            try
-            {
-                await _optionsLoader.WriteAsync(GetOptionsPath(), _io, _options);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                Debug.WriteLine(ex.Message);
-            }
-            _canClose = true;
-            App.Current.Shutdown();
+            _pluginManager?.OnClosing();
         }
         private void RemoveSelectedConnection()
         {
@@ -604,14 +589,12 @@ namespace MultiCommentViewer
             }
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        public MainViewModel(string optionsPath, IIo io, ILogger logger, IOptionsSerializer optionsLoader, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
+        public MainViewModel(IIo io, ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
             :base(options)
         {
-            _optionsPath = optionsPath;
             _io = io;
             _dispatcher = Dispatcher.CurrentDispatcher;
-
-            _optionsLoader = optionsLoader;
+            
             _options = options;
             _userStore = userStore;
 

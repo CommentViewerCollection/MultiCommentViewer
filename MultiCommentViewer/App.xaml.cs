@@ -22,15 +22,21 @@ namespace MultiCommentViewer
     public partial class App : Application
     {
         ILogger _logger;
+        Test.DynamicOptionsTest options;
+        IIo io;
+        private string GetOptionsPath()
+        {
+            var currentDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
+            return Path.Combine(currentDir, "settings", "options.txt");
+        }
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
             _logger = new Test.LoggerTest();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-            var currentDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
-            var optionsPath = Path.Combine(currentDir, "settings", "options.txt");
-            IIo io = new Test.IOTest();
+            
+            io = new Test.IOTest();
 
             //OptionsはMainViewModelのContentRendered()で読み込みたい。しかし、その前にConnectionNameWidth等が参照されるため現状ではコンストラクタ以前に読み込む必要がある。
             //実行される順番は
@@ -39,22 +45,38 @@ namespace MultiCommentViewer
             //しかし、それをやるにはViewの位置はデフォルト値になってしまう。それでも良いか。            
             //これ↓が一番いいかも
             //ここでOptionsのインスタンスを作成し、MainViewModelに渡す。とりあえずデフォルト値で初期化させ、ContentRenderedで保存されたOptionsを読み込み差し替える。
-            IOptionsSerializer optionsLoader = new Test.OptionsLoaderTest();
+            options = new Test.DynamicOptionsTest();
+            try
+            {
+                var s = io.ReadFile(GetOptionsPath());
+                options.Deserialize(s);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
 
-            var options = optionsLoader.Load(optionsPath, io);
-            
             ISitePluginLoader sitePluginLoader = new Test.SitePluginLoaderTest();
             IBrowserLoader browserLoader = new BrowserLoader(_logger);
             IUserStore userStore = new UserStoreTest();
 
             
-            var mainViewModel = new MainViewModel(optionsPath, io, _logger, optionsLoader,options, sitePluginLoader,browserLoader, userStore);
+            var mainViewModel = new MainViewModel(io, _logger, options, sitePluginLoader,browserLoader, userStore);
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModels.ViewModelLocator;
             locator.Main = mainViewModel;
         }
         protected override void OnExit(ExitEventArgs e)
         {
+            try
+            {
+                var s = options.Serialize();
+                io.WriteFile(GetOptionsPath(), s);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
             try
             {
                 var s = _logger.GetExceptions();

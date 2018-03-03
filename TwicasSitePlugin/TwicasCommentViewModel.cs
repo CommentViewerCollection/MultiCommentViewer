@@ -14,7 +14,7 @@ namespace TwicasSitePlugin
             Id = data.Id.ToString();
             NameItems = new List<IMessagePart> { new MessageText(data.Name) };
             MessageItems = data.Message;
-            User = user;
+            //User = user;
         }
     }
 }

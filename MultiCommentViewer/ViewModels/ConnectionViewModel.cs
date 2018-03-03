@@ -198,7 +198,11 @@ namespace MultiCommentViewer
             }
         }
 
-
+        public ConnectionContext GetCurrent()
+        {
+            var context = new ConnectionContext { ConnectionName = this.ConnectionName, SiteContext = SelectedSite.Site, CommentProvider = _commentProvider };
+            return context;
+        }
 
         private async void Connect()
         {

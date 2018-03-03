@@ -18,7 +18,7 @@ namespace SitePlugin
         string Info { get; }
         string Id { get; }
         string UserId { get; }
-        IUser User { get; }
+        //IUser User { get; }
         ICommentProvider CommentProvider { get; }
 
         bool IsInfo { get;  }

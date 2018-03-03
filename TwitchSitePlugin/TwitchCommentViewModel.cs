@@ -18,7 +18,7 @@ namespace TwitchSitePlugin
             MessageItems = Tools.GetMessageItems(commentData.Message, commentData.Emotes);
             IsFirstComment = isFirstComment;
             CommentProvider = commentProvider;
-            User = user;
+            //User = user;
         }
     }
 }

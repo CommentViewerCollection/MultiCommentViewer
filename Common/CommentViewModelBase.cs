@@ -19,8 +19,6 @@ namespace Common
 
         public virtual string Id { get; protected set; }
 
-        public virtual IUser User { get; set; }
-
         public abstract string UserId { get; }
 
         public bool IsInfo { get; protected set; }

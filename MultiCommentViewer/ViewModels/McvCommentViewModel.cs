@@ -39,7 +39,7 @@ namespace MultiCommentViewer
 
         public string UserId => _cvm.UserId;
 
-        public IUser User => _cvm.User;
+        //public IUser User => _cvm.User;
 
         public ICommentProvider CommentProvider => _cvm.CommentProvider;
 

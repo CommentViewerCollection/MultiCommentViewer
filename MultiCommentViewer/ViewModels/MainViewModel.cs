@@ -231,7 +231,7 @@ namespace MultiCommentViewer
                 _metaDict.Add(connection, metaVm);
                 MetaCollection.Add(metaVm);
                 Connections.Add(connection);
-                OnConnectionAdded(connectionName);
+                OnConnectionAdded(connection);
             }
             catch (Exception ex)
             {
@@ -244,10 +244,14 @@ namespace MultiCommentViewer
         /// 将来的にSiteContext毎に別のIUserStoreを使い分ける可能性を考えて今のうちに。
         /// </summary>
         Dictionary<ISiteContext, IUserStore> _dic1 = new Dictionary<ISiteContext, IUserStore>();
+        /// <summary>
+        /// Connection_SelectedSiteChanged内で値を設定
+        /// </summary>
+        Dictionary<ICommentProvider, IUserStore> _dict2 = new Dictionary<ICommentProvider, IUserStore>();
         //Dictionary<ConnectionName, >
         private void Connection_SelectedSiteChanged(object sender, SelectedSiteChangedEventArgs e)
         {
-
+            SetDict(e.NewValue);
         }
 
         private void Connection_Renamed(object sender, RenamedEventArgs e)
@@ -256,10 +260,23 @@ namespace MultiCommentViewer
             Debug.WriteLine($"ConnectionRenamed:{e.OldValue}→{e.NewValue}");
         }
 
-        private void OnConnectionAdded(ConnectionName connectionName)
+        private void OnConnectionAdded(ConnectionViewModel connection)
         {
             //TODO:プラグインに通知
-            Debug.WriteLine($"ConnectionAdded:{connectionName.Guid}");
+            Debug.WriteLine($"ConnectionAdded:{connection.ConnectionName.Guid}");
+
+            var context = connection.GetCurrent();
+            SetDict(context);
+        }
+        private void SetDict(ConnectionContext context)
+        {
+            var newSiteContext = context.SiteContext;
+            var newCommentProvider = context.CommentProvider;
+            var userStore = _dic1[newSiteContext];
+            if (!_dict2.ContainsKey(newCommentProvider))
+            {
+                _dict2.Add(newCommentProvider, userStore);
+            }
         }
         private void OnConnectionDeleted(ConnectionName connectionName)
         {
@@ -705,7 +722,9 @@ namespace MultiCommentViewer
                 //            break;
                 //    }
                 //};
-                var uvm = new UserViewModel(current.User, _options, view);
+                var userStore = _dict2[commentProvider];
+                var user = userStore.GetUser(userId);
+                var uvm = new UserViewModel(user, _options, view);
                 MessengerInstance.Send(new ShowUserViewMessage(uvm));
             }
             catch (Exception ex)

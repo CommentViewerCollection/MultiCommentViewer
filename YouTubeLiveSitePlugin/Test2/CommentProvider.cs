@@ -123,7 +123,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
                 else if(result is NoVidResult no)
                 {
-                    SendInfo("");
+                    SendInfo("このチャンネルでは生放送をしていないようです");
                 }
                 else
                 {

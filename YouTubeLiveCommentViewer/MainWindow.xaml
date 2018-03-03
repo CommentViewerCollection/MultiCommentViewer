@@ -124,7 +124,7 @@
                       EnableRowVirtualization="True"                      
                       VirtualizingStackPanel.IsVirtualizing="True"
                       VirtualizingStackPanel.VirtualizationMode="Recycling"
-                      VirtualizingStackPanel.ScrollUnit="Pixel"
+                      VirtualizingStackPanel.ScrollUnit="{Binding ScrollUnit}"
                       GridLinesVisibility="All"
                       HorizontalGridLinesBrush="{Binding HorizontalGridLineBrush}"
                       VerticalGridLinesBrush="{Binding VerticalGridLineBrush}"

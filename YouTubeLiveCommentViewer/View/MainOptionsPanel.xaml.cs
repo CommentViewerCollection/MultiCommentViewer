@@ -151,7 +151,11 @@ namespace YouTubeLiveCommentViewer
             get { return ChangedOptions.IsAutoCheckIfUpdateExists; }
             set { ChangedOptions.IsAutoCheckIfUpdateExists = value; }
         }
-
+        public bool IsPixelScrolling
+        {
+            get { return ChangedOptions.IsPixelScrolling; }
+            set { ChangedOptions.IsPixelScrolling = value; }
+        }
         private readonly IOptions _origin;
         private readonly IOptions changed;
         public IOptions OriginOptions { get { return _origin; } }

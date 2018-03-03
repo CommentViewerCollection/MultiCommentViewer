@@ -222,7 +222,20 @@ namespace YouTubeLiveCommentViewer.ViewModel
         {
             get { return _options.SelectedRowForeColor; }
         }
-
+        public System.Windows.Controls.ScrollUnit ScrollUnit
+        {
+            get
+            {
+                if (_options.IsPixelScrolling)
+                {
+                    return System.Windows.Controls.ScrollUnit.Pixel;
+                }
+                else
+                {
+                    return System.Windows.Controls.ScrollUnit.Item;
+                }
+            }
+        }
         public IValueConverter ThumbnailConverter { get; } = new Common.Wpf.ThumbnailConverter();
 
         private string GetSiteOptionsPath(ISiteContext site)

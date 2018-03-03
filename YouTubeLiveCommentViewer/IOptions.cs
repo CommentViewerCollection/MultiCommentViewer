@@ -44,6 +44,7 @@ namespace YouTubeLiveCommentViewer
         int InfoDisplayIndex { get; set; }
         bool IsAutoCheckIfUpdateExists { get; set; }
         bool IsAddingNewCommentTop { get; set; }
+        bool IsPixelScrolling { get; set; }
 
         bool IsTopmost { get; set; }
         int UserIdDisplayIndex { get; set; }

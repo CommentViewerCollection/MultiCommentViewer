@@ -75,9 +75,8 @@ namespace MultiCommentViewer.Test
             }
             return s;
         }
-        public async void WriteFile(string path, string s)
+        public void WriteFile(string path, string s)
         {
-            await Task.Yield();
             var bytes = Encoding.UTF8.GetBytes(s);
 
             var totalWaitTime = 0;

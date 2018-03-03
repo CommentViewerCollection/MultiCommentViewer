@@ -63,9 +63,18 @@ namespace YouTubeLiveCommentViewer
             }
             catch (Exception ex)
             {
+                _logger.LogException(ex);
+            }
+            try
+            {
+                var s = _logger.GetExceptions();
+                SendErrorReport(s);
+            }
+            catch (Exception ex)
+            {
+                //ここで例外が起きても送れない・・・。
                 Debug.WriteLine(ex.Message);
             }
-
             base.OnExit(e);
         }
         private string GetUserAgent()

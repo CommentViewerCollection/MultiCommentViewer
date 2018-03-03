@@ -191,9 +191,24 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 var ytInitialData = match.Groups[1].Value;
                 var json = JsonConvert.DeserializeObject<Low.ChannelYtInitialData.RootObject>(ytInitialData);
-                var title = json.contents.twoColumnBrowseResultsRenderer.tabs[1].tabRenderer.title;
-                Debug.Assert(title == "Videos");
-                var contents = json.contents.twoColumnBrowseResultsRenderer.tabs[1].tabRenderer.content.sectionListRenderer.contents;
+                var tabs = json.contents.twoColumnBrowseResultsRenderer.tabs;
+                Low.ChannelYtInitialData.Tab videosTab = null;
+                foreach(var tab in tabs)
+                {
+                    if (tab.tabRenderer == null)
+                    {
+                        continue;
+                    }
+                    if(tab.tabRenderer.title == "Videos")
+                    {
+                        videosTab = tab;
+                    }
+                }
+                if(videosTab == null)
+                {
+                    return list;
+                }
+                var contents = videosTab.tabRenderer.content.sectionListRenderer.contents;
 
                 foreach (var content in contents)
                 {

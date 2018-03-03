@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -15,24 +14,6 @@ using System.Windows.Shapes;
 using System.ComponentModel;
 namespace YouTubeLiveSitePlugin.Test2
 {
-    /// <summary>
-    /// Interaction logic for YouTubeLiveOptionsPanel.xaml
-    /// </summary>
-    public partial class YouTubeLiveOptionsPanel : UserControl
-    {
-        public YouTubeLiveOptionsPanel()
-        {
-            InitializeComponent();
-        }
-        public void SetViewModel(YouTubeLiveOptionsViewModel vm)
-        {
-            this.DataContext = vm;
-        }
-        public YouTubeLiveOptionsViewModel GetViewModel()
-        {
-            return (YouTubeLiveOptionsViewModel)this.DataContext;
-        }
-    }
     public class YouTubeLiveOptionsViewModel : INotifyPropertyChanged
     {
         public Color PaidCommentBackColor

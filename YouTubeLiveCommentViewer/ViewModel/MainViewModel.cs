@@ -208,11 +208,11 @@ namespace YouTubeLiveCommentViewer.ViewModel
         }
         #endregion
 
-        public bool IsShowCommentId
-        {
-            get { return _options.IsShowCommentId; }
-            set { _options.IsShowCommentId = value; }
-        }
+        //public bool IsShowCommentId
+        //{
+        //    get { return _options.IsShowCommentId; }
+        //    set { _options.IsShowCommentId = value; }
+        //}
 
         public Color SelectedRowBackColor
         {
@@ -304,7 +304,7 @@ namespace YouTubeLiveCommentViewer.ViewModel
                 _logger.LogException(ex);
                 Debug.WriteLine(ex.Message);
             }
-            _pluginManager.OnClosing();
+            _pluginManager?.OnClosing();
 
             _canClose = true;
             App.Current.Shutdown();

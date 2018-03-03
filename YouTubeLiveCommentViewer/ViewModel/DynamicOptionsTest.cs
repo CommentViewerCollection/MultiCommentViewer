@@ -32,24 +32,24 @@ namespace YouTubeLiveCommentViewer
         public Color InfoBackColor { get => GetValue(); set => SetValue(value); }
         public Color SelectedRowBackColor { get => GetValue(); set => SetValue(value); }
         public Color SelectedRowForeColor { get => GetValue(); set => SetValue(value); }
-        public double ConnectionNameWidth { get => GetValue(); set => SetValue(value); }
-        public bool IsShowConnectionName { get => GetValue(); set => SetValue(value); }
-        public int ConnectionNameDisplayIndex { get => GetValue(); set => SetValue(value); }
+        //public double ConnectionNameWidth { get => GetValue(); set => SetValue(value); }
+        //public bool IsShowConnectionName { get => GetValue(); set => SetValue(value); }
+        //public int ConnectionNameDisplayIndex { get => GetValue(); set => SetValue(value); }
         public double ThumbnailWidth { get => GetValue(); set => SetValue(value); }
         public int ThumbnailDisplayIndex { get => GetValue(); set => SetValue(value); }
         public bool IsShowThumbnail { get => GetValue(); set => SetValue(value); }
-        public double CommentIdWidth { get => GetValue(); set => SetValue(value); }
-        public int CommentIdDisplayIndex { get => GetValue(); set => SetValue(value); }
-        public bool IsShowCommentId { get => GetValue(); set => SetValue(value); }
+        //public double CommentIdWidth { get => GetValue(); set => SetValue(value); }
+        //public int CommentIdDisplayIndex { get => GetValue(); set => SetValue(value); }
+        //public bool IsShowCommentId { get => GetValue(); set => SetValue(value); }
         public double UsernameWidth { get => GetValue(); set => SetValue(value); }
         public bool IsShowUsername { get => GetValue(); set => SetValue(value); }
         public int UsernameDisplayIndex { get => GetValue(); set => SetValue(value); }
         public double MessageWidth { get => GetValue(); set => SetValue(value); }
         public bool IsShowMessage { get => GetValue(); set => SetValue(value); }
         public int MessageDisplayIndex { get => GetValue(); set => SetValue(value); }
-        public double InfoWidth { get => GetValue(); set => SetValue(value); }
-        public bool IsShowInfo { get => GetValue(); set => SetValue(value); }
-        public int InfoDisplayIndex { get => GetValue(); set => SetValue(value); }
+        //public double InfoWidth { get => GetValue(); set => SetValue(value); }
+        //public bool IsShowInfo { get => GetValue(); set => SetValue(value); }
+        //public int InfoDisplayIndex { get => GetValue(); set => SetValue(value); }
         public bool IsAutoCheckIfUpdateExists { get => GetValue(); set => SetValue(value); }
         public bool IsShowUserId { get => GetValue(); set => SetValue(value); }
         public bool IsShowPostTime { get => GetValue(); set => SetValue(value); }
@@ -116,18 +116,18 @@ namespace YouTubeLiveCommentViewer
 
             Dict.Add(nameof(IsUserNameWrapping), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsAddingNewCommentTop), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsPixelScrolling), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsPixelScrolling), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             //以下使わないけど、IOptionsに要求される
-            Dict.Add(nameof(ConnectionNameWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(CommentIdWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(InfoWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(ConnectionNameDisplayIndex), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
-            Dict.Add(nameof(CommentIdDisplayIndex), new Item { DefaultValue = 2, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
-            Dict.Add(nameof(InfoDisplayIndex), new Item { DefaultValue = 5, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
-            Dict.Add(nameof(IsShowConnectionName), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowCommentId), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsShowInfo), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            //Dict.Add(nameof(ConnectionNameWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            //Dict.Add(nameof(CommentIdWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            //Dict.Add(nameof(InfoWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            //Dict.Add(nameof(ConnectionNameDisplayIndex), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            //Dict.Add(nameof(CommentIdDisplayIndex), new Item { DefaultValue = 2, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            //Dict.Add(nameof(InfoDisplayIndex), new Item { DefaultValue = 5, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            //Dict.Add(nameof(IsShowConnectionName), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            //Dict.Add(nameof(IsShowCommentId), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            //Dict.Add(nameof(IsShowInfo), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
         public ICommentOptions Clone()
         {

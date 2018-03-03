@@ -40,6 +40,7 @@ namespace Common
         [Serializable]
         public class Error
         {
+            public string Name { get; private set; }
             public string Message { get; private set; }
             public string StackTrace { get; private set; }
             public string Timestamp { get; private set; }
@@ -51,6 +52,7 @@ namespace Common
             }
             public Error(Exception ex):this()
             {
+                Name = ex.GetType().FullName;
                 Message = ex.Message;
                 StackTrace = ex.StackTrace;
                 SetProperties(ex);
@@ -94,6 +96,7 @@ namespace Common
             }
             public Error(AggregateException ex) : this()
             {
+                Name = ex.GetType().FullName;
                 Message = ex.Message;
                 StackTrace = ex.StackTrace;
                 var innerCount = ex.InnerExceptions.Count;

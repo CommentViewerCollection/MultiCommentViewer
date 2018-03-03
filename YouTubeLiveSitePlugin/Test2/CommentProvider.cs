@@ -62,6 +62,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly ICommentOptions _options;
         private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
+        private readonly IUserStore _userStore;
         ChatProvider _chatProvider;
         IMetadataProvider _metaProvider;
 
@@ -79,6 +80,25 @@ namespace YouTubeLiveSitePlugin.Test2
             _chatProvider = null;
             CanConnect = true;
             CanDisconnect = false;
+        }
+        Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
+        private YouTubeLiveCommentViewModel CreateCommentViewModel(CommentData data)
+        {
+            var userId = data.UserId;
+            bool isFirstComment;
+            if (_userCommentCountDict.ContainsKey(userId))
+            {
+                _userCommentCountDict[userId]++;
+                isFirstComment = false;
+            }
+            else
+            {
+                _userCommentCountDict.Add(userId, 1);
+                isFirstComment = true;
+            }
+            var user = _userStore.GetUser(userId);
+            var cvm = new YouTubeLiveCommentViewModel(_options, data, this, isFirstComment);
+            return cvm;
         }
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
@@ -200,7 +220,7 @@ reload:
                 var initialComments = new List<ICommentViewModel>();
                 foreach(var data in initialCommentData)
                 {
-                    var cvm = new YouTubeLiveCommentViewModel(_options, data, this);
+                    var cvm = CreateCommentViewModel(data);
                     initialComments.Add(cvm);
                 }
                 if(initialComments.Count > 0)
@@ -324,7 +344,7 @@ reload:
         {
             foreach (var action in e)
             {
-                var cvm = new YouTubeLiveCommentViewModel(_options, action, this);
+                var cvm = CreateCommentViewModel(action);
                 CommentReceived?.Invoke(this, cvm);
             }
         }
@@ -380,11 +400,12 @@ reload:
             return upper;
         }
         IYouTubeLibeServer _server;
-        public CommentProvider(ICommentOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger)
+        public CommentProvider(ICommentOptions options, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStore userStore)
         {
             _options = options;
             _siteOptions = siteOptions;
             _logger = logger;
+            _userStore = userStore;
             _server = new YouTubeLiveServer();
 
             CanConnect = true;

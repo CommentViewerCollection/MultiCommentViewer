@@ -104,6 +104,8 @@
     <Compile Include="IPluginManager.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="PluginManager.cs" />
+    <Compile Include="UserStoreTest.cs" />
+    <Compile Include="UserTest.cs" />
     <Compile Include="ViewModel\DynamicOptionsTest.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\PluginHost.cs" />

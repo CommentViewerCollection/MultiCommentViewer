@@ -17,7 +17,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 return base.Background;
             }
         }
-        public YouTubeLiveCommentViewModel(ICommentOptions options, CommentData commentData, ICommentProvider commentProvider)
+        public YouTubeLiveCommentViewModel(ICommentOptions options, CommentData commentData, ICommentProvider commentProvider, bool isFirstComment)
             : base(options)
         {
             CommentProvider = commentProvider;
@@ -35,6 +35,7 @@ namespace YouTubeLiveSitePlugin.Test2
             Id = commentData.Id;
             UserId = commentData.UserId;
             Thumbnail = commentData.Thumbnail;
+            IsFirstComment = isFirstComment;
         }
     }
 }

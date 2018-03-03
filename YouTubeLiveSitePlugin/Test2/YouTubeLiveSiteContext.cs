@@ -25,7 +25,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public ICommentProvider CreateCommentProvider()
         {
             //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-            return new Test2.CommentProvider(_options, _siteOptions, _logger);
+            return new Test2.CommentProvider(_options, _siteOptions, _logger, _userStore);
         }
 
         public void LoadOptions(string path, IIo io)
@@ -82,11 +82,13 @@ namespace YouTubeLiveSitePlugin.Test2
 
         private readonly ICommentOptions _options;
         private readonly ILogger _logger;
+        private readonly IUserStore _userStore;
         private Test2.YouTubeLiveSiteOptions _siteOptions;
-        public YouTubeLiveSiteContext(ICommentOptions options, ILogger logger)
+        public YouTubeLiveSiteContext(ICommentOptions options, ILogger logger, IUserStore userStore)
         {
             _options = options;
             _logger = logger;
+            _userStore = userStore;
         }
     }
 }

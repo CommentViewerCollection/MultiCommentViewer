@@ -31,7 +31,7 @@ namespace YouTubeLiveCommentViewer
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             base.OnStartup(e);
             io = new IOTest();
-
+            _logger = new LoggerTest();
             options = new DynamicOptionsTest();
             try
             {
@@ -40,10 +40,24 @@ namespace YouTubeLiveCommentViewer
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
             }
 
-            _logger = new LoggerTest();
+            try
+            {
+                if (System.IO.File.Exists("error.txt"))
+                {
+                    string errorContent;
+                    using(var sr = new System.IO.StreamReader("error.txt"))
+                    {
+                        errorContent = sr.ReadToEnd();
+                    }
+                    SendErrorReport(errorContent);
+                    System.IO.File.Delete("error.txt");
+                }
+            }
+            catch { }
+
             var siteContext = new YouTubeLiveSiteContext(options, _logger);
 
             var vm = new ViewModel.MainViewModel(siteContext, options, io, _logger);

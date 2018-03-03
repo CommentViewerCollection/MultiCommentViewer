@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.IO;
 
 namespace ryu_s.BrowserCookie
 {
@@ -15,10 +16,14 @@ namespace ryu_s.BrowserCookie
         public List<IBrowserProfile> GetProfiles()
         {
             var profileFileName = "profiles.ini";
+            var list = new List<IBrowserProfile>();
+            if(!File.Exists(Path.Combine(_moz_path, profileFileName)))
+            {
+                //多分Firefoxをインストールしていない
+                return list;
+            }
 
             var profiles = FirefoxProfile.GetProfiles(_moz_path, profileFileName);
-
-            var list = new List<IBrowserProfile>();
             foreach (var profile in profiles)
             {
                 if (profile.IsDefault)

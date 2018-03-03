@@ -145,7 +145,18 @@ namespace YouTubeLiveSitePlugin.Test2
                 var userId = ExtractUserId(input);
                 var channelId = await GetChannelIdFromUserId(server, userId);
                 var vids = await GetVidsFromChannelId(server, channelId);
-                return new MultiVidsResult { Vids = vids };
+                if (vids.Count == 0)
+                {
+                    return new NoVidResult();
+                }
+                else if (vids.Count == 1)
+                {
+                    return new VidResult { Vid = vids[0] };
+                }
+                else
+                {
+                    return new MultiVidsResult { Vids = vids };
+                }
             }
             else if (IsCustomChannel(input))
             {

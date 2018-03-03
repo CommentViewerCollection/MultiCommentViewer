@@ -13,6 +13,18 @@ namespace NicoSitePluginTests
     class ToolsTests
     {
         [Test]
+        public void GetShortRoomName()
+        {
+            Assert.AreEqual("ｱ", Tools.GetShortRoomName("co123"));
+            Assert.AreEqual("ｱ", Tools.GetShortRoomName("ch123"));
+            Assert.AreEqual("A", Tools.GetShortRoomName("立ち見A列"));
+            Assert.AreEqual("D", Tools.GetShortRoomName("立ち見D列"));
+            Assert.AreEqual("立", Tools.GetShortRoomName("立ち見席"));
+            Assert.AreEqual("アリーナ 最前列", Tools.GetShortRoomName("アリーナ　最前列"));
+            Assert.AreEqual("アリーナ 最前列", Tools.GetShortRoomName("アリーナ 最前列"));
+            Assert.AreEqual("アリーナ", Tools.GetShortRoomName("アリーナ"));
+        }
+        [Test]
         public void ConvertChannelMsList()
         {   
             var msMock = new Mock<IMs>().Object;

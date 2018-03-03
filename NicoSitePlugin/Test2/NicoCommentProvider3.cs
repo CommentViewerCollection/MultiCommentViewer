@@ -10,6 +10,7 @@ using Common;
 using NicoSitePlugin.Old;
 using ryu_s.BrowserCookie;
 using SitePlugin;
+using System.Collections.Concurrent;
 
 namespace NicoSitePlugin.Test2
 {
@@ -138,11 +139,28 @@ namespace NicoSitePlugin.Test2
             _commentProvider?.Disconnect();
             _psProvider?.Disconnect();
         }
-        private readonly Dictionary<IUser, ObservableCollection<NicoCommentViewModel2>> _userCommentDict = new Dictionary<IUser, ObservableCollection<NicoCommentViewModel2>>();
+        private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
+        private NicoCommentViewModel2 CreateCommentViewModel(Chat chat, RoomInfo roomInfo)
+        {
+            var userId = chat.UserId;
+            bool isFirstComment;
+            if (_userCommentCountDict.ContainsKey(userId))
+            {
+                _userCommentCountDict[userId]++;
+                isFirstComment = false;
+            }
+            else
+            {
+                _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
+                isFirstComment = true;
+            }
+            var user = _userStore.GetUser(userId);
+            var cvm = new NicoCommentViewModel2(_options, _siteOptions, chat, roomInfo, user, this, isFirstComment);
+            return cvm;
+        }
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
-            var comments = _userCommentDict[user];
-            return comments.Cast<ICommentViewModel>() as ObservableCollection<ICommentViewModel>;
+            throw new NotImplementedException();
         }
 
         public Task PostCommentAsync(string text)
@@ -195,18 +213,12 @@ namespace NicoSitePlugin.Test2
         private void _commentProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
         {
             var list = new List<ICommentViewModel>();
+            var roomInfo = e.RoomInfo;
             foreach (var chat in e.Chat)
             {
                 if (IsKickCommand(chat))
                     continue;
-                var user = _userStore.GetUser(chat.UserId);
-                if (!_userCommentDict.TryGetValue(user, out ObservableCollection<NicoCommentViewModel2> userComments))
-                {
-                    userComments = new ObservableCollection<NicoCommentViewModel2>();
-                    _userCommentDict.Add(user, userComments);
-                }
-                var isFirstComment = userComments.Count == 0;
-                var cvm = new Old.NicoCommentViewModel2(_options, _siteOptions, chat, e.RoomInfo, user, this, isFirstComment);
+                var cvm = CreateCommentViewModel(chat, roomInfo);
                 list.Add(cvm);
             }
             InitialCommentsReceived?.Invoke(this, list);
@@ -215,19 +227,10 @@ namespace NicoSitePlugin.Test2
         private void _commentProvider_CommentReceived(object sender, ChatReceivedEventArgs e)
         {
             var chat = e.Chat;
+            var roomInfo = e.RoomInfo;
             if (IsKickCommand(chat))
-            {
                 return;
-            }
-            var user = _userStore.GetUser(chat.UserId);
-            if (!_userCommentDict.TryGetValue(user, out ObservableCollection<NicoCommentViewModel2> userComments))
-            {
-                userComments = new ObservableCollection<NicoCommentViewModel2>();
-                _userCommentDict.Add(user, userComments);
-            }
-            var isFirstComment = userComments.Count == 0;
-            var cvm = new Old.NicoCommentViewModel2(_options, _siteOptions, chat, e.RoomInfo, user, this, isFirstComment);
-            userComments.Add(cvm);
+            var cvm = CreateCommentViewModel(chat, roomInfo);
             CommentReceived?.Invoke(this, cvm);
         }
 

@@ -3,11 +3,33 @@ using System.Xml.Serialization;
 using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-
+using System.Text.RegularExpressions;
 namespace NicoSitePlugin.Old
 {
     public static class Tools
     {
+        public static string GetShortRoomName(string roomName)
+        {
+            if(Regex.IsMatch(roomName, "^ch\\d+$") || Regex.IsMatch(roomName, "^co\\d+$"))
+            {
+                return "ｱ";
+            }
+            var match = Regex.Match(roomName, "^立ち見([A-Z])列$");
+            if (match.Success)
+            {
+                var letter = match.Groups[1].Value;
+                return letter;
+            }
+            if(roomName == "立ち見席")
+            {
+                return "立";
+            }
+
+            //ここに来るのはofficialのみ。
+            //officialはコメ番が無いから短縮する必要は無い。そのまま帰す。
+            //ただし全角スペースは半角にする。後々何かに使うときのことを考えて。
+            return roomName.Replace("　", " ");
+        }
         /// <summary>
         ///  例えば、4~10の数字があるとして、
         ///  現在は5、2つ先は？となったら、7となる。

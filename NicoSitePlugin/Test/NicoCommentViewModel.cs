@@ -36,7 +36,15 @@ namespace NicoSitePlugin.Old
             IsFirstComment = isFirstComment;
             CommentProvider = commentProvider;
             SetName(user);
-            Id = $"{roomInfo.RoomLabel}:{chat.No}";
+            if (chat.No.HasValue)
+            {
+                var shortName = Tools.GetShortRoomName(roomInfo.RoomLabel);
+                Id = $"{shortName}:{chat.No}";
+            }
+            else
+            {
+                Id = roomInfo.RoomLabel;
+            }
             MessageItems = new List<IMessagePart> { new MessageText { Text = _chat.Text } };
         }
         private void SetName(IUser _user)

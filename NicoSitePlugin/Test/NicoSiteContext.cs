@@ -69,7 +69,18 @@ namespace NicoSitePlugin.Old
 
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            return null;
+            var nicoCommentProvider = commentProvider as Test2.NicoCommentProvider3;
+            Debug.Assert(nicoCommentProvider != null);
+            if (nicoCommentProvider == null)
+                return null;
+
+            var vm = new Test2.CommentPostPanelViewModel(nicoCommentProvider, _logger);
+            var panel = new Test2.CommentPostPanel
+            {
+                //IsEnabled = false,
+                DataContext = vm
+            };
+            return panel;
         }
 
         private NicoSiteOptions _siteOptions;

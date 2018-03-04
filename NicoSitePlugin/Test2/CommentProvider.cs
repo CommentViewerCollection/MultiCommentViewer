@@ -43,6 +43,8 @@ namespace NicoSitePlugin.Test2
             //・ネットワークの不調 => reconnectの一番の原因だろう。
             //・resultcode="0"のthreadが送られてきた => 内部からDisconnect()
             _retryCount = 0;
+            _isExpectedDisconnect = false;
+            Debug.WriteLine($"ニコ生 接続開始 ({_roomName},thread={_thread},addr={_addr},port={_port})");
             while (true)
             {
                 int res_from;
@@ -60,16 +62,28 @@ namespace NicoSitePlugin.Test2
                 await CallConnectAsync();
                 await CallSendXmlAsync(res_from);
                 await _socket.ReceiveAsync();
+                Debug.WriteLine($"ニコ生 切断 ({_roomName},thread={_thread},addr={_addr},port={_port})");
                 if (_isExpectedDisconnect)
                 {
+                    Debug.WriteLine($"ニコ生 意図的な切断 ({_roomName},thread={_thread},addr={_addr},port={_port})");
                     break;
                 }
                 else if(_retryCount > 10)
                 {
+                    Debug.WriteLine($"ニコ生 再接続回数が{_retryCount}に達したため終了 ({_roomName},thread={_thread},addr={_addr},port={_port})");
                     break;
                 }
+                Debug.WriteLine($"ニコ生 意図しない切断のため再接続 ({_roomName},thread={_thread},addr={_addr},port={_port})");
                 _retryCount++;
             }
+        }
+        public async Task SendAsync(string str)
+        {
+            if(_socket == null)
+            {
+                throw new InvalidOperationException("_socket is null");
+            }
+            await _socket.SendAsync(str);
         }
         protected virtual async Task CallConnectAsync()
         {
@@ -109,10 +123,12 @@ namespace NicoSitePlugin.Test2
             {
                 var threadStr = list[0];
                 var thread = new Old.Thread(threadStr);
+                //<thread resultcode="0" thread="1622377992" last_res="12" ticket="0x1f8f7b00" revision="1" server_time="1520078989"/>
                 _isThreadReceived = true;
                 if(thread.Resultcode == 0)
                 {
                     //ok
+                    TicketReceived?.Invoke(this, thread.Ticket);
                     _retryCount = 0;
                     list.RemoveAt(0);
                     if (list.Count == 0) return;
@@ -142,6 +158,13 @@ namespace NicoSitePlugin.Test2
                     var chat = new Chat(chatStr);
                     CommentReceived?.Invoke(this, chat);
                 }
+                else if(chatStr.StartsWith("<chat_result "))
+                {
+                    Debug.WriteLine(chatStr);
+                    //<chat_result thread="1622396675" status="0" no="4"/>
+                    //status=0で成功、失敗の場合4を確認済み
+                    //status=1は連投規制？
+                }
                 else
                 {
                     //<leave_thread thread="1622163911" reason="2"/>
@@ -154,6 +177,7 @@ namespace NicoSitePlugin.Test2
                 }
             }
         }
+        public event EventHandler<string> TicketReceived;
         public event EventHandler<Chat> CommentReceived;
         public event EventHandler<List<Chat>> InitialCommentsReceived;
     }

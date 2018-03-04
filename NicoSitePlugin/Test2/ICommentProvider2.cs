@@ -7,12 +7,13 @@ namespace NicoSitePlugin.Test2
 {
     interface ICommentProvider
     {
+        event EventHandler<TicketReceivedEventArgs> TicketReceived;
         event EventHandler<ChatReceivedEventArgs> CommentReceived;
         event EventHandler<InitialChatsReceivedEventArgs> InitialCommentsReceived;
 
         void Add(IEnumerable<RoomInfo> newRooms);
         void Disconnect();
         Task ReceiveAsync();
-        Task SendAsync(string str);
+        Task SendAsync(RoomInfo roomInfo, string str);
     }
 }

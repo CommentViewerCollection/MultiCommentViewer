@@ -8,6 +8,6 @@ namespace NicoSitePlugin.Old
 {
     public interface INicoCommentProvider : ICommentProvider
     {
-
+        Task PostCommentAsync(string text, string mail);
     }
 }

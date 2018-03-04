@@ -18,15 +18,16 @@ namespace NicoSitePlugin.Old
 
         string OwnerName { get; }
         ProviderType ProviderType { get; }
-        long BaseTime { get; }
-        long OpenTime { get; }
-        long StartTime { get; }
-        long? EndTime { get; }
+        int BaseTime { get; }
+        int OpenTime { get; }
+        int StartTime { get; }
+        int? EndTime { get; }
         string UserId { get; }
         string Nickname { get; }
         string RoomLabel { get; }
         int RoomSeetNo { get; }
         bool IsJoin { get; }
+        string IsPremium { get; }
         IMs Ms { get; }
         IMs[] MsList { get; }
 

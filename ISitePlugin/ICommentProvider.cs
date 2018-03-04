@@ -22,10 +22,10 @@ namespace SitePlugin
 
         //event EventHandler<List<ICommentViewModel>> PastCommentsReceived;
         event EventHandler<IMetadata> MetadataUpdated;
-        Task PostCommentAsync(string text);
+        //Task PostCommentAsync(string text);
         Task ConnectAsync(string input, IBrowserProfile browserProfile);
         void Disconnect();
-        IEnumerable<ICommentViewModel> GetUserComments(IUser user);
+        //IEnumerable<ICommentViewModel> GetUserComments(IUser user);
         bool CanConnect { get; }
         bool CanDisconnect { get; }
         event EventHandler CanConnectChanged;

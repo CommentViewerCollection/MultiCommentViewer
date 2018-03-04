@@ -14,13 +14,13 @@
 
         public ProviderType ProviderType { get; set; }
 
-        public long BaseTime { get; set; }
+        public int BaseTime { get; set; }
 
-        public long OpenTime { get; set; }
+        public int OpenTime { get; set; }
 
-        public long StartTime { get; set; }
+        public int StartTime { get; set; }
 
-        public long? EndTime { get; set; }
+        public int? EndTime { get; set; }
 
         public string UserId { get; set; }
 
@@ -31,6 +31,8 @@
         public int RoomSeetNo { get; set; }
 
         public bool IsJoin { get; set; }
+
+        public string IsPremium { get; set; }
 
         public IMs Ms { get; set; }
 

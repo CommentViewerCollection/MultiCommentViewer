@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NicoSitePlugin.Old;
+using System.Collections.Concurrent;
 using System.Threading;
 using Common;
 using System.Diagnostics;
@@ -19,8 +20,14 @@ namespace NicoSitePlugin.Test2
         public List<Chat> Chat { get; set; }
         public RoomInfo RoomInfo { get; set; }
     }
+    public class TicketReceivedEventArgs : EventArgs
+    {
+        public string Ticket { get; set; }
+        public RoomInfo RoomInfo { get; set; }
+    }
     class CommentProvider2 : ICommentProvider
     {
+        public event EventHandler<TicketReceivedEventArgs> TicketReceived;
         public event EventHandler<ChatReceivedEventArgs> CommentReceived;
         public event EventHandler<InitialChatsReceivedEventArgs> InitialCommentsReceived;
         class RoomContext
@@ -63,6 +70,7 @@ namespace NicoSitePlugin.Test2
                             var thread = newRoom.Thread;
                             var socket = CreateStreamSocket(addr, port);
                             var room = new RoomCommentProvider(newRoom, _resFrom, socket);
+                            room.TicketReceived += Room_TicketReceived;
                             room.CommentReceived += Room_CommentReceived;
                             room.InitialCommentsReceived += Room_InitialCommentsReceived;
                             var context = new RoomContext
@@ -71,7 +79,7 @@ namespace NicoSitePlugin.Test2
                                 RoomCommentProvider = room,
                                 RoomInfo = newRoom,
                             };
-                            _roomDict.Add(newRoom, context);
+                            _roomDict.AddOrUpdate(newRoom, context, (info,con)=>con);
                         }
                         _newRooms = null;
                     }
@@ -79,13 +87,20 @@ namespace NicoSitePlugin.Test2
                 else
                 {
                     var context = _roomDict.Where(kv => kv.Value.ReceiveTask == t).First().Value;
-                    _roomDict.Remove(context.RoomInfo);
+                    _roomDict.TryRemove(context.RoomInfo, out _);
 
                     //TODO:下の2行を入れるべきか
                     //if (_roomDict.Count == 0)
                     //    break;
                 }
             }
+        }
+
+        private void Room_TicketReceived(object sender, string e)
+        {
+            var pair = _roomDict.Where(kv => kv.Value.RoomCommentProvider == sender).First();
+            var roomInfo = pair.Key;
+            TicketReceived?.Invoke(this, new TicketReceivedEventArgs { Ticket = e, RoomInfo = roomInfo });
         }
 
         private void Room_InitialCommentsReceived(object sender, List<Chat> e)
@@ -102,7 +117,6 @@ namespace NicoSitePlugin.Test2
             var chat = e;
             CommentReceived?.Invoke(this, new ChatReceivedEventArgs { Chat = chat, RoomInfo = roomInfo });
         }
-
         public void Disconnect()
         {
             if (_cts != null)
@@ -111,7 +125,7 @@ namespace NicoSitePlugin.Test2
                 _cts.Cancel();
             }
         }
-        Dictionary<RoomInfo, RoomContext> _roomDict = new Dictionary<RoomInfo, RoomContext>();
+        ConcurrentDictionary<RoomInfo, RoomContext> _roomDict = new ConcurrentDictionary<RoomInfo, RoomContext>();
         public void Add(IEnumerable<RoomInfo> newRooms)
         {
             _newRooms = new System.Collections.Concurrent.ConcurrentBag<RoomInfo>();
@@ -121,10 +135,18 @@ namespace NicoSitePlugin.Test2
             }
             _cts.Cancel();
         }
-        public async Task SendAsync(string str)
+        public async Task SendAsync(RoomInfo roomInfo, string str)
         {
             //コメントを送れるのは自分の部屋だけ。
             //どうやって自分の部屋を識別する？
+            var v = _roomDict.Where(kv => kv.Key.Equals(roomInfo));
+            if(v.Count() == 0)
+            {
+                throw new InvalidOperationException("当該の部屋が存在しない");
+            }
+
+            var context = v.First().Value;
+            await context.RoomCommentProvider.SendAsync(str);
         }
         async Task CancellableTask()
         {

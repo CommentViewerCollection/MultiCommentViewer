@@ -46,7 +46,7 @@ namespace NicoSitePlugin.Test2
             throw new NotImplementedException();
         }
 
-        public Task PostCommentAsync(string text)
+        public Task PostCommentAsync(string text, string mail)
         {
             throw new NotImplementedException();
         }

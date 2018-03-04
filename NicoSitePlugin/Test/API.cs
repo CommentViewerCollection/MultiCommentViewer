@@ -10,6 +10,21 @@ namespace NicoSitePlugin.Old
 {
     public static class API
     {
+        public static async Task<string> GetPostKey(IDataSource dataSource, string threadId, int blockNo, CookieContainer cc)
+        {
+            var url = $"http://live.nicovideo.jp/api/getpostkey?thread={threadId}&block_no={blockNo}&uselc=1&locale_flag=1&seat_flag=1&lang_flag=1";
+            var res = await dataSource.Get(url, cc);
+            var match = Regex.Match(res, "^postkey=(.*)$");
+            if (match.Success)
+            {
+                var postKey = match.Groups[1].Value;
+                return postKey;
+            }
+            else
+            {
+                throw new Test.GetPostKeyFailedException(res);
+            }
+        }
         public static async Task<IPlayerStatusResponse> GetPlayerStatusFromUrlAsync(IDataSource dataSource, string url, CookieContainer cc)
         {
             PlayerStatusResponseTest ret = null;            
@@ -32,14 +47,15 @@ namespace NicoSitePlugin.Old
                         Raw = xml,
                         Title = ps.Stream.Title,
                         DefaultCommunity=ps.Stream.Default_community,
-                        BaseTime = long.Parse(ps.Stream.Base_time),
+                        BaseTime = int.Parse(ps.Stream.Base_time),
                         Description = ps.Stream.Description,
-                        EndTime = long.Parse(ps.Stream.End_time),
+                        EndTime = int.Parse(ps.Stream.End_time),
                         IsJoin = ps.User.Is_join == "1",
+                        IsPremium=ps.User.Is_premium,
                         Ms = new MsTest(ps.Ms.Addr, ps.Ms.Thread, int.Parse(ps.Ms.Port)),
                         Nickname = ps.User.Nickname,
-                        OpenTime = long.Parse(ps.Stream.Open_time),
-                        StartTime = long.Parse(ps.Stream.Start_time),
+                        OpenTime = int.Parse(ps.Stream.Open_time),
+                        StartTime = int.Parse(ps.Stream.Start_time),
                         ProviderType = Tools.Convert(ps.Stream.Provider_type),
                         UserId = ps.User.User_id,
                         RoomSeetNo = int.Parse(ps.User.Room_seetno),

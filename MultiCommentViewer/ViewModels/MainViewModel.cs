@@ -274,6 +274,11 @@ namespace MultiCommentViewer
 
             var context = connection.GetCurrent();
             SetDict(context);
+
+            if(SelectedConnection == null)
+            {
+                SelectedConnection = connection;
+            }
         }
         private void SetDict(ConnectionContext context)
         {
@@ -440,7 +445,14 @@ namespace MultiCommentViewer
             set
             {
                 _selectedConnection = value;
-                MessengerInstance.Send(new SetPostCommentPanel(_selectedConnection.CommentPostPanel));
+                if (_selectedConnection == null)
+                {
+                    MessengerInstance.Send(new SetPostCommentPanel(null));
+                }
+                else
+                {
+                    MessengerInstance.Send(new SetPostCommentPanel(_selectedConnection.CommentPostPanel));
+                }
                 RaisePropertyChanged();
             }
         }

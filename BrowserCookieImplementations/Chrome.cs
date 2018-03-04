@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
-
+using System.IO;
 namespace ryu_s.BrowserCookie
 {
     public class ChromeManager : IChromeManager
@@ -13,6 +13,11 @@ namespace ryu_s.BrowserCookie
         public List<IBrowserProfile> GetProfiles()
         {
             var list = new List<IBrowserProfile>();
+            if (!Directory.Exists(ChromeSettingsDirPath))
+            {
+                //恐らくChromeがインストールされていない
+                return list;
+            }
             var defaultDbFilePath = ChromeSettingsDirPath + _defaultProfileName + "\\" + _dbFilename;
             if (System.IO.File.Exists(defaultDbFilePath))
             {

@@ -78,126 +78,117 @@
                 <MenuItem Header="アップデートを確認" Command="{Binding CheckUpdateCommand}" />
             </MenuItem>
         </Menu>
-        <Expander Header="接続先サイト一覧" Grid.Row="1" IsExpanded="True" VerticalAlignment="Stretch">
-            <i:Interaction.Behaviors>
-                <local:GridColumnWidthReseterBehaviour TargetGridRowIndex="1" />
-            </i:Interaction.Behaviors>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="5" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="5"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-                    <Button Content="接続を追加" Command="{Binding AddNewConnectionCommand}" Margin="0,5" Grid.Column="1" />
-                    <Button Content="選択した接続を削除" Command="{Binding RemoveSelectedConnectionCommand}" Margin="0,5" Grid.Column="3" />
-                    <Button Content="取得済みコメントを削除" IsEnabled="False" Command="{Binding ClearAllCommentsCommand}" Margin="0,5" Grid.Column="5" />
-                </Grid>
-                <ListView Grid.Row="1" ItemsSource="{Binding Connections}" 
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="5" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="5"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Button Content="接続を追加" Command="{Binding AddNewConnectionCommand}" Margin="0,5" Grid.Column="1" />
+                <Button Content="選択した接続を削除" Command="{Binding RemoveSelectedConnectionCommand}" Margin="0,5" Grid.Column="3" />
+                <Button Content="取得済みコメントを削除" IsEnabled="False" Command="{Binding ClearAllCommentsCommand}" Margin="0,5" Grid.Column="5" />
+            </Grid>
+            <ListView Grid.Row="1" ItemsSource="{Binding Connections}" 
                   AllowDrop="True" MinHeight="90" 
                   HorizontalAlignment="Stretch" Margin="5,5,5,5" VerticalAlignment="Stretch">
-                    <ListView.Resources>
-                    </ListView.Resources>
-                    <ListView.View>
-                        <GridView>
-                            <GridView.Columns>
-                                <GridViewColumn Width="40">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="選択" />
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanConnect}" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Width="120">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="サイト" />
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Sites}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}"
+                <ListView.Resources>
+                </ListView.Resources>
+                <ListView.View>
+                    <GridView>
+                        <GridView.Columns>
+                            <GridViewColumn Width="40">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="選択" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanConnect}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="120">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="サイト" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Sites}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}"
                                               SelectedValue="{Binding SelectedSite}" >
-                                            </ComboBox>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Width="Auto">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="名前" />
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="50" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Width="220">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="URL,放送ID等" />
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Text="{Binding Input, UpdateSourceTrigger=PropertyChanged}" Width="200" IsEnabled="{Binding CanConnect}" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Width="130">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="ブラウザ" />
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Browsers}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}"
+                                        </ComboBox>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="Auto">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="名前" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="50" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="220">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="URL,放送ID等" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Input, UpdateSourceTrigger=PropertyChanged}" Width="200" IsEnabled="{Binding CanConnect}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="130">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="ブラウザ" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Browsers}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}"
                                               SelectedValue="{Binding SelectedBrowser}"  />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Width="50">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="接続" />
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="接続" IsEnabled="{Binding CanConnect}" Command="{Binding ConnectCommand}" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Width="50">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="切断" />
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="切断" IsEnabled="{Binding CanDisconnect}" Command="{Binding DisconnectCommand}" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                            </GridView.Columns>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </Grid>
-        </Expander>
-        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" />
-        <Expander Header="メタ情報" Grid.Row="3" IsExpanded="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <i:Interaction.Behaviors>
-                <local:GridColumnWidthReseterBehaviour TargetGridRowIndex="0" />
-            </i:Interaction.Behaviors>
-            <Grid>
-                <DataGrid ItemsSource="{Binding MetaCollection, IsAsync=True}" Margin="0" MinHeight="80"
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="50">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="接続" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="接続" IsEnabled="{Binding CanConnect}" Command="{Binding ConnectCommand}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="50">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="切断" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="切断" IsEnabled="{Binding CanDisconnect}" Command="{Binding DisconnectCommand}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView.Columns>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" ResizeDirection="Rows" />
+        <Grid Grid.Row="3">
+            <DataGrid ItemsSource="{Binding MetaCollection, IsAsync=True}" Margin="0" MinHeight="80"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
@@ -208,27 +199,26 @@
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
                       >
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}">
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="タイトル" Binding="{Binding Title}">
-                        </DataGridTextColumn>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}">
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="タイトル" Binding="{Binding Title}">
+                    </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="経過時間" Binding="{Binding Elapsed}">
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="視聴者数" Binding="{Binding CurrentViewers}">
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="総視聴者数" Binding="{Binding TotalViewers}">
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="アクティブ" Binding="{Binding Active}">
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="その他" Binding="{Binding Others}">
-                        </DataGridTextColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </Expander>
-        <GridSplitter Grid.Row="4" Height="5" HorizontalAlignment="Stretch" />
+                    <DataGridTextColumn Header="経過時間" Binding="{Binding Elapsed}">
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="視聴者数" Binding="{Binding CurrentViewers}">
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="総視聴者数" Binding="{Binding TotalViewers}">
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="アクティブ" Binding="{Binding Active}">
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="その他" Binding="{Binding Others}">
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+        <GridSplitter Grid.Row="4" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" ResizeDirection="Rows"  />
         <local:CommentDataGrid IsShowUserInfoMenuItem="True" Margin="5" Grid.Row="5" />
         <!--<DataGrid x:Name="dataGrid" ItemsSource="{Binding Comments, IsAsync=True}"
                   AutoGenerateColumns="False"

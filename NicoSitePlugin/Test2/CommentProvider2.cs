@@ -98,23 +98,24 @@ namespace NicoSitePlugin.Test2
 
         private void Room_TicketReceived(object sender, string e)
         {
-            var pair = _roomDict.Where(kv => kv.Value.RoomCommentProvider == sender).First();
-            var roomInfo = pair.Key;
+            var roomProvider = sender as RoomCommentProvider;
+            var roomInfo = roomProvider.RoomInfo;
             TicketReceived?.Invoke(this, new TicketReceivedEventArgs { Ticket = e, RoomInfo = roomInfo });
         }
 
         private void Room_InitialCommentsReceived(object sender, List<Chat> e)
         {
-            var pair = _roomDict.Where(kv => kv.Value.RoomCommentProvider == sender).First();
-            var roomInfo = pair.Key;
+            var chat = e;
+            var roomProvider = sender as RoomCommentProvider;
+            var roomInfo = roomProvider.RoomInfo;
             InitialCommentsReceived?.Invoke(this, new InitialChatsReceivedEventArgs { Chat = e, RoomInfo = roomInfo });
         }
 
         private void Room_CommentReceived(object sender, Chat e)
         {
-            var pair = _roomDict.Where(kv => kv.Value.RoomCommentProvider == sender).First();
-            var roomInfo = pair.Key;
             var chat = e;
+            var roomProvider = sender as RoomCommentProvider;
+            var roomInfo = roomProvider.RoomInfo;
             CommentReceived?.Invoke(this, new ChatReceivedEventArgs { Chat = chat, RoomInfo = roomInfo });
         }
         public void Disconnect()

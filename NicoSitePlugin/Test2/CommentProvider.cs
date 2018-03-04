@@ -100,6 +100,8 @@ namespace NicoSitePlugin.Test2
         private readonly string _thread;
         private readonly string _roomName;
         private readonly int _res_from;
+        private readonly RoomInfo _thisRoomInfo;
+        public RoomInfo RoomInfo => _thisRoomInfo;
         private readonly IStreamSocket _socket;
         public RoomCommentProvider(RoomInfo info, int res_from, IStreamSocket socket)
             : this(info.Addr, info.Port, info.Thread, info.RoomLabel, res_from, socket)
@@ -111,6 +113,7 @@ namespace NicoSitePlugin.Test2
             this._port = port;
             this._thread = thread;
             this._roomName = roomName;
+            _thisRoomInfo = new RoomInfo(new MsTest(addr, port, thread), roomName);
             _res_from = res_from;
             _socket = socket;
             _socket.Received += Socket_Received;

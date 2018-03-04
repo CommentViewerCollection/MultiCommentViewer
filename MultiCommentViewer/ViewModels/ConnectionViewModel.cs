@@ -248,6 +248,7 @@ namespace MultiCommentViewer
                         var newName = _connectionName.Name;
                         Renamed?.Invoke(this, new RenamedEventArgs(_beforeName, newName));
                         _beforeName = newName;
+                        RaisePropertyChanged(nameof(Name));
                         break;
                 }
             };

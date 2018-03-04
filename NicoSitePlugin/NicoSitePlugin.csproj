@@ -75,6 +75,7 @@
     <Compile Include="Test2\CommentPostPanelViewModel.cs" />
     <Compile Include="Test2\CommentProvider.cs" />
     <Compile Include="Test2\CommentProvider2.cs" />
+    <Compile Include="Test2\HeartbeatProvider.cs" />
     <Compile Include="Test2\ICommentProvider2.cs" />
     <Compile Include="Test2\NicoCommentProvider3.cs" />
     <Compile Include="Test2\NicoWebsocketCommentProvider.cs" />
@@ -83,6 +84,7 @@
     <Compile Include="Test\ErrorCode.cs" />
     <Compile Include="Test\EmbeddedDataLow.cs" />
     <Compile Include="Test\Exceptions.cs" />
+    <Compile Include="Test\IHeartbeat.cs" />
     <Compile Include="Test\IStreamSocket.cs" />
     <Compile Include="Test\LiveServerInfo.cs" />
     <Compile Include="Test\MsTest.cs" />

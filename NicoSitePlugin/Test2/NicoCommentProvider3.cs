@@ -127,13 +127,82 @@ namespace NicoSitePlugin.Test2
                     }
                     var options = new Old.ResolverOptions(ps);
                     var rooms = await Old.NewRoomResolver.GetRooms(_nicoServer, options);                    
-
+                    
                     var cpTask = _commentProvider.ReceiveAsync();
                     _commentProvider.Add(rooms);
                     var psTask = _psProvider.ReceiveAsync();
-                    
+
+                    var heartbeartProvider = new HeartbeatProvider(_nicoServer);
+                    var heartbeartTask = heartbeartProvider.ReceiveAsync(live_id, _cc);
+
                     //TODO:例外が起きた時の挙動が嫌いだからWhenAllは使いたくない
-                    await Task.WhenAll(cpTask, psTask);
+                    var tasks = new List<Task>
+                    {
+                        cpTask,
+                        psTask,
+                        heartbeartTask,
+                    };
+                    while (tasks.Count > 0)
+                    {
+                        var t = await Task.WhenAny(tasks);
+                        if(t == heartbeartTask)
+                        {
+                            //Heartbeartが終了した。
+                            //追い出しによるエラーで終了した場合は復帰できない。
+                            try
+                            {
+                                await heartbeartTask;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex);
+                            }
+                            tasks.Remove(heartbeartTask);
+                        }
+                        else if (t == psTask)
+                        {
+                            try
+                            {
+                                await psTask;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex);
+                            }
+                            tasks.Remove(psTask);
+                        }
+                        else
+                        {
+                            heartbeartProvider.Disconnect();
+                            _psProvider.Disconnect();
+                            try
+                            {
+                                await heartbeartTask;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex);
+                            }
+                            try
+                            {
+                                await psTask;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex.Message);
+                            }
+                            try
+                            {
+                                await cpTask;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex.Message);
+                            }
+                            break;
+                        }
+                    }
+                    Debug.WriteLine("ニコ生 NicoCommentProvider.ReceiveAsync() 終了");
                 }
             }
             finally

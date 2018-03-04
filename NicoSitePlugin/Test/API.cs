@@ -6,10 +6,30 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
+using System.IO;
+using System.Text;
+
 namespace NicoSitePlugin.Old
 {
-    public static class API
+    static class API
     {
+        public static async Task<HeartbeatResponse> GetHeartbeatAsync(IDataSource dataSource, string liveId, CookieContainer cc)
+        {
+            var url = $"http://live.nicovideo.jp/api/heartbeat?v={liveId}";
+            var res = await dataSource.Get(url, cc);
+            var serializer = new XmlSerializer(typeof(Heartbeat));
+            
+            var ms = new MemoryStream(Encoding.UTF8.GetBytes(res));
+            var heartbeat = serializer.Deserialize(ms) as Heartbeat;
+            if (heartbeat.Status == "ok")
+            {
+                return new HeartbeatResponse((IHeartbeat)heartbeat);
+            }
+            else
+            {
+                return new HeartbeatResponse((IHeartbeartFail)heartbeat);
+            }
+        }
         public static async Task<string> GetPostKey(IDataSource dataSource, string threadId, int blockNo, CookieContainer cc)
         {
             var url = $"http://live.nicovideo.jp/api/getpostkey?thread={threadId}&block_no={blockNo}&uselc=1&locale_flag=1&seat_flag=1&lang_flag=1";

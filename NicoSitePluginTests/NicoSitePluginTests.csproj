@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="APITests.cs" />
     <Compile Include="ChannelCommentProviderTests.cs" />
+    <Compile Include="ChannelPlayerStatusProviderTests.cs" />
     <Compile Include="MetadataParserTests.cs" />
     <Compile Include="NicoSiteContextTests.cs" />
     <Compile Include="PlayerStatusTests.cs" />

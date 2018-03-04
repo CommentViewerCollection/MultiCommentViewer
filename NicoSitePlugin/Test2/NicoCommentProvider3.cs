@@ -105,15 +105,12 @@ namespace NicoSitePlugin.Test2
                     //new
                     //1,まず、自分の部屋をを認識するために普通にpsを取得。コメント投稿時等必要なことがある。
                     //2,1で取ったpsから計算して出来る限りの部屋を取得
-                    //3,
+                    //3,コメントの取得を開始する
+                    //4,数分毎に
 
-                    if (ps.ProviderType== ProviderType.Channel)
+                    if (ps.ProviderType== ProviderType.Channel|| ps.ProviderType== ProviderType.Community)
                     {
-                        _psProvider = new ChannelPlayerStatusProvider();
-                    }
-                    else if(ps.ProviderType == ProviderType.Community)
-                    {
-                        _psProvider = new CommunityPlayerStatusProvider();
+                        _psProvider = new ChannelCommunityPlayerStatusProvider(_nicoServer, live_id, 5 * 60 * 1000, _cc);
                     }
                     else if(ps.ProviderType == ProviderType.Official)
                     {
@@ -125,11 +122,13 @@ namespace NicoSitePlugin.Test2
 
                         return;
                     }
+                    _psProvider.Received += _psProvider_Received;
                     var options = new Old.ResolverOptions(ps);
-                    var rooms = await Old.NewRoomResolver.GetRooms(_nicoServer, options);                    
+                    var rooms = await Old.NewRoomResolver.GetRooms(_nicoServer, options);
+                    
                     
                     var cpTask = _commentProvider.ReceiveAsync();
-                    _commentProvider.Add(rooms);
+                    AddRooms(rooms);
                     var psTask = _psProvider.ReceiveAsync();
 
                     var heartbeartProvider = new HeartbeatProvider(_nicoServer);
@@ -309,14 +308,22 @@ namespace NicoSitePlugin.Test2
         }
         List<Old.RoomInfo> _rooms = new List<Old.RoomInfo>();
         private readonly object _lockObj = new object();
+        /// <summary>
+        /// 部屋を追加
+        /// </summary>
+        /// <param name="rooms"></param>
+        private void AddRooms(List<RoomInfo> rooms)
+        {
+            lock (_lockObj)
+            {
+                var newRooms = rooms.Except(_rooms).ToList();
+                _commentProvider.Add(newRooms);
+            }
+        }
         private void _psProvider_Received(object sender, Old.IPlayerStatus e)
         {
             var psRooms = GetRoomInfo(e);
-            lock (_lockObj)
-            {
-                var newRooms = _rooms.Except(psRooms);
-                _commentProvider.Add(newRooms);
-            }
+            AddRooms(psRooms);
         }
         private List<Old.RoomInfo> GetRoomInfo(Old.IPlayerStatus ps)
         {

@@ -252,6 +252,13 @@ namespace MultiCommentViewer
         private void Connection_SelectedSiteChanged(object sender, SelectedSiteChangedEventArgs e)
         {
             SetDict(e.NewValue);
+
+            var connectionVm = sender as ConnectionViewModel;
+            Debug.Assert(connectionVm != null);
+            if (connectionVm == SelectedConnection)
+            {
+                MessengerInstance.Send(new SetPostCommentPanel(connectionVm.CommentPostPanel));
+            }
         }
 
         private void Connection_Renamed(object sender, RenamedEventArgs e)

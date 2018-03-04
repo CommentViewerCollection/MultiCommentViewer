@@ -106,7 +106,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var match = Regex.Match(sub, "ytcfg\\.set\\(({.+})\\);", RegexOptions.Singleline);
             if (!match.Success)
             {
-                throw new ParseException("仕様変更？");
+                throw new ParseException(liveChatHtml);
             }
             var ytCfg = match.Groups[1].Value;
             return ytCfg;
@@ -116,7 +116,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+});\\s*</script>", RegexOptions.Singleline);
             if (!match.Success)
             {
-                throw new Exception("仕様変更？");
+                throw new ParseException(liveChatHtml);
             }
             var ytInitialData = match.Groups[1].Value;
             return ytInitialData;

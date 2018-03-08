@@ -37,5 +37,6 @@ namespace SitePlugin
         /// </summary>
         int Height { get; }
         System.Drawing.Image Image { get; }
+        string Alt { get; }
     }
 }

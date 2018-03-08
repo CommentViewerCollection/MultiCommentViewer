@@ -19,6 +19,74 @@ namespace Common.Wpf
 {
     internal static class ConverterTools
     {
+        public static InlineUIContainer RemoteImage2UiContainer(IMessageImage remoteIcon)
+        {
+            var uri = remoteIcon.Url;
+            var wc = new System.Net.WebClient { CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.CacheIfAvailable) };
+            var bi = new BitmapImage();
+            Image image = null;
+            try
+            {
+                bi.BeginInit();
+                bi.StreamSource = new System.IO.MemoryStream(wc.DownloadData(uri));
+                bi.EndInit();
+                bi.Freeze();
+                image = new Image()
+                {
+                    Width = remoteIcon.Width ?? bi.Width,
+                    Height = remoteIcon.Height ?? bi.Height,
+                    Source = bi,
+                };
+                if (!string.IsNullOrEmpty(remoteIcon.Alt))
+                {
+                    image.ToolTip = remoteIcon.Alt;
+                }
+            }
+            catch (System.Net.WebException)
+            {
+
+            }
+            catch (System.IO.IOException) { }
+            catch (InvalidOperationException) { }
+            finally
+            {
+                wc.Dispose();
+            }
+            return image != null ? new InlineUIContainer(image) : null;
+        }
+        public static InlineUIContainer ImagePortion2UiContainer(IMessageImagePortion ico)
+        {
+            var bitmap = new System.Drawing.Bitmap(ico.Image);
+            var rectangle = new System.Drawing.Rectangle(ico.SrcX, ico.SrcY, ico.SrcWidth, ico.SrcHeight);
+            var cropped = bitmap.Clone(rectangle, bitmap.PixelFormat);
+            var bitmapImage = ConverterTools.ConvertFromBitmap(cropped, System.Drawing.Imaging.ImageFormat.Png);
+            var image = new Image()
+            {
+                Width = ico.Width,
+                Height = ico.Height,
+                Source = bitmapImage,
+            };
+            if (!string.IsNullOrEmpty(ico.Alt))
+            {
+                image.ToolTip = ico.Alt;
+            }
+            return new InlineUIContainer(image);
+        }
+        public static BitmapImage ConvertFromBitmap(System.Drawing.Bitmap bitmap, System.Drawing.Imaging.ImageFormat format)
+        {
+            using (var stream = new System.IO.MemoryStream())
+            {
+                bitmap.Save(stream, format);
+                stream.Seek(0, System.IO.SeekOrigin.Begin);
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = stream;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+                bitmapImage.Freeze();
+                return bitmapImage;
+            }
+        }
         public static Inline Convert(IMessageImage remoteIcon)
         {
             var uri = remoteIcon.Url;
@@ -36,8 +104,11 @@ namespace Common.Wpf
                     Width = remoteIcon.Width ?? bi.Width,
                     Height = remoteIcon.Height ?? bi.Height,
                     Source = bi,
-                    ToolTip = remoteIcon.Alt,
                 };
+                if (!string.IsNullOrEmpty(remoteIcon.Alt))
+                {
+                    image.ToolTip = remoteIcon.Alt;
+                }
             }
             catch (System.Net.WebException)
             {
@@ -80,13 +151,33 @@ namespace Common.Wpf
             {
                 return collection;
             }
-            //IMessagePart before = null;
+            IMessagePart before = null;
             foreach (IMessagePart item in items)
             {
                 if (item is IMessageText text)
                 {
                     collection.Add(new Run(text.Text));
                 }
+                else if(item is IMessageImage remoteImage)
+                {
+                    var uiContainer = ConverterTools.RemoteImage2UiContainer(remoteImage);
+                    if (uiContainer != null)
+                    {
+                        collection.Add(uiContainer);
+                    }
+                }
+                else if (item is IMessageImagePortion ico)
+                {
+                    if (before is IMessageText)
+                        collection.Add(new Run(" "));
+
+                    var uiContainer = ConverterTools.ImagePortion2UiContainer(ico);
+                    if (uiContainer != null)
+                    {
+                        collection.Add(uiContainer);
+                    }
+                }
+                before = item;
             }
             return collection;
         }
@@ -107,47 +198,33 @@ namespace Common.Wpf
             {
                 return collection;
             }
+            IMessagePart before = null;
             foreach (IMessagePart item in items)
             {
                 if (item is IMessageText text)
                 {
                     collection.Add(new Run(text.Text));
                 }
-                else if (item is IMessageImage remoteIcon)
+                else if (item is IMessageImage remoteImage)
                 {
-                    var uri = remoteIcon.Url;
-                    var wc = new System.Net.WebClient { CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.CacheIfAvailable) };
-                    var bi = new BitmapImage();
-                    Image image = null;
-                    try
+                    var uiContainer = ConverterTools.RemoteImage2UiContainer(remoteImage);
+                    if (uiContainer != null)
                     {
-                        bi.BeginInit();
-                        bi.StreamSource = new System.IO.MemoryStream(wc.DownloadData(uri));
-                        bi.EndInit();
-                        bi.Freeze();
-                        image = new Image()
-                        {
-                            Width = remoteIcon.Width ?? bi.Width,
-                            Height = remoteIcon.Height ?? bi.Height,
-                            Source = bi,
-                            ToolTip = remoteIcon.Alt,
-                        };
-                    }
-                    catch (System.Net.WebException)
-                    {
-
-                    }
-                    catch (System.IO.IOException) { }
-                    catch (InvalidOperationException) { }
-                    finally
-                    {
-                        wc.Dispose();
-                    }
-                    if (image != null)
-                    {
-                        collection.Add(new InlineUIContainer(image));
+                        collection.Add(uiContainer);
                     }
                 }
+                else if (item is IMessageImagePortion ico)
+                {
+                    if (before is IMessageText)
+                        collection.Add(new Run(" "));
+
+                    var uiContainer = ConverterTools.ImagePortion2UiContainer(ico);
+                    if (uiContainer != null)
+                    {
+                        collection.Add(uiContainer);
+                    }
+                }
+                before = item;
             }
             return collection;
         }

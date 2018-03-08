@@ -14,8 +14,8 @@ namespace SitePlugin
         Guid Guid { get; }
         string DisplayName { get; }
         IOptionsTabPage TabPanel { get; }
-        void SaveOptions(string dir, IIo io);
-        void LoadOptions(string dir, IIo io);        
+        void SaveOptions(string path, IIo io);
+        void LoadOptions(string path, IIo io);        
         ICommentProvider CreateCommentProvider();
         /// <summary>
         /// inputがこのサイトの入力値に適合しているか

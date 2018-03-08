@@ -131,8 +131,14 @@ namespace MultiCommentViewer
                 _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dic1, _dispatcher);
                 foreach (var site in _siteContexts)
                 {
-                    var path = GetSiteOptionsPath(site);
-                    site.LoadOptions(path, _io);
+                    try
+                    {
+                        var path = GetSiteOptionsPath(site);
+                        site.LoadOptions(path, _io);
+                    }catch(Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
                 }
                 _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
 

@@ -14,8 +14,9 @@ namespace MultiCommentViewer.Test
         {
 
             var list = new List<ISiteContext>
-            {
+            {   
                 new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, logger, userStore),
+                new OpenrecSitePlugin.OpenrecSiteContext(options, logger, userStore),
                 new TwitchSitePlugin.TwitchSiteContext(options, logger, userStore, dispatcher),
                 new NicoSitePlugin.Old.NicoSiteContext(options, logger, userStore),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger, userStore, dispatcher),

@@ -56,6 +56,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YouTubeLiveCommentViewer", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentGeneratorPlugin", "CommentGeneratorPlugin\CommentGeneratorPlugin.csproj", "{88B68D39-41A4-4C10-B942-0F3BE976D7A3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenrecSitePlugin", "OpenrecSitePlugin\OpenrecSitePlugin.csproj", "{B56F2F0D-197A-4A29-A29A-1F92ECD81902}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -154,6 +156,10 @@ Global
 		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B56F2F0D-197A-4A29-A29A-1F92ECD81902}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B56F2F0D-197A-4A29-A29A-1F92ECD81902}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B56F2F0D-197A-4A29-A29A-1F92ECD81902}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B56F2F0D-197A-4A29-A29A-1F92ECD81902}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -111,7 +111,7 @@ namespace Common
             }
         }
 
-        public virtual bool IsVisible { get; } = true;
+        public virtual bool IsVisible { get; protected set; } = true;
 
         public ICommentProvider CommentProvider { get; protected set; }
         

@@ -9,18 +9,21 @@ namespace TwicasSitePlugin
     [Serializable]
     internal class InvalidBroadcasterIdException : Exception
     {
-        public InvalidBroadcasterIdException() { }
-        public InvalidBroadcasterIdException(string message) : base(message) { }
-        public InvalidBroadcasterIdException(string message, Exception inner) : base(message, inner) { }
-        protected InvalidBroadcasterIdException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        public string InvalidInput { get; }
+        public InvalidBroadcasterIdException(string input)
+        {
+            InvalidInput = input;
+        }
     }
     [Serializable]
     internal class SpecChangedException : Exception
     {
+        public string Raw { get; }
         public SpecChangedException() { }
-        public SpecChangedException(string message) : base(message) { }
+        public SpecChangedException(string message, string raw) : base(message)
+        {
+            Raw = raw;
+        }
         public SpecChangedException(string message, Exception inner) : base(message, inner) { }
         protected SpecChangedException(
           System.Runtime.Serialization.SerializationInfo info,

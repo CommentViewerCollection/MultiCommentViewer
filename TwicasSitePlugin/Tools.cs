@@ -106,14 +106,14 @@ namespace TwicasSitePlugin
             string name;
             string message;
 
-            var match = Regex.Match(html, "<img src=\"(?<thumbnail>[^\"]+)\" width=\"\\d+\" height=\"\\d+\">");
+            var match = Regex.Match(html, "<img src=\"(?<thumbnail>[^\"]+)\" width=\"\\d+\" height=\"\\d+\"");
             if (match.Success)
             {
                 thumbnailUrl = match.Groups["thumbnail"].Value;
             }
             else
             {
-                throw new SpecChangedException("仕様変更があったかも");
+                throw new SpecChangedException("仕様変更があったかも",html);
             }
 
             //名前に"<"とか">"が含まれることがある。
@@ -124,7 +124,7 @@ namespace TwicasSitePlugin
             }
             else
             {
-                throw new SpecChangedException("仕様変更があったかも");
+                throw new SpecChangedException("仕様変更があったかも",html);
             }
             var match2 = Regex.Match(html, "<span class=\"comment-text\">(?<message>.+?)</span>");
             if (match2.Success)
@@ -133,7 +133,7 @@ namespace TwicasSitePlugin
             }
             else
             {
-                throw new SpecChangedException("仕様変更があったかも");
+                throw new SpecChangedException("仕様変更があったかも",html);
             }
             return (name, thumbnailUrl, message);
         }

@@ -72,12 +72,13 @@ namespace TwicasSitePlugin
             }
             catch(InvalidBroadcasterIdException ex)
             {
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"input=\"{input}\"");
                 //TODO:Info
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
             }
             finally
             {

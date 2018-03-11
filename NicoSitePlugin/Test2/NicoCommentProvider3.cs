@@ -108,12 +108,18 @@ namespace NicoSitePlugin.Test2
                     //3,コメントの取得を開始する
                     //4,数分毎に
 
+
+                    var cpTask = _commentProvider.ReceiveAsync();
                     if (ps.ProviderType== ProviderType.Channel|| ps.ProviderType== ProviderType.Community)
                     {
+                        //ChannelとCommunityはPlayerStatusのmsの値を使わない方が良い。ProgramInfoのThreadIdと値が違う。
                         _psProvider = new ChannelCommunityPlayerStatusProvider(_nicoServer, live_id, 5 * 60 * 1000, _cc);
                     }
                     else if(ps.ProviderType == ProviderType.Official)
                     {
+                        var options = new Old.ResolverOptions(ps);
+                        var rooms = await Old.NewRoomResolver.GetRooms(_nicoServer, options);
+                        AddRooms(rooms);
                         _psProvider = new OfficialPlayerStatusProvider();
                     }
                     else
@@ -123,12 +129,6 @@ namespace NicoSitePlugin.Test2
                         return;
                     }
                     _psProvider.Received += _psProvider_Received;
-                    var options = new Old.ResolverOptions(ps);
-                    var rooms = await Old.NewRoomResolver.GetRooms(_nicoServer, options);
-                    
-                    
-                    var cpTask = _commentProvider.ReceiveAsync();
-                    AddRooms(rooms);
                     var psTask = _psProvider.ReceiveAsync();
 
                     var heartbeartProvider = new HeartbeatProvider(_nicoServer);
@@ -316,14 +316,17 @@ namespace NicoSitePlugin.Test2
         {
             lock (_lockObj)
             {
-                var newRooms = rooms.Except(_rooms).ToList();
-                _commentProvider.Add(newRooms);
+                var newRooms = Tools.Distinct(_rooms, rooms);
+                if (newRooms.Count > 0)
+                {
+                    _rooms.AddRange(newRooms);
+                    _commentProvider.Add(newRooms);
+                }
             }
         }
-        private void _psProvider_Received(object sender, Old.IPlayerStatus e)
+        private void _psProvider_Received(object sender, List<RoomInfo> rooms)
         {
-            var psRooms = GetRoomInfo(e);
-            AddRooms(psRooms);
+            AddRooms(rooms);
         }
         private List<Old.RoomInfo> GetRoomInfo(Old.IPlayerStatus ps)
         {

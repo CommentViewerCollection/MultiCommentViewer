@@ -13,6 +13,29 @@ namespace NicoSitePluginTests
     class ToolsTests
     {
         [Test]
+        public void Nico_DistinctTest()
+        {
+            CollectionAssert.AreEquivalent(new List<int> { 3 }, Tools.Distinct<int>(new List<int> { 1, 2 }, new List<int> { 1, 2, 3 }));
+
+            var expected = new List<RoomInfo>
+            {
+                new RoomInfo(new MsTest("c", 2, "2"),"c"),
+            };
+            var main = new List<RoomInfo>
+            {
+                new RoomInfo(new MsTest("a", 0, "0"),"a"),
+                new RoomInfo(new MsTest("b", 1, "1"),"b"),
+            };
+            var newList = new List<RoomInfo>
+            {
+                new RoomInfo(new MsTest("a", 0, "0"),"a"),
+                new RoomInfo(new MsTest("b", 1, "1"),"b"),
+                new RoomInfo(new MsTest("c", 2, "2"),"c"),
+            };
+            var actual = Tools.Distinct(main, newList);
+            CollectionAssert.AreEquivalent(expected, actual);
+        }
+        [Test]
         public void GetShortRoomName()
         {
             Assert.AreEqual("ｱ", Tools.GetShortRoomName("co123"));

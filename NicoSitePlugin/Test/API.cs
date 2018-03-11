@@ -8,11 +8,76 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 
+namespace NicoSitePlugin
+{
+    class ProgramInfo
+    {
+        public string Title { get; }
+        public ProgramInfo(Low.ProgramInfo.RootObject low)
+        {
+            Title = low.data.title;
+
+        }
+    }
+}
+namespace NicoSitePlugin.Low.ProgramInfo
+{
+    public class Meta
+    {
+        public int status { get; set; }
+        public string errorCode { get; set; }
+    }
+
+    public class Room
+    {
+        public string webSocketUri { get; set; }
+        public string xmlSocketUri { get; set; }
+        public string name { get; set; }
+        public int id { get; set; }
+        public string threadId { get; set; }
+    }
+
+    public class SocialGroup
+    {
+        public string type { get; set; }
+        public string id { get; set; }
+        public string name { get; set; }
+    }
+
+    public class Data
+    {
+        public string title { get; set; }
+        public string description { get; set; }
+        public bool isMemberOnly { get; set; }
+        public int vposBaseAt { get; set; }
+        public int beginAt { get; set; }
+        public int endAt { get; set; }
+        public string status { get; set; }
+        public List<string> categories { get; set; }
+        public List<Room> rooms { get; set; }
+        public SocialGroup socialGroup { get; set; }
+    }
+
+    public class RootObject
+    {
+        public Meta meta { get; set; }
+        public Data data { get; set; }
+    }
+}
 namespace NicoSitePlugin.Old
 {
+
     static class API
     {
+        public static async Task<NicoSitePlugin.Low.ProgramInfo.RootObject> GetProgramInfo(IDataSource dataSource, string liveId, CookieContainer cc)
+        {
+            var url = $"http://live2.nicovideo.jp/watch/{liveId}/programinfo";
+            var res = await dataSource.Get(url, cc);
+            var low = Tools.Deserialize<NicoSitePlugin.Low.ProgramInfo.RootObject>(res);
+            return low;
+        }
         public static async Task<HeartbeatResponse> GetHeartbeatAsync(IDataSource dataSource, string liveId, CookieContainer cc)
         {
             var url = $"http://live.nicovideo.jp/api/heartbeat?v={liveId}";

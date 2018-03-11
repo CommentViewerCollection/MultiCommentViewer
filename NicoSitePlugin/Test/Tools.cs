@@ -8,6 +8,30 @@ namespace NicoSitePlugin.Old
 {
     public static class Tools
     {
+        public static List<T> Distinct<T>(List<T> main, List<T> newList)
+        {
+            var ret = new List<T>();
+            foreach(var item in newList)
+            {
+                if (!main.Contains(item))
+                {
+                    ret.Add(item);
+                }
+            }
+            return ret;
+        }
+        public static T Deserialize<T>(string json)
+        {
+            T low;
+            try
+            {
+                low = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+            }catch(Exception ex)
+            {
+                throw new Test.ParseException(json, ex);
+            }
+            return low;
+        }
         public static string GetShortRoomName(string roomName)
         {
             if(Regex.IsMatch(roomName, "^ch\\d+$") || Regex.IsMatch(roomName, "^co\\d+$"))

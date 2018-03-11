@@ -12,6 +12,26 @@ namespace TwitchSitePlugin
 {
     internal static class Tools
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="json"></param>
+        /// <exception cref="ParseException"></exception>
+        /// <returns></returns>
+        public static T Deserialize<T>(string json)
+        {
+            T low;
+            try
+            {
+                low = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException(json, ex);
+            }
+            return low;
+        }
         class EmotContext
         {
             public string Id { get; set; }

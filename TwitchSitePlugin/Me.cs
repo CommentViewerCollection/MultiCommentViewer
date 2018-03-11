@@ -30,6 +30,19 @@ namespace TwitchSitePlugin
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
+    [Serializable]
+    public class ParseException : Exception
+    {
+        public string Raw { get; }
+        public ParseException(string raw)
+        {
+            Raw = raw;
+        }
+        public ParseException(string raw, Exception inner) : base("", inner)
+        {
+            Raw = raw;
+        }
+    }
     internal static class API
     {
         public static async Task<LowObject.Emoticons> GetEmotIcons(IDataServer server, long myUserId, CookieContainer cc)
@@ -54,7 +67,7 @@ namespace TwitchSitePlugin
                 new KeyValuePair<string, string>("twitch-api-token",apiToken),
             };
             var s = await server.GetAsync($"https://api.twitch.tv/v5/users/{userId}/emotes?on_site=1", cc, headers);
-            var low = JsonConvert.DeserializeObject<LowObject.Emoticons>(s);
+            var low = Tools.Deserialize<LowObject.Emoticons>(s);
             return low;
         }
         /// <summary>
@@ -85,7 +98,7 @@ namespace TwitchSitePlugin
                 new KeyValuePair<string, string>("twitch-api-token",apiToken),
             };
             var s = await server.GetAsync("https://api.twitch.tv/api/me?on_site=1", cc, headers);
-            var low = JsonConvert.DeserializeObject<LowObject.Me>(s);
+            var low = Tools.Deserialize<LowObject.Me>(s);
             return new MeTest(low);
         }
     }

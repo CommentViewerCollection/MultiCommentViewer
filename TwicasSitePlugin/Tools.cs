@@ -230,5 +230,9 @@ namespace TwicasSitePlugin
             }
             throw new ArgumentException("invalid input");
         }
+        public static bool IsValidUrl(string input)
+        {
+            return Regex.IsMatch(input, "twitcasting\\.tv/([a-zA-Z0-9:_]+)");
+        }
     }
 }

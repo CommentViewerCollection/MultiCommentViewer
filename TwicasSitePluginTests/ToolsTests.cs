@@ -27,5 +27,10 @@ namespace TwicasSitePluginTests
             CollectionAssert.AreEquivalent(new List<IMessagePart> { new MessageText("だったらスロ配信すんなw") }, data.Message);
             Assert.AreEqual("https://imagegw02.twitcasting.tv/image3s/abs.twimg.com/sticky/default_profile_images/default_profile_normal.png", data.ThumbnailUrl);
         }
+        [Test]
+        public void Twicas_IsValidUrl()
+        {
+            Assert.IsTrue(Tools.IsValidUrl("https://twitcasting.tv/chara2shinai"));
+        }
     }
 }

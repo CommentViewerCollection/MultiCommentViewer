@@ -43,8 +43,7 @@ namespace TwicasSitePlugin
 
         public bool IsValidInput(string input)
         {
-            var broadcasterId = Tools.ExtractBroadcasterId(input);
-            return !string.IsNullOrEmpty(broadcasterId);
+            return Tools.IsValidUrl(input);
         }
 
         private TwicasSiteOptions _siteOptions;

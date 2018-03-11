@@ -131,7 +131,7 @@ namespace TwitchSitePlugin.LowObject
         public bool is_staff { get; set; }
         public bool is_admin { get; set; }
         public bool is_partner { get; set; }
-        public bool is_broadcaster { get; set; }
+        public bool? is_broadcaster { get; set; }
         public string logo { get; set; }
         public bool account_verified { get; set; }
         public string csrf_token { get; set; }

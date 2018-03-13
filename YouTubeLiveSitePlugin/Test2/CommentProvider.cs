@@ -379,11 +379,14 @@ reload:
                 }
                 catch(WebException ex)
                 {
-                    var res = ex.Response as HttpWebResponse;
-                    using (var sr = new System.IO.StreamReader(res.GetResponseStream()))
+                    _logger.LogException(ex);
+                    if (ex.Response is HttpWebResponse res)
                     {
-                        var s = sr.ReadToEnd();
-                        Debug.WriteLine(s);
+                        using (var sr = new System.IO.StreamReader(res.GetResponseStream()))
+                        {
+                            var s = sr.ReadToEnd();
+                            Debug.WriteLine(s);
+                        }
                     }
                 }
                 catch (Exception ex)

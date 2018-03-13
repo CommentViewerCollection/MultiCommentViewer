@@ -65,8 +65,10 @@ namespace Common
             }
             public Error(WebException ex) : this((Exception)ex)
             {
+                Properties.Add(nameof(ex.Status), ex.Status.ToString());
                 if (ex.Response is HttpWebResponse http)
                 {
+                    Properties.Add(nameof(http.StatusCode), http.StatusCode.ToString());
                     using (var sr = new System.IO.StreamReader(http.GetResponseStream()))
                     {
                         var s = sr.ReadToEnd();

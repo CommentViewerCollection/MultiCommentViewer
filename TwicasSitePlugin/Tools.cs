@@ -92,7 +92,7 @@ namespace TwicasSitePlugin
             {
                 Id = low.id,
                 UserId = low.uid,
-                Name = name,
+                Name = ReplaceHtmlEntities(name),
                 Message = ParseMessage(message),
                 ThumbnailUrl = "https:" + thumbnailUrl,
             };

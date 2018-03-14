@@ -1,5 +1,7 @@
-﻿using GalaSoft.MvvmLight;
+﻿using Common;
+using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
+using System;
 using System.Windows;
 using System.Windows.Input;
 
@@ -25,13 +27,24 @@ namespace YouTubeLiveSitePlugin.Test2
             if (CanPostComment)
             {
                 CanPostComment = false;
-                await _commentProvider.PostCommentAsync(Comment);
+                var commentTemp = Comment;
                 Comment = "";
+                try
+                {
+                    await _commentProvider.PostCommentAsync(Comment);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex, "", $"Comment={Comment}");
+                    Comment = commentTemp;
+                }
+                
                 CanPostComment = true;
             }
         }
         private string _comment;
         private readonly CommentProvider _commentProvider;
+        private readonly ILogger _logger;
 
         public string Comment
         {
@@ -43,9 +56,10 @@ namespace YouTubeLiveSitePlugin.Test2
                 RaisePropertyChanged();
             }
         }
-        public CommentPostPanelViewModel(CommentProvider commentProvider)
+        public CommentPostPanelViewModel(CommentProvider commentProvider, ILogger logger)
         {
             _commentProvider = commentProvider;
+            _logger = logger;
             _commentProvider.LoggedInStateChanged += (s, e) =>
             {
                 CanPostComment = _commentProvider.IsLoggedIn;

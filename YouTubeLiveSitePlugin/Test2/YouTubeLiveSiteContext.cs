@@ -71,7 +71,7 @@ namespace YouTubeLiveSitePlugin.Test2
             if (youtubeCommentProvider == null)
                 return null;
 
-            var vm = new CommentPostPanelViewModel(youtubeCommentProvider);
+            var vm = new CommentPostPanelViewModel(youtubeCommentProvider, _logger);
             var panel = new CommentPostPanel
             {
                 //IsEnabled = false,

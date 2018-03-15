@@ -216,7 +216,28 @@ reload:
                     CommentReceived?.Invoke(this, new InfoCommentViewModel(_options, "ytInitialDataの取得に失敗しました"));
                     return;
                 }
-                var (initialContinuation, initialCommentData) = Tools.ParseYtInitialData(ytInitialData);
+                IContinuation initialContinuation;
+                List<CommentData> initialCommentData;
+                try
+                {
+                    (initialContinuation, initialCommentData) = Tools.ParseYtInitialData(ytInitialData);
+                }
+                catch (ContinuationNotExistsException)
+                {
+                    //放送終了
+                    return;
+                }
+                catch(ParseException ex)
+                {
+                    _logger.LogException(ex, "", $"input={input}");
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex,"未知の例外", $"ytInitialData={ytInitialData},input={input}");
+                    CommentReceived?.Invoke(this, new InfoCommentViewModel(_options, "ytInitialDataの解析に失敗しました"));
+                    return;
+                }
                 var initialComments = new List<ICommentViewModel>();
                 foreach(var data in initialCommentData)
                 {
@@ -232,13 +253,20 @@ reload:
                 IsLoggedIn = liveChatContext.IsLoggedIn;
                 if(Tools.TryExtractSendButtonServiceEndpoint(ytInitialData, out string serviceEndPoint))
                 {
-                    var json = DynamicJson.Parse(serviceEndPoint);
-                    _postCommentContext = new PostCommentContext
+                    try
                     {
-                        ClientIdPrefix = json.sendLiveChatMessageEndpoint.clientIdPrefix,
-                        SessionToken = liveChatContext.XsrfToken,
-                        Sej = serviceEndPoint,
-                    };
+                        var json = DynamicJson.Parse(serviceEndPoint);
+                        _postCommentContext = new PostCommentContext
+                        {
+                            ClientIdPrefix = json.sendLiveChatMessageEndpoint.clientIdPrefix,
+                            SessionToken = liveChatContext.XsrfToken,
+                            Sej = serviceEndPoint,
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex, "", $"serviceEndPoint={serviceEndPoint}");
+                    }
                 }
 
                 Task chatTask = null;

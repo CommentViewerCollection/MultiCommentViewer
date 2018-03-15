@@ -121,6 +121,13 @@ namespace YouTubeLiveSitePlugin.Test2
             var ytInitialData = match.Groups[1].Value;
             return ytInitialData;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="s"></param>
+        /// <exception cref="ChatUnavailableException"></exception>
+        /// 
+        /// <returns></returns>
         public static (IContinuation continuation, List<CommentData> actions) ParseYtInitialData(string s)
         {
             var json = DynamicJson.Parse(s);
@@ -130,7 +137,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             if (!json.contents.liveChatRenderer.IsDefined("continuations"))
             {
-                throw new Exception("Continuations無し");
+                throw new ContinuationNotExistsException();
             }
 
             IContinuation continuation;

@@ -36,9 +36,9 @@ namespace YouTubeLiveSitePlugin.Test2
     }
 
     [Serializable]
-    public class NoContinuationException : Exception
+    public class ContinuationNotExistsException : Exception
     {
-        public NoContinuationException() { }
+        public ContinuationNotExistsException() { }
     }
 
     [Serializable]

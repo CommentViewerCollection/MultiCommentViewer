@@ -39,4 +39,8 @@ namespace SitePlugin
         System.Drawing.Image Image { get; }
         string Alt { get; }
     }
+    public interface IMessageLink : IMessageText
+    {
+        string Url { get; }
+    }
 }

@@ -69,6 +69,55 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DynamicJson.cs" />
+    <Compile Include="Next\API.cs" />
+    <Compile Include="Next\Chat.cs" />
+    <Compile Include="Next\ChatProvider.cs" />
+    <Compile Include="Next\CommentPostPanel.xaml.cs">
+      <DependentUpon>CommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Next\CommentPostPanelViewModel.cs" />
+    <Compile Include="Next\DataSource.cs" />
+    <Compile Include="Next\ErrorCode.cs" />
+    <Compile Include="Next\Exceptions.cs" />
+    <Compile Include="Next\HeartbeartError.cs" />
+    <Compile Include="Next\Heartbeat.cs" />
+    <Compile Include="Next\HeartbeatResponse.cs" />
+    <Compile Include="Next\IDataSource.cs" />
+    <Compile Include="Next\IHeartbeartFail.cs" />
+    <Compile Include="Next\IHeartbeat.cs" />
+    <Compile Include="Next\IMs.cs" />
+    <Compile Include="Next\INicoCommentProvider.cs" />
+    <Compile Include="Next\INicoSiteOptions.cs" />
+    <Compile Include="Next\IPlayerStatus.cs" />
+    <Compile Include="Next\IPlayerStatusError.cs" />
+    <Compile Include="Next\IPlayerStatusResponse.cs" />
+    <Compile Include="Next\IProgramInfo.cs" />
+    <Compile Include="Next\IRoomInfo.cs" />
+    <Compile Include="Next\ISplitBuffer.cs" />
+    <Compile Include="Next\IStreamSocket.cs" />
+    <Compile Include="Next\IXmlWsRoomInfo.cs" />
+    <Compile Include="Next\Low\CommunityInfo.cs" />
+    <Compile Include="Next\Low\GetPlayerStatus.cs" />
+    <Compile Include="Next\Low\ProgramInfo.cs" />
+    <Compile Include="Next\Low\RoomInfo.cs" />
+    <Compile Include="Next\MsTest.cs" />
+    <Compile Include="Next\NicoCommentProvider.cs" />
+    <Compile Include="Next\NicoCommentViewModel.cs" />
+    <Compile Include="Next\NicoOptionsPanel.xaml.cs">
+      <DependentUpon>NicoOptionsPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Next\NicoOptionsTabPage.cs" />
+    <Compile Include="Next\NicoSiteContext.cs" />
+    <Compile Include="Next\NicoSiteOptions.cs" />
+    <Compile Include="Next\PlayerStatusError.cs" />
+    <Compile Include="Next\PlayerStatusResponseTest.cs" />
+    <Compile Include="Next\PlayerStatusTest.cs" />
+    <Compile Include="Next\ProviderType.cs" />
+    <Compile Include="Next\RoomCommentProvider.cs" />
+    <Compile Include="Next\SplitBuffer.cs" />
+    <Compile Include="Next\StreamSocket.cs" />
+    <Compile Include="Next\Thread.cs" />
+    <Compile Include="Next\Tools.cs" />
     <Compile Include="Test2\CommentPostPanel.xaml.cs">
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>
@@ -135,6 +184,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Next\CommentPostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Next\NicoOptionsPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Test2\CommentPostPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

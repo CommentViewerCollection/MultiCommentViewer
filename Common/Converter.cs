@@ -99,10 +99,12 @@ namespace Common.Wpf
                 bi.StreamSource = new System.IO.MemoryStream(wc.DownloadData(uri));
                 bi.EndInit();
                 bi.Freeze();
+                var width = remoteIcon.Width == null || remoteIcon.Width.Value == 0 ? bi.Width : remoteIcon.Width.Value;
+                var height = remoteIcon.Height == null || remoteIcon.Height.Value == 0 ? bi.Height : remoteIcon.Height.Value;
                 image = new Image()
                 {
-                    Width = remoteIcon.Width ?? bi.Width,
-                    Height = remoteIcon.Height ?? bi.Height,
+                    Width =width,
+                    Height = height,
                     Source = bi,
                 };
                 if (!string.IsNullOrEmpty(remoteIcon.Alt))

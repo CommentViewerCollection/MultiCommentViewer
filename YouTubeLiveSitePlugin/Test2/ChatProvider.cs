@@ -109,7 +109,7 @@ namespace YouTubeLiveSitePlugin.Test2
                     //放送終了
                     break;
                 }
-                catch (NoContinuationException)
+                catch (ContinuationNotExistsException)
                 {
                     break;
                 }

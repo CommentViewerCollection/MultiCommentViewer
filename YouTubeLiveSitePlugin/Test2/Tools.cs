@@ -315,7 +315,7 @@ namespace YouTubeLiveSitePlugin.Test2
             
             if (!json.response.continuationContents.liveChatContinuation.IsDefined("continuations"))
             {
-                throw new NoContinuationException();
+                throw new ContinuationNotExistsException();
             }
 
             IContinuation continuation;

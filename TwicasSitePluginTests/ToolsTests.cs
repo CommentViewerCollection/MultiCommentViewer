@@ -8,6 +8,7 @@ using TwicasSitePlugin.LowObject;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using SitePlugin;
+using Common;
 
 namespace TwicasSitePluginTests
 {
@@ -25,7 +26,7 @@ namespace TwicasSitePluginTests
             Assert.AreEqual("nd7m0ix", data.UserId);
             Assert.AreEqual("☆", data.Name);
             CollectionAssert.AreEquivalent(new List<IMessagePart> { new MessageText("だったらスロ配信すんなw") }, data.Message);
-            Assert.AreEqual("https://imagegw02.twitcasting.tv/image3s/abs.twimg.com/sticky/default_profile_images/default_profile_normal.png", data.ThumbnailUrl);
+            Assert.AreEqual("http://imagegw02.twitcasting.tv/image3s/abs.twimg.com/sticky/default_profile_images/default_profile_normal.png", data.ThumbnailUrl);
         }
         [Test]
         public void Twicas_IsValidUrl()

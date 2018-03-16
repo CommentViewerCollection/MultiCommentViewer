@@ -21,8 +21,8 @@ namespace TwicasSitePlugin
         public void Cancel()
         {
         }
-        private readonly TabPagePanel _panel;
-        public TwicasOptionsTabPage(string displayName, TabPagePanel panel)
+        private readonly TwicasOptionsPanel _panel;
+        public TwicasOptionsTabPage(string displayName, TwicasOptionsPanel panel)
         {
             HeaderText = displayName;
             _panel = panel;
@@ -34,11 +34,19 @@ namespace TwicasSitePlugin
 
         public string DisplayName => "Twicas";
 
-        public IOptionsTabPage TabPanel => throw new NotImplementedException();
+        public IOptionsTabPage TabPanel
+        {
+            get
+            {
+                var panel = new TwicasOptionsPanel();
+                panel.SetViewModel(new TwicasOptionsViewModel(_siteOptions));
+                return new TwicasOptionsTabPage(DisplayName, panel);
+            }
+        }
 
         public ICommentProvider CreateCommentProvider()
         {
-            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStore, _dispatcher);
+            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStore);
         }
 
         public bool IsValidInput(string input)
@@ -65,13 +73,11 @@ namespace TwicasSitePlugin
         private readonly ICommentOptions _options;
         private readonly ILogger _logger;
         private readonly IUserStore _userStore;
-        private readonly Dispatcher _dispatcher;
-        public TwicasSiteContext(ICommentOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
+        public TwicasSiteContext(ICommentOptions options, ILogger logger, IUserStore userStore)
         {
             _options = options;
             _logger = logger;
             _userStore = userStore;
-            _dispatcher = dispatcher;
         }
     }
 }

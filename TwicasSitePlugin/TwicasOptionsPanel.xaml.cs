@@ -16,21 +16,21 @@ using System.Windows.Shapes;
 namespace TwicasSitePlugin
 {
     /// <summary>
-    /// Interaction logic for TabPagePanel.xaml
+    /// Interaction logic for TwicasOptionsPanel.xaml
     /// </summary>
-    public partial class TabPagePanel : UserControl
+    public partial class TwicasOptionsPanel : UserControl
     {
-        public TabPagePanel()
+        public TwicasOptionsPanel()
         {
             InitializeComponent();
         }
-        internal void SetViewModel(TwicasSiteOptionsViewModel vm)
+        public void SetViewModel(TwicasOptionsViewModel vm)
         {
             this.DataContext = vm;
         }
-        internal TwicasSiteOptionsViewModel GetViewModel()
+        public TwicasOptionsViewModel GetViewModel()
         {
-            return (TwicasSiteOptionsViewModel)this.DataContext;
+            return (TwicasOptionsViewModel)this.DataContext;
         }
     }
 }

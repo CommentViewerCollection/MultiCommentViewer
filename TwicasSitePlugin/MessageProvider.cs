@@ -11,17 +11,54 @@ namespace TwicasSitePlugin
 {
     class MessageProvider
     {
+        public event EventHandler<IEnumerable<ICommentData>> InitialCommentsReceived;
         public event EventHandler<IEnumerable<ICommentData>> Received;
         public event EventHandler<IMetadata> MetaReceived;
+        private List<ICommentData> LowComment2Data(IEnumerable<LowObject.Comment> lows, string raw)
+        {
+            var initialDataList = new List<ICommentData>();
+            foreach (var c in lows)
+            {
+                if (string.IsNullOrEmpty(c.uid))
+                {
+                    continue;
+                }
+                try
+                {
+                    if (c.@class != "other")
+                    {
+                        _logger.LogException(new ParseException("キートス候補" + raw));
+                    }
+                    var data = Tools.Parse(c);
+                    initialDataList.Add(data);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
+            }
+            return initialDataList;
+        }
         public async Task ConnectAsync(string broadcasterId)
         {
             _cts = new CancellationTokenSource();
-
+            //TODO:try-catch
             var liveInfo = await API.GetLiveContext(_server, broadcasterId);
             var cnum = liveInfo.MovieCnum;
             var live_id = liveInfo.MovieId;
             long lastCommentId = 0;
-
+            //TODO:try-catch
+            var (initialComments, initialRaw) = await API.GetListAll(_server, broadcasterId, live_id, lastCommentId, 0, 20, _cc);
+            if (initialComments.Length > 0)
+            {
+                var initialDataList = LowComment2Data(initialComments, initialRaw);
+                if (initialDataList.Count > 0)
+                {
+                    InitialCommentsReceived?.Invoke(this, initialDataList);
+                }
+                var lastComment = initialComments[initialComments.Length - 1];
+                lastCommentId = lastComment.id;
+            }
             //Disconnect()が呼ばれた場合以外は接続し続ける。
             while (!_cts.IsCancellationRequested)
             {
@@ -41,7 +78,7 @@ namespace TwicasSitePlugin
                     {
                         cnum = newCnum;
                         //htmlが""のことがある。コメントを削除した？省いておく
-                        var dataCollection = lowComments.Where(s=>!string.IsNullOrEmpty(s.html)).Select(Tools.Parse).ToList();
+                        var dataCollection = LowComment2Data(lowComments, "");//.Where(s=>!string.IsNullOrEmpty(s.html)).Select(Tools.Parse).ToList();
                         if (dataCollection.Count > 0)
                         {
                             Received?.Invoke(this, dataCollection);
@@ -56,6 +93,7 @@ namespace TwicasSitePlugin
                 }
                 catch (Exception ex)
                 {
+                    //Infoでエラー内容を通知。ただし同じエラーが連続する場合は通知しない
                     _logger.LogException(ex);
                 }
                 try

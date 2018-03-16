@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 using SitePlugin;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using Common;
+
 namespace TwicasSitePlugin
 {
-
-    class MessageLink : IMessageText
+    class MessageLink : IMessageLink
     {
         public string Text { get; set; }
         public string Url { get; set; }
@@ -31,70 +32,98 @@ namespace TwicasSitePlugin
             return Text.GetHashCode() ^ Url.GetHashCode();
         }
     }
-    class MessageText : IMessageText
-    {
-        public string Text { get; }
-        public MessageText(string text)
-        {
-            Text = text;
-        }
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-            {
-                return false;
-            }
-            if (obj is MessageText text)
-            {
-                return this.Text.Equals(text.Text);
-            }
-            return false;
-        }
+    //class MessageText : IMessageText
+    //{
+    //    public string Text { get; }
+    //    public MessageText(string text)
+    //    {
+    //        Text = text;
+    //    }
+    //    public override bool Equals(object obj)
+    //    {
+    //        if (obj == null)
+    //        {
+    //            return false;
+    //        }
+    //        if (obj is MessageText text)
+    //        {
+    //            return this.Text.Equals(text.Text);
+    //        }
+    //        return false;
+    //    }
 
-        public override int GetHashCode()
-        {
-            return Text.GetHashCode();
-        }
-    }
-    public class MessageImage : IMessageImage
-    {
-        public int? Width { get; set; }
+    //    public override int GetHashCode()
+    //    {
+    //        return Text.GetHashCode();
+    //    }
+    //}
+    //public class MessageImage : IMessageImage
+    //{
+    //    public int? Width { get; set; }
 
-        public int? Height { get; set; }
+    //    public int? Height { get; set; }
 
-        public string Url { get; set; }
+    //    public string Url { get; set; }
 
-        public string Alt { get; set; }
+    //    public string Alt { get; set; }
 
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-            {
-                return false;
-            }
-            if (obj is MessageImage image)
-            {
-                return this.Url.Equals(image.Url) && this.Alt.Equals(image.Alt);
-            }
-            return false;
-        }
-        public override int GetHashCode()
-        {
-            return Url.GetHashCode() ^ Alt.GetHashCode();
-        }
-    }
+    //    public override bool Equals(object obj)
+    //    {
+    //        if (obj == null)
+    //        {
+    //            return false;
+    //        }
+    //        if (obj is MessageImage image)
+    //        {
+    //            return this.Url.Equals(image.Url) && this.Alt.Equals(image.Alt);
+    //        }
+    //        return false;
+    //    }
+    //    public override int GetHashCode()
+    //    {
+    //        return Url.GetHashCode() ^ Alt.GetHashCode();
+    //    }
+    //}
     static class Tools
     {
+        public static T Deserialize<T>(string json)
+        {
+            T low;
+            try
+            {
+                low = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException(json, ex);
+            }
+            return low;
+        }
         public static ICommentData Parse(LowObject.Comment low)
         {
-            var (name, thumbnailUrl, message) = SplitHtml(low.html);
+            var (name, preThumbnailUrl, message) = SplitHtml(low.html);
+            string thumbnailUrl;
+            if (preThumbnailUrl.StartsWith("https://"))
+            {
+                thumbnailUrl = preThumbnailUrl;
+            }
+            else if (preThumbnailUrl.StartsWith("//"))
+            {
+                thumbnailUrl = "http:" + preThumbnailUrl;
+            }
+            else
+            {
+                throw new ParseException(low.html);
+            }
             var data = new CommentData
             {
                 Id = low.id,
                 UserId = low.uid,
                 Name = ReplaceHtmlEntities(name),
                 Message = ParseMessage(message),
-                ThumbnailUrl = "https:" + thumbnailUrl,
+                ThumbnailUrl = thumbnailUrl,
+                ThumbnailHeight =50,
+                ThumbnailWidth =50,
             };
             return data;
         }
@@ -117,7 +146,7 @@ namespace TwicasSitePlugin
             }
 
             //名前に"<"とか">"が含まれることがある。
-            var match1 = Regex.Match(html, "<span class=\"user\"><a .+?>(?<name>.+?)</a>");
+            var match1 = Regex.Match(html, "<span class=\"user\"><a .+?>(?<name>.*?)</a>");
             if (match1.Success)
             {
                 name = match1.Groups["name"].Value;

@@ -58,6 +58,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentGeneratorPlugin", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenrecSitePlugin", "OpenrecSitePlugin\OpenrecSitePlugin.csproj", "{B56F2F0D-197A-4A29-A29A-1F92ECD81902}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasCommentViewer", "TwicasCommentViewer\TwicasCommentViewer.csproj", "{85B4DE3E-7032-4FB8-A019-9887F398B9F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -160,6 +162,10 @@ Global
 		{B56F2F0D-197A-4A29-A29A-1F92ECD81902}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B56F2F0D-197A-4A29-A29A-1F92ECD81902}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B56F2F0D-197A-4A29-A29A-1F92ECD81902}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85B4DE3E-7032-4FB8-A019-9887F398B9F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85B4DE3E-7032-4FB8-A019-9887F398B9F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85B4DE3E-7032-4FB8-A019-9887F398B9F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85B4DE3E-7032-4FB8-A019-9887F398B9F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

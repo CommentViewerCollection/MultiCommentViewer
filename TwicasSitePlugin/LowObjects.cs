@@ -16,19 +16,27 @@ namespace TwicasSitePlugin.LowObject
         /// <summary>
         /// 放送ID。放送してない時はnull
         /// </summary>
+        /// <exception cref="ParseException"></exception>
         public long? LiveId { get; }
         public int CurrentViewers { get; }
         public int TotalViewers { get; }
         public int CommentCount { get; }
         public StreamChecker(string tabSplitted)
         {
-            var arr = tabSplitted.Split('\t');
-            if (arr.Length < 5) throw new ArgumentException("");
-            var liveId = arr[0];
-            LiveId = string.IsNullOrEmpty(liveId) ? (long?)null : long.Parse(liveId);
-            CommentCount = int.Parse(arr[2]);
-            CurrentViewers = int.Parse(arr[3]);
-            TotalViewers = int.Parse(arr[5]);
+            try
+            {
+                var arr = tabSplitted.Split('\t');
+                if (arr.Length < 5) throw new ArgumentException("");
+                var liveId = arr[0];
+                LiveId = string.IsNullOrEmpty(liveId) ? (long?)null : long.Parse(liveId);
+                CommentCount = int.Parse(arr[2]);
+                CurrentViewers = int.Parse(arr[3]);
+                TotalViewers = int.Parse(arr[5]);
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException(tabSplitted, ex);
+            }
         }
     }
     public class ListUpdate

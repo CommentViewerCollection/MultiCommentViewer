@@ -59,12 +59,12 @@
     <Compile Include="MessageProvider.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TabPagePanel.xaml.cs">
-      <DependentUpon>TabPagePanel.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Tools.cs" />
     <Compile Include="TwicasCommentProvider.cs" />
     <Compile Include="TwicasCommentViewModel.cs" />
+    <Compile Include="TwicasOptionsPanel.xaml.cs">
+      <DependentUpon>TwicasOptionsPanel.xaml</DependentUpon>
+    </Compile>
     <Compile Include="TwicasServer.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -90,7 +90,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="TabPagePanel.xaml">
+    <Page Include="TwicasOptionsPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

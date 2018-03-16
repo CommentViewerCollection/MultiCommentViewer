@@ -8,6 +8,8 @@ namespace TwicasSitePlugin
 {
     internal class TwicasSiteOptions : DynamicOptionsBase
     {
+        //コメント取得インターバル
+        //キートス
         protected override void Init()
         {
         }

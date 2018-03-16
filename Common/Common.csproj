@@ -91,17 +91,21 @@
       <DependentUpon>ColorPicker.xaml</DependentUpon>
     </Compile>
     <Compile Include="DynamicOptionsBase.cs" />
+    <Compile Include="EmptyBrowserProfile.cs" />
     <Compile Include="FontSelectorView.xaml.cs">
       <DependentUpon>FontSelectorView.xaml</DependentUpon>
     </Compile>
     <Compile Include="FontSelectorViewModel.cs" />
     <Compile Include="IBrowserLoader.cs" />
     <Compile Include="InfoCommentViewModel.cs" />
+    <Compile Include="IOTest.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="LoggerTest.cs" />
     <Compile Include="MessageImage.cs" />
     <Compile Include="MessageText.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserStoreTest.cs" />
+    <Compile Include="UserTest.cs" />
     <Compile Include="ValueConverterGroup.cs" />
     <Compile Include="Wpf\NumericUpDown.xaml.cs">
       <DependentUpon>NumericUpDown.xaml</DependentUpon>
@@ -149,6 +153,10 @@
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">
       <Project>{cdbbbf25-ad0c-4eaf-b673-eb0bb198585a}</Project>
       <Name>BrowserCookieInterfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IPlugin\Plugin.csproj">
+      <Project>{735cfeee-5b77-4d36-977b-4cd94a6f3cdb}</Project>
+      <Name>Plugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>

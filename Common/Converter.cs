@@ -207,6 +207,10 @@ namespace Common.Wpf
                 {
                     collection.Add(new Run(text.Text));
                 }
+                else if (item is IMessageLink link)
+                {
+                    collection.Add(new Hyperlink(new Run(link.Text)) { NavigateUri = new Uri(link.Url) });
+                }
                 else if (item is IMessageImage remoteImage)
                 {
                     var uiContainer = ConverterTools.RemoteImage2UiContainer(remoteImage);

@@ -826,6 +826,9 @@ namespace MultiCommentViewer
     }
     public class CommentData : Plugin.ICommentData
     {
+        public string ThumbnailUrl { get; set; }
+        public int ThumbnailWidth { get; set; }
+        public int ThumbnailHeight { get; set; }
         public string Id { get; set; }
 
         public string UserId { get; set; }

@@ -43,6 +43,9 @@ namespace Plugin
     }
     public interface ICommentData
     {
+        string ThumbnailUrl { get; }
+        int ThumbnailWidth { get; }
+        int ThumbnailHeight { get; }
         /// <summary>
         /// コメントID
         /// </summary>

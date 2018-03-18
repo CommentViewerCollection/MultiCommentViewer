@@ -73,12 +73,12 @@ namespace TwicasSitePlugin
                     {
                         live_id = streamChecker.LiveId.Value;
                     }
-                    var (lowComments, newCnum) = await API.GetListUpdate(_server, broadcasterId, live_id, cnum, lastCommentId, _cc);
+                    var (lowComments, newCnum, updateRaw) = await API.GetListUpdate(_server, broadcasterId, live_id, cnum, lastCommentId, _cc);
                     if (lowComments != null && lowComments.Count > 0)
                     {
                         cnum = newCnum;
                         //htmlが""のことがある。コメントを削除した？省いておく
-                        var dataCollection = LowComment2Data(lowComments, "");//.Where(s=>!string.IsNullOrEmpty(s.html)).Select(Tools.Parse).ToList();
+                        var dataCollection = LowComment2Data(lowComments, updateRaw);//.Where(s=>!string.IsNullOrEmpty(s.html)).Select(Tools.Parse).ToList();
                         if (dataCollection.Count > 0)
                         {
                             Received?.Invoke(this, dataCollection);

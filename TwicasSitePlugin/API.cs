@@ -66,7 +66,7 @@ namespace TwicasSitePlugin
         /// <param name="live_id"></param>
         /// <param name="n"></param>
         /// <param name="lastCommentId"></param>
-        public static async Task<(List<LowObject.Comment> LowComments, int Cnum)> GetListUpdate(IDataServer dataSource, string broadcaster, long live_id, int cnum, long lastCommentId, CookieContainer cc)
+        public static async Task<(List<LowObject.Comment> LowComments, int Cnum, string raw)> GetListUpdate(IDataServer dataSource, string broadcaster, long live_id, int cnum, long lastCommentId, CookieContainer cc)
         {
             var url = $"http://twitcasting.tv/{broadcaster}/userajax.php?c=listupdate&m={live_id}&n={cnum}&k={lastCommentId}";
 
@@ -74,13 +74,13 @@ namespace TwicasSitePlugin
 
             if (str == "[]")
             {
-                return (new List<LowObject.Comment>(), cnum);
+                return (new List<LowObject.Comment>(), cnum, str);
             }
             var obj = Tools.Deserialize<LowObject.ListUpdate>(str);
 
             var comments = obj.comment;
             var newCnum = obj.cnum;
-            return (comments, newCnum);
+            return (comments, newCnum, str);
         }
     }
 }

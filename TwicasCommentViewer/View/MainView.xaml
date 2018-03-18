@@ -24,7 +24,7 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.Resources>
-        <local:MessageConverterNext x:Key="messageItemsConverterNext" />
+        <w:MessageConverter x:Key="messageItemsConverterNext" />
         <local:ThumbnailConverterNext x:Key="thumbnailConverterNext" />
         <FrameworkElement x:Key="ProxyElement" DataContext="{Binding}"/>
         <w:NotConverter x:Key="notConverter" />
@@ -198,17 +198,7 @@
                                             >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <w:BindableTextBlock TextWrapping="{Binding UserNameWrapping, Mode=OneWay}" Padding="5,0">
-                                    <w:BindableTextBlock.InlineList>
-                                        <MultiBinding Converter="{StaticResource messageItemsConverterNext}">
-                                            <Binding Path="NameItems" />
-                                            <Binding Path="DataContext.IsOutlineText" Source="{x:Reference dummyElement}" />
-                                            <Binding Path="DataContext.CommentOutlineTextThickness" Source="{x:Reference dummyElement}" />
-                                            <Binding Path="DataContext.CommentOutlineStrokeColor" Source="{x:Reference dummyElement}" />
-                                            <Binding Path="DataContext.CommentOutlineFillColor" Source="{x:Reference dummyElement}" />
-                                        </MultiBinding>
-                                    </w:BindableTextBlock.InlineList>
-                                </w:BindableTextBlock>
+                                <w:BindableTextBlock InlineList="{Binding NameItems, Converter={StaticResource messageItemsConverterNext}}" TextWrapping="{Binding UserNameWrapping, Mode=OneWay}" Padding="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -230,18 +220,7 @@
                                             >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <w:BindableTextBlock TextWrapping="Wrap"
-                                                   Padding="5,0">
-                                    <w:BindableTextBlock.InlineList>
-                                        <MultiBinding Converter="{StaticResource messageItemsConverterNext}">
-                                            <Binding Path="MessageItems" />
-                                            <Binding Path="DataContext.IsOutlineText" Source="{x:Reference dummyElement}" />
-                                            <Binding Path="DataContext.CommentOutlineTextThickness" Source="{x:Reference dummyElement}" />
-                                            <Binding Path="DataContext.CommentOutlineStrokeColor" Source="{x:Reference dummyElement}" />
-                                            <Binding Path="DataContext.CommentOutlineFillColor" Source="{x:Reference dummyElement}" />
-                                        </MultiBinding>
-                                    </w:BindableTextBlock.InlineList>
-                                </w:BindableTextBlock>
+                                <w:BindableTextBlock InlineList="{Binding MessageItems, Converter={StaticResource messageItemsConverterNext}}" TextWrapping="Wrap" Padding="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

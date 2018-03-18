@@ -127,26 +127,6 @@ namespace TwicasCommentViewer
             get { return ChangedOptions.IsPixelScrolling; }
             set { ChangedOptions.IsPixelScrolling = value; }
         }
-        public bool IsOutlineText
-        {
-            get { return ChangedOptions.IsOutlineText; }
-            set { ChangedOptions.IsOutlineText = value; }
-        }
-        public int CommentOutlineTextThickness
-        {
-            get { return ChangedOptions.CommentOutlineTextThickness; }
-            set { ChangedOptions.CommentOutlineTextThickness = value; }
-        }
-        public Color CommentOutlineStrokeColor
-        {
-            get { return ChangedOptions.CommentOutlineStrokeColor; }
-            set { ChangedOptions.CommentOutlineStrokeColor = value; }
-        }
-        public Color CommentOutlineFillColor
-        {
-            get { return ChangedOptions.CommentOutlineFillColor; }
-            set { ChangedOptions.CommentOutlineFillColor = value; }
-        }
         public bool IsEllipseThumbnail
         {
             get { return ChangedOptions.IsEllipseThumbnail; }

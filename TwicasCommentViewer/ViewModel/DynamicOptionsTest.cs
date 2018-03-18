@@ -18,17 +18,9 @@ namespace TwicasCommentViewer
         double MainViewLeft { get; set; }
         double MainViewTop { get; set; }
 
-        //double ConnectionNameWidth { get; set; }
-        //bool IsShowConnectionName { get; set; }
-        //int ConnectionNameDisplayIndex { get; set; }
-
         double ThumbnailWidth { get; set; }
         int ThumbnailDisplayIndex { get; set; }
         bool IsShowThumbnail { get; set; }
-
-        //double CommentIdWidth { get; set; }
-        //int CommentIdDisplayIndex { get; set; }
-        //bool IsShowCommentId { get; set; }
 
         double UsernameWidth { get; set; }
         bool IsShowUsername { get; set; }
@@ -38,9 +30,6 @@ namespace TwicasCommentViewer
         bool IsShowMessage { get; set; }
         int MessageDisplayIndex { get; set; }
 
-        //double InfoWidth { get; set; }
-        //bool IsShowInfo { get; set; }
-        //int InfoDisplayIndex { get; set; }
         bool IsAutoCheckIfUpdateExists { get; set; }
         bool IsAddingNewCommentTop { get; set; }
         bool IsPixelScrolling { get; set; }
@@ -54,10 +43,6 @@ namespace TwicasCommentViewer
         bool IsShowPostTime { get; set; }
 
         bool IsEllipseThumbnail { get; set; }
-        bool IsOutlineText { get; set; }
-        int CommentOutlineTextThickness { get; set; }
-        Color CommentOutlineStrokeColor { get; set; }
-        Color CommentOutlineFillColor { get; set; }
     }
     class DynamicOptionsTest : DynamicOptionsBase, IOptions
     {
@@ -84,24 +69,15 @@ namespace TwicasCommentViewer
         public Color InfoBackColor { get => GetValue(); set => SetValue(value); }
         public Color SelectedRowBackColor { get => GetValue(); set => SetValue(value); }
         public Color SelectedRowForeColor { get => GetValue(); set => SetValue(value); }
-        //public double ConnectionNameWidth { get => GetValue(); set => SetValue(value); }
-        //public bool IsShowConnectionName { get => GetValue(); set => SetValue(value); }
-        //public int ConnectionNameDisplayIndex { get => GetValue(); set => SetValue(value); }
         public double ThumbnailWidth { get => GetValue(); set => SetValue(value); }
         public int ThumbnailDisplayIndex { get => GetValue(); set => SetValue(value); }
         public bool IsShowThumbnail { get => GetValue(); set => SetValue(value); }
-        //public double CommentIdWidth { get => GetValue(); set => SetValue(value); }
-        //public int CommentIdDisplayIndex { get => GetValue(); set => SetValue(value); }
-        //public bool IsShowCommentId { get => GetValue(); set => SetValue(value); }
         public double UsernameWidth { get => GetValue(); set => SetValue(value); }
         public bool IsShowUsername { get => GetValue(); set => SetValue(value); }
         public int UsernameDisplayIndex { get => GetValue(); set => SetValue(value); }
         public double MessageWidth { get => GetValue(); set => SetValue(value); }
         public bool IsShowMessage { get => GetValue(); set => SetValue(value); }
         public int MessageDisplayIndex { get => GetValue(); set => SetValue(value); }
-        //public double InfoWidth { get => GetValue(); set => SetValue(value); }
-        //public bool IsShowInfo { get => GetValue(); set => SetValue(value); }
-        //public int InfoDisplayIndex { get => GetValue(); set => SetValue(value); }
         public bool IsAutoCheckIfUpdateExists { get => GetValue(); set => SetValue(value); }
         public bool IsShowUserId { get => GetValue(); set => SetValue(value); }
         public bool IsShowPostTime { get => GetValue(); set => SetValue(value); }
@@ -115,10 +91,6 @@ namespace TwicasCommentViewer
         public bool IsPixelScrolling { get => GetValue(); set => SetValue(value); }
 
         public bool IsEllipseThumbnail { get => GetValue(); set => SetValue(value); }
-        public bool IsOutlineText { get => GetValue(); set => SetValue(value); }
-        public int CommentOutlineTextThickness { get => GetValue(); set => SetValue(value); }
-        public Color CommentOutlineStrokeColor { get => GetValue(); set => SetValue(value); }
-        public Color CommentOutlineFillColor { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ, Meiryo"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
@@ -173,15 +145,10 @@ namespace TwicasCommentViewer
             Dict.Add(nameof(IsTopmost), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             Dict.Add(nameof(IsUserNameWrapping), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsAddingNewCommentTop), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsPixelScrolling), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsAddingNewCommentTop), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsPixelScrolling), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             Dict.Add(nameof(IsEllipseThumbnail), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(IsOutlineText), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(CommentOutlineTextThickness), new Item { DefaultValue = 1, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
-
-            Dict.Add(nameof(CommentOutlineStrokeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(CommentOutlineFillColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
         }
         public ICommentOptions Clone()
         {

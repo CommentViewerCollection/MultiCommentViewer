@@ -207,22 +207,6 @@ namespace TwicasCommentViewer.ViewModel
         }
         #endregion
 
-        public bool IsOutlineText
-        {
-            get => _options.IsOutlineText;
-        }
-        public int CommentOutlineTextThickness
-        {
-            get => _options.CommentOutlineTextThickness;
-        }
-        public Color CommentOutlineStrokeColor
-        {
-            get => _options.CommentOutlineStrokeColor;
-        }
-        public Color CommentOutlineFillColor
-        {
-            get => _options.CommentOutlineFillColor;
-        }
         public bool IsEllipseThumbnail
         {
             get => _options.IsEllipseThumbnail;

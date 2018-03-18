@@ -182,6 +182,10 @@
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\OutlineTextPlugin\OutlineTextPlugin.csproj">
+      <Project>{0ec125f6-6026-46d7-bc9a-788e2696eced}</Project>
+      <Name>OutlineTextPlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj">
       <Project>{ebcbadab-c5be-440a-be08-c660244d1f15}</Project>
       <Name>TwicasSitePlugin</Name>
@@ -223,6 +227,9 @@ if not exist settings\placeholder powershell New-Item settings\placeholder -Item
 :: BouyomiPluginのファイルを全部持ってくる
 mkdir plugins\Bouyomi
 copy "..\..\..\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
+:: OutlineTextPluginのファイルを全部持ってくる
+mkdir plugins\OutlineText
+copy "..\..\..\OutlineTextPlugin\bin\$(ConfigurationName)\*" "plugins\OutlineText\"
 
 :: CommentGeneratorPluginのファイルを全部持ってくる
 mkdir plugins\CommentGenerator

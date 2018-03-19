@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -170,24 +171,40 @@ namespace TwicasCommentViewer
             }
             return image;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="remoteIcon"></param>
+        /// <returns>404とかで画像が取れなかったらnull</returns>
         public static BitmapImage Convert2ImageSource(IMessageImage remoteIcon)
         {
             var uri = remoteIcon.Url;
             var wc = new System.Net.WebClient { CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.CacheIfAvailable) };
+            System.IO.MemoryStream ms = null;
+            try
+            {
+                ms = new System.IO.MemoryStream(wc.DownloadData(uri));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            if(ms == null)
+            {
+                return null;
+            }
             var bi = new BitmapImage();
             try
             {
                 bi.BeginInit();
-                bi.StreamSource = new System.IO.MemoryStream(wc.DownloadData(uri));
+                bi.StreamSource = ms;
                 bi.EndInit();
                 bi.Freeze();
             }
-            catch (System.Net.WebException)
+            catch (InvalidOperationException)
             {
-
+                return null;
             }
-            catch (System.IO.IOException) { }
-            catch (InvalidOperationException) { }
             finally
             {
                 wc.Dispose();

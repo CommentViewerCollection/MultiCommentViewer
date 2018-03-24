@@ -205,6 +205,7 @@ namespace CommentViewer.Plugin
         }
         public void OnClosing()
         {
+            _settingsView?.ForceClose();
             _writeTimer?.Stop();
             _deleteTimer?.Stop();
             if (_options != null)

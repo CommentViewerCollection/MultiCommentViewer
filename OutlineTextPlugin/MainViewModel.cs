@@ -2,12 +2,14 @@
 using Plugin;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace OutlineTextPlugin
 {
@@ -15,13 +17,25 @@ namespace OutlineTextPlugin
     {
         private readonly Options _options;
 
+        public bool IsEnabled
+        {
+            get { return _options.IsEnabled; }
+            set { _options.IsEnabled = value; }
+        }
         public ObservableCollection<FontFamilyViewModel> FontFamillyCollection { get; private set; }
         public ObservableCollection<int> FontSizeCollection { get; private set; }
         public ObservableCollection<CommentViewModel> Comments { get; }
+        private FontFamilyViewModel _selectedFontFamily;
         public FontFamilyViewModel SelectedFontFamily
         {
-            get { return new FontFamilyViewModel(_options.FontFamily, CultureInfo.CurrentCulture); }
-            set { _options.FontFamily = value.FontFamily; }
+            get { return _selectedFontFamily; }
+            set
+            {
+                if (_options.FontFamily == value.FontFamily)
+                    return;
+                _options.FontFamily = value.FontFamily;
+                _selectedFontFamily = value;
+            }
         }
         public FontFamily FontFamily => _options.FontFamily;
         public FontStyle FontStyle => _options.FontStyle;
@@ -146,17 +160,44 @@ namespace OutlineTextPlugin
             get { return _options.MessageDisplayIndex; }
             set { _options.MessageDisplayIndex = value; }
         }
-        public void Add(ICommentData comment)
+        public async void Add(ICommentData comment)
         {
-            Comments.Insert(0, new CommentViewModel(comment));
+            try
+            {
+                await _dispatcher.BeginInvoke((Action)(() =>
+                {
+                    Comments.Insert(0, new CommentViewModel(comment));
+                }), DispatcherPriority.Normal);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
+        private Dispatcher _dispatcher;
         public MainViewModel(Options options):this()
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
                 {
+                    case nameof(_options.IsEnabled):
+                        RaisePropertyChanged(nameof(IsEnabled));
+                        break;
+                    case nameof(_options.FontFamily):
+                        RaisePropertyChanged(nameof(FontFamily));
+                        break;
+                    case nameof(_options.FontStyle):
+                        RaisePropertyChanged(nameof(FontStyle));
+                        break;
+                    case nameof(_options.FontWeight):
+                        RaisePropertyChanged(nameof(FontWeight));
+                        break;
+                    case nameof(_options.FontSize):
+                        RaisePropertyChanged(nameof(FontSize));
+                        break;
                     case nameof(_options.CommentOutlineTextThickness):
                         RaisePropertyChanged(nameof(CommentOutlineTextThickness));
                         break;
@@ -181,6 +222,7 @@ namespace OutlineTextPlugin
                         break;
                 }
             };
+            SelectedFontFamily = new FontFamilyViewModel(new FontFamily("Meiryo"), CultureInfo.CurrentCulture);
         }
         public MainViewModel()
         {
@@ -188,7 +230,6 @@ namespace OutlineTextPlugin
 
             var fontList = Fonts.SystemFontFamilies.OrderBy(f => f.ToString()).Select(f => new FontFamilyViewModel(f, CultureInfo.CurrentCulture));
             FontFamillyCollection = new ObservableCollection<FontFamilyViewModel>(fontList);
-            //FontFamily = new FontFamilyViewModel(new FontFamily("Meiryo"), CultureInfo.CurrentCulture);
 
             var sizeList = Enumerable.Range(6, 40);
             FontSizeCollection = new ObservableCollection<int>(sizeList);

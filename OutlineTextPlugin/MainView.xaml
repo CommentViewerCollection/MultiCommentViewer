@@ -16,7 +16,7 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="100" />
+            <RowDefinition Height="120" />
             <RowDefinition />
         </Grid.RowDefinitions>
         <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
@@ -112,26 +112,34 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding SelectedFontFamily, Mode=TwoWay}" HorizontalAlignment="Left" Margin="61,7,0,0" VerticalAlignment="Top" Width="77"/>
-        <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" HorizontalAlignment="Left" Margin="89,34,0,0" VerticalAlignment="Top" Width="49"/>
-        <CheckBox Content="太字" IsChecked="{Binding IsBold}" HorizontalAlignment="Left" Margin="61,69,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.636,-0.133"/>
-        <Common:NumericUpDown Value="{Binding CommentOutlineTextThickness}" Minimum="1" HorizontalAlignment="Left" Height="26" Margin="225,4,0,0" VerticalAlignment="Top" Width="43" RenderTransformOrigin="-1.047,0.192"/>
-        <Label Content="縁取りの太さ" HorizontalAlignment="Left" Margin="153,5,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.053,1.154"/>
-        <xctk:ColorPicker SelectedColor="{Binding CommentOutlineStrokeColor}" Margin="225,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
-        <Label Content="縁取りの色" HorizontalAlignment="Left" Margin="153,27,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker SelectedColor="{Binding CommentOutlineFillColor}" Margin="225,62,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
-        <Label Content="内側の色" HorizontalAlignment="Left" Margin="153,58,0,0" VerticalAlignment="Top"/>
-        <Label Content="フォント" HorizontalAlignment="Left" Margin="10,4,0,0" VerticalAlignment="Top"/>
-        <Label Content="フォントサイズ" HorizontalAlignment="Left" Margin="10,27,0,0" VerticalAlignment="Top"/>
 
-        <CheckBox x:Name="checkBox1" Content="行グリッド線（横線）を表示する" IsChecked="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="440,55,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="label8" Content="行グリッド線の色" IsEnabled="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="470,75,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" IsEnabled="{Binding IsShowHorizontalGridLine}" Margin="560,75,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <GroupBox HorizontalAlignment="Left" Height="120" Margin="19,0,0,0" VerticalAlignment="Top" Width="716">
+            <GroupBox.Header>
+                <CheckBox x:Name="IsEnabledCheckbox" IsChecked="{Binding IsEnabled}" Content="有効" />
+            </GroupBox.Header>
+            <Grid IsEnabled="{Binding ElementName=IsEnabledCheckbox, Path=IsChecked}">
+                <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding SelectedFontFamily, Mode=TwoWay}" HorizontalAlignment="Left" Margin="51,5,0,0" VerticalAlignment="Top" Width="77"/>
+                <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" HorizontalAlignment="Left" Margin="79,32,0,0" VerticalAlignment="Top" Width="49"/>
+                <CheckBox Content="太字" IsChecked="{Binding IsBold}" HorizontalAlignment="Left" Margin="10,62,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.636,-0.133"/>
+                <Common:NumericUpDown Value="{Binding CommentOutlineTextThickness}" Minimum="1" HorizontalAlignment="Left" Height="26" Margin="215,2,0,0" VerticalAlignment="Top" Width="43" RenderTransformOrigin="-1.047,0.192"/>
+                <Label Content="縁取りの太さ" HorizontalAlignment="Left" Margin="143,3,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.053,1.154"/>
+                <xctk:ColorPicker SelectedColor="{Binding CommentOutlineStrokeColor}" Margin="215,33,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
+                <Label Content="縁取りの色" HorizontalAlignment="Left" Margin="143,25,0,0" VerticalAlignment="Top"/>
+                <xctk:ColorPicker SelectedColor="{Binding CommentOutlineFillColor}" Margin="215,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
+                <Label Content="内側の色" HorizontalAlignment="Left" Margin="143,56,0,0" VerticalAlignment="Top"/>
+                <Label Content="フォント" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top"/>
+                <Label Content="フォントサイズ" HorizontalAlignment="Left" Margin="0,25,0,0" VerticalAlignment="Top"/>
 
-        <CheckBox x:Name="checkBox2" Content="列グリッド線（縦線）を表示する" IsChecked="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="440,7,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="label9" Content="列グリッド線の色" IsEnabled="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="470,23,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" IsEnabled="{Binding IsShowVerticalGridLine}" Margin="560,27,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="背景色" HorizontalAlignment="Left" Margin="310,7,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.065,0.615"/>
-        <xctk:ColorPicker SelectedColor="{Binding BackColor}" Margin="361,7,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="64" RenderTransformOrigin="5.6,4.545" />
+                <CheckBox x:Name="checkBox1" Content="行グリッド線（横線）を表示する" IsChecked="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="430,53,0,0" VerticalAlignment="Top"/>
+                <Label x:Name="label8" Content="行グリッド線の色" IsEnabled="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="460,73,0,0" VerticalAlignment="Top"/>
+                <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" IsEnabled="{Binding IsShowHorizontalGridLine}" Margin="550,73,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
+                <CheckBox x:Name="checkBox2" Content="列グリッド線（縦線）を表示する" IsChecked="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="430,5,0,0" VerticalAlignment="Top"/>
+                <Label x:Name="label9" Content="列グリッド線の色" IsEnabled="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="460,21,0,0" VerticalAlignment="Top"/>
+                <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" IsEnabled="{Binding IsShowVerticalGridLine}" Margin="550,25,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                <Label Content="背景色" HorizontalAlignment="Left" Margin="300,5,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.065,0.615"/>
+                <xctk:ColorPicker SelectedColor="{Binding BackColor}" Margin="351,5,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="64" RenderTransformOrigin="5.6,4.545" />
+            </Grid>
+        </GroupBox>
     </Grid>
 </Window>

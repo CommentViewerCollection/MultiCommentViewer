@@ -54,13 +54,14 @@ namespace OutlineTextPlugin
         }
         public void OnClosing()
         {
+            _mainView.ForceClose();
             var s = _options.Serialize();
             Host.SaveOptions(GetSettingsFilePath(), s);
         }
         public void OnCommentReceived(ICommentData data)
         {
-            //if (!_options.IsEnabled || data.IsNgUser)
-            //    return;
+            if (!_options.IsEnabled)// || data.IsNgUser)
+                return;
             _vm.Add(data);
         }
         public IPluginHost Host { get; set; }

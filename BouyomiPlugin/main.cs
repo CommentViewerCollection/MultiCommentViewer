@@ -31,6 +31,7 @@ namespace BouyomiPlugin
         }
         public void OnClosing()
         {
+            _settingsView?.ForceClose();
             var s = _options.Serialize();
             Host.SaveOptions(GetSettingsFilePath(), s);
         }

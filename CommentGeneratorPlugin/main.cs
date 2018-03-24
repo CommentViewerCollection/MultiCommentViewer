@@ -205,9 +205,12 @@ namespace CommentViewer.Plugin
         }
         public void OnClosing()
         {
-            _writeTimer.Stop();
-            _deleteTimer.Stop();
-            Options.Save(_options, GetSettingsFilePath());
+            _writeTimer?.Stop();
+            _deleteTimer?.Stop();
+            if (_options != null)
+            {
+                Options.Save(_options, GetSettingsFilePath());
+            }
         }
         SettingsView _settingsView;
         public void ShowSettingView()

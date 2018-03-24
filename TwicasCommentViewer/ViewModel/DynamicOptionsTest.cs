@@ -43,6 +43,7 @@ namespace TwicasCommentViewer
         bool IsShowPostTime { get; set; }
 
         bool IsEllipseThumbnail { get; set; }
+        InfoType ShowingInfoType { get; set; }
     }
     class DynamicOptionsTest : DynamicOptionsBase, IOptions
     {
@@ -89,6 +90,7 @@ namespace TwicasCommentViewer
         public bool IsUserNameWrapping { get => GetValue(); set => SetValue(value); }
         public bool IsAddingNewCommentTop { get => GetValue(); set => SetValue(value); }
         public bool IsPixelScrolling { get => GetValue(); set => SetValue(value); }
+        public InfoType ShowingInfoType { get => GetValue(); set => SetValue(value); }
 
         public bool IsEllipseThumbnail { get => GetValue(); set => SetValue(value); }
         protected override void Init()
@@ -149,6 +151,8 @@ namespace TwicasCommentViewer
             Dict.Add(nameof(IsPixelScrolling), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             Dict.Add(nameof(IsEllipseThumbnail), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ShowingInfoType), new Item { DefaultValue = InfoType.Notice, Predicate = t => true, Serializer = t => t.ToString(), Deserializer = s => Enum.Parse(typeof(InfoType), s) });
         }
         public ICommentOptions Clone()
         {

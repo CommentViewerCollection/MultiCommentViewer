@@ -277,7 +277,7 @@ namespace TwicasCommentViewer.ViewModel
                 _pluginManager = new PluginManager(_options);
                 _pluginManager.PluginAdded += PluginManager_PluginAdded;
                 _pluginManager.LoadPlugins(new PluginHost(this, _options, _io));
-
+                
                 _pluginManager.OnLoaded();
 
                 if (_options.IsAutoCheckIfUpdateExists)
@@ -291,12 +291,8 @@ namespace TwicasCommentViewer.ViewModel
                 Debug.WriteLine(ex.Message);
             }
         }
-        bool _canClose = false;
-        private async void Closing(CancelEventArgs e)
+        private void Closing(CancelEventArgs e)
         {
-            e.Cancel = !_canClose;
-            if (_canClose)
-                return;
             try
             {
                 var path = GetSiteOptionsPath(_siteContext);
@@ -307,15 +303,18 @@ namespace TwicasCommentViewer.ViewModel
                 _logger.LogException(ex);
                 Debug.WriteLine(ex.Message);
             }
-            _pluginManager?.OnClosing();
-
-            _canClose = true;
-            App.Current.Shutdown();
+            try
+            {
+                _pluginManager?.OnClosing();
+            }catch(Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
-        void SetInfo(string message)
+        private async void SetInfo(string message, InfoType type)
         {
-            var cvm = new InfoCommentViewModel(_options, message);
-            AddComment(cvm);
+            var cvm = new InfoCommentViewModel(_options, message, type);
+            await AddComment(cvm);
         }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
         {
@@ -330,7 +329,7 @@ namespace TwicasCommentViewer.ViewModel
                 _logger.LogException(ex);
                 if (!isAutoCheck)
                 {
-                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。");
+                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。", InfoType.Error);
                 }
                 return;
             }
@@ -476,7 +475,7 @@ namespace TwicasCommentViewer.ViewModel
             _options = options;
             _io = io;
             _logger = logger;
-            
+
             _commentProvider = siteContext.CreateCommentProvider();
             _commentProvider.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
             _commentProvider.CommentReceived += CommentProvider_CommentReceived;
@@ -538,11 +537,18 @@ namespace TwicasCommentViewer.ViewModel
             }
         }
 
-        private void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
+        private async void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
         {
-            foreach (var comment in e)
+            try
             {
-                AddComment(comment);
+                foreach (var comment in e)
+                {
+                    await AddComment(comment);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
             }
         }
         private async void PluginManager_PluginAdded(object sender, IPlugin e)
@@ -563,22 +569,32 @@ namespace TwicasCommentViewer.ViewModel
         }
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
-        private void AddComment(ICommentViewModel cvm)
-        {
-            if (_isAddingNewCommentTop)
-            {
-                Comments.Insert(0, cvm);
-            }
-            else
-            {
-                Comments.Add(cvm);
-            }
-        }
-        private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
+        private async Task AddComment(ICommentViewModel cvm)
         {
             try
             {
-                AddComment(e);
+                await _dispatcher.BeginInvoke((Action)(() =>
+                {
+                    if (_isAddingNewCommentTop)
+                    {
+                        Comments.Insert(0, cvm);
+                    }
+                    else
+                    {
+                        Comments.Add(cvm);
+                    }
+                }), DispatcherPriority.Normal);
+            }
+            catch (Exception ex)
+            {
+                SetInfo(ex.Message, InfoType.Debug);
+            }
+        }
+        private async void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
+        {
+            try
+            {
+                await AddComment(e);
             }
             catch (Exception ex)
             {
@@ -598,7 +614,7 @@ namespace TwicasCommentViewer.ViewModel
             {
                 if (_input == value) return;
                 _input = value;
-                IsValidInput = _siteContext.IsValidInput(_input);
+                IsValidInput = _siteContext.IsValidInput(_input, true);
                 RaisePropertyChanged(nameof(CanConnect));
                 RaisePropertyChanged(nameof(CanDisconnect));
             }
@@ -616,7 +632,7 @@ namespace TwicasCommentViewer.ViewModel
             {
                 _logger.LogException(ex);
             }
-            SetInfo("切断されました");
+            SetInfo("切断されました", InfoType.Notice);
         }
         private void Disconnect()
         {

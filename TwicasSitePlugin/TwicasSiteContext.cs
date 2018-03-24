@@ -3,6 +3,7 @@ using Common;
 using System.Windows.Threading;
 using SitePlugin;
 using System.Windows.Controls;
+using System.Text.RegularExpressions;
 
 namespace TwicasSitePlugin
 {
@@ -52,6 +53,23 @@ namespace TwicasSitePlugin
         public bool IsValidInput(string input)
         {
             return Tools.IsValidUrl(input);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="isIdOk">URLだけでなく、IDのみでもtrueを返すか</param>
+        /// <returns></returns>
+        public bool IsValidInput(string input, bool isIdOk)
+        {
+            if (!isIdOk)
+            {
+                return Tools.IsValidUrl(input);
+            }
+            else
+            {
+                return Tools.IsValidUrl(input) || Tools.IsValidUserId(input);
+            }
         }
 
         private TwicasSiteOptions _siteOptions;

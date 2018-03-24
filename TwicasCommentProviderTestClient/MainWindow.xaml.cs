@@ -32,20 +32,6 @@ namespace TwicasCommentProviderTestClient
             DataContext = new MainViewModel();
         }
     }
-    class TwicasServer : IDataServer
-    {
-        public async Task<string> GetAsync(string url, CookieContainer cc)
-        {
-            var wc = new WebClient();
-            var data = await wc.DownloadDataTaskAsync(url);
-            return Encoding.UTF8.GetString(data);
-        }
-
-        public Task<string> GetAsync(string url)
-        {
-            return GetAsync(url, null);
-        }
-    }
     class Logger : ILogger
     {
         public string GetExceptions()
@@ -93,7 +79,7 @@ namespace TwicasCommentProviderTestClient
                 _messageProvider = new MessageProvider(new TwicasServer(), null, new Logger());
                 _messageProvider.Received += MessageProvider_Received;
                 _messageProvider.MetaReceived += MessageProvider_MetaReceived;
-                await _messageProvider.ConnectAsync(BroadcasterId);
+//                await _messageProvider.ConnectAsync(BroadcasterId);
                 Debug.WriteLine("disconnected");
             }
             finally

@@ -247,11 +247,18 @@ namespace TwicasSitePlugin
             }
             return list;
         }
-
+        public static bool IsValidUserId(string input)
+        {
+            return Regex.IsMatch(input, "^[a-zA-Z0-9:_]+$");
+        }
         internal static string ExtractBroadcasterId(string input)
         {
             if (string.IsNullOrEmpty(input))
                 throw new ArgumentNullException(nameof(input));
+            if (IsValidUserId(input))
+            {
+                return input;
+            }
             var match0 = Regex.Match(input, "twitcasting\\.tv/([a-zA-Z0-9:_]+)");
             if (match0.Success)
             {

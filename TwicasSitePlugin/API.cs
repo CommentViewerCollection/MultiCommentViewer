@@ -34,29 +34,47 @@ namespace TwicasSitePlugin
         /// <param name="dataSource"></param>
         /// <param name="broadcaster"></param>
         /// <returns></returns>
-        /// <exception cref="WebException"></exception>
-        public static async Task<LowObject.LiveContext> GetLiveContext(IDataServer dataSource, string broadcaster)
+        /// <exception cref="System.Net.Http.HttpRequestException"></exception>
+        /// <exception cref="InvalidBroadcasterIdException"></exception>
+        public static async Task<LowObject.LiveContext> GetLiveContext(IDataServer dataSource, string broadcaster, CookieContainer cc)
         {
             var url = "http://twitcasting.tv/" + broadcaster;
-            var str = await dataSource.GetAsync(url);
+            var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36";
+            var str = await dataSource.GetAsync(url, userAgent, cc);
             var context = new LowObject.LiveContext();
-            var match0 = Regex.Match(str, "var movie_cnum = (?<cnum>[\\d]+);");
-            if (match0.Success)
             {
-                context.MovieCnum = int.Parse(match0.Groups["cnum"].Value);
+                var match0 = Regex.Match(str, "var movie_cnum = (?<cnum>[\\d]+);");
+                if (match0.Success)
+                {
+                    context.MovieCnum = int.Parse(match0.Groups["cnum"].Value);
+                }
+                else
+                {
+                    throw new InvalidBroadcasterIdException(broadcaster);
+                }
             }
-            else
             {
-                throw new InvalidBroadcasterIdException(broadcaster);
+                var match1 = Regex.Match(str, "var movieid = \"(\\d+)\"");
+                if (match1.Success)
+                {
+                    context.MovieId = long.Parse(match1.Groups[1].Value);
+                }
+                else
+                {
+                    throw new InvalidBroadcasterIdException(broadcaster);
+                }
             }
-            var match1 = Regex.Match(str, "var movieid = \"(\\d+)\"");
-            if (match1.Success)
             {
-                context.MovieId = long.Parse(match1.Groups[1].Value);
-            }
-            else
-            {
-                throw new InvalidBroadcasterIdException(broadcaster);
+                var match = Regex.Match(str, "\"audienceId\":\"([^\"]+)\"");
+                if (match.Success)
+                {
+                    var audienceId = match.Groups[1].Value;
+                    context.AudienceId = audienceId;
+                }
+                else
+                {
+                    context.AudienceId = null;
+                }
             }
             return context;
         }

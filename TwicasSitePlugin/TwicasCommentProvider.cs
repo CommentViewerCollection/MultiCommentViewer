@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Net.Http;
 
 namespace TwicasSitePlugin
 {
@@ -44,7 +46,10 @@ namespace TwicasSitePlugin
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;
 
-
+        private void SendInfo(string message, InfoType type)
+        {
+            CommentReceived?.Invoke(this, new InfoCommentViewModel(_options, message, type));
+        }
         private CookieContainer _cc;
         MessageProvider _messageProvider;
         public async Task ConnectAsync(string input, global::ryu_s.BrowserCookie.IBrowserProfile browserProfile)
@@ -56,52 +61,110 @@ namespace TwicasSitePlugin
                 return;
             }
             _cc = new CookieContainer();
-            var cookies = browserProfile.GetCookieCollection("twitcasting.tv");
-            _cc.Add(cookies);
+            try
+            {
+                var cookies = browserProfile.GetCookieCollection("twitcasting.tv");
+                _cc.Add(cookies);
+            }
+            catch { }
 
             CanConnect = false;
             CanDisconnect = true;
+            int cnum = -1;
+            long liveId = -1;
+            try
+            {
+                var context = await API.GetLiveContext(_server, broadcasterId, _cc);
+                cnum = context.MovieCnum;
+                liveId = context.MovieId;
+                if (!string.IsNullOrEmpty(context.AudienceId))
+                {
+                    var audienceId = context.AudienceId;
+                    SendInfo($"ログイン済みユーザID:{audienceId}", InfoType.Notice);
+                }
+                else
+                {
+                    SendInfo("未ログイン", InfoType.Notice);
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogException(ex);
+                string message;
+                if (ex.InnerException != null)
+                {
+                    message = ex.InnerException.Message;
+                }
+                else
+                {
+                    message = ex.Message;
+                }
+                SendInfo(message, InfoType.Debug);
+            }
+            catch (InvalidBroadcasterIdException ex)
+            {
+                _logger.LogException(ex, "", $"input=\"{input}\"");
+                SendInfo("入力されたURLまたはIDは存在しないか無効な値です", InfoType.Notice);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
+                SendInfo(ex.Message, InfoType.Debug);
+            }
+            if(cnum < 0 || liveId < 0)
+            {
+                AfterDisconnected();
+                return;
+            }
             try
             {
                 _messageProvider = new MessageProvider(_server, _cc, _logger);
                 _messageProvider.InitialCommentsReceived += _messageProvider_InitialCommentsReceived;
                 _messageProvider.Received += MessageProvider_Received;
                 _messageProvider.MetaReceived += MessageProvider_MetaReceived;
+                _messageProvider.InfoOccured += MessageProvider_InfoOccured;
 
-                await _messageProvider.ConnectAsync(broadcasterId);
-            }
-            catch(InvalidBroadcasterIdException ex)
-            {
-                _logger.LogException(ex, "", $"input=\"{input}\"");
-                //TODO:Info
+                await _messageProvider.ConnectAsync(broadcasterId, cnum, liveId);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                SendInfo(ex.Message, InfoType.Error);
                 _logger.LogException(ex);
             }
             finally
             {
-                _messageProvider = null;
-                CanConnect = true;
-                CanDisconnect = false;
+                AfterDisconnected();
             }
+        }
+        private void AfterDisconnected()
+        {
+            _messageProvider = null;
+            CanConnect = true;
+            CanDisconnect = false;
+        }
+        private void MessageProvider_InfoOccured(object sender, InfoData e)
+        {
+            SendInfo(e.Message, e.Type);
         }
 
         private void _messageProvider_InitialCommentsReceived(object sender, IEnumerable<ICommentData> e)
         {
+            var list = new List<ICommentViewModel>();
             foreach (var data in e)
             {
                 try
                 {
                     var cvm = CommentData2CommentViewModel(data);
-                    CommentReceived?.Invoke(this, cvm);
+                    list.Add(cvm);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogException(ex);
+                    SendInfo(ex.Message, InfoType.Debug);
                 }
             }
+            InitialCommentsReceived?.Invoke(this, list);
         }
         private TwicasCommentViewModel CommentData2CommentViewModel(ICommentData data)
         {
@@ -127,6 +190,7 @@ namespace TwicasSitePlugin
                 catch (Exception ex)
                 {
                     _logger.LogException(ex);
+                    SendInfo(ex.Message, InfoType.Debug);
                 }
             }
         }

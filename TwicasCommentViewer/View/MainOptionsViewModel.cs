@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using Common;
 using Common.Wpf;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
@@ -136,6 +138,13 @@ namespace TwicasCommentViewer
         private readonly IOptions changed;
         public IOptions OriginOptions { get { return _origin; } }
         public IOptions ChangedOptions { get { return changed; } }
+        Dictionary<InfoType, string> _infoTypeTooltipTexts = new Dictionary<InfoType, string>
+        {
+            { InfoType.None, "何も表示しません" },
+            { InfoType.Debug, "" },
+            { InfoType.Notice, "" },
+            { InfoType.Error, "致命的なエラー情報のみ" },
+        };
         public MainOptionsViewModel(IOptions options)
         {
             _origin = options;

@@ -10,6 +10,7 @@ namespace TwicasSitePlugin.LowObject
     {
         public long MovieId { get; set; }
         public int MovieCnum { get; set; }
+        public string AudienceId { get; internal set; }
     }
     public class StreamChecker
     {

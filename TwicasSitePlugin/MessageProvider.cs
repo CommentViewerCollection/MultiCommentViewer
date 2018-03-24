@@ -6,11 +6,18 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Threading;
 using System.Linq;
+using System.Net.Http;
 
 namespace TwicasSitePlugin
 {
+    class InfoData
+    {
+        public string Message { get; set; }
+        public InfoType Type { get; set; }
+    }
     class MessageProvider
     {
+        public event EventHandler<InfoData> InfoOccured;
         public event EventHandler<IEnumerable<ICommentData>> InitialCommentsReceived;
         public event EventHandler<IEnumerable<ICommentData>> Received;
         public event EventHandler<IMetadata> MetaReceived;
@@ -39,32 +46,42 @@ namespace TwicasSitePlugin
             }
             return initialDataList;
         }
-        public async Task ConnectAsync(string broadcasterId)
+        private void SendInfo(string message, InfoType type)
+        {
+            InfoOccured?.Invoke(this, new InfoData { Message = message, Type = type });
+        }
+        public async Task ConnectAsync(string broadcasterId, int cnum,long live_id)
         {
             _cts = new CancellationTokenSource();
             //TODO:try-catch
-            var liveInfo = await API.GetLiveContext(_server, broadcasterId);
-            var cnum = liveInfo.MovieCnum;
-            var live_id = liveInfo.MovieId;
+            //var liveInfo = await API.GetLiveContext(_server, broadcasterId);
+            //var cnum = liveInfo.MovieCnum;
+            //var live_id = liveInfo.MovieId;
             long lastCommentId = 0;
-            //TODO:try-catch
-            var (initialComments, initialRaw) = await API.GetListAll(_server, broadcasterId, live_id, lastCommentId, 0, 20, _cc);
-            if (initialComments.Length > 0)
+            try
             {
-                var initialDataList = LowComment2Data(initialComments, initialRaw);
-                if (initialDataList.Count > 0)
+                var (initialComments, initialRaw) = await API.GetListAll(_server, broadcasterId, live_id, lastCommentId, 0, 20, _cc);
+                if (initialComments.Length > 0)
                 {
-                    InitialCommentsReceived?.Invoke(this, initialDataList);
+                    var initialDataList = LowComment2Data(initialComments, initialRaw);
+                    if (initialDataList.Count > 0)
+                    {
+                        InitialCommentsReceived?.Invoke(this, initialDataList);
+                    }
+                    var lastComment = initialComments[initialComments.Length - 1];
+                    lastCommentId = lastComment.id;
                 }
-                var lastComment = initialComments[initialComments.Length - 1];
-                lastCommentId = lastComment.id;
+            }
+            catch (Exception ex)
+            {
+                SendInfo(ex.Message, InfoType.Debug);
             }
             //Disconnect()が呼ばれた場合以外は接続し続ける。
             while (!_cts.IsCancellationRequested)
             {
                 try
                 {
-                    var streamChecker = await API.GetUtreamChecker(_server, broadcasterId);
+                    var streamChecker = await API.GetUtreamChecker(_server, broadcasterId).ConfigureAwait(false);
                     if (streamChecker.LiveId == null)
                     {
                         //放送してない。live_idは更新しない。
@@ -91,10 +108,25 @@ namespace TwicasSitePlugin
                         }
                     }
                 }
+                catch(HttpRequestException ex)
+                {
+                    _logger.LogException(ex);
+                    string message;
+                    if(ex.InnerException != null)
+                    {
+                        message = ex.InnerException.Message;
+                    }
+                    else
+                    {
+                        message = ex.Message;
+                    }
+                    SendInfo(message, InfoType.Debug);
+                }
                 catch (Exception ex)
                 {
-                    //Infoでエラー内容を通知。ただし同じエラーが連続する場合は通知しない
                     _logger.LogException(ex);
+                    //Infoでエラー内容を通知。ただし同じエラーが連続する場合は通知しない
+                    SendInfo(ex.Message, InfoType.Debug);
                 }
                 try
                 {

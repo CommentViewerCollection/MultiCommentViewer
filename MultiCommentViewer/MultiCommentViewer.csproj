@@ -213,6 +213,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BouyomiPlugin\BouyomiPlugin.csproj">
+      <Project>{13a909dd-3791-4539-9c04-f72d9e755dcf}</Project>
+      <Name>BouyomiPlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\BrowserCookieImplementations\BrowserCookieImplementations.csproj">
       <Project>{dfe01d83-bdbf-4b5c-95d5-9f1034597ede}</Project>
       <Name>BrowserCookieImplementations</Name>
@@ -220,6 +224,10 @@
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">
       <Project>{cdbbbf25-ad0c-4eaf-b673-eb0bb198585a}</Project>
       <Name>BrowserCookieInterfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CommentGeneratorPlugin\CommentGeneratorPlugin.csproj">
+      <Project>{88b68d39-41a4-4c10-b942-0f3be976d7a3}</Project>
+      <Name>CommentGeneratorPlugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
@@ -297,6 +305,10 @@ if not exist settings\placeholder powershell New-Item settings\placeholder -Item
 :: BouyomiPluginのファイルを全部持ってくる
 mkdir plugins\Bouyomi
 copy "..\..\..\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
+
+:: CommentGeneratorPluginのファイルを全部持ってくる
+mkdir plugins\CommentGenerator
+copy "..\..\..\CommentGeneratorPlugin\bin\$(ConfigurationName)\*" "plugins\CommentGenerator\"
 
 :: 自動アップデートに必要なlist.txtを作成
 powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList.ps1" -TargetDir "$(TargetDir)\"

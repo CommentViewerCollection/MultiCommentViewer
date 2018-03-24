@@ -8,6 +8,8 @@ using System.ComponentModel.Composition.Hosting;
 using System.Diagnostics;
 using System.Linq;
 using System.IO;
+using System.ComponentModel.Composition.Primitives;
+
 namespace MultiCommentViewer
 {
     public interface IPluginManager
@@ -19,7 +21,7 @@ namespace MultiCommentViewer
         void OnClosing();
         //event EventHandler<string> PostingCommentReceived;
     }
-    public class PluginManager:IPluginManager
+    public class PluginManager : IPluginManager
     {
         public event EventHandler<IPlugin> PluginAdded;
         //public event EventHandler<IPlugin> PluginRemoved;
@@ -30,15 +32,31 @@ namespace MultiCommentViewer
             var dir = _options.PluginDir;
             var pluginDirs = Directory.GetDirectories(dir);
             var list = new List<DirectoryCatalog>();
-            foreach(var pluginDir in pluginDirs)
+            var def = new ImportDefinition(d => d.ContractName == typeof(IPlugin).FullName, "", ImportCardinality.ExactlyOne, false, false);
+            var plugins = new List<IPlugin>();
+            foreach (var pluginDir in pluginDirs)
             {
+                var files = Directory.GetFiles(pluginDir).Where(s => s.EndsWith("Plugin.dll"));//ファイル名がPlugin.dllで終わるアセンブリだけ探す
+                foreach (var file in files)
+                {
+                    var filename = Path.GetFileName(file);
+                    if (filename == "SitePlugin.dll" || filename == "Plugin.dll") continue;
+                    try
+                    {
+                        var catalog = new AssemblyCatalog(file);
+                        var con = new CompositionContainer(catalog);
+                        var plugin = con.GetExport<IPlugin>().Value;
+                        plugins.Add(plugin);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                    }
+                }
                 list.Add(new DirectoryCatalog(pluginDir));
             }
-            var aggCat = new AggregateCatalog(list);
-
-            var container = new CompositionContainer(aggCat);
-            _plugins = container.GetExports<IPlugin>().Select(p => p.Value).ToList();
-            foreach(var plugin in _plugins)
+            _plugins = plugins;
+            foreach (var plugin in _plugins)
             {
                 plugin.Host = host;
                 PluginAdded?.Invoke(this, plugin);
@@ -51,13 +69,16 @@ namespace MultiCommentViewer
                 Comment = GetString(comment.MessageItems),
                 IsNgUser = false,
                 Nickname = GetString(comment.NameItems),
+                ThumbnailUrl = comment.Thumbnail.Url,
+                ThumbnailWidth = comment.Thumbnail.Width ?? 50,
+                ThumbnailHeight = comment.Thumbnail.Height ?? 50,
             };
             foreach (var plugin in _plugins)
             {
                 plugin.OnCommentReceived(pluginCommentData);
             }
         }
-        private string GetString(IEnumerable<IMessagePart> items, string separator="")
+        private string GetString(IEnumerable<IMessagePart> items, string separator = "")
         {
             var textItems = items.Where(s => s is IMessageText).Cast<IMessageText>().Select(s => s.Text);
             var message = string.Join("", textItems);
@@ -69,13 +90,19 @@ namespace MultiCommentViewer
         }
         public void OnLoaded()
         {
-            foreach(var plugin in _plugins)
+            if (_plugins == null)
+            {
+                throw new InvalidOperationException("最初にLoadPlugins()を実行すること");
+            }
+            foreach (var plugin in _plugins)
             {
                 plugin.OnLoaded();
             }
         }
         public void OnClosing()
         {
+            if (_plugins == null)
+                return;
             foreach (var plugin in _plugins)
             {
                 try
@@ -88,6 +115,22 @@ namespace MultiCommentViewer
                 }
             }
         }
+
+        public void ForeachPlugin(Action<IPlugin> p)
+        {
+            foreach (var plugin in _plugins)
+            {
+                try
+                {
+                    p(plugin);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
+        }
+
         private readonly IOptions _options;
         public PluginManager(IOptions options)
         {

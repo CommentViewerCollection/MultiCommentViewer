@@ -69,9 +69,9 @@ namespace MultiCommentViewer
                 Comment = GetString(comment.MessageItems),
                 IsNgUser = false,
                 Nickname = GetString(comment.NameItems),
-                ThumbnailUrl = comment.Thumbnail.Url,
-                ThumbnailWidth = comment.Thumbnail.Width ?? 50,
-                ThumbnailHeight = comment.Thumbnail.Height ?? 50,
+                ThumbnailUrl = comment.Thumbnail?.Url,
+                ThumbnailWidth = comment.Thumbnail?.Width ?? 50,
+                ThumbnailHeight = comment.Thumbnail?.Height ?? 50,
             };
             foreach (var plugin in _plugins)
             {

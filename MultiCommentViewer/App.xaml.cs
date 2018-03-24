@@ -55,7 +55,20 @@ namespace MultiCommentViewer
             {
                 _logger.LogException(ex);
             }
-
+            try
+            {
+                if (System.IO.File.Exists("error.txt"))
+                {
+                    string errorContent;
+                    using (var sr = new System.IO.StreamReader("error.txt"))
+                    {
+                        errorContent = sr.ReadToEnd();
+                    }
+                    SendErrorReport(errorContent);
+                    System.IO.File.Delete("error.txt");
+                }
+            }
+            catch { }
             ISitePluginLoader sitePluginLoader = new Test.SitePluginLoaderTest();
             IBrowserLoader browserLoader = new BrowserLoader(_logger);
             IUserStore userStore = new UserStoreTest();
@@ -123,6 +136,11 @@ namespace MultiCommentViewer
             var ex = e.ExceptionObject as Exception;
 
             _logger.LogException(ex, "UnhandledException");
+            var s = _logger.GetExceptions();
+            using (var sw = new System.IO.StreamWriter("error.txt", true))
+            {
+                sw.WriteLine(s);
+            }
         }
     }
 }

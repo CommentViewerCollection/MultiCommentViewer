@@ -44,8 +44,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasSitePlugin", "TwicasS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasSitePluginTests", "TwicasSitePluginTests\TwicasSitePluginTests.csproj", "{187FA0C1-E974-407F-AF69-18595B559867}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasCommentProviderTestClient", "TwicasCommentProviderTestClient\TwicasCommentProviderTestClient.csproj", "{D372F747-28FF-486D-B5B3-1D37F10A9314}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoCommentProviderErrorTestClient", "NicoCommentProviderErrorTestClient\NicoCommentProviderErrorTestClient.csproj", "{601BB5E7-557C-43FD-9FD4-136447473A56}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YouTubeLiveCommentViewer", "YouTubeLiveCommentViewer\YouTubeLiveCommentViewer.csproj", "{EBA3CB8F-6609-48EC-B98B-7B116FC926A3}"
@@ -144,10 +142,6 @@ Global
 		{187FA0C1-E974-407F-AF69-18595B559867}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{187FA0C1-E974-407F-AF69-18595B559867}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{187FA0C1-E974-407F-AF69-18595B559867}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D372F747-28FF-486D-B5B3-1D37F10A9314}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D372F747-28FF-486D-B5B3-1D37F10A9314}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D372F747-28FF-486D-B5B3-1D37F10A9314}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D372F747-28FF-486D-B5B3-1D37F10A9314}.Release|Any CPU.Build.0 = Release|Any CPU
 		{601BB5E7-557C-43FD-9FD4-136447473A56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{601BB5E7-557C-43FD-9FD4-136447473A56}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{601BB5E7-557C-43FD-9FD4-136447473A56}.Release|Any CPU.ActiveCfg = Release|Any CPU

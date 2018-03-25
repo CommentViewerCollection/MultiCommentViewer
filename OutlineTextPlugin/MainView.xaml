@@ -13,12 +13,20 @@
         <local:ImageConverter x:Key="imageConverter" />
         <w:IntToFontSizeConverter x:Key="intToFontConverter" />
         <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
+        <local:MarginConverter x:Key="marginConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="120" />
+            <RowDefinition Height="30" />
             <RowDefinition />
         </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid>
+                <CheckBox Content="有効" IsChecked="{Binding IsEnabled}" HorizontalAlignment="Left" Margin="30,8,0,0" VerticalAlignment="Top"/>
+                <Button Content="設定" Command="{Binding ShowOptionsViewCommand}" HorizontalAlignment="Left" Margin="140,5,0,0" VerticalAlignment="Top" Width="75"/>
+
+            </Grid>
+        </Grid>
         <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
         <DataGrid ItemsSource="{Binding Comments, IsAsync=True}"
                   AutoGenerateColumns="False"
@@ -43,7 +51,7 @@
                       VerticalScrollBarVisibility="Visible"
                       ScrollViewer.CanContentScroll="True"
                       ScrollViewer.ScrollChanged="dataGrid_ScrollChanged"   
-                  Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                  Grid.Row="2" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
             <DataGrid.Resources>
                 <Style TargetType="{x:Type DataGridRow}">
                     <Setter Property="FontFamily" Value="{Binding DataContext.FontFamily, Source={x:Reference dummyElement}}" />
@@ -65,19 +73,35 @@
                                         >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Ellipse Width="{Binding ThumbnailWidth}" Height="{Binding ThumbnailHeight}" Margin="5,5,0,0">
-                                <Ellipse.Fill>
-                                    <ImageBrush>
-                                        <ImageBrush.ImageSource>
-                                            <MultiBinding Converter="{StaticResource imageConverter}">
-                                                <Binding Path="ThumbnailUrl" />
-                                                <Binding Path="ThumbnailWidth" />
-                                                <Binding Path="ThumbnailHeight" />
-                                            </MultiBinding>
-                                        </ImageBrush.ImageSource>
-                                    </ImageBrush>
-                                </Ellipse.Fill>
-                            </Ellipse>
+                            <!--
+                        2017/10/15
+                        キャプチャしやすいようにサムネの左側にスペースが欲しいという要望があった。
+                        サムネの列の幅からスペース分を引いた値をサムネの幅と高さにしている。
+                        スペースの値を設定で変更できるようにプロパティにしてバインドできれば良いのだが、ConverterParameterにはBindingできない
+                        ようなので、とりあえずマジックナンバーで5を指定した。
+                        -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="5" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <Ellipse Grid.Column="1" Grid.Row="0" Width="{Binding DataContext.ThumbnailWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource marginConverter}, ConverterParameter=5}" Height="{Binding DataContext.ThumbnailWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource marginConverter}, ConverterParameter=5}">
+                                    <Ellipse.Fill>
+                                        <ImageBrush>
+                                            <ImageBrush.ImageSource>
+                                                <MultiBinding Converter="{StaticResource imageConverter}">
+                                                    <Binding Path="ThumbnailUrl" />
+                                                    <Binding Path="ThumbnailWidth" />
+                                                    <Binding Path="ThumbnailHeight" />
+                                                </MultiBinding>
+                                            </ImageBrush.ImageSource>
+                                        </ImageBrush>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                            </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -88,11 +112,11 @@
                                         >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <local:OutlineText TextWrapping="Wrap"
+                            <local:OutlineText
                                                StrokeThickness="{Binding DataContext.CommentOutlineTextThickness, Source={x:Reference dummyElement}}"
                                                Stroke="{Binding DataContext.CommentOutlineStrokeColorBrush, Source={x:Reference dummyElement}}"
                                                Fill="{Binding DataContext.CommentOutlineFillColorBrush, Source={x:Reference dummyElement}}"
-                                               Text="{Binding Name}" Margin="5,0,5,0" />
+                                               Text="{Binding Name}" TextWrapping="{Binding DataContext.UserNameWrapping, Source={x:Reference dummyElement}}" Margin="5,0,5,0" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -106,40 +130,13 @@
                                                StrokeThickness="{Binding DataContext.CommentOutlineTextThickness, Source={x:Reference dummyElement}}"
                                                Stroke="{Binding DataContext.CommentOutlineStrokeColorBrush, Source={x:Reference dummyElement}}"
                                                Fill="{Binding DataContext.CommentOutlineFillColorBrush, Source={x:Reference dummyElement}}"
-                                               Text="{Binding Message}" Margin="5,0,5,0" />
+                                               Text="{Binding Message}" Margin="5,0,5,0"
+                                               VerticalAlignment="Center"
+                                               />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-
-        <GroupBox HorizontalAlignment="Left" Height="120" Margin="19,0,0,0" VerticalAlignment="Top" Width="716">
-            <GroupBox.Header>
-                <CheckBox x:Name="IsEnabledCheckbox" IsChecked="{Binding IsEnabled}" Content="有効" />
-            </GroupBox.Header>
-            <Grid IsEnabled="{Binding ElementName=IsEnabledCheckbox, Path=IsChecked}">
-                <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding SelectedFontFamily, Mode=TwoWay}" HorizontalAlignment="Left" Margin="51,5,0,0" VerticalAlignment="Top" Width="77"/>
-                <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" HorizontalAlignment="Left" Margin="79,32,0,0" VerticalAlignment="Top" Width="49"/>
-                <CheckBox Content="太字" IsChecked="{Binding IsBold}" HorizontalAlignment="Left" Margin="10,62,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.636,-0.133"/>
-                <Common:NumericUpDown Value="{Binding CommentOutlineTextThickness}" Minimum="1" HorizontalAlignment="Left" Height="26" Margin="215,2,0,0" VerticalAlignment="Top" Width="43" RenderTransformOrigin="-1.047,0.192"/>
-                <Label Content="縁取りの太さ" HorizontalAlignment="Left" Margin="143,3,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.053,1.154"/>
-                <xctk:ColorPicker SelectedColor="{Binding CommentOutlineStrokeColor}" Margin="215,33,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
-                <Label Content="縁取りの色" HorizontalAlignment="Left" Margin="143,25,0,0" VerticalAlignment="Top"/>
-                <xctk:ColorPicker SelectedColor="{Binding CommentOutlineFillColor}" Margin="215,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
-                <Label Content="内側の色" HorizontalAlignment="Left" Margin="143,56,0,0" VerticalAlignment="Top"/>
-                <Label Content="フォント" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top"/>
-                <Label Content="フォントサイズ" HorizontalAlignment="Left" Margin="0,25,0,0" VerticalAlignment="Top"/>
-
-                <CheckBox x:Name="checkBox1" Content="行グリッド線（横線）を表示する" IsChecked="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="430,53,0,0" VerticalAlignment="Top"/>
-                <Label x:Name="label8" Content="行グリッド線の色" IsEnabled="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="460,73,0,0" VerticalAlignment="Top"/>
-                <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" IsEnabled="{Binding IsShowHorizontalGridLine}" Margin="550,73,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-
-                <CheckBox x:Name="checkBox2" Content="列グリッド線（縦線）を表示する" IsChecked="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="430,5,0,0" VerticalAlignment="Top"/>
-                <Label x:Name="label9" Content="列グリッド線の色" IsEnabled="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="460,21,0,0" VerticalAlignment="Top"/>
-                <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" IsEnabled="{Binding IsShowVerticalGridLine}" Margin="550,25,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-                <Label Content="背景色" HorizontalAlignment="Left" Margin="300,5,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.065,0.615"/>
-                <xctk:ColorPicker SelectedColor="{Binding BackColor}" Margin="351,5,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="64" RenderTransformOrigin="5.6,4.545" />
-            </Grid>
-        </GroupBox>
     </Grid>
 </Window>

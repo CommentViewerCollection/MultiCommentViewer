@@ -8,28 +8,36 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Threading;
-
 namespace OutlineTextPlugin
 {
-    class MainViewModel :ViewModelBase
+    class OptionsViewModel:ViewModelBase
     {
         private readonly Options _options;
-        public ICommand ShowOptionsViewCommand { get; }
-        private void ShowOptionsView()
+
+        public ICommand CloseCommand { get; }
+        private void Close()
         {
-            MessengerInstance.Send(new ShowOptionsViewMessage(new OptionsViewModel(_options)));
+            MessengerInstance.Send(new CloseOptionsViewMessage());
         }
-        public bool IsEnabled
-        {
-            get { return _options.IsEnabled; }
-            set { _options.IsEnabled = value; }
-        }
+        public ObservableCollection<FontFamilyViewModel> FontFamillyCollection { get; private set; }
+        public ObservableCollection<int> FontSizeCollection { get; private set; }
         public ObservableCollection<CommentViewModel> Comments { get; }
+        private FontFamilyViewModel _selectedFontFamily;
+        public FontFamilyViewModel SelectedFontFamily
+        {
+            get { return _selectedFontFamily; }
+            set
+            {
+                if (_selectedFontFamily != null &&  _options.FontFamily == value.FontFamily)
+                    return;
+                _options.FontFamily = value.FontFamily;
+                _selectedFontFamily = value;
+            }
+        }
         public FontFamily FontFamily => _options.FontFamily;
         public FontStyle FontStyle => _options.FontStyle;
         public FontWeight FontWeight => _options.FontWeight;
@@ -121,75 +129,20 @@ namespace OutlineTextPlugin
             set { _options.VerticalGridLineColor = value; }
         }
         public Brush VerticalGridLineBrush => new SolidColorBrush(_options.VerticalGridLineColor);
+        public bool IsUserNameWrapping
+        {
+            get { return _options.IsUserNameWrapping; }
+            set { _options.IsUserNameWrapping = value; }
+        }
         #endregion //VerticalGridLin
-
-        public double ThumbnailWidth
+        public OptionsViewModel() : this(new Options()) { }
+        public OptionsViewModel(Options options)
         {
-            get { return _options.ThumbnailWidth; }
-            set { _options.ThumbnailWidth = value; }
-        }
-        public double UserNameWidth
-        {
-            get { return _options.UserNameWidth; }
-            set { _options.UserNameWidth = value; }
-        }
-        public double MessageWidth
-        {
-            get { return _options.MessageWidth; }
-            set { _options.MessageWidth = value; }
-        }
-        public int ThumbnailDisplayIndex
-        {
-            get { return _options.ThumbnailDisplayIndex; }
-            set { _options.ThumbnailDisplayIndex = value; }
-        }
-        public int UserNameDisplayIndex
-        {
-            get { return _options.UsernameDisplayIndex; }
-            set { _options.UsernameDisplayIndex = value; }
-        }
-        public int MessageDisplayIndex
-        {
-            get { return _options.MessageDisplayIndex; }
-            set { _options.MessageDisplayIndex = value; }
-        }
-
-        public TextWrapping UserNameWrapping
-        {
-            get
-            {
-                if (_options.IsUserNameWrapping)
-                    return TextWrapping.Wrap;
-                else
-                    return TextWrapping.NoWrap;
-            }
-        }
-        public async void Add(ICommentData comment)
-        {
-            try
-            {
-                await _dispatcher.BeginInvoke((Action)(() =>
-                {
-                    Comments.Insert(0, new CommentViewModel(comment));
-                }), DispatcherPriority.Normal);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-        }
-        private Dispatcher _dispatcher;
-        public MainViewModel(Options options):this()
-        {
-            _dispatcher = Dispatcher.CurrentDispatcher;
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
                 {
-                    case nameof(_options.IsEnabled):
-                        RaisePropertyChanged(nameof(IsEnabled));
-                        break;
                     case nameof(_options.FontFamily):
                         RaisePropertyChanged(nameof(FontFamily));
                         break;
@@ -225,68 +178,20 @@ namespace OutlineTextPlugin
                         RaisePropertyChanged(nameof(Background));
                         break;
                     case nameof(_options.IsUserNameWrapping):
-                        RaisePropertyChanged(nameof(UserNameWrapping));
-                        break;
-                    case nameof(_options.ThumbnailWidth):
-                        RaisePropertyChanged(nameof(ThumbnailWidth));
+                        RaisePropertyChanged(nameof(IsUserNameWrapping));
                         break;
                 }
             };
-        }
-        public MainViewModel()
-        {
+            CloseCommand = new RelayCommand(Close);
+
             Comments = new ObservableCollection<CommentViewModel>();
-            ShowOptionsViewCommand = new RelayCommand(ShowOptionsView);
-        }
-    }
-    public class FontFamilyViewModel
-    {
-        public string Text { get; private set; }
-        public FontFamily FontFamily { get; private set; }
 
-        public FontFamilyViewModel(FontFamily fontFamily, CultureInfo culture)
-        {
-            Text = ConvertFontFamilyToName(fontFamily, culture);
-            FontFamily = fontFamily;
-        }
-        public override bool Equals(object obj)
-        {
-            var b = obj as FontFamilyViewModel;
-            if (b == null)
-                return false;
-            return this.FontFamily.Equals(b.FontFamily);
-        }
-        public override int GetHashCode()
-        {
-            return FontFamily.GetHashCode();
-        }
-        public static string ConvertFontFamilyToName(FontFamily fontFamily, CultureInfo culture)
-        {
-            string text;
-            var lang = XmlLanguage.GetLanguage(culture.IetfLanguageTag);
-            if (fontFamily.FamilyNames.ContainsKey(lang))
-            {
-                text = fontFamily.FamilyNames[lang];
-            }
-            else
-            {
-                text = fontFamily.ToString();
-            }
-            return text;
-        }
-    }
-    public class MarginConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            var len = (double)value;
-            var margin = double.Parse((string)parameter);
-            return len - margin;
-        }
+            var fontList = Fonts.SystemFontFamilies.OrderBy(f => f.ToString()).Select(f => new FontFamilyViewModel(f, CultureInfo.CurrentCulture));
+            FontFamillyCollection = new ObservableCollection<FontFamilyViewModel>(fontList);
+            SelectedFontFamily = new FontFamilyViewModel(_options.FontFamily, CultureInfo.CurrentCulture);
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
+            var sizeList = Enumerable.Range(6, 40);
+            FontSizeCollection = new ObservableCollection<int>(sizeList);
         }
     }
 }

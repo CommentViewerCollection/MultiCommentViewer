@@ -30,6 +30,7 @@ namespace OutlineTextPlugin
         public int UsernameDisplayIndex { get => GetValue(); set => SetValue(value); }
         public int MessageDisplayIndex { get => GetValue(); set => SetValue(value); }
         public Color BackColor { get => GetValue(); set => SetValue(value); }
+        public bool IsUserNameWrapping { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -57,6 +58,8 @@ namespace OutlineTextPlugin
             Dict.Add(nameof(MessageDisplayIndex), new Item { DefaultValue = 2, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
 
             Dict.Add(nameof(BackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+            Dict.Add(nameof(IsUserNameWrapping), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
         internal Options Clone()
         {

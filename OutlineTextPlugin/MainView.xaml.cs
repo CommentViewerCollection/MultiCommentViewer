@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Common.Wpf;
+using GalaSoft.MvvmLight.Messaging;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,11 +23,35 @@ namespace OutlineTextPlugin
     /// </summary>
     public partial class MainView : Window
     {
+        OptionsView optionsView;
         public MainView()
         {
             InitializeComponent();
             _addingCommentToTop = true;
             _isForceClose = false;
+            Messenger.Default.Register<ShowOptionsViewMessage>(this, message =>
+            {
+                try
+                {
+                    if (optionsView == null)
+                    {
+                        optionsView = new OptionsView
+                        {
+                            Owner = this
+                        };
+                    }
+                    optionsView.DataContext = message.Vm;
+                    var showPos = Tools.GetShowPos(Tools.GetMousePos(), optionsView);
+                    optionsView.Left = showPos.X;
+                    optionsView.Top = showPos.Y;
+                    optionsView.Show();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    Debugger.Break();
+                }
+            });
         }
         protected override void OnClosing(CancelEventArgs e)
         {

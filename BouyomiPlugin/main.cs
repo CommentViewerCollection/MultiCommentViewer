@@ -65,7 +65,11 @@ namespace BouyomiPlugin
                     _bouyomiChanProcess.EnableRaisingEvents = true;
                     _bouyomiChanProcess.Exited += (s, e) =>
                     {
-                        _bouyomiChanProcess.Close();
+                        try
+                        {
+                            _bouyomiChanProcess?.Close();//2018/03/25ここで_bouyomiChanProcessがnullになる場合があった
+                        }
+                        catch { }
                         _bouyomiChanProcess = null;
                     };
                 }

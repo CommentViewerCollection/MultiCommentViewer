@@ -99,16 +99,31 @@ namespace TwicasCommentViewer
             get { return ChangedOptions.SelectedRowForeColor; }
             set { ChangedOptions.SelectedRowForeColor = value; }
         }
+        #region HorizontalGridLine
+        public bool IsShowHorizontalGridLine
+        {
+            get { return ChangedOptions.IsShowHorizontalGridLine; }
+            set { ChangedOptions.IsShowHorizontalGridLine = value; }
+        }
         public Color HorizontalGridLineColor
         {
             get { return ChangedOptions.HorizontalGridLineColor; }
             set { ChangedOptions.HorizontalGridLineColor = value; }
+        }
+        #endregion //HorizontalGridLine
+
+        #region VerticalGridLin
+        public bool IsShowVerticalGridLine
+        {
+            get { return ChangedOptions.IsShowVerticalGridLine; }
+            set { ChangedOptions.IsShowVerticalGridLine = value; }
         }
         public Color VerticalGridLineColor
         {
             get { return ChangedOptions.VerticalGridLineColor; }
             set { ChangedOptions.VerticalGridLineColor = value; }
         }
+        #endregion //VerticalGridLine
         public bool IsUserNameWrapping
         {
             get { return ChangedOptions.IsUserNameWrapping; }

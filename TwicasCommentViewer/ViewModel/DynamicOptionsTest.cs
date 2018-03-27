@@ -44,6 +44,9 @@ namespace TwicasCommentViewer
 
         bool IsEllipseThumbnail { get; set; }
         InfoType ShowingInfoType { get; set; }
+
+        bool IsShowHorizontalGridLine { get; set; }
+        bool IsShowVerticalGridLine { get; set; }
     }
     class DynamicOptionsTest : DynamicOptionsBase, IOptions
     {
@@ -64,7 +67,9 @@ namespace TwicasCommentViewer
         public double MainViewWidth { get => GetValue(); set => SetValue(value); }
         public double MainViewLeft { get => GetValue(); set => SetValue(value); }
         public double MainViewTop { get => GetValue(); set => SetValue(value); }
+        public bool IsShowHorizontalGridLine { get => GetValue(); set => SetValue(value); }
         public Color HorizontalGridLineColor { get => GetValue(); set => SetValue(value); }
+        public bool IsShowVerticalGridLine { get => GetValue(); set => SetValue(value); }
         public Color VerticalGridLineColor { get => GetValue(); set => SetValue(value); }
         public Color InfoForeColor { get => GetValue(); set => SetValue(value); }
         public Color InfoBackColor { get => GetValue(); set => SetValue(value); }
@@ -110,8 +115,13 @@ namespace TwicasCommentViewer
             Dict.Add(nameof(MainViewWidth), new Item { DefaultValue = 716, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MainViewLeft), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MainViewTop), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(HorizontalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+            Dict.Add(nameof(IsShowVerticalGridLine), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(VerticalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(IsShowHorizontalGridLine), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(HorizontalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+
             Dict.Add(nameof(InfoForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(InfoBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFF00"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SelectedRowBackColor), new Item { DefaultValue = ColorFromArgb("#FF0078D7"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });

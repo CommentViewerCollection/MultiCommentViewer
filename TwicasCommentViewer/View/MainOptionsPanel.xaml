@@ -8,7 +8,7 @@
              xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
              xmlns:Common="clr-namespace:Common;assembly=Common" 
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}"
+             d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}" Height="410" Width="480"
              >
     <UserControl.Resources>
         <w:NotConverter x:Key="notConverter" />
@@ -19,18 +19,14 @@
         <TextBlock HorizontalAlignment="Left" Margin="105,10,0,0" TextWrapping="Wrap" Text="{Binding CommentFont, Mode=OneWay}" VerticalAlignment="Top" Width="117"/>
         <Button x:Name="button" Content="フォントを変更" HorizontalAlignment="Left" Margin="243,10,0,0" VerticalAlignment="Top" Width="75" Command="{Binding ShowFontSelectorCommand}"/>
         <Label x:Name="label" Content="背景色" HorizontalAlignment="Left" Margin="37,87,0,0" VerticalAlignment="Top"/>
-        <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" HorizontalAlignment="Left" Margin="39,225,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="label7" Content="変更後、コメビュを再起動してください" Foreground="Red" HorizontalAlignment="Left" Margin="202,219,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" HorizontalAlignment="Left" Margin="32,320,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label7" Content="変更後、コメビュを再起動してください" Foreground="Red" HorizontalAlignment="Left" Margin="195,314,0,0" VerticalAlignment="Top"/>
 
-        <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="37,205,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="30,300,0,0" VerticalAlignment="Top"/>
         <xctk:ColorPicker  SelectedColor="{Binding SelectedRowBackColor}" Margin="134,116,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.32,0.045" />
         <xctk:ColorPicker  SelectedColor="{Binding SelectedRowForeColor}" Margin="134,147,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label x:Name="label10" Content="選択行の背景色" HorizontalAlignment="Left" Margin="37,112,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
         <Label x:Name="label11" Content="選択行の文字色" HorizontalAlignment="Left" Margin="37,143,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
-        <Label x:Name="label8" Content="行グリッド線の色" HorizontalAlignment="Left" Margin="228,129,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.467,-1.231"/>
-        <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" Margin="323,133,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label x:Name="label9" Content="列グリッド線の色" HorizontalAlignment="Left" Margin="233,160,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" Margin="323,160,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
         <Label x:Name="label4_Copy" Content="情報背景色" HorizontalAlignment="Left" Margin="243,64,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.743,0.423"/>
         <Label x:Name="label5_Copy" Content="情報文字色" HorizontalAlignment="Left" Margin="243,93,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.843,0.462"/>
@@ -38,9 +34,15 @@
         <xctk:ColorPicker x:Name="ClrPcker_InfoForeground"  SelectedColor="{Binding NoticeCommentForeColor}" Margin="322,96,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label  Content="文字色" Margin="39,56,337,0" VerticalAlignment="Top" RenderTransformOrigin="0.795,0.846"/>
         <xctk:ColorPicker x:Name="ClrPcker_Foreground"  SelectedColor="{Binding ForeColor}" Margin="134,63,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="39,250,0,0" VerticalAlignment="Top"/>
-        <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="39,270,0,0" VerticalAlignment="Top"/>
-        <Label Content="コメントを数万行以上表示する場合必須。要再起動" Foreground="Red" HorizontalAlignment="Left" Margin="177,264,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.605,-0.577"/>
+        <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="32,345,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="32,365,0,0" VerticalAlignment="Top"/>
+        <Label Content="コメントを数万行以上表示する場合必須。要再起動" Foreground="Red" HorizontalAlignment="Left" Margin="170,359,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.605,-0.577"/>
+        <CheckBox x:Name="checkBox1" Content="行グリッド線（横線）を表示する" IsChecked="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="43,246,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label8_Copy" Content="行グリッド線の色" IsEnabled="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="73,266,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" IsEnabled="{Binding IsShowHorizontalGridLine}" Margin="163,266,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox x:Name="checkBox2" Content="列グリッド線（縦線）を表示する" IsChecked="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="43,198,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label9_Copy" Content="列グリッド線の色" IsEnabled="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="73,214,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" IsEnabled="{Binding IsShowVerticalGridLine}" Margin="163,218,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
     </Grid>
 </UserControl>

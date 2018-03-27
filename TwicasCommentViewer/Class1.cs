@@ -40,13 +40,13 @@ namespace TwicasCommentViewer
             if (isEllipseThumbnail)
             {
                 var bitmapImage = ConverterTools.Convert2ImageSource(imageItem);
-                int width = imageItem.Width ?? (int)bitmapImage.Width;
-                var height = imageItem.Height ?? (int)bitmapImage.Height;
+                var width = imageItem.Width ?? (bitmapImage != null ? (int)bitmapImage.Width : 0);
+                var height = imageItem.Height ?? (bitmapImage != null ? (int)bitmapImage.Height : 0);
                 var ellipse = new Ellipse
                 {
                     Fill = new ImageBrush { ImageSource = bitmapImage },
-                    Width = width,
-                    Height = height,
+                    Width= width,
+                    Height= height,
                 };
                 items.Add(new InlineUIContainer(ellipse));
             }

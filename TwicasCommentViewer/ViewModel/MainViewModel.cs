@@ -16,6 +16,7 @@ using GalaSoft.MvvmLight.Command;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 using System.Windows.Data;
+using System.Windows.Controls;
 
 namespace TwicasCommentViewer.ViewModel
 {
@@ -455,13 +456,22 @@ namespace TwicasCommentViewer.ViewModel
         }
         #endregion //LiveTitle
 
-        public Brush HorizontalGridLineBrush
+        public Brush HorizontalGridLineBrush => new SolidColorBrush(_options.HorizontalGridLineColor);
+        public Brush VerticalGridLineBrush => new SolidColorBrush(_options.VerticalGridLineColor);
+
+        public DataGridGridLinesVisibility GridLinesVisibility
         {
-            get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
-        }
-        public Brush VerticalGridLineBrush
-        {
-            get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
+            get
+            {
+                if (_options.IsShowHorizontalGridLine && _options.IsShowVerticalGridLine)
+                    return DataGridGridLinesVisibility.All;
+                else if (_options.IsShowHorizontalGridLine)
+                    return DataGridGridLinesVisibility.Horizontal;
+                else if (_options.IsShowVerticalGridLine)
+                    return DataGridGridLinesVisibility.Vertical;
+                else
+                    return DataGridGridLinesVisibility.None;
+            }
         }
 
         ICommentProvider _commentProvider;
@@ -520,6 +530,16 @@ namespace TwicasCommentViewer.ViewModel
                         break;
                     case nameof(options.IsShowPostTime):
                         RaisePropertyChanged(nameof(IsShowPostTime));
+                        break;
+                    case nameof(_options.IsShowHorizontalGridLine):
+                    case nameof(_options.IsShowVerticalGridLine):
+                        RaisePropertyChanged(nameof(GridLinesVisibility));
+                        break;
+                    case nameof(_options.HorizontalGridLineColor):
+                        RaisePropertyChanged(nameof(HorizontalGridLineBrush));
+                        break;
+                    case nameof(_options.VerticalGridLineColor):
+                        RaisePropertyChanged(nameof(VerticalGridLineBrush));
                         break;
                 }
             };

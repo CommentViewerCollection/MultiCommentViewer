@@ -164,6 +164,19 @@ namespace OutlineTextPlugin
                     return TextWrapping.NoWrap;
             }
         }
+        public VerticalAlignment VerticalAlignment => _options.VerticalAlignment;
+        private Thickness _rowBorderThickness;
+        public Thickness RowBorderThickness
+        {
+            get
+            {
+                if(_rowBorderThickness == null)
+                {
+                    _rowBorderThickness = new Thickness(0, 0, 0, _options.LineMargin);
+                }
+                return _rowBorderThickness;
+            }
+        }
         public async void Add(ICommentData comment)
         {
             try
@@ -229,6 +242,13 @@ namespace OutlineTextPlugin
                         break;
                     case nameof(_options.ThumbnailWidth):
                         RaisePropertyChanged(nameof(ThumbnailWidth));
+                        break;
+                    case nameof(_options.VerticalAlignment):
+                        RaisePropertyChanged(nameof(VerticalAlignment));
+                        break;
+                    case nameof(_options.LineMargin):
+                        _rowBorderThickness = new Thickness(0, 0, 0, _options.LineMargin);
+                        RaisePropertyChanged(nameof(RowBorderThickness));
                         break;
                 }
             };

@@ -60,6 +60,7 @@
                     <Setter Property="FontSize" Value="{Binding DataContext.FontSize, Converter={StaticResource intToFontConverter}, Source={x:Reference dummyElement}}"/>
                     <Setter Property="Background" Value="{Binding DataContext.Background, Source={x:Reference dummyElement}}" />
                     <Setter Property="BorderBrush" Value="{Binding DataContext.Background, Source={x:Reference dummyElement}}" />
+                    <Setter Property="BorderThickness" Value="{Binding DataContext.RowBorderThickness, Source={x:Reference dummyElement}}"/>
                 </Style>
                 <Style TargetType="{x:Type DataGridCell}">
                     <Setter Property="BorderThickness" Value="0"/>
@@ -131,7 +132,7 @@
                                                Stroke="{Binding DataContext.CommentOutlineStrokeColorBrush, Source={x:Reference dummyElement}}"
                                                Fill="{Binding DataContext.CommentOutlineFillColorBrush, Source={x:Reference dummyElement}}"
                                                Text="{Binding Message}" Margin="5,0,5,0"
-                                               VerticalAlignment="Center"
+                                               VerticalAlignment="{Binding DataContext.VerticalAlignment, Source={x:Reference dummyElement}}"
                                                />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

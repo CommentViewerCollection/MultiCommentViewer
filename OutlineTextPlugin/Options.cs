@@ -31,6 +31,12 @@ namespace OutlineTextPlugin
         public int MessageDisplayIndex { get => GetValue(); set => SetValue(value); }
         public Color BackColor { get => GetValue(); set => SetValue(value); }
         public bool IsUserNameWrapping { get => GetValue(); set => SetValue(value); }
+
+        public Color SelectedRowBackColor { get => GetValue(); set => SetValue(value); }
+        public Color SelectedRowForeColor { get => GetValue(); set => SetValue(value); }
+
+        public VerticalAlignment VerticalAlignment { get => GetValue(); set => SetValue(value); }
+        public int LineMargin { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -60,6 +66,12 @@ namespace OutlineTextPlugin
             Dict.Add(nameof(BackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
 
             Dict.Add(nameof(IsUserNameWrapping), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(SelectedRowBackColor), new Item { DefaultValue = ColorFromArgb("#FF0078D7"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SelectedRowForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+            Dict.Add(nameof(VerticalAlignment), new Item { DefaultValue = VerticalAlignment.Center, Predicate = c => true, Serializer = c => c.ToString(), Deserializer = s => Enum.Parse(typeof(VerticalAlignment), s) });
+            Dict.Add(nameof(LineMargin), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
         }
         internal Options Clone()
         {

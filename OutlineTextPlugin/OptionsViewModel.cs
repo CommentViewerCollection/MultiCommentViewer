@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -134,7 +135,45 @@ namespace OutlineTextPlugin
             get { return _options.IsUserNameWrapping; }
             set { _options.IsUserNameWrapping = value; }
         }
-        #endregion //VerticalGridLin
+        #endregion //VerticalGridLine
+
+        public Color SelectedRowBackColor
+        {
+            get { return _options.SelectedRowBackColor; }
+            set
+            {
+                _options.SelectedRowBackColor = value;
+                RaisePropertyChanged();
+            }
+        }
+        public Color SelectedRowForeColor
+        {
+            get { return _options.SelectedRowForeColor; }
+            set
+            {
+                _options.SelectedRowForeColor = value;
+                RaisePropertyChanged();
+            }
+        }
+        public VerticalAlignment VerticalAlignment
+        {
+            get { return _options.VerticalAlignment; }
+            set
+            {
+                _options.VerticalAlignment = value;
+                RaisePropertyChanged();
+            }
+        }
+        public int LineMargin
+        {
+            get { return _options.LineMargin; }
+            set
+            {
+                _options.LineMargin = value;
+                RaisePropertyChanged();
+            }
+        }
+
         public OptionsViewModel() : this(new Options()) { }
         public OptionsViewModel(Options options)
         {
@@ -180,6 +219,9 @@ namespace OutlineTextPlugin
                     case nameof(_options.IsUserNameWrapping):
                         RaisePropertyChanged(nameof(IsUserNameWrapping));
                         break;
+                    case nameof(_options.VerticalAlignment):
+                        RaisePropertyChanged(nameof(VerticalAlignment));
+                        break;
                 }
             };
             CloseCommand = new RelayCommand(Close);
@@ -192,6 +234,45 @@ namespace OutlineTextPlugin
 
             var sizeList = Enumerable.Range(6, 40);
             FontSizeCollection = new ObservableCollection<int>(sizeList);
+        }
+    }
+    public class EnumBooleanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+
+            string ParameterString = parameter as string;
+            if (ParameterString == null)
+            {
+                return DependencyProperty.UnsetValue;
+            }
+
+            if (Enum.IsDefined(value.GetType(), value) == false)
+            {
+                return DependencyProperty.UnsetValue;
+            }
+
+            object paramvalue = Enum.Parse(value.GetType(), ParameterString);
+
+            if (paramvalue.Equals(value))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string ParameterString = parameter as string;
+            if (ParameterString == null)
+            {
+                return DependencyProperty.UnsetValue;
+            }
+
+            return Enum.Parse(targetType, ParameterString);
         }
     }
 }

@@ -7,30 +7,51 @@
         mc:Ignorable="d"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:Common="clr-namespace:Common;assembly=Common" 
-        Title="OptionsView" Height="402" Width="359">
+        xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
+        Title="OptionsView" Height="402" Width="434">
+    <Window.Resources>
+        <w:NotConverter x:Key="notConverter" />
+        <local:EnumBooleanConverter x:Key="enumBooleanConverter" />
+    </Window.Resources>
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding SelectedFontFamily, Mode=TwoWay}" HorizontalAlignment="Left" Margin="51,5,0,0" VerticalAlignment="Top" Width="77"/>
-        <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" HorizontalAlignment="Left" Margin="79,32,0,0" VerticalAlignment="Top" Width="49"/>
-        <CheckBox Content="太字" IsChecked="{Binding IsBold}" HorizontalAlignment="Left" Margin="10,62,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.636,-0.133"/>
-        <Common:NumericUpDown Value="{Binding CommentOutlineTextThickness}" Minimum="1" HorizontalAlignment="Left" Height="26" Margin="215,2,0,0" VerticalAlignment="Top" Width="43" RenderTransformOrigin="-1.047,0.192"/>
-        <Label Content="縁取りの太さ" HorizontalAlignment="Left" Margin="143,3,0,0" VerticalAlignment="Top" RenderTransformOrigin="1.053,1.154"/>
-        <xctk:ColorPicker SelectedColor="{Binding CommentOutlineStrokeColor}" Margin="215,33,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
-        <Label Content="縁取りの色" HorizontalAlignment="Left" Margin="143,25,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker SelectedColor="{Binding CommentOutlineFillColor}" Margin="215,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="5.6,4.545" />
-        <Label Content="内側の色" HorizontalAlignment="Left" Margin="143,56,0,0" VerticalAlignment="Top"/>
+        <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" HorizontalAlignment="Left" Margin="204,6,0,0" VerticalAlignment="Top" Width="49"/>
+        <CheckBox Content="太字" IsChecked="{Binding IsBold}" HorizontalAlignment="Left" Margin="275,12,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.636,-0.133"/>
+
+
+
         <Label Content="フォント" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top"/>
-        <Label Content="フォントサイズ" HorizontalAlignment="Left" Margin="0,25,0,0" VerticalAlignment="Top"/>
+        <Label Content="フォントサイズ" HorizontalAlignment="Left" Margin="133,6,0,0" VerticalAlignment="Top"/>
 
-        <CheckBox x:Name="checkBox1" Content="行グリッド線（横線）を表示する" IsChecked="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="23,184,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="label8" Content="行グリッド線の色" IsEnabled="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="53,204,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" IsEnabled="{Binding IsShowHorizontalGridLine}" Margin="143,204,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox x:Name="checkBox1" Content="行グリッド線（横線）を表示する" IsChecked="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="21,268,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label8" Content="行グリッド線の色" IsEnabled="{Binding IsShowHorizontalGridLine}" HorizontalAlignment="Left" Margin="51,288,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" IsEnabled="{Binding IsShowHorizontalGridLine}" Margin="141,288,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
-        <CheckBox x:Name="checkBox2" Content="列グリッド線（縦線）を表示する" IsChecked="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="23,136,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="label9" Content="列グリッド線の色" IsEnabled="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="53,152,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" IsEnabled="{Binding IsShowVerticalGridLine}" Margin="143,156,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="背景色" HorizontalAlignment="Left" Margin="10,90,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.065,0.615"/>
-        <xctk:ColorPicker SelectedColor="{Binding BackColor}" Margin="79,90,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="64" RenderTransformOrigin="5.6,4.545" />
-        <Button Content="閉じる" Command="{Binding CloseCommand}" HorizontalAlignment="Left" Margin="110,326,0,0" VerticalAlignment="Top" Width="75"/>
-        <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="56,265,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBox2" Content="列グリッド線（縦線）を表示する" IsChecked="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="21,220,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label9" Content="列グリッド線の色" IsEnabled="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="51,236,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" IsEnabled="{Binding IsShowVerticalGridLine}" Margin="141,240,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="背景色" HorizontalAlignment="Left" Margin="227,40,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.065,0.615"/>
+        <xctk:ColorPicker SelectedColor="{Binding BackColor}" Margin="324,44,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="64" RenderTransformOrigin="5.6,4.545" />
+        <xctk:ColorPicker  SelectedColor="{Binding SelectedRowBackColor}" Margin="324,71,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.32,0.045" />
+        <xctk:ColorPicker  SelectedColor="{Binding SelectedRowForeColor}" Margin="324,98,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label x:Name="label10" Content="選択行の背景色" HorizontalAlignment="Left" Margin="227,71,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="label11" Content="選択行の文字色" HorizontalAlignment="Left" Margin="227,97,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+
+        <Label x:Name="label1" Content="セル中の文字の垂直位置" HorizontalAlignment="Left" Margin="232,136,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.079,-0.308"/>
+        <RadioButton IsChecked="{Binding Path=VerticalAlignment, Mode=TwoWay, Converter={StaticResource enumBooleanConverter},ConverterParameter=Top}" Content="上揃え" HorizontalAlignment="Left" Margin="255,165,0,0" VerticalAlignment="Top"/>
+        <RadioButton IsChecked="{Binding Path=VerticalAlignment, Mode=TwoWay, Converter={StaticResource enumBooleanConverter},ConverterParameter=Center}" Content="中央揃え" HorizontalAlignment="Left" Margin="255,185,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.016,0.533"/>
+
+        <Common:NumericUpDown Value="{Binding LineMargin}" Margin="293,224,0,0" Minimum="0" Maximum="999" VerticalAlignment="Top" HorizontalAlignment="Left" Width="57" />
+        <Label x:Name="label16" Content="行間の幅" HorizontalAlignment="Left" Margin="232,222,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.321,1.038" Height="27"/>
+
+
+        <Button Content="閉じる" Command="{Binding CloseCommand}" HorizontalAlignment="Left" Margin="124,341,0,0" VerticalAlignment="Top" Width="75"/>
+        <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="21,321,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker x:Name="ClrPcker_CommentOutlineStroke"  SelectedColor="{Binding CommentOutlineStrokeColor}" Margin="108,72,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <xctk:ColorPicker x:Name="ClrPcker_CommentOutlineFill"  SelectedColor="{Binding CommentOutlineFillColor}" Margin="108,101,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label x:Name="label12" Content="縁取りの太さ" HorizontalAlignment="Left" Margin="28,42,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label13" Content="縁取りの色" HorizontalAlignment="Left" Margin="28,68,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.289,0.308"/>
+        <Label x:Name="label14" Content="内側の色" HorizontalAlignment="Left" Margin="28,99,0,0" VerticalAlignment="Top"/>
+        <Common:NumericUpDown Value="{Binding CommentOutlineTextThickness}" Minimum="1" Height="25" Margin="108,42,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="75" />
     </Grid>
 </Window>

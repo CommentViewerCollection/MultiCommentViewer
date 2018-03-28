@@ -119,7 +119,7 @@ namespace TwicasSitePlugin
             }
             try
             {
-                _messageProvider = new MessageProvider(_server, _cc, _logger);
+                _messageProvider = new MessageProvider(_server,_siteOptions, _cc, _logger);
                 _messageProvider.InitialCommentsReceived += _messageProvider_InitialCommentsReceived;
                 _messageProvider.Received += MessageProvider_Received;
                 _messageProvider.MetaReceived += MessageProvider_MetaReceived;

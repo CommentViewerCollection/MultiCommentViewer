@@ -130,7 +130,7 @@ namespace TwicasSitePlugin
                 }
                 try
                 {
-                    await Task.Delay(1000 * 4, _cts.Token);
+                    await Task.Delay(1000 * _siteOptions.CommentRetrieveIntervalSec, _cts.Token);
                 }
                 catch(TaskCanceledException)
                 {
@@ -148,11 +148,13 @@ namespace TwicasSitePlugin
         }
         private CancellationTokenSource _cts;
         private readonly IDataServer _server;
+        private readonly TwicasSiteOptions _siteOptions;
         private readonly CookieContainer _cc;
         private readonly ILogger _logger;
-        public MessageProvider(IDataServer server, CookieContainer cc, ILogger logger)
+        public MessageProvider(IDataServer server,TwicasSiteOptions siteOptions, CookieContainer cc, ILogger logger)
         {
             _server = server;
+            _siteOptions = siteOptions;
             _cc = cc;
             _logger = logger;
         }

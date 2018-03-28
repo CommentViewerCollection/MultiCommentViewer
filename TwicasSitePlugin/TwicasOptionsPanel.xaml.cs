@@ -24,13 +24,13 @@ namespace TwicasSitePlugin
         {
             InitializeComponent();
         }
-        public void SetViewModel(TwicasOptionsViewModel vm)
+        internal void SetViewModel(TwicasSiteOptionsViewModel vm)
         {
             this.DataContext = vm;
         }
-        public TwicasOptionsViewModel GetViewModel()
+        internal TwicasSiteOptionsViewModel GetViewModel()
         {
-            return (TwicasOptionsViewModel)this.DataContext;
+            return (TwicasSiteOptionsViewModel)this.DataContext;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using SitePlugin;
 using System.Windows.Controls;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace TwicasSitePlugin
 {
@@ -40,7 +41,7 @@ namespace TwicasSitePlugin
             get
             {
                 var panel = new TwicasOptionsPanel();
-                panel.SetViewModel(new TwicasOptionsViewModel(_siteOptions));
+                panel.SetViewModel(new TwicasSiteOptionsViewModel(_siteOptions));
                 return new TwicasOptionsTabPage(DisplayName, panel);
             }
         }
@@ -73,14 +74,34 @@ namespace TwicasSitePlugin
         }
 
         private TwicasSiteOptions _siteOptions;
-        public void LoadOptions(string dir, IIo io)
+        public void LoadOptions(string path, IIo io)
         {
             _siteOptions = new TwicasSiteOptions();
+            try
+            {
+                var s = io.ReadFile(path);
+
+                _siteOptions.Deserialize(s);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", $"path={path}");
+            }
         }
 
-        public void SaveOptions(string dir, IIo io)
+        public void SaveOptions(string path, IIo io)
         {
-
+            try
+            {
+                var s = _siteOptions.Serialize();
+                io.WriteFile(path, s);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", $"path={path}");
+            }
         }
 
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)

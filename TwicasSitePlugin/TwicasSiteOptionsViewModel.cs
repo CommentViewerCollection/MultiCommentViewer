@@ -4,6 +4,11 @@ namespace TwicasSitePlugin
 {
     class TwicasSiteOptionsViewModel : INotifyPropertyChanged
     {
+        public int CommentRetrieveIntervalSec
+        {
+            get { return ChangedOptions.CommentRetrieveIntervalSec; }
+            set { ChangedOptions.CommentRetrieveIntervalSec = value; }
+        }
         private readonly TwicasSiteOptions _origin;
         private readonly TwicasSiteOptions changed;
         internal TwicasSiteOptions OriginOptions { get { return _origin; } }

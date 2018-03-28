@@ -259,6 +259,20 @@ namespace TwicasCommentViewer.ViewModel
 
                 var siteOptionsPath = GetSiteOptionsPath(_siteContext);
                 _siteContext.LoadOptions(siteOptionsPath, _io);
+                _commentProvider = _siteContext.CreateCommentProvider();
+                _commentProvider.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
+                _commentProvider.CommentReceived += CommentProvider_CommentReceived;
+                _commentProvider.MetadataUpdated += CommentProvider_MetadataUpdated;
+                _commentProvider.CanConnectChanged += (s, e) =>
+                {
+                    RaisePropertyChanged(nameof(CanConnect));
+                    RaisePropertyChanged(nameof(CanDisconnect));
+                };
+                _commentProvider.CanDisconnectChanged += (s, e) =>
+                {
+                    RaisePropertyChanged(nameof(CanConnect));
+                    RaisePropertyChanged(nameof(CanDisconnect));
+                };
 
                 var browsers = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
                 //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
@@ -485,21 +499,6 @@ namespace TwicasCommentViewer.ViewModel
             _options = options;
             _io = io;
             _logger = logger;
-
-            _commentProvider = siteContext.CreateCommentProvider();
-            _commentProvider.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
-            _commentProvider.CommentReceived += CommentProvider_CommentReceived;
-            _commentProvider.MetadataUpdated += CommentProvider_MetadataUpdated;
-            _commentProvider.CanConnectChanged += (s, e) =>
-            {
-                RaisePropertyChanged(nameof(CanConnect));
-                RaisePropertyChanged(nameof(CanDisconnect));
-            };
-            _commentProvider.CanDisconnectChanged += (s, e) =>
-            {
-                RaisePropertyChanged(nameof(CanConnect));
-                RaisePropertyChanged(nameof(CanDisconnect));
-            };
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand<CancelEventArgs>(Closing);

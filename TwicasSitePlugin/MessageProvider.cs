@@ -132,6 +132,11 @@ namespace TwicasSitePlugin
                     }
                     SendInfo(message, InfoType.Debug);
                 }
+                catch(ParseException ex)
+                {
+                    _logger.LogException(ex);
+                    SendInfo(ex.Message, InfoType.Debug);
+                }
                 catch (Exception ex)
                 {
                     _logger.LogException(ex);

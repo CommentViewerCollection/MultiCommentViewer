@@ -79,6 +79,8 @@ namespace TwicasSitePlugin
             //Disconnect()が呼ばれた場合以外は接続し続ける。
             while (!_cts.IsCancellationRequested)
             {
+                var waitTimeMs = 1000 * _siteOptions.CommentRetrieveIntervalSec;
+                var accWaitTime = 0;
                 try
                 {
                     var streamChecker = await API.GetUtreamChecker(_server, broadcasterId).ConfigureAwait(false);
@@ -98,13 +100,21 @@ namespace TwicasSitePlugin
                         var dataCollection = LowComment2Data(lowComments, updateRaw);//.Where(s=>!string.IsNullOrEmpty(s.html)).Select(Tools.Parse).ToList();
                         if (dataCollection.Count > 0)
                         {
-                            Received?.Invoke(this, dataCollection);
                             MetaReceived?.Invoke(this, new Metadata
                             {
                                 CurrentViewers = streamChecker.CurrentViewers.ToString(),
                                 TotalViewers = streamChecker.TotalViewers.ToString()
                             });
                             lastCommentId = dataCollection[dataCollection.Count - 1].Id;
+
+                            var eachInterval = waitTimeMs / dataCollection.Count;
+                            foreach (var data in dataCollection)
+                            {
+                                Received?.Invoke(this, new List<ICommentData> { data });
+
+                                await Task.Delay(eachInterval);
+                                accWaitTime += eachInterval;
+                            }
                         }
                     }
                 }
@@ -130,7 +140,11 @@ namespace TwicasSitePlugin
                 }
                 try
                 {
-                    await Task.Delay(1000 * _siteOptions.CommentRetrieveIntervalSec, _cts.Token);
+                    var restWait = waitTimeMs - accWaitTime;
+                    if (restWait > 0)
+                    {
+                        await Task.Delay(restWait, _cts.Token);
+                    }
                 }
                 catch(TaskCanceledException)
                 {

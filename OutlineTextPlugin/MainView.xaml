@@ -87,9 +87,10 @@
                                     <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
+                                    <RowDefinition Height="5" />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <Ellipse Grid.Column="1" Grid.Row="0" Width="{Binding DataContext.ThumbnailWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource marginConverter}, ConverterParameter=5}" Height="{Binding DataContext.ThumbnailWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource marginConverter}, ConverterParameter=5}">
+                                <Ellipse Grid.Column="1" Grid.Row="1" Width="{Binding DataContext.ThumbnailWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource marginConverter}, ConverterParameter=5}" Height="{Binding DataContext.ThumbnailWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource marginConverter}, ConverterParameter=5}">
                                     <Ellipse.Fill>
                                         <ImageBrush>
                                             <ImageBrush.ImageSource>

@@ -83,7 +83,7 @@ namespace TwicasSitePlugin
                 var accWaitTime = 0;
                 try
                 {
-                    var streamChecker = await API.GetUtreamChecker(_server, broadcasterId).ConfigureAwait(false);
+                    var (streamChecker, streamCheckerRaw) = await API.GetUtreamChecker(_server, broadcasterId).ConfigureAwait(false);
                     if (streamChecker.LiveId == null)
                     {
                         //放送してない。live_idは更新しない。

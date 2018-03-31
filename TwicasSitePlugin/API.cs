@@ -21,12 +21,12 @@ namespace TwicasSitePlugin
             var obj = Tools.Deserialize<LowObject.Comment[]>(str);
             return (obj, str);
         }
-        public static async Task<LowObject.StreamChecker> GetUtreamChecker(IDataServer dataServer, string broadcasterId)
+        public static async Task<(LowObject.StreamChecker, string raw)> GetUtreamChecker(IDataServer dataServer, string broadcasterId)
         {
             var url = $"https://twitcasting.tv/streamchecker.php?u={broadcasterId}&v=999";
             var str = await dataServer.GetAsync(url);
             var s = new LowObject.StreamChecker(str);
-            return s;
+            return (s, str);
         }
         /// <summary>
         /// 
@@ -36,7 +36,7 @@ namespace TwicasSitePlugin
         /// <returns></returns>
         /// <exception cref="System.Net.Http.HttpRequestException"></exception>
         /// <exception cref="InvalidBroadcasterIdException"></exception>
-        public static async Task<LowObject.LiveContext> GetLiveContext(IDataServer dataSource, string broadcaster, CookieContainer cc)
+        public static async Task<(LowObject.LiveContext,string raw)> GetLiveContext(IDataServer dataSource, string broadcaster, CookieContainer cc)
         {
             var url = "http://twitcasting.tv/" + broadcaster;
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36";
@@ -76,7 +76,7 @@ namespace TwicasSitePlugin
                     context.AudienceId = null;
                 }
             }
-            return context;
+            return (context, str);
         }
         /// <summary>
         /// （非公開API）

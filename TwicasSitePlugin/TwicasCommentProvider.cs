@@ -72,14 +72,15 @@ namespace TwicasSitePlugin
             CanDisconnect = true;
             int cnum = -1;
             long liveId = -1;
+            string audienceId;
             try
             {
-                var context = await API.GetLiveContext(_server, broadcasterId, _cc);
+                var (context, contextRaw) = await API.GetLiveContext(_server, broadcasterId, _cc);
                 cnum = context.MovieCnum;
                 liveId = context.MovieId;
                 if (!string.IsNullOrEmpty(context.AudienceId))
                 {
-                    var audienceId = context.AudienceId;
+                    audienceId = context.AudienceId;
                     SendInfo($"ログイン済みユーザID:{audienceId}", InfoType.Notice);
                 }
                 else

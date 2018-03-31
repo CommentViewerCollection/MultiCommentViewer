@@ -29,6 +29,26 @@ namespace OutlineTextPlugin
             get { return _options.IsEnabled; }
             set { _options.IsEnabled = value; }
         }
+        public double Height
+        {
+            get { return _options.MainViewHeight; }
+            set { _options.MainViewHeight = value; }
+        }
+        public double Width
+        {
+            get { return _options.MainViewWidth; }
+            set { _options.MainViewWidth = value; }
+        }
+        public double Left
+        {
+            get { return _options.MainViewLeft; }
+            set { _options.MainViewLeft = value; }
+        }
+        public double Top
+        {
+            get { return _options.MainViewTop; }
+            set { _options.MainViewTop = value; }
+        }
         public ObservableCollection<CommentViewModel> Comments { get; }
         public FontFamily FontFamily => _options.FontFamily;
         public FontStyle FontStyle => _options.FontStyle;

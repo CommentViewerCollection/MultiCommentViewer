@@ -37,6 +37,11 @@ namespace OutlineTextPlugin
 
         public VerticalAlignment VerticalAlignment { get => GetValue(); set => SetValue(value); }
         public int LineMargin { get => GetValue(); set => SetValue(value); }
+
+        public double MainViewHeight { get => GetValue(); set => SetValue(value); }
+        public double MainViewWidth { get => GetValue(); set => SetValue(value); }
+        public double MainViewLeft { get => GetValue(); set => SetValue(value); }
+        public double MainViewTop { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -72,6 +77,12 @@ namespace OutlineTextPlugin
 
             Dict.Add(nameof(VerticalAlignment), new Item { DefaultValue = VerticalAlignment.Center, Predicate = c => true, Serializer = c => c.ToString(), Deserializer = s => Enum.Parse(typeof(VerticalAlignment), s) });
             Dict.Add(nameof(LineMargin), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+
+            Dict.Add(nameof(MainViewHeight), new Item { DefaultValue = 550, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewWidth), new Item { DefaultValue = 716, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewLeft), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewTop), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+
         }
         internal Options Clone()
         {

@@ -76,8 +76,8 @@ namespace OutlineTextPlugin
         public void ShowSettingView()
         {
             _mainView.Topmost = Host.IsTopmost;
-            _mainView.Left = Host.MainViewLeft;
-            _mainView.Top = Host.MainViewTop;
+            //_mainView.Left = Host.MainViewLeft;
+            //_mainView.Top = Host.MainViewTop;
 
             _mainView.Show();
         }

@@ -8,7 +8,7 @@
              xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
              xmlns:Common="clr-namespace:Common;assembly=Common" 
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}" Height="410" Width="480"
+             d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}"
              >
     <UserControl.Resources>
         <w:NotConverter x:Key="notConverter" />
@@ -43,6 +43,10 @@
         <CheckBox x:Name="checkBox2" Content="列グリッド線（縦線）を表示する" IsChecked="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="43,198,0,0" VerticalAlignment="Top"/>
         <Label x:Name="label9_Copy" Content="列グリッド線の色" IsEnabled="{Binding IsShowVerticalGridLine}" HorizontalAlignment="Left" Margin="73,214,0,0" VerticalAlignment="Top"/>
         <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" IsEnabled="{Binding IsShowVerticalGridLine}" Margin="163,218,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox Content="コメビュ開発に有用なデータを作者に送信する" IsChecked="{Binding IsSendCommentData}" HorizontalAlignment="Left" Margin="32,385,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="コメビュ本体にコメントを表示する" IsChecked="{Binding IsShowComments}" HorizontalAlignment="Left" Margin="32,405,0,0" VerticalAlignment="Top"/>
+        <Common:NumericUpDown Value="{Binding CommentUpdateInterval}" Minimum="10" HorizontalAlignment="Left" Height="18" Margin="204,429,0,0" VerticalAlignment="Top" Width="55"/>
+        <Label Content="コメントを表示する間隔（ミリ秒）" HorizontalAlignment="Left" Margin="32,425,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </UserControl>

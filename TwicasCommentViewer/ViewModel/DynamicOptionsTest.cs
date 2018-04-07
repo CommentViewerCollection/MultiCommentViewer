@@ -47,6 +47,10 @@ namespace TwicasCommentViewer
 
         bool IsShowHorizontalGridLine { get; set; }
         bool IsShowVerticalGridLine { get; set; }
+
+        bool IsSendCommentData { get; set; }
+        bool IsShowComments { get; set; }
+        int CommentUpdateInterval { get; set; }
     }
     class DynamicOptionsTest : DynamicOptionsBase, IOptions
     {
@@ -98,6 +102,10 @@ namespace TwicasCommentViewer
         public InfoType ShowingInfoType { get => GetValue(); set => SetValue(value); }
 
         public bool IsEllipseThumbnail { get => GetValue(); set => SetValue(value); }
+
+        public bool IsSendCommentData { get => GetValue(); set => SetValue(value); }
+        public bool IsShowComments { get => GetValue(); set => SetValue(value); }
+        public int CommentUpdateInterval { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ, Meiryo"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
@@ -163,6 +171,10 @@ namespace TwicasCommentViewer
             Dict.Add(nameof(IsEllipseThumbnail), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             Dict.Add(nameof(ShowingInfoType), new Item { DefaultValue = InfoType.Notice, Predicate = t => true, Serializer = t => t.ToString(), Deserializer = s => Enum.Parse(typeof(InfoType), s) });
+
+            Dict.Add(nameof(IsSendCommentData), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowComments), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(CommentUpdateInterval), new Item { DefaultValue = 500, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
         }
         public ICommentOptions Clone()
         {

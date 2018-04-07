@@ -326,10 +326,10 @@ namespace TwicasCommentViewer.ViewModel
                 Debug.WriteLine(ex.Message);
             }
         }
-        private async void SetInfo(string message, InfoType type)
+        private void SetInfo(string message, InfoType type)
         {
             var cvm = new InfoCommentViewModel(_options, message, type);
-            await AddComment(cvm);
+            StockComment(cvm);
         }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
         {
@@ -499,6 +499,7 @@ namespace TwicasCommentViewer.ViewModel
             _options = options;
             _io = io;
             _logger = logger;
+            _commentShowTimer.Elapsed += _commentShowTimer_Elapsed;
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
@@ -544,6 +545,8 @@ namespace TwicasCommentViewer.ViewModel
             };
         }
 
+
+
         private void CommentProvider_MetadataUpdated(object sender, IMetadata e)
         {
             if (e.Title != null)
@@ -560,10 +563,13 @@ namespace TwicasCommentViewer.ViewModel
         {
             try
             {
-                foreach (var comment in e)
-                {
-                    await AddComment(comment);
-                }
+                //最終的にはプラグインにコメントを渡す時に初期コメントかどうかのフラグも一緒に渡したい。
+                //現状、未実装なため、初期コメントはプラグインに渡さないようにする。
+                await AddComments(e);
+                //foreach (var comment in e)
+                //{
+                //    StockComment(comment);
+                //}
             }
             catch (Exception ex)
             {
@@ -588,41 +594,70 @@ namespace TwicasCommentViewer.ViewModel
         }
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         public ObservableCollection<ICommentViewModel> Comments { get; } = new ObservableCollection<ICommentViewModel>();
-        private async Task AddComment(ICommentViewModel cvm)
+        private SynchronizedCollection<ICommentViewModel> _commentsStack = new SynchronizedCollection<ICommentViewModel>();
+        private System.Timers.Timer _commentShowTimer = new System.Timers.Timer();
+        private async Task AddComments(IEnumerable<ICommentViewModel> comments)
         {
             try
             {
-                await _dispatcher.BeginInvoke((Action)(() =>
+                if (_options.IsShowComments)
                 {
-                    if (_isAddingNewCommentTop)
+                    await _dispatcher.BeginInvoke((Action)(() =>
                     {
-                        Comments.Insert(0, cvm);
-                    }
-                    else
-                    {
-                        Comments.Add(cvm);
-                    }
-                }), DispatcherPriority.Normal);
+                        //TODO:AddRange()したい
+                        foreach (var cvm in comments)
+                        {
+                            if (_isAddingNewCommentTop)
+                            {
+                                Comments.Insert(0, cvm);
+                            }
+                            else
+                            {
+                                Comments.Add(cvm);
+                            }
+                        }
+                    }), DispatcherPriority.Normal);
+                }
             }
             catch (Exception ex)
             {
                 SetInfo(ex.Message, InfoType.Debug);
             }
-        }
-        private async void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
-        {
             try
             {
-                await AddComment(e);
+                //TODO:AddRange()したい
+                foreach (var cvm in comments)
+                {
+                    if (!cvm.IsInfo)
+                    {
+                        _pluginManager.SetComments(cvm);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                SetInfo(ex.Message, InfoType.Error);
             }
-            if (!e.IsInfo)
+        }
+        private async void _commentShowTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var temp = new List<ICommentViewModel>(_commentsStack);
+            _commentsStack.Clear();
+            await AddComments(temp);
+        }
+        private void StockComment(ICommentViewModel cvm)
+        {
+            try
             {
-                _pluginManager.SetComments(e);
+                _commentsStack.Add(cvm);
+            }catch(Exception ex)
+            {
+                SetInfo(ex.Message, InfoType.Error);
             }
+        }
+        private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
+        {
+            StockComment(e);
         }
         bool IsValidInput { get; set; }
         private string _input;
@@ -643,6 +678,8 @@ namespace TwicasCommentViewer.ViewModel
             var selectedBrowser = SelectedBrowserViewModel.Browser;
             var input = Input;
             Comments.Clear();
+            _commentShowTimer.Interval = _options.CommentUpdateInterval;
+            _commentShowTimer.Enabled = true;
             try
             {
                 await _commentProvider.ConnectAsync(input, selectedBrowser);
@@ -652,6 +689,7 @@ namespace TwicasCommentViewer.ViewModel
                 _logger.LogException(ex);
             }
             SetInfo("切断されました", InfoType.Notice);
+            _commentShowTimer.Enabled = false;
         }
         private void Disconnect()
         {

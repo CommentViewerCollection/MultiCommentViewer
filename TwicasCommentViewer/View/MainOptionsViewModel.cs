@@ -149,6 +149,21 @@ namespace TwicasCommentViewer
             get { return ChangedOptions.IsEllipseThumbnail; }
             set { ChangedOptions.IsEllipseThumbnail = value; }
         }
+        public bool IsSendCommentData
+        {
+            get { return ChangedOptions.IsSendCommentData; }
+            set { ChangedOptions.IsSendCommentData = value; }
+        }
+        public bool IsShowComments
+        {
+            get { return ChangedOptions.IsShowComments; }
+            set { ChangedOptions.IsShowComments = value; }
+        }
+        public int CommentUpdateInterval
+        {
+            get { return ChangedOptions.CommentUpdateInterval; }
+            set { ChangedOptions.CommentUpdateInterval = value; }
+        }
         private readonly IOptions _origin;
         private readonly IOptions changed;
         public IOptions OriginOptions { get { return _origin; } }

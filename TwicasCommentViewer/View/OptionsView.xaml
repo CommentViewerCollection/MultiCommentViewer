@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TwicasCommentViewer"
         mc:Ignorable="d"
-        Title="OptionsView" Height="517" Width="449">
+        Title="OptionsView" Height="617" Width="449">
     <Grid>
         <TabControl x:Name="tabControl" Margin="0,0,0,33">
         </TabControl>

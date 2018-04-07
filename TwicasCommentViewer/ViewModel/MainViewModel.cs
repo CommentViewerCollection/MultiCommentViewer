@@ -641,9 +641,20 @@ namespace TwicasCommentViewer.ViewModel
         }
         private async void _commentShowTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            var temp = new List<ICommentViewModel>(_commentsStack);
-            _commentsStack.Clear();
-            await AddComments(temp);
+            try
+            {
+                List<ICommentViewModel> temp;
+                lock (_commentsStack)
+                {
+                    temp = new List<ICommentViewModel>(_commentsStack);
+                    _commentsStack.Clear();
+                }
+                await AddComments(temp);
+            }catch(Exception ex)
+            {
+                _logger.LogException(ex);
+                SetInfo(ex.Message, InfoType.Error);
+            }
         }
         private void StockComment(ICommentViewModel cvm)
         {

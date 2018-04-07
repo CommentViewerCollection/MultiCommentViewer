@@ -91,23 +91,32 @@ namespace OutlineTextPlugin
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             var url = values[0] as string;
-            //var width = (int)values[1];
-            //var height = (int)values[2];
             var wc = new System.Net.WebClient { CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.CacheIfAvailable) };
+            System.IO.MemoryStream ms = null;
+            try
+            {
+                ms = new System.IO.MemoryStream(wc.DownloadData(url));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+            if (ms == null)
+            {
+                return null;
+            }
             var bi = new BitmapImage();
             try
             {
                 bi.BeginInit();
-                bi.StreamSource = new System.IO.MemoryStream(wc.DownloadData(url));
+                bi.StreamSource = ms;
                 bi.EndInit();
                 bi.Freeze();
             }
-            catch (System.Net.WebException)
+            catch (InvalidOperationException)
             {
-
+                return null;
             }
-            catch (System.IO.IOException) { }
-            catch (InvalidOperationException) { }
             finally
             {
                 wc.Dispose();

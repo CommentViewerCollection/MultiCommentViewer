@@ -86,8 +86,12 @@ namespace TwicasCommentViewer
             }
             catch (Exception ex)
             {
-                //ここで例外が起きても送れない・・・。
-                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
+                var s = _logger.GetExceptions();
+                using(var sw=new System.IO.StreamWriter("error.txt", true))
+                {
+                    sw.WriteLine(s);
+                }
             }
             base.OnExit(e);
         }
@@ -110,8 +114,8 @@ namespace TwicasCommentViewer
             using (var formData = new MultipartFormDataContent())
             {
                 client.DefaultRequestHeaders.Add("User-Agent", GetUserAgent());
-                formData.Add(fileStreamContent, "error", GetUserAgent() + "_" + "error.txt");
-                var t = client.PostAsync("http://int-main.net/upload", formData);
+                formData.Add(fileStreamContent, "twicas_error", GetUserAgent()+ ".txt");
+                var t = client.PostAsync("http://int-main.net/api/errorreport/twicascommentviewer", formData);
                 var response = t.Result;
                 if (!response.IsSuccessStatusCode)
                 {

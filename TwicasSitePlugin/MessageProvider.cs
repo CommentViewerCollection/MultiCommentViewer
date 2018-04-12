@@ -32,6 +32,10 @@ namespace TwicasSitePlugin
                 }
                 try
                 {
+                    if(!string.IsNullOrEmpty(c.uid) && c.uid.Contains("kii"))
+                    {
+                        _logger.LogException(new ParseException("キートス候補" + raw));
+                    }
                     if (c.@class != "other")
                     {
                         _logger.LogException(new ParseException("キートス候補" + raw));
@@ -84,6 +88,10 @@ namespace TwicasSitePlugin
                 try
                 {
                     var (streamChecker, streamCheckerRaw) = await API.GetUtreamChecker(_server, broadcasterId).ConfigureAwait(false);
+                    if (streamCheckerRaw.Contains("kiitos"))
+                    {
+                        _logger.LogException(new ParseException("キートス候補_stream" + streamCheckerRaw));
+                    }
                     if (streamChecker.LiveId == null)
                     {
                         //放送してない。live_idは更新しない。

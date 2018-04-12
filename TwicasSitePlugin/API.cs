@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Net;
 using System.Text.RegularExpressions;
+using System;
 
 namespace TwicasSitePlugin
 {
@@ -65,7 +66,7 @@ namespace TwicasSitePlugin
                 }
             }
             {
-                var match = Regex.Match(str, "\"audienceId\":\"([^\"]+)\"");
+                var match = Regex.Match(str, "a href=\"/([^\"/]+)/notification");
                 if (match.Success)
                 {
                     var audienceId = match.Groups[1].Value;
@@ -74,6 +75,14 @@ namespace TwicasSitePlugin
                 else
                 {
                     context.AudienceId = null;
+                }
+            }
+            {
+                var match = Regex.Match(str, "\"cs_session_id\":\"([^\"]+)\"");
+                if (match.Success)
+                {
+                    var csSessionId = match.Groups[1].Value;
+                    context.CsSessionId = csSessionId;
                 }
             }
             return (context, str);
@@ -99,6 +108,25 @@ namespace TwicasSitePlugin
             var comments = obj.comment;
             var newCnum = obj.cnum;
             return (comments, newCnum, str);
+        }
+
+        internal static async Task<(LowObject.Comment[],string raw)> PostCommentAsync(
+            IDataServer dataSource, string broadcasterId,long liveId, long lastCommentId, string comment, string csSessionId, CookieContainer cc)
+        {
+            var url = $"https://twitcasting.tv/{broadcasterId}/userajax.php?c=post";
+            var data = new Dictionary<string, string>
+            {
+                {"m", liveId.ToString() },
+                {"s", comment },
+                {"o", broadcasterId },
+                {"k", lastCommentId.ToString() },
+                {"cs_session_id", csSessionId },
+                {"nt", "2" },
+            };
+
+            var str = await dataSource.PostAsync(url, data, cc);
+            var obj = Tools.Deserialize<LowObject.Comment[]>(str);
+            return (obj, str);
         }
     }
 }

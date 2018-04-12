@@ -86,6 +86,22 @@ namespace TwicasSitePlugin
     //}
     static class Tools
     {
+        public static string ToText(this IEnumerable<IMessagePart> messageParts)
+        {
+            var s = "";
+            foreach (var part in messageParts)
+            {
+                if (part is IMessageText text)
+                {
+                    s += text.Text;
+                }
+                else if (part is IMessageLink link)
+                {
+                    s += link.Url;
+                }
+            }
+            return s;
+        }
         public static T Deserialize<T>(string json)
         {
             T low;

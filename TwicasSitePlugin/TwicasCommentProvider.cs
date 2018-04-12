@@ -52,9 +52,13 @@ namespace TwicasSitePlugin
         }
         private CookieContainer _cc;
         MessageProvider _messageProvider;
+        string _csSessionId;
+        string _broadcasterId;
+        long _liveId = -1;
         public async Task ConnectAsync(string input, global::ryu_s.BrowserCookie.IBrowserProfile browserProfile)
         {
             var broadcasterId = Tools.ExtractBroadcasterId(input);
+            _broadcasterId = broadcasterId;
             if (string.IsNullOrEmpty(broadcasterId))
             {
                 //Info
@@ -71,21 +75,24 @@ namespace TwicasSitePlugin
             CanConnect = false;
             CanDisconnect = true;
             int cnum = -1;
-            long liveId = -1;
+
             string audienceId;
             try
             {
                 var (context, contextRaw) = await API.GetLiveContext(_server, broadcasterId, _cc);
                 cnum = context.MovieCnum;
-                liveId = context.MovieId;
+                _liveId = context.MovieId;
                 if (!string.IsNullOrEmpty(context.AudienceId))
                 {
                     audienceId = context.AudienceId;
                     SendInfo($"ログイン済みユーザID:{audienceId}", InfoType.Notice);
+                    IsLoggedIn = true;
+                    _csSessionId = context.CsSessionId;
                 }
                 else
                 {
                     SendInfo("未ログイン", InfoType.Notice);
+                    IsLoggedIn = false;
                 }
             }
             catch (HttpRequestException ex)
@@ -113,7 +120,7 @@ namespace TwicasSitePlugin
                 _logger.LogException(ex);
                 SendInfo(ex.Message, InfoType.Debug);
             }
-            if(cnum < 0 || liveId < 0)
+            if(cnum < 0 || _liveId < 0)
             {
                 AfterDisconnected();
                 return;
@@ -126,7 +133,7 @@ namespace TwicasSitePlugin
                 _messageProvider.MetaReceived += MessageProvider_MetaReceived;
                 _messageProvider.InfoOccured += MessageProvider_InfoOccured;
 
-                await _messageProvider.ConnectAsync(broadcasterId, cnum, liveId);
+                await _messageProvider.ConnectAsync(broadcasterId, cnum, _liveId);
             }
             catch (Exception ex)
             {
@@ -148,7 +155,7 @@ namespace TwicasSitePlugin
         {
             SendInfo(e.Message, e.Type);
         }
-
+        private long _lastCommentId;
         private void _messageProvider_InitialCommentsReceived(object sender, IEnumerable<ICommentData> e)
         {
             var list = new List<ICommentViewModel>();
@@ -166,6 +173,10 @@ namespace TwicasSitePlugin
                 }
             }
             InitialCommentsReceived?.Invoke(this, list);
+            if(list.Count > 0)
+            {
+                _lastCommentId = long.Parse(list[list.Count - 1].Id);
+            }
         }
         private TwicasCommentViewModel CommentData2CommentViewModel(ICommentData data)
         {
@@ -185,8 +196,27 @@ namespace TwicasSitePlugin
             {
                 try
                 {
+                    Debug.WriteLine($"{data.Id} {Tools.ToText(data.Message)} MessageProvider_Received");
                     var cvm = CommentData2CommentViewModel(data);
                     CommentReceived?.Invoke(this, cvm);
+                    _lastCommentId = data.Id;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                    SendInfo(ex.Message, InfoType.Debug);
+                }
+            }
+        }
+        private void OnReceiveComments(IEnumerable<ICommentData> comments)
+        {
+            foreach (var data in comments)
+            {
+                try
+                {
+                    var cvm = CommentData2CommentViewModel(data);
+                    CommentReceived?.Invoke(this, cvm);
+                    //_lastCommentId = data.Id;
                 }
                 catch (Exception ex)
                 {
@@ -209,9 +239,30 @@ namespace TwicasSitePlugin
             throw new NotImplementedException();
         }
 
-        public Task PostCommentAsync(string text)
+        public async Task PostCommentAsync(string text)
         {
-            throw new NotImplementedException();
+            var (comments, raw) = await API.PostCommentAsync(_server, _broadcasterId, _liveId, _lastCommentId, text, _csSessionId, _cc);
+            //var ms = new List<ICommentData>();
+            //foreach(var c in comments)
+            //{
+            //    var data = Tools.Parse(c);
+            //    Debug.WriteLine($"{data.Id} {Tools.ToText(data.Message)} PostCommentAsync");
+            //    ms.Add(data);
+            //}
+            //OnReceiveComments(ms);
+        }
+
+        public event EventHandler LoggedInStateChanged;
+        private bool _isLoggedIn;
+        public bool IsLoggedIn
+        {
+            get { return _isLoggedIn; }
+            set
+            {
+                if (_isLoggedIn == value) return;
+                _isLoggedIn = value;
+                LoggedInStateChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
         private readonly Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>>();
         private readonly IDataServer _server;

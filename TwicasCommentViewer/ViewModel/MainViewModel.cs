@@ -253,7 +253,6 @@ namespace TwicasCommentViewer.ViewModel
             //ここでawaitするとそれ以降が実行されないからこうするしかない。
             try
             {
-                MessengerInstance.Send(new SetPostCommentPanel(_siteContext.GetCommentPostPanel(_commentProvider)));
                 MessengerInstance.Send(new SetAddingCommentDirection { IsTop = _options.IsAddingNewCommentTop });
                 _isAddingNewCommentTop = _options.IsAddingNewCommentTop;
 
@@ -273,6 +272,7 @@ namespace TwicasCommentViewer.ViewModel
                     RaisePropertyChanged(nameof(CanConnect));
                     RaisePropertyChanged(nameof(CanDisconnect));
                 };
+                MessengerInstance.Send(new SetPostCommentPanel(_siteContext.GetCommentPostPanel(_commentProvider)));
 
                 var browsers = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
                 //もしブラウザが無かったらclass EmptyBrowserProfileを使う。

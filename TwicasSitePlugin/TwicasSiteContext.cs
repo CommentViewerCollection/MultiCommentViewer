@@ -106,7 +106,18 @@ namespace TwicasSitePlugin
 
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            return null;
+            var youtubeCommentProvider = commentProvider as TwicasCommentProvider;
+            Debug.Assert(youtubeCommentProvider != null);
+            if (youtubeCommentProvider == null)
+                return null;
+
+            var vm = new CommentPostPanelViewModel(youtubeCommentProvider, _logger);
+            var panel = new CommentPostPanel
+            {
+                //IsEnabled = false,
+                DataContext = vm
+            };
+            return panel;
         }
 
         private readonly ICommentOptions _options;

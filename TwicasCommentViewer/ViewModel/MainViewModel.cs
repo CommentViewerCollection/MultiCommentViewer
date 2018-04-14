@@ -17,6 +17,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Media;
 using System.Windows.Data;
 using System.Windows.Controls;
+using Common.Wpf;
 
 namespace TwicasCommentViewer.ViewModel
 {
@@ -490,16 +491,19 @@ namespace TwicasCommentViewer.ViewModel
 
         ICommentProvider _commentProvider;
         IOptions _options;
+        IUserStore _userStore;
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        internal MainViewModel(TwicasSiteContext siteContext, IOptions options, IIo io, ILogger logger)
+        internal MainViewModel(IOptions options, IIo io, ILogger logger, IUserStore userStore)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
-            _siteContext = siteContext;
+            _siteContext = new TwicasSiteContext(options, logger, userStore);
+            _userStore = userStore;
             _browserLoader = new BrowserLoader(logger);
             _options = options;
             _io = io;
             _logger = logger;
             _commentShowTimer.Elapsed += _commentShowTimer_Elapsed;
+            
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand<CancelEventArgs>(Closing);
@@ -511,6 +515,7 @@ namespace TwicasCommentViewer.ViewModel
             //ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
             ConnectCommand = new RelayCommand(Connect);
             DisconnectCommand = new RelayCommand(Disconnect);
+            ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
             options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -705,6 +710,237 @@ namespace TwicasCommentViewer.ViewModel
         private void Disconnect()
         {
             _commentProvider.Disconnect();
+        }
+        public ICommentViewModel SelectedComment { get; set; }
+        private void ShowUserInfo()
+        {
+            var current = SelectedComment;
+            try
+            {
+                Debug.Assert(current != null);
+                //Debug.Assert(current is McvCommentViewModel);
+
+                var userId = current.UserId;
+                var view = new CollectionViewSource { Source = Comments }.View;
+                view.Filter = obj =>
+                {
+                    if (!(obj is ICommentViewModel cvm))
+                    {
+                        return false;
+                    }
+                    return cvm.UserId == userId;
+                };
+                //ICommentProviderが必要。。。ConnectionViewModel経由で取れないだろうか。
+                //Connectionを切断したり、サイトを変更してもコメントは残る。残ったコメントのユーザ情報を見ようとした時にConnectionViewModel経由で取るのは無理だろう。
+                //やっぱりCommentViewModelにICommentProviderを持たせるしかなさそう。
+                //ICommentProvider commentProvider = current.CommentProvider;
+                //var s = commentProvider.GetUserComments(current.User) as ObservableCollection<ICommentViewModel>;
+                //var collection = new ObservableCollection<McvCommentViewModel>(s.Select(m => new McvCommentViewModel(m, current.ConnectionName));
+
+                //s.CollectionChanged += (sender, e) =>
+                //{
+                //    switch (e.Action)
+                //    {
+                //        case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+                //            break;
+                //    }
+                //};
+
+                //var userStore = _dict2[commentProvider];
+                var user = _userStore.GetUser(userId);
+                var uvm = new UserViewModel(user,current.NameItems.ToText(), _options, view);
+                MessengerInstance.Send(new ShowUserViewMessage(uvm));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
+            }
+        }
+    }
+    /// <summary>
+    /// MainViewModelとUserViewModelの共通項
+    /// </summary>
+    public abstract class CommentDataGridViewModelBase : ViewModelBase
+    {
+        public ICollectionView Comments { get; }
+        public System.Windows.Controls.ScrollUnit ScrollUnit
+        {
+            get
+            {
+                if (_options.IsPixelScrolling)
+                {
+                    return System.Windows.Controls.ScrollUnit.Pixel;
+                }
+                else
+                {
+                    return System.Windows.Controls.ScrollUnit.Item;
+                }
+            }
+        }
+        public Brush HorizontalGridLineBrush
+        {
+            get { return new SolidColorBrush(_options.HorizontalGridLineColor); }
+        }
+        public Brush VerticalGridLineBrush
+        {
+            get { return new SolidColorBrush(_options.VerticalGridLineColor); }
+        }
+        public double ThumbnailWidth
+        {
+            get { return _options.ThumbnailWidth; }
+            set { _options.ThumbnailWidth = value; }
+        }
+        public virtual bool IsShowThumbnail
+        {
+            get { return _options.IsShowThumbnail; }
+            set { _options.IsShowThumbnail = value; }
+        }
+        public int ThumbnailDisplayIndex
+        {
+            get { return _options.ThumbnailDisplayIndex; }
+            set { _options.ThumbnailDisplayIndex = value; }
+        }
+        #region UserId
+        public int UserIdDisplayIndex
+        {
+            get { return _options.UserIdDisplayIndex; }
+            set { _options.UserIdDisplayIndex = value; }
+        }
+        public double UserIdWidth
+        {
+            get { return _options.UserIdWidth; }
+            set { _options.UserIdWidth = value; }
+        }
+        public bool IsShowUserId
+        {
+            get { return _options.IsShowUserId; }
+            set { _options.IsShowUserId = value; }
+        }
+        #endregion
+        public double UsernameWidth
+        {
+            get { return _options.UsernameWidth; }
+            set { _options.UsernameWidth = value; }
+        }
+        public virtual bool IsShowUsername
+        {
+            get { return _options.IsShowUsername; }
+            set { _options.IsShowUsername = value; }
+        }
+        public int UsernameDisplayIndex
+        {
+            get { return _options.UsernameDisplayIndex; }
+            set { _options.UsernameDisplayIndex = value; }
+        }
+
+        public double MessageWidth
+        {
+            get { return _options.MessageWidth; }
+            set { _options.MessageWidth = value; }
+        }
+        public bool IsShowMessage
+        {
+            get { return _options.IsShowMessage; }
+            set { _options.IsShowMessage = value; }
+        }
+        public int MessageDisplayIndex
+        {
+            get { return _options.MessageDisplayIndex; }
+            set { _options.MessageDisplayIndex = value; }
+        }
+        #region PostTime
+        public int PostTimeDisplayIndex
+        {
+            get { return _options.PostTimeDisplayIndex; }
+            set { _options.PostTimeDisplayIndex = value; }
+        }
+        public double PostTimeWidth
+        {
+            get { return _options.PostTimeWidth; }
+            set { _options.PostTimeWidth = value; }
+        }
+        public bool IsShowPostTime
+        {
+            get { return _options.IsShowPostTime; }
+            set { _options.IsShowPostTime = value; }
+        }
+        #endregion
+        public Color SelectedRowBackColor
+        {
+            get { return _options.SelectedRowBackColor; }
+            set { _options.SelectedRowBackColor = value; }
+        }
+        public Color SelectedRowForeColor
+        {
+            get { return _options.SelectedRowForeColor; }
+            set { _options.SelectedRowForeColor = value; }
+        }
+        public ICommentViewModel SelectedComment { get; set; }
+        public DataGridGridLinesVisibility GridLinesVisibility
+        {
+            get
+            {
+                if (_options.IsShowHorizontalGridLine && _options.IsShowVerticalGridLine)
+                    return DataGridGridLinesVisibility.All;
+                else if (_options.IsShowHorizontalGridLine)
+                    return DataGridGridLinesVisibility.Horizontal;
+                else if (_options.IsShowVerticalGridLine)
+                    return DataGridGridLinesVisibility.Vertical;
+                else
+                    return DataGridGridLinesVisibility.None;
+            }
+        }
+        private readonly IOptions _options;
+
+        public CommentDataGridViewModelBase(IOptions options)
+        {
+            _options = options;
+            Comments = CollectionViewSource.GetDefaultView(new ObservableCollection<ICommentViewModel>());
+        }
+        public CommentDataGridViewModelBase(IOptions options, ICollectionView comments)
+        {
+            _options = options;
+            Comments = comments;
+        }
+    }
+    public class UserViewModel : CommentDataGridViewModelBase
+    {
+        public string UserId { get { return User.UserId; } }
+        public string Nickname
+        {
+            get { return _user.Nickname; }
+            set
+            {
+                _user.Nickname = value;
+            }
+        }
+        public string Username { get; set; }
+        private readonly IUser _user;
+        public override bool IsShowThumbnail { get => false; set { } }
+        public override bool IsShowUsername { get => false; set { } }
+        public IUser User { get { return _user; } }
+        public UserViewModel(IUser user, string username, IOptions option, ICollectionView comments)
+            : base(option, comments)
+        {
+            _user = user;
+            Username = username;
+        }
+        public UserViewModel() : base(new DynamicOptionsTest())
+        {
+            if (IsInDesignMode)
+            {
+                _user = new UserTest("userid_123456")
+                {
+                    Nickname = "NICKNAME",
+                    BackColorArgb = "#FFCFCFCF",
+                    ForeColorArgb = "#FF000000",
+                };
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
         }
     }
 }

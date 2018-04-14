@@ -119,6 +119,7 @@
                       RowHeaderWidth="0"
                       SelectionUnit="FullRow"
                       SelectionMode="Single"
+                      SelectedValue="{Binding SelectedComment}"
                       EnableColumnVirtualization="True"
                       EnableRowVirtualization="True"                      
                       VirtualizingStackPanel.IsVirtualizing="True"
@@ -136,11 +137,11 @@
                     <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}" />
                     <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
                     <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}"/>
-                    <ContextMenu x:Key="commentContext" DataContext="{Binding}">
+                    <ContextMenu x:Key="commentContext" DataContext="{Binding DataContext, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
                         <MenuItem Header="コメントをコピー" Command="{Binding CommentCopyCommand}" />
                         <MenuItem Header="URLを開く" IsEnabled="{Binding ContainsUrl}" Command="{Binding OpenUrlCommand}" />
-                        <!--<Separator />
-                        <MenuItem Header="ユーザページを開く" Command="{Binding OpenUserPageCommand}" />-->
+                        <Separator />
+                        <MenuItem x:Name="UserInfoMenuItem" Header="ユーザ情報" Command="{Binding ShowUserInfoCommand}" />
                     </ContextMenu>
                     <Style TargetType="{x:Type DataGridRow}">
                         <Setter Property="FontFamily" Value="{Binding FontFamily}" />

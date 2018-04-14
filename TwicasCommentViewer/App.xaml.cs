@@ -58,9 +58,9 @@ namespace TwicasCommentViewer
             }
             catch { }
 
-            var siteContext = new TwicasSiteContext(options, _logger, new UserStoreTest());
-
-            var vm = new ViewModel.MainViewModel(siteContext, options, io, _logger);
+            //var siteContext = new TwicasSiteContext(options, _logger, new UserStoreTest());
+            var userStore = new UserStoreTest();
+            var vm = new ViewModel.MainViewModel(options, io, _logger, userStore);
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModel.ViewModelLocator;
             locator.Main = vm;

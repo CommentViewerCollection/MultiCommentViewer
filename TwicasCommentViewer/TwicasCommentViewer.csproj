@@ -103,6 +103,12 @@
     <Compile Include="IPluginManager.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="PluginManager.cs" />
+    <Compile Include="View\CommentDataGrid.xaml.cs">
+      <DependentUpon>CommentDataGrid.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\UserView.xaml.cs">
+      <DependentUpon>UserView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ViewModel\DynamicOptionsTest.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\PluginHost.cs" />
@@ -122,6 +128,14 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="View\CommentDataGrid.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\UserView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="View\MainOptionsPanel.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

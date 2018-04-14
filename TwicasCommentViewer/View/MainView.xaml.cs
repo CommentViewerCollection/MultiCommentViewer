@@ -100,6 +100,22 @@ namespace TwicasCommentViewer.View
                     Debug.WriteLine(ex.Message);
                 }
             });
+            Messenger.Default.Register<ShowUserViewMessage>(this, message =>
+            {
+                try
+                {
+                    var uvm = message.Uvm;
+                    var userView = new UserView
+                    {
+                        DataContext = uvm
+                    };
+                    userView.Show();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            });
         }
         private bool _addingCommentToTop;
         private bool bottom = true;

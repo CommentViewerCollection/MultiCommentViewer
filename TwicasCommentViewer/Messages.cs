@@ -24,14 +24,14 @@ namespace TwicasCommentViewer
             Tabs = tabs;
         }
     }
-    //class ShowUserViewMessage : MessageBase
-    //{
-    //    public UserViewModel Uvm { get; }
-    //    public ShowUserViewMessage(UserViewModel uvm)
-    //    {
-    //        Uvm = uvm;
-    //    }
-    //}
+    class ShowUserViewMessage : MessageBase
+    {
+        public  ViewModel.UserViewModel Uvm { get; }
+        public ShowUserViewMessage(ViewModel.UserViewModel uvm)
+        {
+            Uvm = uvm;
+        }
+    }
     class SetPostCommentPanel : MessageBase
     {
         public UserControl Panel { get; }

@@ -9,6 +9,7 @@ namespace TwicasSitePlugin
 {
     class TwicasCommentViewModel : CommentViewModelBase
     {
+        public string PostTime { get; }
         public override string UserId { get; }
         public TwicasCommentViewModel(ICommentOptions options, ICommentData data, IUser user) :
             base(options)
@@ -19,6 +20,7 @@ namespace TwicasSitePlugin
             MessageItems = data.Message;
             Thumbnail = new MessageImage { Url = data.ThumbnailUrl, Height = data.ThumbnailHeight, Width = data.ThumbnailWidth };
             //User = user;
+            PostTime = data.Date.ToString("HH:mm:ss");
         }
     }
     public class TwicasOptionsViewModel : INotifyPropertyChanged

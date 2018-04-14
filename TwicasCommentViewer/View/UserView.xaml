@@ -1,0 +1,48 @@
+﻿<Window x:Class="TwicasCommentViewer.UserView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TwicasCommentViewer"
+        xmlns:vm="clr-namespace:TwicasCommentViewer.ViewModel"
+        xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
+        mc:Ignorable="d"
+         d:DataContext="{d:DesignInstance vm:UserViewModel, IsDesignTimeCreatable=True}"
+        Title="UserView" Height="472" Width="479">
+    <Window.Resources>
+        <w:MessageConverter x:Key="messageItemsConverterNext" />
+        <local:ThumbnailConverterNext x:Key="thumbnailConverterNext" />
+        <FrameworkElement x:Key="ProxyElement" DataContext="{Binding}"/>
+        <w:NotConverter x:Key="notConverter" />
+        <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
+        <w:IntToFontSizeConverter x:Key="intToFontConverter" />
+        <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            
+            <Label Content="ユーザID" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" TextWrapping="NoWrap" Text="{Binding UserId}" VerticalAlignment="Center"/>
+            <Label Content="ユーザ名" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <TextBox Margin="0,0,5,0" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" TextWrapping="NoWrap" Text="{Binding Username}" VerticalAlignment="Top" />
+            <Label Content="コテハン" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <TextBox Margin="0,0,5,0" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" TextWrapping="NoWrap" Text="{Binding Nickname}" VerticalAlignment="Center"/>
+            <CheckBox Content="NGユーザ" Grid.Row="3" Grid.Column="0" IsChecked="{Binding IsNgUser}" />
+        </Grid>
+        <local:CommentDataGrid Grid.Row="1"  IsShowUserInfoMenuItem="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto"/>
+    </Grid>
+</Window>

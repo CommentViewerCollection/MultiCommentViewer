@@ -20,7 +20,8 @@ namespace OpenrecSitePlugin
         public string PostDate { get; }
         public string Elapsed { get; }
         public override string UserId { get; }
-        public OpenrecCommentViewModel(IOpenrecCommentData commentData, ICommentOptions options ,UserViewModel userVm,ICommentProvider commentProvider, bool isFirstComment)
+        public override IUser User { get; }
+        public OpenrecCommentViewModel(IOpenrecCommentData commentData, ICommentOptions options ,UserViewModel userVm,ICommentProvider commentProvider, bool isFirstComment,IUser user)
             : base(options)
         {
             _options = options;
@@ -31,7 +32,7 @@ namespace OpenrecSitePlugin
             var elapsed = commentData.Elapsed;
             Elapsed = Tools.ElapsedToString(elapsed);
             IsVisible = !userVm.IsNgUser;
-
+            User = user;
             //Name
             {
                 var nameItems = new List<IMessagePart>();

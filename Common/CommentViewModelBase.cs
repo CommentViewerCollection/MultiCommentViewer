@@ -11,19 +11,39 @@ namespace Common
 {
     public abstract class CommentViewModelBase : ICommentViewModel
     {
-        public virtual IEnumerable<IMessagePart> NameItems { get; protected set; }
+        public virtual IEnumerable<IMessagePart> NameItems
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(User.Nickname))
+                {
+                    return new List<IMessagePart> { new MessageText(User.Nickname) };
+                }
+                else
+                {
+                    return _nameItems;
+                }
+            }
+            protected set
+            {
+                _nameItems = value;
+            }
+        }
 
+        private IEnumerable<IMessagePart> _nameItems;
         public virtual IEnumerable<IMessagePart> MessageItems { get; protected set; }
-
         public virtual string Info { get; protected set; }
 
         public virtual string Id { get; protected set; }
 
         public abstract string UserId { get; }
+        public abstract IUser User { get; }
 
         public bool IsInfo { get; protected set; }
 
         public bool IsFirstComment { get; protected set; }
+
+        public string PostTime { get; protected set; } = "-";
 
         public virtual IMessageImage Thumbnail { get; protected set; }
 

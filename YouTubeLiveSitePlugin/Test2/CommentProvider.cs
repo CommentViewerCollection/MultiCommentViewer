@@ -97,7 +97,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 isFirstComment = true;
             }
             var user = _userStore.GetUser(userId);
-            var cvm = new YouTubeLiveCommentViewModel(_options, data, this, isFirstComment);
+            var cvm = new YouTubeLiveCommentViewModel(_options, data, this, isFirstComment, user);
             return cvm;
         }
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)

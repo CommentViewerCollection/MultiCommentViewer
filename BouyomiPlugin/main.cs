@@ -37,7 +37,7 @@ namespace BouyomiPlugin
         }
         public void OnCommentReceived(ICommentData data)
         {
-            if (!_options.IsEnabled || data.IsNgUser)
+            if (!_options.IsEnabled || data.IsNgUser || data.IsFirstComment)
                 return;
             try
             {

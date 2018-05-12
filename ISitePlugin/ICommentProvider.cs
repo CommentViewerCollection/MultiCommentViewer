@@ -36,9 +36,11 @@ namespace SitePlugin
     public interface IUser:INotifyPropertyChanged
     {
         string UserId { get; }
+        IEnumerable<IMessagePart> Name { get; set; }
         string Nickname { get; set; }
         string ForeColorArgb { get; set; }
         string BackColorArgb { get; set; }
+        bool IsNgUser { get; set; }
     }
 
 

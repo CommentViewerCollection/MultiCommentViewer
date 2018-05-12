@@ -49,6 +49,25 @@ namespace TwicasCommentViewer
                 userInfoMenuItem.Visibility = (bool)e.NewValue ? Visibility.Visible : Visibility.Collapsed;
             }
         }
+        public bool ForceShowingInvisibleComments
+        {
+            get { return (bool)GetValue(ForceShowingInvisibleCommentsProperty); }
+            set { SetValue(ForceShowingInvisibleCommentsProperty, value); }
+        }
+
+        public static readonly DependencyProperty ForceShowingInvisibleCommentsProperty =
+            DependencyProperty.Register(nameof(ForceShowingInvisibleComments), typeof(bool), typeof(CommentDataGrid), new PropertyMetadata(true, OnForceShowingInvisibleCommentsChanged));
+
+        private static void OnForceShowingInvisibleCommentsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is CommentDataGrid dataGrid)
+            {
+                //var menu = dataGrid.dataGrid.Resources["commentContext"] as ContextMenu;
+                //Debug.Assert(menu != null);
+                //var userInfoMenuItem = LogicalTreeHelper.FindLogicalNode(menu, "UserInfoMenuItem") as MenuItem;
+                //userInfoMenuItem.Visibility = (bool)e.NewValue ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
         /// <summary>
         /// 
         /// </summary>

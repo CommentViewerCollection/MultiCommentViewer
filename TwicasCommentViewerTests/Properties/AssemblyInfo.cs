@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("LiveCommuneSitePlugin")]
+[assembly: AssemblyTitle("TwicasCommentViewerTests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("LiveCommuneSitePlugin")]
+[assembly: AssemblyProduct("TwicasCommentViewerTests")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("2569bb64-94fe-4864-9896-633ff3e03e3e")]
+[assembly: Guid("f76c77a0-cacd-4d25-b141-19600fd74b51")]
 
 // Version information for an assembly consists of the following four values:
 //

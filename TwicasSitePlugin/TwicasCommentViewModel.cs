@@ -9,8 +9,56 @@ namespace TwicasSitePlugin
 {
     class TwicasCommentViewModel : CommentViewModelBase
     {
-        public string PostTime { get; }
         public override string UserId { get; }
+        private IUser _user;
+        public override IUser User => _user;
+        public override bool IsVisible
+        {
+            get
+            {
+                return base.IsVisible;
+            }
+
+            protected set
+            {
+                if (base.IsVisible == value)
+                    return;
+                base.IsVisible = value;
+                RaisePropertyChanged();
+            }
+        }
+        public override SolidColorBrush Background
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_user.BackColorArgb))
+                {
+                    return new SolidColorBrush(Tools.ColorFromArgb(_user.BackColorArgb));
+                }
+                else
+                {
+                    return base.Background;
+                }
+            }
+        }
+        public override SolidColorBrush Foreground
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_user.ForeColorArgb))
+                {
+                    return new SolidColorBrush(Tools.ColorFromArgb(_user.ForeColorArgb));
+                }
+                else
+                {
+                    return base.Foreground;
+                }
+            }
+        }
+        private void SetVisibility(IUser user)
+        {
+            IsVisible = !user.IsNgUser;
+        }
         public TwicasCommentViewModel(ICommentOptions options, ICommentData data, IUser user) :
             base(options)
         {
@@ -19,8 +67,31 @@ namespace TwicasSitePlugin
             NameItems = new List<IMessagePart> { new MessageText(data.Name) };
             MessageItems = data.Message;
             Thumbnail = new MessageImage { Url = data.ThumbnailUrl, Height = data.ThumbnailHeight, Width = data.ThumbnailWidth };
-            //User = user;
+            _user = user;
+
+            //いずれNameの型をIEnumerable<IMessagePart>にした。とりあえずstringで。
+            _user.Name = NameItems;
+            
             PostTime = data.Date.ToString("HH:mm:ss");
+            SetVisibility(user);
+            user.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(user.IsNgUser):
+                        SetVisibility(user);
+                        break;
+                    case nameof(user.BackColorArgb):
+                        RaisePropertyChanged(nameof(Background));
+                        break;
+                    case nameof(user.ForeColorArgb):
+                        RaisePropertyChanged(nameof(Foreground));
+                        break;
+                    case nameof(user.Nickname):
+                        RaisePropertyChanged(nameof(NameItems));
+                        break;
+                }
+            };
         }
     }
     public class TwicasOptionsViewModel : INotifyPropertyChanged

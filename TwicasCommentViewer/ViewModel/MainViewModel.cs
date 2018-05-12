@@ -37,6 +37,7 @@ namespace TwicasCommentViewer.ViewModel
         public ICommand RemoveSelectedConnectionCommand { get; }
         public ICommand AddNewConnectionCommand { get; }
         public ICommand ClearAllCommentsCommand { get; }
+        public ICommand ShowUserListCommand { get; }
         #endregion //Commands
 
         #region Fields
@@ -46,6 +47,7 @@ namespace TwicasCommentViewer.ViewModel
         private IPluginManager _pluginManager;
         private readonly IIo _io;
         public ObservableCollection<BrowserViewModel> BrowserCollection { get; } = new ObservableCollection<BrowserViewModel>();
+        private ObservableCollection<UserViewModel> _users = new ObservableCollection<UserViewModel>();
         private readonly IBrowserLoader _browserLoader;
         private bool _isAddingNewCommentTop;
 
@@ -296,6 +298,51 @@ namespace TwicasCommentViewer.ViewModel
                 
                 _pluginManager.OnLoaded();
 
+                _userStore.Init();
+                _userStore.UserAdded += (s, e) =>
+                {
+                    _dispatcher.Invoke((Action)(() => {
+                        try
+                        {
+                            var user = e;
+                            var userId = user.UserId;
+                            var view = new CollectionViewSource { Source = Comments }.View;
+                            view.Filter = obj =>
+                            {
+                                if (!(obj is ICommentViewModel cvm))
+                                {
+                                    return false;
+                                }
+                                return cvm.UserId == userId;
+                            };
+                            _users.Add(new UserViewModel(user, _options, view));
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex);
+                        }
+                    }));
+                };
+                var userVms = new List<UserViewModel>();
+                foreach(var user in _userStore.GetAllUsers())
+                {
+                    var userId = user.UserId;
+                    var view = new CollectionViewSource { Source = Comments }.View;
+                    view.Filter = obj =>
+                    {
+                        if (!(obj is ICommentViewModel cvm))
+                        {
+                            return false;
+                        }
+                        return cvm.UserId == userId;
+                    };
+                    userVms.Add(new UserViewModel(user, _options, view));
+                }
+                foreach (var userVm in userVms)
+                {
+                    _users.Add(userVm);
+                }
+
                 if (_options.IsAutoCheckIfUpdateExists)
                 {
                     await CheckIfUpdateExists(true);
@@ -416,6 +463,10 @@ namespace TwicasCommentViewer.ViewModel
                 _logger.LogException(ex);
             }
         }
+        private void ShowUserList()
+        {
+            MessengerInstance.Send(new ShowUserListViewMessage(_users));
+        }
         private void Close()
         {
             MessengerInstance.Send(new MainViewCloseMessage());
@@ -516,6 +567,7 @@ namespace TwicasCommentViewer.ViewModel
             ConnectCommand = new RelayCommand(Connect);
             DisconnectCommand = new RelayCommand(Disconnect);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
+            ShowUserListCommand = new RelayCommand(ShowUserList);
             options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -564,17 +616,14 @@ namespace TwicasCommentViewer.ViewModel
             }
         }
 
-        private async void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
+        private void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
         {
             try
             {
-                //最終的にはプラグインにコメントを渡す時に初期コメントかどうかのフラグも一緒に渡したい。
-                //現状、未実装なため、初期コメントはプラグインに渡さないようにする。
-                await AddComments(e);
-                //foreach (var comment in e)
-                //{
-                //    StockComment(comment);
-                //}
+                foreach (var comment in e)
+                {
+                    StockComment(comment);
+                }
             }
             catch (Exception ex)
             {
@@ -748,7 +797,7 @@ namespace TwicasCommentViewer.ViewModel
 
                 //var userStore = _dict2[commentProvider];
                 var user = _userStore.GetUser(userId);
-                var uvm = new UserViewModel(user,current.NameItems.ToText(), _options, view);
+                var uvm = new UserViewModel(user, _options, view);
                 MessengerInstance.Send(new ShowUserViewMessage(uvm));
             }
             catch (Exception ex)
@@ -902,45 +951,6 @@ namespace TwicasCommentViewer.ViewModel
         {
             _options = options;
             Comments = comments;
-        }
-    }
-    public class UserViewModel : CommentDataGridViewModelBase
-    {
-        public string UserId { get { return User.UserId; } }
-        public string Nickname
-        {
-            get { return _user.Nickname; }
-            set
-            {
-                _user.Nickname = value;
-            }
-        }
-        public string Username { get; set; }
-        private readonly IUser _user;
-        public override bool IsShowThumbnail { get => false; set { } }
-        public override bool IsShowUsername { get => false; set { } }
-        public IUser User { get { return _user; } }
-        public UserViewModel(IUser user, string username, IOptions option, ICollectionView comments)
-            : base(option, comments)
-        {
-            _user = user;
-            Username = username;
-        }
-        public UserViewModel() : base(new DynamicOptionsTest())
-        {
-            if (IsInDesignMode)
-            {
-                _user = new UserTest("userid_123456")
-                {
-                    Nickname = "NICKNAME",
-                    BackColorArgb = "#FFCFCFCF",
-                    ForeColorArgb = "#FF000000",
-                };
-            }
-            else
-            {
-                throw new NotSupportedException();
-            }
         }
     }
 }

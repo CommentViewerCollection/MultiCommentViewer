@@ -81,6 +81,22 @@ namespace TwicasCommentViewer.View
                     Debugger.Break();
                 }
             });
+            Messenger.Default.Register<ShowUserListViewMessage>(this, message =>
+            {
+                try
+                {
+                    var uvms = message.UserViewModels;
+                    var userView = new UserListView
+                    {
+                        DataContext = uvms,
+                    };
+                    userView.Show();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            });
             Messenger.Default.Register<Common.AutoUpdate.ShowUpdateDialogMessage>(this, message =>
             {
                 try
@@ -174,6 +190,41 @@ namespace TwicasCommentViewer.View
         private bool Test(ScrollChangedEventArgs e)
         {
             return e.ViewportHeightChange > 0 || e.ExtentHeightChange > 0 || e.ViewportHeightChange < 0 || e.ExtentHeightChange < 0;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// https://social.msdn.microsoft.com/Forums/vstudio/en-US/63fa1e10-1050-4448-a2bc-62dfe0836f25/selecting-datagrid-row-when-right-mouse-button-is-pressed?forum=wpf
+        private void DataGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+
+            //depがRunだと、VisualTreeHelper.GetParent()で下記の例外が投げられてしまう。
+            //'System.Windows.Documents.Run' is not a Visual or Visual3D' InvalidOperationException
+            if (e.OriginalSource is Run run)
+            {
+                dep = run.Parent;
+            }
+            while ((dep != null) && !(dep is DataGridCell))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            if (dep == null) return;
+
+            if (dep is DataGridCell)
+            {
+                DataGridCell cell = dep as DataGridCell;
+                cell.Focus();
+
+                while ((dep != null) && !(dep is DataGridRow))
+                {
+                    dep = VisualTreeHelper.GetParent(dep);
+                }
+                DataGridRow row = dep as DataGridRow;
+                dataGrid.SelectedItem = row.DataContext;
+            }
         }
     }
     public static class DataGridBehavior

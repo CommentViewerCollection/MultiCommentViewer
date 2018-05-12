@@ -38,6 +38,8 @@ namespace MultiCommentViewer.Test
 
         public bool IsFirstComment { get; set; }
 
+        public string PostTime { get; set; }
+
         public IMessageImage Thumbnail => null;
 
         public FontFamily FontFamily => _options.FontFamily;

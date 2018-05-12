@@ -317,7 +317,7 @@ namespace OpenrecSitePlugin
                 userVm = new UserViewModel(user);
                 _userViewModelDict.Add(userId, userVm);
             }
-            var cvm = new OpenrecCommentViewModel(data, _options,userVm, this, isFirstComment);
+            var cvm = new OpenrecCommentViewModel(data, _options,userVm, this, isFirstComment, user);
             return cvm;
         }
         private static string GetUserAgent(BrowserType browser)

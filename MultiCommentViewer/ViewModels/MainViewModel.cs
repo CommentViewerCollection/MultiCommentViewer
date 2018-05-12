@@ -837,6 +837,7 @@ namespace MultiCommentViewer
 
         public string Comment { get; set; }
         public bool IsNgUser { get; set; }
+        public bool IsFirstComment { get; set; }
     }
     public class EmptyBrowserProfile : IBrowserProfile
     {
@@ -856,54 +857,73 @@ namespace MultiCommentViewer
             return new CookieCollection();
         }
     }
-    public class UserTest : IUser
-    {
-        public string UserId { get { return _userid; } }
-        public string ForeColorArgb { get; set; }
-        public string BackColorArgb { get; set; }
-
-        private string _nickname;
-        public string Nickname
-        {
-            get { return _nickname; }
-            set
-            {
-                if (_nickname == value)
-                    return;
-                _nickname = value;
-                RaisePropertyChanged();
-            }
-        }
-        private readonly string _userid;
-        public UserTest(string userId)
-        {
-            _userid = userId;
-        }
-        #region INotifyPropertyChanged
-        [NonSerialized]
-        private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
-        /// <summary>
-        /// 
-        /// </summary>
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
-        {
-            add { _propertyChanged += value; }
-            remove { _propertyChanged -= value; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="propertyName"></param>
-        protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-        {
-            _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
-        }
-        #endregion
-    }
+    //public class UserTest : IUser
+    //{
+    //    public string UserId { get { return _userid; } }
+    //    public string ForeColorArgb { get; set; }
+    //    public string BackColorArgb { get; set; }
+    //    public bool IsNgUser { get; set; }
+    //    private string _nickname;
+    //    public string Nickname
+    //    {
+    //        get { return _nickname; }
+    //        set
+    //        {
+    //            if (_nickname == value)
+    //                return;
+    //            _nickname = value;
+    //            RaisePropertyChanged();
+    //        }
+    //    }
+    //    private string _name;
+    //    public string Name
+    //    {
+    //        get { return _name; }
+    //        set
+    //        {
+    //            if (_name == value) return;
+    //            _name = value;
+    //            RaisePropertyChanged();
+    //        }
+    //    }
+    //    private readonly string _userid;
+    //    public UserTest(string userId)
+    //    {
+    //        _userid = userId;
+    //    }
+    //    #region INotifyPropertyChanged
+    //    [NonSerialized]
+    //    private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
+    //    /// <summary>
+    //    /// 
+    //    /// </summary>
+    //    public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
+    //    {
+    //        add { _propertyChanged += value; }
+    //        remove { _propertyChanged -= value; }
+    //    }
+    //    /// <summary>
+    //    /// 
+    //    /// </summary>
+    //    /// <param name="propertyName"></param>
+    //    protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
+    //    {
+    //        _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+    //    }
+    //    #endregion
+    //}
     public class UserStoreTest : IUserStore
     {
         //Dictionary<string, IUser> _dict = new Dictionary<string, IUser>();
         System.Collections.Concurrent.ConcurrentDictionary<string, IUser> _dict = new System.Collections.Concurrent.ConcurrentDictionary<string, IUser>();
+
+        public event EventHandler<IUser> UserAdded;
+
+        public IEnumerable<IUser> GetAllUsers()
+        {
+            throw new NotImplementedException();
+        }
+
         public IUser GetUser(string userid)
         {
             if (!_dict.TryGetValue(userid, out IUser user))
@@ -915,6 +935,11 @@ namespace MultiCommentViewer
         }
 
         public void Init()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Save()
         {
             throw new NotImplementedException();
         }

@@ -8,6 +8,7 @@ namespace TwitchSitePlugin
     {
         public override string UserId { get; }
         private readonly TwitchSiteOptions _siteOptions;
+        public override IUser User { get; }
         public TwitchCommentViewModel(ICommentOptions options, TwitchSiteOptions siteOptions,
             ICommentData commentData, LowObject.Emoticons emoticons, bool isFirstComment, ICommentProvider commentProvider, IUser user) : base(options)
         {
@@ -18,7 +19,7 @@ namespace TwitchSitePlugin
             MessageItems = Tools.GetMessageItems(commentData.Message, commentData.Emotes);
             IsFirstComment = isFirstComment;
             CommentProvider = commentProvider;
-            //User = user;
+            User = user;
         }
     }
 }

@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System;
 using System.Net.Http;
 using System.Text;
+using SitePlugin;
 
 namespace TwicasCommentViewer
 {
@@ -59,13 +60,13 @@ namespace TwicasCommentViewer
             catch { }
 
             //var siteContext = new TwicasSiteContext(options, _logger, new UserStoreTest());
-            var userStore = new UserStoreTest();
-            var vm = new ViewModel.MainViewModel(options, io, _logger, userStore);
+            _userStore = new SQLiteUserStore("twicas_users.db", _logger); // UserStoreTest();
+            var vm = new ViewModel.MainViewModel(options, io, _logger, _userStore);
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModel.ViewModelLocator;
             locator.Main = vm;
         }
-
+        IUserStore _userStore;
 
 
         protected override void OnExit(ExitEventArgs e)
@@ -74,6 +75,14 @@ namespace TwicasCommentViewer
             {
                 var s = options.Serialize();
                 io.WriteFile(GetOptionsPath(), s);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            try
+            {
+                _userStore.Save();
             }
             catch (Exception ex)
             {
@@ -93,6 +102,7 @@ namespace TwicasCommentViewer
                     sw.WriteLine(s);
                 }
             }
+
             base.OnExit(e);
         }
         private string GetUserAgent()

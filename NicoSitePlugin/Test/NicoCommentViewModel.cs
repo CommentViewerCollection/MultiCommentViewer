@@ -16,6 +16,7 @@ namespace NicoSitePlugin.Old
         public override string UserId => _chat.UserId;
         private readonly NicoSiteOptions _siteOptions;
         private readonly Chat _chat;
+        public override IUser User { get; }
         [Obsolete]
         public NicoCommentViewModel2(Chat chat, ICommentOptions options, NicoSiteOptions siteOptions) 
             : base(options)
@@ -32,7 +33,7 @@ namespace NicoSitePlugin.Old
         {
             _siteOptions = siteOptions;
             _chat = chat;
-            //User = user;
+            User = user;
             IsFirstComment = isFirstComment;
             CommentProvider = commentProvider;
             SetName(user);

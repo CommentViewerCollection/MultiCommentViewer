@@ -60,7 +60,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasCommentViewer", "Twic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutlineTextPlugin", "OutlineTextPlugin\OutlineTextPlugin.csproj", "{0EC125F6-6026-46D7-BC9A-788E2696ECED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveCommuneSitePlugin", "LiveCommuneSitePlugin\LiveCommuneSitePlugin.csproj", "{2569BB64-94FE-4864-9896-633FF3E03E3E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasCommentViewerTests", "TwicasCommentViewerTests\TwicasCommentViewerTests.csproj", "{F76C77A0-CACD-4D25-B141-19600FD74B51}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -168,10 +168,10 @@ Global
 		{0EC125F6-6026-46D7-BC9A-788E2696ECED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0EC125F6-6026-46D7-BC9A-788E2696ECED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0EC125F6-6026-46D7-BC9A-788E2696ECED}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2569BB64-94FE-4864-9896-633FF3E03E3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2569BB64-94FE-4864-9896-633FF3E03E3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2569BB64-94FE-4864-9896-633FF3E03E3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2569BB64-94FE-4864-9896-633FF3E03E3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F76C77A0-CACD-4D25-B141-19600FD74B51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F76C77A0-CACD-4D25-B141-19600FD74B51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F76C77A0-CACD-4D25-B141-19600FD74B51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F76C77A0-CACD-4D25-B141-19600FD74B51}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

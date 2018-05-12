@@ -13,5 +13,7 @@
 
         public string Comment { get; set; }
         public bool IsNgUser { get; set; }
+
+        public bool IsFirstComment { get; set; }
     }
 }

@@ -39,6 +39,7 @@
         </Grid.RowDefinitions>
         <Menu Width="Auto" Height="20" Grid.Row="0">
             <MenuItem Header="ファイル">
+                <MenuItem Header="ユーザ一覧" Command="{Binding ShowUserListCommand}" />
                 <Separator />
                 <MenuItem Header="終了" Command="{Binding CloseCommand}" />
             </MenuItem>
@@ -130,7 +131,8 @@
                       VerticalGridLinesBrush="{Binding VerticalGridLineBrush}"
                       VerticalScrollBarVisibility="Visible"
                       ScrollViewer.CanContentScroll="True"
-                      ScrollViewer.ScrollChanged="dataGrid_ScrollChanged"                      
+                      ScrollViewer.ScrollChanged="dataGrid_ScrollChanged"
+                      MouseRightButtonUp="DataGrid_MouseRightButtonUp"
                       Margin="5" Grid.Row="2">
                 <DataGrid.Resources>
                     <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
@@ -210,7 +212,7 @@
                                             >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding UserId}" TextWrapping="{Binding UserIdWrapping}" Margin="5,0,5,0"/>
+                                <TextBlock Text="{Binding UserId}" TextWrapping="{Binding DataContext.UserIdWrapping, Source={x:Reference dummyElement}}" Margin="5,0,5,0"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

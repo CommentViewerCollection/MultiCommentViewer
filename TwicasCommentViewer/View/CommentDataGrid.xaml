@@ -64,16 +64,18 @@
                 <Setter Property="FontFamily" Value="{Binding FontFamily}" />
                 <Setter Property="FontStyle" Value="{Binding FontStyle}" />
                 <Setter Property="FontWeight" Value="{Binding FontWeight}" />
-                <!--<Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>-->
+                <Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>
                 <Setter Property="Background" Value="{Binding Background}" />
                 <Setter Property="Foreground" Value="{Binding Foreground}" />
                 <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />
                 <!--<Setter Property="IsSelected" Value="{Binding IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />-->
-                <Style.Triggers>
+                
+                <!--2018/05/12現状このクラスはUserViewでしか使っていないためIsVisibleを無効に-->
+                <!--<Style.Triggers>
                     <DataTrigger Binding="{Binding IsVisible}" Value="False">
                         <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
-                </Style.Triggers>
+                </Style.Triggers>-->
 
             </Style>
             <Style TargetType="{x:Type DataGridCell}">

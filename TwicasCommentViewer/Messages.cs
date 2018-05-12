@@ -2,6 +2,7 @@
 using SitePlugin;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,6 +31,14 @@ namespace TwicasCommentViewer
         public ShowUserViewMessage(ViewModel.UserViewModel uvm)
         {
             Uvm = uvm;
+        }
+    }
+    class ShowUserListViewMessage : MessageBase
+    {
+        public ObservableCollection<ViewModel.UserViewModel> UserViewModels { get; }
+        public ShowUserListViewMessage(ObservableCollection<ViewModel.UserViewModel> userViewModels)
+        {
+            UserViewModels = userViewModels;
         }
     }
     class SetPostCommentPanel : MessageBase

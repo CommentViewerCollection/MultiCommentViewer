@@ -51,6 +51,9 @@
     <Reference Include="GalaSoft.MvvmLight.Platform, Version=5.4.1.0, Culture=neutral, PublicKeyToken=5f873c45e98af8a1, processorArchitecture=MSIL">
       <HintPath>..\packages\MvvmLightLibs.5.4.1\lib\net45\GalaSoft.MvvmLight.Platform.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
@@ -103,8 +106,13 @@
     <Compile Include="IPluginManager.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="PluginManager.cs" />
+    <Compile Include="ViewModel\SQLiteUserStore.cs" />
+    <Compile Include="ViewModel\UserViewModel.cs" />
     <Compile Include="View\CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\UserListView.xaml.cs">
+      <DependentUpon>UserListView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
@@ -131,6 +139,10 @@
     <Page Include="View\CommentDataGrid.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\UserListView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\UserView.xaml">
       <Generator>MSBuild:Compile</Generator>

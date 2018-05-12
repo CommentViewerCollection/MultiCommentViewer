@@ -17,7 +17,8 @@ namespace YouTubeLiveSitePlugin.Test2
                 return base.Background;
             }
         }
-        public YouTubeLiveCommentViewModel(ICommentOptions options, CommentData commentData, ICommentProvider commentProvider, bool isFirstComment)
+        public override IUser User { get; }
+        public YouTubeLiveCommentViewModel(ICommentOptions options, CommentData commentData, ICommentProvider commentProvider, bool isFirstComment,IUser user)
             : base(options)
         {
             CommentProvider = commentProvider;
@@ -36,6 +37,7 @@ namespace YouTubeLiveSitePlugin.Test2
             UserId = commentData.UserId;
             Thumbnail = commentData.Thumbnail;
             IsFirstComment = isFirstComment;
+            User = user;
         }
     }
 }

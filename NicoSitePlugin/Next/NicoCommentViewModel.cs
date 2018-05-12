@@ -21,6 +21,7 @@ namespace NicoSitePlugin.Next
         public override string UserId => _chat.UserId;
         private readonly INicoSiteOptions _siteOptions;
         private readonly Chat _chat;
+        public override IUser User { get; }
         public NicoCommentViewModel(ICommentOptions options, INicoSiteOptions siteOptions,
             Chat chat, IXmlWsRoomInfo roomInfo, IUser user, ICommentProvider commentProvider, bool isFirstComment)
             : base(options)
@@ -28,7 +29,7 @@ namespace NicoSitePlugin.Next
             Debug.Assert(user != null);
             _siteOptions = siteOptions;
             _chat = chat;
-            //User = user;
+            User = user;
             IsFirstComment = isFirstComment;
             CommentProvider = commentProvider;
             SetName(user);

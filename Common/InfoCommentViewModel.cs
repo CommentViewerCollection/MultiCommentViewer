@@ -8,7 +8,8 @@ namespace Common
     public class InfoCommentViewModel : CommentViewModelBase, IInfoCommentViewModel
     {
         public override string UserId => "-";
-
+        private readonly static IUser _user = new UserTest("-") { Nickname = "-" };
+        public override IUser User => _user;
         public InfoType Type { get; }
 
         public InfoCommentViewModel(ICommentOptions options, string message, InfoType type)

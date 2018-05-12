@@ -18,10 +18,11 @@ namespace SitePlugin
         string Info { get; }
         string Id { get; }
         string UserId { get; }
-        //IUser User { get; }
+        IUser User { get; }
         ICommentProvider CommentProvider { get; }
 
-        bool IsInfo { get;  }
+        bool IsInfo { get; }
+        string PostTime { get; }
 
         /// <summary>
         /// このユーザの最初のコメント
@@ -39,6 +40,8 @@ namespace SitePlugin
         SolidColorBrush Background { get; }
 
         bool IsVisible { get; }
+
+        bool IsFirstComment { get; }
 
         Task AfterCommentAdded();
     }

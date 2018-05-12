@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:TwicasCommentViewer"
         xmlns:vm="clr-namespace:TwicasCommentViewer.ViewModel"
         xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
          d:DataContext="{d:DesignInstance vm:UserViewModel, IsDesignTimeCreatable=True}"
         Title="UserView" Height="472" Width="479">
@@ -20,29 +21,34 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="130" />
             <RowDefinition />
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" Margin="10,10,151,50">
             <Grid.RowDefinitions>
-                <RowDefinition />
                 <RowDefinition />
                 <RowDefinition />
                 <RowDefinition />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition />
+                <ColumnDefinition Width="60" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            
+
             <Label Content="ユーザID" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" TextWrapping="NoWrap" Text="{Binding UserId}" VerticalAlignment="Center"/>
             <Label Content="ユーザ名" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <TextBox Margin="0,0,5,0" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" TextWrapping="NoWrap" Text="{Binding Username}" VerticalAlignment="Top" />
+            <w:BindableTextBlock Margin="0,0,5,0" Grid.Row="1" Grid.Column="1" InlineList="{Binding Name, Converter={StaticResource messageItemsConverterNext}}" TextWrapping="NoWrap" />
             <Label Content="コテハン" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <TextBox Margin="0,0,5,0" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" TextWrapping="NoWrap" Text="{Binding Nickname}" VerticalAlignment="Center"/>
-            <CheckBox Content="NGユーザ" Grid.Row="3" Grid.Column="0" IsChecked="{Binding IsNgUser}" />
+            <TextBox Margin="0,0,5,0" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" TextWrapping="NoWrap" Text="{Binding Nickname, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+
+
         </Grid>
-        <local:CommentDataGrid Grid.Row="1"  IsShowUserInfoMenuItem="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto"/>
+        <CheckBox Content="NGユーザ" Height="Auto" Width="Auto" IsChecked="{Binding IsNgUser}" Margin="335,6,66,74" />
+        <CheckBox Content="背景色を変更" IsChecked="{Binding IsEnabledUserBackColor}" HorizontalAlignment="Left" Margin="335,24,0,0" VerticalAlignment="Top" RenderTransformOrigin="5.341,-2.733"/>
+        <xctk:ColorPicker SelectedColor="{Binding BackColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="360,44,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox Content="文字色を変更" IsChecked="{Binding IsEnabledUserForeColor}" HorizontalAlignment="Left" Margin="335,71,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker SelectedColor="{Binding ForeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="360,91,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="2.28,4.5" Grid.RowSpan="2" />
+        <local:CommentDataGrid Grid.Row="2" ForceShowingInvisibleComments="true"  IsShowUserInfoMenuItem="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto"/>
     </Grid>
 </Window>

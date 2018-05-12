@@ -58,7 +58,8 @@ namespace TwicasCommentViewer
             var pluginCommentData = new CommentData
             {
                 Comment = GetString(comment.MessageItems),
-                IsNgUser = false,
+                IsNgUser = comment.User.IsNgUser,
+                IsFirstComment = comment.IsFirstComment,
                 Nickname = GetString(comment.NameItems),
                 ThumbnailUrl =comment.Thumbnail.Url,
                 ThumbnailWidth =comment.Thumbnail.Width ?? 50,
@@ -141,5 +142,6 @@ namespace TwicasCommentViewer
 
         public string Comment { get; set; }
         public bool IsNgUser { get; set; }
+        public bool IsFirstComment { get; set; }
     }
 }

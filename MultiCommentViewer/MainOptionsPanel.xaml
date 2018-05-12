@@ -1,0 +1,70 @@
+﻿<UserControl x:Class="MultiCommentViewer.MainOptionsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MultiCommentViewer"
+             xmlns:Common="clr-namespace:Common;assembly=Common" 
+             xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
+             mc:Ignorable="d"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}" Height="345" Width="415">
+    <UserControl.Resources>
+        <w:NotConverter x:Key="notConverter" />
+        <local:FontFamilyToFontFamilyViewModelConverter x:Key="fontFamilyViewModelConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <Label Content="文字色" HorizontalAlignment="Left" Margin="24,18,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.109,-0.577"/>
+        <xctk:ColorPicker x:Name="ClrPcker_Foreground"  SelectedColor="{Binding ForeColor}" Margin="134,22,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <!--<Common:ColorPicker SelectedColor="{Binding ForeColor, Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,40,0,0" VerticalAlignment="Top" Width="70"/>-->
+
+        <Label Content="背景色" HorizontalAlignment="Left" Margin="24,41,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.457,0.731"/>
+        <xctk:ColorPicker x:Name="ClrPcker_Background"  SelectedColor="{Binding BackColor}" Margin="134,49,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="3.467,1.727" />
+        <!--<Common:ColorPicker SelectedColor="{Binding BackColor,Mode=TwoWay}" HorizontalAlignment="Left" Height="30" Margin="135,89,0,0" VerticalAlignment="Top" Width="70"/>-->
+
+        <Label x:Name="label11" Content="選択行の文字色" HorizontalAlignment="Left" Margin="24,98,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker  SelectedColor="{Binding SelectedRowForeColor}" Margin="134,103,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
+        <Label x:Name="label10" Content="選択行の背景色" HorizontalAlignment="Left" Margin="24,72,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker  SelectedColor="{Binding SelectedRowBackColor}" Margin="134,76,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
+        <Label x:Name="NoticeBackColor" Content="情報背景色" HorizontalAlignment="Left" Margin="228,23,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.457,-0.538" />
+        <xctk:ColorPicker x:Name="ClrPcker_InfoBackground"  SelectedColor="{Binding NoticeCommentBackColor}" Margin="315,27,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label x:Name="NoticeForeColor" Content="情報文字色" HorizontalAlignment="Left" Margin="228,54,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker x:Name="ClrPcker_InfoForeground"  SelectedColor="{Binding NoticeCommentForeColor}" Margin="315,58,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
+        <Label x:Name="label8" Content="行グリッド線の色" HorizontalAlignment="Left" Margin="225,80,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" Margin="322,89,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label x:Name="label9" Content="列グリッド線の色" HorizontalAlignment="Left" Margin="227,107,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" Margin="322,116,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Grid Margin="30,165,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="55" Width="367">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Label Grid.Column="0" Grid.Row="0" Content="フォント" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Grid.Row="0" ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FontFamily, Mode=TwoWay}" Margin="5,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="2" Grid.Row="0" ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" Margin="5,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <CheckBox Grid.Column="3" Grid.Row="0" IsChecked="{Binding IsBold}" Content="太字" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+            <Label Grid.Column="0" Grid.Row="1" Content="初コメフォント" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Grid.Row="1" ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FirstCommentFontFamily}" Margin="5,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="2" Grid.Row="1" ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FirstCommentFontSize}" Margin="5,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <CheckBox Grid.Column="3" Grid.Row="1" IsChecked="{Binding IsFirstCommentBold}" Content="太字" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+
+        <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="24,235,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" HorizontalAlignment="Left" Margin="24,255,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label7" Content="変更後、コメビュを再起動してください" Foreground="Red" HorizontalAlignment="Left" Margin="187,249,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="24,280,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="24,310,0,0" VerticalAlignment="Top"/>
+        <Label Content="コメントを数万行以上表示する場合必須" Foreground="Red" HorizontalAlignment="Left" Margin="167,304,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.605,-0.577"/>
+
+    </Grid>
+</UserControl>

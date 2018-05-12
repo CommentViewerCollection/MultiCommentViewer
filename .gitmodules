@@ -1,0 +1,33 @@
+[submodule "BrowserCookieInterfaces"]
+	path = BrowserCookieInterfaces
+	url = git@github.com:CommentViewerCollection/BrowserCookieInterfaces.git
+[submodule "Common"]
+	path = Common
+	url = git@github.com:CommentViewerCollection/Common.git
+[submodule "ISitePlugin"]
+	path = ISitePlugin
+	url = git@github.com:CommentViewerCollection/ISitePlugin.git
+[submodule "BrowserCookieImplementations"]
+	path = BrowserCookieImplementations
+	url = git@github.com:CommentViewerCollection/BrowserCookieImplementations.git
+[submodule "IPlugin"]
+	path = IPlugin
+	url = git@github.com:CommentViewerCollection/IPlugin.git
+[submodule "BouyomiPlugin"]
+	path = BouyomiPlugin
+	url = git@github.com:CommentViewerCollection/BouyomiPlugin.git
+[submodule "NicoSitePlugin"]
+	path = NicoSitePlugin
+	url = git@github.com:CommentViewerCollection/NicoSitePlugin.git
+[submodule "OpenrecSitePlugin"]
+	path = OpenrecSitePlugin
+	url = git@github.com:CommentViewerCollection/OpenrecSitePlugin.git
+[submodule "TwicasSitePlugin"]
+	path = TwicasSitePlugin
+	url = git@github.com:CommentViewerCollection/TwicasSitePlugin.git
+[submodule "YouTubeLiveSitePlugin"]
+	path = YouTubeLiveSitePlugin
+	url = git@github.com:CommentViewerCollection/YouTubeLiveSitePlugin.git
+[submodule "TwitchSitePlugin"]
+	path = TwitchSitePlugin
+	url = git@github.com:CommentViewerCollection/TwitchSitePlugin.git

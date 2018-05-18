@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using SitePlugin;
 using System.Windows.Media;
@@ -10,24 +11,44 @@ namespace MultiCommentViewer
     public class McvCommentViewModel
     {
         private readonly ICommentViewModel _cvm;
-        private readonly ConnectionName _connectionName;
 
         public McvCommentViewModel(ICommentViewModel cvm, ConnectionName connectionName)
         {
             _cvm = cvm;
-            _connectionName = connectionName;
-            _connectionName.PropertyChanged += (s, e) =>
+            _cvm.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
                 {
-                    case nameof(_connectionName.Name):
+                    case nameof(_cvm.FontFamily):
+                        RaisePropertyChanged(nameof(FontFamily));
+                        break;
+                    case nameof(_cvm.FontStyle):
+                        RaisePropertyChanged(nameof(FontStyle));
+                        break;
+                    case nameof(_cvm.FontWeight):
+                        RaisePropertyChanged(nameof(FontWeight));
+                        break;
+                    case nameof(_cvm.FontSize):
+                        RaisePropertyChanged(nameof(FontSize));
+                        break;
+                    
+
+
+                }
+            };
+            ConnectionName = connectionName;
+            ConnectionName.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(ConnectionName.Name):
                         RaisePropertyChanged(nameof(connectionName));
                         break;
                 }
             };
         }
 
-        public ConnectionName ConnectionName => _connectionName;
+        public ConnectionName ConnectionName { get; }
 
         public IEnumerable<IMessagePart> NameItems => _cvm.NameItems;
 

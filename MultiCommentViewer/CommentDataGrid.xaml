@@ -62,7 +62,7 @@
                 <Setter Property="FontFamily" Value="{Binding FontFamily}" />
                 <Setter Property="FontStyle" Value="{Binding FontStyle}" />
                 <Setter Property="FontWeight" Value="{Binding FontWeight}" />
-                <!--<Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>-->
+                <Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>
                 <Setter Property="Background" Value="{Binding Background}" />
                 <Setter Property="Foreground" Value="{Binding Foreground}" />
                 <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />

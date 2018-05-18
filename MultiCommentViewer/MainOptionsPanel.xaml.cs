@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Common;
 using MultiCommentViewer.Test;
 using SitePlugin;
 namespace MultiCommentViewer
@@ -193,30 +194,46 @@ namespace MultiCommentViewer
             get { return ChangedOptions.IsPixelScrolling; }
             set { ChangedOptions.IsPixelScrolling = value; }
         }
-        private readonly IOptions _origin;
-        private readonly IOptions _changed;
-        public IOptions OriginOptions { get { return _origin; } }
-        public IOptions ChangedOptions { get { return _changed; } }
+
+        public IOptions OriginOptions { get; private set; }
+        public IOptions ChangedOptions { get; private set; }
         public ObservableCollection<FontFamilyViewModel> FontFamillyCollection { get; private set; }
         public ObservableCollection<int> FontSizeCollection { get; private set; }
+        public ObservableCollection<InfoType> InfoTypeCollection { get; private set; }
+        public InfoType SelectedInfoType
+        {
+            get => ChangedOptions.ShowingInfoLevel;
+            set => ChangedOptions.ShowingInfoLevel = value;
+        }
         public MainOptionsViewModel(IOptions options)
         {
-            _origin = options;
-            _changed = options.Clone() as IOptions;
+            Init(options);
+        }
+
+        private void Init(IOptions options)
+        {
+            OriginOptions = options;
+            ChangedOptions = options.Clone() as IOptions;
 
             var fontList = Fonts.SystemFontFamilies.OrderBy(f => f.ToString()).Select(f => new FontFamilyViewModel(f, CultureInfo.CurrentCulture));
             FontFamillyCollection = new ObservableCollection<FontFamilyViewModel>(fontList);
-            FontFamily = new FontFamilyViewModel(new FontFamily("Meiryo"), CultureInfo.CurrentCulture);
+            //FontFamily = new FontFamilyViewModel(new FontFamily("Meiryo"), CultureInfo.CurrentCulture);
+            FontFamily = new FontFamilyViewModel(ChangedOptions.FontFamily, CultureInfo.CurrentCulture);
+            FirstCommentFontFamily = new FontFamilyViewModel(ChangedOptions.FirstCommentFontFamily, CultureInfo.CurrentCulture);
 
             var sizeList = Enumerable.Range(6, 40);
             FontSizeCollection = new ObservableCollection<int>(sizeList);
-            FontSize = 10;
+            //FontSize = 10;
+
+            InfoTypeCollection = new ObservableCollection<InfoType>(Enum.GetValues(typeof(InfoType)).Cast<InfoType>());
+            SelectedInfoType = InfoType.Notice;
+
         }
         public MainOptionsViewModel()
         {
             if (GalaSoft.MvvmLight.ViewModelBase.IsInDesignModeStatic)
             {
-                _origin = new DynamicOptionsTest
+                var options = new DynamicOptionsTest
                 {
                     ForeColor = Colors.Red,
                     BackColor = Colors.Black,
@@ -226,17 +243,46 @@ namespace MultiCommentViewer
                     SelectedRowForeColor = Colors.Pink,
                     VerticalGridLineColor = Colors.Green,
                     HorizontalGridLineColor = Colors.LightGray,
-                    FontFamily = new FontFamily("メイリオ"),
-                     IsPixelScrolling = false,
+                    FontFamily = new FontFamily("Meiryo"),
+                    FirstCommentFontFamily = new FontFamily("MS Gothic"),
+                    FontSize = 16,
+                    FirstCommentFontSize = 24,
+                    IsPixelScrolling = false,
                 };
-                _changed = _origin.Clone() as IOptions;
-                IsBold = true;
+                Init(options);
+                IsBold = false;
+                IsFirstCommentBold = true;
             }
             else
             {
                 throw new NotSupportedException();
             }
         }
+        #region INotifyPropertyChanged
+        [NonSerialized]
+        private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
+        {
+            add { _propertyChanged += value; }
+            remove { _propertyChanged -= value; }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="propertyName"></param>
+        protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
+        {
+            _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+        }
+
+        public Task AfterCommentAdded()
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
     class MainTabPage : IOptionsTabPage
     {

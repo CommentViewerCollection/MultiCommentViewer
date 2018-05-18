@@ -61,6 +61,7 @@ namespace MultiCommentViewer.Test
         public bool IsUserNameWrapping { get => GetValue(); set => SetValue(value); }
         public bool IsTopmost { get => GetValue(); set => SetValue(value); }
         public bool IsPixelScrolling { get => GetValue(); set => SetValue(value); }
+        public InfoType ShowingInfoLevel { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
@@ -115,6 +116,12 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(IsUserNameWrapping), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTopmost), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsPixelScrolling), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+#if DEBUG
+            Dict.Add(nameof(ShowingInfoLevel), new Item { DefaultValue = InfoType.Notice, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => InfoTypeRelatedOperations.ToInfoType(s) });
+#else
+            Dict.Add(nameof(ShowingInfoLevel), new Item { DefaultValue = InfoType.Notice, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+#endif
+
         }
         public ICommentOptions Clone()
         {
@@ -138,7 +145,7 @@ namespace MultiCommentViewer.Test
                 }
             }
         }
-        #region Converters
+#region Converters
         private FontFamily FontFamilyFromString(string str)
         {
             return new FontFamily(str);
@@ -188,6 +195,6 @@ namespace MultiCommentViewer.Test
             var argb = color.ToString();
             return argb;
         }
-        #endregion
+#endregion
     }
 }

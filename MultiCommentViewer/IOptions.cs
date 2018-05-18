@@ -1,4 +1,5 @@
-﻿using SitePlugin;
+﻿using Common;
+using SitePlugin;
 using System.ComponentModel;
 
 namespace MultiCommentViewer
@@ -45,6 +46,8 @@ namespace MultiCommentViewer
 
         bool IsTopmost { get; set; }
         bool IsPixelScrolling { get; set; }
+
+        InfoType ShowingInfoLevel { get; set; }
     }
 }
 

@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MultiCommentViewer"
-             xmlns:Common="clr-namespace:Common;assembly=Common" 
              xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
              mc:Ignorable="d"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
@@ -65,6 +64,8 @@
         <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="24,280,0,0" VerticalAlignment="Top"/>
         <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="24,310,0,0" VerticalAlignment="Top"/>
         <Label Content="コメントを数万行以上表示する場合必須" Foreground="Red" HorizontalAlignment="Left" Margin="167,304,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.605,-0.577"/>
+        <ComboBox ItemsSource="{Binding InfoTypeCollection}" SelectedValue="{Binding SelectedInfoType}" HorizontalAlignment="Left" Margin="179,134,0,0" VerticalAlignment="Top" Width="64"/>
+        <Label Content="表示する情報のレベル" HorizontalAlignment="Left" Margin="50,134,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </UserControl>

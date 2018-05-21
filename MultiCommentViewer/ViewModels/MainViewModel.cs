@@ -352,6 +352,10 @@ namespace MultiCommentViewer
         
         private void AddComment(ICommentViewModel cvm, ConnectionName connectionName)
         {
+            if(cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
+            {
+                return;
+            }
             var mcvCvm = new McvCommentViewModel(cvm, connectionName);
             _comments.Add(mcvCvm);
         }

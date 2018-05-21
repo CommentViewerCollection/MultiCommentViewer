@@ -31,3 +31,6 @@
 [submodule "TwitchSitePlugin"]
 	path = TwitchSitePlugin
 	url = git@github.com:CommentViewerCollection/TwitchSitePlugin.git
+[submodule "LineLiveSitePlugin"]
+	path = LineLiveSitePlugin
+	url = git@github.com:CommentViewerCollection/LineLiveSitePlugin.git

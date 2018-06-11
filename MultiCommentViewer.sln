@@ -31,7 +31,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonTests", "Common\Commo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineLiveSitePlugin", "LineLiveSitePlugin\LineLiveSitePlugin\LineLiveSitePlugin.csproj", "{33C8AFD8-24F3-481E-AD0C-9F24AD6CDEE4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineLiveSitePluginTests", "..\LineLiveSitePlugin\LineLiveSitePluginTests\LineLiveSitePluginTests.csproj", "{040CCABD-A332-4DD3-8C8C-6C49CA0A7E47}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineLiveSitePluginTests", "LineLiveSitePlugin\LineLiveSitePluginTests\LineLiveSitePluginTests.csproj", "{040CCABD-A332-4DD3-8C8C-6C49CA0A7E47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

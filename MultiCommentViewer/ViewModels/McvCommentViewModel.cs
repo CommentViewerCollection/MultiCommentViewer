@@ -31,7 +31,9 @@ namespace MultiCommentViewer
                     case nameof(_cvm.FontSize):
                         RaisePropertyChanged(nameof(FontSize));
                         break;
-                    
+                    case nameof(_cvm.NameItems):
+                        RaisePropertyChanged(nameof(NameItems));
+                        break;
 
 
                 }

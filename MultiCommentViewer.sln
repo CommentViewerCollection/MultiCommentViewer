@@ -33,6 +33,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineLiveSitePlugin", "LineL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineLiveSitePluginTests", "LineLiveSitePlugin\LineLiveSitePluginTests\LineLiveSitePluginTests.csproj", "{040CCABD-A332-4DD3-8C8C-6C49CA0A7E47}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouyomiPlugin", "BouyomiPlugin\BouyomiPlugin\BouyomiPlugin.csproj", "{13A909DD-3791-4539-9C04-F72D9E755DCF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentGeneratorPlugin", "CommentGeneratorPlugin\CommentGeneratorPlugin\CommentGeneratorPlugin.csproj", "{88B68D39-41A4-4C10-B942-0F3BE976D7A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +103,14 @@ Global
 		{040CCABD-A332-4DD3-8C8C-6C49CA0A7E47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{040CCABD-A332-4DD3-8C8C-6C49CA0A7E47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{040CCABD-A332-4DD3-8C8C-6C49CA0A7E47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13A909DD-3791-4539-9C04-F72D9E755DCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

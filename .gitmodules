@@ -34,3 +34,6 @@
 [submodule "LineLiveSitePlugin"]
 	path = LineLiveSitePlugin
 	url = git@github.com:CommentViewerCollection/LineLiveSitePlugin.git
+[submodule "CommentGeneratorPlugin"]
+	path = CommentGeneratorPlugin
+	url = git@github.com:CommentViewerCollection/CommentGeneratorPlugin.git

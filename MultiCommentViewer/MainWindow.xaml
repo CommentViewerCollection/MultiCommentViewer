@@ -58,7 +58,7 @@
                 <MenuItem Header="放送情報" IsChecked="{Binding IsShowLiveInfo}" IsCheckable="True" />
             </MenuItem>-->
             <MenuItem Header="設定">
-                <!--<MenuItem Header="常に一番手前に表示" IsChecked="{Binding Topmost}" IsCheckable="True" />-->
+                <MenuItem Header="常に一番手前に表示" IsChecked="{Binding Topmost}" IsCheckable="True" />
                 <MenuItem Header="オプション" Command="{Binding ShowOptionsWindowCommand}"/>
                 <!--<MenuItem Header="棒読みちゃん" Command="{Binding ShowBouyomiChanSettingsCommand}" />-->
             </MenuItem>

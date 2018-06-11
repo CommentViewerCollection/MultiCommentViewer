@@ -480,7 +480,15 @@ namespace MultiCommentViewer
                 return s;
             }
         }
-        public bool Topmost { get { return false; } }
+        public bool Topmost
+        {
+            get { return _options.IsTopmost; }
+            set
+            {
+                _options.IsTopmost = value;
+                RaisePropertyChanged();
+            }
+        }
         public double MainViewHeight
         {
             get { return _options.MainViewHeight; }
@@ -699,6 +707,7 @@ namespace MultiCommentViewer
                         break;
                 }
             };
+            RaisePropertyChanged(nameof(Topmost));
         }
 
         private async void PluginManager_PluginAdded(object sender, IPlugin e)

@@ -114,23 +114,51 @@ namespace MultiCommentViewer
             var a = e as ScrollChangedEventArgs;
 
 
-            //2017/09/11
-            //ExtentHeightは表示されていない部分も含めた全てのコンテントの高さ。
-            //ScrollChangedが呼び出されたのにExtentHeightChangeが0ということはアイテムが追加されていないのにも関わらずスクロールがあった。
-            //それはユーザが手動でスクロールした場合のみ起こること。
-            if (a.ExtentHeightChange == 0)
-            {
-                //ユーザが手動でスクロールした
-                _bottom = scrollViewer.IsBottom();
-                //neverTouch = false;
+            ////2017/09/11
+            ////ExtentHeightは表示されていない部分も含めた全てのコンテントの高さ。
+            ////ScrollChangedが呼び出されたのにExtentHeightChangeが0ということはアイテムが追加されていないのにも関わらずスクロールがあった。
+            ////それはユーザが手動でスクロールした場合のみ起こること。
+            //if (a.ExtentHeightChange == 0)
+            //{
+            //    //ユーザが手動でスクロールした
+            //    _bottom = scrollViewer.IsBottom();
+            //    //neverTouch = false;
+            //}
+
+            ////2017/09/11全体の高さが表示部に収まる間はスクロールがBottomにあるとみなすと、表示部に収まらなくなった瞬間にもBottomにあると判定されて、最初のスクロールが上手くいくかも。
+
+            ////if (bottom && a.ExtentHeightChange != 0)
+            //if (_bottom && Test(a))
+            //{
+            //    scrollViewer.ScrollToBottom();
+            //}
+            AutoScrollTest(scrollViewer, a.ExtentHeightChange);
+        }
+        private bool AutoScroll = true;
+        private void AutoScrollTest(ScrollViewer sc, double extentHeightChange)
+        {
+            // User scroll event : set or unset autoscroll mode
+            if (extentHeightChange == 0)
+            {   // Content unchanged : user scroll event
+                if (sc.VerticalOffset == sc.ScrollableHeight)
+                {   // Scroll bar is in bottom
+                    // Set autoscroll mode
+                    AutoScroll = true;
+                    Debug.WriteLine("Autoscroll=true");
+                }
+                else
+                {   // Scroll bar isn't in bottom
+                    // Unset autoscroll mode
+                    AutoScroll = false;
+                    Debug.WriteLine("Autoscroll=false");
+                }
             }
 
-            //2017/09/11全体の高さが表示部に収まる間はスクロールがBottomにあるとみなすと、表示部に収まらなくなった瞬間にもBottomにあると判定されて、最初のスクロールが上手くいくかも。
-
-            //if (bottom && a.ExtentHeightChange != 0)
-            if (_bottom && Test(a))
-            {
-                scrollViewer.ScrollToBottom();
+            // Content scroll event : autoscroll eventually
+            if (AutoScroll && extentHeightChange != 0)
+            {   // Content changed and autoscroll mode set
+                // Autoscroll
+                sc.ScrollToVerticalOffset(sc.ExtentHeight);
             }
         }
         private bool Test(ScrollChangedEventArgs e)

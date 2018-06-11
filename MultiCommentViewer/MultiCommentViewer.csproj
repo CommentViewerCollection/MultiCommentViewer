@@ -277,12 +277,12 @@ if not exist settings mkdir settings
 if not exist settings\placeholder powershell New-Item settings\placeholder -ItemType file
 
 :: BouyomiPluginのファイルを全部持ってくる
-mkdir plugins\Bouyomi
-copy "..\..\..\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
+if not exist plugins\Bouyomi mkdir plugins\Bouyomi
+copy "$(SolutionDir)\BouyomiPlugin\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
 
 :: CommentGeneratorPluginのファイルを全部持ってくる
-mkdir plugins\CommentGenerator
-copy "..\..\..\CommentGeneratorPlugin\bin\$(ConfigurationName)\*" "plugins\CommentGenerator\"
+if not exist plugins\CommentGenerator mkdir plugins\CommentGenerator
+copy "$(SolutionDir)\CommentGeneratorPlugin\CommentGeneratorPlugin\bin\$(ConfigurationName)\*" "plugins\CommentGenerator\"
 
 :: 自動アップデートに必要なlist.txtを作成
 powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList.ps1" -TargetDir "$(TargetDir)\"

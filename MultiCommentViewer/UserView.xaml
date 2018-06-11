@@ -13,7 +13,7 @@
         <Label Content="ユーザID" HorizontalAlignment="Left" Margin="40,50,0,0" VerticalAlignment="Top"/>
         <Label Content="ユーザ名" HorizontalAlignment="Left" Margin="40,81,0,0" VerticalAlignment="Top"/>
         <Label Content="コテハン" HorizontalAlignment="Left" Margin="50,125,0,0" VerticalAlignment="Top"/>
-        <TextBox HorizontalAlignment="Left" Height="23" Margin="125,125,0,0" TextWrapping="Wrap" Text="{Binding Nickname}" VerticalAlignment="Top" Width="120"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="125,125,0,0" TextWrapping="Wrap" Text="{Binding Nickname, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="120"/>
         <TextBlock HorizontalAlignment="Left" Margin="125,81,0,0" TextWrapping="Wrap" Text="{Binding Username}" VerticalAlignment="Top"/>
 
 

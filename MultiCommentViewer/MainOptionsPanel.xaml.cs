@@ -226,7 +226,7 @@ namespace MultiCommentViewer
             //FontSize = 10;
 
             InfoTypeCollection = new ObservableCollection<InfoType>(Enum.GetValues(typeof(InfoType)).Cast<InfoType>());
-            SelectedInfoType = InfoType.Notice;
+            SelectedInfoType = options.ShowingInfoLevel;
 
         }
         public MainOptionsViewModel()

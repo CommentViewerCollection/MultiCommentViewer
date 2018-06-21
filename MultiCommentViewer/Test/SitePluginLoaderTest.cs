@@ -19,7 +19,7 @@ namespace MultiCommentViewer.Test
                 new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, logger, userStore),
                 new OpenrecSitePlugin.OpenrecSiteContext(options, logger, userStore),
                 new TwitchSitePlugin.TwitchSiteContext(options, logger, userStore, dispatcher),
-                new NicoSitePlugin.Old.NicoSiteContext(options, logger, userStore),
+                new NicoSitePlugin.NicoSiteContext(options, logger, userStore),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger, userStore),
 #if DEBUG
                 new TestSiteContext(options, logger),

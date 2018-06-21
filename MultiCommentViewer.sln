@@ -37,6 +37,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouyomiPlugin", "BouyomiPlu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentGeneratorPlugin", "CommentGeneratorPlugin\CommentGeneratorPlugin\CommentGeneratorPlugin.csproj", "{88B68D39-41A4-4C10-B942-0F3BE976D7A3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoSitePluginTests", "NicoSitePlugin\NicoSitePluginTests\NicoSitePluginTests.csproj", "{71A8174D-AB0C-40DD-8218-E092FFE5EAE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YouTubeLiveSitePluginTests", "YouTubeLiveSitePlugin\YouTubeLiveSitePluginTests\YouTubeLiveSitePluginTests.csproj", "{A39D3546-FB5F-41FC-AAE0-2AC1B5C61ECF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +115,14 @@ Global
 		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88B68D39-41A4-4C10-B942-0F3BE976D7A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71A8174D-AB0C-40DD-8218-E092FFE5EAE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71A8174D-AB0C-40DD-8218-E092FFE5EAE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71A8174D-AB0C-40DD-8218-E092FFE5EAE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71A8174D-AB0C-40DD-8218-E092FFE5EAE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A39D3546-FB5F-41FC-AAE0-2AC1B5C61ECF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A39D3546-FB5F-41FC-AAE0-2AC1B5C61ECF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A39D3546-FB5F-41FC-AAE0-2AC1B5C61ECF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A39D3546-FB5F-41FC-AAE0-2AC1B5C61ECF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

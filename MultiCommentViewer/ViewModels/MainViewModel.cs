@@ -128,7 +128,7 @@ namespace MultiCommentViewer
             {
                 //Observable.Interval()
                 //_optionsLoader.LoadAsync().
-                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dic1, _dispatcher);
+                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dic1);
                 foreach (var site in _siteContexts)
                 {
                     try

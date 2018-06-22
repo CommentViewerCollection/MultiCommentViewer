@@ -180,7 +180,7 @@ namespace MultiCommentViewer.Test
 
             try
             {
-                var list = Enumerable.Range(0, 100000).Select(n =>new TestSiteCommentViewModel(new List<IMessagePart> { new MessageText("name") }, new List<IMessagePart> { new MessageText("message") }, _options, SiteOptions)).Cast<ICommentViewModel>().ToList();
+                var list = Enumerable.Range(0, 100000).Select(n =>new TestSiteCommentViewModel(new List<IMessagePart> { MessagePartFactory.CreateMessageText("name") }, new List<IMessagePart> { MessagePartFactory.CreateMessageText("message") }, _options, SiteOptions)).Cast<ICommentViewModel>().ToList();
                 InitialCommentsReceived?.Invoke(this, list);
                 while (!_cts.IsCancellationRequested)
                 {

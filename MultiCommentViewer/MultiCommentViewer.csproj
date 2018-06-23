@@ -167,7 +167,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\BouyomiPlugin\BouyomiPlugin.csproj">
+    <ProjectReference Include="$(SolutionDir)\BouyomiPlugin\BouyomiPlugin\BouyomiPlugin.csproj">
       <Project>{13a909dd-3791-4539-9c04-f72d9e755dcf}</Project>
       <Name>BouyomiPlugin</Name>
     </ProjectReference>
@@ -179,7 +179,7 @@
       <Project>{cdbbbf25-ad0c-4eaf-b673-eb0bb198585a}</Project>
       <Name>BrowserCookieInterfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\CommentGeneratorPlugin\CommentGeneratorPlugin.csproj">
+    <ProjectReference Include="$(SolutionDir)\CommentGeneratorPlugin\CommentGeneratorPlugin\CommentGeneratorPlugin.csproj">
       <Project>{88b68d39-41a4-4c10-b942-0f3be976d7a3}</Project>
       <Name>CommentGeneratorPlugin</Name>
     </ProjectReference>

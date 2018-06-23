@@ -736,6 +736,11 @@ namespace MultiCommentViewer
                 Debug.Assert(current is McvCommentViewModel);
 
                 var userId = current.UserId;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    Debug.WriteLine("UserIdがnull");
+                    return;
+                }
                 var view = new CollectionViewSource { Source = _comments }.View;
                 view.Filter = obj =>
                 {

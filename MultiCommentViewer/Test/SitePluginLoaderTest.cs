@@ -14,13 +14,13 @@ namespace MultiCommentViewer.Test
         {
 
             var list = new List<ISiteContext>
-            {   
-                //new LineLiveSitePlugin.LineLiveSiteContext(options,logger,userStore),
+            {
                 new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, new YouTubeLiveSitePlugin.Test2.YouTubeLiveServer(), logger, userStore),
                 new OpenrecSitePlugin.OpenrecSiteContext(options, logger, userStore),
                 new TwitchSitePlugin.TwitchSiteContext(options,new TwitchSitePlugin.TwitchServer(),()=>new TwitchSitePlugin.MessageProvider(), logger, userStore),
                 new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), (addr,port,size,buffer)=> new NicoSitePlugin.StreamSocket(addr,port,size,buffer), logger, userStore),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger, userStore),
+                new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger,userStore),
 #if DEBUG
                 new TestSiteContext(options, logger),
 #endif

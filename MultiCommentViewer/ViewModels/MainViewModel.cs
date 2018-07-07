@@ -210,6 +210,11 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
+        private void SetInfo(string message, InfoType type)
+        {
+            var info = new InfoCommentViewModel(_options, message, type);
+            //AddComment(info, )
+        }
         private string GetDefaultName(IEnumerable<string> existingNames)
         {
             for (var n = 1; ; n++)
@@ -309,10 +314,6 @@ namespace MultiCommentViewer
         {
             get { return $""; }
         }
-        void SetInfo(string message)
-        {
-
-        }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
         {
             //新しいバージョンがあるか確認
@@ -326,7 +327,7 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
                 if (!isAutoCheck)
                 {
-                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。");
+                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。", InfoType.Error);
                 }
                 return;
             }

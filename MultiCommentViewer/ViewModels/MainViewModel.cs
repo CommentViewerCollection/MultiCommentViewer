@@ -3,17 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using System.Windows.Input;
 using SitePlugin;
 using System.Threading;
 using System.Collections.ObjectModel;
 using Plugin;
-using ryu_s.BrowserCookie;
 using System.Diagnostics;
 using System.Windows.Threading;
-using System.Net;
 using System.Windows.Media;
 using System.Reflection;
 using System.ComponentModel;
@@ -814,196 +811,6 @@ namespace MultiCommentViewer
         private void Exit()
         {
 
-        }
-    }
-    public class PluginHost : IPluginHost
-    {
-        public string SettingsDirPath => _options.SettingsDirPath;
-
-        public double MainViewLeft => _options.MainViewLeft;
-
-        public double MainViewTop => _options.MainViewTop;
-        public bool IsTopmost => _options.IsTopmost;
-        public string LoadOptions(string path)
-        {
-            var s = _io.ReadFile(path);
-            return s;
-        }
-
-        public void SaveOptions(string path, string s)
-        {
-            _io.WriteFile(path, s);
-        }
-
-        private readonly MainViewModel _vm;
-        private readonly IOptions _options;
-        private readonly IIo _io;
-        public PluginHost(MainViewModel vm, IOptions options, IIo io)
-        {
-            _vm = vm;
-            _options = options;
-            _io = io;
-        }
-    }
-    public class CommentData : Plugin.ICommentData
-    {
-        public string ThumbnailUrl { get; set; }
-        public int ThumbnailWidth { get; set; }
-        public int ThumbnailHeight { get; set; }
-        public string Id { get; set; }
-
-        public string UserId { get; set; }
-
-        public string Nickname { get; set; }
-
-        public string Comment { get; set; }
-        public bool IsNgUser { get; set; }
-        public bool IsFirstComment { get; set; }
-        public string SiteName { get; set; }
-    }
-    public class EmptyBrowserProfile : IBrowserProfile
-    {
-        public string Path => "";
-
-        public string ProfileName => "無し";
-
-        public BrowserType Type { get { return BrowserType.Unknown; } }
-
-        public Cookie GetCookie(string domain, string name)
-        {
-            return null;
-        }
-
-        public CookieCollection GetCookieCollection(string domain)
-        {
-            return new CookieCollection();
-        }
-    }
-    //public class UserTest : IUser
-    //{
-    //    public string UserId { get { return _userid; } }
-    //    public string ForeColorArgb { get; set; }
-    //    public string BackColorArgb { get; set; }
-    //    public bool IsNgUser { get; set; }
-    //    private string _nickname;
-    //    public string Nickname
-    //    {
-    //        get { return _nickname; }
-    //        set
-    //        {
-    //            if (_nickname == value)
-    //                return;
-    //            _nickname = value;
-    //            RaisePropertyChanged();
-    //        }
-    //    }
-    //    private string _name;
-    //    public string Name
-    //    {
-    //        get { return _name; }
-    //        set
-    //        {
-    //            if (_name == value) return;
-    //            _name = value;
-    //            RaisePropertyChanged();
-    //        }
-    //    }
-    //    private readonly string _userid;
-    //    public UserTest(string userId)
-    //    {
-    //        _userid = userId;
-    //    }
-    //    #region INotifyPropertyChanged
-    //    [NonSerialized]
-    //    private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
-    //    /// <summary>
-    //    /// 
-    //    /// </summary>
-    //    public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
-    //    {
-    //        add { _propertyChanged += value; }
-    //        remove { _propertyChanged -= value; }
-    //    }
-    //    /// <summary>
-    //    /// 
-    //    /// </summary>
-    //    /// <param name="propertyName"></param>
-    //    protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-    //    {
-    //        _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
-    //    }
-    //    #endregion
-    //}
-    public class UserStoreTest : IUserStore
-    {
-        //Dictionary<string, IUser> _dict = new Dictionary<string, IUser>();
-        System.Collections.Concurrent.ConcurrentDictionary<string, IUser> _dict = new System.Collections.Concurrent.ConcurrentDictionary<string, IUser>();
-
-        public event EventHandler<IUser> UserAdded;
-
-        public IEnumerable<IUser> GetAllUsers()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IUser GetUser(string userid)
-        {
-            if (!_dict.TryGetValue(userid, out IUser user))
-            {
-                user = new UserTest(userid);
-                _dict.AddOrUpdate(userid, user, (_,u)=>u);
-            }
-            return user;
-        }
-
-        public void Init()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Save()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Update(IUser user)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public class PluginMenuItemViewModel:ViewModelBase
-    {
-        public string Name { get; set; }
-        public ObservableCollection<PluginMenuItemViewModel> Children { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        private RelayCommand _show;
-        public ICommand ShowSettingViewCommand
-        {
-            //以前はコンストラクタ中でICommandに代入していたが、項目をクリックしてもTest()が呼ばれないことがあった。今の状態に書き換えたら問題なくなった。何故だ？IPluginを保持するようにしたから？GCで無くなっちゃってたとか？
-            get
-            {
-                if(_show == null)
-                {
-                    _show = new RelayCommand(()=> Test(_plugin));
-                }
-                return _show;
-            }
-        }
-        private readonly IPlugin _plugin;
-        public PluginMenuItemViewModel(IPlugin plugin)// PluginContext plugin, string name, ICommand command)
-        {
-            Name = plugin.Name;
-            _plugin = plugin;
-        }
-        private void Test(IPlugin plugin)
-        {
-            try
-            {
-                plugin.ShowSettingView();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
         }
     }
 }

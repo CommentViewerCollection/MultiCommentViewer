@@ -158,6 +158,8 @@ namespace MultiCommentViewer
 
                 _pluginManager.OnLoaded();
 
+                _userStore.Init();
+
                 if (_options.IsAutoCheckIfUpdateExists)
                 {
                     await CheckIfUpdateExists(true);

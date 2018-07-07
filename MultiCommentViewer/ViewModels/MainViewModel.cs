@@ -857,6 +857,7 @@ namespace MultiCommentViewer
         public string Comment { get; set; }
         public bool IsNgUser { get; set; }
         public bool IsFirstComment { get; set; }
+        public string SiteName { get; set; }
     }
     public class EmptyBrowserProfile : IBrowserProfile
     {

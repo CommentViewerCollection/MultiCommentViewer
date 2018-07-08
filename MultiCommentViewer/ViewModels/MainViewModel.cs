@@ -46,12 +46,11 @@ namespace MultiCommentViewer
         private readonly IBrowserLoader _browserLoader;
         private readonly IIo _io;
         IOptions _options;
-        IEnumerable<ISiteContext> _siteContexts;
+        //IEnumerable<ISiteContext> _siteContexts;
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
 
         private readonly Dispatcher _dispatcher;
-        private readonly IUserStore _userStore;
         Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
         #endregion //Fields
 
@@ -86,11 +85,12 @@ namespace MultiCommentViewer
                 var mainOptionsPanel = new MainOptionsPanel();
                 mainOptionsPanel.SetViewModel(new MainOptionsViewModel(_options));
                 list.Add(new MainTabPage("一般", mainOptionsPanel));
-                foreach (var site in _siteContexts)
+                foreach (var siteVm in _siteVms)
                 {
                     try
                     {
-                        var tabPanel = site.TabPanel;
+                        var siteContext = _sitePluginLoader.GetSiteContext(siteVm.Guid);
+                        var tabPanel = siteContext.TabPanel;
                         if (tabPanel == null)
                             continue;
                         list.Add(tabPanel);
@@ -112,10 +112,17 @@ namespace MultiCommentViewer
         {
             return System.IO.Path.Combine(_options.SettingsDirPath, "options.txt");
         }
-        private string GetSiteOptionsPath(ISiteContext site)
+        private string GetSiteOptionsPath(string displayName)
         {
-            var path = System.IO.Path.Combine(_options.SettingsDirPath, site.DisplayName + ".txt");
+            var path = System.IO.Path.Combine(_options.SettingsDirPath, displayName + ".txt");
             return path;
+        }
+        private IEnumerable<ISiteContext> GetSiteContexts()
+        {
+            foreach(var siteVm in _siteVms)
+            {
+                yield return _sitePluginLoader.GetSiteContext(siteVm.Guid);
+            }
         }
         private async void ContentRendered()
         {
@@ -125,19 +132,22 @@ namespace MultiCommentViewer
             {
                 //Observable.Interval()
                 //_optionsLoader.LoadAsync().
-                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dic1);
-                foreach (var site in _siteContexts)
+                var a = _sitePluginLoader.LoadSitePlugins(_options, _logger);
+                var siteVms = new List<SiteViewModel>();
+                foreach (var (displayName, guid) in a)
                 {
                     try
                     {
-                        var path = GetSiteOptionsPath(site);
-                        site.LoadOptions(path, _io);
+                        var path = GetSiteOptionsPath(displayName);
+                        var siteContext = _sitePluginLoader.GetSiteContext(guid);
+                        siteContext.LoadOptions(path, _io);
+                        siteVms.Add(new SiteViewModel(displayName, guid));
                     }catch(Exception ex)
                     {
                         _logger.LogException(ex);
                     }
                 }
-                _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
+                _siteVms = siteVms;
 
                 _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
                 //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
@@ -155,8 +165,6 @@ namespace MultiCommentViewer
 
                 _pluginManager.OnLoaded();
 
-                _userStore.Init();
-
                 if (_options.IsAutoCheckIfUpdateExists)
                 {
                     await CheckIfUpdateExists(true);
@@ -170,23 +178,22 @@ namespace MultiCommentViewer
         }
         private void Closing(CancelEventArgs e)
         {
-            if (_siteContexts != null)
+            foreach (var site in GetSiteContexts())
             {
-                foreach (var site in _siteContexts)
+                try
                 {
-                    try
-                    {
-                        var path = GetSiteOptionsPath(site);
-                        site.SaveOptions(path, _io);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                        Debug.WriteLine(ex.Message);
-                    }
+                    var path = GetSiteOptionsPath(site.DisplayName);
+                    site.SaveOptions(path, _io);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                    Debug.WriteLine(ex.Message);
                 }
             }
             _pluginManager?.OnClosing();
+
+            _sitePluginLoader.Save();
         }
         private void RemoveSelectedConnection()
         {
@@ -231,7 +238,7 @@ namespace MultiCommentViewer
             {
                 var name = GetDefaultName(Connections.Select(c => c.Name));
                 var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger);
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
@@ -253,15 +260,15 @@ namespace MultiCommentViewer
         /// <summary>
         /// 将来的にSiteContext毎に別のIUserStoreを使い分ける可能性を考えて今のうちに。
         /// </summary>
-        Dictionary<ISiteContext, IUserStore> _dic1 = new Dictionary<ISiteContext, IUserStore>();
+        //Dictionary<ISiteContext, IUserStore> _dic1 = new Dictionary<ISiteContext, IUserStore>();
         /// <summary>
         /// Connection_SelectedSiteChanged内で値を設定
         /// </summary>
-        Dictionary<ICommentProvider, IUserStore> _dict2 = new Dictionary<ICommentProvider, IUserStore>();
+        //Dictionary<ICommentProvider, IUserStore> _dict2 = new Dictionary<ICommentProvider, IUserStore>();
         //Dictionary<ConnectionName, >
         private void Connection_SelectedSiteChanged(object sender, SelectedSiteChangedEventArgs e)
         {
-            SetDict(e.NewValue);
+            //SetDict(e.NewValue);
 
             var connectionVm = sender as ConnectionViewModel;
             Debug.Assert(connectionVm != null);
@@ -283,23 +290,23 @@ namespace MultiCommentViewer
             Debug.WriteLine($"ConnectionAdded:{connection.ConnectionName.Guid}");
 
             var context = connection.GetCurrent();
-            SetDict(context);
+            //SetDict(context);
 
             if(SelectedConnection == null)
             {
                 SelectedConnection = connection;
             }
         }
-        private void SetDict(ConnectionContext context)
-        {
-            var newSiteContext = context.SiteContext;
-            var newCommentProvider = context.CommentProvider;
-            var userStore = _dic1[newSiteContext];
-            if (!_dict2.ContainsKey(newCommentProvider))
-            {
-                _dict2.Add(newCommentProvider, userStore);
-            }
-        }
+        //private void SetDict(ConnectionContext context)
+        //{
+        //    var newSiteContext = context.SiteContext;
+        //    var newCommentProvider = context.CommentProvider;
+        //    var userStore = _dic1[newSiteContext];
+        //    if (!_dict2.ContainsKey(newCommentProvider))
+        //    {
+        //        _dict2.Add(newCommentProvider, userStore);
+        //    }
+        //}
         private void OnConnectionDeleted(ConnectionName connectionName)
         {
             //TODO:プラグインに通知
@@ -643,14 +650,13 @@ namespace MultiCommentViewer
             }
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        public MainViewModel(IIo io, ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
+        public MainViewModel(IIo io, ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader)
             :base(options)
         {
             _io = io;
             _dispatcher = Dispatcher.CurrentDispatcher;
             
             _options = options;
-            _userStore = userStore;
 
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;
@@ -754,6 +760,7 @@ namespace MultiCommentViewer
                 //Connectionを切断したり、サイトを変更してもコメントは残る。残ったコメントのユーザ情報を見ようとした時にConnectionViewModel経由で取るのは無理だろう。
                 //やっぱりCommentViewModelにICommentProviderを持たせるしかなさそう。
                 ICommentProvider commentProvider = current.CommentProvider;
+                var user = commentProvider.GetUser(userId);
                 //var s = commentProvider.GetUserComments(current.User) as ObservableCollection<ICommentViewModel>;
                 //var collection = new ObservableCollection<McvCommentViewModel>(s.Select(m => new McvCommentViewModel(m, current.ConnectionName));
 
@@ -765,8 +772,8 @@ namespace MultiCommentViewer
                 //            break;
                 //    }
                 //};
-                var userStore = _dict2[commentProvider];
-                var user = userStore.GetUser(userId);
+                //var userStore = _dict2[commentProvider];
+                //var user = userStore.GetUser(userId);
                 var uvm = new UserViewModel(user, _options, view);
                 MessengerInstance.Send(new ShowUserViewMessage(uvm));
             }

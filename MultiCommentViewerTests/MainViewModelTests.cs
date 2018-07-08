@@ -23,8 +23,8 @@ namespace MultiCommentViewerTests
             optionsMock.SetupSet(action).Raises(m => m.PropertyChanged += null, new PropertyChangedEventArgs(propertyName));
             var browserLoaderMock = new Mock<IBrowserLoader>();
             var siteLoaderMock = new Mock<ISitePluginLoader>();
-            var userStoreMock = new Mock<IUserStore>();
-            var vm = new MainViewModel(ioMock.Object, loggerMock.Object, optionsMock.Object, siteLoaderMock.Object, browserLoaderMock.Object, userStoreMock.Object);
+            //var userStoreMock = new Mock<IUserStore>();
+            var vm = new MainViewModel(ioMock.Object, loggerMock.Object, optionsMock.Object, siteLoaderMock.Object, browserLoaderMock.Object);
             vm.MainViewContentRenderedCommand.Execute(null);
             bool b = false;
             vm.PropertyChanged += (s, e) =>

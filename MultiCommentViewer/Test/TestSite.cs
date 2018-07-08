@@ -38,7 +38,7 @@ namespace MultiCommentViewer.Test
         }
         public ICommentProvider CreateCommentProvider()
         {
-            return new TestSiteCommentProvider(_options, _siteOptions);
+            return new TestSiteCommentProvider(_options, _siteOptions, _userStore);
         }
         private TestSiteOptions _siteOptions;
         public void LoadOptions(string siteOptionsStr, IIo io)
@@ -49,18 +49,30 @@ namespace MultiCommentViewer.Test
         public void SaveOptions(string path, IIo io)
         {
         }
-
+        public void Init()
+        {
+            _userStore.Init();
+        }
+        public void Save()
+        {
+            _userStore.Save();
+        }
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             throw new NotImplementedException();
         }
-
+        protected virtual IUserStore CreateUserStore()
+        {
+            return new UserStoreTest();
+        }
         private readonly ICommentOptions _options;
         private readonly ILogger _logger;
+        private readonly IUserStore _userStore;
         public TestSiteContext(ICommentOptions options, ILogger logger)
         {
             _options = options;
             _logger = logger;
+            _userStore = CreateUserStore();
         }
     }
     public class TestSiteOptionsViewModel:ViewModelBase
@@ -225,16 +237,22 @@ namespace MultiCommentViewer.Test
         private readonly System.Timers.Timer _metaTimer = new System.Timers.Timer();
         public TestSiteOptions SiteOptions { get; set; }
         private readonly ICommentOptions _options;
-        public TestSiteCommentProvider(ICommentOptions options, TestSiteOptions siteOptions)
+        private readonly IUserStore _userStore;
+
+        public TestSiteCommentProvider(ICommentOptions options, TestSiteOptions siteOptions, IUserStore userStore)
         {
             _options = options;
             SiteOptions = siteOptions;
+            _userStore = userStore;
         }
         public TestSiteCommentProvider()
         {
 
         }
-
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
 
         public void Disconnect()
         {

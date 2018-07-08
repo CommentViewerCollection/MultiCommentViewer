@@ -66,11 +66,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="CommentDataGrid.xaml.cs">
+    <Compile Include="Views\CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
     </Compile>
-    <Compile Include="CommentDataGridViewModelBase.cs" />
+    <Compile Include="ViewModels\CommentDataGridViewModelBase.cs" />
     <Compile Include="ConnectionName.cs" />
+    <Compile Include="ViewModels\CommentData.cs" />
     <Compile Include="ViewModels\ConnectionViewModel.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="GridColumnWidthReseterBehaviour.cs" />
@@ -79,10 +80,13 @@
     <Compile Include="IPluginManager.cs" />
     <Compile Include="ISitePluginLoader.cs" />
     <Compile Include="ISitePluginManager.cs" />
+    <Compile Include="ViewModels\EmptyBrowserProfile.cs" />
     <Compile Include="ViewModels\McvCommentViewModel.cs" />
     <Compile Include="Test\DynamicOptionsTest.cs" />
     <Compile Include="Test\LoggerTest.cs" />
     <Compile Include="ViewModels\MetadataViewModel.cs" />
+    <Compile Include="ViewModels\PluginHost.cs" />
+    <Compile Include="ViewModels\PluginMenuItemViewModel.cs" />
     <Compile Include="ViewModels\SiteViewModel.cs" />
     <Compile Include="Test\CommentViewModelTest.cs" />
     <Compile Include="Test\SitePluginManager.cs" />
@@ -92,20 +96,21 @@
     <Compile Include="Test\TestSiteOptionsPagePanel.xaml.cs">
       <DependentUpon>TestSiteOptionsPagePanel.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserView.xaml.cs">
+    <Compile Include="Views\UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModels\UserStoreTest.cs" />
     <Compile Include="ViewModels\UserViewModel.cs" />
     <Compile Include="ViewModels\ViewModelLocator.cs" />
-    <Page Include="CommentDataGrid.xaml">
+    <Page Include="Views\CommentDataGrid.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainOptionsPanel.xaml">
+    <Page Include="Views\MainOptionsPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainWindow.xaml">
+    <Page Include="Views\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -113,15 +118,15 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainOptionsPanel.xaml.cs">
+    <Compile Include="Views\MainOptionsPanel.xaml.cs">
       <DependentUpon>MainOptionsPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\MainViewModel.cs" />
-    <Compile Include="MainWindow.xaml.cs">
+    <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="OptionsView.xaml">
+    <Page Include="Views\OptionsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -129,14 +134,14 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UserView.xaml">
+    <Page Include="Views\UserView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Messages.cs" />
-    <Compile Include="OptionsView.xaml.cs">
+    <Compile Include="Views\OptionsView.xaml.cs">
       <DependentUpon>OptionsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -224,14 +229,17 @@
     <Resource Include="mcv_icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="CommonServiceLocator">
+      <Version>2.0.2</Version>
+    </PackageReference>
     <PackageReference Include="Extended.Wpf.Toolkit">
-      <Version>3.3.0</Version>
+      <Version>3.4.0</Version>
     </PackageReference>
     <PackageReference Include="MvvmLightLibs">
       <Version>5.4.1</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>11.0.1</Version>
+      <Version>11.0.2</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.108</Version>

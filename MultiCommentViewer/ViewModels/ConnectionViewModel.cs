@@ -15,7 +15,7 @@ namespace MultiCommentViewer
     {
         public ConnectionName ConnectionName { get; set; }
         public ICommentProvider CommentProvider { get; set; }
-        public ISiteContext SiteContext { get; set; }
+        public Guid SiteGuid { get; set; }
     }
     public class SelectedSiteChangedEventArgs : EventArgs
     {
@@ -62,7 +62,8 @@ namespace MultiCommentViewer
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
                 }
                 _selectedSite = value;
-                var next = _commentProvider = _selectedSite.Site.CreateCommentProvider();
+                var nextGuid = _selectedSite.Guid;
+                var next = _commentProvider = _sitePluginLoader.CreateCommentProvider(nextGuid);
                 next.CanConnectChanged += CommentProvider_CanConnectChanged;
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
                 next.CommentReceived += CommentProvider_CommentReceived;
@@ -72,7 +73,7 @@ namespace MultiCommentViewer
                 System.Windows.Controls.UserControl commentPanel;
                 try
                 {
-                    commentPanel = _selectedSite.Site.GetCommentPostPanel(next);
+                    commentPanel = _sitePluginLoader.GetCommentPostPanel(nextGuid, next);
                 }
                 catch (Exception ex)
                 {
@@ -86,7 +87,8 @@ namespace MultiCommentViewer
                 {
                      ConnectionName = this.ConnectionName,
                       CommentProvider = next,
-                       SiteContext = _selectedSite.Site,
+                       SiteGuid = nextGuid,
+                       //SiteContext = _selectedSite.Site,
                 };
                 RaisePropertyChanged();
                 SelectedSiteChanged?.Invoke(this, new SelectedSiteChangedEventArgs
@@ -164,43 +166,18 @@ namespace MultiCommentViewer
                     return;
                 _input = value;
 
-                ISiteContext sc = null;
-                if (!string.IsNullOrWhiteSpace(_input))
+                var guid = _sitePluginLoader.GetValidSiteGuid(value);
+                if (guid != Guid.Empty)
                 {
-                    foreach (var site in _sites)
-                    {
-                        try
-                        {
-                            if (site.IsValidInput(_input))
-                            {
-                                sc = site;
-                                break;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogException(ex, "", _input);
-                        }
-                    }
-                }
-                if (sc != null)
-                {
-                    try
-                    {
-                        var vm = _siteVmDict[sc];
-                        SelectedSite = vm;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
+                    var vm = _siteVmDict[guid];
+                    SelectedSite = vm;
                 }
             }
         }
 
         public ConnectionContext GetCurrent()
         {
-            var context = new ConnectionContext { ConnectionName = this.ConnectionName, SiteContext = SelectedSite.Site, CommentProvider = _commentProvider };
+            var context = new ConnectionContext { ConnectionName = this.ConnectionName, SiteGuid= SelectedSite.Guid, CommentProvider = _commentProvider };
             return context;
         }
 
@@ -233,11 +210,13 @@ namespace MultiCommentViewer
         }
         string _beforeName;
         private readonly ILogger _logger;
-        private readonly IEnumerable<ISiteContext> _sites;
-        private readonly Dictionary<ISiteContext, SiteViewModel> _siteVmDict = new Dictionary<ISiteContext, SiteViewModel>();
-        public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger)
+        private readonly ISitePluginLoader _sitePluginLoader;
+        //private readonly IEnumerable<ISiteContext> _sites;
+        private readonly Dictionary<Guid, SiteViewModel> _siteVmDict = new Dictionary<Guid, SiteViewModel>();
+        public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger, ISitePluginLoader sitePluginLoader)
         {
             _logger = logger;
+            _sitePluginLoader = sitePluginLoader;
             _connectionName = connectionName ?? throw new ArgumentNullException(nameof(connectionName));
             _beforeName = _connectionName.Name;
             _connectionName.PropertyChanged += (s, e) =>
@@ -257,11 +236,10 @@ namespace MultiCommentViewer
             {
                 throw new ArgumentNullException(nameof(sites));
             }
-            _sites = sites.Select(m => m.Site);
             Sites = new ObservableCollection<SiteViewModel>();
             foreach (var siteVm in sites)
             {
-                _siteVmDict.Add(siteVm.Site, siteVm);
+                _siteVmDict.Add(siteVm.Guid, siteVm);
                 Sites.Add(siteVm);
             }
             //Sites = new ObservableCollection<SiteViewModel>(sites);

@@ -19,7 +19,7 @@ namespace MultiCommentViewerTests
         public void ConnectionViewModel_RaiseRenamedWhenNameChanged()
         {
             var name = new ConnectionName();
-            var conn = new ConnectionViewModel(name, new List<SiteViewModel>(), new List<BrowserViewModel>(), null);
+            var conn = new ConnectionViewModel(name, new List<SiteViewModel>(), new List<BrowserViewModel>(), null, null);
             var newName = "new";
             var b = false;
             conn.Renamed += (s, e) =>

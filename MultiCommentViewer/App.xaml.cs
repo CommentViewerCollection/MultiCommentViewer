@@ -71,10 +71,9 @@ namespace MultiCommentViewer
             catch { }
             ISitePluginLoader sitePluginLoader = new Test.SitePluginLoaderTest();
             IBrowserLoader browserLoader = new BrowserLoader(_logger);
-            IUserStore userStore = new UserStoreTest();
 
             
-            var mainViewModel = new MainViewModel(io, _logger, options, sitePluginLoader,browserLoader, userStore);
+            var mainViewModel = new MainViewModel(io, _logger, options, sitePluginLoader,browserLoader);
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModels.ViewModelLocator;
             locator.Main = mainViewModel;

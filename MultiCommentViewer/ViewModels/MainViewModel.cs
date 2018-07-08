@@ -3,17 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using System.Windows.Input;
 using SitePlugin;
 using System.Threading;
 using System.Collections.ObjectModel;
 using Plugin;
-using ryu_s.BrowserCookie;
 using System.Diagnostics;
 using System.Windows.Threading;
-using System.Net;
 using System.Windows.Media;
 using System.Reflection;
 using System.ComponentModel;
@@ -49,12 +46,11 @@ namespace MultiCommentViewer
         private readonly IBrowserLoader _browserLoader;
         private readonly IIo _io;
         IOptions _options;
-        IEnumerable<ISiteContext> _siteContexts;
+        //IEnumerable<ISiteContext> _siteContexts;
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
 
         private readonly Dispatcher _dispatcher;
-        private readonly IUserStore _userStore;
         Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
         #endregion //Fields
 
@@ -89,11 +85,12 @@ namespace MultiCommentViewer
                 var mainOptionsPanel = new MainOptionsPanel();
                 mainOptionsPanel.SetViewModel(new MainOptionsViewModel(_options));
                 list.Add(new MainTabPage("一般", mainOptionsPanel));
-                foreach (var site in _siteContexts)
+                foreach (var siteVm in _siteVms)
                 {
                     try
                     {
-                        var tabPanel = site.TabPanel;
+                        var siteContext = _sitePluginLoader.GetSiteContext(siteVm.Guid);
+                        var tabPanel = siteContext.TabPanel;
                         if (tabPanel == null)
                             continue;
                         list.Add(tabPanel);
@@ -115,10 +112,17 @@ namespace MultiCommentViewer
         {
             return System.IO.Path.Combine(_options.SettingsDirPath, "options.txt");
         }
-        private string GetSiteOptionsPath(ISiteContext site)
+        private string GetSiteOptionsPath(string displayName)
         {
-            var path = System.IO.Path.Combine(_options.SettingsDirPath, site.DisplayName + ".txt");
+            var path = System.IO.Path.Combine(_options.SettingsDirPath, displayName + ".txt");
             return path;
+        }
+        private IEnumerable<ISiteContext> GetSiteContexts()
+        {
+            foreach(var siteVm in _siteVms)
+            {
+                yield return _sitePluginLoader.GetSiteContext(siteVm.Guid);
+            }
         }
         private async void ContentRendered()
         {
@@ -128,19 +132,22 @@ namespace MultiCommentViewer
             {
                 //Observable.Interval()
                 //_optionsLoader.LoadAsync().
-                _siteContexts = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStore, _dic1);
-                foreach (var site in _siteContexts)
+                var a = _sitePluginLoader.LoadSitePlugins(_options, _logger);
+                var siteVms = new List<SiteViewModel>();
+                foreach (var (displayName, guid) in a)
                 {
                     try
                     {
-                        var path = GetSiteOptionsPath(site);
-                        site.LoadOptions(path, _io);
+                        var path = GetSiteOptionsPath(displayName);
+                        var siteContext = _sitePluginLoader.GetSiteContext(guid);
+                        siteContext.LoadOptions(path, _io);
+                        siteVms.Add(new SiteViewModel(displayName, guid));
                     }catch(Exception ex)
                     {
                         _logger.LogException(ex);
                     }
                 }
-                _siteVms = _siteContexts.Select(c => new SiteViewModel(c));
+                _siteVms = siteVms;
 
                 _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
                 //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
@@ -171,23 +178,22 @@ namespace MultiCommentViewer
         }
         private void Closing(CancelEventArgs e)
         {
-            if (_siteContexts != null)
+            foreach (var site in GetSiteContexts())
             {
-                foreach (var site in _siteContexts)
+                try
                 {
-                    try
-                    {
-                        var path = GetSiteOptionsPath(site);
-                        site.SaveOptions(path, _io);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                        Debug.WriteLine(ex.Message);
-                    }
+                    var path = GetSiteOptionsPath(site.DisplayName);
+                    site.SaveOptions(path, _io);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                    Debug.WriteLine(ex.Message);
                 }
             }
             _pluginManager?.OnClosing();
+
+            _sitePluginLoader.Save();
         }
         private void RemoveSelectedConnection()
         {
@@ -210,6 +216,11 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
+        private void SetInfo(string message, InfoType type)
+        {
+            var info = new InfoCommentViewModel(_options, message, type);
+            //AddComment(info, )
+        }
         private string GetDefaultName(IEnumerable<string> existingNames)
         {
             for (var n = 1; ; n++)
@@ -227,7 +238,7 @@ namespace MultiCommentViewer
             {
                 var name = GetDefaultName(Connections.Select(c => c.Name));
                 var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger);
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
@@ -249,15 +260,15 @@ namespace MultiCommentViewer
         /// <summary>
         /// 将来的にSiteContext毎に別のIUserStoreを使い分ける可能性を考えて今のうちに。
         /// </summary>
-        Dictionary<ISiteContext, IUserStore> _dic1 = new Dictionary<ISiteContext, IUserStore>();
+        //Dictionary<ISiteContext, IUserStore> _dic1 = new Dictionary<ISiteContext, IUserStore>();
         /// <summary>
         /// Connection_SelectedSiteChanged内で値を設定
         /// </summary>
-        Dictionary<ICommentProvider, IUserStore> _dict2 = new Dictionary<ICommentProvider, IUserStore>();
+        //Dictionary<ICommentProvider, IUserStore> _dict2 = new Dictionary<ICommentProvider, IUserStore>();
         //Dictionary<ConnectionName, >
         private void Connection_SelectedSiteChanged(object sender, SelectedSiteChangedEventArgs e)
         {
-            SetDict(e.NewValue);
+            //SetDict(e.NewValue);
 
             var connectionVm = sender as ConnectionViewModel;
             Debug.Assert(connectionVm != null);
@@ -279,23 +290,23 @@ namespace MultiCommentViewer
             Debug.WriteLine($"ConnectionAdded:{connection.ConnectionName.Guid}");
 
             var context = connection.GetCurrent();
-            SetDict(context);
+            //SetDict(context);
 
             if(SelectedConnection == null)
             {
                 SelectedConnection = connection;
             }
         }
-        private void SetDict(ConnectionContext context)
-        {
-            var newSiteContext = context.SiteContext;
-            var newCommentProvider = context.CommentProvider;
-            var userStore = _dic1[newSiteContext];
-            if (!_dict2.ContainsKey(newCommentProvider))
-            {
-                _dict2.Add(newCommentProvider, userStore);
-            }
-        }
+        //private void SetDict(ConnectionContext context)
+        //{
+        //    var newSiteContext = context.SiteContext;
+        //    var newCommentProvider = context.CommentProvider;
+        //    var userStore = _dic1[newSiteContext];
+        //    if (!_dict2.ContainsKey(newCommentProvider))
+        //    {
+        //        _dict2.Add(newCommentProvider, userStore);
+        //    }
+        //}
         private void OnConnectionDeleted(ConnectionName connectionName)
         {
             //TODO:プラグインに通知
@@ -308,10 +319,6 @@ namespace MultiCommentViewer
         string Fullname
         {
             get { return $""; }
-        }
-        void SetInfo(string message)
-        {
-
         }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
         {
@@ -326,7 +333,7 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
                 if (!isAutoCheck)
                 {
-                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。");
+                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。", InfoType.Error);
                 }
                 return;
             }
@@ -643,14 +650,13 @@ namespace MultiCommentViewer
             }
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        public MainViewModel(IIo io, ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader, IUserStore userStore)
+        public MainViewModel(IIo io, ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader)
             :base(options)
         {
             _io = io;
             _dispatcher = Dispatcher.CurrentDispatcher;
             
             _options = options;
-            _userStore = userStore;
 
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;
@@ -754,6 +760,7 @@ namespace MultiCommentViewer
                 //Connectionを切断したり、サイトを変更してもコメントは残る。残ったコメントのユーザ情報を見ようとした時にConnectionViewModel経由で取るのは無理だろう。
                 //やっぱりCommentViewModelにICommentProviderを持たせるしかなさそう。
                 ICommentProvider commentProvider = current.CommentProvider;
+                var user = commentProvider.GetUser(userId);
                 //var s = commentProvider.GetUserComments(current.User) as ObservableCollection<ICommentViewModel>;
                 //var collection = new ObservableCollection<McvCommentViewModel>(s.Select(m => new McvCommentViewModel(m, current.ConnectionName));
 
@@ -765,8 +772,8 @@ namespace MultiCommentViewer
                 //            break;
                 //    }
                 //};
-                var userStore = _dict2[commentProvider];
-                var user = userStore.GetUser(userId);
+                //var userStore = _dict2[commentProvider];
+                //var user = userStore.GetUser(userId);
                 var uvm = new UserViewModel(user, _options, view);
                 MessengerInstance.Send(new ShowUserViewMessage(uvm));
             }
@@ -811,195 +818,6 @@ namespace MultiCommentViewer
         private void Exit()
         {
 
-        }
-    }
-    public class PluginHost : IPluginHost
-    {
-        public string SettingsDirPath => _options.SettingsDirPath;
-
-        public double MainViewLeft => _options.MainViewLeft;
-
-        public double MainViewTop => _options.MainViewTop;
-        public bool IsTopmost => _options.IsTopmost;
-        public string LoadOptions(string path)
-        {
-            var s = _io.ReadFile(path);
-            return s;
-        }
-
-        public void SaveOptions(string path, string s)
-        {
-            _io.WriteFile(path, s);
-        }
-
-        private readonly MainViewModel _vm;
-        private readonly IOptions _options;
-        private readonly IIo _io;
-        public PluginHost(MainViewModel vm, IOptions options, IIo io)
-        {
-            _vm = vm;
-            _options = options;
-            _io = io;
-        }
-    }
-    public class CommentData : Plugin.ICommentData
-    {
-        public string ThumbnailUrl { get; set; }
-        public int ThumbnailWidth { get; set; }
-        public int ThumbnailHeight { get; set; }
-        public string Id { get; set; }
-
-        public string UserId { get; set; }
-
-        public string Nickname { get; set; }
-
-        public string Comment { get; set; }
-        public bool IsNgUser { get; set; }
-        public bool IsFirstComment { get; set; }
-    }
-    public class EmptyBrowserProfile : IBrowserProfile
-    {
-        public string Path => "";
-
-        public string ProfileName => "無し";
-
-        public BrowserType Type { get { return BrowserType.Unknown; } }
-
-        public Cookie GetCookie(string domain, string name)
-        {
-            return null;
-        }
-
-        public CookieCollection GetCookieCollection(string domain)
-        {
-            return new CookieCollection();
-        }
-    }
-    //public class UserTest : IUser
-    //{
-    //    public string UserId { get { return _userid; } }
-    //    public string ForeColorArgb { get; set; }
-    //    public string BackColorArgb { get; set; }
-    //    public bool IsNgUser { get; set; }
-    //    private string _nickname;
-    //    public string Nickname
-    //    {
-    //        get { return _nickname; }
-    //        set
-    //        {
-    //            if (_nickname == value)
-    //                return;
-    //            _nickname = value;
-    //            RaisePropertyChanged();
-    //        }
-    //    }
-    //    private string _name;
-    //    public string Name
-    //    {
-    //        get { return _name; }
-    //        set
-    //        {
-    //            if (_name == value) return;
-    //            _name = value;
-    //            RaisePropertyChanged();
-    //        }
-    //    }
-    //    private readonly string _userid;
-    //    public UserTest(string userId)
-    //    {
-    //        _userid = userId;
-    //    }
-    //    #region INotifyPropertyChanged
-    //    [NonSerialized]
-    //    private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
-    //    /// <summary>
-    //    /// 
-    //    /// </summary>
-    //    public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
-    //    {
-    //        add { _propertyChanged += value; }
-    //        remove { _propertyChanged -= value; }
-    //    }
-    //    /// <summary>
-    //    /// 
-    //    /// </summary>
-    //    /// <param name="propertyName"></param>
-    //    protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-    //    {
-    //        _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
-    //    }
-    //    #endregion
-    //}
-    public class UserStoreTest : IUserStore
-    {
-        //Dictionary<string, IUser> _dict = new Dictionary<string, IUser>();
-        System.Collections.Concurrent.ConcurrentDictionary<string, IUser> _dict = new System.Collections.Concurrent.ConcurrentDictionary<string, IUser>();
-
-        public event EventHandler<IUser> UserAdded;
-
-        public IEnumerable<IUser> GetAllUsers()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IUser GetUser(string userid)
-        {
-            if (!_dict.TryGetValue(userid, out IUser user))
-            {
-                user = new UserTest(userid);
-                _dict.AddOrUpdate(userid, user, (_,u)=>u);
-            }
-            return user;
-        }
-
-        public void Init()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Save()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Update(IUser user)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public class PluginMenuItemViewModel:ViewModelBase
-    {
-        public string Name { get; set; }
-        public ObservableCollection<PluginMenuItemViewModel> Children { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        private RelayCommand _show;
-        public ICommand ShowSettingViewCommand
-        {
-            //以前はコンストラクタ中でICommandに代入していたが、項目をクリックしてもTest()が呼ばれないことがあった。今の状態に書き換えたら問題なくなった。何故だ？IPluginを保持するようにしたから？GCで無くなっちゃってたとか？
-            get
-            {
-                if(_show == null)
-                {
-                    _show = new RelayCommand(()=> Test(_plugin));
-                }
-                return _show;
-            }
-        }
-        private readonly IPlugin _plugin;
-        public PluginMenuItemViewModel(IPlugin plugin)// PluginContext plugin, string name, ICommand command)
-        {
-            Name = plugin.Name;
-            _plugin = plugin;
-        }
-        private void Test(IPlugin plugin)
-        {
-            try
-            {
-                plugin.ShowSettingView();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
         }
     }
 }

@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
+using System.Windows.Threading;
+
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -20,12 +22,30 @@ namespace MultiCommentViewer
     /// </summary>
     public partial class CommentDataGrid : UserControl
     {
+        Dispatcher _dispatcher;
         public CommentDataGrid()
         {
             InitializeComponent();
+            _dispatcher = Dispatcher.CurrentDispatcher;
             dataGrid.MouseRightButtonUp += DataGrid_MouseRightButtonUp;
-            
+            _AModeTimer.Interval = 100;
+            _AModeTimer.AutoReset = false;
+            _AModeTimer.Elapsed += async (s,e)=>
+            {
+                try
+                {
+                    await _dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        var sc = this.dataGrid.GetScrollViewer();
+                        //TODO:_addingCommentToTop=trueの場合はここがバグになる
+                        sc.ScrollToBottom();
+                        Debug.WriteLine("A Mode ScrollToBottom() fired!");
+                    }), DispatcherPriority.Normal);
+                }
+                catch (Exception) { }
+            };
         }
+
 
 
         public bool IsShowUserInfoMenuItem
@@ -135,6 +155,8 @@ namespace MultiCommentViewer
             AutoScrollTest(scrollViewer, a.ExtentHeightChange);
         }
         private bool AutoScroll = true;
+        private bool IsAmode = false;
+        System.Timers.Timer _AModeTimer = new System.Timers.Timer();
         private void AutoScrollTest(ScrollViewer sc, double extentHeightChange)
         {
             // User scroll event : set or unset autoscroll mode
@@ -144,12 +166,27 @@ namespace MultiCommentViewer
                 {   // Scroll bar is in bottom
                     // Set autoscroll mode
                     AutoScroll = true;
+                    if (IsAmode)
+                    {
+                        IsAmode = false;
+                        _AModeTimer.Enabled = false;
+                    }
                     Debug.WriteLine("Autoscroll=true");
                 }
                 else
                 {   // Scroll bar isn't in bottom
                     // Unset autoscroll mode
                     AutoScroll = false;
+                    if (!IsAmode)
+                    {
+                        _AModeTimer.Enabled = true;
+                        IsAmode = true;
+                    }
+                    else
+                    {
+                        _AModeTimer.Enabled = false;
+                        //IsAmode = false;
+                    }
                     Debug.WriteLine("Autoscroll=false");
                 }
             }

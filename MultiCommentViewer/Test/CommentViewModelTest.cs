@@ -38,6 +38,8 @@ namespace MultiCommentViewer.Test
 
         public bool IsFirstComment { get; set; }
 
+        public bool Is184 { get; set; }
+
         public string PostTime { get; set; }
 
         public IMessageImage Thumbnail => null;

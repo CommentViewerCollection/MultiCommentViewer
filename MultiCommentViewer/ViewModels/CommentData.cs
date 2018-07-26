@@ -15,6 +15,7 @@
         public bool IsNgUser { get; set; }
         public bool IsFirstComment { get; set; }
         public string SiteName { get; set; }
+        public bool Is184 { get; set; }
     }
 }
 

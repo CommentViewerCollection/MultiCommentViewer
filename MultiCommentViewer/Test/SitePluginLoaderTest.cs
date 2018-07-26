@@ -23,6 +23,7 @@ namespace MultiCommentViewer.Test
                 new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), (addr,port,size,buffer)=> new NicoSitePlugin.StreamSocket(addr,port,size,buffer), logger),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger),
                 new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger),
+                new WhowatchSitePlugin.WhowatchSiteContext(options, logger),
             };
             foreach(var site in list)
             {

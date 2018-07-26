@@ -37,3 +37,6 @@
 [submodule "CommentGeneratorPlugin"]
 	path = CommentGeneratorPlugin
 	url = git@github.com:CommentViewerCollection/CommentGeneratorPlugin.git
+[submodule "WhowatchSitePlugin"]
+	path = WhowatchSitePlugin
+	url = git@github.com:CommentViewerCollection/WhowatchSitePlugin.git

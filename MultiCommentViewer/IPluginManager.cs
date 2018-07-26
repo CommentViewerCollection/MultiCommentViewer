@@ -80,6 +80,7 @@ namespace MultiCommentViewer
         }
         private string GetString(IEnumerable<IMessagePart> items, string separator = "")
         {
+            if (items == null) return null;
             var textItems = items.Where(s => s is IMessageText).Cast<IMessageText>().Select(s => s.Text);
             var message = string.Join("", textItems);
             return message;

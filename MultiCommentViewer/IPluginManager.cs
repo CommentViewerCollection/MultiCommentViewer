@@ -72,6 +72,7 @@ namespace MultiCommentViewer
                 ThumbnailUrl = comment.Thumbnail?.Url,
                 ThumbnailWidth = comment.Thumbnail?.Width ?? 50,
                 ThumbnailHeight = comment.Thumbnail?.Height ?? 50,
+                Is184=comment.Is184,
             };
             foreach (var plugin in _plugins)
             {

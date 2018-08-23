@@ -412,7 +412,9 @@ namespace MultiCommentViewer
                 {
                     _pluginManager.SetComments(e);
                 }
+                await e.AfterCommentAdded();
             }
+            catch (TaskCanceledException) { }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);

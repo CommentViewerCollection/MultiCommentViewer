@@ -49,6 +49,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhowatchSitePluginTests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenrecSitePluginTests", "OpenrecSitePlugin\OpenrecSitePluginTests\OpenrecSitePluginTests.csproj", "{24C998A6-7CDE-4CEE-8F03-9343580B46BD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasSitePluginTests", "TwicasSitePlugin\TwicasSitePluginTests\TwicasSitePluginTests.csproj", "{EF2FABAC-9D97-4FFC-8FEE-B4FBDEA0CF34}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -147,6 +149,10 @@ Global
 		{24C998A6-7CDE-4CEE-8F03-9343580B46BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24C998A6-7CDE-4CEE-8F03-9343580B46BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24C998A6-7CDE-4CEE-8F03-9343580B46BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF2FABAC-9D97-4FFC-8FEE-B4FBDEA0CF34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF2FABAC-9D97-4FFC-8FEE-B4FBDEA0CF34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF2FABAC-9D97-4FFC-8FEE-B4FBDEA0CF34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF2FABAC-9D97-4FFC-8FEE-B4FBDEA0CF34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

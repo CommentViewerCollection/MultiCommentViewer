@@ -34,7 +34,9 @@ namespace MultiCommentViewer
                     case nameof(_cvm.NameItems):
                         RaisePropertyChanged(nameof(NameItems));
                         break;
-
+                    case nameof(_cvm.IsVisible):
+                        RaisePropertyChanged(nameof(IsVisible));
+                        break;
 
                 }
             };

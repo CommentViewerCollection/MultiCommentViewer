@@ -181,6 +181,16 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
+                            <GridViewColumn Width="40">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="保存" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding NeedSave}" IsEnabled="{Binding CanConnect}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView.Columns>
                     </GridView>
                 </ListView.View>

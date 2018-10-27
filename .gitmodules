@@ -40,3 +40,6 @@
 [submodule "WhowatchSitePlugin"]
 	path = WhowatchSitePlugin
 	url = git@github.com:CommentViewerCollection/WhowatchSitePlugin.git
+[submodule "MirrativSitePlugin"]
+	path = MirrativSitePlugin
+	url = K:\\Programming\\workspace\\a\\MultiCommentViewer\\MirrativSitePlugin

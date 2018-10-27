@@ -36,6 +36,8 @@ namespace MultiCommentViewer.Test
         public Color VerticalGridLineColor { get => GetValue(); set => SetValue(value); }
         public Color InfoForeColor { get => GetValue(); set => SetValue(value); }
         public Color InfoBackColor { get => GetValue(); set => SetValue(value); }
+        public Color BroadcastInfoForeColor { get => GetValue(); set => SetValue(value); }
+        public Color BroadcastInfoBackColor { get => GetValue(); set => SetValue(value); }
         public Color SelectedRowBackColor { get => GetValue(); set => SetValue(value); }
         public Color SelectedRowForeColor { get => GetValue(); set => SetValue(value); }
         public double ConnectionNameWidth { get => GetValue(); set => SetValue(value); }
@@ -86,6 +88,8 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(VerticalGridLineColor), new Item {  DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(InfoForeColor), new Item {  DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(InfoBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFF00"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(BroadcastInfoForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(BroadcastInfoBackColor), new Item { DefaultValue = ColorFromArgb("#FFEFEFEF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SelectedRowBackColor), new Item { DefaultValue = ColorFromArgb("#FF0078D7"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SelectedRowForeColor), new Item {  DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
 

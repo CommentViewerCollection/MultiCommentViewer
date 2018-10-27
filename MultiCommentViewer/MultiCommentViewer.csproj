@@ -66,6 +66,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\ConnectionSerializer.cs" />
     <Compile Include="Views\CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
     </Compile>
@@ -227,6 +228,10 @@
     <ProjectReference Include="$(SolutionDir)\WhowatchSitePlugin\WhowatchSitePlugin\WhowatchSitePlugin.csproj">
       <Project>{92bdc986-1d50-48a3-9a94-5a94a285c53d}</Project>
       <Name>WhowatchSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\MirrativSitePlugin\MirrativSitePlugin\MirrativSitePlugin.csproj">
+      <Project>{c6f57847-d6c3-4f64-b0a4-c778d7cea333}</Project>
+      <Name>MirrativSitePlugin</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

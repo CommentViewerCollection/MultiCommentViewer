@@ -17,6 +17,7 @@ using System.ComponentModel;
 using MultiCommentViewer.Test;
 using Common;
 using System.Windows.Data;
+using System.Text.RegularExpressions;
 
 namespace MultiCommentViewer
 {
@@ -36,6 +37,8 @@ namespace MultiCommentViewer
         public ICommand RemoveSelectedConnectionCommand { get; }
         public ICommand AddNewConnectionCommand { get; }
         public ICommand ClearAllCommentsCommand { get; }
+        public ICommand CommentCopyCommand { get; }
+        public ICommand OpenUrlCommand { get; }
         #endregion //Commands
 
         #region Fields
@@ -216,9 +219,9 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
-        private void SetInfo(string message, InfoType type)
+        private void SetSystemInfo(string message, InfoType type)
         {
-            var info = new InfoCommentViewModel(_options, message, type);
+            var info = new SystemInfoCommentViewModel(_options, message, type);
             //AddComment(info, )
         }
         private string GetDefaultName(IEnumerable<string> existingNames)
@@ -333,7 +336,7 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
                 if (!isAutoCheck)
                 {
-                    SetInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。", InfoType.Error);
+                    SetSystemInfo("サーバに障害が発生している可能性があります。しばらく経ってから再度試してみて下さい。", InfoType.Error);
                 }
                 return;
             }
@@ -392,6 +395,7 @@ namespace MultiCommentViewer
         {
             var connectionViewModel = sender as ConnectionViewModel;
             Debug.Assert(connectionViewModel != null);
+            Debug.Assert(e.MessageType != MessageType.Unknown);
             try
             {
                 //TODO:Comments.AddRange()が欲しい
@@ -408,7 +412,7 @@ namespace MultiCommentViewer
                     AddComment(comment, connectionViewModel.ConnectionName);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
-                if (!e.IsInfo)
+                if (IsComment(e.MessageType))
                 {
                     _pluginManager.SetComments(e);
                 }
@@ -420,6 +424,10 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex);
             }
+        }
+        bool IsComment(MessageType type)
+        {
+            return !(type == MessageType.SystemInfo || type == MessageType.BroadcastInfo);
         }
         private void Connection_MetadataReceived(object sender, IMetadata e)
         {
@@ -638,6 +646,39 @@ namespace MultiCommentViewer
         //    get { return _options.SelectedRowForeColor; }
         //    set { _options.SelectedRowForeColor = value; }
         //}
+        public bool ContainsUrl
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(GetUrlFromSelectedComment());
+            }
+        }
+        private string GetUrlFromSelectedComment()
+        {
+            var message = SelectedComment.MessageItems.ToText();
+            var match = Regex.Match(message, "(https?://([\\w-]+.)+[\\w-]+(?:/[\\w- ./?%&=]))?");
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            return null;
+        }
+        private void OpenUrl()
+        {
+            var url = GetUrlFromSelectedComment();
+            Process.Start(url);
+            SetSystemInfo("open: " + url, InfoType.Debug);
+        }
+        private void CopyComment()
+        {
+            var message = SelectedComment.MessageItems.ToText();
+            try
+            {
+                System.Windows.Clipboard.SetText(message);
+            }
+            catch (System.Runtime.InteropServices.COMException) { }
+            SetSystemInfo("copy: " + message, InfoType.Debug);
+        }
         #endregion
 
         public MainViewModel():base(new DynamicOptionsTest())
@@ -679,6 +720,8 @@ namespace MultiCommentViewer
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
             ActivatedCommand = new RelayCommand(Activated);
             LoadedCommand = new RelayCommand(Loaded);
+            CommentCopyCommand = new RelayCommand(CopyComment);
+            OpenUrlCommand = new RelayCommand(OpenUrl);
             _options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)

@@ -96,6 +96,16 @@ namespace MultiCommentViewer
             get { return ChangedOptions.InfoForeColor; }
             set { ChangedOptions.InfoForeColor = value; }
         }
+        public Color SiteInfoBackColor
+        {
+            get { return ChangedOptions.BroadcastInfoBackColor; }
+            set { ChangedOptions.BroadcastInfoBackColor = value; }
+        }
+        public Color SiteInfoForeColor
+        {
+            get { return ChangedOptions.BroadcastInfoForeColor; }
+            set { ChangedOptions.BroadcastInfoForeColor = value; }
+        }
         public Color SelectedRowBackColor
         {
             get { return ChangedOptions.SelectedRowBackColor; }

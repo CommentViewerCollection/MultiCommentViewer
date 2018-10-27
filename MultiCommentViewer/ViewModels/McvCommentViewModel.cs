@@ -68,8 +68,6 @@ namespace MultiCommentViewer
 
         public ICommentProvider CommentProvider => _cvm.CommentProvider;
 
-        public bool IsInfo => _cvm.IsInfo;
-
         public IMessageImage Thumbnail => _cvm.Thumbnail;
 
         public FontFamily FontFamily => _cvm.FontFamily;

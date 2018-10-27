@@ -66,6 +66,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\ConnectionSerializer.cs" />
     <Compile Include="Views\CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
     </Compile>

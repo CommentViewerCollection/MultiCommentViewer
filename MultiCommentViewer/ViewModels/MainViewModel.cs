@@ -21,6 +21,51 @@ using System.Text.RegularExpressions;
 
 namespace MultiCommentViewer
 {
+    class ConnectionSerializerLoader
+    {
+        private readonly string _path;
+
+        public void Save(IEnumerable<ConnectionViewModel> serializers)
+        {
+            var list = new List<string>();
+            foreach (var connection in serializers)
+            {
+                if (connection.NeedSave)
+                {
+                    var connectionSerializer = new ConnectionSerializer(connection.Name, connection.SelectedSite.DisplayName, connection.Input, connection.SelectedBrowser.DisplayName);
+                    var serialized = connectionSerializer.Serialize();
+                    list.Add(serialized);
+                }
+            }
+            using (var sw = new System.IO.StreamWriter(_path))
+            {
+                foreach (var line in list)
+                {
+                    sw.WriteLine(line);
+                }
+            }
+        }
+        public IEnumerable<ConnectionSerializer> Load()
+        {
+            var connectionSerializerList = new List<ConnectionSerializer>();
+            if (System.IO.File.Exists(_path))
+            {
+                using (var sr = new System.IO.StreamReader(_path))
+                {
+                    for (string line; (line = sr.ReadLine()) != null;)
+                    {
+                        var serializer = ConnectionSerializer.Deserialize(line);
+                        connectionSerializerList.Add(serializer);
+                    }
+                }
+            }
+            return connectionSerializerList;
+        }
+        public ConnectionSerializerLoader(string path)
+        {
+            _path = path;
+        }
+    }
     public class MainViewModel : CommentDataGridViewModelBase
     {
         #region Commands
@@ -55,6 +100,7 @@ namespace MultiCommentViewer
 
         private readonly Dispatcher _dispatcher;
         Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
+        ConnectionSerializerLoader _connectionSerializerLoader = new ConnectionSerializerLoader("settings\\connections.txt");
         #endregion //Fields
 
 
@@ -168,6 +214,11 @@ namespace MultiCommentViewer
 
                 _pluginManager.OnLoaded();
 
+                var connectionSerializerList = _connectionSerializerLoader.Load();
+                foreach (var serializer in connectionSerializerList)
+                {
+                    AddNewConnection(serializer.Name, serializer.SiteName, serializer.Url, serializer.BrowserName, true);
+                }
                 if (_options.IsAutoCheckIfUpdateExists)
                 {
                     await CheckIfUpdateExists(true);
@@ -179,8 +230,11 @@ namespace MultiCommentViewer
                 Debug.WriteLine(ex.Message);
             }
         }
+
         private void Closing(CancelEventArgs e)
         {
+            _connectionSerializerLoader.Save(Connections);
+            
             foreach (var site in GetSiteContexts())
             {
                 try
@@ -233,6 +287,64 @@ namespace MultiCommentViewer
                 {
                     return testName;
                 }
+            }
+        }
+        private SiteViewModel GetSiteViewModelFromName(string siteName)
+        {
+            foreach(var siteViewModel in _siteVms)
+            {
+                if(siteViewModel.DisplayName == siteName)
+                {
+                    return siteViewModel;
+                }
+            }
+            return null;
+        }
+        private BrowserViewModel GetBrowserViewModelFromName(string browserName)
+        {
+            foreach(var browserViewModel in _browserVms)
+            {
+                if(browserViewModel.DisplayName == browserName)
+                {
+                    return browserViewModel;
+                }
+            }
+            return null;
+        }
+        private void AddNewConnection(string name, string siteName, string url, string browserName, bool needSave)
+        {
+            try
+            {
+                var connectionName = new ConnectionName { Name = name };
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
+                connection.Renamed += Connection_Renamed;
+                connection.CommentReceived += Connection_CommentReceived;
+                connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
+                connection.MetadataReceived += Connection_MetadataReceived;
+                connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
+                var site = GetSiteViewModelFromName(siteName);
+                if(site != null)
+                {
+                    connection.SelectedSite = site;
+                }
+                var browser = GetBrowserViewModelFromName(browserName);
+                if(browser != null)
+                {
+                    connection.SelectedBrowser = browser;
+                }
+                connection.InputWithNoAutoSiteSelect = url;
+                connection.NeedSave = needSave;
+                var metaVm = new MetadataViewModel(connectionName);
+                _metaDict.Add(connection, metaVm);
+                MetaCollection.Add(metaVm);
+                Connections.Add(connection);
+                OnConnectionAdded(connection);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                Debug.WriteLine(ex.Message);
+                Debugger.Break();
             }
         }
         private void AddNewConnection()

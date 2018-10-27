@@ -60,6 +60,7 @@ namespace MultiCommentViewer
                     before.CommentReceived -= CommentProvider_CommentReceived;
                     before.InitialCommentsReceived -= CommentProvider_InitialCommentsReceived;
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
+                    before.Connected -= CommentProvider_Connected;
                 }
                 _selectedSite = value;
                 var nextGuid = _selectedSite.Guid;
@@ -69,6 +70,7 @@ namespace MultiCommentViewer
                 next.CommentReceived += CommentProvider_CommentReceived;
                 next.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
+                next.Connected += CommentProvider_Connected;
 
                 System.Windows.Controls.UserControl commentPanel;
                 try
@@ -98,6 +100,20 @@ namespace MultiCommentViewer
                     NewValue = _currentContext
                 });
             }
+        }
+        /// <summary>
+        /// 配信者のユーザIDとかコミュニティIDのような毎回そこからリアルタイムの配信に接続できる文字列であるか
+        /// 配信IDだと毎回変わるため保存しても無意味。
+        /// </summary>
+        public bool IsInputStoringNeeded { get; private set; }
+        /// <summary>
+        /// 保存して次回起動時にリストアする文字列
+        /// </summary>
+        public string UrlToRestore { get; private set; }
+        private void CommentProvider_Connected(object sender, ConnectedEventArgs e)
+        {
+            IsInputStoringNeeded = e.IsInputStoringNeeded;
+            UrlToRestore = e.UrlToRestore;
         }
 
         private System.Windows.Controls.UserControl _commentPostPanel;
@@ -144,6 +160,8 @@ namespace MultiCommentViewer
             get { return _selectedBrowser; }
             set
             {
+                if (_selectedBrowser == value)
+                    return;
                 _selectedBrowser = value;
                 RaisePropertyChanged();
             }
@@ -155,6 +173,19 @@ namespace MultiCommentViewer
         public bool CanDisconnect
         {
             get { return _commentProvider.CanDisconnect; }
+        }
+        private bool _needSave;
+        /// <summary>
+        /// ユーザがこのConnectionの情報の保存を要求しているか
+        /// </summary>
+        public bool NeedSave
+        {
+            get => _needSave;
+            set
+            {
+                _needSave = value;
+                RaisePropertyChanged();
+            }
         }
         private string _input;
         public string Input
@@ -172,6 +203,20 @@ namespace MultiCommentViewer
                     var vm = _siteVmDict[guid];
                     SelectedSite = vm;
                 }
+            }
+        }
+        /// <summary>
+        /// 自動サイト選択機能が無い版
+        /// </summary>
+        public string InputWithNoAutoSiteSelect
+        {
+            get => _input;
+            set
+            {
+                if (_input == value)
+                    return;
+                _input = value;
+                RaisePropertyChanged();
             }
         }
 

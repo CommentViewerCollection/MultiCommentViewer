@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using Common;
+using Plugin;
 
 namespace MultiCommentViewer
 {
@@ -23,7 +24,7 @@ namespace MultiCommentViewer
         public ConnectionContext OldValue { get; set; }
         public ConnectionContext NewValue { get; set; }
     }
-    public class ConnectionViewModel : ViewModelBase
+    public class ConnectionViewModel : ViewModelBase, IConnectionStatus
     {
         public ConnectionName ConnectionName => _connectionName;
         public string Name
@@ -31,6 +32,9 @@ namespace MultiCommentViewer
             get { return _connectionName.Name; }
             set { _connectionName.Name = value; }
         }
+        public ICommentProvider CommentProvider => _commentProvider;
+
+        string IConnectionStatus.Guid => Guid.ToString();
         public bool IsSelected { get; set; }
         public ObservableCollection<SiteViewModel> Sites { get; }
         public ObservableCollection<BrowserViewModel> Browsers { get; }
@@ -258,8 +262,13 @@ namespace MultiCommentViewer
         private readonly ISitePluginLoader _sitePluginLoader;
         //private readonly IEnumerable<ISiteContext> _sites;
         private readonly Dictionary<Guid, SiteViewModel> _siteVmDict = new Dictionary<Guid, SiteViewModel>();
+        /// <summary>
+        /// ConnectionNameは重複可だから一意識別のために必要
+        /// </summary>
+        public Guid Guid { get; }
         public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger, ISitePluginLoader sitePluginLoader)
         {
+            Guid = Guid.NewGuid();
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;
             _connectionName = connectionName ?? throw new ArgumentNullException(nameof(connectionName));

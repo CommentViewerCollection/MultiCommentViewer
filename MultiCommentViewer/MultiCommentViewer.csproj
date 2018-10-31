@@ -233,6 +233,10 @@
       <Project>{c6f57847-d6c3-4f64-b0a4-c778d7cea333}</Project>
       <Name>MirrativSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\YoyakuPlugin\YoyakuPlugin\YoyakuPlugin.csproj">
+      <Project>{a04c3dc9-78cb-4db2-b8ba-0d462a64314f}</Project>
+      <Name>YoyakuPlugin</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="mcv_icon.ico" />
@@ -297,6 +301,10 @@ copy "$(SolutionDir)\BouyomiPlugin\BouyomiPlugin\bin\$(ConfigurationName)\*" "pl
 :: CommentGeneratorPluginのファイルを全部持ってくる
 if not exist plugins\CommentGenerator mkdir plugins\CommentGenerator
 copy "$(SolutionDir)\CommentGeneratorPlugin\CommentGeneratorPlugin\bin\$(ConfigurationName)\*" "plugins\CommentGenerator\"
+
+:: YoyakuPluginのファイルを全部持ってくる
+if not exist plugins\Yoyaku mkdir plugins\Yoyaku
+copy "$(SolutionDir)\YoyakuPlugin\YoyakuPlugin\bin\$(ConfigurationName)\*" "plugins\Yoyaku\"
 
 :: 自動アップデートに必要なlist.txtを作成
 powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList.ps1" -TargetDir "$(TargetDir)\"

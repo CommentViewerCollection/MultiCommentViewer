@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MirrativSitePlugin", "Mirra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MirrativSitePluginTests", "MirrativSitePlugin\MirrativSitePluginTests\MirrativSitePluginTests.csproj", "{3F84B446-A643-4959-8D2A-3D24A5C8B677}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoyakuPlugin", "YoyakuPlugin\YoyakuPlugin\YoyakuPlugin.csproj", "{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -165,6 +167,10 @@ Global
 		{3F84B446-A643-4959-8D2A-3D24A5C8B677}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F84B446-A643-4959-8D2A-3D24A5C8B677}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F84B446-A643-4959-8D2A-3D24A5C8B677}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

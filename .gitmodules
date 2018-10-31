@@ -43,3 +43,6 @@
 [submodule "MirrativSitePlugin"]
 	path = MirrativSitePlugin
 	url = K:\\Programming\\workspace\\a\\MultiCommentViewer\\MirrativSitePlugin
+[submodule "YoyakuPlugin"]
+	path = YoyakuPlugin
+	url = git@github.com:CommentViewerCollection/YoyakuPlugin.git

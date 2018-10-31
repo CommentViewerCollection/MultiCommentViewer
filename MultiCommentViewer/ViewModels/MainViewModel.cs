@@ -210,7 +210,7 @@ namespace MultiCommentViewer
 
                 _pluginManager = new PluginManager(_options);
                 _pluginManager.PluginAdded += PluginManager_PluginAdded;
-                _pluginManager.LoadPlugins(new PluginHost(this, _options, _io));
+                _pluginManager.LoadPlugins(new PluginHost(this, _options, _io, _logger));
 
                 _pluginManager.OnLoaded();
 

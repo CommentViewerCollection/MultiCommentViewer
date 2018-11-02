@@ -13,6 +13,8 @@ using GalaSoft.MvvmLight;
 using System.Windows.Media;
 using System.Windows;
 using Common;
+using System.Net;
+
 namespace MultiCommentViewer.Test
 {
 
@@ -288,6 +290,16 @@ namespace MultiCommentViewer.Test
             var str = new string(Enumerable.Repeat(chars, length)
               .Select(s => s[_random.Next(s.Length)]).ToArray());
             return int.Parse(str);
+        }
+
+        public Task<ICurrentUserInfo> GetCurrentUserInfo(CookieContainer cc)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        {
+            throw new NotImplementedException();
         }
     }
     class Metadata : IMetadata

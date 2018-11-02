@@ -10,6 +10,11 @@ using System.Linq;
 using Common;
 using Plugin;
 
+using System.Reactive.Linq;
+using System.Reactive.Disposables;
+using System.Threading.Tasks;
+using System.Windows.Threading;
+
 namespace MultiCommentViewer
 {
     public class ConnectionContext
@@ -75,6 +80,7 @@ namespace MultiCommentViewer
                 next.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
                 next.Connected += CommentProvider_Connected;
+                UpdateLoggedInInfo();
 
                 System.Windows.Controls.UserControl commentPanel;
                 try
@@ -105,6 +111,42 @@ namespace MultiCommentViewer
                 });
             }
         }
+        private async void UpdateLoggedInInfo()
+        {
+            var cp = _commentProvider;
+            if(cp == null)
+            {
+                return;
+            }
+            SitePlugin.ICurrentUserInfo currentUserInfo = null;
+            var br = SelectedBrowser;
+            if(br == null)
+            {
+                _dispatcher.Invoke(()=>
+                {
+                    LoggedInUsername = "";
+                });
+                try
+                {
+                    currentUserInfo = await cp.GetCurrentUserInfo(br.Browser);
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+            _dispatcher.Invoke(() =>
+            {
+                if (currentUserInfo == null)
+                {
+                    LoggedInUsername = "";
+                }
+                else
+                {
+                    LoggedInUsername = currentUserInfo.IsLoggedIn ? currentUserInfo.Username : "(未ログイン)";
+                }
+            });
+        }
         /// <summary>
         /// 配信者のユーザIDとかコミュニティIDのような毎回そこからリアルタイムの配信に接続できる文字列であるか
         /// 配信IDだと毎回変わるため保存しても無意味。
@@ -114,6 +156,17 @@ namespace MultiCommentViewer
         /// 保存して次回起動時にリストアする文字列
         /// </summary>
         public string UrlToRestore { get; private set; }
+
+        private string _LoggedInUsername;
+        public string LoggedInUsername
+        {
+            get => _LoggedInUsername;
+            set
+            {
+                _LoggedInUsername = value;
+                RaisePropertyChanged();
+            }
+        }
         private void CommentProvider_Connected(object sender, ConnectedEventArgs e)
         {
             IsInputStoringNeeded = e.IsInputStoringNeeded;
@@ -167,6 +220,7 @@ namespace MultiCommentViewer
                 if (_selectedBrowser == value)
                     return;
                 _selectedBrowser = value;
+                UpdateLoggedInInfo();
                 RaisePropertyChanged();
             }
         }
@@ -266,8 +320,10 @@ namespace MultiCommentViewer
         /// ConnectionNameは重複可だから一意識別のために必要
         /// </summary>
         public Guid Guid { get; }
+        private readonly Dispatcher _dispatcher;
         public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger, ISitePluginLoader sitePluginLoader)
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             Guid = Guid.NewGuid();
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;

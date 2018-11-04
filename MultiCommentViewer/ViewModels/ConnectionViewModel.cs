@@ -120,7 +120,7 @@ namespace MultiCommentViewer
             }
             SitePlugin.ICurrentUserInfo currentUserInfo = null;
             var br = SelectedBrowser;
-            if(br == null)
+            if(br != null)
             {
                 _dispatcher.Invoke(()=>
                 {
@@ -132,19 +132,24 @@ namespace MultiCommentViewer
                 }
                 catch (Exception ex)
                 {
-
+                    _logger.LogException(ex);
                 }
             }
             _dispatcher.Invoke(() =>
             {
-                if (currentUserInfo == null)
+                //UpdateLoggedInInfo()がasync voidだから自分より後に実行されたものが既にLoggedInUsernameをセットしている可能性がある。そのためcpとbrに変更が無いか確認する必要がある。
+                if (cp == _commentProvider && br == SelectedBrowser)
                 {
-                    LoggedInUsername = "";
+                    if (currentUserInfo == null)
+                    {
+                        LoggedInUsername = "";
+                    }
+                    else
+                    {
+                        LoggedInUsername = currentUserInfo.IsLoggedIn ? currentUserInfo.Username : "(未ログイン)";
+                    }
                 }
-                else
-                {
-                    LoggedInUsername = currentUserInfo.IsLoggedIn ? currentUserInfo.Username : "(未ログイン)";
-                }
+
             });
         }
         /// <summary>
@@ -297,6 +302,7 @@ namespace MultiCommentViewer
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
             }
         }
         private void Disconnect()

@@ -187,7 +187,7 @@
                                 </GridViewColumn.Header>
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding NeedSave}" IsEnabled="{Binding CanConnect}" />
+                                        <CheckBox IsChecked="{Binding NeedSave}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>

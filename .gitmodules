@@ -46,3 +46,6 @@
 [submodule "YoyakuPlugin"]
 	path = YoyakuPlugin
 	url = git@github.com:CommentViewerCollection/YoyakuPlugin.git
+[submodule "CommentViewerCommon"]
+	path = CommentViewerCommon
+	url = git@github.com:CommentViewerCollection/CommentViewerCommon.git

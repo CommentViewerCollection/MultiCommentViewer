@@ -13,6 +13,7 @@ using System.Net;
 using System.Diagnostics;
 using Common;
 using System.Net.Http;
+using CommentViewerCommon;
 
 namespace MultiCommentViewer
 {

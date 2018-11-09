@@ -18,6 +18,7 @@ using MultiCommentViewer.Test;
 using Common;
 using System.Windows.Data;
 using System.Text.RegularExpressions;
+using CommentViewerCommon;
 
 namespace MultiCommentViewer
 {

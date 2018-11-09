@@ -237,6 +237,10 @@
       <Project>{a04c3dc9-78cb-4db2-b8ba-0d462a64314f}</Project>
       <Name>YoyakuPlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\CommentViewerCommon\CommentViewerCommon\CommentViewerCommon.csproj">
+      <Project>{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}</Project>
+      <Name>CommentViewerCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="mcv_icon.ico" />

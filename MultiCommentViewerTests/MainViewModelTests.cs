@@ -10,6 +10,8 @@ using Moq;
 using System.ComponentModel;
 using Common;
 using MultiCommentViewer.Test;
+using CommentViewerCommon;
+
 namespace MultiCommentViewerTests
 {
     [TestFixture]

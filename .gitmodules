@@ -49,3 +49,6 @@
 [submodule "CommentViewerCommon"]
 	path = CommentViewerCommon
 	url = git@github.com:CommentViewerCollection/CommentViewerCommon.git
+[submodule "SitePluginCommon"]
+	path = SitePluginCommon
+	url = git@github.com:CommentViewerCollection/SitePluginCommon.git

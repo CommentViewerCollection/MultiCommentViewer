@@ -66,6 +66,8 @@ namespace MultiCommentViewer
 
         //public IUser User => _cvm.User;
 
+        public string PostTime => _cvm.PostTime;
+
         public ICommentProvider CommentProvider => _cvm.CommentProvider;
 
         public IMessageImage Thumbnail => _cvm.Thumbnail;

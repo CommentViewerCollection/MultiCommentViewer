@@ -866,6 +866,9 @@ namespace MultiCommentViewer
                     case nameof(_options.IsShowMessage):
                         RaisePropertyChanged(nameof(IsShowMessage));
                         break;
+                    case nameof(_options.IsShowPostTime):
+                        RaisePropertyChanged(nameof(IsShowPostTime));
+                        break;
                     case nameof(_options.IsShowInfo):
                         RaisePropertyChanged(nameof(IsShowInfo));
                         break;

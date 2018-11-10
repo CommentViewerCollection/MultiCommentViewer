@@ -69,6 +69,9 @@ namespace MultiCommentViewer.Test
         public bool IsTopmost { get => GetValue(); set => SetValue(value); }
         public bool IsPixelScrolling { get => GetValue(); set => SetValue(value); }
         public InfoType ShowingInfoLevel { get => GetValue(); set => SetValue(value); }
+        public bool IsActiveCountEnabled { get => GetValue(); set => SetValue(value); }
+        public int ActiveCountIntervalSec { get => GetValue(); set => SetValue(value); }
+        public int ActiveMeasureSpanMin { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
@@ -133,6 +136,9 @@ namespace MultiCommentViewer.Test
 #else
             Dict.Add(nameof(ShowingInfoLevel), new Item { DefaultValue = InfoType.Notice, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 #endif
+            Dict.Add(nameof(IsActiveCountEnabled), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(ActiveCountIntervalSec), new Item { DefaultValue = 1, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ActiveMeasureSpanMin), new Item { DefaultValue = 10, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
 
         }
         public ICommentOptions Clone()

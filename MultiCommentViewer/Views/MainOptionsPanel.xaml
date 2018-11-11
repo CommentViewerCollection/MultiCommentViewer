@@ -57,8 +57,8 @@
             </Grid>
 
             <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="38,415,0,0" VerticalAlignment="Top"/>
-            <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" HorizontalAlignment="Left" Margin="38,435,0,0" VerticalAlignment="Top"/>
-            <Label x:Name="label7" Content="変更後、コメビュを再起動してください" Foreground="Red" HorizontalAlignment="Left" Margin="201,429,0,0" VerticalAlignment="Top"/>
+            <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" IsEnabled="False" HorizontalAlignment="Left" Margin="38,435,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="label7" Content="変更後、コメビュを再起動してください" IsEnabled="False" Foreground="Red" HorizontalAlignment="Left" Margin="201,429,0,0" VerticalAlignment="Top"/>
             <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="38,460,0,0" VerticalAlignment="Top"/>
             <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="38,490,0,0" VerticalAlignment="Top"/>
             <Label Content="コメントを数万行以上表示する場合必須" Foreground="Red" HorizontalAlignment="Left" Margin="181,484,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.605,-0.577"/>

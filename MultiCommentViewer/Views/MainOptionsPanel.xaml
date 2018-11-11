@@ -6,8 +6,10 @@
              xmlns:local="clr-namespace:MultiCommentViewer"
              xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
              mc:Ignorable="d"
-    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-    d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}">
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}" 
+             d:DesignHeight="700" d:DesignWidth="500"
+             >
     <UserControl.Resources>
         <w:NotConverter x:Key="notConverter" />
         <local:FontFamilyToFontFamilyViewModelConverter x:Key="fontFamilyViewModelConverter" />
@@ -37,45 +39,35 @@
             <xctk:ColorPicker SelectedColor="{Binding SiteInfoBackColor}" Margin="322,89,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
             <Label x:Name="label9" Content="サイト情報文字色" HorizontalAlignment="Left" Margin="227,107,0,0" VerticalAlignment="Top"/>
             <xctk:ColorPicker  SelectedColor="{Binding SiteInfoForeColor}" Margin="322,116,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-            <Grid Margin="30,196,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="55" Width="367">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="70" />
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <Label Grid.Column="0" Grid.Row="0" Content="フォント" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                <ComboBox Grid.Column="1" Grid.Row="0" ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FontFamily, Mode=TwoWay}" Margin="5,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
-                <ComboBox Grid.Column="2" Grid.Row="0" ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" Margin="5,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
-                <CheckBox Grid.Column="3" Grid.Row="0" IsChecked="{Binding IsBold}" Content="太字" HorizontalAlignment="Center" VerticalAlignment="Center" />
 
-                <Label Grid.Column="0" Grid.Row="1" Content="初コメフォント" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-            </Grid>
-
-            <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="38,415,0,0" VerticalAlignment="Top"/>
-            <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" IsEnabled="False" HorizontalAlignment="Left" Margin="38,435,0,0" VerticalAlignment="Top"/>
-            <Label x:Name="label7" Content="変更後、コメビュを再起動してください" IsEnabled="False" Foreground="Red" HorizontalAlignment="Left" Margin="201,429,0,0" VerticalAlignment="Top"/>
-            <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="38,460,0,0" VerticalAlignment="Top"/>
-            <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="38,490,0,0" VerticalAlignment="Top"/>
-            <Label Content="コメントを数万行以上表示する場合必須" Foreground="Red" HorizontalAlignment="Left" Margin="181,484,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.605,-0.577"/>
+            <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="27,371,0,0" VerticalAlignment="Top"/>
+            <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" IsEnabled="False" HorizontalAlignment="Left" Margin="27,391,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="label7" Content="変更後、コメビュを再起動してください" IsEnabled="False" Foreground="Red" HorizontalAlignment="Left" Margin="190,385,0,0" VerticalAlignment="Top"/>
+            <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="27,416,0,0" VerticalAlignment="Top"/>
+            <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="27,446,0,0" VerticalAlignment="Top"/>
+            <Label Content="コメントを数万行以上表示する場合必須" Foreground="Red" HorizontalAlignment="Left" Margin="170,440,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.605,-0.577"/>
             <ComboBox ItemsSource="{Binding InfoTypeCollection}" SelectedValue="{Binding SelectedInfoType}" HorizontalAlignment="Left" Margin="159,165,0,0" VerticalAlignment="Top" Width="64"/>
             <Label Content="表示する情報のレベル" HorizontalAlignment="Left" Margin="30,161,0,0" VerticalAlignment="Top"/>
             <Label x:Name="label8_Copy" Content="行グリッド線の色" HorizontalAlignment="Left" Margin="225,133,0,0" VerticalAlignment="Top"/>
             <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" Margin="322,142,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
             <Label x:Name="label9_Copy" Content="列グリッド線の色" HorizontalAlignment="Left" Margin="227,160,0,0" VerticalAlignment="Top"/>
             <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" Margin="322,169,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-            <GroupBox Header="初コメ" HorizontalAlignment="Left" Height="134" Margin="49,256,0,0" VerticalAlignment="Top" Width="336">
+            <GroupBox Header="初コメ" HorizontalAlignment="Left" Height="99" Margin="30,251,0,0" VerticalAlignment="Top" Width="336">
                 <Grid>
-                    <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FirstCommentFontFamily}" Margin="10,10,198,81" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
-                    <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FirstCommentFontSize}" Margin="148,10,59,80" HorizontalAlignment="Stretch" VerticalAlignment="Center" RenderTransformOrigin="0.462,2.682" />
-                    <CheckBox IsChecked="{Binding IsFirstCommentBold}" Content="太字" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="270,10,10,88" RenderTransformOrigin="0.432,2.429" />
+                    <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FirstCommentFontFamily}" Margin="10,10,0,0" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top" Width="126" />
+                    <CheckBox IsChecked="{Binding IsFirstCommentBold}" Content="太字" Margin="270,10,0,0" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.455,0.4" />
+                    <xctk:ColorPicker  SelectedColor="{Binding SelectedRowForeColor}" Margin="61,42,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                    <xctk:ColorPicker  SelectedColor="{Binding SelectedRowBackColor}" Margin="199,42,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="86" />
+                    <Label Content="背景色" HorizontalAlignment="Left" Margin="10,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.435,0.077"/>
+                    <Label Content="文字色" HorizontalAlignment="Left" Margin="148,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.478,0.077"/>
+                    <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FirstCommentFontSize}" Margin="148,10,0,0" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" />
 
                 </Grid>
             </GroupBox>
+            <Label Content="フォント" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,206,0,468" />
+            <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FontFamily, Mode=TwoWay}" Margin="73,210,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="122" />
+            <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" Margin="228,210,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="89" />
+            <CheckBox IsChecked="{Binding IsBold}" Content="太字" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="345,210,0,0" />
         </Grid>
     </ScrollViewer>
 </UserControl>

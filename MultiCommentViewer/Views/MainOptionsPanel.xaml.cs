@@ -116,6 +116,16 @@ namespace MultiCommentViewer
             get { return ChangedOptions.SelectedRowForeColor; }
             set { ChangedOptions.SelectedRowForeColor = value; }
         }
+        public Color FirstCommentBackColor
+        {
+            get { return ChangedOptions.FirstCommentBackColor; }
+            set { ChangedOptions.FirstCommentBackColor = value; }
+        }
+        public Color FirstCommentForeColor
+        {
+            get { return ChangedOptions.FirstCommentForeColor; }
+            set { ChangedOptions.FirstCommentForeColor = value; }
+        }
         public Color VerticalGridLineColor
         {
             get { return ChangedOptions.VerticalGridLineColor; }

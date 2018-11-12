@@ -149,7 +149,7 @@
                 </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="投稿時間" 
-                                            DisplayIndex="{Binding DataContext.PostTimeIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=5}"
+                                            DisplayIndex="{Binding DataContext.PostTimeDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=5}"
                                             Width="{Binding DataContext.PostTimeWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                             Visibility="{Binding DataContext.IsShowPostTime, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
                     <DataGridTemplateColumn.CellTemplate>

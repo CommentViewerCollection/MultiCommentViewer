@@ -23,6 +23,8 @@ namespace MultiCommentViewer.Test
         public FontStyle FirstCommentFontStyle { get => GetValue(); set => SetValue(value); }
         public FontWeight FirstCommentFontWeight { get => GetValue(); set => SetValue(value); }
         public int FirstCommentFontSize { get => GetValue(); set => SetValue(value); }
+        public Color FirstCommentBackColor { get => GetValue(); set => SetValue(value); }
+        public Color FirstCommentForeColor { get => GetValue(); set => SetValue(value); }
         public string SettingsDirPath { get => GetValue(); set => SetValue(value); }
         public Color BackColor { get => GetValue(); set => SetValue(value); }
         public Color ForeColor { get => GetValue(); set => SetValue(value); }
@@ -82,6 +84,9 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(FirstCommentFontStyle), new Item {  DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
             Dict.Add(nameof(FirstCommentFontWeight), new Item { DefaultValue = FontWeights.Bold, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
             Dict.Add(nameof(FirstCommentFontSize), new Item { DefaultValue = 14, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(FirstCommentBackColor), new Item { DefaultValue = ColorFromArgb("#FFEFEFEF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(FirstCommentForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
             Dict.Add(nameof(SettingsDirPath), new Item { DefaultValue = "settings", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
             Dict.Add(nameof(BackColor), new Item { DefaultValue = ColorFromArgb("#FFEFEFEF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ForeColor), new Item {  DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });

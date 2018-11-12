@@ -56,8 +56,8 @@
                 <Grid>
                     <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FirstCommentFontFamily}" Margin="10,10,0,0" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top" Width="126" />
                     <CheckBox IsChecked="{Binding IsFirstCommentBold}" Content="太字" Margin="270,10,0,0" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.455,0.4" />
-                    <xctk:ColorPicker  SelectedColor="{Binding SelectedRowForeColor}" Margin="61,42,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-                    <xctk:ColorPicker  SelectedColor="{Binding SelectedRowBackColor}" Margin="199,42,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="86" />
+                    <xctk:ColorPicker  SelectedColor="{Binding FirstCommenBackColor}" Margin="61,42,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                    <xctk:ColorPicker  SelectedColor="{Binding FirstCommenForeColor}" Margin="199,42,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="86" />
                     <Label Content="背景色" HorizontalAlignment="Left" Margin="10,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.435,0.077"/>
                     <Label Content="文字色" HorizontalAlignment="Left" Margin="148,42,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.478,0.077"/>
                     <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FirstCommentFontSize}" Margin="148,10,0,0" Height="25" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" />

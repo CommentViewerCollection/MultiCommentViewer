@@ -84,7 +84,6 @@
     <Compile Include="ViewModels\EmptyBrowserProfile.cs" />
     <Compile Include="ViewModels\McvCommentViewModel.cs" />
     <Compile Include="Test\DynamicOptionsTest.cs" />
-    <Compile Include="Test\LoggerTest.cs" />
     <Compile Include="ViewModels\MetadataViewModel.cs" />
     <Compile Include="ViewModels\PluginHost.cs" />
     <Compile Include="ViewModels\PluginMenuItemViewModel.cs" />

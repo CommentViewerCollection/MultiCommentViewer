@@ -33,7 +33,7 @@ namespace MultiCommentViewer
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            _logger = new Test.LoggerTest();
+            _logger = new Common.LoggerTest();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             

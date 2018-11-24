@@ -30,6 +30,19 @@ namespace MultiCommentViewer
             var currentDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
             return Path.Combine(currentDir, "settings", "options.txt");
         }
+        private void SendErrorFile()
+        {
+            if (System.IO.File.Exists("error.txt"))
+            {
+                string errorContent;
+                using (var sr = new System.IO.StreamReader("error.txt"))
+                {
+                    errorContent = sr.ReadToEnd();
+                }
+                SendErrorReport(errorContent, GetTitle(), GetVersion());
+                System.IO.File.Delete("error.txt");
+            }
+        }
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -58,16 +71,7 @@ namespace MultiCommentViewer
             }
             try
             {
-                if (System.IO.File.Exists("error.txt"))
-                {
-                    string errorContent;
-                    using (var sr = new System.IO.StreamReader("error.txt"))
-                    {
-                        errorContent = sr.ReadToEnd();
-                    }
-                    SendErrorReport(errorContent);
-                    System.IO.File.Delete("error.txt");
-                }
+                SendErrorFile();
             }
             catch { }
             ISitePluginLoader sitePluginLoader = new Test.SitePluginLoaderTest();
@@ -93,23 +97,29 @@ namespace MultiCommentViewer
             try
             {
                 var s = _logger.GetExceptions();
-                SendErrorReport(s);
-            }catch(Exception ex)
+                SendErrorReport(s, GetTitle(), GetVersion());
+            }
+            catch(Exception ex)
             {
                 //ここで例外が起きても送れない・・・。
                 Debug.WriteLine(ex.Message);
             }
             base.OnExit(e);
         }
-        private string GetUserAgent()
+        private string GetTitle()
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var title = asm.GetName().Name;
+            return title;
+        }
+        private string GetVersion()
         {
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
             var ver = asm.GetName().Version;
-            var title = asm.GetName().Name;
-            var s = $"{title} v{ver.Major}.{ver.Minor}.{ver.Build}";
+            var s = $"v{ver.Major}.{ver.Minor}.{ver.Build}";
             return s;
         }
-        private void SendErrorReport(string errorData)
+        private void SendErrorReport(string errorData, string title, string version)
         {
             if (string.IsNullOrEmpty(errorData))
             {
@@ -119,8 +129,8 @@ namespace MultiCommentViewer
             using (var client = new HttpClient())
             using (var formData = new MultipartFormDataContent())
             {
-                client.DefaultRequestHeaders.Add("User-Agent", GetUserAgent());
-                formData.Add(fileStreamContent, "error", "MultiCommentViewer" + "_" + "error.txt");
+                client.DefaultRequestHeaders.Add("User-Agent", $"{title} {version}");
+                formData.Add(fileStreamContent, "error", title + "_" + version + "_" + "error.txt");
                 var t = client.PostAsync("http://int-main.net/upload", formData);
                 var response = t.Result;
                 if (!response.IsSuccessStatusCode)
@@ -135,12 +145,16 @@ namespace MultiCommentViewer
         {
             var ex = e.ExceptionObject as Exception;
 
-            _logger.LogException(ex, "UnhandledException");
-            var s = _logger.GetExceptions();
-            using (var sw = new System.IO.StreamWriter("error.txt", true))
+            try
             {
-                sw.WriteLine(s);
+                _logger.LogException(ex, "UnhandledException");
+                var s = _logger.GetExceptions();
+                using (var sw = new System.IO.StreamWriter("error.txt", true))
+                {
+                    sw.WriteLine(s);
+                }
             }
+            catch { }
         }
     }
 }

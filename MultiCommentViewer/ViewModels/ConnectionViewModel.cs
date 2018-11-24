@@ -40,7 +40,19 @@ namespace MultiCommentViewer
         public ICommentProvider CommentProvider => _commentProvider;
 
         string IConnectionStatus.Guid => Guid.ToString();
-        public bool IsSelected { get; set; }
+        #region IsSelected
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (_isSelected == value) return;
+                _isSelected = value;
+                RaisePropertyChanged();
+            }
+        }
+        #endregion //IsSelected
         public ObservableCollection<SiteViewModel> Sites { get; }
         public ObservableCollection<BrowserViewModel> Browsers { get; }
         private SiteViewModel _selectedSite;
@@ -293,6 +305,8 @@ namespace MultiCommentViewer
         {
             try
             {
+                //接続中は削除できないように選択を外す
+                IsSelected = false;
                 var input = Input;
                 var browser = SelectedBrowser.Browser;
                 await _commentProvider.ConnectAsync(input, browser);

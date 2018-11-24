@@ -18,6 +18,7 @@ using MultiCommentViewer.Test;
 using Common;
 using System.Windows.Data;
 using System.Text.RegularExpressions;
+using CommentViewerCommon;
 
 namespace MultiCommentViewer
 {
@@ -543,9 +544,9 @@ namespace MultiCommentViewer
         }
         private void Connection_MetadataReceived(object sender, IMetadata e)
         {
-            try
+            if (sender is ConnectionViewModel connection)
             {
-                if (sender is ConnectionViewModel connection)
+                try
                 {
                     var metaVm = _metaDict[connection];
                     if (e.Title != null)
@@ -559,10 +560,17 @@ namespace MultiCommentViewer
                     if (e.Elapsed != null)
                         metaVm.Elapsed = e.Elapsed;
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
+                catch (KeyNotFoundException ex)
+                {
+                    //{"Ex":{"Message":"指定されたキーはディレクトリ内に存在しませんでした。","StackTrace":"   場所 System.Collections.Generic.Dictionary`2.get_Item(TKey key)\r\n   場所 MultiCommentViewer.MainViewModel.Connection_MetadataReceived(Object sender, IMetadata e) 場所 K:\\Programming\\workspace\\MultiCommentViewer\\MultiCommentViewer\\ViewModels\\MainViewModel.cs:行 550","Timestamp":"2018/11/24 18:28:49","InnerError":null},"Title":"","Detail":""},
+                    var keys = _metaDict.Select(kv => kv.Key.Name).Aggregate((a, b) => a + "," + b);
+                    _logger.LogException(ex, "バグ", $"keys=\"{keys}\" find=\"{connection.Name}\"");
+                    Debug.Fail("");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
             }
         }
         #endregion //EventHandler
@@ -864,6 +872,9 @@ namespace MultiCommentViewer
                         break;
                     case nameof(_options.IsShowMessage):
                         RaisePropertyChanged(nameof(IsShowMessage));
+                        break;
+                    case nameof(_options.IsShowPostTime):
+                        RaisePropertyChanged(nameof(IsShowPostTime));
                         break;
                     case nameof(_options.IsShowInfo):
                         RaisePropertyChanged(nameof(IsShowInfo));

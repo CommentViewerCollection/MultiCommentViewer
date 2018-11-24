@@ -124,6 +124,23 @@ namespace MultiCommentViewer
             get { return _options.MessageDisplayIndex; }
             set { _options.MessageDisplayIndex = value; }
         }
+        #region PostTime
+        public double PostTimeWidth
+        {
+            get { return _options.PostTimeWidth; }
+            set { _options.PostTimeWidth = value; }
+        }
+        public bool IsShowPostTime
+        {
+            get { return _options.IsShowPostTime; }
+            set { _options.IsShowPostTime = value; }
+        }
+        public int PostTimeDisplayIndex
+        {
+            get { return _options.PostTimeDisplayIndex; }
+            set { _options.PostTimeDisplayIndex = value; }
+        }
+        #endregion
 
         public double InfoWidth
         {

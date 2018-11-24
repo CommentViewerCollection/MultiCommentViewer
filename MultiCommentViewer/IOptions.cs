@@ -8,8 +8,6 @@ namespace MultiCommentViewer
     {
         string PluginDir { get; }
 
-        string SettingsDirPath { get; set; }
-
         double MainViewHeight { get; set; }
         double MainViewWidth { get; set; }
         double MainViewLeft { get; set; }
@@ -37,6 +35,10 @@ namespace MultiCommentViewer
         double MessageWidth { get; set; }
         bool IsShowMessage { get; set; }
         int MessageDisplayIndex { get; set; }
+
+        double PostTimeWidth { get; set; }
+        bool IsShowPostTime { get; set; }
+        int PostTimeDisplayIndex { get; set; }
 
         double InfoWidth { get; set; }
         bool IsShowInfo { get; set; }

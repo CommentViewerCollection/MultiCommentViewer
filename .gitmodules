@@ -42,7 +42,13 @@
 	url = git@github.com:CommentViewerCollection/WhowatchSitePlugin.git
 [submodule "MirrativSitePlugin"]
 	path = MirrativSitePlugin
-	url = K:\\Programming\\workspace\\a\\MultiCommentViewer\\MirrativSitePlugin
+	url = git@github.com:CommentViewerCollection/MirrativSitePlugin.git
 [submodule "YoyakuPlugin"]
 	path = YoyakuPlugin
 	url = git@github.com:CommentViewerCollection/YoyakuPlugin.git
+[submodule "CommentViewerCommon"]
+	path = CommentViewerCommon
+	url = git@github.com:CommentViewerCollection/CommentViewerCommon.git
+[submodule "SitePluginCommon"]
+	path = SitePluginCommon
+	url = git@github.com:CommentViewerCollection/SitePluginCommon.git

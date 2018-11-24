@@ -57,6 +57,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MirrativSitePluginTests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoyakuPlugin", "YoyakuPlugin\YoyakuPlugin\YoyakuPlugin.csproj", "{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentViewerCommon", "CommentViewerCommon\CommentViewerCommon\CommentViewerCommon.csproj", "{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitePluginCommon", "SitePluginCommon\SitePluginCommon\SitePluginCommon.csproj", "{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -171,6 +175,14 @@ Global
 		{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

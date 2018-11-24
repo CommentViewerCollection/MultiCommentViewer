@@ -8,7 +8,7 @@
              xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="370">
     <UserControl.Resources>
         <w:NotConverter x:Key="notConverter" />
         <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
@@ -85,7 +85,7 @@
                 <MenuItem Header="ユーザ名" IsChecked="{Binding IsShowUsername, Mode=TwoWay}" IsCheckable="True" />
                 <!--<MenuItem Header="ユーザID" IsChecked="{Binding IsShowUserId, Mode=TwoWay}" IsCheckable="True" />-->
 
-                <!--<MenuItem Header="投稿時間" IsChecked="{Binding IsShowPostTime, Mode=TwoWay}" IsCheckable="True" />-->
+                <MenuItem Header="投稿時間" IsChecked="{Binding IsShowPostTime, Mode=TwoWay}" IsCheckable="True" />
                 <!--<MenuItem Header="経過時間" IsChecked="{Binding IsShowPostElapsed, Mode=TwoWay}" IsCheckable="True" />-->
             </ContextMenu>
             <Style TargetType="{x:Type DataGridColumnHeader}">
@@ -148,17 +148,27 @@
                     </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
-            <DataGridTemplateColumn Header="情報" 
-                                            DisplayIndex="{Binding DataContext.InfoDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=5}"
+                <DataGridTemplateColumn Header="投稿時間" 
+                                            DisplayIndex="{Binding DataContext.PostTimeDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=5}"
+                                            Width="{Binding DataContext.PostTimeWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                            Visibility="{Binding DataContext.IsShowPostTime, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding PostTime}" Margin="5,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="情報" 
+                                            DisplayIndex="{Binding DataContext.InfoDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=6}"
                                             Width="{Binding DataContext.InfoWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                             Visibility="{Binding DataContext.IsShowInfo, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}">
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Info}" Margin="5,0" />
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
-        </DataGrid.Columns>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Info}" Margin="5,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
     </DataGrid>
     </Grid>
 </UserControl>

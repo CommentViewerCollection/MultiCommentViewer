@@ -23,8 +23,8 @@ namespace MultiCommentViewer
     public partial class App : Application
     {
         ILogger _logger;
-        Test.DynamicOptionsTest options;
-        IIo io;
+        Test.DynamicOptionsTest _options;
+        IIo _io;
         private string GetOptionsPath()
         {
             var currentDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
@@ -50,7 +50,7 @@ namespace MultiCommentViewer
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             
-            io = new Test.IOTest();
+            _io = new Test.IOTest();
 
             //OptionsはMainViewModelのContentRendered()で読み込みたい。しかし、その前にConnectionNameWidth等が参照されるため現状ではコンストラクタ以前に読み込む必要がある。
             //実行される順番は
@@ -59,11 +59,11 @@ namespace MultiCommentViewer
             //しかし、それをやるにはViewの位置はデフォルト値になってしまう。それでも良いか。            
             //これ↓が一番いいかも
             //ここでOptionsのインスタンスを作成し、MainViewModelに渡す。とりあえずデフォルト値で初期化させ、ContentRenderedで保存されたOptionsを読み込み差し替える。
-            options = new Test.DynamicOptionsTest();
+            _options = new Test.DynamicOptionsTest();
             try
             {
-                var s = io.ReadFile(GetOptionsPath());
-                options.Deserialize(s);
+                var s = _io.ReadFile(GetOptionsPath());
+                _options.Deserialize(s);
             }
             catch (Exception ex)
             {
@@ -78,7 +78,7 @@ namespace MultiCommentViewer
             IBrowserLoader browserLoader = new BrowserLoader(_logger);
 
             
-            var mainViewModel = new MainViewModel(io, _logger, options, sitePluginLoader,browserLoader);
+            var mainViewModel = new MainViewModel(_io, _logger, _options, sitePluginLoader,browserLoader);
             var resource = Application.Current.Resources;
             var locator = resource["Locator"] as ViewModels.ViewModelLocator;
             locator.Main = mainViewModel;
@@ -87,8 +87,8 @@ namespace MultiCommentViewer
         {
             try
             {
-                var s = options.Serialize();
-                io.WriteFile(GetOptionsPath(), s);
+                var s = _options.Serialize();
+                _io.WriteFile(GetOptionsPath(), s);
             }
             catch (Exception ex)
             {

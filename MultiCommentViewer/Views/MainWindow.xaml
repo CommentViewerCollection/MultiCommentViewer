@@ -218,6 +218,7 @@
                       CanUserSortColumns="False"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
+                      IsReadOnly="True"
                       >
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}">

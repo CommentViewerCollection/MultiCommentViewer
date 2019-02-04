@@ -79,6 +79,7 @@ namespace MultiCommentViewer
                     before.CanConnectChanged -= CommentProvider_CanConnectChanged;
                     before.CanDisconnectChanged -= CommentProvider_CanDisconnectChanged;
                     before.CommentReceived -= CommentProvider_CommentReceived;
+                    before.MessageReceived -= CommentProvider_MessageReceived;
                     before.InitialCommentsReceived -= CommentProvider_InitialCommentsReceived;
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
                     before.Connected -= CommentProvider_Connected;
@@ -89,6 +90,7 @@ namespace MultiCommentViewer
                 next.CanConnectChanged += CommentProvider_CanConnectChanged;
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
                 next.CommentReceived += CommentProvider_CommentReceived;
+                next.MessageReceived += CommentProvider_MessageReceived;
                 next.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
                 next.Connected += CommentProvider_Connected;
@@ -123,6 +125,9 @@ namespace MultiCommentViewer
                 });
             }
         }
+
+
+
         private async void UpdateLoggedInInfo()
         {
             var cp = _commentProvider;
@@ -207,12 +212,18 @@ namespace MultiCommentViewer
             MetadataReceived?.Invoke(this, e);//senderはConnection
         }
         public event EventHandler<RenamedEventArgs> Renamed;
+        [Obsolete("MessageReceivedを使うこと")]
         public event EventHandler<ICommentViewModel> CommentReceived;
+        public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<IMetadata> MetadataReceived;
         private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
         {
             CommentReceived?.Invoke(this, e);
+        }
+        private void CommentProvider_MessageReceived(object sender, IMessageContext e)
+        {
+            MessageReceived?.Invoke(this, e);
         }
         private void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
         {

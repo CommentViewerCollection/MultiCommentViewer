@@ -37,7 +37,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>mcv_icon.ico</ApplicationIcon>
+    <ApplicationIcon>mcv_icon2.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -284,6 +284,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="mcv_icon2.ico" />
     <Content Include="ReadMe.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

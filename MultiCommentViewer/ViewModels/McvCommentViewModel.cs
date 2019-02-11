@@ -13,7 +13,17 @@ namespace MultiCommentViewer
         private readonly WhowatchSitePlugin.IWhowatchMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
-
+        private void SetNickname(IUser user)
+        {
+            if (!string.IsNullOrEmpty(user.Nickname))
+            {
+                _nickItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(user.Nickname) };
+            }
+            else
+            {
+                _nickItems = null;
+            }
+        }
         private McvWhowatchCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
         {
             _metadata = metadata;
@@ -53,13 +63,28 @@ namespace MultiCommentViewer
                         break;
                 }
             };
+            if (_metadata.User != null)
+            {
+                var user = _metadata.User;
+                user.PropertyChanged += (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(user.Nickname):
+                            SetNickname(user);
+                            RaisePropertyChanged(nameof(NameItems));
+                            break;
+                    }
+                };
+                SetNickname(user);
+            }
         }
         public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)
         {
             _message = comment;
 
-            NameItems = comment.NameItems;
+            _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();
@@ -71,7 +96,7 @@ namespace MultiCommentViewer
             var comment = item;
             _message = comment;
 
-            NameItems = comment.NameItems;
+            _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = new Common.MessageImage
             {
@@ -98,7 +123,22 @@ namespace MultiCommentViewer
 
         public ConnectionName ConnectionName { get; }
 
-        public IEnumerable<IMessagePart> NameItems { get; private set; }
+        private IEnumerable<IMessagePart> _nickItems { get; set; }
+        private IEnumerable<IMessagePart> _nameItems { get; set; }
+        public IEnumerable<IMessagePart> NameItems
+        {
+            get
+            {
+                if (_nickItems != null)
+                {
+                    return _nickItems;
+                }
+                else
+                {
+                    return _nameItems;
+                }
+            }
+        }
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 
@@ -164,7 +204,17 @@ namespace MultiCommentViewer
         private readonly YouTubeLiveSitePlugin.IYouTubeLiveMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
-
+        private void SetNickname(IUser user)
+        {
+            if (!string.IsNullOrEmpty(user.Nickname))
+            {
+                _nickItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(user.Nickname) };
+            }
+            else
+            {
+                _nickItems = null;
+            }
+        }
         private McvYouTubeLiveCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
         {
             _metadata = metadata;
@@ -204,17 +254,32 @@ namespace MultiCommentViewer
                         break;
                 }
             };
+            if (_metadata.User != null)
+            {
+                var user = _metadata.User;
+                user.PropertyChanged += (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(user.Nickname):
+                            SetNickname(user);
+                            RaisePropertyChanged(nameof(NameItems));
+                            break;
+                    }
+                };
+                SetNickname(user);
+            }
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)
         {
             _message = comment;
 
-            NameItems = comment.NameItems;
+            _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();
-            PostTime = UnixTimeStampToDateTime(comment.PostedAt).ToString("HH:mm:ss");
+            PostTime = comment.PostTime;
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)
@@ -222,11 +287,11 @@ namespace MultiCommentViewer
             var comment = item;
             _message = comment;
 
-            NameItems = comment.NameItems;
+            _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();
-            PostTime = UnixTimeStampToDateTime(comment.PostedAt).ToString("HH:mm:ss");
+            PostTime = comment.PostTime;
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)
@@ -243,7 +308,22 @@ namespace MultiCommentViewer
 
         public ConnectionName ConnectionName { get; }
 
-        public IEnumerable<IMessagePart> NameItems { get; private set; }
+        private IEnumerable<IMessagePart> _nickItems { get; set; }
+        private IEnumerable<IMessagePart> _nameItems { get; set; }
+        public IEnumerable<IMessagePart> NameItems
+        {
+            get
+            {
+                if (_nickItems != null)
+                {
+                    return _nickItems;
+                }
+                else
+                {
+                    return _nameItems;
+                }
+            }
+        }
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 
@@ -309,7 +389,17 @@ namespace MultiCommentViewer
         private readonly MirrativSitePlugin.IMirrativMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
-
+        private void SetNickname(IUser user)
+        {
+            if (!string.IsNullOrEmpty(user.Nickname))
+            {
+                _nickItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(user.Nickname) };
+            }
+            else
+            {
+                _nickItems = null;
+            }
+        }
         private McvMirrativCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
         {
             _metadata = metadata;
@@ -349,13 +439,28 @@ namespace MultiCommentViewer
                         break;
                 }
             };
+            if (_metadata.User != null)
+            {
+                var user = _metadata.User;
+                user.PropertyChanged += (s, e) =>
+                {
+                    switch (e.PropertyName)
+                    {
+                        case nameof(user.Nickname):
+                            SetNickname(user);
+                            RaisePropertyChanged(nameof(NameItems));
+                            break;
+                    }
+                };
+                SetNickname(user);
+            }
         }
         public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)
         {
             _message = comment;
 
-            NameItems = comment.NameItems;
+            _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();
@@ -368,7 +473,7 @@ namespace MultiCommentViewer
             var comment = item;
             _message = comment;
 
-            NameItems = comment.NameItems;
+            _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = null;
@@ -389,7 +494,22 @@ namespace MultiCommentViewer
 
         public ConnectionName ConnectionName { get; }
 
-        public IEnumerable<IMessagePart> NameItems { get; private set; }
+        private IEnumerable<IMessagePart> _nickItems { get; set; }
+        private IEnumerable<IMessagePart> _nameItems { get; set; }
+        public IEnumerable<IMessagePart> NameItems
+        {
+            get
+            {
+                if (_nickItems != null)
+                {
+                    return _nickItems;
+                }
+                else
+                {
+                    return _nameItems;
+                }
+            }
+        }
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 

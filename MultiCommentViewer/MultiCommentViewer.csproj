@@ -37,7 +37,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>mcv_icon.ico</ApplicationIcon>
+    <ApplicationIcon>mcv_icon2.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -67,6 +67,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ViewModels\ConnectionSerializer.cs" />
+    <Compile Include="ViewModels\IMcvCommentViewModel.cs" />
     <Compile Include="Views\CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
     </Compile>
@@ -240,6 +241,18 @@
       <Project>{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}</Project>
       <Name>CommentViewerCommon</Name>
     </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\WhowatchIF\WhowatchIF\WhowatchIF.csproj">
+      <Project>{5a83afc8-e6ce-4dd2-8389-1f43a731388f}</Project>
+      <Name>WhowatchIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\YouTubeLiveIF\YouTubeLiveIF\YouTubeLiveIF.csproj">
+      <Project>{83974e62-4d55-4e67-8f88-bbff2222e5a1}</Project>
+      <Name>YouTubeLiveIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\MirrativIF\MirrativIF\MirrativIF.csproj">
+      <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
+      <Name>MirrativIF</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="mcv_icon.ico" />
@@ -271,6 +284,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="mcv_icon2.ico" />
     <Content Include="ReadMe.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -17,6 +17,7 @@ namespace MultiCommentViewer
         event EventHandler<IPlugin> PluginAdded;
         void LoadPlugins(IPluginHost host);
         void SetComments(ICommentViewModel comments);
+        void SetMessage(IMessage message, IMessageMetadata messageMetadata);
         void OnLoaded();
         void OnClosing();
         //event EventHandler<string> PostingCommentReceived;
@@ -130,6 +131,14 @@ namespace MultiCommentViewer
                 {
                     Debug.WriteLine(ex.Message);
                 }
+            }
+        }
+
+        public void SetMessage(IMessage message, IMessageMetadata messageMetadata)
+        {
+            foreach (var plugin in _plugins)
+            {
+                plugin.OnMessageReceived(message, messageMetadata);
             }
         }
 

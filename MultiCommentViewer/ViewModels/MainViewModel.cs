@@ -320,6 +320,7 @@ namespace MultiCommentViewer
                 var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
+                connection.MessageReceived += Connection_MessageReceived;
                 connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
@@ -348,6 +349,7 @@ namespace MultiCommentViewer
                 Debugger.Break();
             }
         }
+
         private void AddNewConnection()
         {
             try
@@ -357,6 +359,7 @@ namespace MultiCommentViewer
                 var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
+                connection.MessageReceived += Connection_MessageReceived;
                 connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
@@ -472,15 +475,85 @@ namespace MultiCommentViewer
             }
         }
         #endregion //Methods
-        
+
         private void AddComment(ICommentViewModel cvm, ConnectionName connectionName)
         {
-            if(cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
+            if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
             {
                 return;
             }
             var mcvCvm = new McvCommentViewModel(cvm, connectionName);
             _comments.Add(mcvCvm);
+        }
+        private void AddComment(IMessageContext messageContext, ConnectionName connectionName)
+        {
+            //if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
+            //{
+            //    return;
+            //}
+
+            IMcvCommentViewModel mcvCvm = null;
+            if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
+            {
+                if (whowatchMessage is WhowatchSitePlugin.IWhowatchComment comment)
+                {
+                    mcvCvm = new McvWhowatchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (whowatchMessage is WhowatchSitePlugin.IWhowatchItem item)
+                {
+                    mcvCvm = new McvWhowatchCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (whowatchMessage is WhowatchSitePlugin.IWhowatchConnected connected)
+                {
+                    mcvCvm = new McvWhowatchCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (whowatchMessage is WhowatchSitePlugin.IWhowatchDisconnected disconnected)
+                {
+                    mcvCvm = new McvWhowatchCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            else if (messageContext.Message is YouTubeLiveSitePlugin.IYouTubeLiveMessage youtubeMessage)
+            {
+                if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveComment comment)
+                {
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item)
+                {
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveConnected connected)
+                {
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveDisconnected disconnected)
+                {
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            else if (messageContext.Message is MirrativSitePlugin.IMirrativMessage mirrativMessage)
+            {
+                if (mirrativMessage is MirrativSitePlugin.IMirrativComment comment)
+                {
+                    mcvCvm = new McvMirrativCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (mirrativMessage is MirrativSitePlugin.IMirrativJoinRoom item)
+                {
+                    mcvCvm = new McvMirrativCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (mirrativMessage is MirrativSitePlugin.IMirrativConnected connected)
+                {
+                    mcvCvm = new McvMirrativCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (mirrativMessage is MirrativSitePlugin.IMirrativDisconnected disconnected)
+                {
+                    mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            if (mcvCvm != null)
+            {
+                _comments.Add(mcvCvm);
+            }
         }
         #region EventHandler
         private async void Connection_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
@@ -503,6 +576,37 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
             //TODO:Pluginに渡す
+        }
+        private async void Connection_MessageReceived(object sender, IMessageContext e)
+        {
+            var connectionViewModel = sender as ConnectionViewModel;
+            Debug.Assert(connectionViewModel != null);
+            var methods = e.Methods;
+            try
+            {
+                //TODO:Comments.AddRange()が欲しい
+                await _dispatcher.BeginInvoke((Action)(() =>
+                {
+                    var comment = e;
+                    //if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
+                    //{
+                    //    var user = _userStore.GetUser(comment.UserId);
+                    //    uvm = new UserViewModel(user, _options);
+                    //    _userDict.Add(comment.UserId, uvm);
+                    //}
+                    //comment.User = uvm.User;
+                    AddComment(comment, connectionViewModel.ConnectionName);
+                    //uvm.Comments.Add(comment);
+                }), DispatcherPriority.Normal);
+                _pluginManager.SetMessage(e.Message, e.Metadata);
+                await methods.AfterCommentAdded();
+            }
+            catch (TaskCanceledException) { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex);
+            }
         }
         private async void Connection_CommentReceived(object sender, ICommentViewModel e)
         {
@@ -581,7 +685,7 @@ namespace MultiCommentViewer
         #region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
-        private readonly ObservableCollection<McvCommentViewModel> _comments = new ObservableCollection<McvCommentViewModel>();
+        private readonly ObservableCollection<IMcvCommentViewModel> _comments = new ObservableCollection<IMcvCommentViewModel>();
         public ICollectionView Comments { get; }
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
 
@@ -907,7 +1011,7 @@ namespace MultiCommentViewer
             try
             {
                 Debug.Assert(current != null);
-                Debug.Assert(current is McvCommentViewModel);
+                Debug.Assert(current is IMcvCommentViewModel);
 
                 var userId = current.UserId;
                 if (string.IsNullOrEmpty(userId))
@@ -918,7 +1022,7 @@ namespace MultiCommentViewer
                 var view = new CollectionViewSource { Source = _comments }.View;
                 view.Filter = obj =>
                 {
-                    if(!(obj is McvCommentViewModel cvm))
+                    if(!(obj is IMcvCommentViewModel cvm))
                     {
                         return false;
                     }

@@ -52,3 +52,12 @@
 [submodule "SitePluginCommon"]
 	path = SitePluginCommon
 	url = git@github.com:CommentViewerCollection/SitePluginCommon.git
+[submodule "WhowatchIF"]
+	path = WhowatchIF
+	url = git@github.com:CommentViewerCollection/WhowatchIF.git
+[submodule "YouTubeLiveIF"]
+	path = YouTubeLiveIF
+	url = https://github.com/CommentViewerCollection/YouTubeLiveIF.git
+[submodule "MirrativIF"]
+	path = MirrativIF
+	url = git@github.com:CommentViewerCollection/MirrativIF.git

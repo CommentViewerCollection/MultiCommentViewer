@@ -177,6 +177,7 @@ namespace MultiCommentViewer.Test
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;
         public event EventHandler<ConnectedEventArgs> Connected;
+        public event EventHandler<IMessageContext> MessageReceived;
 
         private CancellationTokenSource _cts;
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)

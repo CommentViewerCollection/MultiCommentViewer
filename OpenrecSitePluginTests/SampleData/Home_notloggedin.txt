@@ -1,0 +1,1519 @@
+﻿<!DOCTYPE html>
+<html lang="ja"          >
+    <head>
+        <meta charset="utf-8">
+        <link rel="shortcut icon" href="https://www.openrec.tv/viewapp/images/v4/favicon.ico" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta name="format-detection" content="telephone=no" />
+<meta property="og:site_name" content="OPENREC.tv" />
+<meta property="og:url" content="https://www.openrec.tv/" />
+<meta property="og:title" content="OPENREC.tv (オープンレック) | ゲーム実況＆プレイ動画" />
+<meta property="og:image" content="https://www.openrec.tv/viewapp/images/v4/ogp_openrectv.png" />
+<meta property="og:description" content="OPENREC.tv（オープンレックティービー）は、ゲーム実況やプレイ動画、ライブ配信が楽しめる、新しい動画コミュニティプラットフォームです。" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@OPENREC" />
+<meta name="twitter:title" content="OPENREC.tv (オープンレック) | ゲーム実況＆プレイ動画" />
+<meta name="twitter:image" content="https://www.openrec.tv/viewapp/images/v4/ogp_openrectv.png" />
+<meta name="twitter:description" content="OPENREC.tv（オープンレックティービー）は、ゲーム実況やプレイ動画、ライブ配信が楽しめる、新しい動画コミュニティプラットフォームです。" />
+<meta name="twitter:app:country" content="JP" />
+<meta name="twitter:app:name:iphone" content="OPENREC.tv" />
+<meta name="twitter:app:id:iphone" content="912776162" />
+<meta name="twitter:app:url:iphone" content="jp.co.cyber-z.openrec://top?id=" />
+<meta name="twitter:app:name:ipad" content="OPENREC.tv" />
+<meta name="twitter:app:id:ipad" content="912776162" />
+<meta name="twitter:app:url:ipad" content="jp.co.cyber-z.openrec://top?id=" />
+<meta name="twitter:app:name:googleplay" content="OPENREC.tv" />
+<meta name="twitter:app:id:googleplay" content="jp.co.cyber_z.openrecviewapp" />
+<meta name="twitter:app:url:googleplay" content="jp.co.cyber-z.openrec://top?id=" />
+                <meta name="keywords" content="OPENREC,オープンレック,ゲーム攻略">
+                        <meta name="description" content="OPENREC.tv（オープンレックティービー）は、ゲーム実況やプレイ動画、ライブ配信が楽しめる、新しい動画コミュニティプラットフォームです。">
+                <title>OPENREC.tv (オープンレック) | ゲーム実況＆プレイ動画</title>
+
+        
+                    <!-- LightBoxタグ（オリジナルタグ） -->
+            <!-- CSS -->
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/remodal/1.0.5/remodal.min.css" rel="stylesheet" type="text/css" media="all"/>
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/remodal/1.0.5/remodal-default-theme.min.css" rel="stylesheet" type="text/css" media="all"/>
+                <link href="https://www.openrec.tv/viewapp/css/lib.css?t=2018101801" rel="stylesheet" type="text/css" />        <link href="https://www.openrec.tv/viewapp/css/pc/all.css?t=2018101801" rel="stylesheet" type="text/css" /><link href="https://www.openrec.tv/viewapp/css/pc/top.css?t=2018101801" rel="stylesheet" type="text/css" />
+                <script type="text/javascript">
+        var gbl_is_sp = 0;
+var gbl_is_pc = 1;
+var gbl_err_signup_email_empty = "メールアドレスを入力してください";
+var gbl_err_signup_password_empty = "パスワードを入力してください";
+var gbl_err_signup_channel_id_empty = "ユーザーIDを入力してください";
+var gbl_err_signup_name_empty = "名前を入力してください";
+var gbl_err_signup_re_password_empty = "パスワードを再入力してください";
+var gbl_err_signup_password_unmatch = "パスワードが再入力と一致しません";
+var gbl_msg_onair = "プレイ中";
+var gbl_msg_time_seconds_ago = "秒前";
+var gbl_msg_time_minutes_ago = "分前";
+var gbl_msg_time_hours_ago = "時間前";
+var gbl_msg_time_days_ago = "日前";
+var gbl_scheme = "jp.co.cyber-z.openrec://top?id=";
+var gbl_android_package = "jp.co.cyber_z.openrecviewapp";
+var gbl_uri = "/";
+var gbl_universal = 0;
+var gbl_default_icon_url = "https://www.openrec.tv/viewapp/images/v4/default/profile.png";
+var gbl_default_thumbnail_url = "https://www.openrec.tv/viewapp/images/v4/default/thumbnail.png";
+var gbl_default_background_url = "https://www.openrec.tv/viewapp/images/v5/img_back.png";
+var gbl_default_game_title_url = "https://www.openrec.tv/viewapp/images/v4/default/game_title.png";
+var gbl_logging_url = "https://viewinglog.openrec.tv/";
+var gbl_premium_enabled = 1;
+var gbl_apiv5Url = "https://apiv5.openrec.tv/";
+var gbl_apiv5_public_url = "https://public.openrec.tv/external/api/v5/";
+var gbl_vb_key = "384dc732-7f0a-43e9-98e6-d1fd85916855";
+var gbl_is_premium = "";
+        </script>
+        
+                <script type="text/javascript">
+        var gbl_video_messages = {"video_theater_on":"\u30b7\u30a2\u30bf\u30fc\u30e2\u30fc\u30c9","video_theater_off":"\u30b7\u30a2\u30bf\u30fc\u30e2\u30fc\u30c9\u306e\u7d42\u4e86","video_chat_on":"\u30c1\u30e3\u30c3\u30c8\u3092\u8868\u793a","video_chat_off":"\u30c1\u30e3\u30c3\u30c8\u3092\u975e\u8868\u793a","video_fullscreen_on":"\u5168\u753b\u9762\u30e2\u30fc\u30c9","video_fullscreen_off":"\u5168\u753b\u9762\u30e2\u30fc\u30c9\u306e\u7d42\u4e86","playback_rate":"%s \u500d\u901f","playback_rate_normal":"\u6a19\u6e96\u518d\u751f","low_latency":"\u8d85\u4f4e\u9045\u5ef6(\u03b2)","premium_appeal_popup_title_low_latency":""};
+var gbl_apiv5_public_url = "https:\/\/public.openrec.tv\/external\/api\/v5\/";
+        </script>
+        
+        <script src="//imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+        <script src="https://www.openrec.tv/viewapp/js/lib.js?t=2018101801"></script>        <script src="https://www.openrec.tv/viewapp/js/v4/lib/jquery.nicescroll/dist/jquery.nicescroll.min.js?t=2018101801"></script>
+        <script src="https://www.openrec.tv/viewapp/js/jsrender.min.js"></script>
+        <script src="https://content.jwplatform.com/libraries/FwWK0XWn.js?t=2018101801"></script>
+        <script src="https://cdn.viblast.com/vb/6.54.1/viblast.js?t=2018101801"></script>
+        <script src="https://www.openrec.tv/viewapp/js/v5/all.js?t=2018101801"></script><script src="https://www.openrec.tv/viewapp/js/v5/header.js?t=2018101801"></script><script src="https://www.openrec.tv/viewapp/js/v5/module/top.js?t=2018101801"></script>
+                <script type="text/javascript">
+            // Google Analytics
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-56427332-4', 'auto');
+                ga('send', 'pageview');
+        </script>
+                                <script async='async' src='https://www.googletagservices.com/tag/js/gpt.js'></script>
+                <script>
+                    var googletag = googletag || {};
+                    googletag.cmd = googletag.cmd || [];
+                </script>
+
+                <script>
+                    googletag.cmd.push(function() {var closeables = [];window.mkService = function(closeable, divId) {var sv = googletag.pubads();if (closeable) {sv.collapseEmptyDivs(true);if (divId) {closeables.push(divId);var closeEvent = function(event) {var divId = event.slot.getSlotElementId();if ($.inArray(divId, closeables) !== -1) {if (event.isEmpty) {$('#' + divId).parent().css('display', 'none');}}};sv.addEventListener('slotRenderEnded', closeEvent);}}return sv;};googletag.pubads().enableSingleRequest();googletag.enableServices();});                </script>
+                <!-- LightBoxタグ（オリジナルタグ） -->
+                <!-- javascript -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/remodal/1.0.5/remodal.min.js" type="text/javascript"></script>
+                <script type="text/javascript">
+                if (!String.prototype.startsWith) {
+                    String.prototype.startsWith = function(searchString, position) {
+                        position = position || 0;
+                        return this.indexOf(searchString, position) === position;
+                        };
+                }
+                if (!String.prototype.endsWith) {
+                    String.prototype.endsWith = function(searchString, position) {
+                        var subjectString = this.toString();
+                        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+                            position = subjectString.length;
+                        }
+                        position -= searchString.length;
+                        var lastIndex = subjectString.indexOf(searchString, position);
+                        return lastIndex !== -1 && lastIndex === position;
+                    };
+                }
+
+                $(function() {
+                    var AdModal = function() {
+                        var adModal = $('#ad-modal-container').remodal({ hashTracking: false });
+                        var adVideo = videojs('admodal-video');
+                        var adObject = null;
+                        adVideo.on('error', function(err) {
+                            return false;
+                        });
+
+                        // ad object setting
+                        function bindAdObject(adObject) {
+                            var videoEl = $('.admodal-video');
+                            var imgEl = $('.admodal-substitute-image');
+                            function changeMainContent(videoVisiblity) {
+                                if (videoVisiblity) {
+                                    videoEl.css('display', 'block');
+                                    imgEl.css('display', 'none');
+                                    adVideo.load();
+                                    adVideo.play();
+                                } else {
+                                    videoEl.css('display', 'none');
+                                    imgEl.css('display', 'block');
+                                    adVideo.pause();
+                                }
+                            }
+                            if (adObject.videoUrl.endsWith('.mp4') || adObject.videoUrl.endsWith('.MP4')) {
+                                adVideo.src({ type: 'video/mp4', src: adObject.videoUrl});
+                                if (adObject.currentTime) {
+                                    adVideo.currentTime(adObject.currentTime);
+                                }
+                                changeMainContent(true);
+                            } else {
+                                $('.admodal-substitute-image').attr('src', adObject.substituteImage);
+                                changeMainContent(false);
+                            }
+                            if (adObject.icon) {
+                                $('.admodal-icon').css('display', 'block').children('img').attr('src', adObject.icon);
+                            } else {
+                                $('.admodal-icon').css('display', 'none');
+                            }
+                            $('.admodal-advertiser').text(adObject.advertiser);
+                            $('.admodal-title').text(adObject.title);
+                            $('.admodal-body').children('span').text(adObject.body);
+                            $('.admodal-action-link').text(adObject.callToAction);
+                        }
+
+                        function callAction() {
+                            if (adObject.clickUrl) {
+                                adVideo.pause();
+                                window.open(adObject.clickUrl);
+                            }
+                        }
+
+                        $('.admodal-action-button').click(function() { callAction(); });
+
+                        $(window).on('message', function(e) {
+                            var d = e.originalEvent.data;
+                            var adVideo = videojs('admodal-video');
+
+                            if (e.originalEvent.origin !== 'http://tpc.googlesyndication.com' && e.originalEvent.origin !== 'https://tpc.googlesyndication.com') {
+                                return;
+                            } else if (!d.startsWith('Web/video/popup_movie')) {
+                                return;
+                            } else {
+                                adObject = JSON.parse(d.slice(22));
+                                bindAdObject(adObject);
+                                adModal.open();
+                            }
+                        });
+
+                        // fix font
+                        var fixBodyText = function () {
+                            if (!adObject) return;
+                            var maxWidth = $('.admodal-body').children('span').text(adObject.body).width();
+                            var maxHeight = 29;
+
+                            function setWidth() {
+                                var el = $('.admodal-body').children('span');
+                                var h = el.get(0).offsetHeight;
+                                if (h > maxHeight) {
+                                    var txt = el.text();
+                                    if (!txt.endsWith('…')) {
+                                        txt = txt + '…';
+                                    }
+                                    txt = txt.substr(0, txt.length - 2) + '…';
+                                    el.text(txt);
+                                    setWidth();
+                                }
+                            }
+
+                            setWidth();
+                        }
+
+                        // setting video size
+                        var fixAdModalSize = function() {
+                            var containerEl = $('.ad-modal-container');
+                            var contentEl = $('.admodal-content');
+                            var detailEl = $('.admodal-details');
+                            var h = contentEl.width() * 9.0 / 16.0;
+                            contentEl.height(h);
+                            detailEl.height(containerEl.height() - h);
+                        }
+
+                        // set fixing event
+                        $(window).resize(fixAdModalSize);
+                        $(window).resize(fixBodyText);
+                        $(document).on('closing', '.remodal', function() {
+                            adVideo.pause();
+                        }).on('opening', '.remodal', function () {
+                            if (!adObject) {
+                                adModal.close();
+                            } else {
+                                fixAdModalSize();
+                                fixBodyText();
+                            }
+                        });
+                    };
+
+                    var adModal = new AdModal();
+                });
+                </script>
+            </head>
+    <body class=" top"
+                   data-pagename="top"
+                >
+        
+        <div data-remodal-id="modal" id="ad-modal-container" class="admodal-container">
+            <div class="admodal-close-button">
+                <button data-remodal-action="close" class="admodal-close">
+                    <img src="https://www.openrec.tv/images/v5/icon_close.png" alt="button" width="22" height="22" />
+                </button>
+            </div>
+            <div class="admodal-content">
+                <video id="admodal-video" class="video-js main-content admodal-video" width="640" heigh="360" tcontrols loop preload="auto" data-setup='{ "controls": true, "autoplay": false, "preload": "none" }'></video>
+                <img class="admodal-substitute-image main-content" style="display: none" />
+            </div>
+            <div class="admodal-details">
+                <div class="admodal-icon">
+                    <img width="78px" height="78px" />
+                </div>
+                <div class="admodal-action-content">
+                    <div class="admodal-title"></div>
+                    <div class="admodal-body"><span></span></div>
+                </div>
+                <div class="admodal-footer">
+                    <div class="admodal-action-button">
+                        <span class="admodal-action-link"></span>
+                    </div>
+                    <div class="admodal-advertiser">#advertiser#</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="c-siteWrapper">
+          <div class="c-siteWrapperImage" style="background-image: url(https://dqd0jw5gvbchn.cloudfront.net/spotlight/top_20181101101529.jpg?t=201811012237)"></div>
+          <!--div class="c-siteWrapperMask"></div-->
+          <div class="c-siteInner">
+          <!-- header value -->
+  <input type="hidden" name="header_public_url" id="header_public_url" value="https://www.openrec.tv/" />
+  <input type="hidden" name="header_base_url" id="header_base_url" value="https://www.openrec.tv/viewapp/" />
+  <input type="hidden" name="header_login_flg" id="header_login_flg" value="0" />
+  <input type="hidden" name="header_approve_flg" id="header_approve_flg" value="" />
+  <!-- header -->
+
+  <header class="c-headerWrapper  js-header ">
+    <div class="c-headerContent">
+      <div class="c-headerContent__leftItem c-headerContent__leftItem--menu">
+        <a class="menu-trigger c-headerContent__menuIcon" href="javascript:;">
+          <span></span>
+          <span></span>
+          <span></span>
+        </a>
+      </div>
+      <div class="c-headerContent__leftItem c-headerContent__leftItem--logo">
+        <a class="c-headerContent__itemContent" href="https://www.openrec.tv/"><img src="https://www.openrec.tv/viewapp/images/201804__renewal/logoPc@2x.png" alt="" width="115" /></a>
+      </div>
+
+      <div class="c-headerContent__leftItem c-headerContent__leftItem--searchBox">
+        <div class="c-headerContent__itemContent">
+          <div class="c-headerContent__itemContent__searchBox">
+            <input class="js-headerSearchInputPc" value="" type="text" placeholder="ゲーム、動画、チャンネルを検索" autocapitalize="off" autocorrect="off" maxlength="100" />
+            <i class="c-headerContent__itemContent__searchIcon js-btn__searchIcon"></i>
+          </div>
+        </div>
+      </div>
+
+                      <a class="l-headerMain__content__upgrade js-headerUpgradeLink    " href="https://www.openrec.tv/premium">
+          <span class="l-headerMain__content__upgrade__text"> <span>プレミアム会員に<br>アップグレード！</span></span>
+        </a>
+      
+      <div class="l-headerMain__content__delivery  js-headerLiveBt  isHidden">
+        <div class="l-headerMain__content__delivery__box">
+          <p class="l-headerMain__content__delivery__box__text js-deliverymenu">配信する</p>
+          <p class="l-headerMain__content__delivery__box__icon js-deliveryIcon"></p>
+        </div>
+      </div>
+
+      <div class="l-headerMain__content__notice js-noticeButton  isHidden">
+        <div class="l-headerMain__content__notice__box">
+          <span class="l-headerMain__content__notice__box__icon"></span>
+        </div>
+        <span class="l-headerMain__content__notice__box__badge isHidden"></span>
+      </div>
+
+      <div class="l-headerMain__content__pf  js-username isHidden">
+        <div class="l-headerMain__content__pf__box">
+          <p class="l-headerMain__content__pf__box__img js-menu__icon">
+                      </p>
+          <!--p class="l-headerMain__content__pf__box__name js-menu__name js-browserSupport"></p-->
+                        <span class="l-headerMain__content__pf__box__premium js-menu__plemiumIcon isHidden"></span>
+                    <p class="l-headerMain__content__pf__box__Icon js-pfArrowIcon"></p>
+        </div>
+      </div>
+      <p class="l-headerMain__content__signupPc  js-btn__signup ">新規登録</p>
+      <p class="l-headerMain__content__loginPc  js-btn__login js-menuLoginPc ">ログイン</p>
+
+      <ul class="l-headerMain__content__deliverymenu  js-deliverymenuList">
+        <li class="l-headerMain__content__deliverymenu__live">
+          <a href="https://www.openrec.tv/dashboard/live" class="js-btn__effectWaves js-btn__showLoading">ライブ配信</a>
+        </li>
+        <li class="l-headerMain__content__deliverymenu__upload">
+          <a href="https://www.openrec.tv/dashboard/movie" class="js-btn__effectWaves js-btn__showLoading">アップロード</a>
+        </li>
+      </ul>
+
+      <div class="l-headerMain__content__noticemenu  js-noticeList" id="js-noticeList__infinityScroll">
+        <h3>重要なお知らせ<!--span class="js-notice_count_important p-notice_count_important isHidden"></span--></h3>
+        <div class="p-noticeListBox__important js-noticeListBox__important">
+          <ul class="p-noticeList__important js-noticeList__important isHidden" data-offset="0">
+          </ul>
+          <a href="javascript:;" class="p-noticeMore__important isHidden js-noticeMore__important">もっとみる</a>
+        </div>
+
+        <div class="js-obj__loadingAjax sk-spinner sk-spinner-pulse isHidden"></div>
+
+        <h3>お知らせ<!--span class="js-notice_count_normal p-notice_count_normal isHidden"></span--></h3>
+        <div class="p-noticeListBox__normal">
+          <ul class="js-noticeList__normal" data-offset="0" data-end="false">
+          </ul>
+        </div>
+      </div>
+
+      <ul class="js-template__noticeList isHidden">
+        <li class="l-headerMain__content__noticemenu__none js-noticeNone isHidden">
+          <p class="l-headerMain__content__noticemenu__none__text">お知らせはありません</p>
+        </li>
+
+        <li class="l-headerMain__content__noticemenu__item js-noticeItem__important isHidden">
+          <div class="l-headerMain__content__noticemenu__item__box">
+            <a class="js-noticeItemHref" href="javascript:;">
+              <p class="l-headerMain__content__noticemenu__item__body">
+                <span class="l-headerMain__content__noticemenu__item__body__message js-noticeItemMessage"></span>
+              </p>
+              <p class="l-headerMain__content__noticemenu__item__time js-noticeItemTime"></p>
+            </a>
+          </div>
+        </li>
+
+        <li class="l-headerMain__content__noticemenu__item js-noticeItem__normal isHidden">
+          <div class="l-headerMain__content__noticemenu__item__box">
+            <a class="js-noticeItemHref" href="javascript:;">
+              <p class="l-headerMain__content__noticemenu__item__icon">
+                <img class="js-noticeItemIcon" src="/images/v4/default/profile.png">
+              </p>
+              <div class="p-noticeItem__text">
+                <p class="l-headerMain__content__noticemenu__item__body">
+                  <span class="l-headerMain__content__noticemenu__item__body__name js-noticeItemName"></span>
+                  <span class="l-headerMain__content__noticemenu__item__body__message js-noticeItemMessage"></span>
+                </p>
+                <p class="l-headerMain__content__noticemenu__item__time js-noticeItemTime"></p>
+              </div>
+            </a>
+          </div>
+        </li>
+
+        <li class="l-headerMain__content__noticemenu__more js-noticeMore__box isHidden">
+          <a href="javascript:;" class="l-headerMain__content__noticemenu__more__text js-noticeMore__important">もっとみる</a>
+        </li>
+      </ul>
+
+      <ul class="l-headerMain__content__usermenu  js-usermenulist">
+        <li class="l-headerMain__content__usermenu__myIcon js-menu__myIcon">
+          <a href="">
+            <div class="l-headerMain__content__usermenu__myIcon__image js-menu__icon">
+                          </div>
+            <div class="l-headerMain__content__usermenu__myIcon__myInfo">
+              <div class="l-headerMain__content__usermenu__myIcon__myName js-menu__name  ">
+                              </div>
+                          </div>
+          </a>
+        </li>
+
+
+
+
+
+
+                <li class="l-headerMain__content__usermenu__mypage js-menu__mypage">
+          <a class="js-btn__effectWaves js-btn__showLoading" href="">マイページへ</a>
+        </li>
+                        <li class="l-headerMain__content__usermenu__setup">
+          <a class="js-btn__effectWaves js-btn__showLoading" href="https://www.openrec.tv/profile">設定</a>
+        </li>
+                <li class="l-headerMain__content__usermenu__deliverySetting js-usermenuDeliverySetting  isHidden">
+          <a class="js-btn__effectWaves js-btn__showLoading" href="https://www.openrec.tv/dashboard/setup">配信設定</a>
+        </li>
+                  <li class="l-headerMain__content__usermenu__sendMessage ">
+            <a class="js-btn__effectWaves js-btn__showLoading" href="https://www.openrec.tv/third_part/auth/redirect?url=https://www.openrec.me/" target="_blank">メッセージ</a>
+          </li>
+                          <li class="l-headerMain__content__usermenu__pointCharge ">
+            <a class="js-btn__effectWaves js-btn__showLoading" href="https://www.openrec.tv/profile/point_logs">ポイント管理</a>
+          </li>
+                          <li class="l-headerMain__content__usermenu__premium js-usermenuPremium isHidden">
+            <a class="js-btn__effectWaves js-btn__showLoading" href="https://www.openrec.tv/premium">プレミアム会員</a>
+          </li>
+                <li class="l-headerMain__content__usermenu__news">
+          <a class="js-btn__effectWaves js-btn__showLoading" href="https://article.openrec.tv/" target="_blank">NEWS</a>
+        </li>
+        <li class="l-headerMain__content__usermenu__logout">
+          <p class="js-btn__effectWaves js-btn__showLoading js-menu__logout">ログアウト</p>
+        </li>
+      </ul>
+
+            <div class="l-headerMain__search js-headerSearchListPc isHidden">
+        <div class="l-headerMain__search__box js-headerSearchListPcBox ">
+            <div class="js-afterLogin l-headerMain__search__pcContent  ">
+                          <dl class="l-headerMain__search__pcContent__bestKeyword js-bestKeywordPc">
+                <dt>人気のキーワード</dt>
+                                  <dd class="js-search__log">
+                    <p class="l-headerMain__search__content__bestKeyword__text js-search__keywords">スプラトゥーン</p>
+                  </dd>
+                                  <dd class="js-search__log">
+                    <p class="l-headerMain__search__content__bestKeyword__text js-search__keywords">FORTNITE</p>
+                  </dd>
+                                  <dd class="js-search__log">
+                    <p class="l-headerMain__search__content__bestKeyword__text js-search__keywords">PUBG</p>
+                  </dd>
+                                  <dd class="js-search__log">
+                    <p class="l-headerMain__search__content__bestKeyword__text js-search__keywords">シャドウバース</p>
+                  </dd>
+                                  <dd class="js-search__log">
+                    <p class="l-headerMain__search__content__bestKeyword__text js-search__keywords">RAGE</p>
+                  </dd>
+                              </dl>
+                        <dl class="l-headerMain__search__pcContent__history js-historyPc">
+              <dt>検索履歴</dt>
+              <div class="js-history__contents"></div>
+            </dl>
+            <dl class="l-headerMain__search__pcContent__rgTitle isHidden js-rgTitlePc">
+              <dt>関連ゲームタイトル</dt>
+              <dd>
+                <ul class="js-headerMain__search__game">
+                </ul>
+              </dd>
+            </dl>
+            <dl class="l-headerMain__search__pcContent__rgchannel isHidden js-rgchannelPc">
+              <dt>関連チャンネル</dt>
+              <dd>
+                <ul class="l-headerMain__search__pcContent__rgchannel__list js-header__search__channel">
+                </ul>
+              </dd>
+            </dl>
+            <dl class="l-headerMain__search__pcContent__rgkeywold isHidden js-rgkeywoldPc">
+              <dt>関連キーワード</dt>
+              <dd>
+                <ul class="js-headerMain__search__suggest">
+                </ul>
+              </dd>
+            </dl>
+            <dl class="l-headerMain__search__loading js-header__loading isHidden">
+              <div class="sk-spinner sk-spinner-pulse"></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+      
+
+    </div>
+  </header>
+
+
+
+      <!-- login modal -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-loginContent">
+    <div class="c-header__modal__content isAutoHeight js-headerModelContent js-modal__content">
+      <ul class="c-header__modal__content__menu js-modalContent">
+        <li class="c-header__modal__content__menu__title">
+                      <!-- other -->
+            <span>ログイン</span>
+                  </li>
+        <li class="c-header__modal__content__menu__sns">
+          <div class="c-header__modal__content__menu__sns__box">
+              <p class="c-header__modal__content__menu__sns__box__facebook js-modalLoginContentSnsFacebook"></p>
+              <p class="c-header__modal__content__menu__sns__box__twitter js-modalLoginContentSnsTwitter"></p>
+              <p class="c-header__modal__content__menu__sns__box__google js-modalLoginContentSnsGoogle"></p>
+              <p class="c-header__modal__content__menu__sns__box__yahoo js-modalLoginContentSnsYahoo"></p>
+          </div>
+        </li>
+        <li class="c-header__modal__content__menu__other">
+          <div class="c-header__modal__content__menu__other__box">
+            <p class="c-header__modal__content__menu__other__box__registration js-modalregistration js-btn__effectWaves">新規登録</p>
+            <p class="c-header__modal__content__menu__other__box__login js-modalLogin js-btn__effectWaves">ログイン</p>
+          </div>
+        </li>
+        <li class="c-header__modal__content__menu__service">
+          OPENRECの<a href="https://www.openrec.tv/policy" target="_blank">利用規約</a>・<a href="https://cyber-z.co.jp/privacy" target="_blank">プライバシーポリシー</a>に<br>同意頂いた上で、次にお進みください        </li>
+                  <li class="c-header__modal__content__menu__premium">
+                          <!-- other -->
+              OPENREC.tvをより快適に楽しむための様々な特典があります。            <br>
+            <a href="https://www.openrec.tv/premium">プレミアム会員にアップグレードする</a>
+          </li>
+              </ul>
+      <p class="c-header__modal__content__close js-loginCloseBt"></p>
+    </div>
+  </div>
+
+  <div class="c-header__modal isHidden js-modal__wrapper js-loginboxContent">
+    <div class="c-header__modal__content isAutoHeight js-headerModelContent js-modal__content">
+      <ul class="c-header__modal__content__login js-modalContent">
+        <li class="c-header__modal__content__login__title">
+          <span>ログイン</span>
+        </li>
+        <li class="c-header__modal__content__login__email ">
+          <input type="text" placeholder="メールアドレス" class="c-header__modal__content__login__email__input js-headerLoginEmail" autocapitalize="off" autocorrect="off" maxlength="200"/>
+        </li>
+        <li class="c-errorMsg js-headerLoginEmailError"></li>
+        <li class="c-header__modal__content__login__password ">
+          <input type="password" placeholder="パスワード" class="c-header__modal__content__login__password__input js-headerLoginPassword" autocapitalize="off" autocorrect="off" maxlength="100"/>
+        </li>
+        <li class="c-errorMsg js-headerLoginPasswordError"></li>
+        <li class="c-header__modal__content__login__account">
+          <p class="c-header__modal__content__login__account__button js-modalLoginAccountButton js-btn__effectWaves js-btn__showLoading">
+            ログイン          </p>
+        </li>
+
+        <li class="c-header__modal__content__login__forget">
+          パスワードを忘れた方は<span class="js-btn__passwordForget">こちら</span>        </li>
+        <li class="c-header__modal__content__login__createAccount m-pc">
+          アカウントをお持ちですか？&nbsp;<span class="js-btn__signup">アカウントを作成する</span>        </li>
+        <li class="c-modal__scrollSpace  js-modalScrollSpace"></li>
+      </ul>
+      <p class="c-header__modal__content__close js-loginCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- signup modal -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-signupContent">
+    <div class="c-header__modal__content js-modal__content">
+     <div class="js-signupForm">
+       <ul class="c-header__modal__content__login js-modalContent">
+          <li class="c-header__modal__content__login__title">
+            <span>新規登録</span>
+          </li>
+          <li class="c-header__modal__content__login__sns">
+            <div class="c-header__modal__content__login__sns__box">
+              <p class="c-header__modal__content__login__sns__box__facebook js-modalLoginContentSnsFacebook"></p>
+              <p class="c-header__modal__content__login__sns__box__twitter js-modalLoginContentSnsTwitter"></p>
+              <p class="c-header__modal__content__login__sns__box__google js-modalLoginContentSnsGoogle"></p>
+              <p class="c-header__modal__content__login__sns__box__yahoo js-modalLoginContentSnsYahoo"></p>
+            </div>
+          </li>
+          <li class="c-header__modal__content__login__accountTitle">プロフィール情報</li>
+          <li class="c-header__modal__content__login__channelId">
+            <input type="text" placeholder="ユーザーIDを入力..." class="c-header__modal__content__login__channelId__input js-headerSignupUserkey" autocapitalize="off" autocorrect="off" maxlength="100"/>
+          </li>
+          <li class="c-errorMsg js-headerSignupUserkeyError"></li>
+          <li class="c-header__modal__content__login__channelAlert">
+                      </li>
+          <li class="c-header__modal__content__login__subtitle">必須項目</li>
+          <li class="c-header__modal__content__login__email">
+            <input type="text" placeholder="メールアドレス" class="c-header__modal__content__login__email__input js-headerSignupEmail" autocapitalize="off" autocorrect="off" maxlength="200"/>
+          </li>
+          <li class="c-errorMsg js-headerSignupEmailError"></li>
+          <li class="c-header__modal__content__login__username">
+            <input type="text" placeholder="名前" class="c-header__modal__content__login__username__input js-headerSignupUsername" autocapitalize="off" autocorrect="off" maxlength="20"/>
+          </li>
+          <li class="c-errorMsg js-headerSignupUsernameError"></li>
+          <li class="c-header__modal__content__login__password">
+            <input type="password" placeholder="パスワード" class="c-header__modal__content__login__password__input js-headerSignupPassword" autocapitalize="off" autocorrect="off" maxlength="100"/>
+          </li>
+          <li class="c-errorMsg js-headerSignupPasswordError"></li>
+          <li class="c-header__modal__content__login__password">
+            <input type="password" placeholder="パスワード再入力" class="c-header__modal__content__login__password__input js-headerSignupRePassword" autocapitalize="off" autocorrect="off" maxlength="100"/>
+          </li>
+          <li class="c-errorMsg js-headerSignupRePasswordError"></li>
+          <li class="c-header__modal__content__login__termsofuse js-headerSignupConsent">
+            <div class="c-header__modal__content__login__termsofuse__checkbox">
+              <input type="checkbox" class="js-headerSignupConsentCheckbox"><span>OPENREC.tvの<a href="https://www.openrec.tv/policy" target="_blank">利用規約</a>・<a href="https://cyber-z.co.jp/privacy" target="_blank">プライバシーポリシー</a>に同意</span>
+            </div>
+            <div class="c-header__modal__content__login__termsofuse__errorMsg">利用規約・プライバシーポリシーに同意してください</div>
+          </li>
+          <li class="c-header__modal__content__login__account signup">
+            <p class="c-header__modal__content__login__account__button js-modalSignupButton js-btn__effectWaves js-btn__showLoading">
+              アカウント作成            </p>
+          </li>
+        </ul>
+      </div>
+      <p class="c-header__modal__content__close js-signupCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- register complete modal -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-registerCompletion">
+    <div class="c-header__modal__content js-modal__content">
+       <ul class="c-header__modal__content__provisionalComp">
+        <li class="c-header__modal__content__provisionalComp__title">
+          <span>仮登録完了</span>
+        </li>
+         <li class="c-header__modal__content__provisionalComp__content">
+            登録メールアドレスへ確認メールを送信しました<br />メールより本登録のお手続きをお願いします         </li>
+         <li class="c-header__modal__content__provisionalComp__alert">
+           ※確認メールが届かない場合は、以下をご確認ください         </li>
+        </ul>
+        <ul class="c-header__modal__content__alert">
+          <li>・ご入力いただいたメールアドレスに誤りがなかったか</li>
+<li>・「@openrec.jp」ドメインからのメールが迷惑フォルダに分類されていないか</li>
+<li>・「@openrec.jp」ドメインからのメールがドメイン拒否設定によりブロックされていないか</li>        </ul>
+        <div class="c-header__modal__content__button">
+          <input type="submit" value="メールを再送信する" class="btn primary js-modalreMailSendButton"/>
+          <input type="hidden" class="js-modalreMailSendHidden" value="" />
+        </div>
+        <p class="c-header__modal__content__close js-provisionalCompCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- password forget modal -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-passwordForget">
+    <div class="c-header__modal__content js-modal__content">
+      <ul class="c-header__modal__content__passwordForget">
+        <li class="c-header__modal__content__passwordForget__title">
+          <span>パスワード再設定</span>
+        </li>
+        <li class="c-header__modal__content__passwordForget__msg">
+          登録したメールアドレスを入力し、<br />送信してください。パスワード再設定URLが<br />記載されたメールを送信します。        </li>
+        <li class="c-header__modal__content__passwordForget__password">
+          <input type="text" placeholder="メールアドレス" class="c-header__modal__content__passwordForget__password__input js-modalPasswordResetMailAddressInput" autocapitalize="off" autocorrect="off" maxlength="200"/>
+        </li>
+        <li class="c-errorMsg js-modalPasswordResetMailAddressError"></li>
+        <li class="c-header__modal__content__passwordForget__input">
+          <p class="c-header__modal__content__passwordForget__input__button js-btn__passwordReset js-btn__effectWaves js-btn__showLoading">
+            再設定する          </p>
+        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-passwordForgetCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- password forget sent modal -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-passwordForgetContentComplete">
+    <div class="c-header__modal__content js-headerModelContent js-modal__content">
+      <ul class="c-header__modal__content__passwordForget">
+        <li class="c-header__modal__content__passwordForget__title">
+          <span>パスワード再設定</span>
+        </li>
+        <li class="c-header__modal__content__passwordForget__msg">
+          入力していただいたメールアドレスに、パスワード再設定用URLを記載されたメールを送信しましたのでご確認ください        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-passwordForgetCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- password reset modal -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-passwordReset">
+    <div class="c-header__modal__content js-modal__content">
+      <ul class="c-header__modal__content__passwordReset">
+        <li class="c-header__modal__content__passwordReset__title">
+          <span>パスワード再設定</span>
+        </li>
+        <li class="c-header__modal__content__passwordReset__msg">
+          安全性の高いパスワードは、<br />英数字と記号の組み合わせたものです        </li>
+        <li class="c-header__modal__content__passwordReset__password">
+          <input type="password" placeholder="新しいパスワード" class="c-header__modal__content__passwordReset__Password__input js-passwordInput" autocapitalize="off" autocorrect="off" maxlength="100"/>
+        </li>
+        <li class="c-header__modal__content__passwordReset__password">
+          <input type="password" placeholder="新しいパスワード再入力" class="c-header__modal__content__passwordReset__Password__input js-rePasswordInput" autocapitalize="off" autocorrect="off" maxlength="100"/>
+        </li>
+        <li class="c-header__modal__content__passwordReset__input">
+          <p class="c-header__modal__content__passwordReset__input__button js-modalResetButton js-btn__effectWaves js-btn__showLoading">
+            パスワード再設定          </p>
+        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-passwordResetCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- report movie -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-reportMovie">
+    <div class="c-header__modal__content js-modal__content">
+      <ul class="c-header__modal__content__report__movie js-modalContent">
+        <li class="c-header__modal__content__report__movie__title">
+          <span>不適切な動画として報告</span>
+        </li>
+        <li class="c-header__modal__content__report__movie__label">
+          <span>問題の種類</span>
+        </li>
+        <li class="c-header__modal__content__report__movie__type">
+          <label>
+            <select class="js-report-movie-type">
+              <option value="0">問題を選択してください</option>
+              <option value="1">わいせつな表現</option>
+              <option value="2">他者を誹謗中傷する表現</option>
+              <option value="3">著作権の侵害</option>
+              <option value="4">プライバシーの侵害</option>
+              <option value="5">過激な暴力や自傷行為</option>
+              <option value="6">なりすまし行為</option>
+              <option value="7">出会いを誘導する行為</option>
+              <option value="8">ねずみ講やマルチ商法</option>
+              <option value="9">誤解を招く配信設定</option>
+              <option value="10">ゲームの録画禁止区域の配信</option>
+              <option value="11">改造版・海賊版ソフトの配信</option>
+              <option value="12">政治的・宗教的・人種的な内容</option>
+              <option value="99">その他の問題</option>
+            </select>
+          </label>
+        </li>
+        <li class="c-header__modal__content__report__movie__label">
+          <span>問題の内容</span>
+        </li>
+        <li class="c-header__modal__content__report__movie__content">
+          <textarea class="js-report-movie-content resize_manually" maxlength="500" autocapitalize="off" autocorrect="off"></textarea>
+        </li>
+        <li class="c-header__modal__content__report__movie__note">
+          報告された問題については、利用規約に違反しているかどうかをスタッフが確認します。<br>
+          この機能をむやみに使用することは、利用規約違反になります。        </li>
+        <li class="c-header__modal__content__report__movie__post">
+          <p class="js-report-movie-post">
+            送信          </p>
+        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-reportCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- report comment -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-reportComment">
+    <div class="c-header__modal__content js-modal__content">
+      <ul class="c-header__modal__content__report__comment js-modalContent">
+        <li class="c-header__modal__content__report__comment__title">
+          <span>不適切なコメントとして報告</span>
+        </li>
+        <li class="c-header__modal__content__report__comment__label">
+          <span>問題の内容</span>
+        </li>
+        <li class="c-header__modal__content__report__comment__type">
+          <label>
+            <select class="js-report-comment-type">
+              <option value="0">問題を選択してください</option>
+              <option value="1">わいせつな表現</option>
+              <option value="2">他者を誹謗中傷する表現</option>
+              <option value="3">出会いを誘導する行為</option>
+              <option value="4">商用目的、スパム</option>
+              <option value="99">その他の問題</option>
+            </select>
+          </label>
+        </li>
+        <li class="c-header__modal__content__report__comment__label isHidden js-report-other-content">
+          <span>問題の内容</span>
+        </li>
+        <li class="c-header__modal__content__report__comment__content isHidden js-report-other-content">
+          <textarea class="js-report-comment-content resize_manually" maxlength="100" autocapitalize="off" autocorrect="off"></textarea>
+        </li>
+        <li class="c-header__modal__content__report__comment__note">
+          報告された問題については、利用規約に違反しているかどうかをスタッフが確認します。<br>
+          この機能をむやみに使用することは、利用規約違反になります。        </li>
+        <li class="c-header__modal__content__report__comment__post">
+          <p class="js-report-comment-post">
+            送信          </p>
+        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-reportCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- report movie complete -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-reportMovieComplete">
+    <div class="c-header__modal__content js-headerModelContent js-modal__content">
+      <ul class="c-header__modal__content__report__movie">
+        <li class="c-header__modal__content__report__movie__title">
+          <span>不適切な動画として報告</span>
+        </li>
+        <li class="c-header__modal__content__report__movie__message">
+          ご報告ありがとうございました。<br>
+          報告された問題については、利用規約に違反しているかどうかをスタッフが確認します。<br>
+        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-reportCloseBt"></p>
+    </div>
+  </div>
+
+  <!-- report comment complete -->
+  <div class="c-header__modal isHidden js-modal__wrapper js-reportCommentComplete">
+    <div class="c-header__modal__content js-headerModelContent js-modal__content">
+      <ul class="c-header__modal__content__report__comment">
+        <li class="c-header__modal__content__report__comment__title">
+          <span>不適切なコメントとして報告</span>
+        </li>
+        <li class="c-header__modal__content__report__comment__message">
+          ご報告ありがとうございました。<br>
+          報告された問題については、利用規約に違反しているかどうかをスタッフが確認します。<br>
+        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-reportCloseBt"></p>
+    </div>
+  </div>
+
+  <div class="c-header__modal isHidden js-noFlashContent modal">
+    <div class="c-header__modal__content js-headerModelContent">
+      <ul class="c-header__modal__content__passwordForget">
+        <li class="c-header__modal__content__passwordForget__title">
+          <span>動画再生について</span>
+        </li>
+        <li class="c-header__modal__content__passwordForget__msg">
+          本サイトの動画再生にはFlash Playerが必要となることがあります。<br />
+再生できない場合は、<a href="https://get.adobe.com/jp/flashplayer/" target="_blank" style="color: #ffc511;">こちら</a>より最新のFlash Playerをイントールしてください。        </li>
+      </ul>
+      <p class="c-header__modal__content__close js-noFlashContentCloseBt"></p>
+    </div>
+  </div>
+
+      
+    <!-- premium appeal modal -->
+    <div class="c-header__modal isHidden js-modal__wrapper js-premiumContent">
+      <div class="c-header__modal__content premiumContent js-headerModelContent">
+        <ul class="c-header__modal__content__premiumContent">
+          <li class="c-header__modal__content__premiumContent__title">
+                          <span class="js-premiumContentTitle">プレミアム会員に入会すると過去のライブの<br>動画が何度も視聴できるようになります</span>
+                      </li>
+          <li class="c-header__modal__content__premiumContent__list">
+            <div class="c-header__modal__content__premiumContent__list__msg">さらに、プレミアム会員限定の様々な特典が受けられます。</div>
+            <div class="c-header__modal__content__premiumContent__list__item first">
+              <span class="c-header__modal__content__premiumContent__list__item__text">チャット/コメント スタンプ機能</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item second">
+              <span class="c-header__modal__content__premiumContent__list__item__text">無制限アーカイブ視聴</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item third">
+              <span class="c-header__modal__content__premiumContent__list__item__text">スペシャル番組視聴</span>
+            </div>
+          </li>
+          <li class="c-header__modal__content__premiumContent__text">
+            ３ステップで完了！簡単登録。月額540円          </li>
+          <li class="c-header__modal__content__premiumContent__item">
+            <a href="https://www.openrec.tv/premium" class="c-header__modal__content__premiumContent__item__button">プレミアム会員に入会</a>
+          </li>
+        </ul>
+        <p class="c-header__modal__content__close js-premiumContentCloseBt"></p>
+      </div>
+    </div>
+
+    <!-- premium low latency modal -->
+    <div class="c-header__modal isHidden js-modal__wrapper js-premiumLowLatencyContent">
+      <div class="c-header__modal__content premiumContent js-headerModelContent">
+        <ul class="c-header__modal__content__premiumContent">
+          <li class="c-header__modal__content__premiumContent__title">
+            <span class="js-premiumContentTitle">超低遅延モードで視聴するためには、<br />プレミアム会員への入会が必要です。</span>
+          </li>
+          <li class="c-header__modal__content__premiumContent__list">
+            <div class="c-header__modal__content__premiumContent__list__msg">さらに、プレミアム会員限定の様々な特典が受けられます。</div>
+            <div class="c-header__modal__content__premiumContent__list__item first">
+              <span class="c-header__modal__content__premiumContent__list__item__text">チャット/コメント スタンプ機能</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item second">
+              <span class="c-header__modal__content__premiumContent__list__item__text">無制限アーカイブ視聴</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item third">
+              <span class="c-header__modal__content__premiumContent__list__item__text">スペシャル番組視聴</span>
+            </div>
+          </li>
+          <li class="c-header__modal__content__premiumContent__text">
+              ３ステップで完了！簡単登録。月額540円          </li>
+          <li class="c-header__modal__content__premiumContent__item">
+            <a href="https://www.openrec.tv/premium" class="c-header__modal__content__premiumContent__item__button">プレミアム会員に入会</a>
+          </li>
+        </ul>
+        <p class="c-header__modal__content__close js-premiumContentCloseBt"></p>
+      </div>
+    </div>
+
+    <!-- premium NG word modal -->
+    <div class="c-header__modal isHidden js-modal__wrapper js-premiumNGWordContent">
+      <div class="c-header__modal__content premiumContent js-headerModelContent">
+        <ul class="c-header__modal__content__premiumContent">
+          <li class="c-header__modal__content__premiumContent__title">
+            <span class="c-header__modal__content__premiumContent__title__ngword js-premiumContentTitleNgword">プレミアム会員へ入会すると、<br>NGワードを200個まで指定できます。</span>
+          </li>
+          <li class="c-header__modal__content__premiumContent__list">
+            <div class="c-header__modal__content__premiumContent__list__msg">さらに、プレミアム会員限定の様々な特典が受けられます。</div>
+            <div class="c-header__modal__content__premiumContent__list__item first">
+              <span class="c-header__modal__content__premiumContent__list__item__text">チャット/コメント スタンプ機能</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item second">
+              <span class="c-header__modal__content__premiumContent__list__item__text">無制限アーカイブ視聴</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item third">
+              <span class="c-header__modal__content__premiumContent__list__item__text">スペシャル番組視聴</span>
+            </div>
+          </li>
+          <li class="c-header__modal__content__premiumContent__text">
+              ３ステップで完了！簡単登録。月額540円          </li>
+          <li class="c-header__modal__content__premiumContent__item">
+            <a href="https://www.openrec.tv/premium" class="c-header__modal__content__premiumContent__item__button">プレミアム会員に入会</a>
+          </li>
+        </ul>
+        <p class="c-header__modal__content__close js-premiumContentCloseBt"></p>
+      </div>
+    </div>
+
+    <!-- premium chat popout modal -->
+    <div class="c-header__modal isHidden js-modal__wrapper js-premiumPopoutContent">
+      <div class="c-header__modal__content premiumContent js-headerModelContent">
+        <ul class="c-header__modal__content__premiumContent">
+          <li class="c-header__modal__content__premiumContent__title">
+            <span class="js-premiumContentTitle">プレミアム会員に入会すると、チャットのポップアウト機能が利用できます。</span>
+          </li>
+          <li class="c-header__modal__content__premiumContent__list">
+            <div class="c-header__modal__content__premiumContent__list__msg">さらに、プレミアム会員限定の様々な特典が受けられます。</div>
+            <div class="c-header__modal__content__premiumContent__list__item first">
+              <span class="c-header__modal__content__premiumContent__list__item__text">チャット/コメント スタンプ機能</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item second">
+              <span class="c-header__modal__content__premiumContent__list__item__text">無制限アーカイブ視聴</span>
+            </div>
+            <div class="c-header__modal__content__premiumContent__list__item third">
+              <span class="c-header__modal__content__premiumContent__list__item__text">スペシャル番組視聴</span>
+            </div>
+          </li>
+          <li class="c-header__modal__content__premiumContent__text">
+            ３ステップで完了！簡単登録。月額540円          </li>
+          <li class="c-header__modal__content__premiumContent__item">
+            <a href="https://www.openrec.tv/premium" class="c-header__modal__content__premiumContent__item__button">プレミアム会員に入会</a>
+          </li>
+        </ul>
+        <p class="c-header__modal__content__close js-premiumContentCloseBt"></p>
+      </div>
+    </div>
+
+    <div class="c-header__modal isHidden js-modal__wrapper js-finishedMovie">
+      <div class="c-header__modal__content finishedMovie js-headerModelContent">
+        <ul class="c-header__modal__content__finishedMovie">
+          <li class="c-header__modal__content__finishedMovie__title">
+              <span class="js-premiumContentTitle">この動画の公開は終了しました</span>
+          </li>
+          <li class="c-header__modal__content__finishedMovie__item">
+            <div class="c-header__modal__content__finishedMovie__item__button js-premiumContentCloseBt">OK</div>
+          </li>
+        </ul>
+        <p class="c-header__modal__content__close js-premiumContentCloseBt"></p>
+      </div>
+    </div>
+            <section class="c-mainWrapper js-contentMain">
+    <style>
+  .video-js .vjs-menu li {
+    text-transform: none !important;
+  }
+  .video-js .vjs-captions-button {
+    display: none !important;
+  }
+</style>
+
+<div class="js-spotlightWrapper p-spotlightWrapper u-ffHKS">
+  <div class="js-spotlightWrapperBg p-spotlightWrapperBg">&nbsp;</div>
+
+
+
+  <div class="p-spotlightWrapperInner">
+    <div class="js-spotlightMain p-spotlightMain">
+      <a href="#" class="js-spotlightMainItem p-spotlightMainItem title">&nbsp;</a>
+      <a href="#" class="js-spotlightMainItem p-spotlightMainItem userIcon"><img src="https://www.openrec.tv/viewapp/images/v4/default/profile.png" alt="" onerror="this.onerror=null; this.src='https://www.openrec.tv/viewapp/images/v4/default/profile.png';"></a>
+      <div class="p-spotlightMainItem subName">
+        <a href="#" class="js-spotlightMainItem userName">&nbsp;</a> <span class="js-delimiter isHidden">/</span> <a href="#" class="js-spotlightMainItem gameTitle">&nbsp;</a>
+      </div>
+
+      <div class="js-spotlightMainStatusItem isLive isHidden">
+        <div class="js-spotlightMainItem p-spotlightMainItem viewCount" id="js-interaction__countUp__LIVE" data-start="0" data-end="0">&nbsp;</div>
+        <div class="js-spotlightMainItem p-spotlightMainItem type">&nbsp;</div>
+      </div>
+
+      <div class="js-spotlightMainStatusItem isMovie isHidden">
+        <div class="js-spotlightMainItem p-spotlightMainItem viewCount" id="js-interaction__countUp__MOVIE" data-start="0" data-end="0">&nbsp;</div>
+      </div>
+
+      <div id="js-openrecPlayer" class="js-spotlightMainItem p-spotlightMainItem player"></div>
+      <img class="js-spotlightMainItem p-spotlightMainItem img" src="" alt="">
+      <a href="#" class="p-spotlightMainItem js-spotlightMainItem boxShadow">&nbsp;</a>
+    </div>
+
+    <div class="p-spotlightThumbnailContainer">
+      <ul class="js-spotlightThumbnailList p-spotlightThumbnailList p-animate__startScroll"></ul>
+    </div>
+    <a class="js-spotlightButton p-spotlightButton p-spotlightButton--prev isHidden" data-type="prev" href="javascript:void(0)">&lt;</a>
+    <a class="js-spotlightButton p-spotlightButton p-spotlightButton--next isHidden" data-type="next" href="javascript:void(0)">&gt;</a>
+  </div>
+</div>
+
+<ul class="isHidden js-template__spotLightThumbnailList">
+  <li class="p-spotlightThumbnailListItem">
+    <img class="p-spotlightThumbnailListItem__img" src="" alt="">
+    <div class="p-spotlightThumbnailListItem__Mask js-spotlightThumbnailListItem__Mask">
+      <div class="p-spotlightThumbnailListItem__Mask__view js-spotlightThumbnailListItem__Mask__view isHidden">&nbsp;</div>
+      <div class="p-spotlightThumbnailListItem__Mask__status js-spotlightThumbnailListItem__Mask__status isHidden"></div>
+    </div>
+    <div class="p-spotlightThumbnailListItem__Mask js-spotlightThumbnailListItem__Mask hoverEffect">&nbsp;</div>
+  </li>
+</ul>
+
+<div class="js-data__spotLightList isHidden"></div>
+
+
+<script>
+    var gbl_base_url = "https://www.openrec.tv/viewapp/";
+    var gbl_update_version = "2018101801";
+</script>
+            <!--div class="c-toast js-toast" style="margin-top:24px;"-->
+      <div class="c-toast js-toast" style="margin-top:0">
+        <div class="c-toast__content">
+          <a href="https://article.openrec.tv/4513" target="_blank" class="c-toast__content__text">VTuber専用ページ新設記念！VTuberランキングキャンペーン！</a>
+          <a href="https://article.openrec.tv/4513" target="_blank" class="c-toast__content__link js-toastMore">もっとみる</a>
+        </div>
+        <p class="c-toast__closeBt__box js-toastCloseBt">
+          <span class="c-toast__closeBt"></span>
+        </p>
+      </div>
+      
+    <div class="c-main">
+      <div class="c-mainInner">
+        <div class="c-mainContents">
+
+          <div class="p-yell__wrapper js-yell-ranking">
+  <div class="p-yell__title">
+    <div class="c-sectionTitle">
+      <h2 class="c-sectionTitle__text c-sectionTitle__text--yell">サポーター<br />
+イチ押しライブ</h2>
+    </div>
+  </div>
+
+  <div class="p-yell__content">
+    <div class="c-thumbnailList__wrapper js-thumbnailList__wrapper c-thumbnailList__wrapper--yellRankingList">
+      <div class="c-thumbnailList__box">
+        <ul class="p-top__yellRankingList c-thumbnailList js-thumbnailList js-yell-ranking-list"></ul>
+      </div>
+      <span class="c-thumbnailList__leftButton isHidden" data-direction="right"></span>
+      <span class="c-thumbnailList__rightButton" data-direction="left"></span>
+    </div>
+
+  </div>
+</div>
+          <div class="c-sectionTitle">
+  <h2 class="c-sectionTitle__text"><a href="https://www.openrec.tv/popular/live">人気のライブ</a></h2>
+    <div class="c-sectionTitle__PopularTags"></div>
+  </div>
+
+<div class="p-top__movieList__wrapper">
+  <ul class="p-top__movieList js-responsiveList js-popularLiveList">
+      </ul>
+  <div class="c-thumbnailList__footer">
+    <a class="c-thumbnailList__more" href="https://www.openrec.tv/popular/live">もっとみる</a>
+  </div>
+</div>          <div class="c-sectionTitle">
+  <h2 class="c-sectionTitle__text"><a href="https://www.openrec.tv/schedule">配信予定</a></h2>
+</div>
+
+<div class="c-thumbnailList__wrapper js-thumbnailList__wrapper c-thumbnailList__wrapper--comingupList">
+  <div class="c-thumbnailList__box">
+    <ul class="p-top__movieList c-thumbnailList js-thumbnailList js-popularComingupList">
+          </ul>
+  </div>
+  <span class="c-thumbnailList__leftButton isHidden" data-direction="right"></span>
+  <span class="c-thumbnailList__rightButton" data-direction="left"></span>
+
+  <div class="c-thumbnailList__footer">
+    <a class="c-thumbnailList__more" href="https://www.openrec.tv/schedule">もっとみる</a>
+  </div>
+</div>
+          <div class="c-sectionTitle">
+  <h2 class="c-sectionTitle__text"><a href="https://www.openrec.tv/popular/movie">人気の動画</a></h2>
+</div>
+
+<div class="c-thumbnailList__wrapper js-thumbnailList__wrapper c-thumbnailList__wrapper--movieList">
+  <div class="c-thumbnailList__box">
+    <ul class="p-top__movieList c-thumbnailList js-thumbnailList js-popularMovieList">
+          </ul>
+  </div>
+  <span class="c-thumbnailList__leftButton isHidden" data-direction="right"></span>
+  <span class="c-thumbnailList__rightButton" data-direction="left"></span>
+
+  <div class="c-thumbnailList__footer">
+    <a class="c-thumbnailList__more" href="https://www.openrec.tv/popular/movie">もっとみる</a>
+  </div>
+</div>
+          <div class="c-sectionTitle">
+  <h2 class="c-sectionTitle__text"><a href="https://www.openrec.tv/popular/archive">過去の人気ライブ</a></h2>
+</div>
+
+<div class="c-thumbnailList__wrapper js-thumbnailList__wrapper">
+  <div class="c-thumbnailList__box">
+    <ul class="p-top__archiveLiveList c-thumbnailList js-thumbnailList js-popularArchiveList">
+          </ul>
+  </div>
+
+  <span class="c-thumbnailList__leftButton isHidden" data-direction="right"></span>
+  <span class="c-thumbnailList__rightButton" data-direction="left"></span>
+
+  <div class="c-thumbnailList__footer">
+    <a class="c-thumbnailList__more" href="https://www.openrec.tv/popular/archive">もっとみる</a>
+  </div>
+</div>
+          <div class="c-sectionTitle">
+  <h2 class="c-sectionTitle__text"><a href="https://www.openrec.tv/popular/game"></a>人気のゲーム</a></h2>
+</div>
+
+<div class="c-thumbnailList__wrapper js-thumbnailList__wrapper c-thumbnailList__wrapper--gameList">
+  <div class="c-thumbnailList__box">
+    <ul class="p-top__gameList c-thumbnailList js-thumbnailList js-popularGameList">
+          </ul>
+  </div>
+  <span class="c-thumbnailList__leftButton isHidden" data-direction="right"></span>
+  <span class="c-thumbnailList__rightButton" data-direction="left"></span>
+
+  <div class="c-thumbnailList__footer">
+    <a class="c-thumbnailList__more" href="https://www.openrec.tv/popular/game">もっとみる</a>
+  </div>
+</div>
+          <div class="c-sectionTitle">
+  <h2 class="c-sectionTitle__text"><a href="https://www.openrec.tv/popular/user">人気のチャンネル</a></h2>
+</div>
+
+<div class="c-thumbnailList__wrapper js-thumbnailList__wrapper c-thumbnailList__wrapper--channelList">
+  <div class="c-thumbnailList__box">
+    <ul class="p-top__channelList c-thumbnailList js-thumbnailList js-popularUserList">
+          </ul>
+  </div>
+  <span class="c-thumbnailList__leftButton isHidden" data-direction="right"></span>
+  <span class="c-thumbnailList__rightButton" data-direction="left"></span>
+
+  <div class="c-thumbnailList__footer">
+    <a class="c-thumbnailList__more" href="https://www.openrec.tv/popular/user">もっとみる</a>
+  </div>
+</div>
+
+        <div class="p-top__content__left">
+          <div class="c-global">
+            <ul class="c-global__menuGroup">
+  <li class="c-global__menuGroup__afterLogin js-global__menu__islogin isHidden">
+    <ul class="c-global__menuList">
+      <li class="js-global__menu__islogin isHidden">
+        <a href="https://www.openrec.tv/timeline" class="c-global__menu__following js-btn__effectWaves js-btn__showLoading ">タイムライン</a>
+      </li>
+      <li class="js-global__menu__islogin isHidden">
+        <a href="https://www.openrec.tv/favorite" class="c-global__menu__favorites js-btn__effectWaves js-btn__showLoading ">お気に入り</a>
+      </li>
+    </ul>
+  </li>
+  <li class="c-global__menuGroup__OPENREC">
+    <ul class="c-global__menuList">
+      <li>
+        <a href="https://www.openrec.tv/" class="c-global__menu__popular js-btn__showLoading js-btn__effectWaves selected">人気</a>
+      </li>
+
+              <li>
+          <a href="https://www.openrec.tv/ranking" class="c-global__menu__ranking js-btn__showLoading js-btn__effectWaves ">ランキング</a>
+        </li>
+      
+            <li>
+        <a href="https://www.openrec.tv/vtuber" class="c-global__menu__movie js-btn__showLoading js-btn__effectWaves ">VTuber <span class="c-global__menuList__tag">NEW</span></a>
+      </li>
+      
+      <li>
+        <a href="https://www.openrec.tv/movielist" class="c-global__menu__movie js-btn__showLoading js-btn__effectWaves ">動画</a>
+      </li>
+
+      <li>
+        <a href="https://www.openrec.tv/gamelist" class="c-global__menu__game js-btn__showLoading js-btn__effectWaves ">ゲーム</a>
+      </li>
+
+      <li>
+        <a href="https://www.openrec.tv/topic" class="c-global__menu__topics js-btn__showLoading js-btn__effectWaves ">トピックス</a>
+      </li>
+
+      <li>
+        <a href="https://article.openrec.tv/" target="_blank" class="js-btn__showLoading js-btn__effectWaves">NEWS</a>
+      </li>
+    </ul>
+  </li>
+  <li class="c-global__menuGroup__related">
+    <h3 class="c-global__menuGroup__title">関連サービス</h3>
+    <ul class="c-global__menuList">
+      <li>
+        <a href="https://arena.openrec.tv/" target="_blank" class="c-global__menu__arena js-btn__showLoading js-btn__effectWaves">
+        ARENA<span class="u-line__separate"></span>大会を探す</a>
+      </li>
+
+      <li>
+        <a href="https://gamy.jp/" target="_blank" class="c-global__menu__hints__and__tips js-btn__showLoading js-btn__effectWaves">
+          GAMY<span class="u-line__separate"></span>攻略情報</a>
+      </li>
+    </ul>
+  </li>
+    <li class="c-global__menuGroup__toPremium ">
+    <div class="c-global__menu__upgrade js-sideMenuUpgradeLink">
+      <p class="c-global__menu__upgrade__words">３ステップで完了！簡単入会</p>
+      <a class="c-global__menu__upgrade__link js-btn__effectWaves js-btn__showLoading" href="https://www.openrec.tv/premium">プレミアム会員に入会</a>
+    </div>
+  </li>
+    <li class="c-global__menuGroup__others">
+    <div class="c-global__menu__other">
+    <div class="c-global__menu__other__language">
+        <span class="c-global__menu__other__language__text js-language">Language : <span>日本語</span></span>
+        <ul class="c-global__menu__other__language__list js-languageList">
+            <li class="isHidden"><a class="js-btn__effectWaves js-btn__showLoading js-language-ja" href="javascript:void(0);">日本語</a></li>
+            <li class=""><a class="js-btn__effectWaves js-btn__showLoading js-language-en" href="javascript:void(0);">English</a></li>
+            <li class=""><a class="js-btn__effectWaves js-btn__showLoading js-language-zh" href="javascript:void(0);">中文(簡体)</a></li>
+            <li class=""><a class="js-btn__effectWaves js-btn__showLoading js-language-ko" href="javascript:void(0);">한국어</a></li>
+        </ul>
+    </div>
+    <ul class="c-global__menu__other__menu">
+        <li><a href="https://openrec.zendesk.com/hc/ja">お問い合わせ</a></li>
+        <li><a href="https://article.openrec.tv/" target="_blank">特集記事</a></li>
+        <li><a href="https://cyber-z.co.jp/" target="_blank">運営会社</a></li>
+        <li><a href="https://www.openrec.tv/policy">利用規約</a></li>
+        <li><a href="https://cyber-z.co.jp/privacy" target="_blank">プライバシーポリシー</a></li>
+        <li><a href="https://www.openrec.tv/cookie_guideline">Cookie及び広告識別番号等に関するガイドライン</a></li>
+    </ul>
+    <p class="c-global__menu__other__copyright">© CyberZ, inc. All Rights Reserved.</p>
+    <div class="c-global__menu__other__license">
+        <p class="c-global__menu__other__license__img"><img src="https://www.openrec.tv/viewapp/images/v4/jasrac_v4.png" width="32" height="32"></p>
+        <p class="c-global__menu__other__license__text">JASRAC許諾<br />第9016719001Y45125号</p>
+    </div>
+    <div class="c-global__menu__other__license NexTone">
+        <p class="c-global__menu__other__license__img"><img src="https://www.openrec.tv/viewapp/images/v4/nex_tone.png" width="32" height="32"></p>
+        <p class="c-global__menu__other__license__text">NexTone許諾番号<br />ID000000437<br />ID000000438</p>
+    </div>
+</div>
+  </li>
+
+  </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+<!-- jsrender templates -->
+<script id="template_loop_thumbnailVideo" type="text/x-jsrender">
+  <!-- テンプレートをfor文で回す用 -->
+  <!-- 初期表示に設定した分だけループ用にfor文を拡張 -->
+  {{range items start=0 end=~firstRendering}}
+    {{if ad_placement_id}}
+    <li class="p-top__movieListItem js-thumbnailListItem advertisement">
+  {{htmlspecialcharsDecode:body_tag}}
+</li>
+    {{else}}
+    <!-- これがjsrenderで生成するテンプレートの中身 -->
+<li class="p-top__movieListItem js-thumbnailListItem jsrender">
+  <div class="p-top__movieListItem__creator">
+    <a class="p-top__movieListItem__creator__icon" href="https://www.openrec.tv/user/{{if user_key}}{{:user_key}}{{else}}{{:recxuser_identify_id}}{{/if}}">
+      <img src="{{:user_icon}}" onerror="this.onerror=null; this.src='https://www.openrec.tv/viewapp/images/v4/default/profile.png';">
+    </a>
+    <a class="p-top__movieListItem__creator__name js-support js-ieSupport {{if user_type == 1}}checkmark{{/if}}"
+    href="https://www.openrec.tv/user/{{if user_key}}{{:user_key}}{{else}}{{:recxuser_identify_id}}{{/if}}">
+      <span class="ellipsis-text">{{html:user_name}}</span>
+    </a>
+  </div>
+
+  <a class="p-top__movieListItem__thumbnail" href="https://www.openrec.tv/{{if live_flg && live_flg == 1 && movie_type == 8}}live{{else}}movie{{/if}}/{{:identify_id}}">
+    <img src="{{:thumbnail_url}}" alt="">
+
+    {{if (live_flg && live_flg == 1 && movie_type == 8) }}
+      {{if (movie_live != null && movie_live.onair_status != null)}}
+        {{if movie_live.onair_status == 0}}
+          <div class="u-label__comingup"></div>
+        {{else movie_live.onair_status == 1}}
+          <div class="u-label__live"></div>
+        {{else movie_live.onair_status == 2}}
+          <div class="u-label__offline">OFFLINE</div>
+        {{/if}}
+      {{/if}}
+    {{else}}
+      <div class="u-label__time">{{strToGmdate:play_time}}</div>
+    {{/if}}
+
+    {{if (sp_flg && sp_flg == 1) }}
+      {{if (live_flg && live_flg == 1 && movie_type == 8) }}
+        {{if (movie_live != null && movie_live.onair_status != null)}}
+          {{if movie_live.onair_status == 0}}
+          <div class="u-label__fromSP">スマートフォンから配信予定</div>
+          {{else movie_live.onair_status == 1}}
+          <div class="u-label__fromSP">スマートフォンから配信中</div>
+          {{else movie_live.onair_status == 2}}
+          <!-- offlineは何も表示しない -->
+          {{/if}}
+        {{/if}}
+      {{/if}}
+
+      {{if (live_flg && live_flg == 1 && movie_type == 1) }}
+        <div class="u-label__fromSP">スマートフォンから配信</div>
+      {{/if}}
+    {{/if}}
+  </a>
+
+  <div class="p-top__movieListItem__title">
+    <a href="https://www.openrec.tv/{{if live_flg && live_flg == 1 && movie_type == 8}}live{{else}}movie{{/if}}/{{:identify_id}}" >{{if special}}<span class="u-specialmark">SP</span>{{/if}}{{:meta_data}}</a>
+  </div>
+    <div class="p-top__movieListItem__game">{{if game}}<a href="https://www.openrec.tv/game/{{:game.identify_id}}">{{html:game.title}}</a>{{/if}}</div>
+  <!--div class="p-top__movieListItem__summary">
+    {{:meta_data}}
+  </div-->
+  <div class="u-cf">
+    {{if movie_live != null && movie_live.onair_status != null && movie_live.onair_status == 0}}
+      <div class="p-top__movieListItem__time__comingup">
+        <a href="https://www.openrec.tv/live/{{:identify_id}}">{{:schedule_start_dt}}</a>
+      </div>
+    {{else}}
+      <div class="p-top__movieListItem__count">
+        {{if (live_flg && live_flg == 1 && movie_type == 8 && movie_live.onair_status == 1) }}
+            <span class="u-color--red">{{addComma:live_views}}人が視聴中</span>
+          {{else}}
+            視聴回数 {{addComma:views}}回          {{/if}}
+      </div>
+      <div class="p-top__movieListItem__time">
+        ・{{:cre_dt}}
+      </div>
+    {{/if}}
+  </div>
+</li>
+    {{/if}}
+  {{/range}}
+</script>
+<script id="template_loop_thumbnailGame" type="text/x-jsrender">
+  <!-- テンプレートをfor文で回す用 -->
+  <!-- 初期表示に設定した分だけループ用にfor文を拡張 -->
+  {{range items start=0 end=~firstRendering}}
+    {{if ad_placement_id}}
+    <li class="c-content__list__populargame js-thumbnailListItem advertisement">
+  {{htmlspecialcharsDecode:body_tag}}
+</li>
+    {{else}}
+    <li class="p-top__gameListItem">
+  <a class="p-top__gameListItem__game" href="https://www.openrec.tv/game/{{:identify_id}}">
+    <div class="p-top__gameListItem__thumbnail">
+    {{if title_file != ""}}
+      <img src="{{:title_file}}" onerror="this.onerror=null; this.src='https://www.openrec.tv/viewapp/images/v4/default/game_title.png';">
+    {{else}}
+      <img src="https://www.openrec.tv/viewapp/images/v4/default/game_title.png" onerror="this.onerror=null; this.src='https://www.openrec.tv/viewapp/images/v4/default/game_title.png';">
+    {{/if}}
+    </div>
+    <div class="p-top__gameListItem__title">
+      <a href="https://www.openrec.tv/game/{{:identify_id}}">{{:title}}</a>
+    </div>
+    <div class="p-top__gameListItem__count">
+      {{if is_live_now == true}}
+        <p class="c-content__list__populargame__watch__count">{{addComma:total_live_views}}人が視聴中</p>
+      {{else}}
+        <p class="c-content__list__populargame__watch__time">{{:last_display_at}}</p>
+      {{/if}}
+    </div>
+  </a>
+</li>
+    {{/if}}
+  {{/range}}
+</script>
+<script id="template_loop_thumbnailChannel" type="text/x-jsrender">
+  <!-- テンプレートをfor文で回す用 -->
+  <!-- 初期表示に設定した分だけループ用にfor文を拡張 -->
+  {{range items start=0 end=~firstRendering}}
+    {{if ad_placement_id}}
+    <li class="c-content__list__popularchannel js-thumbnailListItem advertisement">
+  {{htmlspecialcharsDecode:body_tag}}
+</li>
+    {{else}}
+    <li class="p-top__channelListItem">
+  {{if user_key != "" }}
+  <a href="https://www.openrec.tv/user/{{:user_key}}" class="p-top__channelListItem__creator">
+  {{else}}
+  <a href="https://www.openrec.tv/user/{{:identify_id}}" class="p-top__channelListItem__creator">
+  {{/if}}
+    <div class="p-top__channelListItem__backgroundImage">
+      {{if background_file != ""}}
+        <div style="background-image:url({{:background_file}}), url(https://www.openrec.tv/viewapp/images/v5/img_back.png);"></div>
+      {{else}}
+        <div style="background-image:url(https://www.openrec.tv/viewapp/images/v5/img_back.png), url(https://www.openrec.tv/viewapp/images/v5/img_back.png);"></div>
+      {{/if}}
+    </div>
+
+    <div class="p-top__channelListItem__info">
+      <div class="p-top__channelListItem__name {{if user_type==1}}p-top__channelListItem__name--official{{/if}}">{{html:user_name}}
+        {{if user_type == 1}}
+        <span class="u-officalmark"></span>
+        {{/if}}
+      </div>
+      {{if user_key != "" }}
+      <div class="p-top__channelListItem__userKey">{{:user_key}}</div>
+      {{else}}
+      <div class="p-top__channelListItem__notUserKey">&nbsp</div>
+      {{/if}}
+
+
+      <div class="p-top__channelListItem__introduce">
+      {{if is_live == true || onair_flg == true}}
+        <div class="p-top__channelListItem__gameTitle">
+          {{if live_game_title != ""}}
+          <p class="oneLine">プレイ中:{{html:live_game_title}}</p>
+          {{else}}
+          <p class="oneLine">&nbsp;</p>
+          {{/if}}
+        </div>
+
+        <div class="p-top__channelListItem__gameLiveCount">
+          {{addComma:live_views}}人が視聴中        </div>
+      {{else}}
+        {{:user_introduce}}
+      {{/if}}
+      </div>
+    </div>
+
+    <div class="p-top__channelListItem__thumbnail">
+      {{if user_icon != ""}}
+          <img src="{{:user_icon}}" onerror="this.onerror=null; this.src='https://www.openrec.tv/viewapp/images/v4/default/profile.png';">
+        {{else}}
+          <img src="https://www.openrec.tv/viewapp/images/v4/default/profile.png" onerror="this.onerror=null; this.src='https://www.openrec.tv/viewapp/images/v4/default/profile.png';">
+        {{/if}}
+
+        {{if is_live == true || onair_flg == true}}
+          <p class="c-content__list__popularchannel__link__profile__relative__dott"></p>
+        {{/if}}
+      </div>
+    </div>
+
+  </a>
+</li>
+    {{/if}}
+  {{/range}}
+</script>
+<script id="template_loop_spotlight" type="text/x-jsrender">
+  {{range items start=0 end=~firstRendering}}
+    <div
+  class="js-data__spotLightItem"
+  data-title=           "{{:meta_data}}"
+  {{if (live_flg && movie_type == 8) && ((movie_live && movie_live.onair_status == 0) || (movie_live && movie_live.onair_status == 2))}}
+    data-image=         "{{if movie_live && movie_live.offline_thumbnail}}{{:movie_live.offline_thumbnail}}{{else}}{{:thumbnail_url}}{{/if}}"
+    data-file=          ""
+    data-sourcefile=    ""
+  {{else}}
+    data-image=         "{{:thumbnail_url}}"
+    data-file=          "{{:video_play_m3u8}}"
+    data-sourcefile=    "{{if video_play_source_m3u8}}{{:video_play_source_m3u8}}{{/if}}"
+  {{/if}}
+  data-userid=          "{{:user_id}}"
+  data-username=        "{{:user_name}}"
+  data-usericon=        "{{:user_icon}}"
+  data-view=            "{{:views}}"
+  data-liveview=        "{{:live_views}}"
+  data-type=            "{{if live_flg && movie_type == 8}}LIVE{{else}}MOVIE{{/if}}"
+  data-game=            "{{:game_title}}"
+  data-gameimage=       "{{:game_image}}"
+  data-sec=             "{{:play_time}}"
+  data-start-time=      "{{:start_time}}"
+  data-id=              "{{:#index+1}}"
+  data-movieid=         "{{:movie_id}}"
+  data-onairstatus=     "{{if movie_live && movie_live.onair_status}}{{:movie_live.onair_status}}{{/if}}"
+  data-link=            "https://www.openrec.tv/{{if live_flg}}live/{{else}}movie/{{/if}}{{:identify_id}}"
+  data-profileurl=      "https://www.openrec.tv/user/{{if user_key}}{{:user_key}}{{else}}{{:recxuser_identify_id}}{{/if}}"
+  data-movieurl=        "https://www.openrec.tv/{{if live_flg}}live/{{else}}movie/{{/if}}{{:identify_id}}"
+  data-gameurl=         "https://www.openrec.tv/game/{{:game_identify_id}}"
+  data-is-special=      "{{if special && special.trailer_url}}1{{else}}0{{/if}}"
+  data-special-trailer= "{{if special && special.trailer_url}}{{:special.trailer_url}}{{/if}}"
+  data-special-mark=    '{{if special }}<span class="u-specialmark">SP</span>{{/if}}'>
+  >&nbsp;</div>
+  {{/range}}
+</script>
+<script id="template-yell-user-grid" type="text/x-jsrender">
+<li class="p-top__yellRankingListItem">
+  <a class="p-top__yellRankingListItem__creator {{if isOfficial}} p-top__yellRankingListItem__creator--official {{/if}} " href="{{:liveUrl}}">
+    <div class="p-top__yellRankingListItem__icon">
+      <img src="{{:iconUrl}}">
+    </div>
+    <div class="p-top__yellRankingListItem__info">
+      <div class="p-top__yellRankingListItem__name">
+        <span class="ellipsis-text">{{html:name}}</span>
+      </div>
+      <span class="p-top__yellRankingListItem__count">{{:totalYells}}エール</span>
+    </div>
+  </a>
+</li>
+</script>
+
+<script>
+(function(){
+  $(function(){
+    $('.c-siteWrapper').removeClass('c-siteWrapper--page');
+    $('.c-siteWrapper').addClass('c-siteWrapper--top');
+  });
+})();
+</script>
+                    </div>
+          </div>
+        </div>
+        <div class="js-obj__topLoadingBar c-obj__topLoadingBar"></div>
+    </body>
+</html>

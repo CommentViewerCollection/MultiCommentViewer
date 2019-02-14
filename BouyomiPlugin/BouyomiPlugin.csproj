@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{13A909DD-3791-4539-9C04-F72D9E755DCF}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BouyomiPlugin</RootNamespace>
+    <AssemblyName>BouyomiPlugin</AssemblyName>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BouyomiChanClient.cs" />
+    <Compile Include="main.cs" />
+    <Compile Include="ConfigView.xaml.cs">
+      <DependentUpon>ConfigView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ConfigViewModel.cs" />
+    <Compile Include="Options.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{66d18de1-4d66-41a5-b0e2-47df9975495a}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IPlugin\Plugin.csproj">
+      <Project>{735cfeee-5b77-4d36-977b-4cd94a6f3cdb}</Project>
+      <Name>Plugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
+      <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
+      <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
+      <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
+      <Name>MirrativIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
+      <Project>{5a83afc8-e6ce-4dd2-8389-1f43a731388f}</Project>
+      <Name>WhowatchIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj">
+      <Project>{83974e62-4d55-4e67-8f88-bbff2222e5a1}</Project>
+      <Name>YouTubeLiveIF</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="ConfigView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MvvmLightLibs">
+      <Version>5.4.1</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

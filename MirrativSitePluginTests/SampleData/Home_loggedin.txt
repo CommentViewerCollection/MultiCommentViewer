@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Mirrativ</title>
+    <meta name="keywords" content="Mirrativ,Mirrative,Mirativ,Mirative,live,stream,livestream,broadcast,videostreaming,game,apps,ios,android,chat,video,SNS,twitch,youtube,mobcrush,shou.tv,kamcord,mobile,smartphones,shoutcast,DeNA">
+    <meta name="description" content="Mirrativ is a completely mobile livestreaming app that lets you broadcast any content on your screen. Start broadcasting with a few taps!" data-react-helmet="true">
+    <meta name="viewport" content="width=device-width" />
+    <meta property="og:title" content="Mirrativ - Free Mobile-focused Livestreaming App" data-react-helmet="true">
+    <meta property="og:description" content="Mirrativ is a completely mobile livestreaming app that lets you broadcast any content on your screen. Start broadcasting with a few taps!" data-react-helmet="true">
+    <meta property="og:type" content="website" data-react-helmet="true">
+    <meta property="og:image" content="https://cdn.mirrativ.com/assets/img/img_cover_share.png?t=1533197283" data-react-helmet="true">
+    <meta property="og:url" content="https://www.mirrativ.com/" data-react-helmet="true">
+    <meta property="og:site_name" content="Mirrativ" data-react-helmet="true">
+    <meta property="twitter:card" content="app" data-react-helmet="true">
+    <meta property="twitter:site" content="@Mirrativ">
+    <meta property="twitter:description" content="Mirrativ is a completely mobile livestreaming app that lets you broadcast any content on your screen. Start broadcasting with a few taps!" data-react-helmet="true">
+    <meta property="twitter:title" content="Mirrativ - Free Mobile-focused Livestreaming App" data-react-helmet="true">
+    <meta property="twitter:image" content="https://cdn.mirrativ.com/assets/img/img_cover_share.png?t=1533197283" data-react-helmet="true">
+    <meta property="twitter:app:id:iphone" content="id1028944599">
+    <meta property="twitter:app:id:ipad" content="id1028944599">
+    <meta property="twitter:app:id:googleplay" content="com.dena.mirrativ">
+    <meta name="naver-site-verification" content="1cb65b0d35f091df60f68f5e352277d24acf0427"/>
+    <meta name="csrf-token" content="hFcAeAB_z0EdMSFVRm4xxETJzAwPuxPsdIsHmUQj">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <script>
+      window.Mirrativ = window.Mirrativ || {};
+      window.Mirrativ.ssl = 1;
+      window.Mirrativ.currentUser = {"share_url":"https:\/\/www.mirrativ.com\/user\/4566407","current_continuous_record":0,"custom_thanks_message":"","registered_at":"1540407400","profile_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/image\/profile_image\/6c7482519ab18c45f7e1ffcfdd408f347d177dba919e02b2788c6e56bc810d1e_m.jpeg?1540407401","header_image_url":"","badges":[],"follower_num":"1","is_new":0,"following_num":"1","max_continuous_record":"0","links":[],"grade_id":2,"twitter_screen_name":"kv510k","name":"Ryu","description":"","properties":[],"total_viewer_num":0,"is_continuous_streamer":0,"live_announcement":null,"paypal_username":"","user_id":"4566407","live_request_num":"0","onlive":null};
+    </script>
+      <link href="https://cdn.mirrativ.com/assets/style/pc_9312e6124c9601a0dd03.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+    
+  <div class="mrWrapper">
+    <div id="app"></div>
+  </div>
+  <script src="https://cdn.mirrativ.com/assets/index_9312e6124c9601a0dd03.js"></script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-122141998-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-122141998-1');
+    </script>
+  </body>
+</html>

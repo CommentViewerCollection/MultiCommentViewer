@@ -1,0 +1,58 @@
+﻿<Window x:Class="Common.Wpf.FontSelectorView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Common.Wpf"
+        xmlns:vm="clr-namespace:Common.Wpf"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:FontSelectorViewModel, IsDesignTimeCreatable=True}"
+        ResizeMode="NoResize"
+        Title="{Binding Title}" Height="377.624" Width="470.116">
+    <Window.Resources>
+        <local:FontFamilyToJpStringConverter x:Key="fontFamilyConverter" />
+        <local:IntToFontSizeConverter x:Key="intToFontSizeConverter" />
+        <local:FontFamilyToFontFamilyViewModelConverter x:Key="fontFamilyViewModelConverter" />
+        <vm:FontStyleToFontStyleViewModelConverter x:Key="fontStyleViewModelConverter" />
+        <vm:FontWeightToFontWeightViewModelConverter x:Key="fontWeightViewModelConverter" />
+    </Window.Resources>
+    <Grid Background="{Binding Background}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <TextBlock x:Name="textBox" TextAlignment="Center" HorizontalAlignment="Left" Margin="21,40,0,0" TextWrapping="Wrap" Text="{Binding SelectedFontFamily, Converter={StaticResource fontFamilyConverter}}" VerticalAlignment="Top" Width="132"/>
+        <vm:ListBoxScroll x:Name="listBox" ItemsSource="{Binding FontFamillyCollection}" SelectedItem="{Binding SelectedFontFamily, Mode=TwoWay, Converter={StaticResource fontFamilyViewModelConverter}}" HorizontalAlignment="Left" Margin="21,61,0,105" VerticalAlignment="Stretch" Width="132">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Text}" FontFamily="{Binding FontFamily}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </vm:ListBoxScroll>
+        <Button x:Name="btnOk" Content="OK" Command="{Binding OkCommand}" HorizontalAlignment="Left" Margin="135,0,0,10" VerticalAlignment="Bottom" Width="75" RenderTransformOrigin="0.377,1.323"/>
+        <Button x:Name="btnCancel" Content="Cancel" Command="{Binding CancelCommand}" HorizontalAlignment="Left" Margin="258,0,0,10" VerticalAlignment="Bottom" Width="75"/>
+        <TextBlock x:Name="textBlock" TextAlignment="Center" HorizontalAlignment="Left" Margin="382,43,0,0" TextWrapping="Wrap" Text="{Binding SelectedFontSize}" VerticalAlignment="Top" Width="47"/>
+        <vm:ListBoxScroll x:Name="listBox1" ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding SelectedFontSize, Mode=TwoWay}" HorizontalAlignment="Left" Margin="382,64,0,105" VerticalAlignment="Stretch" Width="47" RenderTransformOrigin="0.467,0.88"/>
+        <TextBlock x:Name="textBlock1" TextAlignment="Center" HorizontalAlignment="Left" Margin="176,40,0,0" TextWrapping="Wrap" Text="{Binding SelectedFontStyle}" VerticalAlignment="Top" Width="50"/>
+        <vm:ListBoxScroll x:Name="listBox2" ItemsSource="{Binding FontStyleCollection}" SelectedItem="{Binding SelectedFontStyle, Mode=TwoWay, Converter={StaticResource fontStyleViewModelConverter}}" HorizontalAlignment="Left" Margin="176,64,0,102" VerticalAlignment="Stretch" Width="71">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Text}" FontStyle="{Binding FontStyle}" FontFamily="{Binding DataContext.SelectedFontFamily,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Window}}}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </vm:ListBoxScroll>
+        <vm:ListBoxScroll x:Name="listBoxFontWeight" ItemsSource="{Binding FontWeightCollection}" SelectedValue="{Binding SelectedFontWeight, Mode=TwoWay, Converter={StaticResource fontWeightViewModelConverter}}" HorizontalAlignment="Left" Margin="264,67,0,102" VerticalAlignment="Stretch" Width="100">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Text}" FontWeight="{Binding FontWeight}" FontFamily="{Binding DataContext.SelectedFontFamily,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Window}}}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </vm:ListBoxScroll>
+        <TextBlock x:Name="txtSelectedFontWeight" TextAlignment="Center" HorizontalAlignment="Left" Margin="264,43,0,0" TextWrapping="Wrap" Text="{Binding SelectedFontWeight}" VerticalAlignment="Top" Width="100"/>
+        <TextBlock x:Name="txtSelectedFont" TextAlignment="Center" Margin="10,0,10,35" TextWrapping="Wrap" VerticalAlignment="Bottom"
+                   Text="{Binding SelectedFont}" FontFamily="{Binding SelectedFontFamily}" FontStyle="{Binding SelectedFontStyle}" FontWeight="{Binding SelectedFontWeight}"
+                   FontSize="{Binding SelectedFontSize, Converter={StaticResource intToFontSizeConverter}}"
+                   Width="442" Height="62"/>
+        <Label x:Name="label" Content="ファミリー" HorizontalAlignment="Left" Margin="46,12,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label1" Content="スタイル" HorizontalAlignment="Left" Margin="176,12,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label2" Content="ウェイト" HorizontalAlignment="Left" Margin="290,12,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label3" Content="サイズ" HorizontalAlignment="Left" Margin="382,12,0,0" VerticalAlignment="Top"/>
+
+    </Grid>
+</Window>

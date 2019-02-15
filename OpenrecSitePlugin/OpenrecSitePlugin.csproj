@@ -63,6 +63,12 @@
     <Compile Include="Low\External\Movies\Class1.cs" />
     <Compile Include="Low\LivePage\Class1.cs" />
     <Compile Include="Low\Movies\Class1.cs" />
+    <Compile Include="Message\MessageMetadata.cs" />
+    <Compile Include="Message\OpenrecComment.cs" />
+    <Compile Include="Message\OpenrecConnected.cs" />
+    <Compile Include="Message\OpenrecDisconnected.cs" />
+    <Compile Include="Message\OpenrecMessageContext.cs" />
+    <Compile Include="Message\OpenrecMessageMethods.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="OpenrecCommentData.cs" />
     <Compile Include="OpenrecCommentViewModel.cs" />
@@ -98,6 +104,10 @@
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
+      <Project>{02a55625-e735-4909-a470-e8405eee1a32}</Project>
+      <Name>OpenrecIF</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -143,5 +153,6 @@
       <Version>0.15.2</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

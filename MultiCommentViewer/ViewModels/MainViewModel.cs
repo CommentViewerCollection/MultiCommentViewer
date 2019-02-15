@@ -550,11 +550,26 @@ namespace MultiCommentViewer
                     mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
-            else if(messageContext.Message is TwitchSitePlugin.ITwitchMessage twitchMessage)
+            else if (messageContext.Message is TwitchSitePlugin.ITwitchMessage twitchMessage)
             {
-                if(twitchMessage is TwitchSitePlugin.ITwitchComment comment)
+                if (twitchMessage is TwitchSitePlugin.ITwitchComment comment)
                 {
                     mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            else if (messageContext.Message is OpenrecSitePlugin.IOpenrecMessage openrecMessage)
+            {
+                if (openrecMessage is OpenrecSitePlugin.IOpenrecComment comment)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecStamp stamp)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if(openrecMessage is OpenrecSitePlugin.IOpenrecYell yell)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
             if (mcvCvm != null)

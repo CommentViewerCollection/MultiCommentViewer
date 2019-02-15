@@ -145,16 +145,65 @@ namespace OpenrecSitePlugin
             
             var _context = Tools.GetContext(_cc);
             var chats = await API.GetChats(_dataSource, movieContext2.Id, DateTime.Now, _cc);
-            var initialComments = chats.Select(item =>
+            foreach(var item in chats)
             {
                 var comment = Tools.Parse(item);
                 var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
                 var userId = commentData.UserId;
                 var user = _userStore.GetUser(userId);
-                ICommentViewModel cvm = CreateCommentViewModel(commentData);
-                return cvm;
-            }).ToList();
-            InitialCommentsReceived?.Invoke(this, initialComments);
+                bool isFirstComment;
+                if (_userCommentCountDict.ContainsKey(userId))
+                {
+                    _userCommentCountDict[userId]++;
+                    isFirstComment = false;
+                }
+                else
+                {
+                    _userCommentCountDict.Add(userId, 1);
+                    isFirstComment = true;
+                }
+
+                var nameItems = new List<IMessagePart>();
+                nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
+                nameItems.AddRange(commentData.NameIcons);
+
+                var messageItems = new List<IMessagePart>();
+                if (commentData.IsYell)
+                {
+                    //MessageType = MessageType.BroadcastInfo;
+                    messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
+                }
+                messageItems.Add(commentData.Message);
+                if (commentData.Stamp != null)
+                {
+                    //MessageType = MessageType.BroadcastInfo;
+                    messageItems.Add(commentData.Stamp);
+                }
+
+                if (commentData.IsYell)
+                {
+
+                }
+                else if(commentData.Stamp != null)
+                {
+
+                }
+                else
+                {
+                    var message = new OpenrecComment("")
+                    {
+                        CommentItems = new List<IMessagePart> { commentData.Message },
+                        Id = commentData.Id,
+                        NameItems = nameItems,
+                        PostTime = commentData.PostTime.ToString("HH:mm:ss"),
+                        UserIcon = null,
+                        UserId = commentData.UserId,
+                    };
+                    var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                    var methods = new OpenrecMessageMethods();
+                    MessageReceived?.Invoke(this, new OpenrecMessageContext(message, metadata, methods));
+                }
+            }
 
             _ws = new OpenrecWebsocket(_logger);
             _ws.Received += WebSocket_Received;
@@ -212,6 +261,66 @@ namespace OpenrecSitePlugin
                 }
             }
             AfterDisconnected();
+        }
+
+        private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData)
+        {
+            var userId = commentData.UserId;
+            var user = _userStore.GetUser(userId);
+            bool isFirstComment;
+            if (_userCommentCountDict.ContainsKey(userId))
+            {
+                _userCommentCountDict[userId]++;
+                isFirstComment = false;
+            }
+            else
+            {
+                _userCommentCountDict.Add(userId, 1);
+                isFirstComment = true;
+            }
+
+            var nameItems = new List<IMessagePart>();
+            nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
+            nameItems.AddRange(commentData.NameIcons);
+
+            var messageItems = new List<IMessagePart>();
+            if (commentData.IsYell)
+            {
+                //MessageType = MessageType.BroadcastInfo;
+                messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
+            }
+            messageItems.Add(commentData.Message);
+            if (commentData.Stamp != null)
+            {
+                //MessageType = MessageType.BroadcastInfo;
+                messageItems.Add(commentData.Stamp);
+            }
+
+            OpenrecMessageContext messageContext = null;
+            if (commentData.IsYell)
+            {
+
+            }
+            else if (commentData.Stamp != null)
+            {
+
+            }
+            else
+            {
+                var message = new OpenrecComment("")
+                {
+                    CommentItems = new List<IMessagePart> { commentData.Message },
+                    Id = commentData.Id,
+                    NameItems = nameItems,
+                    PostTime = commentData.PostTime.ToString("HH:mm:ss"),
+                    UserIcon = null,
+                    UserId = commentData.UserId,
+                };
+                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                var methods = new OpenrecMessageMethods();
+                messageContext = new OpenrecMessageContext(message, metadata, methods);
+            }
+            return messageContext;
         }
 
         private void BlackListProvider_Received(object sender, List<string> e)
@@ -307,30 +416,30 @@ namespace OpenrecSitePlugin
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
         DateTime _startAt;
-        private OpenrecCommentViewModel CreateCommentViewModel(IOpenrecCommentData data)
-        {
-            var userId = data.UserId;
-            bool isFirstComment;
+        //private OpenrecCommentViewModel CreateCommentViewModel(IOpenrecCommentData data)
+        //{
+        //    var userId = data.UserId;
+        //    bool isFirstComment;
 
-            if (_userCommentCountDict.ContainsKey(userId))
-            {
-                _userCommentCountDict[userId]++;
-                isFirstComment = false;
-            }
-            else
-            {
-                _userCommentCountDict.Add(userId, 1);
-                isFirstComment = true;
-            }
-            var user = _userStore.GetUser(userId);
-            if (!_userViewModelDict.TryGetValue(userId, out UserViewModel userVm))
-            {
-                userVm = new UserViewModel(user);
-                _userViewModelDict.Add(userId, userVm);
-            }
-            var cvm = new OpenrecCommentViewModel(data, _options, _siteOptions,  this, isFirstComment, user);
-            return cvm;
-        }
+        //    if (_userCommentCountDict.ContainsKey(userId))
+        //    {
+        //        _userCommentCountDict[userId]++;
+        //        isFirstComment = false;
+        //    }
+        //    else
+        //    {
+        //        _userCommentCountDict.Add(userId, 1);
+        //        isFirstComment = true;
+        //    }
+        //    var user = _userStore.GetUser(userId);
+        //    if (!_userViewModelDict.TryGetValue(userId, out UserViewModel userVm))
+        //    {
+        //        userVm = new UserViewModel(user);
+        //        _userViewModelDict.Add(userId, userVm);
+        //    }
+        //    var cvm = new OpenrecCommentViewModel(data, _options, _siteOptions,  this, isFirstComment, user);
+        //    return cvm;
+        //}
         private static string GetUserAgent(BrowserType browser)
         {
             string userAgent;
@@ -362,8 +471,8 @@ namespace OpenrecSitePlugin
                 {
                     var comment = Tools.Parse(chat.Comment);
                     var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                    var cvm = CreateCommentViewModel(commentData);
-                    CommentReceived?.Invoke(this, cvm);
+                    var messageContext = CreateMessageContext(comment, commentData);
+                    MessageReceived?.Invoke(this, messageContext);
                 }
                 else if (e is PacketMessageEventMessageAudienceCount audienceCount)
                 {

@@ -66,6 +66,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\CommentViewModel\OpenrecCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwitchCommentViewModel.cs" />
     <Compile Include="ViewModels\ConnectionSerializer.cs" />
     <Compile Include="ViewModels\IMcvCommentViewModel.cs" />
@@ -217,6 +218,10 @@
     <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj">
       <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
       <Name>NicoSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
+      <Project>{02a55625-e735-4909-a470-e8405eee1a32}</Project>
+      <Name>OpenrecIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj">
       <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>

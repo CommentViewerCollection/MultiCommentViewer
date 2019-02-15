@@ -291,29 +291,6 @@ namespace TwitchSitePlugin
         public string Id { get; set; }
         public DateTime SentAt { get; internal set; }
     }
-    class MyWebClient : WebClient
-    {
-        protected override WebRequest GetWebRequest(Uri address)
-        {
-            var req = base.GetWebRequest(address);
-            if (req is HttpWebRequest http)
-            {
-                http.CookieContainer = _cc;
-                foreach (var header in _headers)
-                {
-                    http.Headers.Add(header.Key, header.Value);
-                }
-            }
-            return req;
-        }
-        private readonly CookieContainer _cc;
-        readonly IEnumerable<KeyValuePair<string, string>> _headers;
-        public MyWebClient(CookieContainer cc, IEnumerable<KeyValuePair<string, string>> headers)
-        {
-            _cc = cc;
-            _headers = headers;
-        }
-    }
     public class MessageImage : IMessageImage
     {
         public int? Width { get; set; }

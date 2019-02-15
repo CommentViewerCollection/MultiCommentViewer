@@ -158,8 +158,21 @@ namespace TwitchSitePlugin
                                 isFirstComment = true;
                             }
                             var user = _userStore.GetUser(userId);
-                            var cvm = new TwitchCommentViewModel(_options, _siteOptions, commentData, isFirstComment, this, user);
-                            CommentReceived?.Invoke(this, cvm);
+
+                            var message = new TwitchComment(result.Raw)
+                            {
+                                CommentItems = Tools.GetMessageItems(result),
+                                Id = commentData.Id,
+                                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Username) },
+                                PostTime = commentData.SentAt.ToString("HH:mm:ss"),
+                                UserId = commentData.UserId,
+                            };
+                            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                            var methods = new TwitchMessageMethods();
+                            var messageContext = new TwitchMessageContext(message, metadata, methods);
+                            MessageReceived?.Invoke(this, messageContext);
+                            //var cvm = new TwitchCommentViewModel(_options, _siteOptions, commentData, isFirstComment, this, user);
+                            //CommentReceived?.Invoke(this, cvm);
                         }
                         break;
                     default:

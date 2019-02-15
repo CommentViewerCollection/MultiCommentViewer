@@ -1,6 +1,8 @@
-﻿namespace TwitchSitePlugin
+﻿using System.ComponentModel;
+
+namespace TwitchSitePlugin
 {
-    interface ITwitchSiteOptions
+    interface ITwitchSiteOptions: INotifyPropertyChanged
     {
         bool NeedAutoSubNickname { get; }
     }

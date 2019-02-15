@@ -54,6 +54,12 @@
     <Compile Include="IWebSocket.cs" />
     <Compile Include="Me.cs" />
     <Compile Include="MessageProvider.cs" />
+    <Compile Include="Message\MessageMetadata.cs" />
+    <Compile Include="Message\TwitchComment.cs" />
+    <Compile Include="Message\TwitchConnected.cs" />
+    <Compile Include="Message\TwitchDisconnected.cs" />
+    <Compile Include="Message\TwitchMessageContext.cs" />
+    <Compile Include="Message\TwitchMessageMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TabPagePanel.xaml.cs">
       <DependentUpon>TabPagePanel.xaml</DependentUpon>
@@ -82,6 +88,10 @@
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
+      <Project>{aa70074d-1c40-4cc0-9e1c-7acdcbdd7d32}</Project>
+      <Name>TwitchIF</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Page Include="TabPagePanel.xaml">
@@ -100,5 +110,6 @@
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

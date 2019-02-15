@@ -66,6 +66,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\CommentViewModel\TwitchCommentViewModel.cs" />
     <Compile Include="ViewModels\ConnectionSerializer.cs" />
     <Compile Include="ViewModels\IMcvCommentViewModel.cs" />
     <Compile Include="Views\CommentDataGrid.xaml.cs">
@@ -224,6 +225,10 @@
     <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj">
       <Project>{ebcbadab-c5be-440a-be08-c660244d1f15}</Project>
       <Name>TwicasSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
+      <Project>{aa70074d-1c40-4cc0-9e1c-7acdcbdd7d32}</Project>
+      <Name>TwitchIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
       <Project>{5a83afc8-e6ce-4dd2-8389-1f43a731388f}</Project>

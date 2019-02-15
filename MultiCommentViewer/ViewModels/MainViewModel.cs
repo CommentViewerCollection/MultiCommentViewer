@@ -550,6 +550,13 @@ namespace MultiCommentViewer
                     mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
+            else if(messageContext.Message is TwitchSitePlugin.ITwitchMessage twitchMessage)
+            {
+                if(twitchMessage is TwitchSitePlugin.ITwitchComment comment)
+                {
+                    mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
             if (mcvCvm != null)
             {
                 _comments.Add(mcvCvm);

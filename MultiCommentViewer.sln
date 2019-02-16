@@ -79,6 +79,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwitchIF", "TwitchIF\Twitch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenrecIF", "OpenrecIF\OpenrecIF.csproj", "{02A55625-E735-4909-A470-E8405EEE1A32}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineLiveIF", "LineLiveIF\LineLiveIF.csproj", "{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -221,6 +223,10 @@ Global
 		{02A55625-E735-4909-A470-E8405EEE1A32}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02A55625-E735-4909-A470-E8405EEE1A32}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02A55625-E735-4909-A470-E8405EEE1A32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

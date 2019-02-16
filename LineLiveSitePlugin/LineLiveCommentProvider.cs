@@ -371,6 +371,102 @@ namespace LineLiveSitePlugin
         {
             return Tools.FromUnixTime(unixTime).ToString("HH:mm:ss");
         }
+        private LineLiveMessageContext CreateMessageContext(ParseMessage.IMessage message, ParseMessage.IUser sender, string raw, bool isFirstComment)
+        {
+            LineLiveMessageContext messageContext;
+            if (message is ParseMessage.IMessageData comment)
+            {
+                var user = _userStore.GetUser(sender.Id.ToString());
+                var m = new LineLiveComment(raw)
+                {
+                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment.Message) },
+                    NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(sender.DisplayName) },
+                    Id = null,
+                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(comment.SentAt).ToString("HH:mm:ss"),
+                    UserIcon = new MessageImage { Url = sender.IconUrl },
+                    UserId = sender.Id.ToString(),
+                };
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var methods = new LineLiveMessageMethods();
+                messageContext = new LineLiveMessageContext(m, metadata, methods);
+            }
+            else if (message is ParseMessage.ILove love)
+            {
+                var user = _userStore.GetUser(sender.Id.ToString());
+                var str = sender.DisplayName + "さんがハートを送りました！";
+                var m = new LineLiveItem(raw)
+                {
+                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(str) },
+                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(love.SentAt).ToString("HH:mm:ss"),
+                    Id = null,
+                    NameItems = null,
+                    UserIcon = null,
+                    UserId = null,
+                };
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var methods = new LineLiveMessageMethods();
+                messageContext = new LineLiveMessageContext(m, metadata, methods);
+            }
+            else if (message is ParseMessage.IFollowStartData follow)
+            {
+                var user = _userStore.GetUser(sender.Id.ToString());
+                var msg = sender.DisplayName + "さんがフォローしました！";
+                var m = new LineLiveItem(raw)
+                {
+                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) },
+                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(follow.FollowedAt).ToString("HH:mm:ss"),
+                    Id = null,
+                    NameItems = null,
+                    UserIcon = null,
+                    UserId = null,
+                };
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var methods = new LineLiveMessageMethods();
+                messageContext = new LineLiveMessageContext(m, metadata, methods);
+            }
+            else if (message is ParseMessage.IGiftMessage gift)
+            {
+                var user = _userStore.GetUser(sender.Id.ToString());
+                if (_loveIconUrlDict.ContainsKey(gift.ItemId))
+                {
+                    gift.Url = _loveIconUrlDict[gift.ItemId];
+                }
+                else
+                {
+                    gift.Url = "";
+                }
+                List<IMessagePart> messageItems;
+                if (gift.ItemId == "limited-love-gift" || string.IsNullOrEmpty(gift.Url))
+                {
+                    //{"type":"giftMessage","data":{"message":"","type":"LOVE","itemId":"limited-love-gift","quantity":1,"displayName":"limited.love.gift.item","sender":{"id":2903515,"hashedId":"715i4MKqyv","displayName":"上杉The Times","iconUrl":"https://scdn.line-apps.com/obs/0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew/f64x64","hashedIconId":"0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew","isGuest":false,"isBlocked":false},"isNGGift":false,"sentAt":1531445716,"key":"2426265.29035150000000000000","blockedByCms":false}}
+                    var msg = sender.DisplayName + "さんがハートで応援ポイントを送りました！";
+                    messageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
+                }
+                else
+                {
+                    var msg = sender.DisplayName + "さんが" + gift.Quantity + "コインプレゼントしました！";
+                    messageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg), new MessageImage { Url = gift.Url } };
+                }
+
+                var m = new LineLiveItem(raw)
+                {
+                    CommentItems = messageItems,
+                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(gift.SentAt).ToString("HH:mm:ss"),
+                    Id = null,
+                    NameItems = null,
+                    UserIcon = null,
+                    UserId = null,
+                };
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var methods = new LineLiveMessageMethods();
+                messageContext = new LineLiveMessageContext(m, metadata, methods);
+            }
+            else
+            {
+                messageContext = null;
+            }
+            return messageContext;
+        }
         private ICommentViewModel Parse(ParseMessage.IMessage message, ParseMessage.IUser sender)
         {
             ICommentViewModel cvm;
@@ -446,20 +542,18 @@ namespace LineLiveSitePlugin
                     if (!_isFirstConnection)
                         return;
                     _isFirstConnection = false;
-                    var list = new List<ICommentViewModel>();
-                    foreach (var (bulkItemMessage, bulkItemUser) in bulk.Messages)
+                    foreach (var (bulkItemMessage, bulkItemUser, raw) in bulk.Messages)
                     {
-                        var cvm = Parse(bulkItemMessage, bulkItemUser);
-                        if (cvm == null) continue;
-                        list.Add(cvm);
+                        var messageContext = CreateMessageContext(bulkItemMessage, bulkItemUser, raw, true);
+                        if (messageContext == null) continue;
+                        MessageReceived?.Invoke(this, messageContext);
                     }
-                    InitialCommentsReceived?.Invoke(this, list);
                 }
                 else
                 {
-                    var cvm = Parse(data.message, data.sender);
-                    if (cvm == null) return;
-                    CommentReceived?.Invoke(this, cvm);
+                    var messageContext = CreateMessageContext(data.message, data.sender, "", false);
+                    if (messageContext == null) return;
+                    MessageReceived?.Invoke(this, messageContext);
                 }
             }
             catch(ParseException ex)

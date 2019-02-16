@@ -238,7 +238,7 @@ namespace LineLiveSitePlugin
 
 //        }
 //    }
-//    class TwitchCommentProvider : ICommentProvider
+//    class LineLiveCommentProvider : ICommentProvider
 //    {
 //        private bool _canConnect;
 //        public bool CanConnect
@@ -339,13 +339,13 @@ namespace LineLiveSitePlugin
 //                    {
 //                        var commentData = new CommentData(result);
 //                        var user = _userStore.GetUser(commentData.UserId);
-//                        if (!_userCommentDict.TryGetValue(user, out ObservableCollection<TwitchCommentViewModel> userComments))
+//                        if (!_userCommentDict.TryGetValue(user, out ObservableCollection<LineLiveCommentViewModel> userComments))
 //                        {
-//                            userComments = new ObservableCollection<TwitchCommentViewModel>();
+//                            userComments = new ObservableCollection<LineLiveCommentViewModel>();
 //                            _userCommentDict.Add(user, userComments);
 //                        }
 //                        var isFirstComment = userComments.Count == 0;
-//                        var cvm = new TwitchCommentViewModel(_options, _siteOptions, commentData, _emotIcons, isFirstComment, this, user);
+//                        var cvm = new LineLiveCommentViewModel(_options, _siteOptions, commentData, _emotIcons, isFirstComment, this, user);
 //                        await _dispatcher.BeginInvoke((Action)(() =>
 //                        {
 //                            userComments.Add(cvm);
@@ -354,7 +354,7 @@ namespace LineLiveSitePlugin
 //                    }
 //                    break;
 //                default:
-//                    Debug.WriteLine($"Twitch unknown command={result.Command}");
+//                    Debug.WriteLine($"LineLive unknown command={result.Command}");
 //                    var info = new InfoCommentViewModel(_options, result.Raw, InfoType.Debug);
 //                    CommentReceived?.Invoke(this, info);
 //                    break;
@@ -409,14 +409,14 @@ namespace LineLiveSitePlugin
 //            var s = $"PRIVMSG {_channelName} :{text}";
 //            await Task.FromResult<object>(null);
 //        }
-//        private readonly Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwitchCommentViewModel>>();
+//        private readonly Dictionary<IUser, ObservableCollection<LineLiveCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<LineLiveCommentViewModel>>();
 //        private readonly IDataServer _server;
 //        private readonly ILogger _logger;
 //        private readonly ICommentOptions _options;
-//        private readonly TwitchSiteOptions _siteOptions;
+//        private readonly LineLiveSiteOptions _siteOptions;
 //        private readonly IUserStore _userStore;
 //        private readonly Dispatcher _dispatcher;
-//        public TwitchCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
+//        public LineLiveCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStore userStore, Dispatcher dispacher)
 //        {
 //            _server = server;
 //            _logger = logger;
@@ -429,30 +429,30 @@ namespace LineLiveSitePlugin
 //            CanDisconnect = false;
 //        }
 //    }
-//    public class TwitchSiteContext : ISiteContext
+//    public class LineLiveSiteContext : ISiteContext
 //    {
 //        public Guid Guid => new Guid("22F7824A-EA1B-411E-85CA-6C9E6BE94E39");
 
-//        public string DisplayName => "Twitch";
+//        public string DisplayName => "LineLive";
 
 //        public IOptionsTabPage TabPanel
 //        {
 //            get
 //            {
 //                var panel = new TabPagePanel();
-//                panel.SetViewModel(new TwitchSiteOptionsViewModel(_siteOptions));
-//                return new TwitchOptionsTabPage(DisplayName, panel);
+//                panel.SetViewModel(new LineLiveSiteOptionsViewModel(_siteOptions));
+//                return new LineLiveOptionsTabPage(DisplayName, panel);
 //            }
 //        }
 
 //        public ICommentProvider CreateCommentProvider()
 //        {
-//            return new TwitchCommentProvider(new TwitchServer(), _logger, _options, _siteOptions, _userStore, _dispatcher);
+//            return new LineLiveCommentProvider(new LineLiveServer(), _logger, _options, _siteOptions, _userStore, _dispatcher);
 //        }
-//        private TwitchSiteOptions _siteOptions;
+//        private LineLiveSiteOptions _siteOptions;
 //        public void LoadOptions(string path, IIo io)
 //        {
-//            _siteOptions = new TwitchSiteOptions();
+//            _siteOptions = new LineLiveSiteOptions();
 //            try
 //            {
 //                var s = io.ReadFile(path);
@@ -496,7 +496,7 @@ namespace LineLiveSitePlugin
 //        private readonly ILogger _logger;
 //        private readonly IUserStore _userStore;
 //        private readonly Dispatcher _dispatcher;
-//        public TwitchSiteContext(ICommentOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
+//        public LineLiveSiteContext(ICommentOptions options, ILogger logger, IUserStore userStore, Dispatcher dispatcher)
 //        {
 //            _options = options;
 //            _logger = logger;

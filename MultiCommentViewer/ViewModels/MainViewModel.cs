@@ -572,6 +572,17 @@ namespace MultiCommentViewer
                     mcvCvm = new OpenrecCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
+            else if (messageContext.Message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
+            {
+                if (lineliveMessage is LineLiveSitePlugin.ILineLiveComment comment)
+                {
+                    mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if(lineliveMessage is LineLiveSitePlugin.ILineLiveItem item)
+                {
+                    mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
             if (mcvCvm != null)
             {
                 _comments.Add(mcvCvm);

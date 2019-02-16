@@ -11,50 +11,50 @@ namespace LineLiveSitePlugin
         public override string UserId { get; }
         private readonly ILineLiveSiteOptions _siteOptions;
         //ParseMessage.IMessage _message;
-   //     public LineLiveCommentViewModel(ICommentOptions options, ILineLiveSiteOptions siteOptions, ParseMessage.ILove data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
-   //         base(options, user, cp, false)
-   //     {
-   //         MessageType = MessageType.BroadcastInfo;
-   //         _siteOptions = siteOptions;
-   //         _message = data;
-   //         CommentProvider = cp;
-   //         var msg = sender.DisplayName + "さんがハートを送りました！";
-   //         MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
-   //         Init();
-   //     }
-   //     public LineLiveCommentViewModel(ICommentOptions options, ILineLiveSiteOptions siteOptions, ParseMessage.IGiftMessage data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
-   //base(options, user, cp, false)
-   //     {
-   //         MessageType = MessageType.BroadcastInfo;
-   //         _siteOptions = siteOptions;
-   //         _message = data;
-   //         CommentProvider = cp;
-   //         //2018/07/13
-   //         if (data.ItemId == "limited-love-gift" || string.IsNullOrEmpty(data.Url))
-   //         {
-   //             //{"type":"giftMessage","data":{"message":"","type":"LOVE","itemId":"limited-love-gift","quantity":1,"displayName":"limited.love.gift.item","sender":{"id":2903515,"hashedId":"715i4MKqyv","displayName":"上杉The Times","iconUrl":"https://scdn.line-apps.com/obs/0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew/f64x64","hashedIconId":"0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew","isGuest":false,"isBlocked":false},"isNGGift":false,"sentAt":1531445716,"key":"2426265.29035150000000000000","blockedByCms":false}}
-   //             var msg = sender.DisplayName + "さんがハートで応援ポイントを送りました！";
-   //             MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
-   //         }
-   //         else
-   //         {
-   //             var msg = sender.DisplayName + "さんが" + data.Quantity + "コインプレゼントしました！";
-   //             MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg), new MessageImage { Url = data.Url } };
-   //         }
-   //         Init();
-   //     }
-   //     public LineLiveCommentViewModel(ICommentOptions options, ILineLiveSiteOptions siteOptions, ParseMessage.IFollowStartData data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
-   //         base(options, user, cp, false)
-   //     {
-   //         MessageType = MessageType.BroadcastInfo;
-   //         _siteOptions = siteOptions;
-   //         _message = data;
-   //         CommentProvider = cp;
-   //         var msg = sender.DisplayName + "さんがフォローしました！";
-   //         MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
-   //         Init();
-   //     }
-        public LineLiveCommentViewModel(ICommentOptions options,ILineLiveSiteOptions siteOptions, ParseMessage.IMessageData data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
+        //     public LineLiveCommentViewModel(ICommentOptions options, ILineLiveSiteOptions siteOptions, ParseMessage.ILove data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
+        //         base(options, user, cp, false)
+        //     {
+        //         MessageType = MessageType.BroadcastInfo;
+        //         _siteOptions = siteOptions;
+        //         _message = data;
+        //         CommentProvider = cp;
+        //         var msg = sender.DisplayName + "さんがハートを送りました！";
+        //         MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
+        //         Init();
+        //     }
+        //     public LineLiveCommentViewModel(ICommentOptions options, ILineLiveSiteOptions siteOptions, ParseMessage.IGiftMessage data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
+        //base(options, user, cp, false)
+        //     {
+        //         MessageType = MessageType.BroadcastInfo;
+        //         _siteOptions = siteOptions;
+        //         _message = data;
+        //         CommentProvider = cp;
+        //         //2018/07/13
+        //         if (data.ItemId == "limited-love-gift" || string.IsNullOrEmpty(data.Url))
+        //         {
+        //             //{"type":"giftMessage","data":{"message":"","type":"LOVE","itemId":"limited-love-gift","quantity":1,"displayName":"limited.love.gift.item","sender":{"id":2903515,"hashedId":"715i4MKqyv","displayName":"上杉The Times","iconUrl":"https://scdn.line-apps.com/obs/0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew/f64x64","hashedIconId":"0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew","isGuest":false,"isBlocked":false},"isNGGift":false,"sentAt":1531445716,"key":"2426265.29035150000000000000","blockedByCms":false}}
+        //             var msg = sender.DisplayName + "さんがハートで応援ポイントを送りました！";
+        //             MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
+        //         }
+        //         else
+        //         {
+        //             var msg = sender.DisplayName + "さんが" + data.Quantity + "コインプレゼントしました！";
+        //             MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg), new MessageImage { Url = data.Url } };
+        //         }
+        //         Init();
+        //     }
+        //     public LineLiveCommentViewModel(ICommentOptions options, ILineLiveSiteOptions siteOptions, ParseMessage.IFollowStartData data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
+        //         base(options, user, cp, false)
+        //     {
+        //         MessageType = MessageType.BroadcastInfo;
+        //         _siteOptions = siteOptions;
+        //         _message = data;
+        //         CommentProvider = cp;
+        //         var msg = sender.DisplayName + "さんがフォローしました！";
+        //         MessageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
+        //         Init();
+        //     }
+        public LineLiveCommentViewModel(ICommentOptions options, ILineLiveSiteOptions siteOptions, ParseMessage.IMessageData data, ParseMessage.IUser sender, IUser user, ICommentProvider cp) :
             base(options, user, cp, false)
         {
             MessageType = MessageType.Comment;

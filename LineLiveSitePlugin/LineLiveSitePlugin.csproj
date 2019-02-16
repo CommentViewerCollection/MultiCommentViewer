@@ -83,6 +83,12 @@
     <Compile Include="Low\PromptlyStats.cs" />
     <Compile Include="Low\SystemMessage.cs" />
     <Compile Include="MessageProvider.cs" />
+    <Compile Include="Message\LineLiveMessageMetadata.cs" />
+    <Compile Include="Message\LineLiveComment.cs" />
+    <Compile Include="Message\LineLiveConnected.cs" />
+    <Compile Include="Message\LineLiveDisconnected.cs" />
+    <Compile Include="Message\LineLiveMessageContext.cs" />
+    <Compile Include="Message\LineLiveMessageMethods.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="PromptyStatsProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -100,6 +106,14 @@
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj">
+      <Project>{c45009ce-c7ba-4a23-ae39-1f8cc5339b2f}</Project>
+      <Name>LineLiveIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{aaf4779f-f8bf-4794-a6e8-4ed88a8b6b68}</Project>
+      <Name>SitePluginCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

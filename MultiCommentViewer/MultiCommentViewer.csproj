@@ -67,6 +67,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ViewModels\CommentViewModel\OpenrecCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\LineLiveCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwitchCommentViewModel.cs" />
     <Compile Include="ViewModels\ConnectionSerializer.cs" />
     <Compile Include="ViewModels\IMcvCommentViewModel.cs" />
@@ -202,6 +203,10 @@
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj">
+      <Project>{c45009ce-c7ba-4a23-ae39-1f8cc5339b2f}</Project>
+      <Name>LineLiveIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\LineLiveSitePlugin\LineLiveSitePlugin.csproj">
       <Project>{33c8afd8-24f3-481e-ad0c-9f24ad6cdee4}</Project>

@@ -1,9 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Media;
 
 namespace LineLiveSitePlugin
 {
-    interface ISiteOptions<T>
+    interface ISiteOptions<T>:INotifyPropertyChanged
     {
         T Clone();
         void Set(T t);

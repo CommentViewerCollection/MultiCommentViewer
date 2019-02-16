@@ -583,6 +583,13 @@ namespace MultiCommentViewer
                     mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
+            else if (messageContext.Message is NicoSitePlugin.INicoMessage nicoMessage)
+            {
+                if (nicoMessage is NicoSitePlugin.INicoComment comment)
+                {
+                    mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
             if (mcvCvm != null)
             {
                 _comments.Add(mcvCvm);
@@ -612,6 +619,8 @@ namespace MultiCommentViewer
         }
         private async void Connection_MessageReceived(object sender, IMessageContext e)
         {
+            Debug.Assert(e != null);
+            if (e == null) return;
             var connectionViewModel = sender as ConnectionViewModel;
             Debug.Assert(connectionViewModel != null);
             var methods = e.Methods;

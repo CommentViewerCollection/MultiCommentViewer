@@ -21,6 +21,7 @@ namespace NicoSitePlugin
         void Disconnect();
         event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         event EventHandler<ICommentViewModel> CommentReceived;
+        event EventHandler<IMessageContext> MessageReceived;
         event EventHandler<IMetadata> MetadataUpdated;
         event EventHandler<ConnectedEventArgs> Connected;
         bool IsValidInput(string input);
@@ -38,6 +39,7 @@ namespace NicoSitePlugin
 
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<ICommentViewModel> CommentReceived;
+        public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler<ConnectedEventArgs> Connected;
 
@@ -104,6 +106,7 @@ namespace NicoSitePlugin
 
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<ICommentViewModel> CommentReceived;
+        public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler<ConnectedEventArgs> Connected;
 
@@ -194,6 +197,7 @@ namespace NicoSitePlugin
         #region INicoCommentProviderInternal
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<ICommentViewModel> CommentReceived;
+        public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler<ConnectedEventArgs> Connected;
         public void BeforeConnect()
@@ -406,13 +410,19 @@ namespace NicoSitePlugin
         private void ChatProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
         {
             try
-            {
-                var items = e.Chat.Select(c =>
+            {                
+                foreach(var chat in e.Chat)
                 {
-                    ICommentViewModel cvm = CreateCommentViewModel(c, e.RoomInfo);
-                    return cvm;
-                }).Where(c => c != null).ToList();
-                InitialCommentsReceived?.Invoke(this, items);
+                    var messageContext = CreateMessageContext(chat, e.RoomInfo, true);
+                    if (messageContext == null) continue;
+                    MessageReceived?.Invoke(this, messageContext);
+                }
+                //var items = e.Chat.Select(c =>
+                //{
+                //    ICommentViewModel cvm = CreateCommentViewModel(c, e.RoomInfo);
+                //    return cvm;
+                //}).Where(c => c != null).ToList();
+                //InitialCommentsReceived?.Invoke(this, items);
             }
             catch (Exception ex)
             {
@@ -426,9 +436,13 @@ namespace NicoSitePlugin
         {
             try
             {
-                var cvm = CreateCommentViewModel(e.Chat, e.RoomInfo);
-                if (cvm == null) return;
-                CommentReceived?.Invoke(this, cvm);
+                var messageContext = CreateMessageContext(e.Chat, e.RoomInfo, false);
+                if (messageContext == null) return;
+                MessageReceived?.Invoke(this, messageContext);
+
+                //var cvm = CreateCommentViewModel(e.Chat, e.RoomInfo);
+                //if (cvm == null) return;
+                //CommentReceived?.Invoke(this, cvm);
             }
             catch (Exception ex)
             {
@@ -516,8 +530,69 @@ namespace NicoSitePlugin
             var cvm = new NicoCommentViewModel2(_options, _siteOptions, chat, roomInfo.Name, user, _commentProvider, isFirstComment);
             return cvm;
         }
-
-
+        private NicoMessageContext CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isFirstComment)
+        {
+            NicoMessageContext messageContext = null;
+            if (chat.Premium.HasValue)
+            {
+                Debug.WriteLine($"{chat.Thread},{chat.Premium.Value},{chat.Text}");
+            }
+            //追い出しコマンドは除外
+            if (chat.Text.StartsWith("/hb ifseetno "))
+            {
+                //SendSystemInfo($"kick command={chat.Text}", InfoType.Debug);
+                return null;
+            }
+            //アリーナ以外の運営コメントは除外
+            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Thread != _mainRoomThreadId)
+            {
+                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
+                return null;
+            }
+            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Text.StartsWith("/uadpoint"))
+            {
+                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
+                return null;
+            }
+            //アリーナ以外のBSPコメントは除外
+            if (chat.IsBsp && chat.Thread != _mainRoomThreadId)
+            {
+                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
+                return null;
+            }
+            if (chat.Text.StartsWith("/nicoad "))
+            {
+                chat.Text = GetAdComment(chat.Text);
+            }
+            var userId = chat.UserId;
+            var user = _userStore.GetUser(userId);
+            string id;
+            if (chat.No.HasValue)
+            {
+                var shortName = Tools.GetShortRoomName(roomInfo.Name);
+                id = $"{shortName}:{chat.No}";
+            }
+            else
+            {
+                id = roomInfo.Name;
+            }
+            var message = new NicoComment(chat.Raw)
+            {
+                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(chat.Text) },
+                Id = id,
+                NameItems = null,
+                PostTime = null,
+                UserIcon = null,
+                UserId = null,
+                ChatNo =chat.No,
+                RoomName =roomInfo.Name,
+                Is184 = Tools.Is184UserId(chat.UserId),
+            };
+            var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment);
+            var methods = new NicoMessageMethods();
+            messageContext = new NicoMessageContext(message, metadata, methods);
+            return messageContext;
+        }
     }
     class NicoCommentProvider : INicoCommentProvider
     {
@@ -646,6 +721,7 @@ namespace NicoSitePlugin
             _internal.InitialCommentsReceived += (s, e) => InitialCommentsReceived?.Invoke(s, e);
             _internal.CommentReceived += (s, e) => CommentReceived?.Invoke(s, e);
             _internal.MetadataUpdated += (s, e) => MetadataUpdated?.Invoke(s, e);
+            _internal.MessageReceived += (s, e) => MessageReceived?.Invoke(s, e);
             try
             {
                 await _internal.ConnectAsync(input, cc);

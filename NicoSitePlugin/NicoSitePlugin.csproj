@@ -57,6 +57,12 @@
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="CommentPostPanelViewModel.cs" />
+    <Compile Include="Message\NicoComment.cs" />
+    <Compile Include="Message\NicoConnected.cs" />
+    <Compile Include="Message\NicoDisconnected.cs" />
+    <Compile Include="Message\NicoMessageContext.cs" />
+    <Compile Include="Message\NicoMessageMetadata.cs" />
+    <Compile Include="Message\NicoMessageMethods.cs" />
     <Compile Include="Next20181012\IXmlSocketRoomInfo.cs" />
     <Compile Include="Low\CommunityInfo.cs" />
     <Compile Include="DataSource.cs" />
@@ -125,6 +131,10 @@
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
+      <Project>{daf5e126-c37f-4181-aae5-89e8fc89aae4}</Project>
+      <Name>NicoLiveIF</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

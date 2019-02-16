@@ -65,6 +65,12 @@ namespace NicoSitePlugin
             {
                 return "ｱ";
             }
+            var match0 = Regex.Match(roomName, "^立ち見(\\d+)$");
+            if (match0.Success)
+            {
+                var num = match0.Groups[1].Value;
+                return "立" + num;
+            }
             //2018/07/06ニコ生コミュニティの立ち見？列：A～Z→[→\→]→^→_→`→a～z
             var match = Regex.Match(roomName, "^立ち見(.+)列$");
             if (match.Success)

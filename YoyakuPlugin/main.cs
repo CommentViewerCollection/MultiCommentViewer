@@ -63,7 +63,7 @@ namespace OpenrecYoyakuPlugin
         }
         public void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata)
         {
-            if (!_options.IsEnabled || messageMetadata.IsNgUser)
+            if (!_options.IsEnabled || messageMetadata.IsNgUser || messageMetadata.IsInitialComment)
                 return;
 
             if (message is IMessageComment comment)

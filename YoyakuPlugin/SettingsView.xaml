@@ -86,7 +86,7 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridCheckBoxColumn Header="呼出済" Binding="{Binding HadCalled}" IsReadOnly="True">
+                    <DataGridCheckBoxColumn Header="呼出済" Binding="{Binding HadCalled, Mode=TwoWay}">
                     </DataGridCheckBoxColumn>
                 </DataGrid.Columns>
             </DataGrid>

@@ -15,7 +15,7 @@ namespace CommentViewer.Plugin
     {
         [DataMember]
         private bool _isEnabled = false;
-        public bool IsEnabled
+        public virtual bool IsEnabled
         {
             get { return _isEnabled; }
             set
@@ -30,7 +30,7 @@ namespace CommentViewer.Plugin
         /// <summary>
         /// HTML5コメジェネの設定ファイルの場所
         /// </summary>
-        public string HcgSettingFilePath
+        public virtual string HcgSettingFilePath
         {
             get { return _hcgSettingFilePath; }
             set

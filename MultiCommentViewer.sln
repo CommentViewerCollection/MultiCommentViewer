@@ -83,6 +83,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineLiveIF", "LineLiveIF\Li
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoLiveIF", "NicoLiveIF\NicoLiveIF.csproj", "{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentGeneratorPluginTests", "CommentGeneratorPluginTests\CommentGeneratorPluginTests.csproj", "{E5C007C8-34BB-4BEB-9076-50EECE6CDF1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -233,6 +235,10 @@ Global
 		{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5C007C8-34BB-4BEB-9076-50EECE6CDF1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5C007C8-34BB-4BEB-9076-50EECE6CDF1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5C007C8-34BB-4BEB-9076-50EECE6CDF1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5C007C8-34BB-4BEB-9076-50EECE6CDF1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

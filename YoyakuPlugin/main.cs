@@ -81,7 +81,7 @@ namespace OpenrecYoyakuPlugin
             try
             {
                 var s = Host.LoadOptions(GetSettingsFilePath());
-                _options.Deserialize(s);
+                options.Deserialize(s);
             }
             catch (System.IO.FileNotFoundException) { }
             return options;

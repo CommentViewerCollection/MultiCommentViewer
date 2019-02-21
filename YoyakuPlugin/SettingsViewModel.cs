@@ -482,28 +482,34 @@ namespace OpenrecYoyakuPlugin
 
             if (IsYoyakuCommand(comment))
             {
-                if (FindUser(userId) == null)
+                lock (RegisteredUsers)
                 {
-                    //未登録なら登録する
-                    _dispatcher.Invoke(() =>
+                    if (FindUser(userId) == null)
                     {
-                        var user = new User { Date = GetCurrentDateTime(), Id = userId, Name = nickname, HadCalled = false };
-                        RegisteredUsers.Add(user);
-                        WriteComment(Reserved_Message.Replace("$name", nickname));
-                    });
+                        //未登録なら登録する
+                        _dispatcher.Invoke(() =>
+                        {
+                            var user = new User { Date = GetCurrentDateTime(), Id = userId, Name = nickname, HadCalled = false };
+                            RegisteredUsers.Add(user);
+                            WriteComment(Reserved_Message.Replace("$name", nickname));
+                        });
+                    }
                 }
             }
             else if (IsTorikeshiCommand(comment))
             {
-                var user = FindUser(userId);
-                if (user != null)
+                lock (RegisteredUsers)
                 {
-                    //登録済みなら取り消す
-                    _dispatcher.Invoke(() =>
+                    var user = FindUser(userId);
+                    if (user != null)
                     {
-                        RegisteredUsers.Remove(user);
-                        WriteComment(Delete_Message.Replace("$name", nickname));
-                    });
+                        //登録済みなら取り消す
+                        _dispatcher.Invoke(() =>
+                        {
+                            RegisteredUsers.Remove(user);
+                            WriteComment(Delete_Message.Replace("$name", nickname));
+                        });
+                    }
                 }
             }
             else if (IsKakuninCommand(comment))

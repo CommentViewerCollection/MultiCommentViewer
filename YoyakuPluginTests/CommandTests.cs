@@ -102,9 +102,9 @@ namespace YoyakuPluginTests
         {
             AddComment("/yoyaku", "1");
             var ms = _vm.RegisteredUsers.ToArray();
-            Assert.AreEqual(new[]{
+            CheckResult(new[]{
                 new User{  Id="1" },
-                }, ms);
+                });
         }
         [Test]
         public void 複数人が登録可能か()
@@ -112,10 +112,10 @@ namespace YoyakuPluginTests
             AddComment("/yoyaku", "1");
             AddComment("/yoyaku", "2");
             var ms = _vm.RegisteredUsers.ToArray();
-            Assert.AreEqual(new[]{
+            CheckResult(new[]{
                 new User{  Id="1" },
                 new User{  Id="2" },
-                }, ms);
+                });
         }
         [Test]
         public void 登録済みの場合に重複登録されないか()
@@ -123,9 +123,9 @@ namespace YoyakuPluginTests
             AddComment("/yoyaku", "1");
             AddComment("/yoyaku", "1");
             var ms = _vm.RegisteredUsers.ToArray();
-            Assert.AreEqual(new[]{
+            CheckResult(new[]{
                 new User{  Id="1" },
-                }, ms);
+                });
         }
         [Test]
         public void 取り消しが正常に動作するか()
@@ -134,9 +134,14 @@ namespace YoyakuPluginTests
             AddComment("/yoyaku", "2");
             AddComment("/torikeshi", "1");
             var ms = _vm.RegisteredUsers.ToArray();
-            Assert.AreEqual(new[]{
+            CheckResult(new[]{
                 new User{  Id="2" },
-                }, ms);
+                });
+        }
+        private void CheckResult(User[] expected)
+        {
+            var ms = _vm.RegisteredUsers.ToArray();
+            Assert.AreEqual(expected, ms);
         }
         private void AddComment(string comment, string userId)
         {

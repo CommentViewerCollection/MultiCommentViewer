@@ -468,11 +468,17 @@ namespace OpenrecYoyakuPlugin
         {
             _host.PostCommentToAll(comment);
         }
+        protected virtual DateTime GetCurrentDateTime()
+        {
+            return DateTime.Now;
+        }
         public void SetComment(string userId, string nickname, string comment)
         {
             //"/yoyaku"
             //"/torikeshi"
             //"/kakunin"
+
+            if (string.IsNullOrEmpty(userId)) return;
 
             if (IsYoyakuCommand(comment))
             {
@@ -481,7 +487,7 @@ namespace OpenrecYoyakuPlugin
                     //未登録なら登録する
                     _dispatcher.Invoke(() =>
                     {
-                        var user = new User { Date = DateTime.Now, Id = userId, Name = nickname, HadCalled = false };
+                        var user = new User { Date = GetCurrentDateTime(), Id = userId, Name = nickname, HadCalled = false };
                         RegisteredUsers.Add(user);
                         WriteComment(Reserved_Message.Replace("$name", nickname));
                     });
@@ -646,7 +652,7 @@ namespace OpenrecYoyakuPlugin
             Explain_Message = _options.Explain_Message;
         }
         private readonly IPluginHost _host;
-        private readonly DynamicOptions _options;
+        private readonly IOptions _options;
         private readonly Dispatcher _dispatcher;
         public SettingsViewModel()
         {
@@ -658,7 +664,7 @@ namespace OpenrecYoyakuPlugin
             }
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
-        public SettingsViewModel(IPluginHost host, DynamicOptions options, Dispatcher dispatcher)
+        public SettingsViewModel(IPluginHost host, IOptions options, Dispatcher dispatcher)
         {
             _host = host;
             _options = options;
@@ -700,6 +706,9 @@ namespace OpenrecYoyakuPlugin
             }
         }
         private bool _hasCalled;
+        /// <summary>
+        /// 呼び出し済みか
+        /// </summary>
         public bool HadCalled
         {
             get { return _hasCalled; }
@@ -708,6 +717,21 @@ namespace OpenrecYoyakuPlugin
                 _hasCalled = value;
                 RaisePropertyChanged();
             }
+        }
+        public override string ToString()
+        {
+            return $"{Name} id={Id}";
+        }
+        public override bool Equals(object obj)
+        {
+            if (!(obj is User user))
+                return false;
+            if (this.Id == null) return false;
+            return Id.Equals(user.Id);
+        }
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
         }
     }
 }

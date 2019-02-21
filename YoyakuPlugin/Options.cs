@@ -11,7 +11,7 @@ using System.Runtime.Serialization;
 
 namespace OpenrecYoyakuPlugin
 {
-    public class DynamicOptions : DynamicOptionsBase
+    public class DynamicOptions : DynamicOptionsBase, IOptions
     {
         internal const string Default_Reserved_Se = "";
         internal const string Default_Reserved_Message = "$nameさんの予約うけつけましたー";
@@ -101,6 +101,7 @@ namespace OpenrecYoyakuPlugin
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(HcgSettingFilePath), new Item { DefaultValue = _hcgSettingFilePath, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
         }
+
         private static readonly string _hcgSettingFilePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"hcg\setting.xml");
     }
 }

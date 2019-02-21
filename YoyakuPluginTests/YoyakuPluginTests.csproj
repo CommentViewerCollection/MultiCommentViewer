@@ -42,6 +42,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
@@ -49,11 +50,33 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Moq">
-      <Version>4.10.0</Version>
+      <Version>4.10.1</Version>
     </PackageReference>
     <PackageReference Include="NUnit">
       <Version>3.11.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{66d18de1-4d66-41a5-b0e2-47df9975495a}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IPlugin\Plugin.csproj">
+      <Project>{735CFEEE-5B77-4D36-977B-4CD94A6F3CDB}</Project>
+      <Name>Plugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
+      <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
+      <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj">
+      <Project>{83974E62-4D55-4E67-8F88-BBFF2222E5A1}</Project>
+      <Name>YouTubeLiveIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YoyakuPlugin\YoyakuPlugin.csproj">
+      <Project>{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}</Project>
+      <Name>YoyakuPlugin</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

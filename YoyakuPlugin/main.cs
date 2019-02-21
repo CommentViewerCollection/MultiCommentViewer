@@ -35,7 +35,7 @@ namespace OpenrecYoyakuPlugin
     [Export(typeof(IPlugin))]
     public class PluginBody : IPlugin
     {
-        private DynamicOptions _options = new DynamicOptions();
+        private IOptions _options;
 
         public string Name
         {
@@ -59,7 +59,7 @@ namespace OpenrecYoyakuPlugin
             if (!_options.IsEnabled || data.IsNgUser)
                 return;
 
-            vm.SetComment(data);
+            _vm.SetComment(data);
         }
         public void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata)
         {
@@ -70,26 +70,35 @@ namespace OpenrecYoyakuPlugin
             {
                 var name = comment.NameItems.ToText();
                 var text = comment.CommentItems.ToText();
-                vm.SetComment(comment.UserId, name, text);
+                _vm.SetComment(comment.UserId, name, text);
             }
         }
-        SettingsViewModel vm;
+        SettingsViewModel _vm;
         private Dispatcher _dispatcher;
-        public void OnLoaded()
+        protected virtual IOptions LoadOptions()
         {
-            _dispatcher = Dispatcher.CurrentDispatcher;
+            var options = new DynamicOptions();
             try
             {
                 var s = Host.LoadOptions(GetSettingsFilePath());
                 _options.Deserialize(s);
             }
             catch (System.IO.FileNotFoundException) { }
-            vm = new SettingsViewModel(Host, _options, _dispatcher);
+            return options;
+        }
+        public void OnLoaded()
+        {
+            _dispatcher = Dispatcher.CurrentDispatcher;
+            _options = LoadOptions();
+            _vm = CreateSettingsViewModel();
+        }
+        protected virtual SettingsViewModel CreateSettingsViewModel()
+        {
+            return new SettingsViewModel(Host, _options, _dispatcher);
         }
 
         public void OnClosing()
         {
-            var op = new DynamicOptions();
             var s = _options.Serialize();
             Host.SaveOptions(GetSettingsFilePath(), s);
         }
@@ -104,7 +113,7 @@ namespace OpenrecYoyakuPlugin
             var view = new SettingsView();
             view.Left = left;
             view.Top = top;
-            view.DataContext = vm;
+            view.DataContext = _vm;
             view.Show();
         }
 

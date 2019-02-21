@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Converter.cs" />
     <Compile Include="DynamicOptionsBase.cs" />
+    <Compile Include="IOptions.cs" />
     <Compile Include="main.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

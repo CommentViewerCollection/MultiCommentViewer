@@ -25,7 +25,7 @@ namespace MultiCommentViewer
     /// </summary>
     public abstract class CommentDataGridViewModelBase : ViewModelBase
     {
-        public ICollectionView Comments { get; }
+        public ICollectionView Comments { get; protected set; }
         public System.Windows.Controls.ScrollUnit ScrollUnit
         {
             get

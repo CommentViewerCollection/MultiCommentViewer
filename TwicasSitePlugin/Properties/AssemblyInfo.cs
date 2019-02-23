@@ -38,3 +38,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 [assembly: InternalsVisibleTo("TwicasSitePluginTests")]
 [assembly: InternalsVisibleTo("TwicasCommentProviderTestClient")]
+[assembly: InternalsVisibleTo("SitePluginTests")]

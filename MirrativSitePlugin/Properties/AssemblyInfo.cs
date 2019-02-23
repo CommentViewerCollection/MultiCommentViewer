@@ -37,3 +37,4 @@ using System.Runtime.InteropServices;
 
 [assembly:InternalsVisibleTo("MirrativSitePluginTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+[assembly: InternalsVisibleTo("SitePluginTests")]

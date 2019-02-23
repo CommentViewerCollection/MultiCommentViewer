@@ -36,3 +36,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("0.0.1.0")]
 [assembly:InternalsVisibleTo("WhowatchSitePluginTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+[assembly: InternalsVisibleTo("SitePluginTests")]

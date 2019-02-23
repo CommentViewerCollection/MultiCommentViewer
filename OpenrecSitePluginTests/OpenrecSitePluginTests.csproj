@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
     <Compile Include="CommentViewModelTests.cs" />
+    <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools.cs" />
     <Compile Include="ToolsTests.cs" />
@@ -57,6 +58,10 @@
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
       <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
+      <Project>{02A55625-E735-4909-A470-E8405EEE1A32}</Project>
+      <Name>OpenrecIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj">
       <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>

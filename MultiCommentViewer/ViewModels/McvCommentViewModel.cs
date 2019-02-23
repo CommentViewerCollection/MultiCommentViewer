@@ -61,6 +61,9 @@ namespace MultiCommentViewer
                     case nameof(_metadata.FontSize):
                         RaisePropertyChanged(nameof(FontSize));
                         break;
+                    case nameof(_metadata.IsNameWrapping):
+                        RaisePropertyChanged(nameof(UserNameWrapping));
+                        break;
                 }
             };
             if (_metadata.User != null)
@@ -168,6 +171,21 @@ namespace MultiCommentViewer
 
         public string UserId => _metadata.User?.UserId;
 
+        public TextWrapping UserNameWrapping
+        {
+            get
+            {
+                if (_metadata.IsNameWrapping)
+                {
+                    return TextWrapping.Wrap;
+                }
+                else
+                {
+                    return TextWrapping.NoWrap;
+                }
+            }
+        }
+
         public Task AfterCommentAdded()
         {
             return Task.CompletedTask;
@@ -251,6 +269,9 @@ namespace MultiCommentViewer
                         break;
                     case nameof(_metadata.FontSize):
                         RaisePropertyChanged(nameof(FontSize));
+                        break;
+                    case nameof(_metadata.IsNameWrapping):
+                        RaisePropertyChanged(nameof(UserNameWrapping));
                         break;
                 }
             };
@@ -353,6 +374,21 @@ namespace MultiCommentViewer
 
         public string UserId => _metadata.User?.UserId;
 
+        public TextWrapping UserNameWrapping
+        {
+            get
+            {
+                if (_metadata.IsNameWrapping)
+                {
+                    return TextWrapping.Wrap;
+                }
+                else
+                {
+                    return TextWrapping.NoWrap;
+                }
+            }
+        }
+
         public Task AfterCommentAdded()
         {
             return Task.CompletedTask;
@@ -436,6 +472,9 @@ namespace MultiCommentViewer
                         break;
                     case nameof(_metadata.FontSize):
                         RaisePropertyChanged(nameof(FontSize));
+                        break;
+                    case nameof(_metadata.IsNameWrapping):
+                        RaisePropertyChanged(nameof(UserNameWrapping));
                         break;
                 }
             };
@@ -538,6 +577,21 @@ namespace MultiCommentViewer
         public IMessageImage Thumbnail { get; private set; }
 
         public string UserId => _metadata.User?.UserId;
+
+        public TextWrapping UserNameWrapping
+        {
+            get
+            {
+                if (_metadata.IsNameWrapping)
+                {
+                    return TextWrapping.Wrap;
+                }
+                else
+                {
+                    return TextWrapping.NoWrap;
+                }
+            }
+        }
 
         public Task AfterCommentAdded()
         {
@@ -647,6 +701,8 @@ namespace MultiCommentViewer
         public SolidColorBrush Background => _cvm.Background;
 
         public bool IsVisible => _cvm.IsVisible;
+
+        public TextWrapping UserNameWrapping { get; }
 
         public Task AfterCommentAdded()
         {

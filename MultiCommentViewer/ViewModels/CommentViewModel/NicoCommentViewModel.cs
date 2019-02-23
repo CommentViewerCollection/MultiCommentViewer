@@ -62,6 +62,9 @@ namespace MultiCommentViewer
                     case nameof(_metadata.FontSize):
                         RaisePropertyChanged(nameof(FontSize));
                         break;
+                    case nameof(_metadata.IsNameWrapping):
+                        RaisePropertyChanged(nameof(UserNameWrapping));
+                        break;
                 }
             };
             if (_metadata.User != null)
@@ -168,6 +171,21 @@ namespace MultiCommentViewer
         public IMessageImage Thumbnail { get; private set; }
 
         public string UserId => _metadata.User?.UserId;
+
+        public TextWrapping UserNameWrapping
+        {
+            get
+            {
+                if (_metadata.IsNameWrapping)
+                {
+                    return TextWrapping.Wrap;
+                }
+                else
+                {
+                    return TextWrapping.NoWrap;
+                }
+            }
+        }
 
         public Task AfterCommentAdded()
         {

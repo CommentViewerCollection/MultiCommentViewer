@@ -121,6 +121,8 @@ namespace MirrativSitePlugin
             }
         }
         public bool IsInitialComment { get; set; }
+        public bool IsNameWrapping => _options.IsUserNameWrapping;
+
         public MirrativMessageMetadata(IMirrativMessage message, ICommentOptions options, IMirrativSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _options = options;
@@ -130,6 +132,17 @@ namespace MirrativSitePlugin
             _isFirstComment = isFirstComment;
 
             options.PropertyChanged += Options_PropertyChanged;
+            siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
+        }
+
+        private void SiteOptions_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(_siteOptions.NeedAutoSubNickname):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
+                    break;
+            }
         }
 
         private void Options_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -165,6 +178,9 @@ namespace MirrativSitePlugin
                     break;
                 case nameof(_options.FirstCommentFontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.IsUserNameWrapping):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
                     break;
             }
         }

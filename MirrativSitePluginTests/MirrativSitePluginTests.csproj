@@ -72,6 +72,10 @@
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
+      <Project>{D2C2C0AF-3A29-45F7-B653-CF20AACAA051}</Project>
+      <Name>MirrativIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj">
       <Project>{c6f57847-d6c3-4f64-b0a4-c778d7cea333}</Project>
       <Name>MirrativSitePlugin</Name>

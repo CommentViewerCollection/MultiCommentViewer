@@ -23,5 +23,6 @@ namespace SitePlugin
         IUser User { get; }
         ICommentProvider CommentProvider { get; }
         bool IsVisible { get; }
+        bool IsNameWrapping { get; }
     }
 }

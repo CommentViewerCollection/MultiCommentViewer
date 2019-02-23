@@ -123,6 +123,7 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public YouTubeLiveMessageMetadata(IYouTubeLiveMessage message, ICommentOptions options, IYouTubeLiveSiteOptions siteOptions,IUser user,ICommentProvider cp, bool isFirstComment)
         {
+            _message = message;
             _options = options;
             _siteOptions = siteOptions;
             User = user;

@@ -52,7 +52,6 @@
     <Compile Include="LineLiveCommentProviderTests.cs" />
     <Compile Include="LineLiveCommentViewModelTests.cs" />
     <Compile Include="LineLiveSiteContextTests.cs" />
-    <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestHelper.cs" />
   </ItemGroup>

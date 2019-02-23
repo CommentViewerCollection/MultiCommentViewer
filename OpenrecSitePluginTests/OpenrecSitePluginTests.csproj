@@ -45,7 +45,6 @@
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
     <Compile Include="CommentViewModelTests.cs" />
-    <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools.cs" />
     <Compile Include="ToolsTests.cs" />

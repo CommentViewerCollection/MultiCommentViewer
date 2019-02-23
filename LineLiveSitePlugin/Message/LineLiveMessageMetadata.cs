@@ -119,6 +119,8 @@ namespace LineLiveSitePlugin
             }
         }
         public bool IsInitialComment { get; set; }
+        public bool IsNameWrapping => _options.IsUserNameWrapping;
+
         public MessageMetadata(ILineLiveMessage message, ICommentOptions options, ILineLiveSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
@@ -186,6 +188,9 @@ namespace LineLiveSitePlugin
                     break;
                 case nameof(_options.FirstCommentFontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.IsUserNameWrapping):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
                     break;
             }
         }

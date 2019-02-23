@@ -26,6 +26,7 @@ using GalaSoft.MvvmLight.Messaging;
 using System.Diagnostics;
 using System.Net;
 using Plugin;
+using SitePlugin;
 
 namespace OpenrecYoyakuPlugin
 {
@@ -472,7 +473,7 @@ namespace OpenrecYoyakuPlugin
         {
             return DateTime.Now;
         }
-        public void SetComment(string userId, string nickname, string comment)
+        public void SetComment(string userId, string nickname, string comment, IUser user)
         {
             //"/yoyaku"
             //"/torikeshi"
@@ -489,8 +490,8 @@ namespace OpenrecYoyakuPlugin
                         //未登録なら登録する
                         _dispatcher.Invoke(() =>
                         {
-                            var user = new User { Date = GetCurrentDateTime(), Id = userId, Name = nickname, HadCalled = false };
-                            RegisteredUsers.Add(user);
+                            var pluginUser = new User(user) { Date = GetCurrentDateTime(), Id = userId, Name = nickname, HadCalled = false };
+                            RegisteredUsers.Add(pluginUser);
                             WriteComment(Reserved_Message.Replace("$name", nickname));
                         });
                     }
@@ -500,13 +501,13 @@ namespace OpenrecYoyakuPlugin
             {
                 lock (RegisteredUsers)
                 {
-                    var user = FindUser(userId);
-                    if (user != null)
+                    var pluginUser = FindUser(userId);
+                    if (pluginUser != null)
                     {
                         //登録済みなら取り消す
                         _dispatcher.Invoke(() =>
                         {
-                            RegisteredUsers.Remove(user);
+                            RegisteredUsers.Remove(pluginUser);
                             WriteComment(Delete_Message.Replace("$name", nickname));
                         });
                     }
@@ -518,14 +519,14 @@ namespace OpenrecYoyakuPlugin
                 lock (RegisteredUsers)
                 {
                     var i = 0;
-                    foreach (var user in RegisteredUsers)
+                    foreach (var pluginUser in RegisteredUsers)
                     {
-                        if (user.Id == userId && !user.HadCalled)
+                        if (pluginUser.Id == userId && !pluginUser.HadCalled)
                         {
                             WriteComment($"ただいまの予約人数は{RegisteredUsers.Count}名です。{nickname}さんは、{i + 1}番目です");
                             break;
                         }
-                        if (!user.HadCalled)
+                        if (!pluginUser.HadCalled)
                             i++;
                     }
                 }
@@ -537,51 +538,51 @@ namespace OpenrecYoyakuPlugin
             //"/torikeshi"
             //"/kakunin"
 
-            if (IsYoyakuCommand(commentData))
-            {
-                if (FindUser(commentData.UserId) == null)
-                {
-                    //未登録なら登録する
-                    _dispatcher.Invoke(() =>
-                    {
-                        var user = new User { Date = DateTime.Now, Id = commentData.UserId, Name = commentData.Nickname, HadCalled = false };
-                        RegisteredUsers.Add(user);
-                        WriteComment(Reserved_Message.Replace("$name", commentData.Nickname));
-                    });
-                }
-            }
-            else if (IsTorikeshiCommand(commentData))
-            {
-                var user = FindUser(commentData.UserId);
-                if (user != null)
-                {
-                    //登録済みなら取り消す
-                    _dispatcher.Invoke(() =>
-                    {
-                        RegisteredUsers.Remove(user);
-                        WriteComment(Delete_Message.Replace("$name", commentData.Nickname));
-                    });
-                }
-            }
-            else if (IsKakuninCommand(commentData))
-            {
-                //未登録の場合は何も表示されない。
-                var userId = commentData.UserId;
-                lock (RegisteredUsers)
-                {
-                    var i = 0;
-                    foreach (var user in RegisteredUsers)
-                    {
-                        if (user.Id == userId && !user.HadCalled)
-                        {
-                            WriteComment($"ただいまの予約人数は{RegisteredUsers.Count}名です。{commentData.Nickname}さんは、{i + 1}番目です");
-                            break;
-                        }
-                        if (!user.HadCalled)
-                            i++;
-                    }
-                }
-            }
+            //if (IsYoyakuCommand(commentData))
+            //{
+            //    if (FindUser(commentData.UserId) == null)
+            //    {
+            //        //未登録なら登録する
+            //        _dispatcher.Invoke(() =>
+            //        {
+            //            var user = new User { Date = DateTime.Now, Id = commentData.UserId, Name = commentData.Nickname, HadCalled = false };
+            //            RegisteredUsers.Add(user);
+            //            WriteComment(Reserved_Message.Replace("$name", commentData.Nickname));
+            //        });
+            //    }
+            //}
+            //else if (IsTorikeshiCommand(commentData))
+            //{
+            //    var user = FindUser(commentData.UserId);
+            //    if (user != null)
+            //    {
+            //        //登録済みなら取り消す
+            //        _dispatcher.Invoke(() =>
+            //        {
+            //            RegisteredUsers.Remove(user);
+            //            WriteComment(Delete_Message.Replace("$name", commentData.Nickname));
+            //        });
+            //    }
+            //}
+            //else if (IsKakuninCommand(commentData))
+            //{
+            //    //未登録の場合は何も表示されない。
+            //    var userId = commentData.UserId;
+            //    lock (RegisteredUsers)
+            //    {
+            //        var i = 0;
+            //        foreach (var user in RegisteredUsers)
+            //        {
+            //            if (user.Id == userId && !user.HadCalled)
+            //            {
+            //                WriteComment($"ただいまの予約人数は{RegisteredUsers.Count}名です。{commentData.Nickname}さんは、{i + 1}番目です");
+            //                break;
+            //            }
+            //            if (!user.HadCalled)
+            //                i++;
+            //        }
+            //    }
+            //}
         }
         private User FindUser(string userId)
         {
@@ -662,7 +663,7 @@ namespace OpenrecYoyakuPlugin
         private readonly Dispatcher _dispatcher;
         public SettingsViewModel()
         {
-            if (IsInDesignMode)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
             {
                 _options = new DynamicOptions();
                 IsEnabled = true;
@@ -681,6 +682,31 @@ namespace OpenrecYoyakuPlugin
     }
     public class User : ViewModelBase
     {
+        private void SetName()
+        {
+            if (string.IsNullOrEmpty(_user.Nickname))
+            {
+                this.Name = _user.Name.ToText();
+            }
+            else
+            {
+                this.Name = _user.Nickname;
+            }
+        }
+        public User(IUser user)
+        {
+            _user = user;
+            user.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(user.Name):
+                    case nameof(user.Nickname):
+                        SetName();
+                        break;
+                }
+            };
+        }
         private DateTime _date;
         public DateTime Date
         {
@@ -712,6 +738,8 @@ namespace OpenrecYoyakuPlugin
             }
         }
         private bool _hasCalled;
+        private readonly IUser _user;
+
         /// <summary>
         /// 呼び出し済みか
         /// </summary>

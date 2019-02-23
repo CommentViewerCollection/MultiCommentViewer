@@ -70,7 +70,7 @@ namespace OpenrecYoyakuPlugin
             {
                 var name = comment.NameItems.ToText();
                 var text = comment.CommentItems.ToText();
-                _vm.SetComment(comment.UserId, name, text);
+                _vm.SetComment(comment.UserId, name, text, messageMetadata.User);
             }
         }
         SettingsViewModel _vm;

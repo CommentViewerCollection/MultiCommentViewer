@@ -530,7 +530,7 @@ namespace NicoSitePlugin
             var cvm = new NicoCommentViewModel2(_options, _siteOptions, chat, roomInfo.Name, user, _commentProvider, isFirstComment);
             return cvm;
         }
-        private NicoMessageContext CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isFirstComment)
+        public NicoMessageContext CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isFirstComment)
         {
             NicoMessageContext messageContext = null;
             if (chat.Premium.HasValue)
@@ -576,14 +576,23 @@ namespace NicoSitePlugin
             {
                 id = roomInfo.Name;
             }
+            if (_siteOptions.IsAutoSetNickname)
+            {
+                var messageText = chat.Text;
+                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
+                if (!string.IsNullOrEmpty(nick))
+                {
+                    user.Nickname = nick;
+                }
+            }
             var message = new NicoComment(chat.Raw)
             {
                 CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(chat.Text) },
                 Id = id,
                 NameItems = null,
-                PostTime = null,
+                PostTime = chat.Date.ToString("HH:mm:ss"),
                 UserIcon = null,
-                UserId = null,
+                UserId = chat.UserId,
                 ChatNo =chat.No,
                 RoomName =roomInfo.Name,
                 Is184 = Tools.Is184UserId(chat.UserId),

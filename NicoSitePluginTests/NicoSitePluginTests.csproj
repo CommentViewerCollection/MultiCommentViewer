@@ -62,6 +62,10 @@
       <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
+      <Project>{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}</Project>
+      <Name>NicoLiveIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj">
       <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
       <Name>NicoSitePlugin</Name>

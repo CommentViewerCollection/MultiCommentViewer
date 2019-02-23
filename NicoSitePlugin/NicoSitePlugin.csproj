@@ -136,6 +136,10 @@
       <Project>{daf5e126-c37f-4181-aae5-89e8fc89aae4}</Project>
       <Name>NicoLiveIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{aaf4779f-f8bf-4794-a6e8-4ed88a8b6b68}</Project>
+      <Name>SitePluginCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Page Include="CommentPostPanel.xaml">

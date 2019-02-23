@@ -119,6 +119,8 @@ namespace NicoSitePlugin
             }
         }
         public bool IsInitialComment { get; set; }
+        public bool IsNameWrapping => _options.IsUserNameWrapping;
+
         public MessageMetadata(INicoMessage message, ICommentOptions options, INicoSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
@@ -186,6 +188,9 @@ namespace NicoSitePlugin
                     break;
                 case nameof(_options.FirstCommentFontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.IsUserNameWrapping):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
                     break;
             }
         }

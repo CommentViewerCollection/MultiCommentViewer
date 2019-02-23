@@ -119,6 +119,8 @@ namespace TwitchSitePlugin
             }
         }
         public bool IsInitialComment { get; set; }
+        public bool IsNameWrapping => _options.IsUserNameWrapping;
+
         public MessageMetadata(ITwitchMessage message, ICommentOptions options, ITwitchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
@@ -186,6 +188,9 @@ namespace TwitchSitePlugin
                     break;
                 case nameof(_options.FirstCommentFontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.IsUserNameWrapping):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
                     break;
             }
         }

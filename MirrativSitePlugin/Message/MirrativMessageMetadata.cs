@@ -1,92 +1,11 @@
-﻿using Common;
-using SitePlugin;
+﻿using SitePlugin;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
 namespace MirrativSitePlugin
 {
-    internal class MirrativConnected : MessageBase, IMirrativConnected
-    {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
-        public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Connected;
-
-        public MirrativConnected(string raw) : base(raw)
-        {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("接続しました"),
-            };
-        }
-    }
-    internal class MirrativDisconnected : MessageBase, IMirrativDisconnected
-    {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
-        public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Disconnected;
-        public MirrativDisconnected(string raw) : base(raw)
-        {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
-            };
-        }
-    }
-    internal class MirrativComment : MessageBase, IMirrativComment
-    {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
-        public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Comment;
-        //public string Comment { get; set; }
-        public string Id { get; set; }
-        //public string UserName { get; set; }
-        public string UserId { get; set; }
-        public string PostTime { get; set; }
-        public IMessageImage UserIcon { get; set; }
-        public MirrativComment(Message commentData,string raw) : base(raw)
-        {
-            UserId = commentData.UserId;
-            Id = commentData.Id;
-            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Comment) };
-            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Username) };
-            UserIcon = null;
-            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.CreatedAt).ToString("HH:mm:ss");
-        }
-    }
-    internal class MirrativJoinRoom : MessageBase, IMirrativJoinRoom
-    {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
-        public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.JoinRoom;
-        //public string Comment { get; set; }
-        public string Id { get; set; }
-        //public string UserName { get; set; }
-        public string UserId { get; set; }
-        public string PostTime { get; set; }
-        public IMessageImage UserIcon { get; set; }
-        public MirrativJoinRoom(Message commentData,string raw) : base(raw)
-        {
-            UserId = commentData.UserId;
-            Id = commentData.Id;
-            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Comment) };
-            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Username) };
-            UserIcon = null;
-            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.CreatedAt).ToString("HH:mm:ss");
-        }
-    }
-    internal class MirrativMessageContext : IMessageContext
-    {
-        public SitePlugin.IMessage Message { get; }
-
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public MirrativMessageContext(IMirrativMessage message, MirrativMessageMetadata metadata, IMessageMethods methods)
-        {
-            Message = message;
-            Metadata = metadata;
-            Methods = methods;
-        }
-    }
     internal class MirrativMessageMetadata : IMessageMetadata
     {
         private readonly IMirrativMessage _message;
@@ -269,12 +188,5 @@ namespace MirrativSitePlugin
             _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
         #endregion
-    }
-    internal class MirrativMessageMethods : IMessageMethods
-    {
-        public Task AfterCommentAdded()
-        {
-            return Task.CompletedTask;
-        }
     }
 }

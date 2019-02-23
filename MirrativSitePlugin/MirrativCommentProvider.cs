@@ -298,38 +298,13 @@ namespace MirrativSitePlugin
             if (_siteOptions.NeedAutoSubNickname)
             {
                 var messageText = message.Comment;
-                var nick = ExtractNickname(messageText);
+                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
                 if (!string.IsNullOrEmpty(nick))
                 {
                     user.Nickname = nick;
                 }
             }
             return new MirrativMessageContext(comment, metadata, methods);
-        }
-        /// <summary>
-        /// 文字列から@ニックネームを抽出する
-        /// 文字列中に@が複数ある場合は一番最後のものを採用する
-        /// 数字だけのニックネームは不可
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        protected string ExtractNickname(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return null;
-            var matches = Regex.Matches(text, "(?:@|＠)(\\S+)", RegexOptions.Singleline);
-            if (matches.Count > 0)
-            {
-                foreach (Match match in matches.Cast<Match>().Reverse())
-                {
-                    var val = match.Groups[1].Value;
-                    if (!Regex.IsMatch(val, "^[0-9０１２３４５６７８９]+$"))
-                    {
-                        return val;
-                    }
-                }
-            }
-            return null;
         }
         private void OnMessageReceived(string data)
         {

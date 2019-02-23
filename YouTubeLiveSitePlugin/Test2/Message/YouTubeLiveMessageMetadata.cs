@@ -120,6 +120,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
         public bool IsInitialComment { get; set; }
+        public bool IsNameWrapping => _options.IsUserNameWrapping;
 
         public YouTubeLiveMessageMetadata(IYouTubeLiveMessage message, ICommentOptions options, IYouTubeLiveSiteOptions siteOptions,IUser user,ICommentProvider cp, bool isFirstComment)
         {
@@ -166,6 +167,9 @@ namespace YouTubeLiveSitePlugin.Test2
                     break;
                 case nameof(_options.FirstCommentFontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.IsUserNameWrapping):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
                     break;
             }
         }

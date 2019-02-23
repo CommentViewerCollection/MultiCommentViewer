@@ -148,6 +148,8 @@ namespace WhowatchSitePlugin
             }
         }
         public bool IsInitialComment { get; set; }
+        public bool IsNameWrapping => _options.IsUserNameWrapping;
+
         public MessageMetadata(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
@@ -215,6 +217,9 @@ namespace WhowatchSitePlugin
                     break;
                 case nameof(_options.FirstCommentFontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.IsUserNameWrapping):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
                     break;
             }
         }

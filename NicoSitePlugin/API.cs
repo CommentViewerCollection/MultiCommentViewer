@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
 using System.Xml.Serialization;
+using Codeplex.Data;
 using NicoSitePlugin.Next20181012;
 namespace NicoSitePlugin
 {
@@ -363,5 +364,49 @@ namespace NicoSitePlugin
             var id = match.Groups[1].Value;
             return id;
         }
+
+        public static async Task<IUserInfo> GetUserInfo(IDataSource dataSource, string userId)
+        {
+            var url = $"http://api.ce.nicovideo.jp/api/v1/user.info?user_id={userId}&__format=json";
+            //正常なレスポンス
+            //{"nicovideo_user_response":{"user":{"id":"2297426","nickname":"Ryu","thumbnail_url":"http:\/\/dcdn.cdn.nimg.jp\/nicoaccount\/usericon\/229\/2297426.jpg?1477771628"},"vita_option":{"user_secret":"0"},"additionals":"","@status":"ok"}}
+            //存在しないuser_idを指定した時のレスポンス
+            //{"nicovideo_user_response":{"error":{"code":"NOT_FOUND","description":"\u30e6\u30fc\u30b6\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093"},"@status":"fail"}}
+            var res = await dataSource.GetAsync(url);
+            res = res.Replace("\"@status\":", "\"status\":");
+            try
+            {
+                var json = DynamicJson.Parse(res);
+
+                if(json.nicovideo_user_response.status == "ok")
+                {
+                    var d_user = json.nicovideo_user_response.user;
+                    var userInfo = new UserInfo
+                    {
+                        Name = d_user.nickname,
+                        ThumbnailUrl = d_user.thumbnail_url,
+                        UserId = d_user.id,
+                    };
+                    return userInfo;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException(res, ex);
+            }
+            throw new ParseException(res);
+        }
+        class UserInfo : IUserInfo
+        {
+            public string UserId { get; set; }
+            public string ThumbnailUrl { get; set; }
+            public string Name { get; set; }
+        }
+    }
+    public interface IUserInfo
+    {
+        string UserId { get; }
+        string ThumbnailUrl { get; }
+        string Name { get; }
     }
 }

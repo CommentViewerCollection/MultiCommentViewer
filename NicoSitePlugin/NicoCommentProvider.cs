@@ -407,13 +407,13 @@ namespace NicoSitePlugin
         {
         }
 
-        private void ChatProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
+        private async void ChatProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
         {
             try
             {                
                 foreach(var chat in e.Chat)
                 {
-                    var messageContext = CreateMessageContext(chat, e.RoomInfo, true);
+                    var messageContext = await CreateMessageContext(chat, e.RoomInfo, true);
                     if (messageContext == null) continue;
                     MessageReceived?.Invoke(this, messageContext);
                 }
@@ -432,11 +432,11 @@ namespace NicoSitePlugin
 
         }
 
-        private void ChatProvider_CommentReceived(object sender, ChatReceivedEventArgs e)
+        private async void ChatProvider_CommentReceived(object sender, ChatReceivedEventArgs e)
         {
             try
             {
-                var messageContext = CreateMessageContext(e.Chat, e.RoomInfo, false);
+                var messageContext = await CreateMessageContext(e.Chat, e.RoomInfo, false);
                 if (messageContext == null) return;
                 MessageReceived?.Invoke(this, messageContext);
 
@@ -530,7 +530,7 @@ namespace NicoSitePlugin
             var cvm = new NicoCommentViewModel2(_options, _siteOptions, chat, roomInfo.Name, user, _commentProvider, isFirstComment);
             return cvm;
         }
-        public NicoMessageContext CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isFirstComment)
+        public async Task<NicoMessageContext> CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isFirstComment)
         {
             NicoMessageContext messageContext = null;
             if (chat.Premium.HasValue)
@@ -585,17 +585,41 @@ namespace NicoSitePlugin
                     user.Nickname = nick;
                 }
             }
+            var is184 = Tools.Is184UserId(chat.UserId);
+            string thumbnailUrl = null;
+            List<IMessagePart> nameItems = null;
+            try
+            {
+                if (!is184 && userId!= "900000000")
+                {
+                    var userInfo = await API.GetUserInfo(_dataSource, userId);
+                    thumbnailUrl = userInfo.ThumbnailUrl;
+                    nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
+                    user.Name = nameItems;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+
             var message = new NicoComment(chat.Raw)
             {
                 CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(chat.Text) },
                 Id = id,
-                NameItems = null,
+                NameItems = nameItems,
                 PostTime = chat.Date.ToString("HH:mm:ss"),
-                UserIcon = null,
+                UserIcon = thumbnailUrl != null ? new MessageImage
+                {
+                    Url = thumbnailUrl,
+                    Alt = null,
+                    Height = 40,
+                    Width = 40,
+                } : null,
                 UserId = chat.UserId,
                 ChatNo =chat.No,
                 RoomName =roomInfo.Name,
-                Is184 = Tools.Is184UserId(chat.UserId),
+                Is184 = is184,
             };
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment);
             var methods = new NicoMessageMethods();

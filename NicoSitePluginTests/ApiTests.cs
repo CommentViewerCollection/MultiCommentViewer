@@ -69,5 +69,24 @@ namespace NicoSitePluginTests
             serverMock.Setup(k => k.GetAsync("http://jk.nicovideo.jp/api/v2/getflv?v=jk" + channelId)).Returns(Task.FromResult(s));
             Assert.ThrowsAsync<JikkyoInfoFailedException>(async () => await API.GetJikkyoInfoAsync(serverMock.Object, channelId));
         }
+        [Test]
+        public async Task GetUserInfoTest()
+        {
+            var serverMock = new Mock<IDataSource>();
+            var data = "{\"nicovideo_user_response\":{\"user\":{\"id\":\"2297426\",\"nickname\":\"Ryu\",\"thumbnail_url\":\"http:\\/\\/dcdn.cdn.nimg.jp\\/nicoaccount\\/usericon\\/229\\/2297426.jpg?1477771628\"},\"vita_option\":{\"user_secret\":\"0\"},\"additionals\":\"\",\"@status\":\"ok\"}}";
+            serverMock.Setup(s => s.GetAsync(It.IsAny<string>())).Returns(Task.FromResult(data));
+            var userInfo = await API.GetUserInfo(serverMock.Object, "");
+            Assert.AreEqual("2297426", userInfo.UserId);
+            Assert.AreEqual("Ryu", userInfo.Name);
+            Assert.AreEqual("http://dcdn.cdn.nimg.jp/nicoaccount/usericon/229/2297426.jpg?1477771628", userInfo.ThumbnailUrl);
+        }
+        [Test]
+        public void GetUserInfoThrowTest()
+        {
+            var serverMock = new Mock<IDataSource>();
+            var data = "{\"nicovideo_user_response\":{\"error\":{\"code\":\"NOT_FOUND\",\"description\":\"\\u30e6\\u30fc\\u30b6\\u30fc\\u304c\\u898b\\u3064\\u304b\\u308a\\u307e\\u305b\\u3093\"},\"@status\":\"fail\"}}";
+            serverMock.Setup(s => s.GetAsync(It.IsAny<string>())).Returns(Task.FromResult(data));
+            Assert.ThrowsAsync<ParseException>(()=>API.GetUserInfo(serverMock.Object, ""));
+        }
     }
 }

@@ -89,6 +89,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitePluginCommonTests", "Si
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitePluginTests", "SitePluginTests\SitePluginTests.csproj", "{32B23AE7-6708-41B3-BCE7-3BB730E2E70B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasIF", "TwicasIF\TwicasIF.csproj", "{4DA33B17-792D-44D7-93F6-D0561788676D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -251,6 +253,10 @@ Global
 		{32B23AE7-6708-41B3-BCE7-3BB730E2E70B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32B23AE7-6708-41B3-BCE7-3BB730E2E70B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32B23AE7-6708-41B3-BCE7-3BB730E2E70B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DA33B17-792D-44D7-93F6-D0561788676D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DA33B17-792D-44D7-93F6-D0561788676D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DA33B17-792D-44D7-93F6-D0561788676D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DA33B17-792D-44D7-93F6-D0561788676D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -613,6 +613,25 @@ namespace MultiCommentViewer
                     mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
+            else if (messageContext.Message is TwicasSitePlugin.ITwicasMessage twicasMessage)
+            {
+                if (twicasMessage is TwicasSitePlugin.ITwicasComment comment)
+                {
+                    mcvCvm = new TwicasCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (twicasMessage is TwicasSitePlugin.ITwicasItem item)
+                {
+                    mcvCvm = new TwicasCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (twicasMessage is TwicasSitePlugin.ITwicasConnected connected)
+                {
+                    mcvCvm = new TwicasCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (twicasMessage is TwicasSitePlugin.ITwicasDisconnected disconnected)
+                {
+                    mcvCvm = new TwicasCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
             if (mcvCvm != null)
             {
                 _comments.Add(mcvCvm);

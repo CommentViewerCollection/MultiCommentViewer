@@ -66,6 +66,10 @@
       <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
+      <Project>{4DA33B17-792D-44D7-93F6-D0561788676D}</Project>
+      <Name>TwicasIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj">
       <Project>{ebcbadab-c5be-440a-be08-c660244d1f15}</Project>
       <Name>TwicasSitePlugin</Name>

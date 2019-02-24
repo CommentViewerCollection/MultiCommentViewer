@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace TwicasSitePlugin.LowObject
@@ -57,33 +58,56 @@ namespace TwicasSitePlugin.LowObject
         }
         private static List<Item> ParseItemData(string data)
         {
+            //一度に複数のアイテムが含まれている場合があるっぽい。アイテム\nアイテムのように\nで区切られている。
+            //投げられた瞬間だけではなく、表示されている間中はずっとStreamChecker中に含まれるっぽい？
+            //投げられたアイテムはそれぞれがIDを持っているため区別できる。同じ人が同じアイテムを複数投げてもどれがどれなのかちゃんと識別できると思う。
             var k = UrlDecode(data).Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
             return k.Select(n => Parse(n)).Where(o => o != null).ToList();
         }
         private static Item Parse(string e)
         {
-            try
-            {
-                var t = e.Split('\t');
-                if (int.Parse(t[9]) != 1)
-                {
-                    return null;
-                }
-                var n = t[0].Trim();
-                var r = t[1].Trim();
-                var i = t[2];
-                var a = t[3].Trim();
-                var o = Tools.DecodeBase64(t[4]);
-                //t[8]はBase64にエンコードされた値。
-                //flowitem("https://twitcasting.tv/img/anim/anim_tea_10", 3000, 1, 1, 5)
-                var c = Tools.DecodeBase64(t[8]);
-
-                return new Item { Id = n, SenderName = o, SenderImage = a, ItemImage = r, Message = i, Effect = c };
-            }
-            catch (Exception ex)
+            var t = e.Split('\t');
+            if (int.Parse(t[9]) != 1)
             {
                 return null;
             }
+            var n = t[0].Trim();
+            var r = t[1].Trim();
+            var i = Tools.DecodeBase64(t[2]);
+            var a = t[3].Trim();
+            var o = Tools.DecodeBase64(t[4]);
+            //t[8]はBase64にエンコードされた値。
+            //flowitem("https://twitcasting.tv/img/anim/anim_tea_10", 3000, 1, 1, 5)
+            var c = Tools.DecodeBase64(t[8]);
+
+            var t12 = Tools.DecodeBase64(t[12]);
+            Debug.WriteLine($"t12={t12}");//アイテムを投げた人のScreenNameっぽい
+
+            var t13 = Tools.DecodeBase64(t[13]);
+            Debug.WriteLine($"t13={t13}");//
+
+
+            return new Item
+            {
+                Raw = e,
+                Id = n,
+                SenderName = o,
+                SenderImage = a,
+                ItemImage = r,
+                Message = i,
+                Effect = c,
+                t5 = t[5],
+                t6 = t[6],
+                t7 = t[7],
+                t9 = t[9],
+                t10 = t[10],
+                t11 = t[11],
+                t12 = Tools.DecodeBase64(t[12]),
+                t13 = Tools.DecodeBase64(t[13]),
+                t14 = t[14],
+                t15 = t[15],
+
+            };
         }
 
         enum StreamType:int

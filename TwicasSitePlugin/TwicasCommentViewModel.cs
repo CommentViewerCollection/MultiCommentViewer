@@ -7,64 +7,64 @@ using System.ComponentModel;
 
 namespace TwicasSitePlugin
 {
-    class TwicasCommentViewModel : CommentViewModelBase
-    {
-        public override MessageType MessageType { get; protected set; }
-        public override string UserId { get; }
-        public override SolidColorBrush Background
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(User.BackColorArgb))
-                {
-                    return new SolidColorBrush(Tools.ColorFromArgb(User.BackColorArgb));
-                }
-                else
-                {
-                    return base.Background;
-                }
-            }
-        }
-        public override SolidColorBrush Foreground
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(User.ForeColorArgb))
-                {
-                    return new SolidColorBrush(Tools.ColorFromArgb(User.ForeColorArgb));
-                }
-                else
-                {
-                    return base.Foreground;
-                }
-            }
-        }
-        public TwicasCommentViewModel(ICommentOptions options,ITwicasSiteOptions siteOptions, ICommentData data, IUser user, ICommentProvider commentProvider)
-            : base(options, user, commentProvider, false)
-        {
-            MessageType = MessageType.Comment;
-            var messageText = data.Message.ToText();
-            UserId = data.UserId;
-            Id = data.Id.ToString();
-            NameItemsInternal = new List<IMessagePart> { MessagePartFactory.CreateMessageText(data.Name) };
-            MessageItems = data.Message;
-            Thumbnail = new MessageImage { Url = data.ThumbnailUrl, Height = data.ThumbnailHeight, Width = data.ThumbnailWidth };
+    //class TwicasCommentViewModel : CommentViewModelBase
+    //{
+    //    public override MessageType MessageType { get; protected set; }
+    //    public override string UserId { get; }
+    //    public override SolidColorBrush Background
+    //    {
+    //        get
+    //        {
+    //            if (!string.IsNullOrEmpty(User.BackColorArgb))
+    //            {
+    //                return new SolidColorBrush(Tools.ColorFromArgb(User.BackColorArgb));
+    //            }
+    //            else
+    //            {
+    //                return base.Background;
+    //            }
+    //        }
+    //    }
+    //    public override SolidColorBrush Foreground
+    //    {
+    //        get
+    //        {
+    //            if (!string.IsNullOrEmpty(User.ForeColorArgb))
+    //            {
+    //                return new SolidColorBrush(Tools.ColorFromArgb(User.ForeColorArgb));
+    //            }
+    //            else
+    //            {
+    //                return base.Foreground;
+    //            }
+    //        }
+    //    }
+    //    public TwicasCommentViewModel(ICommentOptions options,ITwicasSiteOptions siteOptions, ICommentData data, IUser user, ICommentProvider commentProvider)
+    //        : base(options, user, commentProvider, false)
+    //    {
+    //        MessageType = MessageType.Comment;
+    //        var messageText = data.Message.ToText();
+    //        UserId = data.UserId;
+    //        Id = data.Id.ToString();
+    //        NameItemsInternal = new List<IMessagePart> { MessagePartFactory.CreateMessageText(data.Name) };
+    //        MessageItems = data.Message;
+    //        Thumbnail = new MessageImage { Url = data.ThumbnailUrl, Height = data.ThumbnailHeight, Width = data.ThumbnailWidth };
 
-            if (siteOptions.IsAutoSetNickname)
-            {
-                var nick = ExtractNickname(messageText);
-                if (!string.IsNullOrEmpty(nick))
-                {
-                    user.Nickname = nick;
-                }
-            }
-            User.Name = NameItemsInternal;
+    //        if (siteOptions.IsAutoSetNickname)
+    //        {
+    //            var nick = ExtractNickname(messageText);
+    //            if (!string.IsNullOrEmpty(nick))
+    //            {
+    //                user.Nickname = nick;
+    //            }
+    //        }
+    //        User.Name = NameItemsInternal;
             
-            PostTime = data.Date.ToString("HH:mm:ss");
+    //        PostTime = data.Date.ToString("HH:mm:ss");
 
-            Init();
-        }
-    }
+    //        Init();
+    //    }
+    //}
     public class TwicasOptionsViewModel : INotifyPropertyChanged
     {
         private readonly TwicasSiteOptions _origin;

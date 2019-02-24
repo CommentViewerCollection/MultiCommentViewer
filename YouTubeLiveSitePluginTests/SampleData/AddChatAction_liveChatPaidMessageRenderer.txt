@@ -1,0 +1,57 @@
+﻿{  
+   "addChatItemAction":{  
+      "item":{  
+         "liveChatPaidMessageRenderer":{  
+            "id":"CjoKGkNNam54TWpWd3Q0Q0ZRVnZLZ29kcGFzT2JBEhxDS21paE4zU3d0NENGWmxSWUFvZHNZSUZTUS0w",
+            "timestampUsec":"1541607010250939",
+            "authorName":{  
+               "simpleText":"ん ん"
+            },
+            "authorPhoto":{  
+               "thumbnails":[  
+                  {  
+                     "url":"https://yt3.ggpht.com/-BrEaZAWz_Do/AAAAAAAAAAI/AAAAAAAAAAA/n2m4xm5WT40/s32-c-k-no-mo-rj-c0xffffff/photo.jpg",
+                     "width":32,
+                     "height":32
+                  },
+                  {  
+                     "url":"https://yt3.ggpht.com/-BrEaZAWz_Do/AAAAAAAAAAI/AAAAAAAAAAA/n2m4xm5WT40/s64-c-k-no-mo-rj-c0xffffff/photo.jpg",
+                     "width":64,
+                     "height":64
+                  }
+               ]
+            },
+            "purchaseAmountText":{  
+               "simpleText":"￥1,200"
+            },
+            "message":{  
+               "simpleText":"面白かったです ではまた^ ^"
+            },
+            "headerBackgroundColor":4294947584,
+            "headerTextColor":3741319168,
+            "bodyBackgroundColor":4294953512,
+            "bodyTextColor":3741319168,
+            "authorExternalChannelId":"UCWzefMLeuAhrCyhqYsFLl5Q",
+            "authorNameTextColor":2315255808,
+            "contextMenuEndpoint":{  
+               "clickTrackingParams":"CAEQl98BIhMI8veY0tXC3gIVyVBgCh1Nqwwa",
+               "commandMetadata":{  
+                  "webCommandMetadata":{  
+                     "ignoreNavigation":true
+                  }
+               },
+               "liveChatItemContextMenuEndpoint":{  
+                  "params":"Q2p3S09nb2FRMDFxYm5oTmFsWjNkRFJEUmxGV2RrdG5iMlJ3WVhOUFlrRVNIRU5MYldsb1RqTlRkM1EwUTBaYWJGSlpRVzlrYzFsSlJsTlJMVEFRQUJvUENnMEtDMkZFTWsxSlUwUm1Ua3gzSUFJb0JBJTNEJTNE"
+               }
+            },
+            "timestampColor":2147483648,
+            "contextMenuAccessibility":{  
+               "accessibilityData":{  
+                  "label":"コメントの操作"
+               }
+            }
+         }
+      },
+      "clientId":"CKmihN3Swt4CFZlRYAodsYIFSQ-0"
+   }
+}

@@ -550,6 +550,46 @@ namespace MultiCommentViewer
                     mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
+            else if (messageContext.Message is TwitchSitePlugin.ITwitchMessage twitchMessage)
+            {
+                if (twitchMessage is TwitchSitePlugin.ITwitchComment comment)
+                {
+                    mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            else if (messageContext.Message is OpenrecSitePlugin.IOpenrecMessage openrecMessage)
+            {
+                if (openrecMessage is OpenrecSitePlugin.IOpenrecComment comment)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecStamp stamp)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if(openrecMessage is OpenrecSitePlugin.IOpenrecYell yell)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            else if (messageContext.Message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
+            {
+                if (lineliveMessage is LineLiveSitePlugin.ILineLiveComment comment)
+                {
+                    mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if(lineliveMessage is LineLiveSitePlugin.ILineLiveItem item)
+                {
+                    mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            else if (messageContext.Message is NicoSitePlugin.INicoMessage nicoMessage)
+            {
+                if (nicoMessage is NicoSitePlugin.INicoComment comment)
+                {
+                    mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
             if (mcvCvm != null)
             {
                 _comments.Add(mcvCvm);
@@ -579,6 +619,8 @@ namespace MultiCommentViewer
         }
         private async void Connection_MessageReceived(object sender, IMessageContext e)
         {
+            Debug.Assert(e != null);
+            if (e == null) return;
             var connectionViewModel = sender as ConnectionViewModel;
             Debug.Assert(connectionViewModel != null);
             var methods = e.Methods;
@@ -686,7 +728,6 @@ namespace MultiCommentViewer
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         private readonly ObservableCollection<IMcvCommentViewModel> _comments = new ObservableCollection<IMcvCommentViewModel>();
-        public ICollectionView Comments { get; }
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
 
         private ConnectionViewModel _selectedConnection;

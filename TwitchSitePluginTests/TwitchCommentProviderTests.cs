@@ -1,0 +1,118 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using Common;
+using Moq;
+using NUnit.Framework;
+using ryu_s.BrowserCookie;
+using SitePlugin;
+using TwitchSitePlugin;
+
+namespace TwitchSitePluginTests
+{
+    [TestFixture]
+    class TwitchCommentProviderTests
+    {
+        class C : TwitchCommentProvider
+        {
+            public bool IsLoggedin { get; set; }
+            protected override bool IsLoggedIn()
+            {
+                return IsLoggedin;
+            }
+            protected override string GetChannelName(string input)
+            {
+                return "";
+            }
+            protected override CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
+            {
+                return new CookieContainer();
+            }
+            protected override string GetRandomGuestUsername()
+            {
+                return "";
+            }
+            public IMessageProvider MessageProvider { get; set; }
+            protected override IMessageProvider CreateMessageProvider()
+            {
+                return MessageProvider;
+            }
+            public ICommentData CommentData { get; set; }
+            //protected override ICommentData ParsePrivMsg(Result result)
+            //{
+            //    return CommentData;
+            //}
+            public C(IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStore userStore) 
+                : base(server, logger, options, siteOptions, userStore)
+            {
+            }
+        }
+        class MessageProvider : IMessageProvider
+        {
+            public event EventHandler<Result> Received;
+            public event EventHandler Opened;
+            TaskCompletionSource<object> _tcs = new TaskCompletionSource<object>();
+            public void Disconnect()
+            {
+                _tcs.SetResult(null);
+            }
+
+            public Task ReceiveAsync()
+            {
+                return _tcs.Task;
+            }
+
+            public Task SendAsync(string s)
+            {
+                throw new NotImplementedException();
+            }
+            public void SetResult(Result result)
+            {
+                Received?.Invoke(this, result);
+            }
+        }
+        [Test]
+        public async Task Test()
+        {
+            //テスト案
+            //ログイン済み、未ログインそれぞれの場合にそれぞれの接続コマンドが送信されるか
+            //サーバから送られてくるコマンドに対する反応は適切か。PINGの時はPONGが返されるか、PRIVMSGだったらCommentReceivedが発生するか
+
+            var result = Tools.Parse("@badges=subscriber/12,partner/1;color=#FF0000;display-name=harutomaru;emotes=189031:20-31,60-71/588715:33-58/635709:73-82;id=9029a587-81b0-4705-8607-38cba9b762d6;mod=0;room-id=39587048;subscriber=1;tmi-sent-ts=1518062412116;turbo=0;user-id=72777405;user-type= :harutomaru!harutomaru@harutomaru.tmi.twitch.tv PRIVMSG #mimicchi :@bwscar221 おざまぁぁぁす！ mimicchiHage haruto1Harutomarubakayarou mimicchiHage bwscarDead");
+            var userid = "72777405";
+            var serverMock = new Mock<IDataServer>();
+            var loggerMock = new Mock<ILogger>();
+            var optionsMock = new Mock<ICommentOptions>();
+            var siteOptions = new TwitchSiteOptions
+            {
+                NeedAutoSubNickname = true
+            };
+            var userStoreMock = new Mock<IUserStore>();
+            var userMock = new Mock<IUser>();
+            userMock.SetupGet(u => u.UserId).Returns(userid);
+            userStoreMock.Setup(s => s.GetUser(userid)).Returns(userMock.Object);
+            var browserProfileMock = new Mock<IBrowserProfile>();
+            var messageProvider = new MessageProvider();
+            var commentDataMock = new Mock<ICommentData>();
+            var commentProvider = new C(serverMock.Object, loggerMock.Object, optionsMock.Object, siteOptions, userStoreMock.Object)
+            {
+                MessageProvider = messageProvider,
+                CommentData = commentDataMock.Object,
+            };
+            ICommentViewModel actual = null;
+            commentProvider.CommentReceived += (s, e) =>
+            {
+                actual = e;
+                commentProvider.Disconnect();
+            };
+            var t = commentProvider.ConnectAsync("", browserProfileMock.Object);
+            messageProvider.SetResult(result);
+            await t;
+            Assert.AreEqual(MessageType.Comment, actual.MessageType);
+            Assert.AreEqual("9029a587-81b0-4705-8607-38cba9b762d6", actual.Id);
+        }
+    }
+}

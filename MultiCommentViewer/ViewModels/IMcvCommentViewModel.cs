@@ -24,6 +24,7 @@ namespace MultiCommentViewer
         string PostTime { get; }
         IMessageImage Thumbnail { get; }
         string UserId { get; }
+        TextWrapping UserNameWrapping { get; }
 
         Task AfterCommentAdded();
     }

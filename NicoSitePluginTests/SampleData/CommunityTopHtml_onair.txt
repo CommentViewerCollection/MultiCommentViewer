@@ -1,0 +1,1347 @@
+﻿
+		<!DOCTYPE HTML>
+	<html lang="ja">
+
+	<head>
+		<script type="text/javascript">
+  try {
+    window.NicoGoogleTagManagerDataLayer = [];
+
+    var data = {};
+
+        data.user = (function () {
+      var user = {};
+
+                  user.user_id = parseInt('', 10) || null;
+      user.login_status = '';
+      user.member_status = '';
+      user.birthday = '';
+      user.sex = '';
+      user.country = '';
+      user.prefecture = '';
+
+            
+      return user;
+      })();
+
+    window.NicoGoogleTagManagerDataLayer.push(data);
+    } catch (e) {}
+</script>		<!-- Google Tag Manager -->
+
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','NicoGoogleTagManagerDataLayer','GTM-KXT7G5G');</script>
+
+<!-- End Google Tag Manager -->		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="keywords" content="ニコニコミュニティ,ニコニコ動画,ニコニコ生放送,動画,生放送,コミュニティ,SNS">
+<meta name="description" content="ニコニコミュニティ: 
+
+
+　　　　　*’“・* 。
+　　　　　　　　|　　　　 `*。　　　
+　　　 ,｡∩∧_,,∧　 　* 　　　平日...">
+<meta property="og:title" content="毎日ヒロインむらかみクローバー”D”-ニコニコミュニティ">
+<meta property="og:url" content="http://nico.ms/co1736565">
+<meta property="og:image" content="https://img.cdn.nimg.jp/s/comch/community-icon/original/co1736565/5378108.jpg/a1024x1024l_FFFFFFFF?key=998249dc8621a7ae032c847305c5ff797975006e0207c1a380a062047402e0b9">
+<meta property="og:type" content="website">
+		<title>
+			毎日ヒロインむらかみクローバー”D”-ニコニコミュニティ
+		</title>
+		<base href="https://com.nicovideo.jp/">
+					<meta name="viewport" content="width=device-width,initial-scale=1">
+				<link rel="apple-touch-icon" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-76x76-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="72x72" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-72x72-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="76x76" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-76x76-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="114x114" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-114x114-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="120x120" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-120x120-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="144x144" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-144x144-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="152x152" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-152x152-precomposed.png">
+		<link rel="apple-touch-icon-precomposed" sizes="180x180" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/apple-touch-icon-180x180-precomposed.png">
+		<link rel="icon" sizes="192x192" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/apple/touch-icon-192x192.png">
+		<link rel="shortcut icon" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/favicon_com.ico">
+
+		
+
+<link rel="stylesheet" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/nicoheader/resources/siteHeader.css?170922">
+<link rel="stylesheet" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/nicoheader/resources/nicolib-CommonNotificationHeader.css?170922">
+<link rel="stylesheet" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/css/common/nicoheader_com_fixed.css?170922">
+
+<link rel="stylesheet" href="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/css/fresh/style_community.css?1536913926">
+					<link rel="alternate" type="application/rss+xml" title="毎日ヒロインむらかみクローバー”D”コミュニティ動画" href="/video/co1736565?rss=2.0">
+		
+		<script type="text/javascript">
+
+if (typeof Nico === 'undefined') Nico = {};
+if (typeof Nico.messages === 'undefined') Nico.messages = {};
+
+Nico.messages.cant_fetch = '取得できませんでした';
+Nico.messages.no_res     = '書き込みはありません';
+Nico.messages.no_name    = 'ななしのよっしん';
+
+</script>
+<script type="text/javascript" charset="utf-8" src="https://ads.nicovideo.jp/assets/js/ads-2.28.3.min.js"></script>
+
+<script src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/nicoheader/siteHeader.js?170806"></script>
+<script src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/nicoheader/nicolib-CommonNotificationHeader.js?170806"></script>
+
+<script src="https://notification.nicovideo.jp/res/notify.js?160614" async defer></script>
+
+<script src="https://secure-dcdn.cdn.nimg.jp/enquete/static/js/enquete.js?160614" async defer></script>
+
+<script src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/lib/jquery-1.9.1.min.js"></script>
+<script>$j=jQuery.noConflict();</script>
+
+		<script src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/lib/prototype-1.7.2.js?150327"></script>
+	<script src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/nicolib.js?180301"></script>
+	<script src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/combbs.js?180313"></script>
+
+<script>
+	
+	Ads.get_segment_object = function(){
+		var segment = {};
+	
+				segment.gender = '0';
+			return segment;
+	
+	};
+	
+</script>	</head>
+
+	<body class="forSpHeader">
+		<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KXT7G5G" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->		<!--site-head-->
+<div id="siteHeader">
+	<div id="siteHeaderInner">
+		<ul class="siteHeaderGlovalNavigation">
+			<li><a href="https://www.nicovideo.jp/?header" class="iconNiconico"><span>niconico</span></a></li>
+			<li><a href="https://www.nicovideo.jp/video_top?header"><span>動画</span></a></li>
+			<li><a href="http://seiga.nicovideo.jp/?header"><span>静画</span></a></li>
+			<li><a href="http://live.nicovideo.jp/?header"><span>生放送</span></a></li>
+			<li><a href="http://ch.nicovideo.jp/?header"><span>チャンネル</span></a></li>
+			<li><a href="http://ch.nicovideo.jp/portal/blomaga?header"><span>ブロマガ</span></a></li>
+			<li><a href="http://game.nicovideo.jp/atsumaru/?header" target="_blank"><span>RPG</span></a></li>
+			<li><a href="http://rd.nicovideo.jp/cc/app/mastodon?header" target="_blank"><span>マストドン</span></a></li>
+			<li class="siteHeaderOther" id="siteHeaderLeftMenu">
+				<a href="javascript:void(0);"><span>その他▼</span></a>
+				<ul id="siteHeaderLeftMenuContainer" style="display: none;">
+					<li><a href="http://app.nicovideo.jp/?header">アプリ</a></li>
+					<li><a href="http://ichiba.nicovideo.jp/?header">市場</a></li>
+					<li><a href="https://dic.nicovideo.jp/?header">大百科</a></li>
+					<li><a href="https://nicoad.nicovideo.jp/?header">ニコニ広告</a></li>
+					<li><a href="http://commons.nicovideo.jp/?header">コモンズ</a></li>
+					<li><a href="http://niconare.nicovideo.jp/?header">ニコナレ</a></li>
+					<li><a href="http://3d.nicovideo.jp/?header">ニコニ立体</a></li>
+					<li><a href="http://jk.nicovideo.jp/?header">実況</a></li>
+					<li><a href="https://com.nicovideo.jp/?header">コミュニティ</a></li>
+					<li><a href="https://news.nicovideo.jp/?header">ニュース</a></li>
+					<li><a href="https://q.nicovideo.jp/?header">ニコニコQ</a></li>
+					<li><a href="https://mtm.nicovideo.jp/?header">ニコニコまとめ</a></li>
+					<li class="menuServiceList">
+						<a href="http://site.nicovideo.jp/service_list/?header">もっと見る</a>
+					</li>
+				</ul>
+			</li>
+		</ul>
+		<ul class="siteHeaderMenuList">
+<!-- start notification header -->
+			<li id="siteHeaderNotification" data-nico-userId="2297426" data-nico-siteId="nicomunitty"
+				data-nico-API-Date="1541670405" data-nico-API-Version="2" data-nico-locale="ja_JP"
+				data-nico-API-Key="987e10eafc4e9733732ba612d12a2ff76ff48052"
+				data-nico-JSONP-URL="https://notify.nicovideo.jp/api/notify"
+							>
+				<a href="https://www.nicovideo.jp/my" id="siteHeaderUserContainer">
+					<span class="siteHeaderAva" id="siteHeaderUserIconContainer"></span>
+					<span id="siteHeaderUserNickNameContainer">Ryu さん</span>
+				</a>
+
+				<div class="siteHeaderNotificationContainer" id="siteHeaderNotificationContainer">
+					<dl id="siteHeaderNotificationWithNotification" style="display: none;">
+					</dl>
+					<div id="siteHeaderNotificationWithoutNotification" style="display: none;">
+						<span></span>
+						<p>あなた宛のお知らせが届くとここに表示されます。</p>
+						<p id="siteHeaderShowConfigButton" class="siteHeaderInformationOption">設定変更</p>
+					</div>
+					<dl id="siteHeaderNotificationLoading" style="display: none;">
+						<dt>お知らせ<span></span></dt>
+						<dd><span class="loadingImg"></span>お知らせを読み込んでいます…</dd>
+					</dl>
+					<dl id="siteHeaderNotificationError" style="display: none;">
+						<dt>お知らせ<span></span></dt>
+						<dd id="siteHeaderNotificationError503Detail">お知らせが取得できませんでした。しばらく待って再度お試しください。</dd>
+						<dd id="siteHeaderNotificationError503Config" style="display: none;">設定が反映できませんでした。しばらく待って再度お試しください。</dd>
+						<dd id="siteHeaderNotificationError401" style="display: none;">ログインされておりません。再度ログインしなおしてください。</dd>
+					</dl>
+					<dl id="siteHeaderNotificationMaintenance" style="display: none;">
+						<dt>お知らせ<span></span></dt>
+						<dd>只今メンテナンス中です。</dd>
+					</dl>
+					<dl id="siteHeaderNotificationOption" style="display: none;">
+						<dt>設定<span></span></dt>
+						<dd>
+							<p class="siteHeaderSwitch siteHeaderFirstChild">スタンプ取得のお知らせ
+								<span id="siteHeaderConfigStampgetButton" class="siteHeaderEnable"></span>
+							</p>
+
+							<p class="siteHeaderSwitch lastChild">ブロマガコメントのお知らせ
+								<span id="siteHeaderConfigBlomagacommentButton" class="siteHeaderEnable"></span>
+							</p>
+							<a href="javascript:void(0);" id="siteHeaderApplyConfigButton" class="siteHeaderSubmitButtonDisable">変更を適用する</a>
+						</dd>
+						<dd class="siteHeaderInformationOption">
+							<a href="javascript:void(0);" id="siteHeaderBackDetail">一覧に戻る</a>
+							<a href="javascript:void(0);" id="siteHeaderBackDetailChanged" style="display: none;">閉じる</a>
+						</dd>
+					</dl>
+				</div>
+								<a href="https://account.nicovideo.jp/premium/register?site=community&sec=bar" class="siteHeaderUpgrade" id="siteHeaderNotificationPremium" data-site="community">
+					<small>－</small>
+					<span>プレミアム登録</span>
+				</a>
+											</li>
+<!-- end notification header -->
+			<li class="siteHeaderHorizon"><a href="/community" id="btn_usermenu_join"><span>フォロー中のコミュニティ</span></a></li>
+			<li class="siteHeaderOther" id="siteHeaderRightMenu">
+				<a href="javascript:void(0);"><span>メニュー▼</span></a>
+				<ul style="display: none;" id="siteHeaderRightMenuContainer">
+					<li><a href="/my_contact" id="btn_usermenu_mycontact">マイリクエストBOX</a></li>
+					<li><a href="/create" id="btn_usermenu_create">コミュニティ作成</a></li>
+					<li><a href="https://www.nicovideo.jp/my/community" id="btn_usermenu_mypage">マイページ</a></li>
+					<li><a href="http://point.nicovideo.jp/index/bank/?from_notification=2">ポイント購入</a></li>
+					<li id="siteHeaderRightMenuUnfix"><a href="javascript:void(0);">ヘッダー:<span class="siteHeaderScroll">追従</span></a></li>
+					<li id="siteHeaderRightMenuFix"><a href="javascript:void(0);">ヘッダー:<span class="siteHeaderFix">固定</span></a></li>
+					<li><a href="https://account.nicovideo.jp/logout?site=community" id="btn_usermenu_logout">ログアウト</a></li>
+				</ul>
+			</li>
+		</ul>
+	</div>
+</div>
+				<!-- header for pc-->
+<header class="area-pcSiteHeader">
+	<div class="cp-pcSiteHeader">
+		<h1 class="pcSiteLogo"><a href="/"><img src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/fresh/logo-header_pc.svg" alt="ニコニコミュニティ"></a></h1>
+		<form class="pcSearchForm md-searchForm" onsubmit="location.href='https://com.nicovideo.jp/search/'+encodeURIComponent(this.s.value.replace(/^\s+|\s+$/g, '')).replace(/%20/g, '+')+'?mode=s'; return false;">
+			<input type="text" class="textArea" value="" name="s">
+			<button type="submit" class="submitButton" value="検索"><img src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/fresh/icon-searchForm.svg" alt="検索"></button>
+		</form>
+		<aside class="adPcSiteHeader">
+			<aside id="community_pc_top" style="width:468px; height:60px; float:right;"></aside>
+<script type="text/javascript">
+
+	(function() {
+
+		var queryWidth = 920;
+		var target_dom_id = "community_pc_top";
+		var isSet = false;
+		var isShow = false;
+
+
+		var target_dom;
+
+		function ad_set() {
+			var segment = Ads.get_segment_object();
+			new Ads.Advertisement({zone: 72, segments: segment, impression: 2}).set(target_dom_id);
+		}
+
+		function ad_showControl() {
+			if(!isSet) {
+				// セットされてなかったらセットして表示
+				if(window.innerWidth >= queryWidth) {
+					ad_set();
+					isSet = true;
+					isShow = true;
+					target_dom = document.getElementById(target_dom_id);
+				}
+			} else {
+				// 既にセットされている
+				if(isShow) {
+					// 表示されている
+					if(window.innerWidth < queryWidth) {
+						// もし表示条件を満たさなければ非表示
+						target_dom.style.display = "none";
+						isShow = false;``
+					}
+				} else {
+					// 表示されていない
+					if(window.innerWidth >= queryWidth) {
+						target_dom.style.display = "flex";
+						isShow = true;
+					}
+				}
+			}
+		}
+
+		// 読み込み時に実行
+		ad_showControl();
+
+		// リサイズ時に実行
+		window.addEventListener('resize', function () {
+			ad_showControl();
+		});
+
+	})();
+
+
+</script>		</aside>
+	</div>
+</header>
+
+<!-- header for tablet & smartphone  -->
+<header class="area-spSiteHeader">
+	<div class="cp-tablespSiteHeader">
+		<h1 class="spSiteLogo"><a href="/"><img src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/fresh/logo-header_sp.svg" alt="ニコニコミュニティ"></a></h1>
+		<button class="navigation md-headerIconButton" id="globalNav_sp_button">
+			<img src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/fresh/icon-navigation.svg" alt="ニコニコミュニティメニュー">
+		</button>
+		<button class="search md-headerIconButton" id="searchForm_sp_button">
+			<img src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/fresh/icon-search.svg" alt="コミュニティを探す">
+		</button>
+	</div>
+</header>
+
+<!-- navigation for tablet & smartphone-->
+<div class="globalNav_sp_overlay" id="globalNav_sp_overlay" style="display:none"></div>
+<div class="globalNav_sp_contentBg" id="globalNav_sp_contentBg" style="display:none;"></div>
+<div class="area-globalNav_sp" id="globalNav_sp_area" style="display:none">
+	<nav class="md-globalNav_sp">
+		<ul class="navList" id="globalNav_sp_content">
+			<li class="navItem"><a href="/community">フォロー中のコミュニティ</a></li>
+			<li class="navItem"><a href="/my_contact">マイリクエストBOX</a></li>
+			<li class="navItem"><a href="/create">コミュニティ作成</a></li>
+			<li class="navItem"><a href="http://point.nicovideo.jp/index/bank/?from_notification=2">ポイント購入</a></li>
+			<li class="navItem">
+				<a href="https://qa.nicovideo.jp/category/show/482" target="_blank">ニコニコミュニティヘルプ</a>
+			</li>
+			<li class="navTitle_otherService">アカウントメニュー</li>
+							<li class="navItem"><a href="https://www.nicovideo.jp/my/community">マイページ</a></li>
+				<li class="navItem"><a href="https://secure.nicovideo.jp/secure/logout">ログアウト</a></li>
+					</ul>
+	</nav>
+</div>
+
+<div class="area-searchForm_sp" id="searchForm_sp_area" style="display:none;">
+	<form class="md-searchForm" onsubmit="location.href='https://com.nicovideo.jp/search/'+encodeURIComponent(this.s.value.replace(/^\s+|\s+$/g, '')).replace(/%20/g, '+')+'?mode=s'; return false;">
+		<input type="text" class="textArea" value="" name="s">
+		<button type="submit" class="submitButton" value="検索"><img src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/fresh/icon-searchForm.svg" alt="検索"></button>
+	</form>
+</div>
+
+<!-- ad for tablet & smartphone-->
+<aside id="ad_community_tablet_header" class="area-adTabletSiteHeader" style="height:auto;"></aside>
+<script type="text/javascript">
+
+	(function() {
+
+		var queryWidth_max = 920;
+		var queryWidth_min = 480;
+		var target_dom_id = "ad_community_tablet_header";
+		var isSet = false;
+		var isShow = false;
+
+		var target_dom;
+
+		function ad_set() {
+			var segment = Ads.get_segment_object();
+			new Ads.Advertisement({zone: 72, segments: segment, impression: 2}).set('ad_community_tablet_header');
+		}
+
+		function ad_showControl() {
+			if(!isSet) {
+				// セットされてなかったらセットして表示
+				if(window.innerWidth > queryWidth_min && window.innerWidth <= queryWidth_max) {
+					ad_set();
+					isSet = true;
+					isShow = true;
+					target_dom = document.getElementById(target_dom_id);
+				}
+			} else {
+				// 既にセットされている
+				if(isShow) {
+					// 表示されている
+					if(!(window.innerWidth > queryWidth_min && window.innerWidth <= queryWidth_max)) {
+						// もし表示条件を満たさなければ非表示
+						target_dom.style.display = "none";
+						isShow = false;
+					}
+				} else {
+					// 表示されていない
+					if(window.innerWidth > queryWidth_min && window.innerWidth <= queryWidth_max) {
+						target_dom.style.display = "flex";
+						isShow = true;
+					}
+				}
+			}
+		}
+
+		// 読み込み時に実行
+		ad_showControl();
+
+		// リサイズ時に実行
+		window.addEventListener('resize', function () {
+			ad_showControl();
+		});
+
+	})();
+
+	(function(){
+
+	})();
+
+</script>	<aside id="ad_community_sp_header" class="area-adSpSiteHeader" style="height:auto;"></aside>
+<script type="text/javascript">
+
+	(function() {
+
+		var zone_id_iOS = 1018;
+		var zone_id_Android = 1021;
+		var queryWidth = 480;
+		var target_dom_id = "ad_community_sp_header";
+		var isSet = false;
+		var isShow = false;
+
+		var zone_id;
+		var ua = window.navigator.userAgent;
+		if(ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 ||  ua.indexOf('iPad') > 0) {
+			zone_id = zone_id_iOS;
+		} else {
+			zone_id = zone_id_Android;
+		}
+
+		var target_dom;
+
+		function ad_set() {
+			// サイズが条件を満たしたら実行
+			new Ads.Advertisement({
+					zone: zone_id    // ゾーンID（必須）
+			}).set(target_dom_id);      // 広告を表示するdiv要素のid
+		}
+
+		function ad_showControl() {
+			if(!isSet) {
+				// セットされてなかったらセットして表示
+				if(window.innerWidth <= queryWidth) {
+					ad_set();
+					isSet = true;
+					isShow = true;
+					target_dom = document.getElementById(target_dom_id);
+				}
+			} else {
+				// 既にセットされている
+				if(isShow) {
+					// 表示されている
+					if(window.innerWidth > queryWidth) {
+						// もし表示条件を満たさなければ非表示
+						target_dom.style.display = "none";
+						isShow = false;``
+					}
+				} else {
+					// 表示されていない
+					if(window.innerWidth <= queryWidth) {
+						target_dom.style.display = "flex";
+						isShow = true;
+					}
+				}
+			}
+		}
+
+		// 読み込み時に実行
+		ad_showControl();
+
+		// リサイズ時に実行
+		window.addEventListener('resize', function () {
+			ad_showControl();
+		});
+
+	})();
+
+
+</script>
+
+										<header class="area-communityHeader">
+		<div class="cp-communityHeader">
+
+			<div class="communityInfo">
+
+				<div class="communityThumbnail">
+					<a href="/community/co1736565">
+						<img src="https://img.cdn.nimg.jp/s/comch/community-icon/original/co1736565/5378108.jpg/a1024x1024l_FFFFFFFF?key=998249dc8621a7ae032c847305c5ff797975006e0207c1a380a062047402e0b9" alt="毎日ヒロインむらかみクローバー”D”">
+					</a>
+										<div class="flag">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/img/fresh/flag-community_open.svg" alt="													オープンコミュニティ											">
+					</div>
+									</div>
+
+				<div class="communityData">
+
+					<h2 class="title">
+						<a href="/community/co1736565">
+							毎日ヒロインむらかみクローバー”D”
+						</a>
+					</h2>
+
+					<table class="communityDetail">
+
+						<tr class="row">
+							<th class="label">オーナー</th>
+							<td class="content">
+								<a href="https://www.nicovideo.jp/user/387778" target="_blank">
+									むらまこ
+								</a>
+							</td>
+						</tr>
+
+						<tr class="row">
+							<th class="label">開設日</th>
+							<td class="content">2012年08月03日</td>
+						</tr>
+
+						<tr class="row">
+							<th class="label tagLabel">登録タグ</th>
+							<td class="content">
+								<ul class="tagList">
+																														<li class="item">
+											 <a href="/search/%EF%BC%A1%EF%BC%AB%EF%BC%A2%EF%BC%94%EF%BC%98?mode=t">ＡＫＢ４８</a>
+										 </li>
+																					<li class="item">
+											 <a href="/search/%E3%83%8F%E3%83%AD%E3%83%97%E3%83%AD?mode=t">ハロプロ</a>
+										 </li>
+																					<li class="item">
+											 <a href="/search/%E3%82%80%E3%82%89%E3%81%BE%E3%81%93?mode=t">むらまこ</a>
+										 </li>
+																					<li class="item">
+											 <a href="/search/%E8%B8%8A%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%9F?mode=t">踊ってみた</a>
+										 </li>
+																											</ul>
+							</td>
+						</tr>
+
+					</table>
+
+					<a class="md-settingButton" id="comSetting_show">コミュニティの設定を表示 ▼</a>
+					<a class="md-settingButton" id="comSetting_hide" style="display:none;">コミュニティの設定を非表示 ▲</a>
+
+					<table style="display: none" class="communitySetting_data" id="comSetting_data">
+						<tr>
+							<th>フォローリクエストの承認</th>
+							<td>自動</td>
+						</tr>
+						<tr>
+							<th>フォロー時の個人情報公開</th>
+							<td>不要</td>
+						</tr>
+						<tr>
+							<th>動画投稿が可能なユーザー</th>
+							<td>特権フォロワーのみ</td>
+						</tr>
+						<tr>
+							<th>フォロー承認が可能なユーザー</th>
+							<td>特権フォロワーのみ</td>
+						</tr>
+						<tr>
+							<th>生放送が可能なユーザー</th>
+							<td>特権フォロワーのみ</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<div class="communityRegist">
+				<div class="communityRegist_text">
+					<dl class="communityScale">
+						<dt class="label">レベル</dt>
+						<dd class="content">109</dd>
+						<dt class="label memberCount">フォロワー</dt>
+						<dd class="content memberCount">
+							51290<span class="unit">人</span>
+							<span class="max">(最大:128087人)</span>
+						</dd>
+					</dl>
+
+											<div class="communityLivePrivilegedDescription">獲得した生放送特権 :</div>
+					
+					<div class="communityLivePrivileged" id="comLivePrivileged_data">
+												<div id="other_privilege">
+															<p>バックステージパス（10人）</p>
+								<p>アンケート</p>
+													</div>
+					</div>
+											<p class="registerMerit">
+							<a href="https://account.nicovideo.jp/premium/register?site=community&next_url=community/co1736565&sec=com_community">プレミアム会員</a>があと<span class="num">194</span>人でレベル<span class="num">110</span>
+						</p>
+									</div>
+															<a href="/leave/co1736565" class="followButton following">
+							<span class="following_text">フォロー中</span>
+							<span class="leave_text">フォロー解除</span>
+						</a>
+												</div>
+		</div>
+	</header>
+
+<nav class="area-communityNavigation">
+	<div class="cp-communityNavigation">
+		<ul class="list">
+			<li
+				 class="item active"
+								title="このコミュニティのトップ"
+			>
+				<a href="/community/co1736565?com_header=1" class="on">トップ</a>
+			</li>
+			<li
+				 class='item' 				title="このコミュニティの動画一覧"
+			>
+				<a href="/video/co1736565?com_header=1">動画</a>
+			</li>
+							<li
+					 class='item' 					title="このコミュニティの生放送履歴一覧"
+				>
+					<a href="/live_archives/co1736565?com_header=1">生放送</a>
+				</li>
+										<li
+					 class='item' 					title="掲示板"
+				>
+					<a href="https://com.nicovideo.jp/bbs/co1736565?com_header=1">掲示板</a>
+				</li>
+						<li
+				 class='item' 				title="このコミュニティのフォロワー"
+			>
+				<a href="/member/co1736565?com_header=1">フォロワー</a>
+			</li>
+										<li class='item' title="コミュニティリクエストBOX">
+					<a href="/group_contact/co1736565?com_header=1" class="on">コミュニティリクエストBOX</a>
+				</li>
+					</ul>
+	</div>
+</nav>			<header class="area-communityInformation">
+	
+	
+	
+					<section class="now_live">
+			<a class="now_live_inner" href="http://live.nicovideo.jp/watch/lv316750923?ref=community">
+				<div class="now_live_info">
+					<span class="now_live_icon">LIVE</span>
+					<h2 class="now_live_title">修羅場放送会場</h2>
+				</div>
+				<div class="now_live_playButton_wrap">
+					<span class="now_live_playButton">視聴する</span>
+				</div>
+			</a>
+		</section>
+	
+</header>		
+		<script type="text/javascript">
+	
+	cdv = getCookie("ComDescVisibly");
+	if(cdv == "null") { cdv = true; }
+	else if(cdv == "true") { cdv = true; }
+	else if(cdv == "false") { cdv = false; }
+	else { cdv = true; }
+
+	function getCookie(key,  tmp1, tmp2, xx1, xx2, xx3) {
+		tmp1 = " " + document.cookie + ";";
+		xx1 = xx2 = 0;
+		len = tmp1.length;
+		while (xx1 < len) {
+			xx2 = tmp1.indexOf(";", xx1);
+			tmp2 = tmp1.substring(xx1 + 1, xx2);
+			xx3 = tmp2.indexOf("=");
+			if (tmp2.substring(0, xx3) == key) {
+				return(unescape(tmp2.substring(xx3 + 1, xx2 - xx1 - 1)));
+			}
+			xx1 = xx2 + 1;
+		}
+		return("");
+	}
+	function setCookie(key, val, tmp) {
+		tmp = key + "=" + escape(val) + "; ";
+		// tmp += "path=" + location.pathname + "; ";
+		tmp += "expires=Tue, 31-Dec-2030 23:59:59; ";
+		document.cookie = tmp;
+	}
+	function clearCookie(key) {
+		document.cookie = key + "=" + "xx; expires=Tue, 1-Jan-1980 00:00:00;";
+	}
+
+	function comprfVisBtn(id,visible){
+		if (id == "community_description") {
+			document.getElementById(id).style.display = visible ? "block" : "none";
+		} else {
+			document.getElementById(id).style.display = visible ? "inline" : "none";
+		}
+	}
+	
+</script>
+
+
+
+	<main class="area-communityTop">
+
+		<div class="cp-communityTop">
+
+			
+						<div class="area-mainContent">
+										<section class="md-mainContentBox communityNotice">
+		<div class="mainContentBox_header">
+			<h2 class="title">お知らせ</h2>
+					</div>
+		<ul class="noticeList">
+							<li class="noticeItem js-notice_item">
+					<div class="noticeItemHeader_wrap">
+						<div class="noticeItemHeader">
+							<h3 class="noticeTitle">１１月４日（日）１４：００～　リア凸企画</h3>
+							<div class="noticeDetail"><span class="date">2018年11月01日 18:58:13</span> - <span class="author">むらまこ</span></div>
+						</div>
+						<button class="noticeReadWholeText js-notice_readText_show"><span class="noticeReadWholeText_inner">本文表示</span></button>
+						<button class="noticeReadWholeText js-notice_readText_hide" style="display:none;"><span class="noticeReadWholeText_inner">隠す</span></button>
+					</div>
+					<p class="notice_text js-notice_text_data">１１月４日（日）１４：００～秋葉の秋葉原公園にてリア凸待ち企画を行います。<BR>
+来てくれた方にはオリジナルステッカー差し上げます！！<BR><BR>
+【注意事項】<BR>
+・配信者などの長すぎるｇｄｇｄ売名凸禁止<BR>
+・むらまこ及びリスナーさんの盗撮禁止<BR>
+・配信に映りたくない方は映らなくて大丈夫です！<BR>
+（後から肖像権ガー！っていう方もおやめください。）<BR>
+みんなで仲良くしようね！！！</p>
+				</li>
+							<li class="noticeItem js-notice_item">
+					<div class="noticeItemHeader_wrap">
+						<div class="noticeItemHeader">
+							<h3 class="noticeTitle">7/7　新しい動画あげたよ！！！</h3>
+							<div class="noticeDetail"><span class="date">2018年07月07日 22:34:38</span> - <span class="author">むらまこ</span></div>
+						</div>
+						<button class="noticeReadWholeText js-notice_readText_show"><span class="noticeReadWholeText_inner">本文表示</span></button>
+						<button class="noticeReadWholeText js-notice_readText_hide" style="display:none;"><span class="noticeReadWholeText_inner">隠す</span></button>
+					</div>
+					<p class="notice_text js-notice_text_data">新しい踊ってみたあげました！！！<BR><BR>
+【まろん×むらまこ】ビバハピ【歌って踊ってみた】<BR>
+<a href="http://www.nicovideo.jp/watch/sm33465919" target="_blank" rel="noopener nofollow">http://www.nicovideo.jp/watch/sm33465919</a><BR>
+マイリスおねがいします！！！</p>
+				</li>
+							<li class="noticeItem js-notice_item">
+					<div class="noticeItemHeader_wrap">
+						<div class="noticeItemHeader">
+							<h3 class="noticeTitle">【出演情報】</h3>
+							<div class="noticeDetail"><span class="date">2018年07月05日 14:39:50</span> - <span class="author">むらまこ</span></div>
+						</div>
+						<button class="noticeReadWholeText js-notice_readText_show"><span class="noticeReadWholeText_inner">本文表示</span></button>
+						<button class="noticeReadWholeText js-notice_readText_hide" style="display:none;"><span class="noticeReadWholeText_inner">隠す</span></button>
+					</div>
+					<p class="notice_text js-notice_text_data">７月５日（土）に高田さんとギャンブーにでまぁす！！<BR><BR>
+「むらまこ」VS.「高田健志」 【サマーナイトフェスティバルG2＠松戸競輪】大予想会！<BR>
+<a href="http://live.nicovideo.jp/gate/lv314239048" target="_blank" rel="noopener nofollow">http://live.nicovideo.jp/gate/lv314239048</a></p>
+				</li>
+							<li class="noticeItem js-notice_item">
+					<div class="noticeItemHeader_wrap">
+						<div class="noticeItemHeader">
+							<h3 class="noticeTitle">これからやっていくサイト</h3>
+							<div class="noticeDetail"><span class="date">2018年06月21日 14:32:26</span> - <span class="author">むらまこ</span></div>
+						</div>
+						<button class="noticeReadWholeText js-notice_readText_show"><span class="noticeReadWholeText_inner">本文表示</span></button>
+						<button class="noticeReadWholeText js-notice_readText_hide" style="display:none;"><span class="noticeReadWholeText_inner">隠す</span></button>
+					</div>
+					<p class="notice_text js-notice_text_data">【youtubeチャンネル】<BR><a href="https://www.youtube.com/channel/UCCSyxERubHllFQcyKVkwakQ?view_as=subscriber" target="_blank" rel="noopener nofollow">https://www.youtube.com/channel/UCCSyxERubHllFQcyKVkwakQ?view_as=subscriber</a><BR>
+(ニコ生と同時配信)<BR><BR>
+
+【BIGOLIVE】午前９：００～１２：００<BR>
+
+<a href="http://www.bigo.tv/muramako_2525" target="_blank" rel="noopener nofollow">http://www.bigo.tv/muramako_2525</a><BR>
+スマホからのほうがみやすいかも！</p>
+				</li>
+					</ul>
+		<a class="noticeReadMoreEntries" id="notice_readMore">残りの3件を表示</a>
+	</section>
+					<section class="md-mainContentBox communityProfile">
+	<div class="mainContentBox_header">
+		<h2 class="title">コミュニティプロフィール</h2>
+			</div>
+	<p class="profile_text" id="profile_text_box">
+		<span class="profile_text_inner" id="profile_text_content">
+			<BR><BR>
+<Font Color="#A0522D">
+
+　　　　　*’“・* 。<BR>
+　　　　　　　　|　　　　 `*。<BR>　　　
+　　　 ,｡∩∧_,,∧　 　* 　　　<Font Size="3" Color="#ff9999"><b>平日ヒロインむらかみクローバー”D”</b></Font><BR>
+　　　　　　+　(´･ω･`)　*｡+ﾟ<BR>
+　　　　　　`*｡ ヽ、　 つ *ﾟ*<BR>
+　　　　　　　`・+｡*・’ ﾟ⊃ +ﾟ<BR>
+　　　　　　　☆　　 ∪~ ｡*ﾟ<BR>
+　 　　　　　　`・+｡*・ ﾟ<BR>
+<BR>
+♥ﾟ+｡⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒｡+ﾟ♥　<br>
+名前：むらまこ(ムラ・マコーシカ)<BR><BR>
+
+Twitter：＠muramako_2525<BR><BR>
+
+放送内容は、主に雑談。踊ってみたもしてますしゲームもやります<BR>
+趣味は筋トレで、痩せてることがいいところです<BR>
+胸はありません<BR><BR>
+
+
+♥ﾟ+｡⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒Ｙ⌒｡+ﾟ♥<BR><BR>
+
+
+</Font>
+		</span>
+		<a class="profileReadMore" id="profile_readMore">続きを読む</a>
+	</p>
+</section>							</div>
+
+			
+			<div class="area-sideContent">
+
+				<!-- お知らせ -->
+					<!---->
+		<!---->
+
+				<!-- 生放送 -->
+				
+	<section class="md-sideContentBox">
+		<div class="mainHeader">
+			<h2 class="title">生放送のお知らせ</h2>
+			<a href="https://twitter.com/share" data-text=" " data-url="http://nico.ms/l/co1736565" data-count="none" class="twitter-share-button subinfo shareButton">シェアする</a>
+			<script type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
+		</div>
+		<h3 class="subHeader">最近行われた生放送</h3>
+		<ul>
+											<li>
+					<span class="liveDate">2018年11月08日 15:54</span>
+										<a href="http://live.nicovideo.jp/watch/lv316749254?ref=community" class="liveTitle">【外配信】おいしいパン屋でチョココロネを買い漁る女</a>
+					<span class="liveBroadcaster">放送者：むらまこ</span>
+				</li>
+					</ul>
+		<h3 class="subHeader">予約スケジュール</h3>
+		<ul>
+							<li class="liveNoReserved">生放送の予約はありません</li>
+					</ul>
+		<a href="/live_archives/co1736565?side_bar=1" class="footlink">生放送履歴を見る</a>
+	</section>
+
+				<!-- 広告 -->
+				<aside id="ad_community_sp_content" class="ad_community_sp_content"></aside>
+<script type="text/javascript">
+
+	(function() {
+
+		var zone_id_iOS = 1019;
+		var zone_id_Android = 1022;
+		var queryWidth = 480;
+		var target_dom_id = "ad_community_sp_content";
+		var isSet = false;
+		var isShow = false;
+
+		var zone_id;
+		var ua = window.navigator.userAgent;
+		if(ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 ||  ua.indexOf('iPad') > 0) {
+			zone_id = zone_id_iOS;
+		} else {
+			zone_id = zone_id_Android;
+		}
+
+		var target_dom;
+
+		function ad_set() {
+			// サイズが条件を満たしたら実行
+			new Ads.Advertisement({
+					zone: zone_id       // ゾーンID（必須）
+			}).set(target_dom_id);      // 広告を表示するdiv要素のid
+		}
+
+		function ad_showControl() {
+			if(!isSet) {
+				// セットされてなかったらセットして表示
+				if(window.innerWidth <= queryWidth) {
+					ad_set();
+					isSet = true;
+					isShow = true;
+					target_dom = document.getElementById(target_dom_id);
+				}
+			} else {
+				// 既にセットされている
+				if(isShow) {
+					// 表示されている
+					if(window.innerWidth > queryWidth) {
+						// もし表示条件を満たさなければ非表示
+						target_dom.style.display = "none";
+						isShow = false;``
+					}
+				} else {
+					// 表示されていない
+					if(window.innerWidth <= queryWidth) {
+						target_dom.style.display = "flex";
+						isShow = true;
+					}
+				}
+			}
+		}
+
+		// 読み込み時に実行
+		ad_showControl();
+
+		// リサイズ時に実行
+		window.addEventListener('resize', function () {
+			ad_showControl();
+		});
+
+	})();
+
+
+</script>
+
+									<!-- 掲示板新着コメント -->
+					<section class="md-sideContentBox">
+	<div class="mainHeader">
+		<h2 class="title">掲示板新着コメント</h2>
+	</div>
+	<div id="bbs_summary"></div>
+	<textarea id="bbs_template" style="display:none;">
+		<ul>
+			<li>
+				<span class="bbsResTitle">[$number]. [$name] : [$date]</span>
+				<p class="bbsResText">[$body|40]</p>
+				[if oekaki]
+					<img src="https://dic.nicovideo.jp/b/c/co1736565/oekaki/[$oekaki].png" alt="" width="32" height="32">
+				[/if]
+			</li>
+		</ul>
+	</textarea>
+	<script>
+		Nico.Community.BBS.BASE_URL = "https://dic.nicovideo.jp/b/c/";
+		Nico.Community.BBS("bbs_summary", "bbs_template", "co1736565", 5, "1541674005%3A2297426%3A0%3A109%3Aeb5ee02e");
+	</script>
+	<noscript>JavaScript を有効にしないと表示できません</noscript>
+	<a href="https://com.nicovideo.jp/bbs/co1736565?side_bar=1" class="footlink">掲示板へ </a>
+</section>				
+				<!-- コミュニティ動画 -->
+				<section class="md-sideContentBox">
+	<div class="mainHeader">
+		<h2 class="title">コミュニティ動画</h2><span class="subinfo">32件 / 10000件</span>
+	</div>
+	<ul>
+									<li class="videoItem">
+					<a href="https://www.nicovideo.jp/watch/1530970490?side_bar=0">
+						<img src="//tn.smilevideo.jp/smile?i=33465919" alt="" title="【まろん×むらまこ】ビバハピ【踊ってみた】" class="videoThumbnail">
+					</a>
+											<a href="https://www.nicovideo.jp/watch/1530970490?side_bar=0" class="videoTitle">【まろん×むらまこ】ビバハピ【踊ってみた】</a>
+									</li>
+							<li class="videoItem">
+					<a href="https://www.nicovideo.jp/watch/1529920813?side_bar=1">
+						<img src="//tn.smilevideo.jp/smile?i=33420599" alt="" title="【まろん×むらまこ】いーあるふぁんくらぶ【歌って踊ってみた】" class="videoThumbnail">
+					</a>
+											<a href="https://www.nicovideo.jp/watch/1529920813?side_bar=1" class="videoTitle">【まろん×むらまこ】いーあるふぁんくらぶ【歌って踊ってみた】</a>
+									</li>
+							<li class="videoItem">
+					<a href="https://www.nicovideo.jp/watch/1517309101?side_bar=2">
+						<img src="//tn.smilevideo.jp/smile?i=32662443" alt="" title="【鳴まこショ羽←】Hysteric Bullet【踊ってみた】" class="videoThumbnail">
+					</a>
+											<a href="https://www.nicovideo.jp/watch/1517309101?side_bar=2" class="videoTitle">【鳴まこショ羽←】Hysteric Bullet【踊ってみた】</a>
+									</li>
+							<li class="videoItem">
+					<a href="https://www.nicovideo.jp/watch/1492683301?side_bar=3">
+						<img src="//tn.smilevideo.jp/smile?i=31063140" alt="" title="【なるまコラ】うどん【踊ってみた】" class="videoThumbnail">
+					</a>
+											<a href="https://www.nicovideo.jp/watch/1492683301?side_bar=3" class="videoTitle">【なるまコラ】うどん【踊ってみた】</a>
+									</li>
+						</ul>
+	<a href="/video/co1736565?side_bar=1" class="footlink">コミュニティ動画の確認・編集</a>
+</section>
+								<!-- ブロマガ -->
+						
+
+<script type="text/javascript"><!--
+	function change_channel_enable() {
+		if (confirm('オーナーのブロマガを非表示にします。よろしいですか？')) {
+			document.channel_blomaga_form.submit();
+		}
+		return false;
+	}
+	--></script>
+
+
+
+	<section class="md-sideContentBox">
+			<div class="mainHeader blomaga">
+	<div class="mainHeader_blomagaInfo">
+		<span class="blomaga_leadText">オーナーのブロマガ</span>
+		<h2 class="title">むらまこのブロマガ</h2>
+	</div>
+</div>							
+ 		<ul>
+					
+			
+
+			<li class="blomagaItem">
+				
+				<div class="blomagaArticleInfo">
+					<span class="blomagaArticleDate">
+						04/03 20:09
+					</span>
+					<a href="http://ch.nicovideo.jp/article/ar725922" class="blomagaArticleTitle" target="_blank">Ｔシャツつくったよ＾＾</a>
+				</div>
+			</li>
+					
+			
+
+			<li class="blomagaItem">
+									<a href="http://ch.nicovideo.jp/article/ar725918" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/blomaga/material/user/article_thumbnail/e7/muramako_725918.jpg" alt="" class="blomagaThumbnail">
+					</a>
+				
+				<div class="blomagaArticleInfo">
+					<span class="blomagaArticleDate">
+						02/08 16:04
+					</span>
+					<a href="http://ch.nicovideo.jp/article/ar725918" class="blomagaArticleTitle" target="_blank">むらまこTシャツ販売</a>
+				</div>
+			</li>
+			</ul>
+						</section>
+				
+				<!-- コミュニティフォロワー -->
+				<section class="md-sideContentBox">
+	<div class="mainHeader">
+		<h2 class="title">コミュニティフォロワー</h2><span class="subinfo">51290人</span>
+	</div>
+	<ul class="memberList">
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/40818945?side_bar=top" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/4081/40818945.jpg?1518562215" alt="オルテンシア">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/40818945?side_bar=top" target="_blank" style="font-weight:bold">
+						オルテンシア
+					</a>
+				</div>
+			</li>
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/85963526?side_bar=top" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/defaults/blank.jpg" alt="ゲスト">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/85963526?side_bar=top" target="_blank" style="font-weight:bold">
+						ゲスト
+					</a>
+				</div>
+			</li>
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/86347835?side_bar=top" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/defaults/blank.jpg" alt="ゲスト">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/86347835?side_bar=top" target="_blank" style="font-weight:bold">
+						ゲスト
+					</a>
+				</div>
+			</li>
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/263692?side_bar=top" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/defaults/blank.jpg" alt="わんわん">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/263692?side_bar=top" target="_blank" style="font-weight:bold">
+						わんわん
+					</a>
+				</div>
+			</li>
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/13831166?side_bar=bottom" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/defaults/blank.jpg" alt="あ.お.や.ん">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/13831166?side_bar=bottom" target="_blank" style="font-weight:bold">
+						あ.お.や.ん
+					</a>
+				</div>
+			</li>
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/3379876?side_bar=bottom" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/defaults/blank.jpg" alt="たか">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/3379876?side_bar=bottom" target="_blank" style="font-weight:bold">
+						たか
+					</a>
+				</div>
+			</li>
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/57982638?side_bar=bottom" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/defaults/blank.jpg" alt="らく">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/57982638?side_bar=bottom" target="_blank" style="font-weight:bold">
+						らく
+					</a>
+				</div>
+			</li>
+					<li class="memberItem">
+				<div class="memberThumbnail">
+					<a href="https://www.nicovideo.jp/user/81715682?side_bar=bottom" target="_blank">
+						<img src="https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/8171/81715682.jpg?1528116402" alt="笹熊 II mod II">
+					</a>
+				</div>
+				<div class="memberName">
+					<a href="https://www.nicovideo.jp/user/81715682?side_bar=bottom" target="_blank" style="font-weight:bold">
+						笹熊 II mod II
+					</a>
+				</div>
+			</li>
+			</ul>
+	<a href="/member/co1736565?side_bar=1" class="footlink">コミュニティフォロワーの確認</a>
+</section>
+
+				
+				<!-- ブログパーツ -->
+				<section class="blog_parts">
+	<h2 style="display:none;">ブログパーツ</h2>
+	<div class="blog_parts_formWrap">
+		<form name="form_iframe">
+			<p class="blog_parts_formLabel">ブログパーツ iframe</p>
+			<input type="text" class="blog_parts_form" readonly name="input_iframe" onClick="javascript:document.form_iframe.input_iframe.focus(); document.form_iframe.input_iframe.select();" value='&lt;iframe width=&quot;312&quot; height=&quot;176&quot; src=&quot;https://com.nicovideo.jp/thumb_community/co1736565&quot; scrolling=&quot;no&quot; style=&quot;border:solid 1px #CCC;&quot; frameborder=&quot;0&quot;&gt;&lt;a href=&quot;https://com.nicovideo.jp/community/co1736565&quot;&gt;【ニコニコ動画】毎日ヒロインむらかみクローバー”D”&lt;/a&gt;&lt;/iframe&gt;'>
+		</form>
+	</div>
+	<div class="blog_parts_formWrap">
+		<form name="form_link">
+			<p class="blog_parts_formLabel">ブログパーツ リンク</p>
+			<input type="text" class="blog_parts_form" readonly name="input_link" onclick="javascript:document.form_link.input_link.focus(); document.form_link.input_link.select();" value='&lt;a target=&quot;_blank&quot; href=&quot;https://com.nicovideo.jp/community/co1736565&quot;&gt;【ニコニコミュニティ】毎日ヒロインむらかみクローバー”D”&lt;/a&gt;'>
+		</form>
+	</div>
+	<div class="blog_parts_formWrap">
+		<form name="form_liveurl">
+			<p class="blog_parts_formLabel">ブログパーツ 生放送をお知らせ</p>
+			<input type="text" class="blog_parts_form" readonly name="input_liveurl" onclick="javascript:document.form_liveurl.input_liveurl.focus(); document.form_liveurl.input_liveurl.select();" value='&lt;a target=&quot;_blank&quot; href=&quot;http://live.nicovideo.jp/watch/co1736565?ref=community&quot;&gt;【ニコニコミュニティ】毎日ヒロインむらかみクローバー”D”の生放送&lt;/a&gt; '>
+		</form>
+	</div>
+</section>
+				<aside id="community_pc_sidefollow" style="margin-top:20px;text-align:center;"></aside>
+<script type="text/javascript">
+
+(function() {
+
+	var queryWidth = 920;
+	var target_dom_id = "community_pc_sidefollow";
+	var isSet = false;
+	var isShow = false;
+
+
+	var target_dom;
+
+	function ad_set() {
+		var segment = Ads.get_segment_object();
+		new Ads.Advertisement({zone: 260, segments: segment, impression: 2}).set(target_dom_id);
+	}
+
+	function ad_showControl() {
+		if(!isSet) {
+			// セットされてなかったらセットして表示
+			if(window.innerWidth >= queryWidth) {
+				ad_set();
+				isSet = true;
+				isShow = true;
+				target_dom = document.getElementById(target_dom_id);
+			}
+		} else {
+			// 既にセットされている
+			if(isShow) {
+				// 表示されている
+				if(window.innerWidth < queryWidth) {
+					// もし表示条件を満たさなければ非表示
+					target_dom.style.display = "none";
+					isShow = false;
+				}
+			} else {
+				// 表示されていない
+				if(window.innerWidth >= queryWidth) {
+					target_dom.style.display = "block";
+					isShow = true;
+				}
+			}
+		}
+	}
+
+	// 読み込み時に実行
+	ad_showControl();
+
+	// リサイズ時に実行
+	window.addEventListener('resize', function () {
+		ad_showControl();
+	});
+
+})();
+
+
+</script>			</div>
+
+		</div> <!-- /.cp-communityTop -->
+	</main> <!-- /.area-communityTop -->
+
+		<footer class="area-communityFooter">
+	<div class="cp-communityFooter">
+					<ul class="communityControlList">
+									<li class="item">
+						<a href="/leave/co1736565">
+							このコミュニティのフォローを解除する						</a>
+					</li>
+													<li class="item"><a href="https://secure.nicovideo.jp/secure/support_form?ct=nicocommu-report%28%20https%3A%2F%2Fcom.nicovideo.jp%2Fcommunity%2Fco1736565%20%29" target="_blank">このコミュニティを違反通報する</a></li>
+							</ul>
+		
+			<aside class="ad pc tablet" id="ad_pc_footer"></aside>
+	<script type="text/javascript">
+	
+		(function() {
+
+			var queryWidth = 920;
+			var target_dom_id = "ad_pc_footer";
+			var isSet = false;
+			var isShow = false;
+
+			var target_dom;
+
+			function ad_set() {
+				// サイズが条件を満たしたら実行
+				var segment = Ads.get_segment_object();
+				new Ads.Advertisement({zone: 130, segments: segment, impression: 2}).set(target_dom_id);
+			}
+
+			function ad_showControl() {
+				if(!isSet) {
+					// セットされてなかったらセットして表示
+					if(window.innerWidth >= queryWidth) {
+						ad_set();
+						isSet = true;
+						isShow = true;
+						target_dom = document.getElementById(target_dom_id);
+					}
+				} else {
+					// 既にセットされている
+					if(isShow) {
+						// 表示されている
+						if(window.innerWidth < queryWidth) {
+							// もし表示条件を満たさなければ非表示
+							target_dom.style.display = "none";
+							isShow = false;``
+						}
+					} else {
+						// 表示されていない
+						if(window.innerWidth >= queryWidth) {
+							target_dom.style.display = "flex";
+							isShow = true;
+						}
+					}
+				}
+			}
+
+			// 読み込み時に実行
+			ad_showControl();
+
+			// リサイズ時に実行
+			window.addEventListener('resize', function () {
+				ad_showControl();
+			});
+
+		})();
+
+	
+	</script>
+
+					<aside id="ad_community_sp_footer" class="ad sp" style="height:auto;"></aside>
+<script type="text/javascript">
+
+	(function() {
+
+		var zone_id_iOS = 1020;
+		var zone_id_Android = 1023;
+		var queryWidth = 480;
+		var target_dom_id = "ad_community_sp_footer";
+		var isSet = false;
+		var isShow = false;
+
+		var zone_id;
+		var ua = window.navigator.userAgent;
+		if(ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 ||  ua.indexOf('iPad') > 0) {
+			zone_id = zone_id_iOS;
+		} else {
+			zone_id = zone_id_Android;
+		}
+
+		var target_dom;
+
+		function ad_set() {
+			// サイズが条件を満たしたら実行
+			new Ads.Advertisement({
+					zone: zone_id       // ゾーンID（必須）
+			}).set(target_dom_id);      // 広告を表示するdiv要素のid
+		}
+
+		function ad_showControl() {
+			if(!isSet) {
+				// セットされてなかったらセットして表示
+				if(window.innerWidth <= queryWidth) {
+					ad_set();
+					isSet = true;
+					isShow = true;
+					target_dom = document.getElementById(target_dom_id);
+				}
+			} else {
+				// 既にセットされている
+				if(isShow) {
+					// 表示されている
+					if(window.innerWidth > queryWidth) {
+						// もし表示条件を満たさなければ非表示
+						target_dom.style.display = "none";
+						isShow = false;``
+					}
+				} else {
+					// 表示されていない
+					if(window.innerWidth <= queryWidth) {
+						target_dom.style.display = "flex";
+						isShow = true;
+					}
+				}
+			}
+		}
+
+		// 読み込み時に実行
+		ad_showControl();
+
+		// リサイズ時に実行
+		window.addEventListener('resize', function () {
+			ad_showControl();
+		});
+
+	})();
+
+
+</script>
+			</div>
+</footer>
+		<footer class="area-siteFooter">
+	<div class="cp-siteFooter">
+    <div class="siteFooter_menu">
+  		<ul class="siteFooterLinkList">
+  			<li class="item"><a href="https://com.nicovideo.jp/">ニコニコミュニティTOP</a></li>
+  			<li class="item"><a target="_blank" href="https://secure.nicovideo.jp/secure/rule">niconico利用規約</a></li>
+  			<li class="item">
+				<a href="https://qa.nicovideo.jp/category/show/482" target="_blank">ニコニコミュニティ ヘルプ</a>
+  			</li>
+  		</ul>
+    </div>
+    <div class="copyright_wrap">
+      <small class="copyright">&copy; DWANGO Co., Ltd.</small>
+    </div>
+  </div>
+</footer>
+		<script src="https://secure-dcdn.cdn.nimg.jp/nicommunity/nicommunity/js/fresh/fresh.js?20180313"></script>
+
+</body>
+</html>

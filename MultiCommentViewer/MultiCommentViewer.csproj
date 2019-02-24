@@ -66,6 +66,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\CommentViewModel\OpenrecCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\LineLiveCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\NicoCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\TwitchCommentViewModel.cs" />
     <Compile Include="ViewModels\ConnectionSerializer.cs" />
     <Compile Include="ViewModels\IMcvCommentViewModel.cs" />
     <Compile Include="Views\CommentDataGrid.xaml.cs">
@@ -173,85 +177,101 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\BouyomiPlugin\BouyomiPlugin\BouyomiPlugin.csproj">
+    <ProjectReference Include="..\BouyomiPlugin\BouyomiPlugin.csproj">
       <Project>{13a909dd-3791-4539-9c04-f72d9e755dcf}</Project>
       <Name>BouyomiPlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\BrowserCookieImplementations\BrowserCookieImplementations\BrowserCookieImplementations.csproj">
+    <ProjectReference Include="..\BrowserCookieImplementations\BrowserCookieImplementations.csproj">
       <Project>{dfe01d83-bdbf-4b5c-95d5-9f1034597ede}</Project>
       <Name>BrowserCookieImplementations</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\BrowserCookieInterfaces\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">
+    <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">
       <Project>{cdbbbf25-ad0c-4eaf-b673-eb0bb198585a}</Project>
       <Name>BrowserCookieInterfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\CommentGeneratorPlugin\CommentGeneratorPlugin\CommentGeneratorPlugin.csproj">
+    <ProjectReference Include="..\CommentGeneratorPlugin\CommentGeneratorPlugin.csproj">
       <Project>{88b68d39-41a4-4c10-b942-0f3be976d7a3}</Project>
       <Name>CommentGeneratorPlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\Common\Common\Common.csproj">
+    <ProjectReference Include="..\Common\Common.csproj">
       <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\IPlugin\IPlugin\Plugin.csproj">
+    <ProjectReference Include="..\IPlugin\Plugin.csproj">
       <Project>{735cfeee-5b77-4d36-977b-4cd94a6f3cdb}</Project>
       <Name>Plugin</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\ISitePlugin\ISitePlugin\SitePlugin.csproj">
+    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\NicoSitePlugin\NicoSitePlugin\NicoSitePlugin.csproj">
-      <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
-      <Name>NicoSitePlugin</Name>
+    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj">
+      <Project>{c45009ce-c7ba-4a23-ae39-1f8cc5339b2f}</Project>
+      <Name>LineLiveIF</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\OpenrecSitePlugin\OpenrecSitePlugin\OpenrecSitePlugin.csproj">
-      <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>
-      <Name>OpenrecSitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\TwicasSitePlugin\TwicasSitePlugin\TwicasSitePlugin.csproj">
-      <Project>{ebcbadab-c5be-440a-be08-c660244d1f15}</Project>
-      <Name>TwicasSitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\TwitchSitePlugin\TwitchSitePlugin\TwitchSitePlugin.csproj">
-      <Project>{45c68e6e-3c4d-4b28-9b89-ff9f4ca467bf}</Project>
-      <Name>TwitchSitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj">
-      <Project>{d3fd476c-9801-4861-8fa1-c3d57ff30c83}</Project>
-      <Name>YouTubeLiveSitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\LineLiveSitePlugin\LineLiveSitePlugin\LineLiveSitePlugin.csproj">
+    <ProjectReference Include="..\LineLiveSitePlugin\LineLiveSitePlugin.csproj">
       <Project>{33c8afd8-24f3-481e-ad0c-9f24ad6cdee4}</Project>
       <Name>LineLiveSitePlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\WhowatchSitePlugin\WhowatchSitePlugin\WhowatchSitePlugin.csproj">
-      <Project>{92bdc986-1d50-48a3-9a94-5a94a285c53d}</Project>
-      <Name>WhowatchSitePlugin</Name>
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
+      <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
+      <Name>MirrativIF</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\MirrativSitePlugin\MirrativSitePlugin\MirrativSitePlugin.csproj">
+    <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj">
       <Project>{c6f57847-d6c3-4f64-b0a4-c778d7cea333}</Project>
       <Name>MirrativSitePlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\YoyakuPlugin\YoyakuPlugin\YoyakuPlugin.csproj">
-      <Project>{a04c3dc9-78cb-4db2-b8ba-0d462a64314f}</Project>
-      <Name>YoyakuPlugin</Name>
+    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
+      <Project>{daf5e126-c37f-4181-aae5-89e8fc89aae4}</Project>
+      <Name>NicoLiveIF</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\CommentViewerCommon\CommentViewerCommon\CommentViewerCommon.csproj">
-      <Project>{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}</Project>
-      <Name>CommentViewerCommon</Name>
+    <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj">
+      <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
+      <Name>NicoSitePlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\WhowatchIF\WhowatchIF\WhowatchIF.csproj">
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
+      <Project>{02a55625-e735-4909-a470-e8405eee1a32}</Project>
+      <Name>OpenrecIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj">
+      <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>
+      <Name>OpenrecSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj">
+      <Project>{ebcbadab-c5be-440a-be08-c660244d1f15}</Project>
+      <Name>TwicasSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
+      <Project>{aa70074d-1c40-4cc0-9e1c-7acdcbdd7d32}</Project>
+      <Name>TwitchIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
       <Project>{5a83afc8-e6ce-4dd2-8389-1f43a731388f}</Project>
       <Name>WhowatchIF</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\YouTubeLiveIF\YouTubeLiveIF\YouTubeLiveIF.csproj">
+    <ProjectReference Include="..\WhowatchSitePlugin\WhowatchSitePlugin.csproj">
+      <Project>{92bdc986-1d50-48a3-9a94-5a94a285c53d}</Project>
+      <Name>WhowatchSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj">
       <Project>{83974e62-4d55-4e67-8f88-bbff2222e5a1}</Project>
       <Name>YouTubeLiveIF</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\MirrativIF\MirrativIF\MirrativIF.csproj">
-      <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
-      <Name>MirrativIF</Name>
+    <ProjectReference Include="..\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj">
+      <Project>{d3fd476c-9801-4861-8fa1-c3d57ff30c83}</Project>
+      <Name>YouTubeLiveSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwitchSitePlugin\TwitchSitePlugin.csproj">
+      <Project>{45c68e6e-3c4d-4b28-9b89-ff9f4ca467bf}</Project>
+      <Name>TwitchSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YoyakuPlugin\YoyakuPlugin.csproj">
+      <Project>{a04c3dc9-78cb-4db2-b8ba-0d462a64314f}</Project>
+      <Name>YoyakuPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CommentViewerCommon\CommentViewerCommon.csproj">
+      <Project>{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}</Project>
+      <Name>CommentViewerCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -262,16 +282,16 @@
       <Version>2.0.4</Version>
     </PackageReference>
     <PackageReference Include="Extended.Wpf.Toolkit">
-      <Version>3.4.0</Version>
+      <Version>3.5.0</Version>
     </PackageReference>
     <PackageReference Include="MvvmLight">
       <Version>5.4.1.1</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>11.0.2</Version>
+      <Version>12.0.1</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
-      <Version>1.0.108</Version>
+      <Version>1.0.109.2</Version>
     </PackageReference>
     <PackageReference Include="System.Reactive">
       <Version>4.1.2</Version>
@@ -323,15 +343,15 @@ if not exist settings\placeholder powershell New-Item settings\placeholder -Item
 
 :: BouyomiPluginのファイルを全部持ってくる
 if not exist plugins\Bouyomi mkdir plugins\Bouyomi
-copy "$(SolutionDir)\BouyomiPlugin\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
+copy "$(SolutionDir)\BouyomiPlugin\bin\$(ConfigurationName)\*" "plugins\Bouyomi\"
 
 :: CommentGeneratorPluginのファイルを全部持ってくる
 if not exist plugins\CommentGenerator mkdir plugins\CommentGenerator
-copy "$(SolutionDir)\CommentGeneratorPlugin\CommentGeneratorPlugin\bin\$(ConfigurationName)\*" "plugins\CommentGenerator\"
+copy "$(SolutionDir)\CommentGeneratorPlugin\bin\$(ConfigurationName)\*" "plugins\CommentGenerator\"
 
 :: YoyakuPluginのファイルを全部持ってくる
 if not exist plugins\Yoyaku mkdir plugins\Yoyaku
-copy "$(SolutionDir)\YoyakuPlugin\YoyakuPlugin\bin\$(ConfigurationName)\*" "plugins\Yoyaku\"
+copy "$(SolutionDir)\YoyakuPlugin\bin\$(ConfigurationName)\*" "plugins\Yoyaku\"
 
 :: 自動アップデートに必要なlist.txtを作成
 powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList.ps1" -TargetDir "$(TargetDir)\"

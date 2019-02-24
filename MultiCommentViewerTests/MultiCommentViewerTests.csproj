@@ -60,29 +60,29 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\Common\Common\Common.csproj">
+    <ProjectReference Include="..\CommentViewerCommon\CommentViewerCommon.csproj">
+      <Project>{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}</Project>
+      <Name>CommentViewerCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj">
       <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\IPlugin\IPlugin\Plugin.csproj">
+    <ProjectReference Include="..\IPlugin\Plugin.csproj">
       <Project>{735cfeee-5b77-4d36-977b-4cd94a6f3cdb}</Project>
       <Name>Plugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\ISitePlugin\ISitePlugin\SitePlugin.csproj">
-      <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
-      <Name>SitePlugin</Name>
     </ProjectReference>
     <ProjectReference Include="$(SolutionDir)\MultiCommentViewer\MultiCommentViewer.csproj">
       <Project>{1caa4971-6cb9-4fb5-ac5e-bfc6bed83c87}</Project>
       <Name>MultiCommentViewer</Name>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\NicoSitePlugin\NicoSitePlugin\NicoSitePlugin.csproj">
+    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
+      <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
+      <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj">
       <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
       <Name>NicoSitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CommentViewerCommon\CommentViewerCommon\CommentViewerCommon.csproj">
-      <Project>{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}</Project>
-      <Name>CommentViewerCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

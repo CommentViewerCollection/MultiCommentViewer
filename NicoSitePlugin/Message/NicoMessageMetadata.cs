@@ -15,14 +15,18 @@ namespace NicoSitePlugin
         {
             get
             {
-                //if (_message is INicoItem item)
-                //{
-                //    return _siteOptions.ItemBackColor;
-                //}
-                //else
-                //{
-                return _options.BackColor;
-                //}
+                if(_message is INicoConnected)
+                {
+                    return _options.InfoBackColor;
+                }
+                else if(_message is INicoDisconnected)
+                {
+                    return _options.InfoBackColor;
+                }
+                else
+                {
+                    return _options.BackColor;
+                }
             }
         }
 
@@ -30,14 +34,18 @@ namespace NicoSitePlugin
         {
             get
             {
-                //if (_message is INicoItem item)
-                //{
-                //    return _siteOptions.ItemForeColor;
-                //}
-                //else
-                //{
-                return _options.ForeColor;
-                //}
+                if (_message is INicoConnected)
+                {
+                    return _options.InfoForeColor;
+                }
+                else if (_message is INicoDisconnected)
+                {
+                    return _options.InfoForeColor;
+                }
+                else
+                {
+                    return _options.ForeColor;
+                }
             }
         }
 

@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BouyomiPlugin"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance local:ConfigViewModel, IsDesignTimeCreatable=True}" d:DesignWidth="609"
-        Title="棒読みちゃん連携プラグイン" Height="617" Width="609" Background="#F0F0F0">
+        d:DataContext="{d:DesignInstance local:ConfigViewModel, IsDesignTimeCreatable=True}"
+        Title="棒読みちゃん連携プラグイン" Height="452" Width="439" Background="#F0F0F0">
     <Grid>
         <CheckBox x:Name="checkBox" Content="棒読みちゃんにコメントを読んでもらう" IsChecked="{Binding IsEnabled}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
         <TabControl HorizontalAlignment="Stretch" Margin="5,30,5,5" VerticalAlignment="Stretch">
@@ -24,7 +24,7 @@
             </TabItem>
             <TabItem Header="読んでもらうメッセージ">
                 <ScrollViewer Background="#FFE5E5E5">
-                    <Grid HorizontalAlignment="Left" Height="385" VerticalAlignment="Top" Width="225">
+                    <Grid HorizontalAlignment="Stretch" Height="Auto" VerticalAlignment="Stretch" Width="Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition />
                             <ColumnDefinition />
@@ -41,43 +41,43 @@
                         </Border>
                         <Border Grid.Row="0" Grid.Column="1" BorderBrush="Black" BorderThickness="0 0 0 1">
                             <Grid Grid.Row="0" Grid.Column="1" Margin="5">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <CheckBox Grid.Row="0" IsChecked="{Binding IsWhowatchConnect}" Content="接続" />
-                            <CheckBox Grid.Row="1" IsChecked="{Binding IsWhowatchDisconnect}" Content="切断" />
-                            <Grid Grid.Row="2">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-                                <CheckBox x:Name="CheckWhowatchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsWhowatchComment}" Content="コメント" />
-                                <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckWhowatchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsWhowatchCommentNickname}" Content="コテハン" />
-                            </Grid>
-                            <Grid Grid.Row="3">
-                                <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-                                <CheckBox x:Name="CheckWhowatchItem" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsWhowatchItem}" Content="アイテム" />
-                                <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckWhowatchItem}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsWhowatchItemNickname}" Content="コテハン" />
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsWhowatchConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsWhowatchDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckWhowatchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsWhowatchComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckWhowatchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsWhowatchCommentNickname}" Content="コテハン" />
+                                </Grid>
+                                <Grid Grid.Row="3">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckWhowatchItem" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsWhowatchItem}" Content="アイテム" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckWhowatchItem}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsWhowatchItemNickname}" Content="コテハン" />
+                                </Grid>
                             </Grid>
-                        </Grid>
                         </Border>
 
                         <Border Grid.Row="1" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
@@ -85,45 +85,45 @@
                         </Border>
                         <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
                             <Grid Grid.Row="1" Grid.Column="1" Margin="5">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <CheckBox Grid.Row="0" IsChecked="{Binding IsYouTubeLiveConnect}" Content="接続" />
-                            <CheckBox Grid.Row="1" IsChecked="{Binding IsYouTubeLiveDisconnect}" Content="切断" />
-                            <Grid Grid.Row="2">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
                                     <RowDefinition />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-                                <CheckBox x:Name="CheckYouTubeLiveComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveComment}" Content="コメント" />
-                                <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveCommentNickname}" Content="コテハン" />
-                                <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveCommentStamp}" Content="スタンプ" />
-                            </Grid>
-                            <Grid Grid.Row="3">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-                                <CheckBox x:Name="CheckYouTubeLiveSuperchat" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveSuperchat}" Content="super chat" />
-                                <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveSuperchat}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveSuperchatNickname}" Content="コテハン" />
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsYouTubeLiveConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsYouTubeLiveDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckYouTubeLiveComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveCommentNickname}" Content="コテハン" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveCommentStamp}" Content="スタンプ" />
+                                </Grid>
+                                <Grid Grid.Row="3">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckYouTubeLiveSuperchat" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveSuperchat}" Content="super chat" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveSuperchat}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveSuperchatNickname}" Content="コテハン" />
+                                </Grid>
                             </Grid>
-                        </Grid>
                         </Border>
 
                         <Border Grid.Row="2" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
@@ -131,15 +131,37 @@
                         </Border>
                         <Border Grid.Row="2" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
                             <Grid Grid.Row="2" Grid.Column="1" Margin="5">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <CheckBox Grid.Row="0" IsChecked="{Binding IsMirrativConnect}" Content="接続" />
-                            <CheckBox Grid.Row="1" IsChecked="{Binding IsMirrativDisconnect}" Content="切断" />
-                            <Grid Grid.Row="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsMirrativConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsMirrativDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckMirrativComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMirrativComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMirrativComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMirrativCommentNickname}" Content="コテハン" />
+                                </Grid>
+                                <CheckBox Grid.Row="3" IsChecked="{Binding IsMirrativJoinRoom}" Content="入室" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="3" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <TextBlock Text="その他" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="3" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <Grid Grid.Row="3" Grid.Column="1" Margin="5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
@@ -150,31 +172,9 @@
                                     <ColumnDefinition />
                                     <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
-                                <CheckBox x:Name="CheckMirrativComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMirrativComment}" Content="コメント" />
-                                <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMirrativComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMirrativCommentNickname}" Content="コテハン" />
+                                <CheckBox x:Name="CheckOthers" Grid.Row="0" Grid.ColumnSpan="4" IsChecked="{Binding IsReadComment}" Content="コメント" />
+                                <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckOthers}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsReadHandleName}" Content="コテハン" />
                             </Grid>
-                            <CheckBox Grid.Row="3" IsChecked="{Binding IsMirrativJoinRoom}" Content="入室" />
-                        </Grid>
-                        </Border>
-
-                        <Border Grid.Row="3" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
-                            <TextBlock Text="その他" Margin="5" />
-                        </Border>
-                        <Border Grid.Row="3" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
-                            <Grid Grid.Row="3" Grid.Column="1" Margin="5">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <CheckBox x:Name="CheckOthers" Grid.Row="0" Grid.ColumnSpan="4" IsChecked="{Binding IsReadComment}" Content="コメント" />
-                            <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckOthers}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsReadHandleName}" Content="コテハン" />
-                        </Grid>
                         </Border>
                     </Grid>
                 </ScrollViewer>

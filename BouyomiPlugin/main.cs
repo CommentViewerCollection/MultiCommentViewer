@@ -257,7 +257,17 @@ namespace BouyomiPlugin
                         break;
                 }
             }
-
+            else
+            {
+                if (_options.IsReadHandleName)
+                {
+                    name = message.NameItems.ToText();
+                }
+                if (_options.IsReadComment)
+                {
+                    comment = message.CommentItems.ToText();
+                }
+            }
             try
             {
                 //棒読みちゃんが事前に起動されていたらそれを使いたい。

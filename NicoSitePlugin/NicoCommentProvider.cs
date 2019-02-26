@@ -530,7 +530,7 @@ namespace NicoSitePlugin
             var cvm = new NicoCommentViewModel2(_options, _siteOptions, chat, roomInfo.Name, user, _commentProvider, isFirstComment);
             return cvm;
         }
-        public async Task<NicoMessageContext> CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isFirstComment)
+        public async Task<NicoMessageContext> CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isInitialComment)
         {
             NicoMessageContext messageContext = null;
             if (chat.Premium.HasValue)
@@ -621,7 +621,21 @@ namespace NicoSitePlugin
                 RoomName =roomInfo.Name,
                 Is184 = is184,
             };
-            var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment);
+            bool isFirstComment;
+            if (_userCommentCountDict.ContainsKey(userId))
+            {
+                _userCommentCountDict[userId]++;
+                isFirstComment = false;
+            }
+            else
+            {
+                _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
+                isFirstComment = true;
+            }
+            var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment)
+            {
+                IsInitialComment = isInitialComment,
+            };
             var methods = new NicoMessageMethods();
             messageContext = new NicoMessageContext(message, metadata, methods);
             return messageContext;

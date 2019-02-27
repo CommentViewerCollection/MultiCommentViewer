@@ -89,21 +89,49 @@ namespace CommentViewer.Plugin
             //Mirrativ:mirrativ
             //LINELIVE:linelive
             //Periscope:periscope
-
+            //Mixer:mixer
 
             string siteName;
             if (message is YouTubeLiveSitePlugin.IYouTubeLiveComment)
             {
                 siteName = "youtubelive";
             }
+            else if (message is NicoSitePlugin.INicoComment)
+            {
+                siteName = "nicolive";
+            }
+            else if (message is TwitchSitePlugin.ITwitchComment)
+            {
+                siteName = "twitch";
+            }
+            //else if (message is TwicasSitePlugin.ITwicasComment)
+            //{
+            //    siteName = "twicas";
+            //}
             else if (message is WhowatchSitePlugin.IWhowatchComment)
             {
                 siteName = "whowatch";
+            }
+            else if (message is OpenrecSitePlugin.IOpenrecComment)
+            {
+                siteName = "openrec";
             }
             else if (message is MirrativSitePlugin.IMirrativComment)
             {
                 siteName = "mirrativ";
             }
+            else if (message is LineLiveSitePlugin.ILineLiveComment)
+            {
+                siteName = "linelive";
+            }
+            //else if (message is PeriscopeSitePlugin.IPeriscopeComment)
+            //{
+            //    siteName = "periscope";
+            //}
+            //else if (message is MixerSitePlugin.IMixerComment)
+            //{
+            //    siteName = "mixer";
+            //}
             else
             {
                 siteName = "";

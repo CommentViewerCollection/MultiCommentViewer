@@ -109,10 +109,19 @@ namespace CommentViewer.Plugin
                 siteName = "";
             }
 
+            string name;
+            if(messageMetadata.User != null && string.IsNullOrEmpty(messageMetadata.User.Nickname))
+            {
+                name = messageMetadata.User.Nickname;
+            }
+            else
+            {
+                name = comment.NameItems.ToText();
+            }
             var data = new Data
             {
                 Comment = comment.CommentItems.ToText(),
-                Nickname = comment.NameItems.ToText(),
+                Nickname = name,
                  SiteName=siteName,
             };
             _commentCollection.Add(data);

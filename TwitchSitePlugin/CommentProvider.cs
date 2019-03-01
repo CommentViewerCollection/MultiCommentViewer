@@ -85,6 +85,7 @@ namespace TwitchSitePlugin
         {
             return new MessageProvider();
         }
+        CommentCounter _commentCounter;
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             CanConnect = false;
@@ -106,6 +107,8 @@ namespace TwitchSitePlugin
                         _name = cookie.Value;
                     }
                 }
+
+                _commentCounter = new CommentCounter();
 
                 _provider = CreateMessageProvider();
                 _provider.Opened += Provider_Opened;
@@ -146,17 +149,7 @@ namespace TwitchSitePlugin
 
                             var commentData = ParsePrivMsg(result);
                             var userId = commentData.UserId;
-                            bool isFirstComment;
-                            if (_userCommentCountDict.ContainsKey(userId))
-                            {
-                                _userCommentCountDict[userId]++;
-                                isFirstComment = false;
-                            }
-                            else
-                            {
-                                _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
-                                isFirstComment = true;
-                            }
+                            var isFirstComment = _commentCounter.UpdateCount(userId);
                             var user = _userStore.GetUser(userId);
 
                             var message = new TwitchComment(result.Raw)
@@ -329,6 +322,25 @@ namespace TwitchSitePlugin
         public override int GetHashCode()
         {
             return Url.GetHashCode() ^ Alt.GetHashCode();
+        }
+    }
+    class CommentCounter
+    {
+        private readonly ConcurrentDictionary<string, int> _countDict = new ConcurrentDictionary<string, int>();
+        public bool UpdateCount(string id)
+        {
+            bool isFirst;
+            if (_countDict.ContainsKey(id))
+            {
+                _countDict[id]++;
+                isFirst = false;
+            }
+            else
+            {
+                _countDict.AddOrUpdate(id, 1, (s, n) => n);
+                isFirst = true;
+            }
+            return isFirst;
         }
     }
 }

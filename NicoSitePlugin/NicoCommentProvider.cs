@@ -291,7 +291,7 @@ namespace NicoSitePlugin
             else if (ContainsCommunityId(input))
             {
                 var communityId = ExtractId("co", input);
-                liveId = await API.GetCurrentCommunityLiveId(_dataSource, communityId);
+                liveId = await API.GetCurrentCommunityLiveId(_dataSource, communityId,cc);
             }
             else if (ContainsChannelId(input))
             {

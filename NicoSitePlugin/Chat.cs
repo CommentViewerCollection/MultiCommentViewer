@@ -7,7 +7,7 @@ namespace NicoSitePlugin
     /// 
     /// </summary>
     [Serializable]
-    public class Chat
+    public class Chat : IChat
     {
         public string Thread { get; internal set; }
         public int? No { get; protected set; }

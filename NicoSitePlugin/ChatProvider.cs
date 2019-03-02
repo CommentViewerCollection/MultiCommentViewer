@@ -9,12 +9,12 @@ namespace NicoSitePlugin
 {
     class ChatReceivedEventArgs : EventArgs
     {
-        public Chat Chat { get; set; }
+        public IChat Chat { get; set; }
         public IXmlWsRoomInfo RoomInfo { get; set; }
     }
     class InitialChatsReceivedEventArgs : EventArgs
     {
-        public List<Chat> Chat { get; set; }
+        public List<IChat> Chat { get; set; }
         public IXmlWsRoomInfo RoomInfo { get; set; }
     }
     class TicketReceivedEventArgs : EventArgs
@@ -100,7 +100,7 @@ namespace NicoSitePlugin
             TicketReceived?.Invoke(this, new TicketReceivedEventArgs { Ticket = e, RoomInfo = roomInfo });
         }
 
-        private void Room_InitialCommentsReceived(object sender, List<Chat> e)
+        private void Room_InitialCommentsReceived(object sender, List<IChat> e)
         {
             var chat = e;
             var roomProvider = sender as RoomCommentProvider;
@@ -108,7 +108,7 @@ namespace NicoSitePlugin
             InitialCommentsReceived?.Invoke(this, new InitialChatsReceivedEventArgs { Chat = e, RoomInfo = roomInfo });
         }
 
-        private void Room_CommentReceived(object sender, Chat e)
+        private void Room_CommentReceived(object sender, IChat e)
         {
             var chat = e;
             var roomProvider = sender as RoomCommentProvider;

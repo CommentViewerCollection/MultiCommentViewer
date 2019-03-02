@@ -13,7 +13,7 @@ namespace NicoSitePlugin
 {
     static class Tools
     {
-        public static async Task<NicoComment> CreateNicoCommentAsync(Chat chat, string roomName, IUser user,IDataSource _dataSource,INicoSiteOptions siteOptions, string _mainRoomThreadId,ILogger logger)
+        public static async Task<NicoComment> CreateNicoCommentAsync(IChat chat, string roomName, IUser user,IDataSource _dataSource,INicoSiteOptions siteOptions, string _mainRoomThreadId,ILogger logger)
         {
             if (chat.Premium.HasValue)
             {

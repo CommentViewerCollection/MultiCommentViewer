@@ -510,7 +510,7 @@ namespace NicoSitePlugin
             var cvm = new NicoCommentViewModel2(_options, _siteOptions, chat, roomInfo.Name, user, _commentProvider, isFirstComment);
             return cvm;
         }
-        public async Task<NicoMessageContext> CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isInitialComment)
+        public async Task<NicoMessageContext> CreateMessageContext(IChat chat, IXmlWsRoomInfo roomInfo, bool isInitialComment)
         {
             NicoMessageContext messageContext = null;
 

@@ -460,26 +460,6 @@ namespace NicoSitePlugin
             _logger = logger;
             _commentProvider = commentProvider;
         }
-        internal static string GetAdComment(string nicoad)
-        {
-            string text = null;
-            var match = Regex.Match(nicoad, "\"latestNicoad\":{\"advertiser\":\"([^\"]+)\",\"point\":(\\d+)(?:,\"message\":\"([^\"]+)\")?}");
-            if (match.Success)
-            {
-                var name = match.Groups[1].Value;
-                var points = int.Parse(match.Groups[2].Value);
-                string message = match.Groups[3].Value;
-                if (!string.IsNullOrEmpty(message))
-                {
-                    text = $"提供：{name}「{message}」（{points}pt）";
-                }
-                else
-                {
-                    text = $"提供：{name}（{points}pt）";
-                }
-            }
-            return text;
-        }
         private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
         private NicoCommentViewModel2 CreateCommentViewModel(Chat chat, IXmlWsRoomInfo roomInfo)
         {
@@ -512,7 +492,7 @@ namespace NicoSitePlugin
             }
             if (chat.Text.StartsWith("/nicoad "))
             {
-                chat.Text = GetAdComment(chat.Text);
+                chat.Text = Tools.GetAdComment(chat.Text);
             }
             var userId = chat.UserId;
             bool isFirstComment;
@@ -533,94 +513,11 @@ namespace NicoSitePlugin
         public async Task<NicoMessageContext> CreateMessageContext(Chat chat, IXmlWsRoomInfo roomInfo, bool isInitialComment)
         {
             NicoMessageContext messageContext = null;
-            if (chat.Premium.HasValue)
-            {
-                Debug.WriteLine($"{chat.Thread},{chat.Premium.Value},{chat.Text}");
-            }
-            //追い出しコマンドは除外
-            if (chat.Text.StartsWith("/hb ifseetno "))
-            {
-                //SendSystemInfo($"kick command={chat.Text}", InfoType.Debug);
-                return null;
-            }
-            //アリーナ以外の運営コメントは除外
-            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Thread != _mainRoomThreadId)
-            {
-                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
-            }
-            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Text.StartsWith("/uadpoint"))
-            {
-                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
-            }
-            //アリーナ以外のBSPコメントは除外
-            if (chat.IsBsp && chat.Thread != _mainRoomThreadId)
-            {
-                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
-            }
-            if (chat.Text.StartsWith("/nicoad "))
-            {
-                chat.Text = GetAdComment(chat.Text);
-            }
+
             var userId = chat.UserId;
             var user = _userStore.GetUser(userId);
-            string id;
-            if (chat.No.HasValue)
-            {
-                var shortName = Tools.GetShortRoomName(roomInfo.Name);
-                id = $"{shortName}:{chat.No}";
-            }
-            else
-            {
-                id = roomInfo.Name;
-            }
-            if (_siteOptions.IsAutoSetNickname)
-            {
-                var messageText = chat.Text;
-                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
-                if (!string.IsNullOrEmpty(nick))
-                {
-                    user.Nickname = nick;
-                }
-            }
-            var is184 = Tools.Is184UserId(chat.UserId);
-            string thumbnailUrl = null;
-            List<IMessagePart> nameItems = null;
-            try
-            {
-                if (!is184 && userId!= "900000000")
-                {
-                    var userInfo = await API.GetUserInfo(_dataSource, userId);
-                    thumbnailUrl = userInfo.ThumbnailUrl;
-                    nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
-                    user.Name = nameItems;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
 
-            var message = new NicoComment(chat.Raw)
-            {
-                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(chat.Text) },
-                Id = id,
-                NameItems = nameItems,
-                PostTime = chat.Date.ToString("HH:mm:ss"),
-                UserIcon = thumbnailUrl != null ? new MessageImage
-                {
-                    Url = thumbnailUrl,
-                    Alt = null,
-                    Height = 40,
-                    Width = 40,
-                } : null,
-                UserId = chat.UserId,
-                ChatNo =chat.No,
-                RoomName =roomInfo.Name,
-                Is184 = is184,
-            };
+            var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions, _mainRoomThreadId, _logger);
             bool isFirstComment;
             if (_userCommentCountDict.ContainsKey(userId))
             {

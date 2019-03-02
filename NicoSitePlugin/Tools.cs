@@ -42,10 +42,7 @@ namespace NicoSitePlugin
                 //SendSystemInfo($"{chat.Text}", InfoType.Debug);
                 return null;
             }
-            if (chat.Text.StartsWith("/nicoad "))
-            {
-                chat.Text = Tools.GetAdComment(chat.Text);
-            }
+
             var userId = chat.UserId;
             string id;
             if (chat.No.HasValue)
@@ -83,10 +80,18 @@ namespace NicoSitePlugin
             {
                 logger.LogException(ex);
             }
-
+            string comment;
+            if (chat.Text.StartsWith("/nicoad "))
+            {
+                comment = Tools.GetAdComment(chat.Text);
+            }
+            else
+            {
+                comment = chat.Text;
+            }
             var message = new NicoComment(chat.Raw)
             {
-                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(chat.Text) },
+                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
                 Id = id,
                 NameItems = nameItems,
                 PostTime = chat.Date.ToString("HH:mm:ss"),

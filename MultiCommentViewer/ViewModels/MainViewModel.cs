@@ -948,7 +948,7 @@ namespace MultiCommentViewer
 
         public MainViewModel():base(new DynamicOptionsTest())
         {
-            if (IsInDesignMode)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
             {
 
             }

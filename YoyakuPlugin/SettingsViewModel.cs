@@ -473,13 +473,23 @@ namespace OpenrecYoyakuPlugin
         {
             return DateTime.Now;
         }
-        public void SetComment(string userId, string nickname, string comment, IUser user)
+        public void SetComment(string userId, string name, string comment, IUser user)
         {
             //"/yoyaku"
             //"/torikeshi"
             //"/kakunin"
 
             if (string.IsNullOrEmpty(userId)) return;
+
+            string defaultName;
+            if (user != null && !string.IsNullOrEmpty(user.Nickname))
+            {
+                defaultName = user.Nickname;
+            }
+            else
+            {
+                defaultName = name;
+            }
 
             if (IsYoyakuCommand(comment))
             {
@@ -490,9 +500,9 @@ namespace OpenrecYoyakuPlugin
                         //未登録なら登録する
                         _dispatcher.Invoke(() =>
                         {
-                            var pluginUser = new User(user) { Date = GetCurrentDateTime(), Id = userId, Name = nickname, HadCalled = false };
+                            var pluginUser = new User(user) { Date = GetCurrentDateTime(), Id = userId, Name = defaultName, HadCalled = false };
                             RegisteredUsers.Add(pluginUser);
-                            WriteComment(Reserved_Message.Replace("$name", nickname));
+                            WriteComment(Reserved_Message.Replace("$name", defaultName));
                         });
                     }
                 }
@@ -508,7 +518,7 @@ namespace OpenrecYoyakuPlugin
                         _dispatcher.Invoke(() =>
                         {
                             RegisteredUsers.Remove(pluginUser);
-                            WriteComment(Delete_Message.Replace("$name", nickname));
+                            WriteComment(Delete_Message.Replace("$name", defaultName));
                         });
                     }
                 }
@@ -523,7 +533,7 @@ namespace OpenrecYoyakuPlugin
                     {
                         if (pluginUser.Id == userId && !pluginUser.HadCalled)
                         {
-                            WriteComment($"ただいまの予約人数は{RegisteredUsers.Count}名です。{nickname}さんは、{i + 1}番目です");
+                            WriteComment($"ただいまの予約人数は{RegisteredUsers.Count}名です。{defaultName}さんは、{i + 1}番目です");
                             break;
                         }
                         if (!pluginUser.HadCalled)

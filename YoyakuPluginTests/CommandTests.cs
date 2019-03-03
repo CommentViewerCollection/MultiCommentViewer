@@ -73,7 +73,53 @@ namespace YoyakuPluginTests
             public event EventHandler<ValueChangedEventArgs> ValueChanged;
         }
         [Test]
-        public void Test()
+        public void もともとコテハンが付いていたユーザを登録した時に名前にコテハンは採用されているか()
+        {
+            var host = new TestHost();
+            var options = new DynamicOptions()
+            {
+                IsEnabled = true,
+            };
+
+            var vmMock = new Mock<SettingsViewModel>(host, options, Dispatcher.CurrentDispatcher);
+            vmMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToLocalTime());
+            _vm = vmMock.Object;
+
+
+
+            var pluginMock = new Mock<PluginBody>() { CallBase = true };
+            pluginMock.Protected().Setup<SettingsViewModel>("CreateSettingsViewModel").Returns(_vm);
+            pluginMock.Protected().Setup<IOptions>("LoadOptions").Returns(options);
+
+            var plugin = pluginMock.Object;
+            _plugin = plugin;
+            plugin.Host = host;
+            plugin.OnLoaded();
+
+            var oldName = "name";
+            var user = new UserTest("1")
+            {
+                 Nickname="nick",
+            };
+            var message = new YtComment()
+            {
+                NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(oldName) },
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("/yoyaku") },
+                UserId = "1",
+            };
+            var messageMetadataMock = new Mock<IMessageMetadata>();
+            messageMetadataMock.Setup(x => x.User).Returns(user);
+            var messageMetadata = messageMetadataMock.Object;
+
+            _plugin.OnMessageReceived(message, messageMetadata);
+
+            var ms = _vm.RegisteredUsers.ToArray();
+            var pluginUser = ms[0];
+
+            Assert.AreEqual("nick", pluginUser.Name);
+        }
+        [Test]
+        public void コテハンを変えた時に反映されるか()
         {
             var host = new TestHost();
             var options = new DynamicOptions()

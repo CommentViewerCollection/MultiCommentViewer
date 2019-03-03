@@ -517,7 +517,7 @@ namespace NicoSitePlugin
             var userId = chat.UserId;
             var user = _userStore.GetUser(userId);
 
-            var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions, _mainRoomThreadId, _logger);
+            var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions.IsAutoSetNickname, _mainRoomThreadId, _logger);
             bool isFirstComment;
             if (_userCommentCountDict.ContainsKey(userId))
             {

@@ -13,7 +13,7 @@ namespace NicoSitePlugin
 {
     static class Tools
     {
-        public static async Task<NicoComment> CreateNicoCommentAsync(IChat chat, string roomName, IUser user,IDataSource _dataSource,INicoSiteOptions siteOptions, string _mainRoomThreadId,ILogger logger)
+        public static async Task<NicoComment> CreateNicoCommentAsync(IChat chat, string roomName, IUser user,IDataSource _dataSource,bool isAutoSetNickname, string _mainRoomThreadId,ILogger logger)
         {
             if (chat.Premium.HasValue)
             {
@@ -54,7 +54,7 @@ namespace NicoSitePlugin
             {
                 id = roomName;
             }
-            if (siteOptions.IsAutoSetNickname)
+            if (isAutoSetNickname)
             {
                 var messageText = chat.Text;
                 var nick = SitePluginCommon.Utils.ExtractNickname(messageText);

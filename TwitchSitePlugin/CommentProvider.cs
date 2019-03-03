@@ -86,7 +86,7 @@ namespace TwitchSitePlugin
         {
             return new MessageProvider();
         }
-        protected virtual MetadataProvider CreateMetadataProvider(string channelName)
+        protected virtual IMetadataProvider CreateMetadataProvider(string channelName)
         {
             return new MetadataProvider(_server, _siteOptions, channelName);
         }
@@ -130,7 +130,7 @@ namespace TwitchSitePlugin
 
                 while (tasks.Count > 0)
                 {
-                    var t = Task.WhenAny(tasks);
+                    var t = await Task.WhenAny(tasks);
                     if (t == messageProviderTask)
                     {
                         try
@@ -141,6 +141,7 @@ namespace TwitchSitePlugin
                         {
                             _logger.LogException(ex);
                         }
+                        tasks.Remove(messageProviderTask);
                         try
                         {
                             await metaProviderTask;
@@ -148,6 +149,7 @@ namespace TwitchSitePlugin
                         {
                             _logger.LogException(ex);
                         }
+                        tasks.Remove(metaProviderTask);
                         break;
                     }
                     else
@@ -160,6 +162,7 @@ namespace TwitchSitePlugin
                         {
                             _logger.LogException(ex);
                         }
+                        tasks.Remove(metaProviderTask);
                     }
                 }
             }

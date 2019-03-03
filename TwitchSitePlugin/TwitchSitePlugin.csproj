@@ -50,6 +50,7 @@
     <Compile Include="Command.cs" />
     <Compile Include="CommentProvider.cs" />
     <Compile Include="ICommentData.cs" />
+    <Compile Include="IMetadataProvider.cs" />
     <Compile Include="ITwitchSiteOptions.cs" />
     <Compile Include="IWebSocket.cs" />
     <Compile Include="Low\Class1.cs" />

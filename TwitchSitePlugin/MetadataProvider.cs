@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TwitchSitePlugin
 {
-    class MetadataProvider
+    class MetadataProvider : IMetadataProvider
     {
         private readonly IDataServer _server;
         private readonly ITwitchSiteOptions _siteOptions;

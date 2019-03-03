@@ -40,6 +40,11 @@ namespace TwitchSitePluginTests
             {
                 return MessageProvider;
             }
+            public IMetadataProvider MetadataProvider { get; set; }
+            protected override IMetadataProvider CreateMetadataProvider(string channelName)
+            {
+                return MetadataProvider;
+            }
             public ICommentData CommentData { get; set; }
             //protected override ICommentData ParsePrivMsg(Result result)
             //{
@@ -74,16 +79,30 @@ namespace TwitchSitePluginTests
                 Received?.Invoke(this, result);
             }
         }
+        class MetadataProvider : IMetadataProvider
+        {
+            public event EventHandler<Stream> MetadataUpdated;
+
+            public void Disconnect()
+            {
+            }
+
+            public Task ReceiveAsync()
+            {
+                return Task.CompletedTask;
+            }
+        }
         [Test]
         public async Task Test()
         {
             //テスト案
             //ログイン済み、未ログインそれぞれの場合にそれぞれの接続コマンドが送信されるか
             //サーバから送られてくるコマンドに対する反応は適切か。PINGの時はPONGが返されるか、PRIVMSGだったらCommentReceivedが発生するか
-
+            var data = TestHelper.GetSampleData("Streams.txt");
             var result = Tools.Parse("@badges=subscriber/12,partner/1;color=#FF0000;display-name=harutomaru;emotes=189031:20-31,60-71/588715:33-58/635709:73-82;id=9029a587-81b0-4705-8607-38cba9b762d6;mod=0;room-id=39587048;subscriber=1;tmi-sent-ts=1518062412116;turbo=0;user-id=72777405;user-type= :harutomaru!harutomaru@harutomaru.tmi.twitch.tv PRIVMSG #mimicchi :@bwscar221 おざまぁぁぁす！ mimicchiHage haruto1Harutomarubakayarou mimicchiHage bwscarDead");
             var userid = "72777405";
             var serverMock = new Mock<IDataServer>();
+            serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(Task.FromResult(data));
             var loggerMock = new Mock<ILogger>();
             var optionsMock = new Mock<ICommentOptions>();
             var siteOptions = new TwitchSiteOptions
@@ -100,6 +119,7 @@ namespace TwitchSitePluginTests
             var commentProvider = new C(serverMock.Object, loggerMock.Object, optionsMock.Object, siteOptions, userStoreMock.Object)
             {
                 MessageProvider = messageProvider,
+                MetadataProvider = new MetadataProvider(),
                 CommentData = commentDataMock.Object,
             };
             IMessageContext actual = null;

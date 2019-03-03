@@ -23,9 +23,9 @@ namespace TwitchSitePluginTests
         [Test]
         public void GetChannelNameTest()
         {
-            Assert.AreEqual("#ryu123", Tools.GetChannelName("ryu123"));
-            Assert.AreEqual("#ryu123", Tools.GetChannelName("https://www.twitch.tv/ryu123"));
-            Assert.AreEqual("#ryu123", Tools.GetChannelName("https://www.twitch.tv/ryu123?abc"));
+            Assert.AreEqual("ryu123", Tools.GetChannelName("ryu123"));
+            Assert.AreEqual("ryu123", Tools.GetChannelName("https://www.twitch.tv/ryu123"));
+            Assert.AreEqual("ryu123", Tools.GetChannelName("https://www.twitch.tv/ryu123?abc"));
             Assert.Throws<ArgumentException>(() => Tools.GetChannelName("test.net/ryu123"));
         }
         [Test]

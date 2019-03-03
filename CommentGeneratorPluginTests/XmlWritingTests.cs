@@ -10,13 +10,21 @@ using NUnit.Framework;
 using YouTubeLiveSitePlugin;
 using Moq.Protected;
 using System.IO;
+using System.Reflection;
 
 namespace CommentGeneratorPluginTests
 {
     [TestFixture]
     public class XmlWritingTests
     {
-        string FilePath { get; } = "./comment_test.xml";
+        string FilePath
+        {
+            get
+            {
+                var dir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
+                return Path.Combine(dir, "./comment_test.xml");
+            }
+        }
         [SetUp]
         public void Setup()
         {

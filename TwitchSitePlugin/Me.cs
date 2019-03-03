@@ -81,8 +81,72 @@ namespace TwitchSitePlugin
         bool PrivateVideo { get; }
         bool PrivacyOptionsEnabled { get; }
     }
+    public class Stream
+    {
+        public string LiveId { get; }
+        public string UserId { get; }
+        public string Username { get; }
+        public string GameId { get; }
+        public string Type { get; }
+        public string Title { get; }
+        public long ViewerCount { get; }
+        public DateTime StartedAt { get; }
+        public string Language { get; }
+        public string ThumbnailUrl { get; }
+        public Stream(Low.Streams.Datum lowObject)
+        {
+            LiveId = lowObject.Id;
+            UserId = lowObject.UserId;
+            Username = lowObject.UserName;
+            GameId = lowObject.GameId;
+            Type = lowObject.Type;
+            Title = lowObject.Title;
+            ViewerCount = lowObject.ViewerCount;
+            StartedAt = lowObject.StartedAt.LocalDateTime;
+            Language = lowObject.Language;
+            ThumbnailUrl = lowObject.ThumbnailUrl;
+
+        }
+    }
     internal static class API
     {
+        /// <summary>
+        /// 現在放送中の番組の情報を取得する
+        /// </summary>
+        /// <param name="server"></param>
+        /// <param name="channel"></param>
+        /// <returns></returns>
+        public static async Task<Stream> GetStreamAsync(IDataServer server, string channel)
+        {
+            //var url = "https://api.twitch.tv/kraken/streams/" + channel;
+            //var headers = new Dictionary<string, string>
+            //{
+            //    {"client-id","jzkbprff40iqj646a697cyrvl0zt2m6" },//固定値
+            //    {"Accept","application/vnd.twitchtv.v3+json" },
+            //};
+            //var s = await server.GetAsync(url, headers);
+
+            var url = "https://api.twitch.tv/helix/streams?user_login=" + channel;
+            var headers = new Dictionary<string, string>
+            {
+                {"client-id","jzkbprff40iqj646a697cyrvl0zt2m6" },//固定値
+                //{"Accept","application/vnd.twitchtv.v3+json" },
+            };
+            var s = await server.GetAsync(url, headers);
+            //配信していないとき
+            //{"data":[],"pagination":{}}
+
+            var lowObject = Tools.Deserialize<Low.Streams.RootObject>(s);
+            if(lowObject.Data.Length > 0)
+            {
+                var ret = new Stream(lowObject.Data[0]);
+                return ret;
+            }
+            else
+            {
+                return null;
+            }
+        }
         /// <summary>
         /// ユーザの表示名からID等を取れる
         /// TwitchではUser=Channel（多分）。他のAPIでは表示名ではなくChannelIDが必要なため、このAPIで先にIDを取得する

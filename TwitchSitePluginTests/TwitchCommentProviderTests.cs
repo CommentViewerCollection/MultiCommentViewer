@@ -102,8 +102,8 @@ namespace TwitchSitePluginTests
                 MessageProvider = messageProvider,
                 CommentData = commentDataMock.Object,
             };
-            ICommentViewModel actual = null;
-            commentProvider.CommentReceived += (s, e) =>
+            IMessageContext actual = null;
+            commentProvider.MessageReceived += (s, e) =>
             {
                 actual = e;
                 commentProvider.Disconnect();
@@ -111,8 +111,10 @@ namespace TwitchSitePluginTests
             var t = commentProvider.ConnectAsync("", browserProfileMock.Object);
             messageProvider.SetResult(result);
             await t;
-            Assert.AreEqual(MessageType.Comment, actual.MessageType);
-            Assert.AreEqual("9029a587-81b0-4705-8607-38cba9b762d6", actual.Id);
+            var comment = actual.Message as ITwitchComment;
+            Assert.AreEqual(TwitchMessageType.Comment, comment.TwitchMessageType);
+            Assert.AreEqual("9029a587-81b0-4705-8607-38cba9b762d6", comment.Id);
+            return;
         }
     }
 }

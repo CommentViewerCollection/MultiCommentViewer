@@ -1,13 +1,134 @@
-﻿using System;
+﻿using Common;
+using SitePlugin;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
 namespace NicoSitePlugin
 {
     static class Tools
     {
+        public static async Task<NicoComment> CreateNicoCommentAsync(IChat chat, string roomName, IUser user,IDataSource _dataSource,bool isAutoSetNickname, string _mainRoomThreadId,ILogger logger)
+        {
+            if (chat.Premium.HasValue)
+            {
+                Debug.WriteLine($"{chat.Thread},{chat.Premium.Value},{chat.Text}");
+            }
+            //追い出しコマンドは除外
+            if (chat.Text.StartsWith("/hb ifseetno "))
+            {
+                //SendSystemInfo($"kick command={chat.Text}", InfoType.Debug);
+                return null;
+            }
+            //アリーナ以外の運営コメントは除外
+            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Thread != _mainRoomThreadId)
+            {
+                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
+                return null;
+            }
+            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Text.StartsWith("/uadpoint"))
+            {
+                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
+                return null;
+            }
+            //アリーナ以外のBSPコメントは除外
+            if (chat.IsBsp && chat.Thread != _mainRoomThreadId)
+            {
+                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
+                return null;
+            }
+
+            var userId = chat.UserId;
+            string id;
+            if (chat.No.HasValue)
+            {
+                var shortName = Tools.GetShortRoomName(roomName);
+                id = $"{shortName}:{chat.No}";
+            }
+            else
+            {
+                id = roomName;
+            }
+            if (isAutoSetNickname)
+            {
+                var messageText = chat.Text;
+                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
+                if (!string.IsNullOrEmpty(nick))
+                {
+                    user.Nickname = nick;
+                }
+            }
+            var is184 = Tools.Is184UserId(chat.UserId);
+            string thumbnailUrl = null;
+            List<IMessagePart> nameItems = null;
+            try
+            {
+                if (!is184 && userId != "900000000")
+                {
+                    var userInfo = await API.GetUserInfo(_dataSource, userId);
+                    thumbnailUrl = userInfo.ThumbnailUrl;
+                    nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
+                    user.Name = nameItems;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogException(ex);
+            }
+            string comment;
+            if (chat.Text.StartsWith("/nicoad "))
+            {
+                comment = Tools.GetAdComment(chat.Text);
+            }
+            else
+            {
+                comment = chat.Text;
+            }
+            var message = new NicoComment(chat.Raw)
+            {
+                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
+                Id = id,
+                NameItems = nameItems,
+                PostTime = chat.Date.ToString("HH:mm:ss"),
+                UserIcon = thumbnailUrl != null ? new MessageImage
+                {
+                    Url = thumbnailUrl,
+                    Alt = null,
+                    Height = 40,
+                    Width = 40,
+                } : null,
+                UserId = chat.UserId,
+                ChatNo = chat.No,
+                RoomName = roomName,
+                Is184 = is184,
+            };
+            return message;
+        }
+        public static string GetAdComment(string nicoad)
+        {
+            string text = null;
+            var match = Regex.Match(nicoad, "\"latestNicoad\":{\"advertiser\":\"([^\"]+)\",\"point\":(\\d+)(?:,\"message\":\"([^\"]+)\")?}");
+            if (match.Success)
+            {
+                var name = match.Groups[1].Value;
+                var points = int.Parse(match.Groups[2].Value);
+                string message = match.Groups[3].Value;
+                if (!string.IsNullOrEmpty(message))
+                {
+                    text = $"提供：{name}「{message}」（{points}pt）";
+                }
+                else
+                {
+                    text = $"提供：{name}（{points}pt）";
+                }
+            }
+            return text;
+        }
         /// <summary>
         /// チャンネルのURLからChannel IDもしくはScreenNameを取得する
         /// </summary>

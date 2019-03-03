@@ -37,3 +37,4 @@ using System.Runtime.InteropServices;
 [assembly:InternalsVisibleTo("NicoSitePluginTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 [assembly: InternalsVisibleTo("SitePluginTests")]
+[assembly: InternalsVisibleTo("MultiCommentViewerTests")]

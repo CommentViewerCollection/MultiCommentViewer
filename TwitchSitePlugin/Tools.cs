@@ -182,12 +182,12 @@ namespace TwitchSitePlugin
             
             if(Regex.IsMatch(s, "^[^/:?]+$"))
             {
-                return "#" + s;
+                return s;
             }
             var match = Regex.Match(s, "twitch.tv/([^/?]+)");
             if (match.Success)
             {
-                return "#" + match.Groups[1].Value;
+                return match.Groups[1].Value;
             }
         
             throw new ArgumentException();

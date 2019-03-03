@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Moq;
@@ -17,8 +18,8 @@ namespace NicoSitePluginTests
         {
             var data = TestHelper.GetSampleData("CommunityTopHtml_onair.txt");
             var serverMock = new Mock<IDataSource>();
-            serverMock.Setup(k => k.GetAsync(It.IsAny<string>())).Returns(Task.FromResult(data));
-            Assert.AreEqual("lv316750923", await API.GetCurrentCommunityLiveId(serverMock.Object, "co123"));
+            serverMock.Setup(k => k.GetAsync(It.IsAny<string>(), It.IsAny<CookieContainer>())).Returns(Task.FromResult(data));
+            Assert.AreEqual("lv316750923", await API.GetCurrentCommunityLiveId(serverMock.Object, "co123", new System.Net.CookieContainer()));
         }
         [Test]
         public async Task GetCurrentChannelLiveId()

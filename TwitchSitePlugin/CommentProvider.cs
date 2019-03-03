@@ -15,6 +15,7 @@ using System.Windows.Threading;
 using System.Collections.ObjectModel;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using SitePluginCommon;
 
 namespace TwitchSitePlugin
 {
@@ -85,6 +86,11 @@ namespace TwitchSitePlugin
         {
             return new MessageProvider();
         }
+        protected virtual IMetadataProvider CreateMetadataProvider(string channelName)
+        {
+            return new MetadataProvider(_server, _siteOptions, channelName);
+        }
+        CommentCounter _commentCounter;
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             CanConnect = false;
@@ -107,10 +113,58 @@ namespace TwitchSitePlugin
                     }
                 }
 
+                _commentCounter = new CommentCounter();
+
                 _provider = CreateMessageProvider();
                 _provider.Opened += Provider_Opened;
                 _provider.Received += Provider_Received;
-                await _provider.ReceiveAsync();
+                var messageProviderTask = _provider.ReceiveAsync();
+
+                var metaProvider = CreateMetadataProvider(_channelName);
+                metaProvider.MetadataUpdated += MetaProvider_MetadataUpdated;
+                var metaProviderTask = metaProvider.ReceiveAsync();
+                var tasks = new List<Task>();
+                tasks.Add(messageProviderTask);
+                tasks.Add(metaProviderTask);
+
+
+                while (tasks.Count > 0)
+                {
+                    var t = await Task.WhenAny(tasks);
+                    if (t == messageProviderTask)
+                    {
+                        try
+                        {
+                            await messageProviderTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex);
+                        }
+                        tasks.Remove(messageProviderTask);
+                        try
+                        {
+                            await metaProviderTask;
+                        }catch(Exception ex)
+                        {
+                            _logger.LogException(ex);
+                        }
+                        tasks.Remove(metaProviderTask);
+                        break;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            await metaProviderTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex);
+                        }
+                        tasks.Remove(metaProviderTask);
+                    }
+                }
             }
             finally
             {
@@ -118,6 +172,24 @@ namespace TwitchSitePlugin
                 CanDisconnect = false;
             }
         }
+        DateTime? _startedAt;
+        System.Timers.Timer _elapsedTimer;
+        private void MetaProvider_MetadataUpdated(object sender, Stream e)
+        {
+            var stream = e;
+            if (!_startedAt.HasValue)
+            {
+                _startedAt = stream.StartedAt;
+                _elapsedTimer.Enabled = true;
+            }
+            var metadata = new Metadata
+            {
+                 Title = stream.Title,
+                   CurrentViewers=stream.ViewerCount.ToString(),
+            };
+            MetadataUpdated?.Invoke(this, metadata);
+        }
+
         private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
         protected virtual ICommentData ParsePrivMsg(Result result)
         {
@@ -146,17 +218,7 @@ namespace TwitchSitePlugin
 
                             var commentData = ParsePrivMsg(result);
                             var userId = commentData.UserId;
-                            bool isFirstComment;
-                            if (_userCommentCountDict.ContainsKey(userId))
-                            {
-                                _userCommentCountDict[userId]++;
-                                isFirstComment = false;
-                            }
-                            else
-                            {
-                                _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
-                                isFirstComment = true;
-                            }
+                            var isFirstComment = _commentCounter.UpdateCount(userId);
                             var user = _userStore.GetUser(userId);
 
                             var message = new TwitchComment(result.Raw)
@@ -211,7 +273,7 @@ namespace TwitchSitePlugin
                     await _provider.SendAsync($"NICK {name}");
                     await _provider.SendAsync($"USER {name} 8 * :{name}");
                 }
-                await _provider.SendAsync($"JOIN " + _channelName);
+                await _provider.SendAsync($"JOIN #" + _channelName);
             }
             catch (Exception ex)
             {
@@ -239,7 +301,7 @@ namespace TwitchSitePlugin
 
         public async Task PostCommentAsync(string text)
         {
-            var s = $"PRIVMSG {_channelName} :{text}";
+            var s = $"PRIVMSG #{_channelName} :{text}";
             await _provider.SendAsync(s);
         }
         private readonly IDataServer _server;
@@ -257,7 +319,28 @@ namespace TwitchSitePlugin
 
             CanConnect = true;
             CanDisconnect = false;
+
+            _elapsedTimer = new System.Timers.Timer();
+            _elapsedTimer.Interval = 500;
+            _elapsedTimer.Elapsed += ElapsedTimer_Elapsed;
         }
+
+        protected virtual DateTime GetCurrentDateTime()
+        {
+            return DateTime.Now;
+        }
+        private void ElapsedTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (!_startedAt.HasValue) return;
+
+            var elapsed = GetCurrentDateTime() - _startedAt.Value;
+            var metadata = new Metadata
+            {
+                 Elapsed = Utils.ElapsedToString(elapsed),
+            };
+            MetadataUpdated?.Invoke(this, metadata);
+        }
+
         private void SendSystemInfo(string message, InfoType type)
         {
             CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
@@ -329,6 +412,25 @@ namespace TwitchSitePlugin
         public override int GetHashCode()
         {
             return Url.GetHashCode() ^ Alt.GetHashCode();
+        }
+    }
+    class CommentCounter
+    {
+        private readonly ConcurrentDictionary<string, int> _countDict = new ConcurrentDictionary<string, int>();
+        public bool UpdateCount(string id)
+        {
+            bool isFirst;
+            if (_countDict.ContainsKey(id))
+            {
+                _countDict[id]++;
+                isFirst = false;
+            }
+            else
+            {
+                _countDict.AddOrUpdate(id, 1, (s, n) => n);
+                isFirst = true;
+            }
+            return isFirst;
         }
     }
 }

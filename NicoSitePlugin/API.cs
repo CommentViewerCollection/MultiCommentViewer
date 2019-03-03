@@ -321,11 +321,12 @@ namespace NicoSitePlugin
         /// <param name="dataSource"></param>
         /// <param name="communityId">co\d+</param>
         /// <returns>配信中であればその配信のID、そうでなければnull</returns>
-        internal static async Task<string> GetCurrentCommunityLiveId(IDataSource dataSource, string communityId)
+        internal static async Task<string> GetCurrentCommunityLiveId(IDataSource dataSource, string communityId,CookieContainer cc)
         {
             //TODO:自動認証じゃないコミュニティの場合、Cookieが無いと入れない
             var url = "https://com.nicovideo.jp/community/" + communityId;
-            var res = await dataSource.GetAsync(url);
+            //コミュニティフォロワーではありません。 （いわゆるclosed community）の場合403が返ってくる
+            var res = await dataSource.GetAsync(url, cc);
             var match = Regex.Match(res, "(<section class=\"now_live.+?</section>)", RegexOptions.Singleline);
             if (!match.Success) return null;
             var nowLiveSection = match.Groups[1].Value;

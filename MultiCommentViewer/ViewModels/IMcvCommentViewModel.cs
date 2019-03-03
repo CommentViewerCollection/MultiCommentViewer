@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -6,7 +7,7 @@ using SitePlugin;
 
 namespace MultiCommentViewer
 {
-    public interface IMcvCommentViewModel
+    public interface IMcvCommentViewModel : INotifyPropertyChanged
     {
         SolidColorBrush Background { get; }
         ICommentProvider CommentProvider { get; }

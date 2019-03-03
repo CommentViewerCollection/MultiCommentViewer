@@ -140,7 +140,7 @@ namespace NicoSitePlugin
             {
                 if (list.Count > 3)
                 {
-                    InitialCommentsReceived?.Invoke(this, list.Select(s => new Chat(s)).ToList());
+                    InitialCommentsReceived?.Invoke(this, list.Select(s => new Chat(s)).Cast<IChat>().ToList());
                     return;
                 }
                 else
@@ -175,7 +175,7 @@ namespace NicoSitePlugin
             }
         }
         public event EventHandler<string> TicketReceived;
-        public event EventHandler<Chat> CommentReceived;
-        public event EventHandler<List<Chat>> InitialCommentsReceived;
+        public event EventHandler<IChat> CommentReceived;
+        public event EventHandler<List<IChat>> InitialCommentsReceived;
     }
 }

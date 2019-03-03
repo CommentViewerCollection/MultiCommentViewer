@@ -51,6 +51,7 @@
     <Compile Include="ConnectionViewModelTests.cs" />
     <Compile Include="DynamicOptionsTest.cs" />
     <Compile Include="MainViewModelTests.cs" />
+    <Compile Include="NicoCommentViewModelTests.cs" />
     <Compile Include="OptionsTest.cs" />
     <Compile Include="PluginMenuItemViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -79,6 +80,10 @@
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
+      <Project>{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}</Project>
+      <Name>NicoLiveIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj">
       <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>

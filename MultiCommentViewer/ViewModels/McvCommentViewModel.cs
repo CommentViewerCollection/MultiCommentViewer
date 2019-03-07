@@ -110,6 +110,7 @@ namespace MultiCommentViewer
             };
             Id = comment.Id.ToString();
             PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
+            Info = item.ItemCount == 1 ? item.ItemName : $"{item.ItemName} × {item.ItemCount}";
         }
         public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)

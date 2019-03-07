@@ -518,6 +518,18 @@ namespace MultiCommentViewer
             Id = null;
             PostTime = comment.PostTime;
         }
+        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
+            : this(metadata, methods, connectionName)
+        {
+            var comment = item;
+            _message = comment;
+
+            _nameItems = comment.NameItems;
+            MessageItems = comment.CommentItems;
+            Thumbnail = null;
+            Id = null;
+            PostTime = comment.PostTime;
+        }
         public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)
         {

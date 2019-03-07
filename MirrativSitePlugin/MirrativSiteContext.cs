@@ -67,10 +67,8 @@ namespace MirrativSitePlugin
         }
         public bool IsValidInput(string input)
         {
-            var liveId = Tools.ExtractLiveId(input);
-            return !string.IsNullOrEmpty(liveId);
+            return Tools.IsValidLiveId(input) || Tools.IsValidUserId(input);
         }
-
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             return null;

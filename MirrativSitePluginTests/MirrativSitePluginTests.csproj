@@ -45,6 +45,7 @@
     <Compile Include="ApiTests.cs" />
     <Compile Include="ParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="SampleData\Class1.txt" />
     <Compile Include="Tools.cs" />
     <Compile Include="ToolsTests.cs" />
   </ItemGroup>

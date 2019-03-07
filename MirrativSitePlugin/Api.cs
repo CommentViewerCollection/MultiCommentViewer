@@ -63,10 +63,31 @@ namespace MirrativSitePlugin
         }
         public static async Task<ILiveInfo> GetLiveInfo(IDataServer server, string liveId)
         {
+            if (string.IsNullOrEmpty(liveId))
+            {
+                throw new ArgumentNullException(nameof(liveId));
+            }
             var url = "https://www.mirrativ.com/api/live/live?live_id=" + liveId;
             var res = await server.GetAsync(url, null);
             var obj = Tools.Deserialize<Low.LiveInfo.RootObject>(res);
             return new LiveInfo(obj);
+        }
+        public static async Task<UserProfile> GetUserProfileAsync(IDataServer server, string userId)
+        {
+            var url = "https://www.mirrativ.com/api/user/profile?user_id=" + userId;
+            var res = await server.GetAsync(url, null);
+            var obj = Tools.Deserialize<Low.UserProfile.RootObject>(res);
+            return new UserProfile(obj);
+        }
+    }
+    class UserProfile
+    {
+        public string Name { get; set; }
+        public string OnLiveLiveId { get; set; }
+        public UserProfile(Low.UserProfile.RootObject lowObject)
+        {
+            OnLiveLiveId= lowObject.Onlive?.LiveId;
+            Name = lowObject.Name;
         }
     }
 }

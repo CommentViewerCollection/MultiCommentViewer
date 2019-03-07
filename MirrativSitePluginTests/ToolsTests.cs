@@ -17,6 +17,12 @@ namespace MirrativSitePluginTests
             Assert.AreEqual("sUbSZSYyTAOYJtLd0WamoQ", MirrativSitePlugin.Tools.ExtractLiveId("https://www.mirrativ.com/broadcast/sUbSZSYyTAOYJtLd0WamoQ?test"));
         }
         [Test]
+        public void ExtractUserIdTest()
+        {
+            Assert.AreEqual("1091674", MirrativSitePlugin.Tools.ExtractUserId("https://www.mirrativ.com/user/1091674"));
+            Assert.IsNull(MirrativSitePlugin.Tools.ExtractUserId("abc"));
+        }
+        [Test]
         public void KeyValue2DictTest()
         {
             var str = "{\"key1\":\"value1\",\"key2\":0,\"key3\":\"value3\"}";

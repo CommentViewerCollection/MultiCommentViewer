@@ -17,14 +17,26 @@ namespace MirrativSitePlugin
         {
             get
             {
+                if(_message is IMirrativConnected)
+                {
+                    return _options.BroadcastInfoBackColor;
+                }
+                else if(_message is IMirrativDisconnected)
+                {
+                    return _options.BroadcastInfoBackColor;
+                }
+                else if(_message is IMirrativJoinRoom)
+                {
+                    return _options.BroadcastInfoBackColor;
+                }
                 //if (_message is IMirrativSuperchat item)
                 //{
                 //    return _siteOptions.PaidCommentBackColor;
                 //}
-                //else
-                //{
-                return _options.BackColor;
-                //}
+                else
+                {
+                    return _options.BackColor;
+                }
             }
         }
 
@@ -32,14 +44,26 @@ namespace MirrativSitePlugin
         {
             get
             {
+                if (_message is IMirrativConnected)
+                {
+                    return _options.BroadcastInfoForeColor;
+                }
+                else if (_message is IMirrativDisconnected)
+                {
+                    return _options.BroadcastInfoForeColor;
+                }
+                else if (_message is IMirrativJoinRoom)
+                {
+                    return _options.BroadcastInfoForeColor;
+                }
                 //if (_message is IMirrativSuperchat item)
                 //{
                 //    return _siteOptions.PaidCommentForeColor;
                 //}
-                //else
-                //{
-                return _options.ForeColor;
-                //}
+                else
+                {
+                    return _options.ForeColor;
+                }
             }
         }
 
@@ -125,6 +149,7 @@ namespace MirrativSitePlugin
 
         public MirrativMessageMetadata(IMirrativMessage message, ICommentOptions options, IMirrativSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
+            _message = message;
             _options = options;
             _siteOptions = siteOptions;
             User = user;

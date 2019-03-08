@@ -647,7 +647,7 @@ namespace MultiCommentViewer
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"{e.ToString()}");
             }
         }
         private async void Connection_CommentReceived(object sender, ICommentViewModel e)

@@ -177,6 +177,7 @@ namespace TwitchSitePlugin
         private void MetaProvider_MetadataUpdated(object sender, Stream e)
         {
             var stream = e;
+            Debug.Assert(stream != null);
             if (!_startedAt.HasValue)
             {
                 _startedAt = stream.StartedAt;

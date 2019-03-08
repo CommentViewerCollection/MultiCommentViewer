@@ -238,10 +238,13 @@ namespace TwitchSitePlugin
                             //CommentReceived?.Invoke(this, cvm);
                         }
                         break;
+                    //case "NOTICE":
+                    //    //@msg-id=msg_channel_suspended :tmi.twitch.tv NOTICE #videos :This channel has been suspended.
+                    //    break;
                     default:
                         Debug.WriteLine($"Twitch unknown command={result.Command}");
                         SendSystemInfo(result.Raw, InfoType.Debug);
-                        break;
+                        throw new ParseException(result.Raw);
                 }
             }
             catch (Exception ex)

@@ -283,6 +283,12 @@ namespace LineLiveSitePlugin
                     ret = null;
                     user = null;
                     break;
+                case "ownerMessage":
+                    //{"type":"ownerMessage","data":{"message":"こんちわ！","sentAt":1552022995}}
+                    //配信者コメントだと思うけど、useridとかiconurlが無い。どうにかして取らないといけない。
+                    ret = null;
+                    user = null;
+                    break;
                 default:
                     //未処理のメッセージ
                     //{"type":"gift","data":{"message":"頑張ってねーおやすみなさい*˙︶˙*)ﾉ\"","type":"LOVE","itemId":"gire014","quantity":1000,"displayName":"live.gift.regular.1000.diamondring","sender":{"id":3748341,"hashedId":"8QhCcxAEZq","displayName":"㊙️☆🐸中国のババア🐸","iconUrl":"https://scdn.line-apps.com/obs/0hIGPVfl6AFmhtLzubUYxpP1VyEB8UARUgFQsNTVQnTV8QHgQ-UBxbWR18S14SHFc4WU9RCkB6TVoQHgY5Bg/f64x64","hashedIconId":"0hIGPVfl6AFmhtLzubUYxpP1VyEB8UARUgFQsNTVQnTV8QHgQ-UBxbWR18S14SHFc4WU9RCkB6TVoQHgY5Bg","isGuest":false,"isBlocked":false},"isNGGift":false,"sentAt":1540570986,"key":"9176638.37483410000000000000","blockedByCms":false}}

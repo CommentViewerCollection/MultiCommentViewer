@@ -335,7 +335,7 @@ reload:
                     //放送終了
                     return;
                 }
-                catch(ParseException ex)
+                catch (ParseException ex)
                 {
                     _logger.LogException(ex, "", $"input={input}");
                     return;
@@ -347,12 +347,12 @@ reload:
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogException(ex,"未知の例外", $"ytInitialData={ytInitialData},input={input}");
+                    _logger.LogException(ex, "未知の例外", $"ytInitialData={ytInitialData},input={input}");
                     SendInfo("ytInitialDataの解析に失敗しました", InfoType.Error);
                     return;
                 }
                 Connected?.Invoke(this, new ConnectedEventArgs { IsInputStoringNeeded = isInputStoringNeeded });
-                foreach(var data in initialCommentData)
+                foreach (var data in initialCommentData)
                 {
                     if (_receivedCommentIds.Contains(data.Id))
                     {
@@ -369,7 +369,7 @@ reload:
                 //コメント投稿に必要なものの準備
                 var liveChatContext = Tools.GetLiveChatContext(liveChatHtml);
                 IsLoggedIn = liveChatContext.IsLoggedIn;
-                if(Tools.TryExtractSendButtonServiceEndpoint(ytInitialData, out string serviceEndPoint))
+                if (Tools.TryExtractSendButtonServiceEndpoint(ytInitialData, out string serviceEndPoint))
                 {
                     try
                     {
@@ -387,50 +387,26 @@ reload:
                     }
                 }
 
-                Task chatTask = null;
-                Task metaTask = null;
-                Task activeCounterTask = null;
-
-                if (_options.IsActiveCountEnabled)
+                var activeCounterTask = CreateActiveCounterTask();
+                if(activeCounterTask != null)
                 {
-                    activeCounterTask = _activeCounter.Start();
                     tasks.Add(activeCounterTask);
                 }
-                _chatProvider = new ChatProvider(_server, _logger);
-                _chatProvider.ActionsReceived += ChatProvider_ActionsReceived;
-                _chatProvider.InfoReceived += ChatProvider_InfoReceived;
-                chatTask = _chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
+
+                var chatTask = CreateChatProviderReceivingTask(vid, initialContinuation);
                 tasks.Add(chatTask);
 
-                string ytCfg = null;
-                try
+                var metaTask = CreateMetadataReceivingTask(browserProfile, vid, liveChatHtml);
+                if (metaTask != null)
                 {
-                    ytCfg = Tools.ExtractYtcfg(liveChatHtml);
-                }
-                catch (ParseException ex)
-                {
-                    _logger.LogException(ex, "live_chatからのytcfgの抜き出しに失敗", liveChatHtml);
-                }
-                if (!string.IsNullOrEmpty(ytCfg))
-                {
-                    //"service_ajax?name=updatedMetadataEndpoint"はIEには対応していないらしく、400が返って来てしまう。
-                    //そこで、IEの場合のみ旧版の"youtubei"を使うようにした。
-                    if (browserProfile.Type == BrowserType.IE)
-                    {
-                        _metaProvider = new MetaDataYoutubeiProvider(_server, _logger);
-                    }
-                    else
-                    {
-                        _metaProvider = new MetadataProvider(_server, _logger);
-                    }
-                    _metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
-                    //_metaProvider.Noticed += _metaProvider_Noticed;
-                    _metaProvider.InfoReceived += MetaProvider_MetadataReceived;
-                    metaTask = _metaProvider.ReceiveAsync(ytCfg: ytCfg, vid: vid, cc: _cc);
                     tasks.Add(metaTask);
                 }
+                //while (tasks.Count > 0)
+                //{
+
+                //}
                 var t = await Task.WhenAny(tasks);
-                if(t == metaTask)
+                if (t == metaTask)
                 {
                     try
                     {
@@ -444,7 +420,7 @@ reload:
                     //metaTaskは終わっても良い。
                     await chatTask;
                 }
-                else if(t == activeCounterTask)
+                else if (t == activeCounterTask)
                 {
                     try
                     {
@@ -468,7 +444,7 @@ reload:
                 retryCount++;
                 goto reload;
             }
-            catch(ChatUnavailableException)
+            catch (ChatUnavailableException)
             {
                 SendInfo("放送が終了しているかチャットが無効な放送です", InfoType.Error);
             }
@@ -481,6 +457,59 @@ reload:
                 AfterConnect();
             }
         }
+
+        private Task CreateActiveCounterTask()
+        {
+            Task activeCounterTask = null;
+            if (_options.IsActiveCountEnabled)
+            {
+                activeCounterTask = _activeCounter.Start();
+            }
+            return activeCounterTask;
+        }
+
+        private Task CreateChatProviderReceivingTask(string vid, IContinuation initialContinuation)
+        {
+            _chatProvider = new ChatProvider(_server, _logger);
+            _chatProvider.ActionsReceived += ChatProvider_ActionsReceived;
+            _chatProvider.InfoReceived += ChatProvider_InfoReceived;
+            var chatTask = _chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
+            return chatTask;
+        }
+
+        private Task CreateMetadataReceivingTask(IBrowserProfile browserProfile, string vid, string liveChatHtml)
+        {
+            Task metaTask = null;
+            string ytCfg = null;
+            try
+            {
+                ytCfg = Tools.ExtractYtcfg(liveChatHtml);
+            }
+            catch (ParseException ex)
+            {
+                _logger.LogException(ex, "live_chatからのytcfgの抜き出しに失敗", liveChatHtml);
+            }
+            if (!string.IsNullOrEmpty(ytCfg))
+            {
+                //"service_ajax?name=updatedMetadataEndpoint"はIEには対応していないらしく、400が返って来てしまう。
+                //そこで、IEの場合のみ旧版の"youtubei"を使うようにした。
+                if (browserProfile.Type == BrowserType.IE)
+                {
+                    _metaProvider = new MetaDataYoutubeiProvider(_server, _logger);
+                }
+                else
+                {
+                    _metaProvider = new MetadataProvider(_server, _logger);
+                }
+                _metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
+                //_metaProvider.Noticed += _metaProvider_Noticed;
+                _metaProvider.InfoReceived += MetaProvider_MetadataReceived;
+                metaTask = _metaProvider.ReceiveAsync(ytCfg: ytCfg, vid: vid, cc: _cc);
+            }
+
+            return metaTask;
+        }
+
         /// <summary>
         /// 文字列から@ニックネームを抽出する
         /// 文字列中に@が複数ある場合は一番最後のものを採用する

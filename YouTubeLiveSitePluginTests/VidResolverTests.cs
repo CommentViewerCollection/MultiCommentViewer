@@ -14,6 +14,15 @@ namespace YouTubeLiveSitePluginTests
     class VidResolverTests
     {
         [Test]
+        public async Task 短縮URLに対応()
+        {
+            var s = new VidResolver();
+            var serverMock = new Mock<IYouTubeLibeServer>();
+            var result1 = await s.GetVid(serverMock.Object, "https://youtu.be/bexmlC2nD0U");
+            Assert.IsTrue(result1 is IVidResult);
+            Assert.AreEqual("bexmlC2nD0U", ((VidResult)result1).Vid);
+        }
+        [Test]
         public async Task ResolveVidFromWatchUrl()
         {
             var s = new VidResolver();

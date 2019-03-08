@@ -29,7 +29,7 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         static readonly Regex _regexVid = new Regex("^" + VID_PATTERN + "$");
         static readonly Regex _regexChannel = new Regex("youtube\\.com/channel/(" + ChannelIdPattern + ")");
-        static readonly Regex _regexWatch = new Regex("youtube\\.com/watch\\?v=(" + VID_PATTERN + ")");
+        static readonly Regex _regexWatch = new Regex("(?:youtube\\.com/watch\\?v=|youtu\\.be/)(" + VID_PATTERN + ")");
         const string VID_PATTERN = "[^?#:/&]+";
         const string USERID_PATTERN = VID_PATTERN;
         const string ChannelIdPattern = VID_PATTERN;

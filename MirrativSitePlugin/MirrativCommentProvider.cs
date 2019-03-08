@@ -244,7 +244,7 @@ namespace MirrativSitePlugin
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogException(ex);
+                                _logger.LogException(ex, "",$"input={input}");
                             }
                             tasks.Remove(commentTask);
                             metaProvider.Disconnect();
@@ -254,7 +254,7 @@ namespace MirrativSitePlugin
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogException(ex);
+                                _logger.LogException(ex, "", $"input={input}");
                             }
                             tasks.Remove(metaTask);
                         }
@@ -266,7 +266,7 @@ namespace MirrativSitePlugin
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogException(ex);
+                                _logger.LogException(ex, "", $"input={input}");
                             }
                             tasks.Remove(metaTask);
                             //MetadataProviderの内部でcatchしないような例外が投げられた。メタデータの取得は諦めたほうが良い。多分。

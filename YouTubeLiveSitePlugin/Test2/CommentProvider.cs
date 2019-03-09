@@ -303,12 +303,10 @@ reload:
                 await Task.Delay(3000);
                 goto reload;
             }
+
+            //ytInitialDataを取得して、そこからcontinuationと直近の過去コメントを取得する
             try
             {
-
-
-                var tasks = new List<Task>();
-
                 string ytInitialData = null;
                 try
                 {
@@ -367,28 +365,12 @@ reload:
                 }
 
                 //コメント投稿に必要なものの準備
-                var liveChatContext = Tools.GetLiveChatContext(liveChatHtml);
-                IsLoggedIn = liveChatContext.IsLoggedIn;
-                if (Tools.TryExtractSendButtonServiceEndpoint(ytInitialData, out string serviceEndPoint))
-                {
-                    try
-                    {
-                        var json = DynamicJson.Parse(serviceEndPoint);
-                        PostCommentContext = new PostCommentContext
-                        {
-                            ClientIdPrefix = json.sendLiveChatMessageEndpoint.clientIdPrefix,
-                            SessionToken = liveChatContext.XsrfToken,
-                            Sej = serviceEndPoint,
-                        };
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex, "", $"serviceEndPoint={serviceEndPoint}");
-                    }
-                }
+                PrepareForPostingComments(liveChatHtml, ytInitialData);
+
+                var tasks = new List<Task>();
 
                 var activeCounterTask = CreateActiveCounterTask();
-                if(activeCounterTask != null)
+                if (activeCounterTask != null)
                 {
                     tasks.Add(activeCounterTask);
                 }
@@ -401,60 +383,108 @@ reload:
                 {
                     tasks.Add(metaTask);
                 }
-                //while (tasks.Count > 0)
-                //{
 
-                //}
-                var t = await Task.WhenAny(tasks);
-                if (t == metaTask)
+                while (tasks.Count > 0)
                 {
-                    try
+                    var t = await Task.WhenAny(tasks);
+                    if (t == metaTask)
                     {
-                        await metaTask;
+                        try
+                        {
+                            await metaTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex, "metaTaskが終了した原因");
+                        }
+                        //metaTask内でParseExceptionもしくはDisconnect()
+                        //metaTaskは終わっても良い。
+                        tasks.Remove(metaTask);
                     }
-                    catch (Exception ex)
+                    else if (t == activeCounterTask)
                     {
-                        _logger.LogException(ex, "metaTaskが終了した原因");
+                        try
+                        {
+                            await activeCounterTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex, "activeCounterTaskが終了した原因");
+                        }
+                        tasks.Remove(activeCounterTask);
                     }
-                    //metaTask内でParseExceptionもしくはDisconnect()
-                    //metaTaskは終わっても良い。
-                    await chatTask;
+                    else //chatTask
+                    {
+                        tasks.Remove(chatTask);
+                        try
+                        {
+                            await chatTask;
+                        }
+                        catch (ReloadException)
+                        {
+                            retryCount++;
+                            goto reload;
+                        }
+                        catch (ChatUnavailableException)
+                        {
+                            SendInfo("放送が終了しているかチャットが無効な放送です", InfoType.Error);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex);
+                        }
+
+                        //chatTaskが終わったらmetaTaskも終了させる
+                        _metaProvider.Disconnect();
+                        try
+                        {
+                            await metaTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex, "metaTaskが終了した原因");
+                        }
+                        tasks.Remove(metaTask);
+
+                        _activeCounter?.Stop();
+                        try
+                        {
+                            await activeCounterTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex, "activeCounterTaskが終了した原因");
+                        }
+                        tasks.Remove(activeCounterTask);
+                    }
                 }
-                else if (t == activeCounterTask)
-                {
-                    try
-                    {
-                        await activeCounterTask;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex, "activeCounterTaskが終了した原因");
-                    }
-                }
-                else
-                {
-                    //chatTaskが終わったらmetaTaskも終了させる
-                    _metaProvider.Disconnect();
-                    _activeCounter?.Stop();
-                    await metaTask;
-                }
-            }
-            catch (ReloadException)
-            {
-                retryCount++;
-                goto reload;
-            }
-            catch (ChatUnavailableException)
-            {
-                SendInfo("放送が終了しているかチャットが無効な放送です", InfoType.Error);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
             }
             finally
             {
                 AfterConnect();
+            }
+        }
+
+        private void PrepareForPostingComments(string liveChatHtml, string ytInitialData)
+        {
+            var liveChatContext = Tools.GetLiveChatContext(liveChatHtml);
+            IsLoggedIn = liveChatContext.IsLoggedIn;
+            if (Tools.TryExtractSendButtonServiceEndpoint(ytInitialData, out string serviceEndPoint))
+            {
+                try
+                {
+                    var json = DynamicJson.Parse(serviceEndPoint);
+                    PostCommentContext = new PostCommentContext
+                    {
+                        ClientIdPrefix = json.sendLiveChatMessageEndpoint.clientIdPrefix,
+                        SessionToken = liveChatContext.XsrfToken,
+                        Sej = serviceEndPoint,
+                    };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex, "", $"serviceEndPoint={serviceEndPoint}");
+                }
             }
         }
 

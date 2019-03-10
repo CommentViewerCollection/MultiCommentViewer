@@ -138,7 +138,7 @@ namespace CommentViewer.Plugin
             }
 
             string name;
-            if(messageMetadata.User != null && string.IsNullOrEmpty(messageMetadata.User.Nickname))
+            if(messageMetadata.User != null && !string.IsNullOrEmpty(messageMetadata.User.Nickname))
             {
                 name = messageMetadata.User.Nickname;
             }

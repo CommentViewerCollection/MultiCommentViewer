@@ -70,6 +70,10 @@ namespace YouTubeLiveSitePlugin.Test2
                     var metadata = ActionsToMetadata(json.actions);
                     metaReceived?.Invoke(this, metadata);
                 }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
                 catch (WebException ex) when (ex.Status == WebExceptionStatus.ProtocolError)
                 {
                     var httpRes = (HttpWebResponse)ex.Response;

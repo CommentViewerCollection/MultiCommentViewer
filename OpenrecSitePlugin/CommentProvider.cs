@@ -173,7 +173,7 @@ namespace OpenrecSitePlugin
                 blackTask
             };
 
-            while (true)
+            while (tasks.Count > 0)
             {
                 var t = await Task.WhenAny(tasks);
                 if (t == blackTask)
@@ -199,6 +199,7 @@ namespace OpenrecSitePlugin
                     {
                         _logger.LogException(ex);
                     }
+                    tasks.Remove(blackTask);
                     SendSystemInfo("ブラックリストタスク終了", InfoType.Debug);
                     try
                     {
@@ -208,8 +209,8 @@ namespace OpenrecSitePlugin
                     {
                         _logger.LogException(ex);
                     }
+                    tasks.Remove(wsTask);
                     SendSystemInfo("wsタスク終了", InfoType.Debug);
-                    break;
                 }
             }
             _ws.Received -= WebSocket_Received;

@@ -149,59 +149,10 @@ namespace OpenrecSitePlugin
             {
                 var comment = Tools.Parse(item);
                 var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                var userId = commentData.UserId;
-                var user = _userStore.GetUser(userId);
-                bool isFirstComment;
-                if (_userCommentCountDict.ContainsKey(userId))
+                var messageContext = CreateMessageContext(comment, commentData, true);
+                if (messageContext != null)
                 {
-                    _userCommentCountDict[userId]++;
-                    isFirstComment = false;
-                }
-                else
-                {
-                    _userCommentCountDict.Add(userId, 1);
-                    isFirstComment = true;
-                }
-
-                var nameItems = new List<IMessagePart>();
-                nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
-                nameItems.AddRange(commentData.NameIcons);
-
-                var messageItems = new List<IMessagePart>();
-                if (commentData.IsYell)
-                {
-                    //MessageType = MessageType.BroadcastInfo;
-                    messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
-                }
-                messageItems.Add(commentData.Message);
-                if (commentData.Stamp != null)
-                {
-                    //MessageType = MessageType.BroadcastInfo;
-                    messageItems.Add(commentData.Stamp);
-                }
-
-                if (commentData.IsYell)
-                {
-
-                }
-                else if(commentData.Stamp != null)
-                {
-
-                }
-                else
-                {
-                    var message = new OpenrecComment("")
-                    {
-                        CommentItems = new List<IMessagePart> { commentData.Message },
-                        Id = commentData.Id,
-                        NameItems = nameItems,
-                        PostTime = commentData.PostTime.ToString("HH:mm:ss"),
-                        UserIcon = null,
-                        UserId = commentData.UserId,
-                    };
-                    var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
-                    var methods = new OpenrecMessageMethods();
-                    MessageReceived?.Invoke(this, new OpenrecMessageContext(message, metadata, methods));
+                    MessageReceived?.Invoke(this, messageContext);
                 }
             }
 
@@ -263,7 +214,7 @@ namespace OpenrecSitePlugin
             AfterDisconnected();
         }
 
-        private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData)
+        private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData, bool isInitialComment)
         {
             var userId = commentData.UserId;
             var user = _userStore.GetUser(userId);
@@ -316,7 +267,10 @@ namespace OpenrecSitePlugin
                     UserIcon = null,
                     UserId = commentData.UserId,
                 };
-                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    IsInitialComment = isInitialComment,
+                };
                 var methods = new OpenrecMessageMethods();
                 messageContext = new OpenrecMessageContext(message, metadata, methods);
             }
@@ -471,8 +425,11 @@ namespace OpenrecSitePlugin
                 {
                     var comment = Tools.Parse(chat.Comment);
                     var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                    var messageContext = CreateMessageContext(comment, commentData);
-                    MessageReceived?.Invoke(this, messageContext);
+                    var messageContext = CreateMessageContext(comment, commentData, false);
+                    if (messageContext != null)
+                    {
+                        MessageReceived?.Invoke(this, messageContext);
+                    }
                 }
                 else if (e is PacketMessageEventMessageAudienceCount audienceCount)
                 {

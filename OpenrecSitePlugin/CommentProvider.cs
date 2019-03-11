@@ -71,6 +71,7 @@ namespace OpenrecSitePlugin
         {
             CanConnect = false;
             CanDisconnect = true;
+            _isExpectedDisconnect = false;
         }
         private void AfterDisconnected()
         {
@@ -155,7 +156,7 @@ namespace OpenrecSitePlugin
                     MessageReceived?.Invoke(this, messageContext);
                 }
             }
-
+        Reconnect:
             _ws = new OpenrecWebsocket(_logger);
             _ws.Received += WebSocket_Received;
             
@@ -209,6 +210,19 @@ namespace OpenrecSitePlugin
                     }
                     SendSystemInfo("wsタスク終了", InfoType.Debug);
                     break;
+                }
+            }
+            _ws.Received -= WebSocket_Received;
+            blackListProvider.Received -= BlackListProvider_Received;
+
+            //意図的な切断では無い場合、配信がまだ続いているか確認して、配信中だったら再接続する。
+            //2019/03/12 heartbeatを送っているのにも関わらずwebsocketが切断されてしまう場合を確認。ブラウザでも配信中に切断されて再接続するのを確認済み。
+            if (!_isExpectedDisconnect)
+            {
+                var movieInfo = await API.GetMovieInfo(_dataSource, liveId, _cc);
+                if(movieInfo.OnairStatus == 1)
+                {
+                    goto Reconnect;
                 }
             }
             AfterDisconnected();
@@ -309,10 +323,15 @@ namespace OpenrecSitePlugin
         }
 
         OpenrecWebsocket _ws;
+        /// <summary>
+        /// ユーザが意図した切断か
+        /// </summary>
+        bool _isExpectedDisconnect;
 
         public void Disconnect()
         {
-            if(_ws != null)
+            _isExpectedDisconnect = true;
+            if (_ws != null)
             {
                 _ws.Disconnect();
             }

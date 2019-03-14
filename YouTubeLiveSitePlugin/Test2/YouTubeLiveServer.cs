@@ -17,7 +17,7 @@ namespace YouTubeLiveSitePlugin.Test2
     }
     public class YouTubeLiveServer : IYouTubeLibeServer
     {
-        public async Task<string> GetAsync(HttpOptions options)
+        private async Task<HttpResponseMessage> GetInternalAsync(HttpOptions options)
         {
             if (string.IsNullOrEmpty(options.Url))
             {
@@ -44,17 +44,15 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                 }
                 var ret = await client.GetAsync(options.Url);
-                if (!ret.IsSuccessStatusCode)
-                {
-                    var errorRes = await ret.Content.ReadAsStringAsync();
-                    throw new HttpException
-                    {
-                        StatusCode = (int)ret.StatusCode,
-                        Response = errorRes,
-                    };
-                }
-                return await ret.Content.ReadAsStringAsync();
+                ret.EnsureSuccessStatusCode();
+                return ret;
             }
+        }
+        public async Task<string> GetAsync(HttpOptions options)
+        {
+            var ret = await GetInternalAsync(options);
+            return await ret.Content.ReadAsStringAsync();
+            
         }
         public Task<string> GetAsync(string url, CookieContainer cc)
         {
@@ -101,26 +99,15 @@ namespace YouTubeLiveSitePlugin.Test2
         public async Task<string> PostAsync(string url, Dictionary<string, string> data, CookieContainer cc)
         {
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.2924.87 Safari/537.36";
-            var content = new FormUrlEncodedContent(data);
-            using (var handler = new HttpClientHandler { UseCookies = true, CookieContainer = cc })
-            using (var client = new HttpClient(handler))
+            var options = new HttpOptions
             {
-                client.DefaultRequestHeaders.Add("User-Agent", userAgent);
-                var result = await client.PostAsync(url, content);
-                var resBody = await result.Content.ReadAsStringAsync();
-                if (result.IsSuccessStatusCode)
-                {
-                    return resBody;
-                }
-                else
-                {
-                    throw new HttpException
-                    {
-                        StatusCode = (int)result.StatusCode,
-                        Response = resBody,
-                    };
-                }
-            }
+                Url = url,
+                UserAgent = userAgent,
+                Cc = cc,
+            };
+            var content = new FormUrlEncodedContent(data);
+            var ret = await PostAsync(options, content);
+            return ret;
         }
         /// <summary>
         /// 
@@ -169,27 +156,20 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
 
                 var result = await client.PostAsync(options.Url, content);
-                if (!result.IsSuccessStatusCode)
-                {
-                    throw new HttpException
-                    {
-                        StatusCode = (int)result.StatusCode,
-                        Response = await result.Content.ReadAsStringAsync(),
-                    };
-                }
+                result.EnsureSuccessStatusCode();
                 return result;
             }
         }
         public async Task<byte[]> GetBytesAsync(string url)
         {
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0";
-            using (var client = new HttpClient())
+            var options = new HttpOptions
             {
-                client.DefaultRequestHeaders.Add("User-Agent", userAgent);
-                var t = await client.GetByteArrayAsync(url);
-                //ここでawaitせずにTaskをreturnしようとすると、先にDispose()が実行されるためTaskがCancelされてしまう。
-                return t;
-            }
+                Url = url,
+                UserAgent = userAgent,
+            };
+            var message = await GetInternalAsync(options);
+            return await message.Content.ReadAsByteArrayAsync();
         }
     }
 }

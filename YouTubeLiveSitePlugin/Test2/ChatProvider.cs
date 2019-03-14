@@ -9,6 +9,7 @@ using System.Threading;
 using SitePlugin;
 using Common;
 using System.Diagnostics;
+using System.Net.Http;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -31,6 +32,14 @@ namespace YouTubeLiveSitePlugin.Test2
                 _cts.Cancel();
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="vid"></param>
+        /// <param name="initialContinuation"></param>
+        /// <param name="cc"></param>
+        /// <returns></returns>
+        /// <exception cref="ReloadException"></exception>
         public async Task ReceiveAsync(string vid,IContinuation initialContinuation, CookieContainer cc)
         {
             _cts = new CancellationTokenSource();
@@ -67,36 +76,15 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                     else
                     {
-                        await Task.Delay(1000);
+                        await Task.Delay(1000, _cts.Token);
                     }
                     
                 }
-                catch(WebException ex) when(ex.Status == WebExceptionStatus.ProtocolError)
+                catch (HttpRequestException ex)
                 {
-                    var httpRes = (HttpWebResponse)ex.Response;
-                    var code = httpRes.StatusCode;
-                    //
-                    SendInfo(ex.Message, InfoType.Debug);
-
-                    if (code == HttpStatusCode.BadRequest || code == HttpStatusCode.ServiceUnavailable)
-                    {
-                        //回復の見込みが無いと判断
-                        _logger.LogException(ex, "", $"vid={vid},url={getLiveChatUrl},getLiveChatJson={getLiveChatJson}");
-                        break;
-                    }
-                    else
-                    {
-                        await Task.Delay(IntervalAfterWebException);
-                    }
+                    throw new ReloadException(ex);
                 }
-                catch(WebException ex)
-                {
-                    _logger.LogException(ex, "", $"vid={vid},url={getLiveChatUrl},getLiveChatJson={getLiveChatJson}");
-                    Debug.WriteLine(ex.Message);
-                    SendInfo(ex.Message, InfoType.Debug);
-                    await Task.Delay(IntervalAfterWebException);
-                }
-                catch(ParseException ex)
+                catch (ParseException ex)
                 {
                     _logger.LogException(ex, "get_live_chatのパースに失敗", getLiveChatJson);
                 }

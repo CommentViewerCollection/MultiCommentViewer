@@ -76,6 +76,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="SampleData\blacklists.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="SampleData\Chats_stamp.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

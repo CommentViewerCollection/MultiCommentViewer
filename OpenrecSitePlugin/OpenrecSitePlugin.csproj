@@ -59,6 +59,7 @@
     <Compile Include="DataSource.cs" />
     <Compile Include="DynamicJson.cs" />
     <Compile Include="IOpenrecCommentData.cs" />
+    <Compile Include="Low\BlackList\Class1.cs" />
     <Compile Include="Low\Chats\Class1.cs" />
     <Compile Include="Low\External\Movies\Class1.cs" />
     <Compile Include="Low\LivePage\Class1.cs" />

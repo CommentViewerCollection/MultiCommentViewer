@@ -9,10 +9,10 @@ using System.Net;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 
 namespace OpenrecSitePlugin
 {
-
     [Serializable]
     public class InvalidInputException : Exception
     {
@@ -156,6 +156,11 @@ namespace OpenrecSitePlugin
                     MessageReceived?.Invoke(this, messageContext);
                 }
             }
+            foreach(var user in _userStore.GetAllUsers())
+            {
+                if (!(user is IUser2 user2)) continue;
+                _userDict.AddOrUpdate(user2.UserId, user2, (id,u)=> u);
+            }
         Reconnect:
             _ws = new OpenrecWebsocket(_logger);
             _ws.Received += WebSocket_Received;
@@ -232,7 +237,11 @@ namespace OpenrecSitePlugin
         private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData, bool isInitialComment)
         {
             var userId = commentData.UserId;
-            var user = _userStore.GetUser(userId);
+            var user = _userStore.GetUser(userId) as IUser2;
+            if (!_userDict.ContainsKey(userId))
+            {
+                _userDict.AddOrUpdate(user.UserId, user, (id, u) => u);
+            }
             bool isFirstComment;
             if (_userCommentCountDict.ContainsKey(userId))
             {
@@ -298,15 +307,15 @@ namespace OpenrecSitePlugin
             {
                 var blackList = e;
                 //現状BAN状態のユーザ
-                var banned = _userViewModelDict.Where(kv => kv.Value.IsNgUser).Select(kv => kv.Key).ToList();
+                var banned = _userDict.Where(kv=>kv.Value.IsSiteNgUser).Select(kv => kv.Key).ToList();// _userViewModelDict.Where(kv => kv.Value.IsNgUser).Select(kv => kv.Key).ToList();
 
                 //ブラックリストに登録されているユーザのBANフラグをONにする
                 foreach (var black in blackList)
                 {
-                    if (_userViewModelDict.ContainsKey(black))
+                    if (_userDict.ContainsKey(black))
                     {
-                        var user = _userViewModelDict[black];
-                        user.IsNgUser = true;
+                        var user = _userDict[black];
+                        user.IsSiteNgUser = true;
                     }
                     //ブラックリストに入っていることが確認できたためリストから外す
                     banned.Remove(black);
@@ -315,7 +324,8 @@ namespace OpenrecSitePlugin
                 //ブラックリストに入っていなかったユーザのBANフラグをOFFにする
                 foreach (var white in banned)
                 {
-                    _userViewModelDict[white].IsNgUser = false;
+                    var u = _userDict[white];
+                    u.IsSiteNgUser = false;
                 }
             }catch(Exception ex)
             {
@@ -389,6 +399,7 @@ namespace OpenrecSitePlugin
         Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
+        ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
         DateTime _startAt;
         //private OpenrecCommentViewModel CreateCommentViewModel(IOpenrecCommentData data)
         //{

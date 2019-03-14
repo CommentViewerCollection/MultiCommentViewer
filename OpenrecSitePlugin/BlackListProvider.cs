@@ -22,7 +22,7 @@ namespace OpenrecSitePlugin
             {
                 try
                 {
-                    var list = await API.GetBanList(_dataSource, movieId, context);
+                    var list = await API.GetBanList(_dataSource, context);
                     Received?.Invoke(this, list);
                 }
                 catch (Exception ex)

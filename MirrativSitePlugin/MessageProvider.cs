@@ -142,7 +142,10 @@ namespace MirrativSitePlugin
                                     Username = json["ac"],
                                 };
                                 SetLinkedLiveOwnerName(message, json);
-                                var joinRoom = new MirrativJoinRoom(message, data);
+                                var joinRoom = new MirrativJoinRoom(message, data)
+                                {
+                                    OnlineViewerNum = (int)json["online_viewer_num"],
+                                };
                                 mirrativMessage = joinRoom;
 
                                 //MetadataUpdated?.Invoke(this, new Metadata
@@ -244,12 +247,12 @@ namespace MirrativSitePlugin
             {
                 MessageReceived?.Invoke(this, message);
             }
-            if(message is IMirrativItem item)
+            if(message is IMirrativJoinRoom join)
             {
-                //MetadataUpdated?.Invoke(this, new Metadata
-                //{
-                //    CurrentViewers = (json["online_viewer_num"]).ToString(),
-                //});
+                MetadataUpdated?.Invoke(this, new Metadata
+                {
+                    CurrentViewers = join.OnlineViewerNum.ToString(),
+                });
             }
         }
 

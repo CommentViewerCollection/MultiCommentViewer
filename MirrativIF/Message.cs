@@ -33,6 +33,7 @@ namespace MirrativSitePlugin
         string UserId { get; }
         string PostTime { get; }
         IMessageImage UserIcon { get; set; }
+        int OnlineViewerNum { get; }
     }
     public interface IMirrativItem : IMirrativMessage
     {

@@ -275,6 +275,11 @@ namespace BouyomiPlugin
                     comment = message.CommentItems.ToText();
                 }
             }
+            //nameがnullでは無い場合かつUser.Nicknameがある場合はNicknameを採用
+            if (!string.IsNullOrEmpty(name) && messageMetadata.User != null && !string.IsNullOrEmpty(messageMetadata.User.Nickname))
+            {
+                name = messageMetadata.User.Nickname;
+            }
             try
             {
                 //棒読みちゃんが事前に起動されていたらそれを使いたい。

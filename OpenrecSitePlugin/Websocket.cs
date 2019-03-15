@@ -84,11 +84,11 @@ namespace OpenrecSitePlugin
         }
         public async Task SendAsync(string str)
         {
-            if(_ws != null)
+            await Task.Yield();
+            if (_ws != null)
             {
-                await Task.Yield();
-                Debug.WriteLine("websocket send:" + str);
                 _ws.Send(str);
+                Debug.WriteLine("websocket send:" + str);
             }
             await Task.CompletedTask;
         }

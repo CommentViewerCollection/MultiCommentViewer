@@ -67,6 +67,9 @@ namespace SitePlugin
         string BackColorArgb { get; set; }
         bool IsNgUser { get; set; }
     }
-
+    public interface IUser2 : IUser
+    {
+        bool IsSiteNgUser { get; set; }
+    }
 
 }

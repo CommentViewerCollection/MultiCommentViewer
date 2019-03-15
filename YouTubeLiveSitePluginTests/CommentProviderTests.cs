@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Net.Http;
 using ryu_s.BrowserCookie;
+using YouTubeLiveSitePlugin;
 
 namespace YouTubeLiveSitePluginTests
 {
@@ -99,10 +100,10 @@ namespace YouTubeLiveSitePluginTests
                 _sessionToken = sessionToken;
             }
         }
-        class C: CommentProvider
+        class C: EachConnection
         {
             public C(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStore userStore, string clientIdPrefix, string sej, string sessionToken)
-                :base(options,server,siteOptions,logger,userStore)
+                :base(logger,new CookieContainer(), options,server,siteOptions, new Dictionary<string, int>(), new System.Collections.Generic.SynchronizedCollection<string>(),new Mock<ICommentProvider>().Object,userStore)
             {
                 PostCommentContext = new PostCommentContext
                 {
@@ -186,20 +187,22 @@ namespace YouTubeLiveSitePluginTests
         public async Task 短すぎるコメントを投稿したときのエラーメッセージを正しく処理できるか()
         {
             var data = Tools.GetSampleData("CommentPost_Result_TooShort.txt");
-            var options = new Mock<ICommentOptions>();
+            var optionsMock = new Mock<ICommentOptions>();
             var serverMock = new Mock<IYouTubeLibeServer>();
             serverMock.Setup(s => s.PostAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CookieContainer>())).Returns(Task.FromResult(data));
             var siteOptions = new YouTubeLiveSiteOptions();
             var loggerMock = new Mock<ILogger>();
             var userStore = new Mock<IUserStore>();
             var broweserProfileMock = new Mock<IBrowserProfile>();
-            var cpMock = new Mock<CommentProvider>(options.Object, serverMock.Object, siteOptions, loggerMock.Object, userStore.Object);
+            var cpMock = new Mock<EachConnection>(loggerMock.Object, new CookieContainer(), optionsMock.Object, serverMock.Object, siteOptions, new Dictionary<string, int>(), new System.Collections.Generic.SynchronizedCollection<string>(), new Mock<ICommentProvider>().Object, userStore.Object);
+            //var cpMock = new Mock<EachConnection>(options.Object, serverMock.Object, siteOptions, loggerMock.Object, userStore.Object);
             cpMock.Protected().Setup<PostCommentContext>("PostCommentContext").Returns(new PostCommentContext() { Sej = "" });
             var cp = cpMock.Object;
             bool expectedResult = false;
-            cp.CommentReceived += (s, e) =>
+            cp.MessageReceived += (s, e) =>
             {
-                if ((e.MessageItems.ToList()[0] as IMessageText).Text == "コメント投稿に失敗しました（コメントが短すぎます。）")
+                var message = e.Message as IInfoMessage;
+                if ((message.CommentItems.ToList()[0] as IMessageText).Text == "コメント投稿に失敗しました（コメントが短すぎます。）")
                 {
                     expectedResult = true;
                 }

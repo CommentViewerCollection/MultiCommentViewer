@@ -9,10 +9,10 @@ using System.Net;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 
 namespace OpenrecSitePlugin
 {
-
     [Serializable]
     public class InvalidInputException : Exception
     {
@@ -71,6 +71,7 @@ namespace OpenrecSitePlugin
         {
             CanConnect = false;
             CanDisconnect = true;
+            _isExpectedDisconnect = false;
         }
         private void AfterDisconnected()
         {
@@ -149,62 +150,18 @@ namespace OpenrecSitePlugin
             {
                 var comment = Tools.Parse(item);
                 var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                var userId = commentData.UserId;
-                var user = _userStore.GetUser(userId);
-                bool isFirstComment;
-                if (_userCommentCountDict.ContainsKey(userId))
+                var messageContext = CreateMessageContext(comment, commentData, true);
+                if (messageContext != null)
                 {
-                    _userCommentCountDict[userId]++;
-                    isFirstComment = false;
-                }
-                else
-                {
-                    _userCommentCountDict.Add(userId, 1);
-                    isFirstComment = true;
-                }
-
-                var nameItems = new List<IMessagePart>();
-                nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
-                nameItems.AddRange(commentData.NameIcons);
-
-                var messageItems = new List<IMessagePart>();
-                if (commentData.IsYell)
-                {
-                    //MessageType = MessageType.BroadcastInfo;
-                    messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
-                }
-                messageItems.Add(commentData.Message);
-                if (commentData.Stamp != null)
-                {
-                    //MessageType = MessageType.BroadcastInfo;
-                    messageItems.Add(commentData.Stamp);
-                }
-
-                if (commentData.IsYell)
-                {
-
-                }
-                else if(commentData.Stamp != null)
-                {
-
-                }
-                else
-                {
-                    var message = new OpenrecComment("")
-                    {
-                        CommentItems = new List<IMessagePart> { commentData.Message },
-                        Id = commentData.Id,
-                        NameItems = nameItems,
-                        PostTime = commentData.PostTime.ToString("HH:mm:ss"),
-                        UserIcon = null,
-                        UserId = commentData.UserId,
-                    };
-                    var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
-                    var methods = new OpenrecMessageMethods();
-                    MessageReceived?.Invoke(this, new OpenrecMessageContext(message, metadata, methods));
+                    MessageReceived?.Invoke(this, messageContext);
                 }
             }
-
+            foreach(var user in _userStore.GetAllUsers())
+            {
+                if (!(user is IUser2 user2)) continue;
+                _userDict.AddOrUpdate(user2.UserId, user2, (id,u)=> u);
+            }
+        Reconnect:
             _ws = new OpenrecWebsocket(_logger);
             _ws.Received += WebSocket_Received;
             
@@ -221,7 +178,7 @@ namespace OpenrecSitePlugin
                 blackTask
             };
 
-            while (true)
+            while (tasks.Count > 0)
             {
                 var t = await Task.WhenAny(tasks);
                 if (t == blackTask)
@@ -247,6 +204,7 @@ namespace OpenrecSitePlugin
                     {
                         _logger.LogException(ex);
                     }
+                    tasks.Remove(blackTask);
                     SendSystemInfo("ブラックリストタスク終了", InfoType.Debug);
                     try
                     {
@@ -256,17 +214,34 @@ namespace OpenrecSitePlugin
                     {
                         _logger.LogException(ex);
                     }
+                    tasks.Remove(wsTask);
                     SendSystemInfo("wsタスク終了", InfoType.Debug);
-                    break;
+                }
+            }
+            _ws.Received -= WebSocket_Received;
+            blackListProvider.Received -= BlackListProvider_Received;
+
+            //意図的な切断では無い場合、配信がまだ続いているか確認して、配信中だったら再接続する。
+            //2019/03/12 heartbeatを送っているのにも関わらずwebsocketが切断されてしまう場合を確認。ブラウザでも配信中に切断されて再接続するのを確認済み。
+            if (!_isExpectedDisconnect)
+            {
+                var movieInfo = await API.GetMovieInfo(_dataSource, liveId, _cc);
+                if(movieInfo.OnairStatus == 1)
+                {
+                    goto Reconnect;
                 }
             }
             AfterDisconnected();
         }
 
-        private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData)
+        private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData, bool isInitialComment)
         {
             var userId = commentData.UserId;
-            var user = _userStore.GetUser(userId);
+            var user = _userStore.GetUser(userId) as IUser2;
+            if (!_userDict.ContainsKey(userId))
+            {
+                _userDict.AddOrUpdate(user.UserId, user, (id, u) => u);
+            }
             bool isFirstComment;
             if (_userCommentCountDict.ContainsKey(userId))
             {
@@ -316,7 +291,10 @@ namespace OpenrecSitePlugin
                     UserIcon = null,
                     UserId = commentData.UserId,
                 };
-                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    IsInitialComment = isInitialComment,
+                };
                 var methods = new OpenrecMessageMethods();
                 messageContext = new OpenrecMessageContext(message, metadata, methods);
             }
@@ -329,15 +307,15 @@ namespace OpenrecSitePlugin
             {
                 var blackList = e;
                 //現状BAN状態のユーザ
-                var banned = _userViewModelDict.Where(kv => kv.Value.IsNgUser).Select(kv => kv.Key).ToList();
+                var banned = _userDict.Where(kv=>kv.Value.IsSiteNgUser).Select(kv => kv.Key).ToList();// _userViewModelDict.Where(kv => kv.Value.IsNgUser).Select(kv => kv.Key).ToList();
 
                 //ブラックリストに登録されているユーザのBANフラグをONにする
                 foreach (var black in blackList)
                 {
-                    if (_userViewModelDict.ContainsKey(black))
+                    if (_userDict.ContainsKey(black))
                     {
-                        var user = _userViewModelDict[black];
-                        user.IsNgUser = true;
+                        var user = _userDict[black];
+                        user.IsSiteNgUser = true;
                     }
                     //ブラックリストに入っていることが確認できたためリストから外す
                     banned.Remove(black);
@@ -346,7 +324,8 @@ namespace OpenrecSitePlugin
                 //ブラックリストに入っていなかったユーザのBANフラグをOFFにする
                 foreach (var white in banned)
                 {
-                    _userViewModelDict[white].IsNgUser = false;
+                    var u = _userDict[white];
+                    u.IsSiteNgUser = false;
                 }
             }catch(Exception ex)
             {
@@ -355,10 +334,15 @@ namespace OpenrecSitePlugin
         }
 
         OpenrecWebsocket _ws;
+        /// <summary>
+        /// ユーザが意図した切断か
+        /// </summary>
+        bool _isExpectedDisconnect;
 
         public void Disconnect()
         {
-            if(_ws != null)
+            _isExpectedDisconnect = true;
+            if (_ws != null)
             {
                 _ws.Disconnect();
             }
@@ -415,6 +399,7 @@ namespace OpenrecSitePlugin
         Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
+        ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
         DateTime _startAt;
         //private OpenrecCommentViewModel CreateCommentViewModel(IOpenrecCommentData data)
         //{
@@ -471,8 +456,11 @@ namespace OpenrecSitePlugin
                 {
                     var comment = Tools.Parse(chat.Comment);
                     var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                    var messageContext = CreateMessageContext(comment, commentData);
-                    MessageReceived?.Invoke(this, messageContext);
+                    var messageContext = CreateMessageContext(comment, commentData, false);
+                    if (messageContext != null)
+                    {
+                        MessageReceived?.Invoke(this, messageContext);
+                    }
                 }
                 else if (e is PacketMessageEventMessageAudienceCount audienceCount)
                 {

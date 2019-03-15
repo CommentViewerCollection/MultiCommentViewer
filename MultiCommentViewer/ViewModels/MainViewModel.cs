@@ -537,7 +537,11 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new McvMirrativCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
-                else if (mirrativMessage is MirrativSitePlugin.IMirrativJoinRoom item)
+                else if (mirrativMessage is MirrativSitePlugin.IMirrativJoinRoom join)
+                {
+                    mcvCvm = new McvMirrativCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (mirrativMessage is MirrativSitePlugin.IMirrativItem item)
                 {
                     mcvCvm = new McvMirrativCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
@@ -647,7 +651,7 @@ namespace MultiCommentViewer
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"{e.ToString()}");
             }
         }
         private async void Connection_CommentReceived(object sender, ICommentViewModel e)

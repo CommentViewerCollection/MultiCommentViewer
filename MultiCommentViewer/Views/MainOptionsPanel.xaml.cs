@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -251,7 +252,7 @@ namespace MultiCommentViewer
         }
         public MainOptionsViewModel()
         {
-            if (GalaSoft.MvvmLight.ViewModelBase.IsInDesignModeStatic)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
             {
                 var options = new DynamicOptionsTest
                 {

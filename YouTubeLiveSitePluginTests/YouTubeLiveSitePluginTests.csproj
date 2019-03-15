@@ -35,6 +35,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -48,6 +49,7 @@
     <Compile Include="CommentProviderTests.cs" />
     <Compile Include="CommentViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReloadManagerTests.cs" />
     <Compile Include="Tools.cs" />
     <Compile Include="ToolsTests.cs" />
     <Compile Include="VidResolverTests.cs" />

@@ -70,6 +70,10 @@ namespace YouTubeLiveSitePlugin.Test2
                     var metadata = ActionsToMetadata(json.actions);
                     metaReceived?.Invoke(this, metadata);
                 }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
                 catch (WebException ex) when (ex.Status == WebExceptionStatus.ProtocolError)
                 {
                     var httpRes = (HttpWebResponse)ex.Response;
@@ -167,6 +171,7 @@ namespace YouTubeLiveSitePlugin.Test2
                         }
                         var v = string.Join("&", data.Select(kv=>kv.Key + "=" + kv.Value));
                         //{"code":"ERROR","error":"不明なエラーです。"}
+                        //{"code":"ERROR","error":"この機能は現在利用できません。しばらくしてからもう一度お試しください。"}
                         throw new ParseException($"res={res},ytCfg={ytCfg},encoded={v}");
                     }
                     if (d.data.continuation.IsDefined("invalidationContinuationData"))

@@ -32,7 +32,10 @@ namespace TwitchSitePlugin
                     break;
                 }
                 var liveInfo = await API.GetStreamAsync(_server, _channelName);
-                MetadataUpdated?.Invoke(this, liveInfo);
+                if (liveInfo != null)
+                {
+                    MetadataUpdated?.Invoke(this, liveInfo);
+                }
                 try
                 {
                     await Task.Delay(_pollingIntervalSec * 1000, _cts.Token);

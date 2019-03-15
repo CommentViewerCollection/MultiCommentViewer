@@ -8,6 +8,7 @@ namespace OpenrecSitePlugin
     interface IDataSource
     {
         Task<string> GetAsync(string url);
+        Task<string> GetAsync(string url, Dictionary<string, string> headers);
         Task<string> GetAsync(string url, CookieContainer cc);
         Task<byte[]> GetByteArrayAsync(string url, CookieContainer cc);
         Task<string> PostJsonAsync(string url, Dictionary<string,string> headers, string json);
@@ -29,6 +30,19 @@ namespace OpenrecSitePlugin
             using (var handler = new System.Net.Http.HttpClientHandler { UseCookies = false })
             using (var client = new System.Net.Http.HttpClient(handler))
             {
+                var result = await client.GetStringAsync(url);
+                return result;
+            }
+        }
+        public async Task<string> GetAsync(string url, Dictionary<string,string> headers)
+        {
+            using (var handler = new System.Net.Http.HttpClientHandler { UseCookies = false })
+            using (var client = new System.Net.Http.HttpClient(handler))
+            {
+                foreach (var kv in headers)
+                {
+                    client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
+                }
                 var result = await client.GetStringAsync(url);
                 return result;
             }

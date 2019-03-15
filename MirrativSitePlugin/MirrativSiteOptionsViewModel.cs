@@ -1,5 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Windows;
+using System.Windows.Media;
 
 namespace MirrativSitePlugin
 {
@@ -10,6 +12,16 @@ namespace MirrativSitePlugin
             get => changed.NeedAutoSubNickname;
             set => changed.NeedAutoSubNickname = value;
         }
+        public Color ItemForeColor
+        {
+            get => changed.ItemForeColor;
+            set => changed.ItemForeColor = value;
+        }
+        public Color ItemBackColor
+        {
+            get => changed.ItemBackColor;
+            set => changed.ItemBackColor = value;
+        }
         private readonly MirrativSiteOptions _origin;
         private readonly MirrativSiteOptions changed;
         internal MirrativSiteOptions OriginOptions { get { return _origin; } }
@@ -19,6 +31,25 @@ namespace MirrativSitePlugin
         {
             _origin = siteOptions;
             changed = siteOptions.Clone();
+        }
+        public MirrativSiteOptionsViewModel()
+        {
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
+            {
+                var options = new MirrativSiteOptions
+                {
+                    ItemBackColor = Colors.Blue,
+                    ItemForeColor = Colors.Red,
+                    NeedAutoSubNickname = true,
+                    PollingIntervalSec = 30,
+                };
+                _origin = options;
+                changed = options.Clone();
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
         }
 
         #region INotifyPropertyChanged

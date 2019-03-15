@@ -9,6 +9,7 @@ namespace MirrativSitePlugin
         JoinRoom,
         Connected,
         Disconnected,
+        Item,
     }
 
     public interface IMirrativMessage : IMessage
@@ -32,5 +33,32 @@ namespace MirrativSitePlugin
         string UserId { get; }
         string PostTime { get; }
         IMessageImage UserIcon { get; set; }
+    }
+    public interface IMirrativItem : IMirrativMessage
+    {
+        string Id { get; }
+        string UserId { get; }
+        string PostTime { get; }
+        //IMessageImage UserIcon { get; set; }
+    }
+    public interface IMirrativPhotoGift : IMirrativItem
+    {
+        string GiftTitle { get; }
+        string PhotoGiftId { get; }
+        string BUrl { get; }
+        int Coins { get; }
+        string GiftSmallImageUrl { get; }
+
+        string ShareText { get; }
+    }
+    public interface IMirrativGift : IMirrativItem
+    {
+        string GiftTitle { get; }
+        string PhotoGiftId { get; }
+        string BUrl { get; }
+        int Coins { get; }
+        string GiftSmallImageUrl { get; }
+
+        int Count { get; }
     }
 }

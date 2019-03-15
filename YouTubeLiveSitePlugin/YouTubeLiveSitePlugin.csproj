@@ -56,11 +56,13 @@
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Test2\CommentPostPanelViewModel.cs" />
+    <Compile Include="Test2\EachConnection.cs" />
     <Compile Include="Test2\IMetadataProvider.cs" />
     <Compile Include="Test2\IYouTubeLibeServer.cs" />
     <Compile Include="Test2\Message\YouTubeLiveMessageContext.cs" />
     <Compile Include="Test2\Message\YouTubeLiveMessageMetadata.cs" />
     <Compile Include="Test2\Message\YouTubeLiveMessageMethods.cs" />
+    <Compile Include="Test2\ReloadManager.cs" />
     <Compile Include="Test2\VidResolver.cs" />
     <Compile Include="Test2\YouTubeListOptionsTabPage.cs" />
     <Compile Include="Test2\YouTubeLiveOptionsPanel.xaml.cs">

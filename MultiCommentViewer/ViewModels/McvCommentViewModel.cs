@@ -110,6 +110,7 @@ namespace MultiCommentViewer
             };
             Id = comment.Id.ToString();
             PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
+            Info = item.ItemCount == 1 ? item.ItemName : $"{item.ItemName} × {item.ItemCount}";
         }
         public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
             : this(metadata, methods, connectionName)
@@ -515,6 +516,18 @@ namespace MultiCommentViewer
             _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
+            Id = null;
+            PostTime = comment.PostTime;
+        }
+        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
+            : this(metadata, methods, connectionName)
+        {
+            var comment = item;
+            _message = comment;
+
+            _nameItems = comment.NameItems;
+            MessageItems = comment.CommentItems;
+            Thumbnail = null;
             Id = null;
             PostTime = comment.PostTime;
         }

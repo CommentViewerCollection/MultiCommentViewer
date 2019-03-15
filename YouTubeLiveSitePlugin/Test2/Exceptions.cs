@@ -24,16 +24,6 @@ namespace YouTubeLiveSitePlugin.Test2
             Details = details;
         }
     }
-    //UnknownResponseReceivedException
-    [Serializable]
-    public class HttpException : Exception
-    {
-        public int StatusCode { get; set; }
-        public string Response { get; set; }
-        public HttpException() { }
-        public HttpException(string message) : base(message) { }
-        public HttpException(string message, Exception innterException) : base(message, innterException) { }
-    }
     [Serializable]
     public class FatalException : Exception
     {
@@ -56,6 +46,7 @@ namespace YouTubeLiveSitePlugin.Test2
     public class ReloadException : Exception
     {
         public ReloadException() { }
+        public ReloadException(Exception innterException) : base("", innterException) { }
     }
     [Serializable]
     public class ContinuationContentsNullException : Exception

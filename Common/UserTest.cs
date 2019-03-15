@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SitePlugin;
 namespace Common
 {
-    public class UserTest : IUser
+    public class UserTest : IUser2
     {
         public string UserId { get { return _userid; } }
 
@@ -39,6 +39,17 @@ namespace Common
             {
                 if (_isNgUser == value) return;
                 _isNgUser = value;
+                RaisePropertyChanged();
+            }
+        }
+        private bool _isSiteNgUser;
+        public bool IsSiteNgUser
+        {
+            get { return _isSiteNgUser; }
+            set
+            {
+                if (_isSiteNgUser == value) return;
+                _isSiteNgUser = value;
                 RaisePropertyChanged();
             }
         }

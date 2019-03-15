@@ -418,11 +418,14 @@ namespace OpenrecSitePlugin
                     case "uuid":
                         context.Uuid = cookie.Value;
                         break;
-                    case "token":
-                        context.Token = cookie.Value;
-                        break;
-                    case "random":
-                        context.Random = cookie.Value;
+                    //case "token":
+                    //    context.Token = cookie.Value;
+                    //    break;
+                    //case "random":
+                    //    context.Random = cookie.Value;
+                    //    break;
+                    case "access_token":
+                        context.AccessToken = cookie.Value;
                         break;
                 }
             }

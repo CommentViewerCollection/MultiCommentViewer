@@ -11,7 +11,7 @@ namespace MirrativSitePlugin
         {
             CommentItems = new List<IMessagePart>
             {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
+                Common.MessagePartFactory.CreateMessageText("配信が終了しました"),
             };
         }
     }

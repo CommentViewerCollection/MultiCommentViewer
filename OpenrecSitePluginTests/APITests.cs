@@ -13,6 +13,16 @@ namespace OpenrecSitePluginTests
     class APITests
     {
         [Test]
+        public async Task GetBlackListAsyncTest()
+        {
+            var data = DataLoader.GetSampleData(@"blacklists.txt");
+            var serverMock = new Mock<IDataSource>();
+            serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string,string>>())).ReturnsAsync(data);
+            var context = new Context();
+            var blacklist = await API.GetBanList(serverMock.Object, context);
+
+        }
+        [Test]
         public async Task GetMeAsync_LoggedIn_Test()
         {
             var data = DataLoader.GetSampleData(@"Home_loggedin.txt");

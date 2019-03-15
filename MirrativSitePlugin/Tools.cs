@@ -43,6 +43,26 @@ namespace MirrativSitePlugin
             }
             return null;
         }
+        public static string ExtractUserId(string str)
+        {
+            //https://www.mirrativ.com/user/1091674
+            var match = Regex.Match(str, "mirrativ\\.com/user/(\\d+)");
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            return null;
+        }
+        public static bool IsValidLiveId(string input)
+        {
+            var liveId = Tools.ExtractLiveId(input);
+            return !string.IsNullOrEmpty(liveId);
+        }
+        public static bool IsValidUserId(string input)
+        {
+            var userId = Tools.ExtractUserId(input);
+            return !string.IsNullOrEmpty(userId);
+        }
         /// <summary>
         /// 
         /// </summary>

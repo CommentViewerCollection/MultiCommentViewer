@@ -255,6 +255,13 @@ namespace BouyomiPlugin
                             comment = (mirrativMessage as IMirrativJoinRoom).CommentItems.ToText();
                         }
                         break;
+                    case MirrativMessageType.Item:
+                        if (_options.IsMirrativItem)
+                        {
+                            name = null;
+                            comment = (mirrativMessage as IMirrativItem).CommentItems.ToText();
+                        }
+                        break;
                 }
             }
             else
@@ -267,6 +274,11 @@ namespace BouyomiPlugin
                 {
                     comment = message.CommentItems.ToText();
                 }
+            }
+            //nameがnullでは無い場合かつUser.Nicknameがある場合はNicknameを採用
+            if (!string.IsNullOrEmpty(name) && messageMetadata.User != null && !string.IsNullOrEmpty(messageMetadata.User.Nickname))
+            {
+                name = messageMetadata.User.Nickname;
             }
             try
             {

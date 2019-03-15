@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace MirrativSitePlugin
 {
-    public interface IMessageProvider
+    public interface IWebSocket
     {
         event EventHandler<string> Received;
         event EventHandler Opened;

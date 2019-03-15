@@ -52,10 +52,12 @@
     <Compile Include="IMessageProvider.cs" />
     <Compile Include="IMirrativSiteOptions.cs" />
     <Compile Include="LiveInfo.cs" />
+    <Compile Include="Low\Class1.cs" />
     <Compile Include="Low\CurrentUser.cs" />
     <Compile Include="Low\LiveComments.cs" />
     <Compile Include="Low\LiveInfo.cs" />
     <Compile Include="MessageProvider.cs" />
+    <Compile Include="Message\MirrativItem.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="Message\MirrativComment.cs" />
     <Compile Include="MirrativCommentProvider.cs" />

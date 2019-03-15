@@ -136,6 +136,7 @@
                                     <RowDefinition />
                                     <RowDefinition />
                                     <RowDefinition />
+                                    <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <CheckBox Grid.Row="0" IsChecked="{Binding IsMirrativConnect}" Content="接続" />
                                 <CheckBox Grid.Row="1" IsChecked="{Binding IsMirrativDisconnect}" Content="切断" />
@@ -154,6 +155,7 @@
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMirrativComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMirrativCommentNickname}" Content="コテハン" />
                                 </Grid>
                                 <CheckBox Grid.Row="3" IsChecked="{Binding IsMirrativJoinRoom}" Content="入室" />
+                                <CheckBox Grid.Row="4" IsChecked="{Binding IsMirrativItem}" Content="アイテム" />
                             </Grid>
                         </Border>
 

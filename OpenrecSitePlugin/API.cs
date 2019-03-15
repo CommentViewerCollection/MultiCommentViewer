@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Codeplex.Data;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,20 +78,51 @@ namespace OpenrecSitePlugin
             var obj = Tools.Deserialize<Low.Movies.RootObject[]>(res);
             return obj;
         }
-        public static async Task<List<string>> GetBanList(IDataSource dataSource, string movieId, Context context)
+        public static async Task<List<string>> GetBanList(IDataSource dataSource, Context context)
         {
-            var url=$"https://www.openrec.tv/viewapp/api/v3/blacklist/list?movie_id={movieId}&user_type=2&Uuid={context.Uuid}&Token={context.Token}&Random={context.Random}";
-            var res = await dataSource.GetAsync(url);
-            var json = JsonConvert.DeserializeObject<Low.BanList.RootObject>(res);
+            //var url=$"https://www.openrec.tv/viewapp/api/v3/blacklist/list?movie_id={movieId}&user_type=2&Uuid={context.Uuid}&Token={context.Token}&Random={context.Random}";
+            //var res = await dataSource.GetAsync(url);
+            //var json = JsonConvert.DeserializeObject<Low.BanList.RootObject>(res);
+            //var list = new List<string>();
+            //if (json.data!= null && json.data.items != null)
+            //{
+            //    foreach (var item in json.data.items)
+            //    {
+            //        list.Add(item.banned_user_id);
+            //    }
+            //}
+            //return list;
             var list = new List<string>();
-            if (json.data!= null && json.data.items != null)
+            var url = "https://apiv5.openrec.tv/api/v5/users/me/blacklists";
+            var headers = new Dictionary<string, string>
             {
-                foreach (var item in json.data.items)
-                {
-                    list.Add(item.banned_user_id);
-                }
+                { "uuid", context.Uuid },
+                {"access-token", context.AccessToken },
+            };
+            var res = await dataSource.GetAsync(url, headers);
+            var d = DynamicJson.Parse(res);
+            if (!d.IsDefined("status"))
+            {
+                return list;
             }
+            switch ((int)d.status)
+            {
+                case 0:
+                    var s = (string)d.data.items.ToString();
+                    var low = JsonConvert.DeserializeObject<Low.BlackList.RootObject[]>(s);
+                    foreach(var item in low)
+                    {
+                        list.Add(item.Id);
+                    }
+                    break;
+                default:
+                    //{"message":"authorization required","status":-4}
+                    return list;
+            }
+
+
             return list;
+
         }
         public static async Task<Low.WebsocketContext2> GetWebsocketContext2(IDataSource dataSource, string movieId, CookieContainer cc)
         {

@@ -497,101 +497,109 @@ namespace MultiCommentViewer
             {
                 if (whowatchMessage is WhowatchSitePlugin.IWhowatchComment comment)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (whowatchMessage is WhowatchSitePlugin.IWhowatchItem item)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (whowatchMessage is WhowatchSitePlugin.IWhowatchConnected connected)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (whowatchMessage is WhowatchSitePlugin.IWhowatchDisconnected disconnected)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is YouTubeLiveSitePlugin.IYouTubeLiveMessage youtubeMessage)
             {
                 if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveComment comment)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveConnected connected)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveDisconnected disconnected)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is MirrativSitePlugin.IMirrativMessage mirrativMessage)
             {
                 if (mirrativMessage is MirrativSitePlugin.IMirrativComment comment)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativJoinRoom join)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativItem item)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativConnected connected)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativDisconnected disconnected)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is TwitchSitePlugin.ITwitchMessage twitchMessage)
             {
                 if (twitchMessage is TwitchSitePlugin.ITwitchComment comment)
                 {
-                    mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is OpenrecSitePlugin.IOpenrecMessage openrecMessage)
             {
                 if (openrecMessage is OpenrecSitePlugin.IOpenrecComment comment)
                 {
-                    mcvCvm = new OpenrecCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new OpenrecCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (openrecMessage is OpenrecSitePlugin.IOpenrecStamp stamp)
                 {
-                    mcvCvm = new OpenrecCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new OpenrecCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
-                else if(openrecMessage is OpenrecSitePlugin.IOpenrecYell yell)
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecYell yell)
                 {
-                    mcvCvm = new OpenrecCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new OpenrecCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecConnected connected)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecDisconnected disconnected)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
             {
                 if (lineliveMessage is LineLiveSitePlugin.ILineLiveComment comment)
                 {
-                    mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if(lineliveMessage is LineLiveSitePlugin.ILineLiveItem item)
                 {
-                    mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is NicoSitePlugin.INicoMessage nicoMessage)
             {
                 if (nicoMessage is NicoSitePlugin.INicoComment comment)
                 {
-                    mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             if (mcvCvm != null)

@@ -14,6 +14,8 @@ namespace MultiCommentViewer
         private readonly LineLiveSitePlugin.ILineLiveMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
+        private readonly IOptions _options;
+
         private void SetNickname(IUser user)
         {
             if (!string.IsNullOrEmpty(user.Nickname))
@@ -25,12 +27,13 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private LineLiveCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
+        private LineLiveCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
             ConnectionName = connectionName;
+            _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -83,8 +86,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = comment;
 
@@ -94,8 +97,8 @@ namespace MultiCommentViewer
             Id = comment.Id?.ToString();
             PostTime = comment.PostTime;
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             var comment = item;
             _message = comment;
@@ -113,14 +116,14 @@ namespace MultiCommentViewer
             Id = null;
             PostTime = comment.PostTime;
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
@@ -147,7 +150,20 @@ namespace MultiCommentViewer
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 
-        public SolidColorBrush Background => new SolidColorBrush(_metadata.BackColor);
+        public SolidColorBrush Background
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.LineLiveBackColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.BackColor);
+                }
+            }
+        }
 
         public ICommentProvider CommentProvider => _metadata.CommentProvider;
 
@@ -159,7 +175,20 @@ namespace MultiCommentViewer
 
         public FontWeight FontWeight => _metadata.FontWeight;
 
-        public SolidColorBrush Foreground => new SolidColorBrush(_metadata.ForeColor);
+        public SolidColorBrush Foreground
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.LineLiveForeColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.ForeColor);
+                }
+            }
+        }
 
         public string Id { get; private set; }
 

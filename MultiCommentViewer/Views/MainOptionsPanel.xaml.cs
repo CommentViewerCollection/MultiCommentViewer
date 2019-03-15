@@ -215,6 +215,100 @@ namespace MultiCommentViewer
             get { return ChangedOptions.IsPixelScrolling; }
             set { ChangedOptions.IsPixelScrolling = value; }
         }
+        public bool IsEnabledSiteConnectionColor
+        {
+            get { return ChangedOptions.IsEnabledSiteConnectionColor; }
+            set { ChangedOptions.IsEnabledSiteConnectionColor = value; }
+        }
+        public SiteConnectionColorType SiteConnectionColorType
+        {
+            get { return ChangedOptions.SiteConnectionColorType; }
+            set { ChangedOptions.SiteConnectionColorType = value; }
+        }
+
+        public Color YouTubeLiveBackColor
+        {
+            get { return ChangedOptions.YouTubeLiveBackColor; }
+            set { ChangedOptions.YouTubeLiveBackColor = value; }
+        }
+        public Color YouTubeLiveForeColor
+        {
+            get { return ChangedOptions.YouTubeLiveForeColor; }
+            set { ChangedOptions.YouTubeLiveForeColor = value; }
+        }
+        public Color OpenrecBackColor
+        {
+            get { return ChangedOptions.OpenrecBackColor; }
+            set { ChangedOptions.OpenrecBackColor = value; }
+        }
+        public Color OpenrecForeColor
+        {
+            get { return ChangedOptions.OpenrecForeColor; }
+            set { ChangedOptions.OpenrecForeColor = value; }
+        }
+        public Color TwitchBackColor
+        {
+            get { return ChangedOptions.TwitchBackColor; }
+            set { ChangedOptions.TwitchBackColor = value; }
+        }
+        public Color TwitchForeColor
+        {
+            get { return ChangedOptions.TwitchForeColor; }
+            set { ChangedOptions.TwitchForeColor = value; }
+        }
+        public Color NicoLiveBackColor
+        {
+            get { return ChangedOptions.NicoLiveBackColor; }
+            set { ChangedOptions.NicoLiveBackColor = value; }
+        }
+        public Color NicoLiveForeColor
+        {
+            get { return ChangedOptions.NicoLiveForeColor; }
+            set { ChangedOptions.NicoLiveForeColor = value; }
+        }
+        public Color TwicasBackColor
+        {
+            get { return ChangedOptions.TwicasBackColor; }
+            set { ChangedOptions.TwicasBackColor = value; }
+        }
+        public Color TwicasForeColor
+        {
+            get { return ChangedOptions.TwicasForeColor; }
+            set { ChangedOptions.TwicasForeColor = value; }
+        }
+        public Color LineLiveBackColor
+        {
+            get { return ChangedOptions.LineLiveBackColor; }
+            set { ChangedOptions.LineLiveBackColor = value; }
+        }
+        public Color LineLiveForeColor
+        {
+            get { return ChangedOptions.LineLiveForeColor; }
+            set { ChangedOptions.LineLiveForeColor = value; }
+        }
+
+        public Color WhowatchBackColor
+        {
+            get { return ChangedOptions.WhowatchBackColor; }
+            set { ChangedOptions.WhowatchBackColor = value; }
+        }
+        public Color WhowatchForeColor
+        {
+            get { return ChangedOptions.WhowatchForeColor; }
+            set { ChangedOptions.WhowatchForeColor = value; }
+        }
+
+        public Color MirrativBackColor
+        {
+            get { return ChangedOptions.MirrativBackColor; }
+            set { ChangedOptions.MirrativBackColor = value; }
+        }
+        public Color MirrativForeColor
+        {
+            get { return ChangedOptions.MirrativForeColor; }
+            set { ChangedOptions.MirrativForeColor = value; }
+        }
+
 
         public IOptions OriginOptions { get; private set; }
         public IOptions ChangedOptions { get; private set; }

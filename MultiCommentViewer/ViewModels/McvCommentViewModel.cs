@@ -13,6 +13,8 @@ namespace MultiCommentViewer
         private readonly WhowatchSitePlugin.IWhowatchMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
+        private readonly IOptions _options;
+
         private void SetNickname(IUser user)
         {
             if (!string.IsNullOrEmpty(user.Nickname))
@@ -24,12 +26,13 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private McvWhowatchCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
+        private McvWhowatchCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
             ConnectionName = connectionName;
+            _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -82,8 +85,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = comment;
 
@@ -93,8 +96,8 @@ namespace MultiCommentViewer
             Id = comment.Id.ToString();
             PostTime = comment.PostTime;
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             var comment = item;
             _message = comment;
@@ -112,14 +115,14 @@ namespace MultiCommentViewer
             PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
             Info = item.ItemCount == 1 ? item.ItemName : $"{item.ItemName} × {item.ItemCount}";
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
@@ -146,7 +149,20 @@ namespace MultiCommentViewer
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 
-        public SolidColorBrush Background => new SolidColorBrush(_metadata.BackColor);
+        public SolidColorBrush Background
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.WhowatchBackColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.BackColor);
+                }
+            }
+        }
 
         public ICommentProvider CommentProvider => _metadata.CommentProvider;
 
@@ -158,7 +174,20 @@ namespace MultiCommentViewer
 
         public FontWeight FontWeight => _metadata.FontWeight;
 
-        public SolidColorBrush Foreground => new SolidColorBrush(_metadata.ForeColor);
+        public SolidColorBrush Foreground
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.WhowatchForeColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.ForeColor);
+                }
+            }
+        }
 
         public string Id { get; private set; }
 
@@ -223,6 +252,8 @@ namespace MultiCommentViewer
         private readonly YouTubeLiveSitePlugin.IYouTubeLiveMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
+        private readonly IOptions _options;
+
         private void SetNickname(IUser user)
         {
             if (!string.IsNullOrEmpty(user.Nickname))
@@ -234,12 +265,13 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private McvYouTubeLiveCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
+        private McvYouTubeLiveCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
             ConnectionName = connectionName;
+            _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -292,8 +324,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = comment;
 
@@ -303,8 +335,8 @@ namespace MultiCommentViewer
             Id = comment.Id.ToString();
             PostTime = comment.PostTime;
         }
-        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             var comment = item;
             _message = comment;
@@ -315,14 +347,14 @@ namespace MultiCommentViewer
             Id = comment.Id.ToString();
             PostTime = comment.PostTime;
         }
-        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
@@ -349,7 +381,20 @@ namespace MultiCommentViewer
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 
-        public SolidColorBrush Background => new SolidColorBrush(_metadata.BackColor);
+        public SolidColorBrush Background
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.YouTubeLiveBackColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.BackColor);
+                }
+            }
+        }
 
         public ICommentProvider CommentProvider => _metadata.CommentProvider;
 
@@ -361,7 +406,20 @@ namespace MultiCommentViewer
 
         public FontWeight FontWeight => _metadata.FontWeight;
 
-        public SolidColorBrush Foreground => new SolidColorBrush(_metadata.ForeColor);
+        public SolidColorBrush Foreground
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.YouTubeLiveForeColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.ForeColor);
+                }
+            }
+        }
 
         public string Id { get; private set; }
 
@@ -426,6 +484,8 @@ namespace MultiCommentViewer
         private readonly MirrativSitePlugin.IMirrativMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
+        private readonly IOptions _options;
+
         private void SetNickname(IUser user)
         {
             if (!string.IsNullOrEmpty(user.Nickname))
@@ -437,12 +497,13 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private McvMirrativCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
+        private McvMirrativCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
             ConnectionName = connectionName;
+            _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -495,8 +556,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = comment;
 
@@ -507,8 +568,8 @@ namespace MultiCommentViewer
             //PostTime = UnixTimeStampToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
             PostTime = comment.PostTime;
         }
-        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativJoinRoom item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativJoinRoom item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             var comment = item;
             _message = comment;
@@ -519,8 +580,8 @@ namespace MultiCommentViewer
             Id = null;
             PostTime = comment.PostTime;
         }
-        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             var comment = item;
             _message = comment;
@@ -531,14 +592,14 @@ namespace MultiCommentViewer
             Id = null;
             PostTime = comment.PostTime;
         }
-        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
@@ -565,7 +626,20 @@ namespace MultiCommentViewer
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 
-        public SolidColorBrush Background => new SolidColorBrush(_metadata.BackColor);
+        public SolidColorBrush Background
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.MirrativBackColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.BackColor);
+                }
+            }
+        }
 
         public ICommentProvider CommentProvider => _metadata.CommentProvider;
 
@@ -577,7 +651,20 @@ namespace MultiCommentViewer
 
         public FontWeight FontWeight => _metadata.FontWeight;
 
-        public SolidColorBrush Foreground => new SolidColorBrush(_metadata.ForeColor);
+        public SolidColorBrush Foreground
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.MirrativForeColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.ForeColor);
+                }
+            }
+        }
 
         public string Id { get; private set; }
 

@@ -14,6 +14,8 @@ namespace MultiCommentViewer
         private readonly NicoSitePlugin.INicoMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
+        private readonly IOptions _options;
+
         private void SetNickname(IUser user)
         {
             if (!string.IsNullOrEmpty(user.Nickname))
@@ -25,12 +27,13 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private NicoCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
+        private NicoCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
             ConnectionName = connectionName;
+            _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -83,8 +86,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public NicoCommentViewModel(NicoSitePlugin.INicoComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public NicoCommentViewModel(NicoSitePlugin.INicoComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = comment;
 
@@ -112,14 +115,14 @@ namespace MultiCommentViewer
         //    Id = comment.Id.ToString();
         //    PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
         //}
-        public NicoCommentViewModel(NicoSitePlugin.INicoConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public NicoCommentViewModel(NicoSitePlugin.INicoConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public NicoCommentViewModel(NicoSitePlugin.INicoDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-            : this(metadata, methods, connectionName)
+        public NicoCommentViewModel(NicoSitePlugin.INicoDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+            : this(metadata, methods, connectionName, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
@@ -146,7 +149,20 @@ namespace MultiCommentViewer
 
         public IEnumerable<IMessagePart> MessageItems { get; private set; }
 
-        public SolidColorBrush Background => new SolidColorBrush(_metadata.BackColor);
+        public SolidColorBrush Background
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.NicoLiveBackColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.BackColor);
+                }
+            }
+        }
 
         public ICommentProvider CommentProvider => _metadata.CommentProvider;
 
@@ -158,7 +174,20 @@ namespace MultiCommentViewer
 
         public FontWeight FontWeight => _metadata.FontWeight;
 
-        public SolidColorBrush Foreground => new SolidColorBrush(_metadata.ForeColor);
+        public SolidColorBrush Foreground
+        {
+            get
+            {
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
+                {
+                    return new SolidColorBrush(_options.NicoLiveForeColor);
+                }
+                else
+                {
+                    return new SolidColorBrush(_metadata.BackColor);
+                }
+            }
+        }
 
         public string Id { get; private set; }
 

@@ -7,12 +7,12 @@
              xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
              mc:Ignorable="d"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-             d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}" 
-             d:DesignHeight="700" d:DesignWidth="500"
+             d:DataContext="{d:DesignInstance local:MainOptionsViewModel, IsDesignTimeCreatable=True}" d:DesignWidth="500" d:DesignHeight="700"
              >
     <UserControl.Resources>
         <w:NotConverter x:Key="notConverter" />
         <local:FontFamilyToFontFamilyViewModelConverter x:Key="fontFamilyViewModelConverter" />
+        <local:SiteConnectionColorTypeConverter x:Key="SiteConnectionColorTypeConverter" />
     </UserControl.Resources>
     <ScrollViewer>
         <Grid>
@@ -68,6 +68,75 @@
             <ComboBox ItemsSource="{Binding FontFamillyCollection}" DisplayMemberPath="Text" SelectedValue="{Binding FontFamily, Mode=TwoWay}" Margin="73,210,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="122" />
             <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" Margin="228,210,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="89" />
             <CheckBox IsChecked="{Binding IsBold}" Content="太字" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="345,210,0,0" />
+
+            <GroupBox Height="395" Margin="5,485,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" >
+                <GroupBox.Header>
+                    <CheckBox x:Name="SiteConnectionColorCheck" IsChecked="{Binding IsEnabledSiteConnectionColor}" Content="サイト毎または接続毎に色を付ける" />
+                </GroupBox.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <RadioButton IsEnabled="{Binding IsChecked, ElementName=SiteConnectionColorCheck}" IsChecked="{Binding SiteConnectionColorType, Converter={StaticResource SiteConnectionColorTypeConverter}, Mode=TwoWay, ConverterParameter=Site}" GroupName="ColorType" Content="配信サイト毎" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" VerticalAlignment="Center" />
+                    <ScrollViewer IsEnabled="{Binding IsChecked, ElementName=SiteConnectionColorCheck}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Width="Auto" Height="100" Margin="0,0,0,1" >
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="1" Content="背景色" HorizontalAlignment="Center" FontWeight="Bold" />
+                            <Label Grid.Row="0" Grid.Column="2" Content="文字色" HorizontalAlignment="Center" FontWeight="Bold" />
+                            <Label Grid.Row="1" Grid.Column="0" Content="YouTubeLive" />
+                            <xctk:ColorPicker Grid.Row="1" Grid.Column="1" SelectedColor="{Binding YouTubeLiveBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="1" Grid.Column="2" SelectedColor="{Binding YouTubeLiveForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="2" Grid.Column="0" Content="OPENREC" />
+                            <xctk:ColorPicker Grid.Row="2" Grid.Column="1" SelectedColor="{Binding OpenrecBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="2" Grid.Column="2" SelectedColor="{Binding OpenrecForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="3" Grid.Column="0" Content="Twitch" />
+                            <xctk:ColorPicker Grid.Row="3" Grid.Column="1" SelectedColor="{Binding TwitchBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="3" Grid.Column="2" SelectedColor="{Binding TwitchForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="4" Grid.Column="0" Content="ニコ生" />
+                            <xctk:ColorPicker Grid.Row="4" Grid.Column="1" SelectedColor="{Binding NicoLiveBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="4" Grid.Column="2" SelectedColor="{Binding NicoLiveForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="5" Grid.Column="0" Content="ツイキャス" />
+                            <xctk:ColorPicker Grid.Row="5" Grid.Column="1" SelectedColor="{Binding TwicasBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="5" Grid.Column="2" SelectedColor="{Binding TwicasForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="6" Grid.Column="0" Content="LINELIVE" />
+                            <xctk:ColorPicker Grid.Row="6" Grid.Column="1" SelectedColor="{Binding LineLiveBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="6" Grid.Column="2" SelectedColor="{Binding LineLiveForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="7" Grid.Column="0" Content="ふわっち" />
+                            <xctk:ColorPicker Grid.Row="7" Grid.Column="1" SelectedColor="{Binding WhowatchBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="7" Grid.Column="2" SelectedColor="{Binding WhowatchForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="8" Grid.Column="0" Content="Mirrativ" />
+                            <xctk:ColorPicker Grid.Row="8" Grid.Column="1" SelectedColor="{Binding MirrativBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="8" Grid.Column="2" SelectedColor="{Binding MirrativForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                        </Grid>
+                    </ScrollViewer>
+                    <RadioButton IsEnabled="{Binding IsChecked, ElementName=SiteConnectionColorCheck}" IsChecked="{Binding SiteConnectionColorType, Converter={StaticResource SiteConnectionColorTypeConverter}, Mode=TwoWay, ConverterParameter=Connection}" GroupName="ColorType" Content="接続毎" Grid.Row="3" VerticalAlignment="Center" />
+                </Grid>
+            </GroupBox>
         </Grid>
     </ScrollViewer>
 </UserControl>

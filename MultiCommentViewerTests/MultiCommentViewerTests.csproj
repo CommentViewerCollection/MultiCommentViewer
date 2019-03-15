@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="CommentViewModelSiteColorTest.cs" />
     <Compile Include="ConnectionSerializerTests.cs" />
     <Compile Include="ConnectionViewModelTests.cs" />
     <Compile Include="DynamicOptionsTest.cs" />
@@ -81,6 +82,14 @@
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj">
+      <Project>{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}</Project>
+      <Name>LineLiveIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
+      <Project>{D2C2C0AF-3A29-45F7-B653-CF20AACAA051}</Project>
+      <Name>MirrativIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
       <Project>{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}</Project>
       <Name>NicoLiveIF</Name>
@@ -88,6 +97,22 @@
     <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj">
       <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
       <Name>NicoSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
+      <Project>{02A55625-E735-4909-A470-E8405EEE1A32}</Project>
+      <Name>OpenrecIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
+      <Project>{AA70074D-1C40-4CC0-9E1C-7ACDCBDD7D32}</Project>
+      <Name>TwitchIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
+      <Project>{5A83AFC8-E6CE-4DD2-8389-1F43A731388F}</Project>
+      <Name>WhowatchIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj">
+      <Project>{83974E62-4D55-4E67-8F88-BBFF2222E5A1}</Project>
+      <Name>YouTubeLiveIF</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

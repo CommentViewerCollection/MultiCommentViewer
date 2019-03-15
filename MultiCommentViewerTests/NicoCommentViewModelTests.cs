@@ -27,6 +27,8 @@ namespace MultiCommentViewerTests
             var server = serverMock.Object;
             var loggerMock = new Mock<ILogger>();
             var logger = loggerMock.Object;
+            var optionsMock = new Mock<IOptions>();
+            var options = optionsMock.Object;
 
             var metadataMock = new Mock<IMessageMetadata>();
             metadataMock.Setup(m => m.User).Returns(user);
@@ -38,12 +40,12 @@ namespace MultiCommentViewerTests
 
             var chat1 = new Chat("<chat thread=\"1645724171\" no=\"4\" vpos=\"180000\" date=\"1550890471\" date_usec=\"549074\" mail=\"184\" user_id=\"G-lRat9seQmpK-gcgcQXSFxr14c\" premium=\"1\" anonymity=\"1\" locale=\"ja-jp\">message1</chat>");
             var comment1 = await Tools.CreateNicoCommentAsync(chat1, "", user, server, true, "", logger);
-            var cvm1 = new NicoCommentViewModel(comment1, metadata, methods, connectionName);
+            var cvm1 = new NicoCommentViewModel(comment1, metadata, methods, connectionName, options);
             Assert.IsNull(cvm1.NameItems);
 
             var chat2 = new Chat("<chat thread=\"1645724171\" no=\"4\" vpos=\"180000\" date=\"1550890471\" date_usec=\"549074\" mail=\"184\" user_id=\"G-lRat9seQmpK-gcgcQXSFxr14c\" premium=\"1\" anonymity=\"1\" locale=\"ja-jp\">message2@newnick</chat>");
             var comment2 = await Tools.CreateNicoCommentAsync(chat2, "", user, server, true, "", logger);
-            var cvm2 = new NicoCommentViewModel(comment2, metadata, methods, connectionName);
+            var cvm2 = new NicoCommentViewModel(comment2, metadata, methods, connectionName, options);
             Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("newnick") }, cvm1.NameItems);
             Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("newnick") }, cvm2.NameItems);
         }

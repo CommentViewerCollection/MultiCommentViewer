@@ -121,16 +121,9 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
         public event EventHandler LoggedInStateChanged;
-        private bool _isLoggedIn;
         public bool IsLoggedIn
         {
-            get { return _isLoggedIn; }
-            set
-            {
-                if (_isLoggedIn == value) return;
-                _isLoggedIn = value;
-                LoggedInStateChanged?.Invoke(this, EventArgs.Empty);
-            }
+            get { return _connection != null ? _connection.IsLoggedIn : false; }
         }
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<ICommentViewModel> CommentReceived;
@@ -176,6 +169,7 @@ namespace YouTubeLiveSitePlugin.Test2
             //_chatProvider = null;
             CanConnect = true;
             CanDisconnect = false;
+            _connection = null;
             SendInfo("切断しました", InfoType.Error);
         }
 
@@ -275,6 +269,7 @@ namespace YouTubeLiveSitePlugin.Test2
             };
             _connection.MessageReceived += (s, e) => MessageReceived?.Invoke(s, e);
             _connection.MetadataUpdated += (s, e) => MetadataUpdated?.Invoke(s, e);
+            _connection.LoggedInStateChanged += (s, e) => LoggedInStateChanged(s, e);
             var reloadManager = new ReloadManager()
             {
                 CountLimit = 5,

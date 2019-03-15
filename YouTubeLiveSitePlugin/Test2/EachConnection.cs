@@ -268,7 +268,18 @@ namespace YouTubeLiveSitePlugin.Test2
             return liveChatHtml;
         }
 
-        public bool IsLoggedIn { get; private set; }
+        public event EventHandler LoggedInStateChanged;
+        private bool _isLoggedIn;
+        public bool IsLoggedIn
+        {
+            get { return _isLoggedIn; }
+            set
+            {
+                if (_isLoggedIn == value) return;
+                _isLoggedIn = value;
+                LoggedInStateChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
         bool CanPostComment => PostCommentContext != null;
         protected virtual PostCommentContext PostCommentContext { get; set; }
         int _commentPostCount;

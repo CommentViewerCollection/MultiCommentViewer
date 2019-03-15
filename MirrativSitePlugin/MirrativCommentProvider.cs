@@ -327,6 +327,49 @@ namespace MirrativSitePlugin
                 }
                 return new MirrativMessageContext(comment, metadata, methods);
             }
+            else if (message is IMirrativJoinRoom join)
+            {
+                var userId = join.UserId;
+                var isFirst = false;
+                var user = GetUser(userId);
+                //var comment = new MirrativComment(message, raw);
+                var metadata = new MirrativMessageMetadata(join, _options, _siteOptions, user, this, isFirst)
+                {
+                    IsInitialComment = false,
+                };
+                var methods = new MirrativMessageMethods();
+                return new MirrativMessageContext(join, metadata, methods);
+            }
+            else if (message is IMirrativItem item)
+            {
+                var userId = item.UserId;
+                var isFirst = false;
+                var user = GetUser(userId);
+                var metadata = new MirrativMessageMetadata(item, _options, _siteOptions, user, this, isFirst)
+                {
+                    IsInitialComment = false,
+                };
+                var methods = new MirrativMessageMethods();
+                return new MirrativMessageContext(item, metadata, methods);
+            }
+            else if (message is IMirrativConnected connected)
+            {
+                var metadata = new MirrativMessageMetadata(connected, _options, _siteOptions, null, this, false)
+                {
+                    IsInitialComment = false,
+                };
+                var methods = new MirrativMessageMethods();
+                return new MirrativMessageContext(connected, metadata, methods);
+            }
+            else if (message is IMirrativDisconnected disconnected)
+            {
+                var metadata = new MirrativMessageMetadata(disconnected, _options, _siteOptions, null, this, false)
+                {
+                    IsInitialComment = false,
+                };
+                var methods = new MirrativMessageMethods();
+                return new MirrativMessageContext(disconnected, metadata, methods);
+            }
             else
             {
                 return null;

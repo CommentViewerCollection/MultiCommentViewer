@@ -30,6 +30,10 @@ namespace MirrativSitePlugin
             }
             return isFirstComment;
         }
+        public void Reset()
+        {
+            _userCommentCountDict = new Dictionary<string, int>();
+        }
     }
     class MetadataProvider
     {
@@ -139,7 +143,7 @@ namespace MirrativSitePlugin
                 CurrentViewers = liveInfo.OnlineUserNum.ToString(),
             };
         }
-        FirstCommentDetector _first;
+        FirstCommentDetector _first = new FirstCommentDetector();
         /// <summary>
         /// ユーザが何をinputに入力したか
         /// </summary>
@@ -179,7 +183,7 @@ namespace MirrativSitePlugin
             {
                 while (true)
                 {
-                    _first = new FirstCommentDetector();
+                    _first.Reset();
                     string liveId;
                     if (Tools.IsValidUserId(input))
                     {
@@ -521,9 +525,9 @@ namespace MirrativSitePlugin
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
-        private readonly MirrativSiteOptions _siteOptions;
+        private readonly IMirrativSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
-        public MirrativCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, MirrativSiteOptions siteOptions, IUserStore userStore)
+        public MirrativCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IMirrativSiteOptions siteOptions, IUserStore userStore)
         {
             _server = server;
             _logger = logger;

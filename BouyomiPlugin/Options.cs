@@ -36,6 +36,7 @@ namespace BouyomiPlugin
         public bool IsMirrativComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMirrativCommentNickname { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMirrativJoinRoom { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMirrativItem { get { return GetValue(); } set { SetValue(value); } }
 
         protected override void Init()
         {
@@ -68,6 +69,7 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsMirrativComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMirrativCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMirrativJoinRoom), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMirrativItem), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
         }
     }

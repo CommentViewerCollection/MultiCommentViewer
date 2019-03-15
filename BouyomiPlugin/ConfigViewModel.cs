@@ -195,6 +195,14 @@ namespace BouyomiPlugin
             get => _options.IsMirrativJoinRoom;
             set => _options.IsMirrativJoinRoom = value;
         }
+        /// <summary>
+        /// Mirrativのアイテムを読み上げるか
+        /// </summary>
+        public bool IsMirrativItem
+        {
+            get => _options.IsMirrativItem;
+            set => _options.IsMirrativItem = value;
+        }
         #endregion //Mirrativ
 
         public ICommand ShowFilePickerCommand { get; }

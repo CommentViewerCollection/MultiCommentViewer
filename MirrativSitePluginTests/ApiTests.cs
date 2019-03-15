@@ -38,13 +38,13 @@ namespace MirrativSitePluginTests
         [Test]
         public async Task GetLiveInfoTest()
         {
-            var liveId = "";
+            var liveId = "abc";
             var url = "https://www.mirrativ.com/api/live/live?live_id=" + liveId;
             var data = Tools.GetSampleData("LiveInfo.txt");
             var serverMock = new Mock<IDataServer>();
             serverMock.Setup(s => s.GetAsync(url, It.IsAny<Dictionary<string, string>>())).Returns(Task.FromResult(data));
             var server = serverMock.Object;
-            var ret = await Api.GetLiveInfo(server, "");
+            var ret = await Api.GetLiveInfo(server, liveId);
             Assert.AreEqual("PUBG全力参加待ち(*´ー｀*)初見さんつかまえる #ハロウィンガチャ", ret.Title);
             Assert.AreEqual("118f91f:UdoBre1M", ret.Broadcastkey);
         }

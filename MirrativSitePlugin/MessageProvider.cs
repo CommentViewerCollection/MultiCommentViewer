@@ -91,8 +91,9 @@ namespace MirrativSitePlugin
                 //SendSystemInfo(ex.Message, InfoType.Error);
             }
         }
-        private void OnMessageReceived(string data)
+        internal static IMirrativMessage ParseMessage(string data, Action<string,InfoType> SendInfo)
         {
+            IMirrativMessage mirrativMessage;
             var json = Codeplex.Data.DynamicJson.Parse(data);
             if (json.IsDefined("t"))
             {
@@ -103,7 +104,7 @@ namespace MirrativSitePlugin
                         {
                             Message message = Tools.ParseType1Data(json);
                             var comment = new MirrativComment(message, data);
-                            MessageReceived?.Invoke(this, comment);
+                            mirrativMessage = comment;
                         }
                         break;
                     case 3://入室メッセージ
@@ -142,12 +143,12 @@ namespace MirrativSitePlugin
                                 };
                                 SetLinkedLiveOwnerName(message, json);
                                 var joinRoom = new MirrativJoinRoom(message, data);
-                                MessageReceived?.Invoke(this, joinRoom);
+                                mirrativMessage = joinRoom;
 
-                                MetadataUpdated?.Invoke(this, new Metadata
-                                {
-                                    CurrentViewers = (json["online_viewer_num"]).ToString(),
-                                });
+                                //MetadataUpdated?.Invoke(this, new Metadata
+                                //{
+                                //    CurrentViewers = (json["online_viewer_num"]).ToString(),
+                                //});
                             }
                             catch (Exception ex)
                             {
@@ -158,37 +159,66 @@ namespace MirrativSitePlugin
                     case 7:
                         Debug.WriteLine(data);
                         SendInfo(data, InfoType.Debug);
+                        mirrativMessage = null;
                         break;
                     case 8:
                         {
                             var message = new MirrativDisconnected(data);
-                            MessageReceived?.Invoke(this, message);
+                            mirrativMessage = message;
                         }
                         break;
                     case 35:
                         {
-                            var message = new Message
+                            //{"gift_title":"かわいいエモモスナップ(300)","photo_gift_id":"9162721","burl":"","coins":"300","gift_small_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/assets\/img\/gift\/small_64.png?v=5","u":"4353835","nameplate_enabled":"1","t":35,"avatar_user_ids":"4072373,4383477,6221780,4353835,2921078,664329","count":1,"is_photo_gift":1,"ac":"matsu【\ud83c\udfa8定期組】\ud83c\udf77\ud83c\udccf\ud83d\udc9c ","total_gift_coins":"25972","iurl":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/image\/profile_image\/5b4ceb7de739f19491efe17165c7fa2f8c065170ef2b0c1ff039e96c48c6125e_m.jpeg?1552123860","gift_id":"64","pause_duration":"0","orientations":"0","gift_large_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/assets\/img\/gift\/large_64.png?v=5","photo_gift_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/image\/photo_gift:1552124210:4353835:26477211\/5b4ceb7de739f19491efe17165c7fa2f8c065170ef2b0c1ff039e96c48c6125e_origin.png?1552124211","share_text":"@KURORO966_Blackさん,@akatukihawk3さん,@usausa_otomeさん,@0609_spitzさん,@uru_umiさん,カルルンバ\ud83c\udfa8さんとの  #エモモスナップ！ #エモモ #ミラティブ"}
+                            //{"count":"8","gift_title":"小さな星","total_gift_coins":"26306","ac":"\ud83d\udc3e真顔ちゃん'-'\ud83c\udf4a\ud83c\udf4c\ud83d\udd4a\ud83d\udc36\ud83c\udf31\ud83c\udf75","burl":"","iurl":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/image\/profile_image\/fa3a29a81ece745badebc1fee44071997da131414ee7d53e2bb5228f2adf23cd_m.jpeg?1551797451","coins":"1","gift_small_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/assets\/img\/gift\/small_1.png?v=2","u":"5101297","gift_id":"1","nameplate_enabled":"1","pause_duration":"0","gift_large_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/assets\/img\/gift\/large_1.png?v=2","t":35}
+
+                            if (json.IsDefined("photo_gift_id"))
                             {
-                                Type = MessageType.BroadcastInfo,
-                                UserId = json["u"],
-                                Username = json["ac"],
-                            };
-                            var itemCount = int.Parse(json["count"]);
-                            if (itemCount == 1)
-                            {
-                                message.Comment = json["ac"] + "が" + json["gift_title"] + "を贈りました";
+                                var message = new Message
+                                {
+                                    Type = MessageType.BroadcastInfo,
+                                    UserId = json["u"],
+                                    Username = json["ac"],
+                                    Comment = json["share_text"],
+                                };
+                                var item = new MirrativPhotoGift(message, data)
+                                {
+                                    GiftTitle = json["gift_title"],
+                                    Coins = int.Parse(json["coins"]),
+                                   ShareText=json["share_text"],
+                                };
+                                mirrativMessage = item;
                             }
                             else
                             {
-                                message.Comment = json["ac"] + "が" + json["gift_title"] + $"を{itemCount}個贈りました";
+                                var message = new Message
+                                {
+                                    Type = MessageType.BroadcastInfo,
+                                    UserId = json["u"],
+                                    Username = json["ac"],
+                                };
+                                var itemCount = int.Parse(json["count"]);
+                                if (itemCount == 1)
+                                {
+                                    message.Comment = json["ac"] + "が" + json["gift_title"] + "を贈りました";
+                                }
+                                else
+                                {
+                                    message.Comment = json["ac"] + "が" + json["gift_title"] + $"を{itemCount}個贈りました";
+                                }
+                                var item = new MirrativGift(message, data)
+                                {
+                                    Count = itemCount,
+                                };
+                                mirrativMessage = item;
                             }
-                            var item = new MirrativItem(message, data);
-                            MessageReceived?.Invoke(this, item);
                         }
                         break;
                     case 34:
+                        mirrativMessage = null;
                         break;
                     case 38:
+                        mirrativMessage = null;
                         break;
                     default:
                         //{"u":"1895964","ac":"キザシ","burl":"","iurl":"https://cdn.mirrativ.com/mirrorman-prod/image/profile_image/bdbf7a85cf950b9fb058e58f0d476d90674843ef6b4952d95db0010e64e26c35_m.jpeg?1551359805","owner_name":"トオるん@火星人(本物)","target_live_id":"bT6KzStu8H0B5-dYa7la4A","t":9}
@@ -205,13 +235,29 @@ namespace MirrativSitePlugin
                 SendInfo(data, InfoType.Debug);
                 throw new ParseException(data);
             }
+            return mirrativMessage;
+        }
+        private void OnMessageReceived(string data)
+        {
+            var message = ParseMessage(data, SendInfo);
+            if(message != null)
+            {
+                MessageReceived?.Invoke(this, message);
+            }
+            if(message is IMirrativItem item)
+            {
+                //MetadataUpdated?.Invoke(this, new Metadata
+                //{
+                //    CurrentViewers = (json["online_viewer_num"]).ToString(),
+                //});
+            }
         }
 
         private void SendInfo(string data, InfoType debug)
         {
         }
 
-        private void SetLinkedLiveOwnerName(Message message, dynamic json)
+        private static void SetLinkedLiveOwnerName(Message message, dynamic json)
         {
             if (json.IsDefined("linked_live_owner_name"))
             {

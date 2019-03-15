@@ -537,7 +537,11 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new McvMirrativCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
-                else if (mirrativMessage is MirrativSitePlugin.IMirrativJoinRoom item)
+                else if (mirrativMessage is MirrativSitePlugin.IMirrativJoinRoom join)
+                {
+                    mcvCvm = new McvMirrativCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (mirrativMessage is MirrativSitePlugin.IMirrativItem item)
                 {
                     mcvCvm = new McvMirrativCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
                 }

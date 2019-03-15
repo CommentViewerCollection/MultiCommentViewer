@@ -29,10 +29,10 @@ namespace MirrativSitePlugin
                 {
                     return _options.BroadcastInfoBackColor;
                 }
-                //if (_message is IMirrativSuperchat item)
-                //{
-                //    return _siteOptions.PaidCommentBackColor;
-                //}
+                else if (_message is IMirrativItem item)
+                {
+                    return _siteOptions.ItemBackColor;
+                }
                 else
                 {
                     return _options.BackColor;
@@ -56,10 +56,10 @@ namespace MirrativSitePlugin
                 {
                     return _options.BroadcastInfoForeColor;
                 }
-                //if (_message is IMirrativSuperchat item)
-                //{
-                //    return _siteOptions.PaidCommentForeColor;
-                //}
+                else if (_message is IMirrativItem item)
+                {
+                    return _siteOptions.ItemForeColor;
+                }
                 else
                 {
                     return _options.ForeColor;

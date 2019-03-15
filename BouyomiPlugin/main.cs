@@ -255,6 +255,13 @@ namespace BouyomiPlugin
                             comment = (mirrativMessage as IMirrativJoinRoom).CommentItems.ToText();
                         }
                         break;
+                    case MirrativMessageType.Item:
+                        if (_options.IsMirrativItem)
+                        {
+                            name = null;
+                            comment = (mirrativMessage as IMirrativItem).CommentItems.ToText();
+                        }
+                        break;
                 }
             }
             else

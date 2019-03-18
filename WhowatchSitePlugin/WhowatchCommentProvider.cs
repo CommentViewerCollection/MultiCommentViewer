@@ -362,11 +362,11 @@ namespace WhowatchSitePlugin
             BeforeConnect();
             try
             {
-                var cc = CreateCookieContainer(browserProfile);
+                _cc = CreateCookieContainer(browserProfile);
                 var itemDict = await GetPlayItemsAsync();
                 MessageParser.Resolver = new ItemNameResolver(itemDict);
 
-                _me = await Api.GetMeAsync(_server, cc);
+                _me = await Api.GetMeAsync(_server, _cc);
 
                 long live_id = -1;
                 var liveIdTest = Tools.ExtractLiveIdFromInput(input);
@@ -393,7 +393,7 @@ namespace WhowatchSitePlugin
                 System.Diagnostics.Debug.Assert(live_id != -1);
 
                 var lastUpdatedAt = 0;
-                var liveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, cc);
+                var liveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);
                 if (liveData.Live.LiveStatus != PUBLISHING)
                 {
                     SendSystemInfo("LiveStatus: " + liveData.Live.LiveStatus, InfoType.Debug);

@@ -89,9 +89,10 @@ namespace WhowatchSitePlugin
         }
         public static async Task<Low.Profile.RootObject> GetProfileAsync(IDataServer server, string userPath, CookieContainer cc)
         {
-            //https://api.whowatch.tv/users/4697334/profile
+            //https://api.whowatch.tv/users/t:shinya_yuunari/profile
             var url = "https://api.whowatch.tv/users/" + userPath + "/profile";
             var res = await server.GetAsync(url, cc);
+            //{"error_code":"U-002","error_message":"該当するユーザーが見つかりません。(U-002)"}
             var obj = Tools.Deserialize<Low.Profile.RootObject>(res);
             return obj;
         }

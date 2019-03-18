@@ -286,13 +286,23 @@ namespace YouTubeLiveSitePlugin.Test2
 
             try
             {
-                await _connection.ReceiveAsync(vid, browserProfile.Type);
-            }
-            catch (ReloadException ex)
-            {
-                _logger.LogException(ex, "", $"input={input}");
-                SendInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Error);
-                goto reload;
+                var disconnectReason = await _connection.ReceiveAsync(vid, browserProfile.Type);
+                switch (disconnectReason)
+                {
+                    case DisconnectReason.Reload:
+                        SendInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Error);
+                        goto reload;
+                    case DisconnectReason.ByUser:
+                    case DisconnectReason.Finished:
+                        //TODO:SendInfo()
+                        break;
+                    case DisconnectReason.ChatUnavailable:
+                        //TODO:SendInfo()
+                        break;
+                    case DisconnectReason.YtInitialDataNotFound:
+                        //TODO:SendInfo()
+                        break;
+                }
             }
             catch(Exception ex)
             {

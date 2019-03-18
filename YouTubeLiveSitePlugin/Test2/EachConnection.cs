@@ -13,6 +13,36 @@ using System.Diagnostics;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
+    /// <summary>
+    /// 接続が切れた理由
+    /// </summary>
+    enum DisconnectReason
+    {
+        /// <summary>
+        /// 原因不明
+        /// </summary>
+        Unknown,
+        /// <summary>
+        /// 配信終了
+        /// </summary>
+        Finished,
+        /// <summary>
+        /// ユーザによる切断
+        /// </summary>
+        ByUser,
+        /// <summary>
+        /// リロードが必要
+        /// </summary>
+        Reload,
+        /// <summary>
+        /// チャットが無効
+        /// </summary>
+        ChatUnavailable,
+        /// <summary>
+        /// YtInitialDataが無かった
+        /// </summary>
+        YtInitialDataNotFound,
+    }
     class EachConnection
     {
         private readonly ILogger _logger;
@@ -25,6 +55,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly ICommentProvider _cp;
         private readonly IUserStore _userStore;
         ChatProvider _chatProvider;
+        DisconnectReason _disconnectReason;
 
         public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
@@ -33,16 +64,16 @@ namespace YouTubeLiveSitePlugin.Test2
         /// 
         /// </summary>
         /// <returns></returns>
-        /// <exception cref="ReloadException"></exception>
-        public async Task ReceiveAsync(string vid, BrowserType browserType)
+        public async Task<DisconnectReason> ReceiveAsync(string vid, BrowserType browserType)
         {
+            _disconnectReason = DisconnectReason.Unknown;
             string liveChatHtml = await GetLiveChatHtml(vid);
             string ytInitialData = ExtractYtInitialData(liveChatHtml);
             if (string.IsNullOrEmpty(ytInitialData))
             {
                 //これが無いとコメントが取れないから終了
-                SendInfo("ytInitialDataの取得に失敗しました", InfoType.Error);
-                return;
+                //SendInfo("ytInitialDataの取得に失敗しました", InfoType.Error);
+                return DisconnectReason.YtInitialDataNotFound;
             }
             IContinuation initialContinuation;
             List<CommentData> initialCommentData;
@@ -53,24 +84,17 @@ namespace YouTubeLiveSitePlugin.Test2
             catch (ContinuationNotExistsException)
             {
                 //放送終了
-                return;
-            }
-            catch (ParseException ex)
-            {
-                _logger.LogException(ex, "", $"ytInitialData={ytInitialData},vid={vid}");
-                SendInfo("ytInitialDataの解析に失敗しました", InfoType.Error);
-                return;
+                return DisconnectReason.Finished;
             }
             catch (ChatUnavailableException)
             {
-                SendInfo("この配信ではチャットが無効になっているようです", InfoType.Error);
-                return;
+                //SendInfo("この配信ではチャットが無効になっているようです", InfoType.Error);
+                return DisconnectReason.ChatUnavailable;
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex, "未知の例外", $"ytInitialData={ytInitialData},vid={vid}");
-                SendInfo("ytInitialDataの解析に失敗しました", InfoType.Error);
-                return;
+                return DisconnectReason.Unknown;
             }
 
             Connected?.Invoke(this, EventArgs.Empty);
@@ -144,6 +168,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var chatTask = _chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
             tasks.Add(chatTask);
 
+            _disconnectReason = DisconnectReason.Finished;
             while (tasks.Count > 0)
             {
                 var t = await Task.WhenAny(tasks);
@@ -182,17 +207,15 @@ namespace YouTubeLiveSitePlugin.Test2
                     {
                         await chatTask;
                     }
-                    catch (ReloadException)
+                    catch (ReloadException ex)
                     {
-                        throw;
-                    }
-                    catch (ChatUnavailableException)
-                    {
-                        SendInfo("放送が終了しているかチャットが無効な放送です", InfoType.Error);
+                        _logger.LogException(ex, "", $"vid={vid}");
+                        _disconnectReason = DisconnectReason.Reload;
                     }
                     catch (Exception ex)
                     {
                         _logger.LogException(ex);
+                        _disconnectReason = DisconnectReason.Unknown;
                     }
                     _chatProvider = null;
 
@@ -222,11 +245,13 @@ namespace YouTubeLiveSitePlugin.Test2
                     activeCounter = null;
                 }
             }
+            return _disconnectReason;
         }
 
         public void Disconnect()
         {
             _chatProvider?.Disconnect();
+            _disconnectReason = DisconnectReason.ByUser;
         }
 
         private string ExtractYtInitialData(string liveChatHtml)

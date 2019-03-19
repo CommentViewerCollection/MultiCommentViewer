@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net;
 using Newtonsoft.Json;
 using System.Net.Http;
+using SitePluginCommon;
 
 namespace TwitchSitePlugin
 {
@@ -181,40 +182,26 @@ namespace TwitchSitePlugin
         Task<string> GetAsync(string url, Dictionary<string, string> headers);
         Task<string> GetAsync(string url, Dictionary<string, string> headers, CookieContainer cc);
     }
-    public class TwitchServer : IDataServer
+    public class TwitchServer : ServerBase, IDataServer
     {
-        public async Task<string> GetAsync(string url, Dictionary<string, string> headers)
+        public Task<string> GetAsync(string url, Dictionary<string, string> headers)
         {
-            using (var client = new HttpClient())
-            {
-                foreach (var kv in headers)
-                {
-                    client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
-                }
-                var result = await client.GetStringAsync(url);
-                return result;
-            }
+            return GetAsync(url, headers, null);
         }
         public async Task<string> GetAsync(string url, Dictionary<string, string> headers, CookieContainer cc)
         {
-            using (var handler = new HttpClientHandler { UseCookies = true, CookieContainer = cc })
-            using (var client = new HttpClient(handler))
+            var result = await GetInternalAsync(new HttpOptions
             {
-                foreach (var kv in headers)
-                {
-                    client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
-                }
-                var result = await client.GetStringAsync(url);
-                return result;
-            }
+                Url = url,
+                Cc = cc,
+                Headers = headers,
+            });
+            var str = await result.Content.ReadAsStringAsync();
+            return str;
         }
-        public async Task<string> GetAsync(string url)
+        public Task<string> GetAsync(string url)
         {
-            using (var client = new HttpClient())
-            {
-                var result = await client.GetStringAsync(url);
-                return result;
-            }
+            return GetAsync(url, null);
         }
         public async Task<string> PostAsync(string url, Dictionary<string, string> data, CookieContainer cc)
         {

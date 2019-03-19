@@ -11,6 +11,7 @@ using Common;
 using System.Threading;
 using System.Diagnostics;
 using System.Net.Http;
+using SitePluginCommon;
 
 namespace YouTubeLiveSitePlugin.Test2
 {

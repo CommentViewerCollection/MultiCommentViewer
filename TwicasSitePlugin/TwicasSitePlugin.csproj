@@ -84,6 +84,10 @@
       <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
+      <Name>SitePluginCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Page Include="CommentPostPanel.xaml">

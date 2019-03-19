@@ -45,6 +45,7 @@
     <Compile Include="IActiveCounter.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServerBase.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -15,6 +15,7 @@ using System.Web;
 using System.Net.Http;
 using ryu_s.BrowserCookie;
 using YouTubeLiveSitePlugin;
+using SitePluginCommon;
 
 namespace YouTubeLiveSitePluginTests
 {

@@ -19,6 +19,7 @@ using Common;
 using System.Windows.Data;
 using System.Text.RegularExpressions;
 using CommentViewerCommon;
+using SitePluginCommon;
 
 namespace MultiCommentViewer
 {
@@ -276,8 +277,14 @@ namespace MultiCommentViewer
         }
         private void SetSystemInfo(string message, InfoType type)
         {
-            var info = new SystemInfoCommentViewModel(_options, message, type);
-            //AddComment(info, )
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Unknown,
+                Type = type,
+            }, _options);
+            AddComment(context, null);
         }
         private string GetDefaultName(IEnumerable<string> existingNames)
         {
@@ -493,7 +500,11 @@ namespace MultiCommentViewer
             //}
 
             IMcvCommentViewModel mcvCvm = null;
-            if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
+            if(messageContext.Message is IInfoMessage infoMessage)
+            {
+                //TODO:
+            }
+            else if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
             {
                 if (whowatchMessage is WhowatchSitePlugin.IWhowatchComment comment)
                 {

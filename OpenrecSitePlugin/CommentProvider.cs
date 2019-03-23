@@ -10,6 +10,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
+using SitePluginCommon;
 
 namespace OpenrecSitePlugin
 {
@@ -394,7 +395,14 @@ namespace OpenrecSitePlugin
         #endregion //Events
         private void SendSystemInfo(string message, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Openrec,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
         Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
         [Obsolete]

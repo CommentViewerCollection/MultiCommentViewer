@@ -347,7 +347,14 @@ namespace TwitchSitePlugin
 
         private void SendSystemInfo(string message, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Twitch,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
 
         public Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)

@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Net.Http;
 using ryu_s.BrowserCookie;
+using SitePluginCommon;
 
 namespace TwicasSitePlugin
 {
@@ -65,7 +66,14 @@ namespace TwicasSitePlugin
         }
         private void SendSystemInfo(string message, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Twicas,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
         private CookieContainer _cc;
         MessageProvider _messageProvider;

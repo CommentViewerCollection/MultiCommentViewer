@@ -1,6 +1,7 @@
 ﻿using Common;
 using ryu_s.BrowserCookie;
 using SitePlugin;
+using SitePluginCommon;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -326,7 +327,14 @@ namespace WhowatchSitePlugin
         }
         private void SendSystemInfo(string message, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Whowatch,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
         public bool IsLoggedIn => _me != null && !string.IsNullOrEmpty(_me.UserPath);
         public string LoggedInUsername => _me?.Name;

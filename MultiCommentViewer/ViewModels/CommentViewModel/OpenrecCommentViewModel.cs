@@ -1,4 +1,5 @@
-﻿using SitePlugin;
+﻿using Plugin;
+using SitePlugin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,12 +28,12 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private OpenrecCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+        private OpenrecCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
-            ConnectionName = connectionName;
+            ConnectionName = connectionStatus;
             _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
@@ -40,6 +41,12 @@ namespace MultiCommentViewer
                 {
                     case nameof(ConnectionName.Name):
                         RaisePropertyChanged(nameof(ConnectionName));
+                        break;
+                    case nameof(ConnectionName.BackColor):
+                        RaisePropertyChanged(nameof(Background));
+                        break;
+                    case nameof(ConnectionName.ForeColor):
+                        RaisePropertyChanged(nameof(Foreground));
                         break;
                 }
             };
@@ -86,8 +93,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = comment;
 
@@ -97,8 +104,8 @@ namespace MultiCommentViewer
             Id = comment.Id.ToString();
             PostTime = comment.PostTime;
         }
-        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecStamp stamp, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecStamp stamp, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = stamp;
 
@@ -108,8 +115,8 @@ namespace MultiCommentViewer
             Id = stamp.Id.ToString();
             PostTime = stamp.PostTime;
         }
-        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecYell yell, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecYell yell, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = yell;
 
@@ -119,8 +126,8 @@ namespace MultiCommentViewer
             Id = yell.Id.ToString();
             PostTime = yell.PostTime;
         }
-        //public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName)
-        //    : this(metadata, methods, connectionName)
+        //public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
+        //    : this(metadata, methods, connectionStatus)
         //{
         //    var comment = item;
         //    _message = comment;
@@ -137,20 +144,20 @@ namespace MultiCommentViewer
         //    Id = comment.Id.ToString();
         //    PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
         //}
-        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
         }
 
-        public ConnectionName ConnectionName { get; }
+        public IConnectionStatus ConnectionName { get; }
 
         private IEnumerable<IMessagePart> _nickItems { get; set; }
         private IEnumerable<IMessagePart> _nameItems { get; set; }
@@ -179,6 +186,10 @@ namespace MultiCommentViewer
                 {
                     return new SolidColorBrush(_options.OpenrecBackColor);
                 }
+                else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return new SolidColorBrush(ConnectionName.BackColor);
+                }
                 else
                 {
                     return new SolidColorBrush(_metadata.BackColor);
@@ -203,6 +214,10 @@ namespace MultiCommentViewer
                 if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
                 {
                     return new SolidColorBrush(_options.OpenrecForeColor);
+                }
+                else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return new SolidColorBrush(ConnectionName.ForeColor);
                 }
                 else
                 {

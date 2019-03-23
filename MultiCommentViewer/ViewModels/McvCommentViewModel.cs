@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using SitePlugin;
 using System.Windows.Media;
 using System.Windows;
+using Plugin;
 
 namespace MultiCommentViewer
 {
@@ -12,7 +13,7 @@ namespace MultiCommentViewer
     {
         private readonly ICommentViewModel _cvm;
 
-        public McvCommentViewModel(ICommentViewModel cvm, ConnectionName connectionName)
+        public McvCommentViewModel(ICommentViewModel cvm, IConnectionStatus connectionName)
         {
             _cvm = cvm;
             _cvm.PropertyChanged += (s, e) =>
@@ -52,7 +53,7 @@ namespace MultiCommentViewer
             };
         }
 
-        public ConnectionName ConnectionName { get; }
+        public IConnectionStatus ConnectionName { get; }
 
         public IEnumerable<IMessagePart> NameItems => _cvm.NameItems;
 

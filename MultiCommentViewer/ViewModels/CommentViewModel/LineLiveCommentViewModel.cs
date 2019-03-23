@@ -1,4 +1,5 @@
-﻿using SitePlugin;
+﻿using Plugin;
+using SitePlugin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,12 +28,12 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private LineLiveCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+        private LineLiveCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
-            ConnectionName = connectionName;
+            ConnectionName = connectionStatus;
             _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
@@ -40,6 +41,12 @@ namespace MultiCommentViewer
                 {
                     case nameof(ConnectionName.Name):
                         RaisePropertyChanged(nameof(ConnectionName));
+                        break;
+                    case nameof(ConnectionName.BackColor):
+                        RaisePropertyChanged(nameof(Background));
+                        break;
+                    case nameof(ConnectionName.ForeColor):
+                        RaisePropertyChanged(nameof(Foreground));
                         break;
                 }
             };
@@ -86,8 +93,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = comment;
 
@@ -97,8 +104,8 @@ namespace MultiCommentViewer
             Id = comment.Id?.ToString();
             PostTime = comment.PostTime;
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             var comment = item;
             _message = comment;
@@ -116,20 +123,20 @@ namespace MultiCommentViewer
             Id = null;
             PostTime = comment.PostTime;
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
         }
 
-        public ConnectionName ConnectionName { get; }
+        public IConnectionStatus ConnectionName { get; }
 
         private IEnumerable<IMessagePart> _nickItems { get; set; }
         private IEnumerable<IMessagePart> _nameItems { get; set; }
@@ -158,6 +165,10 @@ namespace MultiCommentViewer
                 {
                     return new SolidColorBrush(_options.LineLiveBackColor);
                 }
+                else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return new SolidColorBrush(ConnectionName.BackColor);
+                }
                 else
                 {
                     return new SolidColorBrush(_metadata.BackColor);
@@ -182,6 +193,10 @@ namespace MultiCommentViewer
                 if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
                 {
                     return new SolidColorBrush(_options.LineLiveForeColor);
+                }
+                else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return new SolidColorBrush(ConnectionName.ForeColor);
                 }
                 else
                 {

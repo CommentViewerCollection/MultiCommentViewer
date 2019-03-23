@@ -69,7 +69,7 @@
             <ComboBox ItemsSource="{Binding FontSizeCollection}" SelectedValue="{Binding FontSize}" Margin="228,210,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="89" />
             <CheckBox IsChecked="{Binding IsBold}" Content="太字" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="345,210,0,0" />
 
-            <GroupBox Height="395" Margin="5,485,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" >
+            <GroupBox Height="195" Margin="5,485,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" >
                 <GroupBox.Header>
                     <CheckBox x:Name="SiteConnectionColorCheck" IsChecked="{Binding IsEnabledSiteConnectionColor}" Content="サイト毎または接続毎に色を付ける" />
                 </GroupBox.Header>

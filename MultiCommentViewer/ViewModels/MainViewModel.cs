@@ -317,7 +317,7 @@ namespace MultiCommentViewer
             try
             {
                 var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader, _options);
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.MessageReceived += Connection_MessageReceived;
@@ -356,7 +356,7 @@ namespace MultiCommentViewer
             {
                 var name = GetDefaultName(Connections.Select(c => c.Name));
                 var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader, _options);
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.MessageReceived += Connection_MessageReceived;
@@ -476,7 +476,7 @@ namespace MultiCommentViewer
         }
         #endregion //Methods
 
-        private void AddComment(ICommentViewModel cvm, ConnectionName connectionName)
+        private void AddComment(ICommentViewModel cvm, IConnectionStatus connectionName)
         {
             if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
             {
@@ -485,7 +485,7 @@ namespace MultiCommentViewer
             var mcvCvm = new McvCommentViewModel(cvm, connectionName);
             _comments.Add(mcvCvm);
         }
-        private void AddComment(IMessageContext messageContext, ConnectionName connectionName)
+        private void AddComment(IMessageContext messageContext, IConnectionStatus connectionName)
         {
             //if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
             //{
@@ -619,7 +619,7 @@ namespace MultiCommentViewer
                 {
                     foreach (var comment in e)
                     {
-                        AddComment(comment, connectionViewModel.ConnectionName);
+                        AddComment(comment, connectionViewModel);
                     }
                 }), DispatcherPriority.Normal);
             }
@@ -649,7 +649,7 @@ namespace MultiCommentViewer
                     //    _userDict.Add(comment.UserId, uvm);
                     //}
                     //comment.User = uvm.User;
-                    AddComment(comment, connectionViewModel.ConnectionName);
+                    AddComment(comment, connectionViewModel);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
                 _pluginManager.SetMessage(e.Message, e.Metadata);
@@ -680,7 +680,7 @@ namespace MultiCommentViewer
                     //    _userDict.Add(comment.UserId, uvm);
                     //}
                     //comment.User = uvm.User;
-                    AddComment(comment, connectionViewModel.ConnectionName);
+                    AddComment(comment, connectionViewModel);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
                 if (IsComment(e.MessageType))
@@ -956,6 +956,20 @@ namespace MultiCommentViewer
             catch (System.Runtime.InteropServices.COMException) { }
             SetSystemInfo("copy: " + message, InfoType.Debug);
         }
+        public double ConnectionColorColumnWidth
+        {
+            get
+            {
+                if(_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return 90;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
         #endregion
 
         public MainViewModel():base(new DynamicOptionsTest())
@@ -1035,6 +1049,10 @@ namespace MultiCommentViewer
                         break;
                     case nameof(_options.IsShowInfo):
                         RaisePropertyChanged(nameof(IsShowInfo));
+                        break;
+                    case nameof(_options.IsEnabledSiteConnectionColor):
+                    case nameof(_options.SiteConnectionColorType):
+                        RaisePropertyChanged(nameof(ConnectionColorColumnWidth));
                         break;
                 }
             };

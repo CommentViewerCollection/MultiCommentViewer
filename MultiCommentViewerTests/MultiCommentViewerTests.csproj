@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="CommentViewModelConnectionColorTest.cs" />
     <Compile Include="CommentViewModelSiteColorTest.cs" />
     <Compile Include="ConnectionSerializerTests.cs" />
     <Compile Include="ConnectionViewModelTests.cs" />

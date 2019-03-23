@@ -14,6 +14,7 @@ using System.Reactive.Linq;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using System.Windows.Media;
 
 namespace MultiCommentViewer
 {
@@ -111,10 +112,10 @@ namespace MultiCommentViewer
                 _beforeContext = _currentContext;
                 _currentContext = new ConnectionContext
                 {
-                     ConnectionName = this.ConnectionName,
-                      CommentProvider = next,
-                       SiteGuid = nextGuid,
-                       //SiteContext = _selectedSite.Site,
+                    ConnectionName = this.ConnectionName,
+                    CommentProvider = next,
+                    SiteGuid = nextGuid,
+                    //SiteContext = _selectedSite.Site,
                 };
                 RaisePropertyChanged();
                 SelectedSiteChanged?.Invoke(this, new SelectedSiteChangedEventArgs
@@ -126,20 +127,45 @@ namespace MultiCommentViewer
             }
         }
 
-
+        private Color _backColor;
+        public Color BackColor
+        {
+            get
+            {
+                return _backColor;
+            }
+            set
+            {
+                _backColor = value;
+                RaisePropertyChanged();
+            }
+        }
+        private Color _foreColor;
+        public Color ForeColor
+        {
+            get
+            {
+                return _foreColor;
+            }
+            set
+            {
+                _foreColor = value;
+                RaisePropertyChanged();
+            }
+        }
 
         private async void UpdateLoggedInInfo()
         {
             var cp = _commentProvider;
-            if(cp == null)
+            if (cp == null)
             {
                 return;
             }
             SitePlugin.ICurrentUserInfo currentUserInfo = null;
             var br = SelectedBrowser;
-            if(br != null)
+            if (br != null)
             {
-                _dispatcher.Invoke(()=>
+                _dispatcher.Invoke(() =>
                 {
                     LoggedInUsername = "";
                 });
@@ -308,7 +334,7 @@ namespace MultiCommentViewer
 
         public ConnectionContext GetCurrent()
         {
-            var context = new ConnectionContext { ConnectionName = this.ConnectionName, SiteGuid= SelectedSite.Guid, CommentProvider = _commentProvider };
+            var context = new ConnectionContext { ConnectionName = this.ConnectionName, SiteGuid = SelectedSite.Guid, CommentProvider = _commentProvider };
             return context;
         }
 
@@ -345,6 +371,8 @@ namespace MultiCommentViewer
         string _beforeName;
         private readonly ILogger _logger;
         private readonly ISitePluginLoader _sitePluginLoader;
+        private readonly IOptions _options;
+
         //private readonly IEnumerable<ISiteContext> _sites;
         private readonly Dictionary<Guid, SiteViewModel> _siteVmDict = new Dictionary<Guid, SiteViewModel>();
         /// <summary>
@@ -352,12 +380,13 @@ namespace MultiCommentViewer
         /// </summary>
         public Guid Guid { get; }
         private readonly Dispatcher _dispatcher;
-        public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger, ISitePluginLoader sitePluginLoader)
+        public ConnectionViewModel(ConnectionName connectionName, IEnumerable<SiteViewModel> sites, IEnumerable<BrowserViewModel> browsers, ILogger logger, ISitePluginLoader sitePluginLoader, IOptions options)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             Guid = Guid.NewGuid();
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;
+            _options = options;
             _connectionName = connectionName ?? throw new ArgumentNullException(nameof(connectionName));
             _beforeName = _connectionName.Name;
             _connectionName.PropertyChanged += (s, e) =>
@@ -369,6 +398,20 @@ namespace MultiCommentViewer
                         Renamed?.Invoke(this, new RenamedEventArgs(_beforeName, newName));
                         _beforeName = newName;
                         RaisePropertyChanged(nameof(Name));
+                        break;
+                }
+            };
+            options.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(options.IsEnabledSiteConnectionColor):
+                        RaisePropertyChanged(nameof(BackColor));
+                        RaisePropertyChanged(nameof(ForeColor));
+                        break;
+                    case nameof(options.SiteConnectionColorType):
+                        RaisePropertyChanged(nameof(BackColor));
+                        RaisePropertyChanged(nameof(ForeColor));
                         break;
                 }
             };

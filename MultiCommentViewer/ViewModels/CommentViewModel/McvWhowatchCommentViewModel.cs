@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using SitePlugin;
 using System.Windows.Media;
 using System.Windows;
+using Plugin;
 
 namespace MultiCommentViewer
 {
@@ -25,12 +26,12 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private McvWhowatchCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
+        private McvWhowatchCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
 
-            ConnectionName = connectionName;
+            ConnectionName = connectionStatus;
             _options = options;
             ConnectionName.PropertyChanged += (s, e) =>
             {
@@ -38,6 +39,12 @@ namespace MultiCommentViewer
                 {
                     case nameof(ConnectionName.Name):
                         RaisePropertyChanged(nameof(ConnectionName));
+                        break;
+                    case nameof(ConnectionName.BackColor):
+                        RaisePropertyChanged(nameof(Background));
+                        break;
+                    case nameof(ConnectionName.ForeColor):
+                        RaisePropertyChanged(nameof(Foreground));
                         break;
                 }
             };
@@ -84,8 +91,8 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchComment comment, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = comment;
 
@@ -95,8 +102,8 @@ namespace MultiCommentViewer
             Id = comment.Id.ToString();
             PostTime = comment.PostTime;
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             var comment = item;
             _message = comment;
@@ -114,20 +121,20 @@ namespace MultiCommentViewer
             PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
             Info = item.ItemCount == 1 ? item.ItemName : $"{item.ItemName} × {item.ItemCount}";
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchConnected connected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
-        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionName, IOptions options)
-            : this(metadata, methods, connectionName, options)
+        public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;
         }
 
-        public ConnectionName ConnectionName { get; }
+        public IConnectionStatus ConnectionName { get; }
 
         private IEnumerable<IMessagePart> _nickItems { get; set; }
         private IEnumerable<IMessagePart> _nameItems { get; set; }
@@ -156,6 +163,10 @@ namespace MultiCommentViewer
                 {
                     return new SolidColorBrush(_options.WhowatchBackColor);
                 }
+                else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return new SolidColorBrush(ConnectionName.BackColor);
+                }
                 else
                 {
                     return new SolidColorBrush(_metadata.BackColor);
@@ -180,6 +191,10 @@ namespace MultiCommentViewer
                 if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
                 {
                     return new SolidColorBrush(_options.WhowatchForeColor);
+                }
+                else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return new SolidColorBrush(ConnectionName.ForeColor);
                 }
                 else
                 {

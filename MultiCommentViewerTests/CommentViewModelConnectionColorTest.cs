@@ -9,6 +9,7 @@ using Plugin;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,7 +21,7 @@ using YouTubeLiveSitePlugin;
 namespace MultiCommentViewerTests
 {
     [TestFixture]
-    class CommentViewModelSiteColorTests
+    class CommentViewModelConnectionColorTest
     {
         [Test]
         public void YouTubeLiveColorTest()
@@ -115,36 +116,43 @@ namespace MultiCommentViewerTests
             var metadataMock = new Mock<IMessageMetadata>();
             var methodsMock = new Mock<IMessageMethods>();
             var optionsMock = new Mock<IOptions>();
-            optionsMock.Setup(o => o.SiteConnectionColorType).Returns(SiteConnectionColorType.Site);
+            optionsMock.Setup(o => o.SiteConnectionColorType).Returns(SiteConnectionColorType.Connection);
             optionsMock.Setup(o => o.IsEnabledSiteConnectionColor).Returns(true);
-
-            optionsMock.Setup(o => o.YouTubeLiveBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.YouTubeLiveForeColor).Returns(Colors.Blue);
-
-            optionsMock.Setup(o => o.OpenrecBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.OpenrecForeColor).Returns(Colors.Blue);
-            optionsMock.Setup(o => o.TwitchBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.TwitchForeColor).Returns(Colors.Blue);
-            optionsMock.Setup(o => o.NicoLiveBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.NicoLiveForeColor).Returns(Colors.Blue);
-            optionsMock.Setup(o => o.TwicasBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.TwicasForeColor).Returns(Colors.Blue);
-            optionsMock.Setup(o => o.LineLiveBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.LineLiveForeColor).Returns(Colors.Blue);
-            optionsMock.Setup(o => o.WhowatchBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.WhowatchForeColor).Returns(Colors.Blue);
-            optionsMock.Setup(o => o.MirrativBackColor).Returns(Colors.Red);
-            optionsMock.Setup(o => o.MirrativForeColor).Returns(Colors.Blue);
             var connectionStatusMock = new Mock<IConnectionStatus>();
+            connectionStatusMock.Setup(c => c.BackColor).Returns(Colors.Red);
+            connectionStatusMock.Setup(c => c.ForeColor).Returns(Colors.Blue);
 
             var metadata = metadataMock.Object;
             var methods = methodsMock.Object;
             var connectionStatus = connectionStatusMock.Object;
-            
             var options = optionsMock.Object;
             var cvm = f(metadata, methods, connectionStatus, options);// new MultiCommentViewer.McvMirrativCommentViewModel(message, metadata, methods, connectionName, options);
             Assert.AreEqual(Colors.Red, cvm.Background.Color);
             Assert.AreEqual(Colors.Blue, cvm.Foreground.Color);
+
+            var isRaisedBackground = false;
+            var isRaisedForeground = false;
+            cvm.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(cvm.Background):
+                        isRaisedBackground = true;
+                        break;
+                    case nameof(cvm.Foreground):
+                        isRaisedForeground = true;
+                        break;
+                }
+            };
+            connectionStatusMock.Setup(c => c.BackColor).Returns(Colors.Blue);
+            connectionStatusMock.Setup(c => c.ForeColor).Returns(Colors.Red);
+            connectionStatusMock.Raise(c => c.PropertyChanged += null, new PropertyChangedEventArgs(nameof(connectionStatus.BackColor)));
+            connectionStatusMock.Raise(c => c.PropertyChanged += null, new PropertyChangedEventArgs(nameof(connectionStatus.ForeColor)));
+            Assert.AreEqual(Colors.Blue, cvm.Background.Color);
+            Assert.AreEqual(Colors.Red, cvm.Foreground.Color);
+
+            Assert.IsTrue(isRaisedBackground);
+            Assert.IsTrue(isRaisedForeground);
         }
     }
 }

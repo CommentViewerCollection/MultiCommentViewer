@@ -50,6 +50,16 @@ namespace MultiCommentViewer
                         break;
                 }
             };
+            options.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(options.IsEnabledSiteConnectionColor):
+                        RaisePropertyChanged(nameof(Background));
+                        RaisePropertyChanged(nameof(Foreground));
+                        break;
+                }
+            };
             _metadata.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -199,7 +209,7 @@ namespace MultiCommentViewer
                 }
                 else
                 {
-                    return new SolidColorBrush(_metadata.BackColor);
+                    return new SolidColorBrush(_metadata.ForeColor);
                 }
             }
         }

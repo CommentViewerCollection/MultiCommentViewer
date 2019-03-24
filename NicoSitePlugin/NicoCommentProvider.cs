@@ -502,55 +502,6 @@ namespace NicoSitePlugin
             _commentProvider = commentProvider;
         }
         private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
-        private NicoCommentViewModel2 CreateCommentViewModel(Chat chat, IXmlWsRoomInfo roomInfo)
-        {
-            if (chat.Premium.HasValue)
-            {
-                Debug.WriteLine($"{chat.Thread},{chat.Premium.Value},{chat.Text}");
-            }
-            //追い出しコマンドは除外
-            if (chat.Text.StartsWith("/hb ifseetno "))
-            {
-                SendSystemInfo($"kick command={chat.Text}", InfoType.Debug);
-                return null;
-            }
-            //アリーナ以外の運営コメントは除外
-            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Thread != _mainRoomThreadId)
-            {
-                SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
-            }
-            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Text.StartsWith("/uadpoint"))
-            {
-                SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
-            }
-            //アリーナ以外のBSPコメントは除外
-            if (chat.IsBsp && chat.Thread != _mainRoomThreadId)
-            {
-                SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
-            }
-            if (chat.Text.StartsWith("/nicoad "))
-            {
-                chat.Text = Tools.GetAdComment(chat.Text);
-            }
-            var userId = chat.UserId;
-            bool isFirstComment;
-            if (_userCommentCountDict.ContainsKey(userId))
-            {
-                _userCommentCountDict[userId]++;
-                isFirstComment = false;
-            }
-            else
-            {
-                _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
-                isFirstComment = true;
-            }
-            var user = _userStore.GetUser(userId);
-            var cvm = new NicoCommentViewModel2(_options, _siteOptions, chat, roomInfo.Name, user, _commentProvider, isFirstComment);
-            return cvm;
-        }
         public async Task<NicoMessageContext> CreateMessageContext(IChat chat, IXmlWsRoomInfo roomInfo, bool isInitialComment)
         {
             NicoMessageContext messageContext = null;

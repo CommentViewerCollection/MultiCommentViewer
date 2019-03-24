@@ -58,6 +58,7 @@
     </Compile>
     <Compile Include="CommentPostPanelViewModel.cs" />
     <Compile Include="IChat.cs" />
+    <Compile Include="Message\NicoAd.cs" />
     <Compile Include="Message\NicoComment.cs" />
     <Compile Include="Message\NicoConnected.cs" />
     <Compile Include="Message\NicoDisconnected.cs" />

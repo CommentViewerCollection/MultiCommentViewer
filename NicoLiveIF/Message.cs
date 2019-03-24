@@ -8,6 +8,7 @@ namespace NicoSitePlugin
         Comment,
         Connected,
         Disconnected,
+        Ad,
     }
 
     public interface INicoMessage : IMessage
@@ -23,6 +24,11 @@ namespace NicoSitePlugin
     public interface INicoComment : INicoMessage, IMessageComment
     {
         bool Is184 { get; }
+        string RoomName { get; }
+        int? ChatNo { get; }
+    }
+    public interface INicoAd : INicoMessage
+    {
         string RoomName { get; }
         int? ChatNo { get; }
     }

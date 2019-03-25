@@ -116,23 +116,53 @@ namespace WhowatchSitePlugin
                 case "BY_FOLLOWER":
                 case "BY_SYSTEM":
                     //運営コメント
-                    message = new WhowatchComment(raw)
+
+                    //NGワードを含むコメント。ng_word_includedがtrueで、original_messageがある。
+                    //[null,null,"room:10030668","shout",{"topic":"room_pub:10030668","event":"shout","comment":{"user":{"user_profile":{},"user_path":"w:ryu_s","name":"Ryu","is_admin":false,"id":1614280,"icon_url":"","account_name":"ふ:ryu_s"},"tts":{},"reply_to_user_id":0,"posted_at":1553429971000,"original_message":"あいうえお","not_escaped":false,"ng_word_included":true,"message":"この投稿は視聴者には表示されません。","live_id":10030668,"is_silent_comment":true,"is_reply_to_me":false,"id":633344989,"escaped_original_message":"<span class=\"ngword\">あいうえお</span>","escaped_message":"この投稿は視聴者には表示されません。","enabled":true,"comment_type":"BY_FOLLOWER","anonymized":false}}]
+                    //匿名コメント。anonymizedがtrue
+                    //[null,null,"room:10030668","shout",{"topic":"room_pub:10030668","event":"shout","comment":{"user":{"user_profile":{},"user_path":"w:秘密のチキンボーイ","name":"秘密のチキンボーイ","is_admin":false,"id":1024,"icon_url":"https://img.whowatch.tv/user_files/1024/profile_icon/1505207215448.jpeg","account_name":"ふ:秘密のチキンボーイ"},"reply_to_user_id":0,"posted_at":1553429977000,"play_item_pattern_id":116,"pickup_time":2000,"not_escaped":false,"ng_word_included":false,"message":"ひよこをプレゼントしました。","live_id":10030668,"item_count":1,"is_silent_comment":false,"is_reply_to_me":false,"id":633345152,"escaped_message":"ひよこをプレゼントしました。","enabled":true,"comment_type":"BY_PLAYITEM","anonymized":true}}]
+                    if (comment.IsDefined("ng_word_included") && comment.ng_word_included == true)
                     {
-                        AccountName = comment.user.account_name,
-                        NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.user.name) },
-                        CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.message) },
-                        Id = comment.id.ToString(),
-                        PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
-                        UserId = comment.user.id.ToString(),
-                        UserPath = comment.user.user_path,
-                        UserIcon = new MessageImage
+                        //NGコメント
+                        message = new WhowatchNgComment(raw)
                         {
-                            Url = (string)comment.user.icon_url,
-                            Alt = null,
-                            Height = 40,
-                            Width = 40,
-                        }
-                    };
+                            AccountName = comment.user.account_name,
+                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.user.name) },
+                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.message) },
+                            Id = comment.id.ToString(),
+                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
+                            UserId = comment.user.id.ToString(),
+                            UserPath = comment.user.user_path,
+                            OriginalMessage = comment.original_message,
+                            UserIcon = new MessageImage
+                            {
+                                Url = (string)comment.user.icon_url,
+                                Alt = null,
+                                Height = 40,
+                                Width = 40,
+                            }
+                        };
+                    }
+                    else
+                    {
+                        message = new WhowatchComment(raw)
+                        {
+                            AccountName = comment.user.account_name,
+                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.user.name) },
+                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.message) },
+                            Id = comment.id.ToString(),
+                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
+                            UserId = comment.user.id.ToString(),
+                            UserPath = comment.user.user_path,
+                            UserIcon = new MessageImage
+                            {
+                                Url = (string)comment.user.icon_url,
+                                Alt = null,
+                                Height = 40,
+                                Width = 40,
+                            }
+                        };
+                    }
                     break;
                 default:
                     break;

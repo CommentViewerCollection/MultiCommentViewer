@@ -73,6 +73,10 @@
       <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
+      <Project>{5A83AFC8-E6CE-4DD2-8389-1F43A731388F}</Project>
+      <Name>WhowatchIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WhowatchSitePlugin\WhowatchSitePlugin.csproj">
       <Project>{92bdc986-1d50-48a3-9a94-5a94a285c53d}</Project>
       <Name>WhowatchSitePlugin</Name>

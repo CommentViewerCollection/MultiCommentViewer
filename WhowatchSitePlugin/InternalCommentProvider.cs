@@ -47,11 +47,16 @@ namespace WhowatchSitePlugin
                 var internalMessage = MessageParser.ParseRawString2InternalMessage(rawMessage);
 
                 var raw = internalMessage.Raw;
-
+                Debug.WriteLine(raw);
 
                 if(internalMessage.InternalMessageType == WhowatchInternalMessageType.Shout)
                 {
                     var message = MessageParser.ParseShoutMessage(internalMessage);
+                    if (message is IWhowatchNgComment)
+                    {
+                        //NGコメント（"この投稿は視聴者には表示されません。"と表示されるだけ）は無視する
+                        return;
+                    }
                     MessageReceived?.Invoke(this, message);
                 }
             }

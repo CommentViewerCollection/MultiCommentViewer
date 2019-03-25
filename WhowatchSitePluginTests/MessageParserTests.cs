@@ -104,5 +104,17 @@ namespace WhowatchSitePluginTests
             Assert.AreEqual("shout", message.Event);
             Assert.AreEqual("{\"a\"}", message.Payload);
         }
+        [Test]
+        public void NGCommentParseTest()
+        {
+            var data = "[null,null,\"room:10030668\",\"shout\",{\"topic\":\"room_pub:10030668\",\"event\":\"shout\",\"comment\":{\"user\":{\"user_profile\":{},\"user_path\":\"w:ryu_s\",\"name\":\"Ryu\",\"is_admin\":false,\"id\":1614280,\"icon_url\":\"\",\"account_name\":\"ふ:ryu_s\"},\"tts\":{},\"reply_to_user_id\":0,\"posted_at\":1553429971000,\"original_message\":\"あいうえお\",\"not_escaped\":false,\"ng_word_included\":true,\"message\":\"この投稿は視聴者には表示されません。\",\"live_id\":10030668,\"is_silent_comment\":true,\"is_reply_to_me\":false,\"id\":633344989,\"escaped_original_message\":\"<span class=\\\"ngword\\\">あいうえお</span>\",\"escaped_message\":\"この投稿は視聴者には表示されません。\",\"enabled\":true,\"comment_type\":\"BY_FOLLOWER\",\"anonymized\":false}}]";
+            var internalMessage = MessageParser.ParseRawString2InternalMessage(data);
+            Assert.AreEqual(WhowatchInternalMessageType.Shout, internalMessage.InternalMessageType);
+            var message = MessageParser.ParseShoutMessage(internalMessage);
+            var ngComment = message as IWhowatchNgComment;
+            Assert.IsNotNull(ngComment);
+            Assert.AreEqual("あいうえお", ngComment.OriginalMessage);
+        }
+
     }
 }

@@ -24,17 +24,24 @@ namespace YouTubeLiveSitePlugin.Test2
         public ICommand PostCommentCommand { get; }
         private async void PostComment()
         {
-            if (CanPostComment)
+            try
             {
-                CanPostComment = false;
-                var commentTemp = Comment;
-                Comment = "";
-                var success = await _commentProvider.PostCommentAsync(commentTemp);
-                if (!success)
+                if (CanPostComment)
                 {
-                    Comment = commentTemp;
+                    CanPostComment = false;
+                    var commentTemp = Comment;
+                    Comment = "";
+                    var success = await _commentProvider.PostCommentAsync(commentTemp);
+                    if (!success)
+                    {
+                        Comment = commentTemp;
+                    }
+                    CanPostComment = true;
                 }
-                CanPostComment = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
             }
         }
         private string _comment;

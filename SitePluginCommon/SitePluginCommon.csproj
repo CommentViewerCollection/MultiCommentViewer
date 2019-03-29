@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveCounter.cs" />
+    <Compile Include="FirstCommentDetector.cs" />
     <Compile Include="IActiveCounter.cs" />
     <Compile Include="InfoMessage.cs" />
     <Compile Include="Metadata.cs" />

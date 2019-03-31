@@ -89,6 +89,7 @@
     <Compile Include="SQLiteUserStore.cs" />
     <Compile Include="UserStoreTest.cs" />
     <Compile Include="UserTest.cs" />
+    <Compile Include="Utils.cs" />
     <Compile Include="ValueConverterGroup.cs" />
     <Compile Include="Wpf\NumericUpDown.xaml.cs">
       <DependentUpon>NumericUpDown.xaml</DependentUpon>

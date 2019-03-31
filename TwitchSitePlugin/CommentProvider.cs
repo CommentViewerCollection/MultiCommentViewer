@@ -340,7 +340,7 @@ namespace TwitchSitePlugin
             var elapsed = GetCurrentDateTime() - _startedAt.Value;
             var metadata = new Metadata
             {
-                 Elapsed = Utils.ElapsedToString(elapsed),
+                 Elapsed = SitePluginCommon.Utils.ElapsedToString(elapsed),
             };
             MetadataUpdated?.Invoke(this, metadata);
         }

@@ -23,6 +23,41 @@ using SitePluginCommon;
 
 namespace MultiCommentViewer
 {
+    class ColorPair
+    {
+        public Color BackColor { get; }
+        public Color ForeColor { get; }
+        private Color ColorFromArgb(string argb)
+        {
+            if (argb == null)
+                throw new ArgumentNullException("argb");
+            var pattern = "#(?<a>[0-9a-fA-F]{2})(?<r>[0-9a-fA-F]{2})(?<g>[0-9a-fA-F]{2})(?<b>[0-9a-fA-F]{2})";
+            var match = System.Text.RegularExpressions.Regex.Match(argb, pattern, System.Text.RegularExpressions.RegexOptions.Compiled);
+
+            if (!match.Success)
+            {
+                throw new ArgumentException("形式が不正");
+            }
+            else
+            {
+                var a = byte.Parse(match.Groups["a"].Value, System.Globalization.NumberStyles.HexNumber);
+                var r = byte.Parse(match.Groups["r"].Value, System.Globalization.NumberStyles.HexNumber);
+                var g = byte.Parse(match.Groups["g"].Value, System.Globalization.NumberStyles.HexNumber);
+                var b = byte.Parse(match.Groups["b"].Value, System.Globalization.NumberStyles.HexNumber);
+                return Color.FromArgb(a, r, g, b);
+            }
+        }
+        public ColorPair(string backArgb, string foreArgb)
+        {
+            BackColor = ColorFromArgb(backArgb);
+            ForeColor = ColorFromArgb(foreArgb);
+        }
+        public ColorPair(Color backColor, Color foreColor)
+        {
+            BackColor = backColor;
+            ForeColor = foreColor;
+        }
+    }
     class ConnectionSerializerLoader
     {
         private readonly string _path;
@@ -34,7 +69,9 @@ namespace MultiCommentViewer
             {
                 if (connection.NeedSave)
                 {
-                    var connectionSerializer = new ConnectionSerializer(connection.Name, connection.SelectedSite.DisplayName, connection.Input, connection.SelectedBrowser.DisplayName);
+                    var back = Common.Utils.ColorToArgb(connection.BackColor);
+                    var fore = Common.Utils.ColorToArgb(connection.ForeColor);
+                    var connectionSerializer = new ConnectionSerializer(connection.Name, connection.SelectedSite.DisplayName, connection.Input, connection.SelectedBrowser.DisplayName, back, fore);
                     var serialized = connectionSerializer.Serialize();
                     list.Add(serialized);
                 }
@@ -219,7 +256,21 @@ namespace MultiCommentViewer
                 var connectionSerializerList = _connectionSerializerLoader.Load();
                 foreach (var serializer in connectionSerializerList)
                 {
-                    AddNewConnection(serializer.Name, serializer.SiteName, serializer.Url, serializer.BrowserName, true);
+                    Color backColor;
+                    Color foreColor;
+                    if(!string.IsNullOrEmpty(serializer.BackColorArgb) && !string.IsNullOrEmpty(serializer.ForeColorArgb))
+                    {
+                        backColor = Common.Utils.ColorFromArgb(serializer.BackColorArgb);
+                        foreColor = Common.Utils.ColorFromArgb(serializer.ForeColorArgb);
+                    }
+                    else
+                    {
+                        var colorPair = GetRandomColorPair();
+                        backColor = colorPair.BackColor;
+                        foreColor = colorPair.ForeColor;
+                    }
+                    
+                    AddNewConnection(serializer.Name, serializer.SiteName, serializer.Url, serializer.BrowserName, true, backColor, foreColor);
                 }
                 if (_options.IsAutoCheckIfUpdateExists)
                 {
@@ -299,6 +350,10 @@ namespace MultiCommentViewer
         }
         private SiteViewModel GetSiteViewModelFromName(string siteName)
         {
+            if (string.IsNullOrEmpty(siteName))
+            {
+                return null;
+            }
             foreach(var siteViewModel in _siteVms)
             {
                 if(siteViewModel.DisplayName == siteName)
@@ -310,6 +365,10 @@ namespace MultiCommentViewer
         }
         private BrowserViewModel GetBrowserViewModelFromName(string browserName)
         {
+            if (string.IsNullOrEmpty(browserName))
+            {
+                return null;
+            }
             foreach(var browserViewModel in _browserVms)
             {
                 if(browserViewModel.DisplayName == browserName)
@@ -319,12 +378,27 @@ namespace MultiCommentViewer
             }
             return null;
         }
-        private void AddNewConnection(string name, string siteName, string url, string browserName, bool needSave)
+
+        readonly ColorPair[] ConnectionColors = new[]
+        {
+            new ColorPair("#FFe0efd0", "#FF008000"),
+            new ColorPair("#FFEEE8AA", "#FF483D8B"),
+            new ColorPair("#FF7FFFD4", "#FF0000FF"),
+            new ColorPair("#FFA52A2A", "#FF00FF7F"),
+            new ColorPair("#FFAFEEEE", "#FF20B2AA"),
+            new ColorPair("#FFFFD700", "#FFDC143C"),
+
+        };
+        private void AddNewConnection(string name, string siteName, string url, string browserName, bool needSave, Color backColor, Color foreColor)
         {
             try
             {
                 var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader, _options);
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader, _options)
+                {
+                    BackColor = backColor,
+                    ForeColor = foreColor,
+                };
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.MessageReceived += Connection_MessageReceived;
@@ -359,29 +433,15 @@ namespace MultiCommentViewer
 
         private void AddNewConnection()
         {
-            try
-            {
-                var name = GetDefaultName(Connections.Select(c => c.Name));
-                var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader, _options);
-                connection.Renamed += Connection_Renamed;
-                connection.CommentReceived += Connection_CommentReceived;
-                connection.MessageReceived += Connection_MessageReceived;
-                connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
-                connection.MetadataReceived += Connection_MetadataReceived;
-                connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
-                var metaVm = new MetadataViewModel(connectionName);
-                _metaDict.Add(connection, metaVm);
-                MetaCollection.Add(metaVm);
-                Connections.Add(connection);
-                OnConnectionAdded(connection);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                Debug.WriteLine(ex.Message);
-                Debugger.Break();
-            }
+            var name = GetDefaultName(Connections.Select(c => c.Name));
+            var colorPair = GetRandomColorPair();
+            AddNewConnection(name, "", "", "", false, colorPair.BackColor, colorPair.ForeColor);
+        }
+        private ColorPair GetRandomColorPair()
+        {
+            var rnd = new Random();
+            var n = rnd.Next(ConnectionColors.Length);
+            return ConnectionColors[n];
         }
         /// <summary>
         /// 将来的にSiteContext毎に別のIUserStoreを使い分ける可能性を考えて今のうちに。
@@ -992,7 +1052,7 @@ namespace MultiCommentViewer
             {
                 if(_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
                 {
-                    return 90;
+                    return 100;
                 }
                 else
                 {

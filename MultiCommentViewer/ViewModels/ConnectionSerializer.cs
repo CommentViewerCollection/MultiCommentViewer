@@ -9,13 +9,15 @@ namespace MultiCommentViewer
     class ConnectionSerializer
     {
         private ConnectionSerializer() { }
-        public ConnectionSerializer(string name, string siteName, string url, string browserName)
+        public ConnectionSerializer(string name, string siteName, string url, string browserName, string backColorArgb, string foreColorArgb)
         {
             //Guidは保存しないようにする。保存ファイルを弄ってGuidを重複させることも可能になってしまうのを防ぐ
             Name = name;
             SiteName = siteName;
             Url = url;
             BrowserName = browserName;
+            BackColorArgb = backColorArgb;
+            ForeColorArgb = foreColorArgb;
         }
         public string Serialize()
         {
@@ -58,6 +60,9 @@ namespace MultiCommentViewer
         public string SiteName { get; private set; }
         public string Url { get; private set; }
         public string BrowserName { get; private set; }
+        public string BackColorArgb { get; private set; }
+        public string ForeColorArgb { get; private set; }
+
     }
 }
 

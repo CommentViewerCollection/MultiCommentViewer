@@ -30,6 +30,7 @@ namespace WhowatchSitePluginTests
             Assert.AreEqual("w:kagawapro", Tools.ExtractUserPathFromInput("https://whowatch.tv/profile/w:kagawapro"));
             Assert.AreEqual("w:kagawapro", Tools.ExtractUserPathFromInput("w:kagawapro"));
             Assert.AreEqual("t:kagawapro", Tools.ExtractUserPathFromInput("t:kagawapro"));
+            Assert.AreEqual("t:shinya_yuunari", Tools.ExtractUserPathFromInput("t:shinya_yuunari"));
             Assert.IsNull(Tools.ExtractUserPathFromInput(""));
         }
 

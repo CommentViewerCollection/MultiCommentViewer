@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Plugin;
 using SitePlugin;
 
 namespace MultiCommentViewer
@@ -11,7 +12,7 @@ namespace MultiCommentViewer
     {
         SolidColorBrush Background { get; }
         ICommentProvider CommentProvider { get; }
-        ConnectionName ConnectionName { get; }
+        IConnectionStatus ConnectionName { get; }
         FontFamily FontFamily { get; }
         int FontSize { get; }
         FontStyle FontStyle { get; }

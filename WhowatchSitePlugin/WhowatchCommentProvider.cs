@@ -1,6 +1,7 @@
 ﻿using Common;
 using ryu_s.BrowserCookie;
 using SitePlugin;
+using SitePluginCommon;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -326,7 +327,14 @@ namespace WhowatchSitePlugin
         }
         private void SendSystemInfo(string message, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Whowatch,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
         public bool IsLoggedIn => _me != null && !string.IsNullOrEmpty(_me.UserPath);
         public string LoggedInUsername => _me?.Name;
@@ -362,11 +370,11 @@ namespace WhowatchSitePlugin
             BeforeConnect();
             try
             {
-                var cc = CreateCookieContainer(browserProfile);
+                _cc = CreateCookieContainer(browserProfile);
                 var itemDict = await GetPlayItemsAsync();
                 MessageParser.Resolver = new ItemNameResolver(itemDict);
 
-                _me = await Api.GetMeAsync(_server, cc);
+                _me = await Api.GetMeAsync(_server, _cc);
 
                 long live_id = -1;
                 var liveIdTest = Tools.ExtractLiveIdFromInput(input);
@@ -393,7 +401,7 @@ namespace WhowatchSitePlugin
                 System.Diagnostics.Debug.Assert(live_id != -1);
 
                 var lastUpdatedAt = 0;
-                var liveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, cc);
+                var liveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);
                 if (liveData.Live.LiveStatus != PUBLISHING)
                 {
                     SendSystemInfo("LiveStatus: " + liveData.Live.LiveStatus, InfoType.Debug);

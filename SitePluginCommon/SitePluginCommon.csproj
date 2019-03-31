@@ -31,6 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,12 +43,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveCounter.cs" />
+    <Compile Include="FirstCommentDetector.cs" />
     <Compile Include="IActiveCounter.cs" />
+    <Compile Include="InfoMessage.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServerBase.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IPlugin\Plugin.csproj">
       <Project>{735cfeee-5b77-4d36-977b-4cd94a6f3cdb}</Project>
       <Name>Plugin</Name>

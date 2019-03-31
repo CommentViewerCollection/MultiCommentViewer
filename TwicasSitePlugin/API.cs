@@ -23,12 +23,25 @@ namespace TwicasSitePlugin
     }
     public class Item
     {
+        public string Raw { get; set; }
         public string Id { get; set; }
         public string SenderName { get; set; }
         public string SenderImage { get; set; }
         public string ItemImage { get; set; }
         public string Message { get; set; }
         public string Effect { get; set; }
+
+        public string t5 { get; set; }
+        public string t6 { get; set; }
+        public string t7 { get; set; }
+        public string t9 { get; set; }
+        public string t10 { get; set; }
+        public string t11 { get; set; }
+        public string t12 { get; set; }
+        public string t13 { get; set; }
+        public string t14 { get; set; }
+        public string t15 { get; set; }
+
     }
     static class API
     {

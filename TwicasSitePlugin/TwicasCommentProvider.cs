@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Net.Http;
 using ryu_s.BrowserCookie;
+using SitePluginCommon;
 
 namespace TwicasSitePlugin
 {
@@ -65,13 +66,21 @@ namespace TwicasSitePlugin
         }
         private void SendSystemInfo(string message, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Twicas,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
         private CookieContainer _cc;
         MessageProvider _messageProvider;
         string _csSessionId;
         string _broadcasterId;
         long _liveId = -1;
+        FirstCommentDetector _first = new FirstCommentDetector();
         public async Task ConnectAsync(string input, global::ryu_s.BrowserCookie.IBrowserProfile browserProfile)
         {
             var broadcasterId = Tools.ExtractBroadcasterId(input);
@@ -91,6 +100,7 @@ namespace TwicasSitePlugin
 
             CanConnect = false;
             CanDisconnect = true;
+            _first.Reset();
             int cnum = -1;
 
             string audienceId;
@@ -149,10 +159,9 @@ namespace TwicasSitePlugin
             }
             try
             {
-                _messageProvider = new MessageProvider(_server,_siteOptions, _cc, _logger);
-                _messageProvider.InitialCommentsReceived += _messageProvider_InitialCommentsReceived;
-                _messageProvider.Received += MessageProvider_Received;
+                _messageProvider = new MessageProvider(_server,_siteOptions, _cc,_userStore,_options,this, _logger);
                 _messageProvider.MetaReceived += MessageProvider_MetaReceived;
+                _messageProvider.MessageReceived += MessageProvider_MessageReceived;
                 _messageProvider.InfoOccured += MessageProvider_InfoOccured;
 
                 await _messageProvider.ConnectAsync(broadcasterId, cnum, _liveId);
@@ -167,6 +176,16 @@ namespace TwicasSitePlugin
                 AfterDisconnected();
             }
         }
+
+        private void MessageProvider_MessageReceived(object sender, IMessageContext e)
+        {
+            if(e.Message is ITwicasComment comment)
+            {
+                _lastCommentId = long.Parse(comment.Id);
+            }
+            MessageReceived?.Invoke(this, e);
+        }
+
         private void AfterDisconnected()
         {
             _messageProvider = null;
@@ -178,74 +197,9 @@ namespace TwicasSitePlugin
             SendSystemInfo(e.Message, e.Type);
         }
         private long _lastCommentId;
-        private void _messageProvider_InitialCommentsReceived(object sender, IEnumerable<ICommentData> e)
-        {
-            var list = new List<ICommentViewModel>();
-            foreach (var data in e)
-            {
-                try
-                {
-                    var cvm = CommentData2CommentViewModel(data);
-                    list.Add(cvm);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogException(ex);
-                    SendSystemInfo(ex.Message, InfoType.Debug);
-                }
-            }
-            InitialCommentsReceived?.Invoke(this, list);
-            if(list.Count > 0)
-            {
-                _lastCommentId = long.Parse(list[list.Count - 1].Id);
-            }
-        }
-        private TwicasCommentViewModel CommentData2CommentViewModel(ICommentData data)
-        {
-            var userId = data.UserId;
-            var user = _userStore.GetUser(userId);
-            var cvm = new TwicasCommentViewModel(_options,_siteOptions, data, user, this);
-            return cvm;
-        }
         private void MessageProvider_MetaReceived(object sender, IMetadata e)
         {
             MetadataUpdated?.Invoke(this, e);
-        }
-
-        private void MessageProvider_Received(object sender, IEnumerable<ICommentData> e)
-        {
-            foreach (var data in e)
-            {
-                try
-                {
-                    Debug.WriteLine($"{data.Id} {Tools.ToText(data.Message)} MessageProvider_Received");
-                    var cvm = CommentData2CommentViewModel(data);
-                    CommentReceived?.Invoke(this, cvm);
-                    _lastCommentId = data.Id;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogException(ex);
-                    SendSystemInfo(ex.Message, InfoType.Debug);
-                }
-            }
-        }
-        private void OnReceiveComments(IEnumerable<ICommentData> comments)
-        {
-            foreach (var data in comments)
-            {
-                try
-                {
-                    var cvm = CommentData2CommentViewModel(data);
-                    CommentReceived?.Invoke(this, cvm);
-                    //_lastCommentId = data.Id;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogException(ex);
-                    SendSystemInfo(ex.Message, InfoType.Debug);
-                }
-            }
         }
 
         public void Disconnect()
@@ -313,11 +267,10 @@ namespace TwicasSitePlugin
                 LoggedInStateChanged?.Invoke(this, EventArgs.Empty);
             }
         }
-        private readonly Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>> _userCommentDict = new Dictionary<IUser, ObservableCollection<TwicasCommentViewModel>>();
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
-        private readonly TwicasSiteOptions _siteOptions;
+        private readonly ITwicasSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
         public TwicasCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, TwicasSiteOptions siteOptions, IUserStore userStore)
         {

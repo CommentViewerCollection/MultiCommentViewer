@@ -34,7 +34,7 @@ namespace NicoSitePlugin
         }
         private static DateTime FromUnixTime(long unix)
         {
-            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(unix).ToLocalTime();
+            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unix).ToLocalTime();
         }
         public long? DateUsec
         {

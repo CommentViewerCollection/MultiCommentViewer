@@ -7,6 +7,7 @@
     /// ただしコメビュ内では使いたくない。抽象化が薄れてしまう。
     public enum SiteType
     {
+        Unknown,
         NicoLive,
         YouTubeLive,
         Openrec,

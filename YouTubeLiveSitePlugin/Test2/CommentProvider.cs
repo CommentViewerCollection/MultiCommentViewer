@@ -18,79 +18,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
-namespace YouTubeLiveSitePlugin
-{
-    public interface IInfoMessage : IMessage
-    {
-        InfoType Type { get; set; }
-    }
-    public class InfoMessage : IInfoMessage
-    {
-        public InfoType Type { get; set; }
-        public string Raw { get; }
-        public SiteType SiteType { get; set; }
-        public IEnumerable<IMessagePart> NameItems { get; set; }
-        public IEnumerable<IMessagePart> CommentItems { get; set; }
-
-        public event EventHandler<ValueChangedEventArgs> ValueChanged;
-    }
-    public class InfoMessageMetadata : IMessageMetadata
-    {
-        private readonly IInfoMessage _infoMessage;
-        private readonly ICommentOptions _options;
-
-        public Color BackColor => _options.InfoBackColor;
-        public Color ForeColor => _options.InfoForeColor;
-        public FontFamily FontFamily => _options.FontFamily;
-        public int FontSize => _options.FontSize;
-        public FontWeight FontWeight => _options.FontWeight;
-        public FontStyle FontStyle => _options.FontStyle;
-        public bool IsNgUser => false;
-        public bool IsSiteNgUser => false;
-        public bool IsFirstComment => false;
-        public bool IsInitialComment => false;
-        public bool Is184 => false;
-        public IUser User => null;
-        public ICommentProvider CommentProvider => null;
-        public bool IsVisible
-        {
-            get
-            {
-                return true;
-            }
-        }
-        public bool IsNameWrapping => false;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public InfoMessageMetadata(IInfoMessage infoMessage, ICommentOptions options)
-        {
-            _infoMessage = infoMessage;
-            _options = options;
-        }
-    }
-    public class InfoMessageMethods : IMessageMethods
-    {
-        public Task AfterCommentAdded()
-        {
-            return Task.CompletedTask;
-        }
-    }
-    public class InfoMessageContext : IMessageContext
-    {
-        public SitePlugin.IMessage Message { get; }
-
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public InfoMessageContext(IInfoMessage message, InfoMessageMetadata metadata, InfoMessageMethods methods)
-        {
-            Message = message;
-            Metadata = metadata;
-            Methods = methods;
-        }
-    }
-}
 namespace YouTubeLiveSitePlugin.Test2
 {
     class CommentProvider : ICommentProvider
@@ -143,7 +70,14 @@ namespace YouTubeLiveSitePlugin.Test2
         //IActiveCounter<string> _activeCounter;
         private void SendInfo(string comment, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, comment, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment) },
+                NameItems = null,
+                SiteType = SiteType.YouTubeLive,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
         private void BeforeConnect()
         {
@@ -286,13 +220,23 @@ namespace YouTubeLiveSitePlugin.Test2
 
             try
             {
-                await _connection.ReceiveAsync(vid, browserProfile.Type);
-            }
-            catch (ReloadException ex)
-            {
-                _logger.LogException(ex, "", $"input={input}");
-                SendInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Error);
-                goto reload;
+                var disconnectReason = await _connection.ReceiveAsync(vid, browserProfile.Type);
+                switch (disconnectReason)
+                {
+                    case DisconnectReason.Reload:
+                        SendInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Error);
+                        goto reload;
+                    case DisconnectReason.ByUser:
+                    case DisconnectReason.Finished:
+                        //TODO:SendInfo()
+                        break;
+                    case DisconnectReason.ChatUnavailable:
+                        //TODO:SendInfo()
+                        break;
+                    case DisconnectReason.YtInitialDataNotFound:
+                        //TODO:SendInfo()
+                        break;
+                }
             }
             catch(Exception ex)
             {

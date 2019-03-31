@@ -27,6 +27,10 @@ namespace WhowatchSitePlugin
         string UserPath { get; }
         string AccountName { get; }
     }
+    public interface IWhowatchNgComment : IWhowatchComment
+    {
+        string OriginalMessage { get; }
+    }
     public interface IWhowatchItem : IWhowatchMessage
     {
         string ItemName { get; }

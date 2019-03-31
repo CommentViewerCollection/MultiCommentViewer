@@ -8,6 +8,8 @@ using System.Threading;
 using System.Linq;
 using System.Net.Http;
 using System.Diagnostics;
+using System.Collections.Concurrent;
+using SitePluginCommon;
 
 namespace TwicasSitePlugin
 {
@@ -19,9 +21,8 @@ namespace TwicasSitePlugin
     class MessageProvider
     {
         public event EventHandler<InfoData> InfoOccured;
-        public event EventHandler<IEnumerable<ICommentData>> InitialCommentsReceived;
-        public event EventHandler<IEnumerable<ICommentData>> Received;
         public event EventHandler<IMetadata> MetaReceived;
+        public event EventHandler<IMessageContext> MessageReceived;
         private List<ICommentData> LowComment2Data(IEnumerable<LowObject.Comment> lows, string raw)
         {
             var initialDataList = new List<ICommentData>();
@@ -33,14 +34,6 @@ namespace TwicasSitePlugin
                 }
                 try
                 {
-                    if(!string.IsNullOrEmpty(c.uid) && c.uid.Contains("kii"))
-                    {
-                        _logger.LogException(new ParseException("キートス候補kii" + raw));
-                    }
-                    if (c.@class != "other" || c.@class != "other oldcomment")
-                    {
-                        _logger.LogException(new ParseException("キートス候補" + raw));
-                    }
                     var data = Tools.Parse(c);
                     initialDataList.Add(data);
                 }
@@ -51,13 +44,56 @@ namespace TwicasSitePlugin
             }
             return initialDataList;
         }
+        private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
+        private TwicasMessageContext CreateMessageContext(LowObject.Comment lowComment, bool isInitialComment, string raw) 
+        {
+            var commentData = Tools.Parse(lowComment);
+            var userId = commentData.UserId;
+            bool isFirstComment;
+            if (_userCommentCountDict.ContainsKey(userId))
+            {
+                _userCommentCountDict[userId]++;
+                isFirstComment = false;
+            }
+            else
+            {
+                _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
+                isFirstComment = true;
+            }
+            var user = _userStore.GetUser(userId);
+
+            var message = new TwicasComment(raw)
+            {
+                CommentItems = commentData.Message,
+                Id = commentData.Id.ToString(),
+                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Name) },
+                PostTime = commentData.Date.ToString("HH:mm:ss"),
+                UserId = commentData.UserId,
+                UserIcon = new MessageImage
+                {
+                    Url = commentData.ThumbnailUrl,
+                    Alt = null,
+                    Height = commentData.ThumbnailHeight,
+                    Width = commentData.ThumbnailWidth,
+                 },
+            };
+            var metadata = new MessageMetadata(message, _options, _siteOptions, user, _cp, isFirstComment)
+            {
+                IsInitialComment = isInitialComment,
+            };
+            var methods = new TwicasMessageMethods();
+            var messageContext = new TwicasMessageContext(message, metadata, methods);
+            return messageContext;
+        }
         private void SendInfo(string message, InfoType type)
         {
             InfoOccured?.Invoke(this, new InfoData { Message = message, Type = type });
         }
         System.Collections.Concurrent.ConcurrentBag<string> _receivedItemIds;
+        FirstCommentDetector _first = new FirstCommentDetector();
         public async Task ConnectAsync(string broadcasterId, int cnum,long live_id)
         {
+            _first.Reset();
             _cts = new CancellationTokenSource();
             _receivedItemIds = new System.Collections.Concurrent.ConcurrentBag<string>();
             //TODO:try-catch
@@ -70,14 +106,38 @@ namespace TwicasSitePlugin
                 var (initialComments, initialRaw) = await API.GetListAll(_server, broadcasterId, live_id, lastCommentId, 0, 20, _cc);
                 if (initialComments.Length > 0)
                 {
-                    var initialDataList = LowComment2Data(initialComments, initialRaw);
-                    if (initialDataList.Count > 0)
+                    foreach(var lowComment in initialComments)
                     {
-                        InitialCommentsReceived?.Invoke(this, initialDataList);
+                        //showがfalseのデータが時々ある。
+                        //{"id":15465669455,"show":false}
+                        //よく分からないけど、有用な情報は無さそうだからスルー
+                        if (!lowComment.show) continue;
+
+                        var context = CreateMessageContext(lowComment, true, initialRaw);
+                        MessageReceived?.Invoke(this, context);
                     }
+                    //var initialDataList = LowComment2Data(initialComments, initialRaw);
+                    //if (initialDataList.Count > 0)
+                    //{
+                    //    InitialCommentsReceived?.Invoke(this, initialDataList);
+                    //}
                     var lastComment = initialComments[initialComments.Length - 1];
                     lastCommentId = lastComment.id;
                 }
+            }
+            catch(HttpRequestException ex)
+            {
+                _logger.LogException(ex);
+                string message;
+                if (ex.InnerException != null)
+                {
+                    message = ex.InnerException.Message;
+                }
+                else
+                {
+                    message = ex.Message;
+                }
+                SendInfo(message, InfoType.Debug);
             }
             catch (Exception ex)
             {
@@ -117,38 +177,63 @@ namespace TwicasSitePlugin
                     });
                     foreach (var item in streamChecker.Items)
                     {
-                        if (_receivedItemIds.Contains(item.Id))
-                            continue;
-#if DEBUG
-                        if (item.ItemImage.Contains("item_funding_stamp"))
+                        try
                         {
-                            using (var sw = new System.IO.StreamWriter("キートス.txt", true))
+                            if (_receivedItemIds.Contains(item.Id))
+                                continue;
+
+                            ITwicasItem itemMessage = null;
+                            if (Tools.IsKiitos(item))
                             {
-                                sw.WriteLine(streamCheckerRaw);
+                                itemMessage = Tools.CreateKiitosMessage(item);
                             }
+                            else
+                            {
+                                var image = new MessageImage
+                                {
+                                    Url = item.ItemImage,
+                                    Alt = item.t13,
+                                    Height = 40,
+                                    Width = 40,
+                                };
+                                itemMessage = new TwicasItem(item.Raw)
+                                {
+                                    UserIcon = new MessageImage
+                                    {
+                                        Url = item.SenderImage,
+                                        Alt = item.t13,
+                                        Height = 40,
+                                        Width = 40,
+                                    },
+                                    ItemName = item.t13,
+                                    //CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(item.t13) },
+                                    CommentItems = new List<IMessagePart> { image },
+                                    NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(item.t12) },
+                                    UserId = item.SenderName,
+                                    ItemId = item.Id,
+                                };
+                            }
+                            if (itemMessage != null)
+                            {
+                                var user = _userStore.GetUser(item.SenderName);
+                                var metadata = new MessageMetadata(itemMessage, _options, _siteOptions, user, _cp, false);
+                                var methods = new TwicasMessageMethods();
+                                var context = new TwicasMessageContext(itemMessage, metadata, methods);
+                                MessageReceived?.Invoke(this, context);
+                            }
+                            SendInfo(item.SenderName + " " + item.ItemImage, InfoType.Debug);
+                            _receivedItemIds.Add(item.Id);
                         }
-#endif
-                        SendInfo(item.SenderName + " " + item.ItemImage, InfoType.Debug);
-                        _receivedItemIds.Add(item.Id);
-                    }
-#if DEBUG
-                    if (streamCheckerRaw.Contains("kii"))
-                    {
-                        _logger.LogException(new ParseException("キートス候補_stream" + streamCheckerRaw));
-                        using (var sw = new System.IO.StreamWriter("キートスかも.txt", true))
+                        catch(ParseException ex)
                         {
-                            sw.WriteLine(streamCheckerRaw);
+                            _logger.LogException(ex);
                         }
-                    }
-                    if (streamCheckerRaw.Contains("tea"))
-                    {
-                        using(var sw=new System.IO.StreamWriter("お茶爆.txt", true))
+                        catch (Exception ex)
                         {
-                            sw.WriteLine(streamCheckerRaw);
+                            _logger.LogException(ex);
                         }
-                        Debug.WriteLine("お茶爆？");
                     }
-#endif
+
                     if (streamChecker.LiveId == null)
                     {
                         //放送してない。live_idは更新しない。
@@ -156,26 +241,44 @@ namespace TwicasSitePlugin
                     else
                     {
                         live_id = streamChecker.LiveId.Value;
+                        SendInfo($"Twicas live_id={live_id}", InfoType.Debug);
                     }
                     var (lowComments, newCnum, updateRaw) = await API.GetListUpdate(_server, broadcasterId, live_id, cnum, lastCommentId, _cc);
                     if (lowComments != null && lowComments.Count > 0)
                     {
                         cnum = newCnum;
-                        //htmlが""のことがある。コメントを削除した？省いておく
-                        var dataCollection = LowComment2Data(lowComments, updateRaw);//.Where(s=>!string.IsNullOrEmpty(s.html)).Select(Tools.Parse).ToList();
-                        if (dataCollection.Count > 0)
+
+
+                        lastCommentId = lowComments[lowComments.Count - 1].id;
+                        var eachInterval = waitTimeMs / lowComments.Count;
+                        foreach (var lowComment in lowComments)
                         {
-                            lastCommentId = dataCollection[dataCollection.Count - 1].Id;
+                            //showがfalseのデータが時々ある。
+                            //{"id":15465669455,"show":false}
+                            //よく分からないけど、有用な情報は無さそうだからスルー
+                            if (!lowComment.show) continue;
 
-                            var eachInterval = waitTimeMs / dataCollection.Count;
-                            foreach (var data in dataCollection)
-                            {
-                                Received?.Invoke(this, new List<ICommentData> { data });
+                            var context = CreateMessageContext(lowComment, false, updateRaw);
+                            MessageReceived?.Invoke(this, context);
 
-                                await Task.Delay(eachInterval);
-                                accWaitTime += eachInterval;
-                            }
+                            await Task.Delay(eachInterval);
+                            accWaitTime += eachInterval;
                         }
+                        ////htmlが""のことがある。コメントを削除した？省いておく
+                        //var dataCollection = LowComment2Data(lowComments, updateRaw);//.Where(s=>!string.IsNullOrEmpty(s.html)).Select(Tools.Parse).ToList();
+                        //if (dataCollection.Count > 0)
+                        //{
+                        //    lastCommentId = dataCollection[dataCollection.Count - 1].Id;
+
+                        //    var eachInterval = waitTimeMs / dataCollection.Count;
+                        //    foreach (var data in dataCollection)
+                        //    {
+                        //        Received?.Invoke(this, new List<ICommentData> { data });
+
+                        //        await Task.Delay(eachInterval);
+                        //        accWaitTime += eachInterval;
+                        //    }
+                        //}
                     }
                 }
                 catch(HttpRequestException ex)
@@ -218,6 +321,7 @@ namespace TwicasSitePlugin
             }
             _cts = null;
         }
+
         public void Disconnect()
         {
             if (_cts != null)
@@ -227,14 +331,20 @@ namespace TwicasSitePlugin
         }
         private CancellationTokenSource _cts;
         private readonly IDataServer _server;
-        private readonly TwicasSiteOptions _siteOptions;
+        private readonly ITwicasSiteOptions _siteOptions;
         private readonly CookieContainer _cc;
+        private readonly IUserStore _userStore;
+        private readonly ICommentOptions _options;
+        private readonly ICommentProvider _cp;
         private readonly ILogger _logger;
-        public MessageProvider(IDataServer server,TwicasSiteOptions siteOptions, CookieContainer cc, ILogger logger)
+        public MessageProvider(IDataServer server, ITwicasSiteOptions siteOptions, CookieContainer cc,IUserStore userStore,ICommentOptions options,ICommentProvider cp, ILogger logger)
         {
             _server = server;
             _siteOptions = siteOptions;
             _cc = cc;
+            _userStore = userStore;
+            _options = options;
+            _cp = cp;
             _logger = logger;
         }
     }

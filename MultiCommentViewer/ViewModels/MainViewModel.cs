@@ -19,9 +19,45 @@ using Common;
 using System.Windows.Data;
 using System.Text.RegularExpressions;
 using CommentViewerCommon;
+using SitePluginCommon;
 
 namespace MultiCommentViewer
 {
+    class ColorPair
+    {
+        public Color BackColor { get; }
+        public Color ForeColor { get; }
+        private Color ColorFromArgb(string argb)
+        {
+            if (argb == null)
+                throw new ArgumentNullException("argb");
+            var pattern = "#(?<a>[0-9a-fA-F]{2})(?<r>[0-9a-fA-F]{2})(?<g>[0-9a-fA-F]{2})(?<b>[0-9a-fA-F]{2})";
+            var match = System.Text.RegularExpressions.Regex.Match(argb, pattern, System.Text.RegularExpressions.RegexOptions.Compiled);
+
+            if (!match.Success)
+            {
+                throw new ArgumentException("形式が不正");
+            }
+            else
+            {
+                var a = byte.Parse(match.Groups["a"].Value, System.Globalization.NumberStyles.HexNumber);
+                var r = byte.Parse(match.Groups["r"].Value, System.Globalization.NumberStyles.HexNumber);
+                var g = byte.Parse(match.Groups["g"].Value, System.Globalization.NumberStyles.HexNumber);
+                var b = byte.Parse(match.Groups["b"].Value, System.Globalization.NumberStyles.HexNumber);
+                return Color.FromArgb(a, r, g, b);
+            }
+        }
+        public ColorPair(string backArgb, string foreArgb)
+        {
+            BackColor = ColorFromArgb(backArgb);
+            ForeColor = ColorFromArgb(foreArgb);
+        }
+        public ColorPair(Color backColor, Color foreColor)
+        {
+            BackColor = backColor;
+            ForeColor = foreColor;
+        }
+    }
     class ConnectionSerializerLoader
     {
         private readonly string _path;
@@ -33,7 +69,9 @@ namespace MultiCommentViewer
             {
                 if (connection.NeedSave)
                 {
-                    var connectionSerializer = new ConnectionSerializer(connection.Name, connection.SelectedSite.DisplayName, connection.Input, connection.SelectedBrowser.DisplayName);
+                    var back = Common.Utils.ColorToArgb(connection.BackColor);
+                    var fore = Common.Utils.ColorToArgb(connection.ForeColor);
+                    var connectionSerializer = new ConnectionSerializer(connection.Name, connection.SelectedSite.DisplayName, connection.Input, connection.SelectedBrowser.DisplayName, back, fore);
                     var serialized = connectionSerializer.Serialize();
                     list.Add(serialized);
                 }
@@ -218,7 +256,21 @@ namespace MultiCommentViewer
                 var connectionSerializerList = _connectionSerializerLoader.Load();
                 foreach (var serializer in connectionSerializerList)
                 {
-                    AddNewConnection(serializer.Name, serializer.SiteName, serializer.Url, serializer.BrowserName, true);
+                    Color backColor;
+                    Color foreColor;
+                    if(!string.IsNullOrEmpty(serializer.BackColorArgb) && !string.IsNullOrEmpty(serializer.ForeColorArgb))
+                    {
+                        backColor = Common.Utils.ColorFromArgb(serializer.BackColorArgb);
+                        foreColor = Common.Utils.ColorFromArgb(serializer.ForeColorArgb);
+                    }
+                    else
+                    {
+                        var colorPair = GetRandomColorPair();
+                        backColor = colorPair.BackColor;
+                        foreColor = colorPair.ForeColor;
+                    }
+                    
+                    AddNewConnection(serializer.Name, serializer.SiteName, serializer.Url, serializer.BrowserName, true, backColor, foreColor);
                 }
                 if (_options.IsAutoCheckIfUpdateExists)
                 {
@@ -276,8 +328,14 @@ namespace MultiCommentViewer
         }
         private void SetSystemInfo(string message, InfoType type)
         {
-            var info = new SystemInfoCommentViewModel(_options, message, type);
-            //AddComment(info, )
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Unknown,
+                Type = type,
+            }, _options);
+            AddComment(context, null);
         }
         private string GetDefaultName(IEnumerable<string> existingNames)
         {
@@ -292,6 +350,10 @@ namespace MultiCommentViewer
         }
         private SiteViewModel GetSiteViewModelFromName(string siteName)
         {
+            if (string.IsNullOrEmpty(siteName))
+            {
+                return null;
+            }
             foreach(var siteViewModel in _siteVms)
             {
                 if(siteViewModel.DisplayName == siteName)
@@ -303,6 +365,10 @@ namespace MultiCommentViewer
         }
         private BrowserViewModel GetBrowserViewModelFromName(string browserName)
         {
+            if (string.IsNullOrEmpty(browserName))
+            {
+                return null;
+            }
             foreach(var browserViewModel in _browserVms)
             {
                 if(browserViewModel.DisplayName == browserName)
@@ -312,12 +378,27 @@ namespace MultiCommentViewer
             }
             return null;
         }
-        private void AddNewConnection(string name, string siteName, string url, string browserName, bool needSave)
+
+        readonly ColorPair[] ConnectionColors = new[]
+        {
+            new ColorPair("#FFe0efd0", "#FF008000"),
+            new ColorPair("#FFEEE8AA", "#FF483D8B"),
+            new ColorPair("#FF7FFFD4", "#FF0000FF"),
+            new ColorPair("#FFA52A2A", "#FF00FF7F"),
+            new ColorPair("#FFAFEEEE", "#FF20B2AA"),
+            new ColorPair("#FFFFD700", "#FFDC143C"),
+
+        };
+        private void AddNewConnection(string name, string siteName, string url, string browserName, bool needSave, Color backColor, Color foreColor)
         {
             try
             {
                 var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
+                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader, _options)
+                {
+                    BackColor = backColor,
+                    ForeColor = foreColor,
+                };
                 connection.Renamed += Connection_Renamed;
                 connection.CommentReceived += Connection_CommentReceived;
                 connection.MessageReceived += Connection_MessageReceived;
@@ -352,29 +433,15 @@ namespace MultiCommentViewer
 
         private void AddNewConnection()
         {
-            try
-            {
-                var name = GetDefaultName(Connections.Select(c => c.Name));
-                var connectionName = new ConnectionName { Name = name };
-                var connection = new ConnectionViewModel(connectionName, _siteVms, _browserVms, _logger, _sitePluginLoader);
-                connection.Renamed += Connection_Renamed;
-                connection.CommentReceived += Connection_CommentReceived;
-                connection.MessageReceived += Connection_MessageReceived;
-                connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
-                connection.MetadataReceived += Connection_MetadataReceived;
-                connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
-                var metaVm = new MetadataViewModel(connectionName);
-                _metaDict.Add(connection, metaVm);
-                MetaCollection.Add(metaVm);
-                Connections.Add(connection);
-                OnConnectionAdded(connection);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                Debug.WriteLine(ex.Message);
-                Debugger.Break();
-            }
+            var name = GetDefaultName(Connections.Select(c => c.Name));
+            var colorPair = GetRandomColorPair();
+            AddNewConnection(name, "", "", "", false, colorPair.BackColor, colorPair.ForeColor);
+        }
+        private ColorPair GetRandomColorPair()
+        {
+            var rnd = new Random();
+            var n = rnd.Next(ConnectionColors.Length);
+            return ConnectionColors[n];
         }
         /// <summary>
         /// 将来的にSiteContext毎に別のIUserStoreを使い分ける可能性を考えて今のうちに。
@@ -476,7 +543,7 @@ namespace MultiCommentViewer
         }
         #endregion //Methods
 
-        private void AddComment(ICommentViewModel cvm, ConnectionName connectionName)
+        private void AddComment(ICommentViewModel cvm, IConnectionStatus connectionName)
         {
             if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
             {
@@ -485,7 +552,7 @@ namespace MultiCommentViewer
             var mcvCvm = new McvCommentViewModel(cvm, connectionName);
             _comments.Add(mcvCvm);
         }
-        private void AddComment(IMessageContext messageContext, ConnectionName connectionName)
+        private void AddComment(IMessageContext messageContext, IConnectionStatus connectionName)
         {
             //if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
             //{
@@ -493,105 +560,136 @@ namespace MultiCommentViewer
             //}
 
             IMcvCommentViewModel mcvCvm = null;
-            if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
+            if(messageContext.Message is IInfoMessage infoMessage)
+            {
+                //TODO:
+            }
+            else if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
             {
                 if (whowatchMessage is WhowatchSitePlugin.IWhowatchComment comment)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (whowatchMessage is WhowatchSitePlugin.IWhowatchItem item)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (whowatchMessage is WhowatchSitePlugin.IWhowatchConnected connected)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (whowatchMessage is WhowatchSitePlugin.IWhowatchDisconnected disconnected)
                 {
-                    mcvCvm = new McvWhowatchCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvWhowatchCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is YouTubeLiveSitePlugin.IYouTubeLiveMessage youtubeMessage)
             {
                 if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveComment comment)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveConnected connected)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveDisconnected disconnected)
                 {
-                    mcvCvm = new McvYouTubeLiveCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is MirrativSitePlugin.IMirrativMessage mirrativMessage)
             {
                 if (mirrativMessage is MirrativSitePlugin.IMirrativComment comment)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativJoinRoom join)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativItem item)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativConnected connected)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (mirrativMessage is MirrativSitePlugin.IMirrativDisconnected disconnected)
                 {
-                    mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new McvMirrativCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is TwitchSitePlugin.ITwitchMessage twitchMessage)
             {
                 if (twitchMessage is TwitchSitePlugin.ITwitchComment comment)
                 {
-                    mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is OpenrecSitePlugin.IOpenrecMessage openrecMessage)
             {
                 if (openrecMessage is OpenrecSitePlugin.IOpenrecComment comment)
                 {
-                    mcvCvm = new OpenrecCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new OpenrecCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (openrecMessage is OpenrecSitePlugin.IOpenrecStamp stamp)
                 {
-                    mcvCvm = new OpenrecCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new OpenrecCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
-                else if(openrecMessage is OpenrecSitePlugin.IOpenrecYell yell)
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecYell yell)
                 {
-                    mcvCvm = new OpenrecCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new OpenrecCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecConnected connected)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (openrecMessage is OpenrecSitePlugin.IOpenrecDisconnected disconnected)
+                {
+                    mcvCvm = new OpenrecCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
             {
                 if (lineliveMessage is LineLiveSitePlugin.ILineLiveComment comment)
                 {
-                    mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if(lineliveMessage is LineLiveSitePlugin.ILineLiveItem item)
                 {
-                    mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is NicoSitePlugin.INicoMessage nicoMessage)
             {
                 if (nicoMessage is NicoSitePlugin.INicoComment comment)
                 {
-                    mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                    mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
+            else if (messageContext.Message is TwicasSitePlugin.ITwicasMessage twicasMessage)
+            {
+                if (twicasMessage is TwicasSitePlugin.ITwicasComment comment)
+                {
+                    mcvCvm = new TwicasCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (twicasMessage is TwicasSitePlugin.ITwicasItem item)
+                {
+                    mcvCvm = new TwicasCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (twicasMessage is TwicasSitePlugin.ITwicasConnected connected)
+                {
+                    mcvCvm = new TwicasCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+                else if (twicasMessage is TwicasSitePlugin.ITwicasDisconnected disconnected)
+                {
+                    mcvCvm = new TwicasCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
             if (mcvCvm != null)
@@ -611,7 +709,7 @@ namespace MultiCommentViewer
                 {
                     foreach (var comment in e)
                     {
-                        AddComment(comment, connectionViewModel.ConnectionName);
+                        AddComment(comment, connectionViewModel);
                     }
                 }), DispatcherPriority.Normal);
             }
@@ -641,7 +739,7 @@ namespace MultiCommentViewer
                     //    _userDict.Add(comment.UserId, uvm);
                     //}
                     //comment.User = uvm.User;
-                    AddComment(comment, connectionViewModel.ConnectionName);
+                    AddComment(comment, connectionViewModel);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
                 _pluginManager.SetMessage(e.Message, e.Metadata);
@@ -672,7 +770,7 @@ namespace MultiCommentViewer
                     //    _userDict.Add(comment.UserId, uvm);
                     //}
                     //comment.User = uvm.User;
-                    AddComment(comment, connectionViewModel.ConnectionName);
+                    AddComment(comment, connectionViewModel);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
                 if (IsComment(e.MessageType))
@@ -948,6 +1046,20 @@ namespace MultiCommentViewer
             catch (System.Runtime.InteropServices.COMException) { }
             SetSystemInfo("copy: " + message, InfoType.Debug);
         }
+        public double ConnectionColorColumnWidth
+        {
+            get
+            {
+                if(_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                {
+                    return 100;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
         #endregion
 
         public MainViewModel():base(new DynamicOptionsTest())
@@ -1027,6 +1139,10 @@ namespace MultiCommentViewer
                         break;
                     case nameof(_options.IsShowInfo):
                         RaisePropertyChanged(nameof(IsShowInfo));
+                        break;
+                    case nameof(_options.IsEnabledSiteConnectionColor):
+                    case nameof(_options.SiteConnectionColorType):
+                        RaisePropertyChanged(nameof(ConnectionColorColumnWidth));
                         break;
                 }
             };

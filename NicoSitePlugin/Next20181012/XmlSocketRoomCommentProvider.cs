@@ -127,7 +127,19 @@ namespace NicoSitePlugin.Next20181012
             {
                 if (list.Count > 3)
                 {
-                    InitialCommentsReceived?.Invoke(this, list.Select(s => new Chat(s)).ToList());
+                    //2019/03/24実況のjk4に接続したら送られてきた　<view_counter video="0" id="4"/>
+                    InitialCommentsReceived?.Invoke(this, list.Select(s => 
+                    {
+                        if (s.StartsWith("<chat "))
+                        {
+                            return new Chat(s);
+                        }
+                        else
+                        {
+                            Debug.WriteLine(s);
+                            return null;
+                        }
+                    }).Where(chat=>chat != null).ToList());
                     return;
                 }
                 else

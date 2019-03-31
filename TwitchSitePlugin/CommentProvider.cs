@@ -340,14 +340,21 @@ namespace TwitchSitePlugin
             var elapsed = GetCurrentDateTime() - _startedAt.Value;
             var metadata = new Metadata
             {
-                 Elapsed = Utils.ElapsedToString(elapsed),
+                 Elapsed = SitePluginCommon.Utils.ElapsedToString(elapsed),
             };
             MetadataUpdated?.Invoke(this, metadata);
         }
 
         private void SendSystemInfo(string message, InfoType type)
         {
-            CommentReceived?.Invoke(this, new SystemInfoCommentViewModel(_options, message, type));
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.Twitch,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
 
         public Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)

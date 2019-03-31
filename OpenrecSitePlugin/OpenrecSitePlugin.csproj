@@ -110,6 +110,10 @@
       <Project>{02a55625-e735-4909-a470-e8405eee1a32}</Project>
       <Name>OpenrecIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
+      <Name>SitePluginCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Page Include="CommentPostPanel.xaml">

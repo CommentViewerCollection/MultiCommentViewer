@@ -90,6 +90,38 @@ namespace TwicasSitePlugin
     //}
     static class Tools
     {
+        public static bool IsKiitos(Item item)
+        {
+            return item.ItemImage.Contains("item_funding_stamp");
+        }
+        public static ITwicasKiitos CreateKiitosMessage(Item item)
+        {
+            Debug.Assert(Tools.IsKiitos(item));
+            var itemName = "キートス";
+            var message = $"[{item.t13}] {item.Message}{Environment.NewLine}";
+            var itemImage = new MessageImage
+            {
+                Url = item.ItemImage,
+                Alt = itemName,
+                Height = 40,
+                Width = 40,
+            };
+            return new TwicasKiitos(item.Raw)
+            {
+                UserIcon = new MessageImage
+                {
+                    Url = item.SenderImage,
+                    Alt = null,
+                    Height = 40,
+                    Width = 40,
+                },
+                ItemName = itemName,
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message), itemImage },
+                NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(item.t12) },
+                UserId = item.SenderName,
+                ItemId = item.Id,
+            };
+        }
         public static string DecodeBase64(string encoded)
         {
             if (string.IsNullOrEmpty(encoded)) return encoded;

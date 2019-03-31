@@ -66,12 +66,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\CommentViewModel\TwicasCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\OpenrecCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\LineLiveCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\NicoCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwitchCommentViewModel.cs" />
     <Compile Include="ViewModels\ConnectionSerializer.cs" />
     <Compile Include="ViewModels\IMcvCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\McvMirrativCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\McvWhowatchCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\McvYouTubeLiveCommentViewModel.cs" />
     <Compile Include="Views\CommentDataGrid.xaml.cs">
       <DependentUpon>CommentDataGrid.xaml</DependentUpon>
     </Compile>
@@ -237,6 +241,14 @@
       <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>
       <Name>OpenrecSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
+      <Name>SitePluginCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
+      <Project>{4da33b17-792d-44d7-93f6-d0561788676d}</Project>
+      <Name>TwicasIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj">
       <Project>{ebcbadab-c5be-440a-be08-c660244d1f15}</Project>
       <Name>TwicasSitePlugin</Name>
@@ -291,10 +303,10 @@
       <Version>12.0.1</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
-      <Version>1.0.109.2</Version>
+      <Version>1.0.110</Version>
     </PackageReference>
     <PackageReference Include="System.Reactive">
-      <Version>4.1.2</Version>
+      <Version>4.1.3</Version>
     </PackageReference>
     <PackageReference Include="System.ValueTuple">
       <Version>4.5.0</Version>

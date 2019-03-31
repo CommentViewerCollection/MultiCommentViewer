@@ -8,9 +8,11 @@
         xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         xmlns:command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
+        d:DesignWidth="1000"
         Title="{Binding Title}" Topmost="{Binding Topmost}"
         Height="{Binding MainViewHeight, Mode=TwoWay}" Width="{Binding MainViewWidth, Mode=TwoWay}"
         Left="{Binding MainViewLeft, Mode=TwoWay}" Top="{Binding MainViewTop, Mode=TwoWay}"
@@ -198,6 +200,26 @@
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding LoggedInUsername}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="{Binding ConnectionColorColumnWidth}">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="接続背景色" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <xctk:ColorPicker SelectedColor="{Binding BackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Width="{Binding ConnectionColorColumnWidth}">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="接続文字色" />
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <xctk:ColorPicker  SelectedColor="{Binding ForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>

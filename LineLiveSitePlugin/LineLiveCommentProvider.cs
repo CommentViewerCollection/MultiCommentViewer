@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
+using SitePluginCommon;
 
 namespace LineLiveSitePlugin
 {
@@ -359,13 +360,14 @@ namespace LineLiveSitePlugin
         }
         private void SendSystemInfo(string message, InfoType type)
         {
-            var systemInfo = new SystemInfoCommentViewModel(_options, message, type);
-            CommentReceived?.Invoke(this, systemInfo);
-        }
-        private void SendBroadcastInfo(string message, IUser user)
-        {
-            var broadcastInfo = new BroadcastInfoCommentViewModel(_options, message, user, this);
-            CommentReceived?.Invoke(this, broadcastInfo);
+            var context = InfoMessageContext.Create(new InfoMessage
+            {
+                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
+                NameItems = null,
+                SiteType = SiteType.LineLive,
+                Type = type,
+            }, _options);
+            MessageReceived?.Invoke(this, context);
         }
         private string UnixTime2PostTime(long unixTime)
         {
@@ -466,67 +468,6 @@ namespace LineLiveSitePlugin
                 messageContext = null;
             }
             return messageContext;
-        }
-        private ICommentViewModel Parse(ParseMessage.IMessage message, ParseMessage.IUser sender)
-        {
-            ICommentViewModel cvm;
-            if (message is ParseMessage.IMessageData comment)
-            {
-                var user = _userStore.GetUser(sender.Id.ToString());
-                cvm = new LineLiveCommentViewModel(_options, _siteOptions, comment, sender, user, this);
-            }
-            else if (message is ParseMessage.ILove love)
-            {
-                var user = _userStore.GetUser(sender.Id.ToString());
-                var str = sender.DisplayName + "さんがハートを送りました！";
-                cvm = new BroadcastInfoCommentViewModel(_options, str, user, this)
-                {
-                    PostTime = UnixTime2PostTime(love.SentAt),
-                };
-            }
-            else if (message is ParseMessage.IFollowStartData follow)
-            {
-                var user = _userStore.GetUser(sender.Id.ToString());
-                var msg = sender.DisplayName + "さんがフォローしました！";
-                cvm = new BroadcastInfoCommentViewModel(_options, msg, user, this)
-                {
-                    PostTime = UnixTime2PostTime(follow.FollowedAt),
-                };
-            }
-            else if (message is ParseMessage.IGiftMessage gift)
-            {
-                var user = _userStore.GetUser(sender.Id.ToString());
-                if (_loveIconUrlDict.ContainsKey(gift.ItemId))
-                {
-                    gift.Url = _loveIconUrlDict[gift.ItemId];
-                }
-                else
-                {
-                    gift.Url = "";
-                }
-                List<IMessagePart> messageItems;
-                if (gift.ItemId == "limited-love-gift" || string.IsNullOrEmpty(gift.Url))
-                {
-                    //{"type":"giftMessage","data":{"message":"","type":"LOVE","itemId":"limited-love-gift","quantity":1,"displayName":"limited.love.gift.item","sender":{"id":2903515,"hashedId":"715i4MKqyv","displayName":"上杉The Times","iconUrl":"https://scdn.line-apps.com/obs/0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew/f64x64","hashedIconId":"0hmNs42D-0MmFOTR9H8JtNNnYQNBY3YzEpNmkpRHdEbQI3LnYxIX97UGIdaVdjKXVjd3ktVGNEP1VjenU1ew","isGuest":false,"isBlocked":false},"isNGGift":false,"sentAt":1531445716,"key":"2426265.29035150000000000000","blockedByCms":false}}
-                    var msg = sender.DisplayName + "さんがハートで応援ポイントを送りました！";
-                    messageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) };
-                }
-                else
-                {
-                    var msg = sender.DisplayName + "さんが" + gift.Quantity + "コインプレゼントしました！";
-                    messageItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg), new MessageImage { Url = gift.Url } };
-                }
-                var test = new BroadcastInfoCommentViewModel(_options, messageItems, user, this)
-                {
-                    PostTime = UnixTime2PostTime(gift.SentAt),
-                };
-                cvm = test;
-            }
-            else
-            {
-                cvm = null;
-            }
-            return cvm;
         }
         private void Provider_Received(object sender, string e)
         {

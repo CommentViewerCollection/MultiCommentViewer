@@ -1,5 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Windows.Media;
+
 namespace TwicasSitePlugin
 {
     class TwicasSiteOptionsViewModel : INotifyPropertyChanged
@@ -8,6 +10,26 @@ namespace TwicasSitePlugin
         {
             get { return ChangedOptions.CommentRetrieveIntervalSec; }
             set { ChangedOptions.CommentRetrieveIntervalSec = value; }
+        }
+        public Color KiitosBackColor
+        {
+            get { return ChangedOptions.KiitosBackColor; }
+            set { ChangedOptions.KiitosBackColor = value; }
+        }
+        public Color KiitosForeColor
+        {
+            get { return ChangedOptions.KiitosForeColor; }
+            set { ChangedOptions.KiitosForeColor = value; }
+        }
+        public Color ItemBackColor
+        {
+            get { return ChangedOptions.ItemBackColor; }
+            set { ChangedOptions.ItemBackColor = value; }
+        }
+        public Color ItemForeColor
+        {
+            get { return ChangedOptions.ItemForeColor; }
+            set { ChangedOptions.ItemForeColor = value; }
         }
         public bool IsAutoSetNickname
         {

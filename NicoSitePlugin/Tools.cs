@@ -13,7 +13,7 @@ namespace NicoSitePlugin
 {
     static class Tools
     {
-        public static async Task<NicoComment> CreateNicoCommentAsync(IChat chat, string roomName, IUser user,IDataSource _dataSource,bool isAutoSetNickname, string _mainRoomThreadId,ILogger logger)
+        public static async Task<INicoMessage> CreateNicoCommentAsync(IChat chat, string roomName, IUser user,IDataSource _dataSource,bool isAutoSetNickname, string _mainRoomThreadId,ILogger logger)
         {
             if (chat.Premium.HasValue)
             {
@@ -80,33 +80,51 @@ namespace NicoSitePlugin
             {
                 logger.LogException(ex);
             }
-            string comment;
+            INicoMessage message;
             if (chat.Text.StartsWith("/nicoad "))
             {
-                comment = Tools.GetAdComment(chat.Text);
+                var comment = Tools.GetAdComment(chat.Text);
+                message = new NicoAd(chat.Raw)
+                {
+                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
+                    Id = id,
+                    NameItems = nameItems,
+                    PostTime = chat.Date.ToString("HH:mm:ss"),
+                    UserIcon = thumbnailUrl != null ? new MessageImage
+                    {
+                        Url = thumbnailUrl,
+                        Alt = null,
+                        Height = 40,
+                        Width = 40,
+                    } : null,
+                    UserId = chat.UserId,
+                    ChatNo = chat.No,
+                    RoomName = roomName,
+                    Is184 = is184,
+                };
             }
             else
             {
-                comment = chat.Text;
-            }
-            var message = new NicoComment(chat.Raw)
-            {
-                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
-                Id = id,
-                NameItems = nameItems,
-                PostTime = chat.Date.ToString("HH:mm:ss"),
-                UserIcon = thumbnailUrl != null ? new MessageImage
+                var comment = chat.Text;
+                message = new NicoComment(chat.Raw)
                 {
-                    Url = thumbnailUrl,
-                    Alt = null,
-                    Height = 40,
-                    Width = 40,
-                } : null,
-                UserId = chat.UserId,
-                ChatNo = chat.No,
-                RoomName = roomName,
-                Is184 = is184,
-            };
+                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
+                    Id = id,
+                    NameItems = nameItems,
+                    PostTime = chat.Date.ToString("HH:mm:ss"),
+                    UserIcon = thumbnailUrl != null ? new MessageImage
+                    {
+                        Url = thumbnailUrl,
+                        Alt = null,
+                        Height = 40,
+                        Width = 40,
+                    } : null,
+                    UserId = chat.UserId,
+                    ChatNo = chat.No,
+                    RoomName = roomName,
+                    Is184 = is184,
+                };
+            }
             return message;
         }
         public static string GetAdComment(string nicoad)

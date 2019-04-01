@@ -20,7 +20,131 @@ using YouTubeLiveSitePlugin.Test2;
 namespace SitePluginTests
 {
     [TestFixture]
-    class MessageMetadataTests
+    class MessageMetadataNgUserTests
+    {
+        public abstract class MetadataFactory
+        {
+            public abstract IMessageMetadata CreateMetadata(ICommentOptions options, IUser user);
+        }
+        class LineLiveMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<ILineLiveComment>();
+                var siteOptionsMock = new Mock<ILineLiveSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new LineLiveSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+        class MirrativMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<IMirrativComment>();
+                var siteOptionsMock = new Mock<IMirrativSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new MirrativSitePlugin.MirrativMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+        class NicoMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<INicoComment>();
+                var siteOptionsMock = new Mock<INicoSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new NicoSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+        class OpenrecMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<IOpenrecComment>();
+                var siteOptionsMock = new Mock<IOpenrecSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new OpenrecSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+        class TwicasMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<ITwicasComment>();
+                var siteOptionsMock = new Mock<ITwicasSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new TwicasSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+        class TwitchMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<ITwitchComment>();
+                var siteOptionsMock = new Mock<ITwitchSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new TwitchSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+        class WhowatchMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<IWhowatchComment>();
+                var siteOptionsMock = new Mock<IWhowatchSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new WhowatchSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+        class YouTubeLiveMetadataFactory : MetadataFactory
+        {
+            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
+            {
+                var messageMock = new Mock<IYouTubeLiveComment>();
+                var siteOptionsMock = new Mock<IYouTubeLiveSiteOptions>();
+                var userMock = new Mock<IUser>();
+                return new YouTubeLiveSitePlugin.Test2.YouTubeLiveMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+            }
+        }
+
+        private static readonly List<MetadataFactory> _sourceList = new List<MetadataFactory>
+        {
+            new LineLiveMetadataFactory(),
+            new MirrativMetadataFactory(),
+            new NicoMetadataFactory(),
+            new OpenrecMetadataFactory(),
+            new TwicasMetadataFactory(),
+            new TwitchMetadataFactory(),
+            new WhowatchMetadataFactory(),
+            new YouTubeLiveMetadataFactory(),
+        };
+        [Test, TestCaseSource(nameof(_sourceList))]
+        public void NGユーザに指定されたら非表示になる(MetadataFactory sitePlugin)
+        {
+            var optionsMock = new Mock<ICommentOptions>();
+            var userMock = new Mock<IUser>();
+
+            var options = optionsMock.Object;
+            var user = userMock.Object;
+            var metadata = sitePlugin.CreateMetadata(options, user);
+            var isVisible = true;
+            metadata.PropertyChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(metadata.IsVisible):
+                        isVisible = metadata.IsVisible;
+                        break;
+                }
+            };
+            //NGユーザに指定されたら非表示になる
+            userMock.Setup(u => u.IsNgUser).Returns(true);
+            userMock.Raise(c => c.PropertyChanged += null, new PropertyChangedEventArgs(nameof(user.IsNgUser)));
+            Assert.IsFalse(isVisible);
+        }
+    }
+    [TestFixture]
+    partial class MessageMetadataTests
     {
         abstract class MetadataFactory
         {

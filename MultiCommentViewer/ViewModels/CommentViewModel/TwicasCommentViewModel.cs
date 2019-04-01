@@ -66,6 +66,9 @@ namespace MultiCommentViewer
                     case nameof(_metadata.IsNameWrapping):
                         RaisePropertyChanged(nameof(UserNameWrapping));
                         break;
+                    case nameof(_metadata.IsVisible):
+                        RaisePropertyChanged(nameof(IsVisible));
+                        break;
                 }
             };
             if (_metadata.User != null)
@@ -159,7 +162,7 @@ namespace MultiCommentViewer
 
         public string Info { get; private set; }
 
-        public bool IsVisible => true;
+        public bool IsVisible => _metadata.IsVisible;
 
         public string PostTime { get; private set; }
 

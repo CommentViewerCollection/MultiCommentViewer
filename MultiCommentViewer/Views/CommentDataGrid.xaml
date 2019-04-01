@@ -68,9 +68,14 @@
                 <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />
                 <!--<Setter Property="IsSelected" Value="{Binding IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />-->
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsVisible}" Value="False">
+                    <!--IsVisible==false&&ForceShowInvisibleComments==falseの時にだけVisibilityがCollapsedになる-->
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsVisible}" Value="False" />
+                            <Condition Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:CommentDataGrid}}, Path=ForceShowInvisibleComments}" Value="False" />
+                        </MultiDataTrigger.Conditions>
                         <Setter Property="Visibility" Value="Collapsed"/>
-                    </DataTrigger>
+                        </MultiDataTrigger>
                 </Style.Triggers>
 
             </Style>

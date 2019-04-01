@@ -127,8 +127,8 @@ namespace MirrativSitePlugin
             }
         }
 
-        public bool IsNgUser { get; }
-        public bool IsSiteNgUser { get; }
+        public bool IsNgUser => User != null ? User.IsNgUser : false;
+        public bool IsSiteNgUser => false;//TODO:IUserにIsSiteNgUserを追加する
         public bool IsFirstComment { get; }
         public string SiteName { get; }
         public bool Is184 { get; }
@@ -158,6 +158,18 @@ namespace MirrativSitePlugin
 
             options.PropertyChanged += Options_PropertyChanged;
             siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
+            user.PropertyChanged += User_PropertyChanged;
+        }
+
+        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(User.IsNgUser):
+                    //case nameof(User.IsSiteNgUser):
+                    RaisePropertyChanged(nameof(IsVisible));
+                    break;
+            }
         }
 
         private void SiteOptions_PropertyChanged(object sender, PropertyChangedEventArgs e)

@@ -262,7 +262,7 @@
             </DataGrid>
         </Grid>
         <GridSplitter Grid.Row="4" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" ResizeDirection="Rows"  />
-        <local:CommentDataGrid IsShowUserInfoMenuItem="True" Margin="5" Grid.Row="5" />
+        <local:CommentDataGrid IsShowUserInfoMenuItem="True" ForceShowInvisibleComments="False" Margin="5" Grid.Row="5" />
         <!--<DataGrid x:Name="dataGrid" ItemsSource="{Binding Comments, IsAsync=True}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"

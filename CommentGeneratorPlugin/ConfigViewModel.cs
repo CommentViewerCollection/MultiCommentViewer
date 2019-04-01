@@ -56,7 +56,7 @@ namespace CommentViewer.Plugin
         }
         public ConfigViewModel()
         {
-            if (IsInDesignMode)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
             {
                 _options = new Plugin.Options();
                 IsEnabled = true;

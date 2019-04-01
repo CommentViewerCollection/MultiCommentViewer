@@ -33,7 +33,7 @@ namespace MultiCommentViewer
         }
         public UserViewModel() : base(new DynamicOptionsTest())
         {
-            if (IsInDesignMode)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
             {
                 _user = new UserTest("userid_123456")
                 {

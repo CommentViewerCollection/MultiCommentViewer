@@ -91,6 +91,10 @@
       <Project>{02a55625-e735-4909-a470-e8405eee1a32}</Project>
       <Name>OpenrecIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
+      <Project>{4da33b17-792d-44d7-93f6-d0561788676d}</Project>
+      <Name>TwicasIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
       <Project>{aa70074d-1c40-4cc0-9e1c-7acdcbdd7d32}</Project>
       <Name>TwitchIF</Name>

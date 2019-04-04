@@ -104,10 +104,10 @@ namespace CommentViewer.Plugin
             {
                 siteName = "twitch";
             }
-            //else if (message is TwicasSitePlugin.ITwicasComment)
-            //{
-            //    siteName = "twicas";
-            //}
+            else if (message is TwicasSitePlugin.ITwicasComment)
+            {
+                siteName = "twicas";
+            }
             else if (message is WhowatchSitePlugin.IWhowatchComment)
             {
                 siteName = "whowatch";

@@ -487,6 +487,7 @@ namespace YouTubeLiveSitePlugin.Test2
                     user.Nickname = nick;
                 }
             }
+            metadata.User.Name = message.NameItems;
             return new YouTubeLiveMessageContext(message, metadata, methods);
         }
         private IYouTubeLiveMessage CreateMessage(CommentData data)

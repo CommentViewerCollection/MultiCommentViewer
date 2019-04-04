@@ -221,7 +221,7 @@ namespace MultiCommentViewer
 
         public string Info { get; private set; }
 
-        public bool IsVisible => true;
+        public bool IsVisible => _metadata.IsVisible;
 
         public string PostTime { get; private set; }
 

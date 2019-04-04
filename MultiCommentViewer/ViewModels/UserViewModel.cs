@@ -19,7 +19,10 @@ namespace MultiCommentViewer
                 _user.Nickname = value;
             }
         }
-        public string Username { get; set; }
+        public IEnumerable<IMessagePart> UsernameItems
+        {
+            get => _user.Name;
+        }
         public bool IsNgUser
         {
             get { return _user.IsNgUser; }

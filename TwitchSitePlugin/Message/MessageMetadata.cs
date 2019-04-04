@@ -15,14 +15,19 @@ namespace TwitchSitePlugin
         {
             get
             {
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
+                    return color;
+                }
                 //if (_message is ITwitchItem item)
                 //{
                 //    return _siteOptions.ItemBackColor;
                 //}
-                //else
-                //{
-                return _options.BackColor;
-                //}
+                else
+                {
+                    return _options.BackColor;
+                }
             }
         }
 
@@ -30,14 +35,19 @@ namespace TwitchSitePlugin
         {
             get
             {
+                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
+                    return color;
+                }
                 //if (_message is ITwitchItem item)
                 //{
                 //    return _siteOptions.ItemForeColor;
                 //}
-                //else
-                //{
-                return _options.ForeColor;
-                //}
+                else
+                {
+                    return _options.ForeColor;
+                }
             }
         }
 
@@ -144,6 +154,12 @@ namespace TwitchSitePlugin
                 case nameof(User.IsNgUser):
                     //case nameof(User.IsSiteNgUser):
                     RaisePropertyChanged(nameof(IsVisible));
+                    break;
+                case nameof(User.BackColorArgb):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(User.ForeColorArgb):
+                    RaisePropertyChanged(nameof(ForeColor));
                     break;
             }
         }

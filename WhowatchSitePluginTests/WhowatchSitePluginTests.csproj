@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
+    <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="MessageParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WhowatchCommentViewModelTests.cs" />

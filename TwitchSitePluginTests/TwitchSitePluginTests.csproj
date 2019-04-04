@@ -50,6 +50,7 @@
     <Compile Include="ApiTests.cs" />
     <Compile Include="CommandParseTests.cs" />
     <Compile Include="CommentViewModelTests.cs" />
+    <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Content Include="SampleData\Streams.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

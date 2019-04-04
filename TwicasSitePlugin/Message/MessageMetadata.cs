@@ -15,7 +15,12 @@ namespace TwicasSitePlugin
         {
             get
             {
-                if (_message is ITwicasKiitos)
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
+                    return color;
+                }
+                else if (_message is ITwicasKiitos)
                 {
                     return _siteOptions.KiitosBackColor;
                 }
@@ -34,7 +39,12 @@ namespace TwicasSitePlugin
         {
             get
             {
-                if (_message is ITwicasKiitos)
+                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
+                    return color;
+                }
+                else if (_message is ITwicasKiitos)
                 {
                     return _siteOptions.KiitosForeColor;
                 }
@@ -150,6 +160,12 @@ namespace TwicasSitePlugin
                 case nameof(User.IsNgUser):
                     //case nameof(User.IsSiteNgUser):
                     RaisePropertyChanged(nameof(IsVisible));
+                    break;
+                case nameof(User.BackColorArgb):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(User.ForeColorArgb):
+                    RaisePropertyChanged(nameof(ForeColor));
                     break;
             }
         }

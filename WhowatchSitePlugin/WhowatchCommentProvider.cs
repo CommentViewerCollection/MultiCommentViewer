@@ -45,7 +45,12 @@ namespace WhowatchSitePlugin
         {
             get
             {
-                if (_message is IWhowatchItem item)
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
+                    return color;
+                }
+                else if (_message is IWhowatchItem item)
                 {
                     return _siteOptions.ItemBackColor;
                 }
@@ -60,7 +65,12 @@ namespace WhowatchSitePlugin
         {
             get
             {
-                if (_message is IWhowatchItem item)
+                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
+                    return color;
+                }
+                else if (_message is IWhowatchItem item)
                 {
                     return _siteOptions.ItemForeColor;
                 }
@@ -185,6 +195,12 @@ namespace WhowatchSitePlugin
                 case nameof(User.IsNgUser):
                     //case nameof(User.IsSiteNgUser):
                     RaisePropertyChanged(nameof(IsVisible));
+                    break;
+                case nameof(User.BackColorArgb):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(User.ForeColorArgb):
+                    RaisePropertyChanged(nameof(ForeColor));
                     break;
             }
         }

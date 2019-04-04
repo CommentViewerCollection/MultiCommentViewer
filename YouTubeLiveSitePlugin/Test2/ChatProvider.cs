@@ -80,6 +80,10 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                     
                 }
+                catch(WebException ex)
+                {
+                    throw new ReloadException(ex);
+                }
                 catch (HttpRequestException ex)
                 {
                     throw new ReloadException(ex);

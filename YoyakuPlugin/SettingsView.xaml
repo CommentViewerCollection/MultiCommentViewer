@@ -12,6 +12,7 @@
     </Window.Resources>
     <Grid Margin="0,0,0,8" Background="#F0F0F0">
         <CheckBox x:Name="checkBox" Content="有効" IsChecked="{Binding IsEnabled}" HorizontalAlignment="Left" Margin="16,10,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label" Content="呼び出し" Padding="0" HorizontalAlignment="Left" Margin="1,25,0,0" VerticalAlignment="Top"/>
         <Button x:Name="button" Content="5人" Command="{Binding Call5People}"  HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" Width="75"/>
         <Button x:Name="button1" Content="4人" Command="{Binding Call4People}" HorizontalAlignment="Left" Margin="10,66,0,0" VerticalAlignment="Top" Width="75"/>
         <Button x:Name="button2" Content="3人" Command="{Binding Call3People}" HorizontalAlignment="Left" Margin="10,91,0,0" VerticalAlignment="Top" Width="75"/>
@@ -21,41 +22,43 @@
         <Button x:Name="button6" Content="呼出済を削除" Command="{Binding RemoveCalledUsersCommand}" HorizontalAlignment="Left" Margin="10,202,0,0" VerticalAlignment="Top" Width="75"/>
         <Button x:Name="button7" Content="全て削除" Command="{Binding ClearCommand}" HorizontalAlignment="Left" Margin="10,264,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.545,1.6"/>
         <Button x:Name="button8" Content="選択行削除" Command="{Binding DeleteCommand}" HorizontalAlignment="Left" Margin="10,239,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.122,0.553"/>
-        <RadioButton x:Name="radioButton" IsChecked="{Binding IsListSelected}" Content="一覧" HorizontalAlignment="Left" Margin="10,289,0,0" VerticalAlignment="Top"/>
-        <RadioButton x:Name="radioButton1" IsChecked="{Binding ElementName=radioButton, Path=IsChecked, Converter={StaticResource notConverter}}" Content="設定" HorizontalAlignment="Left" Margin="58,289,0,0" VerticalAlignment="Top"/>
-        <ScrollViewer HorizontalAlignment="Stretch" Visibility="{Binding SettingsVisibility}" Margin="109,10,10,10" VerticalAlignment="Stretch" Background="#F0F0F0" VerticalScrollBarVisibility="Visible">
-            <Grid Height="400" >
-                <Button x:Name="button9" Content="保存して一覧を表示" Command="{Binding SaveAndShowListCommand}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="105"/>
-                <Button x:Name="button10" Content="保存されている設定を戻す" Command="{Binding LoadSettingsCommand}" HorizontalAlignment="Left" Margin="120,10,0,0" VerticalAlignment="Top" Width="131" RenderTransformOrigin="0.013,0.738"/>
-                <Button x:Name="button11" Content="デフォルト" Command="{Binding DefaultCommand}" HorizontalAlignment="Left" Margin="256,10,0,0" VerticalAlignment="Top" Width="75"/>
-                <Label Content="予約受付メッセージ" VerticalAlignment="Top" HorizontalAlignment="Left" Padding="0" Margin="12,44,0,0" />
-                <Label Content="取り消し受付メッセージ" VerticalAlignment="Top" Padding="0" Margin="12,83,212,0" />
-                <Label Content="呼出メッセージ" VerticalAlignment="Top" Padding="0" Margin="12,122,252,0" RenderTransformOrigin="0.479,-0.354"/>
-                <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="12,60,0,0" TextWrapping="NoWrap" Text="{Binding Reserved_Se}" VerticalAlignment="Top" Width="80" RenderTransformOrigin="0.5,2.118"/>
-                <TextBox x:Name="textBox_Copy" HorizontalAlignment="Left" Height="23" Margin="97,60,0,0" TextWrapping="NoWrap" Text="{Binding Reserved_Message}" VerticalAlignment="Top" Width="224"/>
-                <TextBox x:Name="textBox_Copy1" HorizontalAlignment="Left" Height="23" Margin="12,99,0,0" TextWrapping="NoWrap" Text="{Binding Delete_Se}" VerticalAlignment="Top" Width="80"/>
-                <TextBox x:Name="textBox_Copy2" HorizontalAlignment="Left" Height="23" Margin="97,99,0,0" TextWrapping="NoWrap" Text="{Binding Delete_Message}" VerticalAlignment="Top" Width="224"/>
-                <TextBox x:Name="textBox_Copy3" HorizontalAlignment="Left" Height="23" Margin="12,138,0,0" TextWrapping="NoWrap" Text="{Binding Call_Se}" VerticalAlignment="Top" Width="80" RenderTransformOrigin="0.544,-0.706"/>
-                <TextBox x:Name="textBox_Copy4" HorizontalAlignment="Left" Height="23" Margin="97,138,0,0" TextWrapping="NoWrap" Text="{Binding Call_Message}" VerticalAlignment="Top" Width="224"/>
-                <TextBox x:Name="textBox_Copy5" HorizontalAlignment="Left" Height="23" Margin="12,177,0,0" TextWrapping="NoWrap" Text="{Binding AlreadyReserved_Se}" VerticalAlignment="Top" Width="80"/>
-                <TextBox x:Name="textBox_Copy6" HorizontalAlignment="Left" Height="23" Margin="97,177,0,0" TextWrapping="NoWrap" Text="{Binding AlreadyReserved_Message}" VerticalAlignment="Top" Width="224"/>
-                <Label Content="既に予約されているとき" VerticalAlignment="Top" Padding="0" Margin="12,161,212,0"/>
-                <Label Content="コテハンなしの人の時のエラー" VerticalAlignment="Top" Padding="0" Margin="12,200,191,0"/>
-                <TextBox x:Name="textBox_Copy7" HorizontalAlignment="Left" Height="23" Margin="12,216,0,0" TextWrapping="NoWrap" Text="{Binding HandleNameNotSubscribed_Se}" VerticalAlignment="Top" Width="80"/>
-                <TextBox x:Name="textBox_Copy8" HorizontalAlignment="Left" Height="23" Margin="97,216,0,0" TextWrapping="NoWrap" Text="{Binding HandleNameNotSubscribed_Message}" VerticalAlignment="Top" Width="224"/>
-                <Label Content="予約がされていないとき" VerticalAlignment="Top" Padding="0" Margin="12,239,214,0"/>
-                <TextBox x:Name="textBox_Copy9" HorizontalAlignment="Left" Height="23" Margin="12,255,0,0" TextWrapping="NoWrap" Text="{Binding NotReserved_Se}" VerticalAlignment="Top" Width="80"/>
-                <TextBox x:Name="textBox_Copy10" HorizontalAlignment="Left" Height="23" Margin="97,255,0,0" TextWrapping="NoWrap" Text="{Binding NotReserved_Message}" VerticalAlignment="Top" Width="224"/>
-                <Label Content="予約した人以外が取り消し" VerticalAlignment="Top" Padding="0" Margin="12,278,193,0"/>
-                <TextBox x:Name="textBox_Copy11" HorizontalAlignment="Left" Height="23" Margin="12,294,0,0" TextWrapping="NoWrap" Text="{Binding DeleteByOther_Se}" VerticalAlignment="Top" Width="80"/>
-                <TextBox x:Name="textBox_Copy12" HorizontalAlignment="Left" Height="23" Margin="97,294,0,0" TextWrapping="NoWrap" Text="{Binding DeleteByOther_Message}" VerticalAlignment="Top" Width="224"/>
-                <Label Content="説明" VerticalAlignment="Top" Padding="0" Margin="12,317,296,0"/>
-                <TextBox x:Name="textBox_Copy13" HorizontalAlignment="Left" Height="23" Margin="12,333,0,0" TextWrapping="NoWrap" Text="{Binding Explain_Se}" VerticalAlignment="Top" Width="80" RenderTransformOrigin="0.338,0.551"/>
-                <TextBox x:Name="textBox_Copy14" HorizontalAlignment="Left" Height="41" Margin="97,333,0,0" TextWrapping="NoWrap" Text="{Binding Explain_Message}" VerticalAlignment="Top" Width="224"/>
-            </Grid>
-        </ScrollViewer>
-        <ScrollViewer HorizontalAlignment="Stretch" Visibility="{Binding ListVisibility}" Margin="109,10,10,10" VerticalAlignment="Stretch" Background="#F0F0F0" VerticalScrollBarVisibility="Visible">
-            <DataGrid 
+        <TabControl Margin="106,10,0,0">
+            <TabItem Header="設定">
+                <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#F0F0F0" VerticalScrollBarVisibility="Visible">
+                    <Grid>
+                        <Button x:Name="button9" Content="保存して一覧を表示" Command="{Binding SaveAndShowListCommand}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="105"/>
+                        <Button x:Name="button10" Content="保存されている設定を戻す" Command="{Binding LoadSettingsCommand}" HorizontalAlignment="Left" Margin="120,10,0,0" VerticalAlignment="Top" Width="131" RenderTransformOrigin="0.013,0.738"/>
+                        <Button x:Name="button11" Content="デフォルト" Command="{Binding DefaultCommand}" HorizontalAlignment="Left" Margin="256,10,0,0" VerticalAlignment="Top" Width="75"/>
+                        <Label Content="予約受付メッセージ" VerticalAlignment="Top" HorizontalAlignment="Left" Padding="0" Margin="12,44,0,0" />
+                        <Label Content="取り消し受付メッセージ" VerticalAlignment="Top" Padding="0" Margin="12,83,212,0" />
+                        <Label Content="呼出メッセージ" VerticalAlignment="Top" Padding="0" Margin="12,122,252,0" RenderTransformOrigin="0.479,-0.354"/>
+                        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="12,60,0,0" TextWrapping="NoWrap" Text="{Binding Reserved_Se}" VerticalAlignment="Top" Width="80" RenderTransformOrigin="0.5,2.118"/>
+                        <TextBox x:Name="textBox_Copy" HorizontalAlignment="Left" Height="23" Margin="97,60,0,0" TextWrapping="NoWrap" Text="{Binding Reserved_Message}" VerticalAlignment="Top" Width="224"/>
+                        <TextBox x:Name="textBox_Copy1" HorizontalAlignment="Left" Height="23" Margin="12,99,0,0" TextWrapping="NoWrap" Text="{Binding Delete_Se}" VerticalAlignment="Top" Width="80"/>
+                        <TextBox x:Name="textBox_Copy2" HorizontalAlignment="Left" Height="23" Margin="97,99,0,0" TextWrapping="NoWrap" Text="{Binding Delete_Message}" VerticalAlignment="Top" Width="224"/>
+                        <TextBox x:Name="textBox_Copy3" HorizontalAlignment="Left" Height="23" Margin="12,138,0,0" TextWrapping="NoWrap" Text="{Binding Call_Se}" VerticalAlignment="Top" Width="80" RenderTransformOrigin="0.544,-0.706"/>
+                        <TextBox x:Name="textBox_Copy4" HorizontalAlignment="Left" Height="23" Margin="97,138,0,0" TextWrapping="NoWrap" Text="{Binding Call_Message}" VerticalAlignment="Top" Width="224"/>
+                        <TextBox x:Name="textBox_Copy5" HorizontalAlignment="Left" Height="23" Margin="12,177,0,0" TextWrapping="NoWrap" Text="{Binding AlreadyReserved_Se}" VerticalAlignment="Top" Width="80"/>
+                        <TextBox x:Name="textBox_Copy6" HorizontalAlignment="Left" Height="23" Margin="97,177,0,0" TextWrapping="NoWrap" Text="{Binding AlreadyReserved_Message}" VerticalAlignment="Top" Width="224"/>
+                        <Label Content="既に予約されているとき" VerticalAlignment="Top" Padding="0" Margin="12,161,212,0"/>
+                        <Label Content="コテハンなしの人の時のエラー" VerticalAlignment="Top" Padding="0" Margin="12,200,191,0"/>
+                        <TextBox x:Name="textBox_Copy7" HorizontalAlignment="Left" Height="23" Margin="12,216,0,0" TextWrapping="NoWrap" Text="{Binding HandleNameNotSubscribed_Se}" VerticalAlignment="Top" Width="80"/>
+                        <TextBox x:Name="textBox_Copy8" HorizontalAlignment="Left" Height="23" Margin="97,216,0,0" TextWrapping="NoWrap" Text="{Binding HandleNameNotSubscribed_Message}" VerticalAlignment="Top" Width="224"/>
+                        <Label Content="予約がされていないとき" VerticalAlignment="Top" Padding="0" Margin="12,239,214,0"/>
+                        <TextBox x:Name="textBox_Copy9" HorizontalAlignment="Left" Height="23" Margin="12,255,0,0" TextWrapping="NoWrap" Text="{Binding NotReserved_Se}" VerticalAlignment="Top" Width="80"/>
+                        <TextBox x:Name="textBox_Copy10" HorizontalAlignment="Left" Height="23" Margin="97,255,0,0" TextWrapping="NoWrap" Text="{Binding NotReserved_Message}" VerticalAlignment="Top" Width="224"/>
+                        <Label Content="予約した人以外が取り消し" VerticalAlignment="Top" Padding="0" Margin="12,278,193,0"/>
+                        <TextBox x:Name="textBox_Copy11" HorizontalAlignment="Left" Height="23" Margin="12,294,0,0" TextWrapping="NoWrap" Text="{Binding DeleteByOther_Se}" VerticalAlignment="Top" Width="80"/>
+                        <TextBox x:Name="textBox_Copy12" HorizontalAlignment="Left" Height="23" Margin="97,294,0,0" TextWrapping="NoWrap" Text="{Binding DeleteByOther_Message}" VerticalAlignment="Top" Width="224"/>
+                        <Label Content="説明" VerticalAlignment="Top" Padding="0" Margin="12,317,296,0"/>
+                        <TextBox x:Name="textBox_Copy13" HorizontalAlignment="Left" Height="23" Margin="12,333,0,0" TextWrapping="NoWrap" Text="{Binding Explain_Se}" VerticalAlignment="Top" Width="80" RenderTransformOrigin="0.338,0.551"/>
+                        <TextBox x:Name="textBox_Copy14" HorizontalAlignment="Left" Height="41" Margin="97,333,0,0" TextWrapping="NoWrap" Text="{Binding Explain_Message}" VerticalAlignment="Top" Width="224"/>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="一覧">
+                <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#F0F0F0" VerticalScrollBarVisibility="Visible">
+                    <DataGrid 
                 AutoGenerateColumns="False"
                 CanUserAddRows="False"
                 CanUserDeleteRows="False"
@@ -64,34 +67,34 @@
                 SelectionMode="Extended"
                 SelectedValue="{Binding SelectedUser}"
                 ItemsSource="{Binding RegisteredUsers, IsAsync=True}">
-                <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="登録日時">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Date, StringFormat={}{0:yyyy/MM/dd HH:mm}}" Margin="5,0,5,0"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="登録ID">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Id}" Margin="5,0,5,0"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="名前">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}" Margin="5,0,5,0"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridCheckBoxColumn Header="呼出済" Binding="{Binding HadCalled, Mode=TwoWay}">
-                    </DataGridCheckBoxColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-        </ScrollViewer>
-        <Label x:Name="label" Content="呼び出し" Padding="0" HorizontalAlignment="Left" Margin="1,25,0,0" VerticalAlignment="Top"/>
-        <!--<Grid HorizontalAlignment="Left" Visibility="Collapsed" Height="306" Margin="109,10,0,0" VerticalAlignment="Top" Width="332"/>-->
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="登録日時">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Date, StringFormat={}{0:yyyy/MM/dd HH:mm}}" Margin="5,0,5,0"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="登録ID">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Id}" Margin="5,0,5,0"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="名前">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" Margin="5,0,5,0"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridCheckBoxColumn Header="呼出済" Binding="{Binding HadCalled, Mode=TwoWay}">
+                            </DataGridCheckBoxColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

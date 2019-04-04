@@ -20,12 +20,12 @@
         <Label Content="コテハン" HorizontalAlignment="Left" Margin="50,125,0,0" VerticalAlignment="Top"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="125,125,0,0" TextWrapping="Wrap" Text="{Binding Nickname, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="120"/>
         <w:BindableTextBlock TextWrapping="NoWrap" InlineList="{Binding UsernameItems, Converter={StaticResource messageConverter}, ConverterParameter=true}" Margin="125,86,166,229" />
-        <CheckBox Content="NGユーザ" IsChecked="{Binding IsNgUser}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="335,6,0,0" />
+        <CheckBox Content="NGユーザ" IsChecked="{Binding IsNgUser, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="335,6,0,0" />
         <CheckBox Content="サイトNGユーザ" Visibility="Hidden" IsChecked="{Binding IsSiteNgUser}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="335,31,0,0" />
-        <CheckBox Content="背景色を変更" IsChecked="{Binding IsEnabledUserBackColor}" HorizontalAlignment="Left" Margin="335,65,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker SelectedColor="{Binding BackColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="360,85,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <CheckBox Content="文字色を変更" IsChecked="{Binding IsEnabledUserForeColor}" HorizontalAlignment="Left" Margin="335,112,0,0" VerticalAlignment="Top"/>
-        <xctk:ColorPicker SelectedColor="{Binding ForeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="360,132,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox Content="背景色を変更" IsChecked="{Binding IsEnabledUserBackColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Margin="335,65,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker SelectedColor="{Binding BackColor, Mode=TwoWay}" Margin="360,85,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox Content="文字色を変更" IsChecked="{Binding IsEnabledUserForeColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Margin="335,112,0,0" VerticalAlignment="Top"/>
+        <xctk:ColorPicker SelectedColor="{Binding ForeColor, Mode=TwoWay}" Margin="360,132,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
 
     </Grid>

@@ -124,12 +124,39 @@ namespace MultiCommentViewer
         public UserViewModel(IUser user, IOptions option) : base(option)
         {
             _user = user;
+            user.PropertyChanged += User_PropertyChanged;
         }
         public UserViewModel(IUser user, IOptions option, ICollectionView comments) 
             : base(option, comments)
         {
             _user = user;
+            user.PropertyChanged += User_PropertyChanged;
         }
+
+        private void User_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(_user.IsNgUser):
+                    RaisePropertyChanged(nameof(IsNgUser));
+                    break;
+                case nameof(_user.BackColorArgb):
+                    RaisePropertyChanged(nameof(IsEnabledUserBackColor));
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(_user.ForeColorArgb):
+                    RaisePropertyChanged(nameof(IsEnabledUserForeColor));
+                    RaisePropertyChanged(nameof(ForeColor));
+                    break;
+                case nameof(_user.Nickname):
+                    RaisePropertyChanged(nameof(Nickname));
+                    break;
+                case nameof(_user.Name):
+                    RaisePropertyChanged(nameof(UsernameItems));
+                    break;
+            }
+        }
+
         public UserViewModel() : base(new DynamicOptionsTest())
         {
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))

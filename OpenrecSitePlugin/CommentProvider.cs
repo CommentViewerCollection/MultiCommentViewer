@@ -258,6 +258,7 @@ namespace OpenrecSitePlugin
             var nameItems = new List<IMessagePart>();
             nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
             nameItems.AddRange(commentData.NameIcons);
+            user.Name = nameItems;
 
             var messageItems = new List<IMessagePart>();
             if (commentData.IsYell)

@@ -68,6 +68,18 @@ namespace MultiCommentViewer
             }
         }
         /// <summary>
+        /// Visibleがfalseに指定されているコメントも強制的に表示するか
+        /// 個別ユーザ情報では全てのコメントを表示したい。その場合にtrueにする。
+        /// </summary>
+        public bool ForceShowInvisibleComments
+        {
+            get { return (bool)GetValue(ForceShowInvisibleCommentsProperty); }
+            set { SetValue(ForceShowInvisibleCommentsProperty, value); }
+        }
+
+        public static readonly DependencyProperty ForceShowInvisibleCommentsProperty =
+            DependencyProperty.Register(nameof(ForceShowInvisibleComments), typeof(bool), typeof(CommentDataGrid), new PropertyMetadata(true));
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="sender"></param>

@@ -89,6 +89,10 @@
       <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>
       <Name>OpenrecSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
+      <Project>{4da33b17-792d-44d7-93f6-d0561788676d}</Project>
+      <Name>TwicasIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj">
       <Project>{ebcbadab-c5be-440a-be08-c660244d1f15}</Project>
       <Name>TwicasSitePlugin</Name>

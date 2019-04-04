@@ -52,12 +52,19 @@
     <Compile Include="ConnectionSerializerTests.cs" />
     <Compile Include="ConnectionViewModelTests.cs" />
     <Compile Include="DynamicOptionsTest.cs" />
+    <Compile Include="YouTubeLiveCommentViewModelTests.cs" />
+    <Compile Include="TwitchCommentViewModelTests.cs" />
+    <Compile Include="TwicasCommentViewModelTests.cs" />
+    <Compile Include="OpenrecCommentViewModelTests.cs" />
+    <Compile Include="MirrativCommentViewModelTests.cs" />
+    <Compile Include="LineLiveCommentViewModelTests.cs" />
     <Compile Include="MainViewModelTests.cs" />
     <Compile Include="NicoCommentViewModelTests.cs" />
     <Compile Include="OptionsTest.cs" />
     <Compile Include="PluginMenuItemViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SitePluginTests.cs" />
+    <Compile Include="WhowatchCommentViewModelTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -102,6 +109,10 @@
     <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
       <Project>{02A55625-E735-4909-A470-E8405EEE1A32}</Project>
       <Name>OpenrecIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
+      <Project>{4DA33B17-792D-44D7-93F6-D0561788676D}</Project>
+      <Name>TwicasIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
       <Project>{AA70074D-1C40-4CC0-9E1C-7ACDCBDD7D32}</Project>

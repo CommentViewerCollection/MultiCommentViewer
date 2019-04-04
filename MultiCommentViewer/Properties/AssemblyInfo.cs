@@ -12,7 +12,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ryu-s")]
 [assembly: AssemblyProduct("MultiCommentViewer")]
-[assembly: AssemblyCopyright("Copyright © 2018 ryu-s")]
+[assembly: AssemblyCopyright("Copyright © 2018-2019 ryu-s")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -51,7 +51,7 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.3.9")]
-[assembly: AssemblyFileVersion("0.3.9.0")]
+[assembly: AssemblyVersion("0.3.10")]
+[assembly: AssemblyFileVersion("0.3.10.0")]
 
 [assembly:InternalsVisibleTo("MultiCommentViewerTests")]

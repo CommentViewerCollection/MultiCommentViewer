@@ -32,6 +32,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,6 +45,7 @@
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
     <Compile Include="CommentProviderTests.cs" />
+    <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="ParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Content Include="SampleData\Class1.txt" />

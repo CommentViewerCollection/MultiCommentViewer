@@ -15,7 +15,12 @@ namespace NicoSitePlugin
         {
             get
             {
-                if(_message is INicoConnected)
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
+                    return color;
+                }
+                else if (_message is INicoConnected)
                 {
                     return _options.InfoBackColor;
                 }
@@ -34,7 +39,12 @@ namespace NicoSitePlugin
         {
             get
             {
-                if (_message is INicoConnected)
+                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
+                    return color;
+                }
+                else if (_message is INicoConnected)
                 {
                     return _options.InfoForeColor;
                 }
@@ -142,6 +152,24 @@ namespace NicoSitePlugin
 
             options.PropertyChanged += Options_PropertyChanged;
             siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
+            user.PropertyChanged += User_PropertyChanged;
+        }
+
+        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(User.IsNgUser):
+                    //case nameof(User.IsSiteNgUser):
+                    RaisePropertyChanged(nameof(IsVisible));
+                    break;
+                case nameof(User.BackColorArgb):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(User.ForeColorArgb):
+                    RaisePropertyChanged(nameof(ForeColor));
+                    break;
+            }
         }
 
         private void SiteOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

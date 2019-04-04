@@ -16,7 +16,12 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             get
             {
-                if (_message is IYouTubeLiveSuperchat item)
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
+                    return color;
+                }
+                else if (_message is IYouTubeLiveSuperchat item)
                 {
                     return _siteOptions.PaidCommentBackColor;
                 }
@@ -31,7 +36,12 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             get
             {
-                if (_message is IYouTubeLiveSuperchat item)
+                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
+                {
+                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
+                    return color;
+                }
+                else if (_message is IYouTubeLiveSuperchat item)
                 {
                     return _siteOptions.PaidCommentForeColor;
                 }
@@ -102,8 +112,8 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
 
-        public bool IsNgUser { get; }
-        public bool IsSiteNgUser { get; }
+        public bool IsNgUser => User != null ? User.IsNgUser : false;
+        public bool IsSiteNgUser => false;//TODO:IUserにIsSiteNgUserを追加する
         public bool IsFirstComment { get; }
         public string SiteName { get; }
         public bool Is184 { get; }
@@ -132,6 +142,24 @@ namespace YouTubeLiveSitePlugin.Test2
             _isFirstComment = isFirstComment;
 
             options.PropertyChanged += Options_PropertyChanged;
+            user.PropertyChanged += User_PropertyChanged;
+        }
+
+        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(User.IsNgUser):
+                    //case nameof(User.IsSiteNgUser):
+                    RaisePropertyChanged(nameof(IsVisible));
+                    break;
+                case nameof(User.BackColorArgb):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(User.ForeColorArgb):
+                    RaisePropertyChanged(nameof(ForeColor));
+                    break;
+            }
         }
 
         private void Options_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -3,6 +3,8 @@ using MultiCommentViewer.Test;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Common;
+using System.Windows.Media;
+using System.Collections.Generic;
 
 namespace MultiCommentViewer
 {
@@ -17,7 +19,104 @@ namespace MultiCommentViewer
                 _user.Nickname = value;
             }
         }
-        public string Username { get; set; }
+        public IEnumerable<IMessagePart> UsernameItems
+        {
+            get => _user.Name;
+        }
+        public bool IsNgUser
+        {
+            get { return _user.IsNgUser; }
+            set
+            {
+                _user.IsNgUser = value;
+            }
+        }
+        public bool IsSiteNgUser
+        {
+            get => false;
+            set
+            {
+
+            }
+        }
+        public bool IsEnabledUserBackColor
+        {
+            get { return !string.IsNullOrEmpty(_user.BackColorArgb); }
+            set
+            {
+                var newValue = value;
+                if (newValue == false)
+                {
+                    _user.BackColorArgb = null;
+                }
+                else
+                {
+                    if (_user.BackColorArgb == null)
+                    {
+                        _user.BackColorArgb = "#FFFFFFFF";
+                    }
+                }
+            }
+        }
+        public bool IsEnabledUserForeColor
+        {
+            get { return !string.IsNullOrEmpty(_user.ForeColorArgb); }
+            set
+            {
+                var newValue = value;
+                if (newValue == false)
+                {
+                    _user.ForeColorArgb = null;
+                }
+                else
+                {
+                    if (_user.ForeColorArgb == null)
+                    {
+                        _user.ForeColorArgb = "#FF000000";
+                    }
+                }
+            }
+        }
+        public Color BackColor
+        {
+            get
+            {
+                var str = _user.BackColorArgb;
+                if (string.IsNullOrEmpty(str))
+                {
+                    return Common.Utils.ColorFromArgb("#00000000");
+                }
+                else
+                {
+                    return Common.Utils.ColorFromArgb(str);
+                }
+            }
+            set
+            {
+                var color = value;
+                _user.BackColorArgb = Common.Utils.ColorToArgb(color);
+            }
+        }
+        public Color ForeColor
+        {
+            get
+            {
+                var str = _user.ForeColorArgb;
+                if (string.IsNullOrEmpty(str))
+                {
+                    return Common.Utils.ColorFromArgb("#00000000");
+                }
+                else
+                {
+                    return Common.Utils.ColorFromArgb(str);
+                }
+            }
+            set
+            {
+                var color = value;
+                _user.ForeColorArgb = Common.Utils.ColorToArgb(color);
+            }
+        }
         private readonly IUser _user;
         public override bool IsShowThumbnail { get => false; set { } }
         public override bool IsShowUsername { get => false; set { } }
@@ -33,10 +132,13 @@ namespace MultiCommentViewer
         }
         public UserViewModel() : base(new DynamicOptionsTest())
         {
-            if (IsInDesignMode)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
             {
                 _user = new UserTest("userid_123456")
                 {
+                    IsNgUser = true,
+                    IsSiteNgUser = true,
+                    Name = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("USERNAME") },
                     Nickname = "NICKNAME",
                     BackColorArgb = "#FFCFCFCF",
                     ForeColorArgb = "#FF000000",

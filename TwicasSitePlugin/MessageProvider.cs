@@ -300,6 +300,10 @@ namespace TwicasSitePlugin
                     _logger.LogException(ex);
                     SendInfo(ex.Message, InfoType.Debug);
                 }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
                 catch (Exception ex)
                 {
                     _logger.LogException(ex);

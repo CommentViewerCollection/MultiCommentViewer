@@ -33,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -45,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
+    <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="NicoCasCommentProviderTests.cs" />
     <Compile Include="NicoCommentProviderTests.cs" />
     <Compile Include="NicoCommentViewModelTests.cs" />

@@ -742,7 +742,11 @@ namespace MultiCommentViewer
                     AddComment(comment, connectionViewModel);
                     //uvm.Comments.Add(comment);
                 }), DispatcherPriority.Normal);
-                _pluginManager.SetMessage(e.Message, e.Metadata);
+                //プラグインに渡すのはIInfoMessage以外全て
+                if (!(e.Message is IInfoMessage))
+                {
+                    _pluginManager.SetMessage(e.Message, e.Metadata);
+                }
                 await methods.AfterCommentAdded();
             }
             catch (TaskCanceledException) { }

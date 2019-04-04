@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using Common;
 using GalaSoft.MvvmLight;
@@ -52,7 +54,7 @@ namespace OpenrecSitePlugin
         #region Ctors
         public CommentPostPanelViewModel()
         {
-            if (IsInDesignMode)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
             {
 
             }

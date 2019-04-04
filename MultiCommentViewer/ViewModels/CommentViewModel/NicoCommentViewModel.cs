@@ -85,6 +85,9 @@ namespace MultiCommentViewer
                     case nameof(_metadata.IsNameWrapping):
                         RaisePropertyChanged(nameof(UserNameWrapping));
                         break;
+                    case nameof(_metadata.IsVisible):
+                        RaisePropertyChanged(nameof(IsVisible));
+                        break;
                 }
             };
             if (_metadata.User != null)

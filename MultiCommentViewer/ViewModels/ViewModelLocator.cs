@@ -15,6 +15,7 @@
 using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
+using System.ComponentModel;
 
 namespace MultiCommentViewer.ViewModels
 {
@@ -31,7 +32,7 @@ namespace MultiCommentViewer.ViewModels
         {
             ServiceLocator.SetLocatorProvider(() => SimpleIoc.Default);
 
-            if (ViewModelBase.IsInDesignModeStatic)
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
             {
                 SimpleIoc.Default.Register<MainViewModel>();
             }

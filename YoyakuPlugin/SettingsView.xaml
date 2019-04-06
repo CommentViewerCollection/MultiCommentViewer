@@ -58,15 +58,21 @@
             </TabItem>
             <TabItem Header="一覧">
                 <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#F0F0F0" VerticalScrollBarVisibility="Visible">
-                    <DataGrid 
-                AutoGenerateColumns="False"
-                CanUserAddRows="False"
-                CanUserDeleteRows="False"
-                CanUserReorderColumns="False"
-                CanUserResizeRows="False"
-                SelectionMode="Extended"
-                SelectedValue="{Binding SelectedUser}"
-                ItemsSource="{Binding RegisteredUsers, IsAsync=True}">
+                    <DataGrid x:Name="RegisteredUserDataGrid"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              CanUserReorderColumns="False"
+                              CanUserResizeRows="False"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              SelectedValue="{Binding SelectedUser}"
+                              AllowDrop="True"
+                              Drop="DataGrid_Drop"
+                              PreviewMouseLeftButtonDown="DataGrid_PreviewMouseLeftButtonDown"
+                              MouseMove="PositionsGrid_MouseMove"
+                              MouseLeftButtonUp="PositionsGrid_MouseLeftButtonUp"
+                              ItemsSource="{Binding RegisteredUsers, IsAsync=True}">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="登録日時">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -89,8 +95,13 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridCheckBoxColumn Header="呼出済" Binding="{Binding HadCalled, Mode=TwoWay}">
-                            </DataGridCheckBoxColumn>
+                            <DataGridTemplateColumn Header="呼出済">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding HadCalled, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </ScrollViewer>

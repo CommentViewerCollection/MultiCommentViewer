@@ -10,7 +10,6 @@
         xmlns:command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        DataContext="{Binding Main, Source={StaticResource Locator}}"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
         d:DesignWidth="1000"
         Title="{Binding Title}" Topmost="{Binding Topmost}"

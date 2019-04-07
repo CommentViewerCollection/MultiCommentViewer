@@ -546,7 +546,23 @@ namespace MultiCommentViewer
             }
         }
         #endregion //Methods
+        public event EventHandler<EventArgs> CloseRequested;
+        public void RequestClose()
+        {
+            OnCloseRequested(EventArgs.Empty);
+        }
 
+        protected virtual void OnCloseRequested(EventArgs e)
+        {
+            CloseRequested?.Invoke(this, e);
+        }
+
+        public async Task InitializeAsync()
+        {
+            //use this to test the exception handling
+            //throw new NotImplementedException();
+            await Task.CompletedTask;
+        }
         private void AddComment(ICommentViewModel cvm, IConnectionStatus connectionName)
         {
             if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)

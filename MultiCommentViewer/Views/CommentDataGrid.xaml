@@ -84,7 +84,7 @@
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             </Style>
             <ContextMenu x:Key="listViewHeaderContext" DataContext="{Binding DataContext, Source={x:Reference dummyElement}}">
-                <MenuItem Header="サイト名" IsChecked="{Binding IsShowConnectionName, Mode=TwoWay}" IsCheckable="True" />
+                <MenuItem Header="接続名" IsChecked="{Binding IsShowConnectionName, Mode=TwoWay}" IsCheckable="True" />
                 <MenuItem Header="サムネ" IsChecked="{Binding IsShowThumbnail, Mode=TwoWay}" IsCheckable="True" />
                 <MenuItem Header="コメントID" IsChecked="{Binding IsShowCommentId, Mode=TwoWay}" IsCheckable="True" />
                 <MenuItem Header="ユーザ名" IsChecked="{Binding IsShowUsername, Mode=TwoWay}" IsCheckable="True" />

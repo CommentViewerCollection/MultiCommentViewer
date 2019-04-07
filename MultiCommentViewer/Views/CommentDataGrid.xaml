@@ -92,7 +92,8 @@
 
                 <MenuItem Header="投稿時間" IsChecked="{Binding IsShowPostTime, Mode=TwoWay}" IsCheckable="True" />
                 <!--<MenuItem Header="経過時間" IsChecked="{Binding IsShowPostElapsed, Mode=TwoWay}" IsCheckable="True" />-->
-            </ContextMenu>
+                    <MenuItem Header="情報" IsChecked="{Binding IsShowInfo, Mode=TwoWay}" IsCheckable="True" />
+                </ContextMenu>
             <Style TargetType="{x:Type DataGridColumnHeader}">
                 <Setter Property="ContextMenu" Value="{StaticResource listViewHeaderContext}" />
             </Style>

@@ -25,6 +25,9 @@ namespace MultiCommentViewer.Test
                 new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger),
                 new WhowatchSitePlugin.WhowatchSiteContext(options, logger),
                 new MirrativSitePlugin.MirrativSiteContext(options,new MirrativSitePlugin.MirrativServer(), logger),
+#if DEBUG
+                new TestSitePlugin.TestSiteContext(options),
+#endif
             };
             foreach(var site in list)
             {

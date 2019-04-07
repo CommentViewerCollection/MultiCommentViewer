@@ -563,6 +563,7 @@ namespace MultiCommentViewer
             if(messageContext.Message is IInfoMessage infoMessage)
             {
                 //TODO:
+                Debug.WriteLine(infoMessage.CommentItems.ToText());
             }
             else if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
             {
@@ -690,6 +691,13 @@ namespace MultiCommentViewer
                 else if (twicasMessage is TwicasSitePlugin.ITwicasDisconnected disconnected)
                 {
                     mcvCvm = new TwicasCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
+                }
+            }
+            else if(messageContext.Message is TestSitePlugin.ITestMessage testMessage)
+            {
+                if(testMessage is TestSitePlugin.ITestComment comment)
+                {
+                    mcvCvm = new TestCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
             if (mcvCvm != null)

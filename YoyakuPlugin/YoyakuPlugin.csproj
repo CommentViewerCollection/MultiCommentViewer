@@ -47,7 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converter.cs" />
-    <Compile Include="DynamicOptionsBase.cs" />
     <Compile Include="IOptions.cs" />
     <Compile Include="main.cs" />
     <Compile Include="Options.cs" />
@@ -64,6 +63,10 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IPlugin\Plugin.csproj">
       <Project>{735CFEEE-5B77-4D36-977B-4CD94A6F3CDB}</Project>
       <Name>Plugin</Name>

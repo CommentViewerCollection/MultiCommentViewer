@@ -59,7 +59,10 @@ namespace TwicasSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("twitcasting.tv");
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch { }
             return cc;
@@ -90,13 +93,7 @@ namespace TwicasSitePlugin
                 //Info
                 return;
             }
-            _cc = new CookieContainer();
-            try
-            {
-                var cookies = browserProfile.GetCookieCollection("twitcasting.tv");
-                _cc.Add(cookies);
-            }
-            catch { }
+            _cc = CreateCookieContainer(browserProfile);
 
             CanConnect = false;
             CanDisconnect = true;

@@ -66,6 +66,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\CommentViewModel\TestCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwicasCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\OpenrecCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\LineLiveCommentViewModel.cs" />
@@ -97,14 +98,9 @@
     <Compile Include="ViewModels\PluginHost.cs" />
     <Compile Include="ViewModels\PluginMenuItemViewModel.cs" />
     <Compile Include="ViewModels\SiteViewModel.cs" />
-    <Compile Include="Test\CommentViewModelTest.cs" />
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
-    <Compile Include="Test\TestSite.cs" />
-    <Compile Include="Test\TestSiteOptionsPagePanel.xaml.cs">
-      <DependentUpon>TestSiteOptionsPagePanel.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
@@ -136,10 +132,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\OptionsView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Test\TestSiteOptionsPagePanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -244,6 +236,14 @@
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
       <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
       <Name>SitePluginCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestSiteIF\TestSiteIF.csproj">
+      <Project>{ff176bcd-7f7e-4c42-9e8d-17912097b3c7}</Project>
+      <Name>TestSiteIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestSitePlugin\TestSitePlugin.csproj">
+      <Project>{74cca5b2-d0ba-4839-9e2b-efcf309835e5}</Project>
+      <Name>TestSitePlugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
       <Project>{4da33b17-792d-44d7-93f6-d0561788676d}</Project>

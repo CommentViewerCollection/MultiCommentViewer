@@ -359,7 +359,10 @@ namespace WhowatchSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("whowatch.tv");
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch { }
             return cc;

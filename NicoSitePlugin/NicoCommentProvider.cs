@@ -510,6 +510,10 @@ namespace NicoSitePlugin
             var user = _userStore.GetUser(userId);
 
             var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions.IsAutoSetNickname, _mainRoomThreadId, _logger);
+            if(message == null)
+            {
+                return null;
+            }
             bool isFirstComment;
             if (_userCommentCountDict.ContainsKey(userId))
             {
@@ -590,8 +594,10 @@ namespace NicoSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("nicovideo.jp");
-
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch { }
             return cc;

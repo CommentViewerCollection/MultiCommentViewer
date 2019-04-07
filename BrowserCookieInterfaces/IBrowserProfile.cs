@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 
 namespace ryu_s.BrowserCookie
 {
@@ -8,6 +9,6 @@ namespace ryu_s.BrowserCookie
         string ProfileName { get; }
         BrowserType Type { get; }
         Cookie GetCookie(string domain, string name);
-        CookieCollection GetCookieCollection(string domain);
+        List<Cookie> GetCookieCollection(string domain);
     }
 }

@@ -115,7 +115,10 @@ namespace YouTubeLiveSitePlugin.Test2
             try
             {
                 var cookies = browserProfile.GetCookieCollection("youtube.com");
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch { }
             return cc;

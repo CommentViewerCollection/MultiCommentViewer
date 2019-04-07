@@ -16,9 +16,9 @@ namespace ryu_s.BrowserCookie
             return new Cookie("", "", "", "");
         }
 
-        public CookieCollection GetCookieCollection(string domain)
+        public List<Cookie> GetCookieCollection(string domain)
         {
-            return new CookieCollection();
+            return new List<Cookie>();
         }
         public UnknownProfile()
         {

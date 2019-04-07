@@ -87,7 +87,10 @@ namespace OpenrecSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("openrec.tv");
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch { }
             return cc;

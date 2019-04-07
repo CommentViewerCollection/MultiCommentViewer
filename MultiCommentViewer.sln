@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2002
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiCommentViewer", "MultiCommentViewer\MultiCommentViewer.csproj", "{1CAA4971-6CB9-4FB5-AC5E-BFC6BED83C87}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -90,6 +90,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitePluginTests", "SitePluginTests\SitePluginTests.csproj", "{32B23AE7-6708-41B3-BCE7-3BB730E2E70B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwicasIF", "TwicasIF\TwicasIF.csproj", "{4DA33B17-792D-44D7-93F6-D0561788676D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSitePlugin", "TestSitePlugin\TestSitePlugin.csproj", "{74CCA5B2-D0BA-4839-9E2B-EFCF309835E5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSiteIF", "TestSiteIF\TestSiteIF.csproj", "{FF176BCD-7F7E-4C42-9E8D-17912097B3C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrowserCookieImplementationsTests", "BrowserCookieImplementationsTests\BrowserCookieImplementationsTests.csproj", "{EF214EB0-699D-4CF9-9CA5-2FC49B1BEDB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -257,6 +263,18 @@ Global
 		{4DA33B17-792D-44D7-93F6-D0561788676D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DA33B17-792D-44D7-93F6-D0561788676D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DA33B17-792D-44D7-93F6-D0561788676D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74CCA5B2-D0BA-4839-9E2B-EFCF309835E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74CCA5B2-D0BA-4839-9E2B-EFCF309835E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74CCA5B2-D0BA-4839-9E2B-EFCF309835E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74CCA5B2-D0BA-4839-9E2B-EFCF309835E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF176BCD-7F7E-4C42-9E8D-17912097B3C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF176BCD-7F7E-4C42-9E8D-17912097B3C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF176BCD-7F7E-4C42-9E8D-17912097B3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF176BCD-7F7E-4C42-9E8D-17912097B3C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF214EB0-699D-4CF9-9CA5-2FC49B1BEDB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF214EB0-699D-4CF9-9CA5-2FC49B1BEDB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF214EB0-699D-4CF9-9CA5-2FC49B1BEDB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF214EB0-699D-4CF9-9CA5-2FC49B1BEDB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

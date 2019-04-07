@@ -13,24 +13,16 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace MultiCommentViewer.Test
+namespace TestSitePlugin
 {
     /// <summary>
-    /// Interaction logic for TestSiteOptionsPagePanel.xaml
+    /// Interaction logic for CommentPostPanel.xaml
     /// </summary>
-    public partial class TestSiteOptionsPagePanel : UserControl
+    public partial class CommentPostPanel : UserControl
     {
-        public TestSiteOptionsPagePanel()
+        public CommentPostPanel()
         {
             InitializeComponent();
-        }
-        public void SetViewModel(TestSiteOptionsViewModel vm)
-        {
-            this.DataContext = vm;
-        }
-        public TestSiteOptionsViewModel GetViewModel()
-        {
-            return (TestSiteOptionsViewModel)this.DataContext;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 using ryu_s.BrowserCookie;
 
 namespace Common
@@ -16,9 +17,9 @@ namespace Common
             return null;
         }
 
-        public CookieCollection GetCookieCollection(string domain)
+        public List<Cookie> GetCookieCollection(string domain)
         {
-            return new CookieCollection();
+            return new List<Cookie>();
         }
     }
 }

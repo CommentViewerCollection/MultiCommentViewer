@@ -120,7 +120,10 @@ namespace LineLiveSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("live.line.me");
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch (Exception ex)
             {

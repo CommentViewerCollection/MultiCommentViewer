@@ -123,7 +123,10 @@ namespace MirrativSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("mirrativ.com");
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch (Exception ex)
             {

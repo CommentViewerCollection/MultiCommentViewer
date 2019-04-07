@@ -38,7 +38,7 @@ namespace ryu_s.BrowserCookie
 
             public BrowserType Type { get; }
 
-            public CookieCollection GetCookieCollection(string domain)
+            public List<Cookie> GetCookieCollection(string domain)
             {
                 var query = "SELECT value, name, host_key, path, expires_utc, encrypted_value FROM cookies WHERE host_key LIKE '%" + domain + "'";
                 return GetCookieCollectionInternal(query);
@@ -81,7 +81,7 @@ namespace ryu_s.BrowserCookie
                     return new List<string> { path };
                 }
             }
-            private System.Net.CookieCollection GetCookieCollectionInternal(string query)
+            private List<Cookie> GetCookieCollectionInternal(string query)
             {
                 System.Data.DataTable dt = null;
                 using (var tempFile = new TempFileProvider())
@@ -113,7 +113,7 @@ namespace ryu_s.BrowserCookie
                         dt = SQLiteHelper.ExecuteReader(conn, query);
                     }
                 }
-                var collection = new CookieCollection();
+                var list = new List<Cookie>();
                 if (dt != null)
                 {
                     var cc = new CookieContainer();
@@ -142,12 +142,12 @@ namespace ryu_s.BrowserCookie
                             //CookieContainerに追加できないようなサイズの大きいvalueが存在したため、適合していることをチェックする。
                             //適合しなかったら例外が投げられ、追加しない。
                             cc.Add(cookie);
-                            collection.Add(cookie);
+                            list.Add(cookie);
                         }
                         catch (CookieException) { }
                     }
                 }
-                return collection;
+                return list;
             }
             /// <summary>
             /// 復号化する。

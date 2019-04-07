@@ -594,8 +594,10 @@ namespace NicoSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("nicovideo.jp");
-
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch { }
             return cc;

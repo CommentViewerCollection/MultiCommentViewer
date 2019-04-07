@@ -74,7 +74,10 @@ namespace TwitchSitePlugin
             try
             {
                 var cookies = browserProfile.GetCookieCollection("twitch.tv");
-                cc.Add(cookies);
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
             }
             catch (Exception ex)
             {

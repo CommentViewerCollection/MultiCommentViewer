@@ -60,28 +60,23 @@ namespace ryu_s.BrowserCookie
                 return null;
             }
 
-            public CookieCollection GetCookieCollection(string domain)
+            public List<Cookie> GetCookieCollection(string domain)
             {
-                var collection = new CookieCollection();
-                foreach (var cookie in GetCookieCollectionInternal(domain))
-                {
-                    collection.Add(cookie);
-                }
-                return collection;
+                return  GetCookieCollectionInternal(domain);
             }
             /// <summary>
             /// 
             /// </summary>
             /// <param name="domain"></param>
             /// <returns></returns>
-            private IEnumerable<Cookie> GetCookieCollectionInternal(string domain)
+            private List<Cookie> GetCookieCollectionInternal(string domain)
             {
                 var path = "/";
                 var cookieData = BrowserCookieImplementations.IE.Tools.GetCookieData("https://" + domain);
                 var cookies = CookieData2Cookies(cookieData, domain, path);
                 var cookieDataProtected = BrowserCookieImplementations.IE.Tools.GetProtectedModeCookieData("https://" + domain);
                 var cookiesProtected = CookieData2Cookies(cookieDataProtected, domain, path);
-                return cookies.Concat(cookiesProtected);
+                return cookies.Concat(cookiesProtected).ToList();
             }
             private IEnumerable<Cookie> CookieData2Cookies(string cookieData, string domain, string path)
             {

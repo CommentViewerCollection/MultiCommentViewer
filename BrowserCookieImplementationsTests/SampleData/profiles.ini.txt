@@ -1,0 +1,14 @@
+﻿[General]
+StartWithLastProfile=1
+
+[Profile0]
+Name=default
+IsRelative=1
+Path=Profiles/f3ezfk6m.default
+
+[Profile1]
+Name=dev-edition-default
+IsRelative=1
+Path=Profiles/42522y5w.dev-edition-default-1516971409783
+Default=1
+

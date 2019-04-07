@@ -170,6 +170,44 @@ namespace ryu_s.BrowserCookie.Firefox
             }
             return null;
         }
+        public static List<FirefoxProfile> GetProfiles(IEnumerable<string> lines, string moz_path)
+        {
+            var list = new List<FirefoxProfile>();
+            FirefoxProfile profile = null;
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("[Profile"))
+                {
+                    profile = new FirefoxProfile();
+                    list.Add(profile);
+                    continue;
+                }
+                if (profile != null)
+                {
+                    var pair = SplitByEqual(line);
+                    switch (pair.Key)
+                    {
+                        case "Name":
+                            profile.Name = pair.Value;
+                            break;
+                        case "IsRelative":
+                            profile.IsRelative = (pair.Value == "1") ? true : false;
+                            break;
+                        case "Path":
+                            profile.path = pair.Value.Replace("/", "\\");
+                            if (profile.IsRelative)
+                                profile.path = moz_path + "\\" + profile.path;
+                            break;
+                        case "Default":
+                            profile.IsDefault = (pair.Value == "1") ? true : false;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return list;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -187,54 +225,34 @@ namespace ryu_s.BrowserCookie.Firefox
             }
             using (var sr = new System.IO.StreamReader(path, enc))
             {
-                FirefoxProfile profile = null;
-                while (!sr.EndOfStream)
-                {
-                    var line = sr.ReadLine();
-                    if (line.StartsWith("[Profile"))
-                    {
-                        profile = new FirefoxProfile();
-                        list.Add(profile);
-                    }
-                    if (profile != null)
-                    {
-                        var pair = SplitByEqual(line);
-                        switch (pair.Key)
-                        {
-                            case "Name":
-                                profile.Name = pair.Value;
-                                break;
-                            case "IsRelative":
-                                profile.IsRelative = (pair.Value == "1") ? true : false;
-                                break;
-                            case "Path":
-                                profile.path = pair.Value.Replace("/", "\\");
-                                if (profile.IsRelative)
-                                    profile.path = moz_path + "\\" + profile.path;
-                                break;
-                            case "Default":
-                                profile.IsDefault = (pair.Value == "1") ? true : false;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                }
+                list.AddRange(GetProfiles(ReadLines(sr), moz_path));
             }
             return list;
+        }
+        public static IEnumerable<string> ReadLines(System.IO.StreamReader sr)
+        {
+            while (!sr.EndOfStream)
+            {
+                yield return sr.ReadLine();
+            }
         }
         /// <summary>
         /// 文字列を'='で2つに分割する。
         /// </summary>
         /// <param name="line"></param>
         /// <returns></returns>
-        private static KeyValuePair<string, string> SplitByEqual(string line)
+        internal static KeyValuePair<string, string> SplitByEqual(string line)
         {
             var arr = line.Split('=').Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
-            if (arr.Length == 2)
-                return new KeyValuePair<string, string>(arr[0], arr[1]);
+            if (arr.Length >= 2)
+            {
+                var pos = line.IndexOf('=');
+                return new KeyValuePair<string, string>(arr[0],line.Substring(pos+1));
+            }
             else
+            {
                 return new KeyValuePair<string, string>();
+            }
         }
     }
 }

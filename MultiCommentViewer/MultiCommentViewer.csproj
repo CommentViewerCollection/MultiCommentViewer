@@ -98,14 +98,9 @@
     <Compile Include="ViewModels\PluginHost.cs" />
     <Compile Include="ViewModels\PluginMenuItemViewModel.cs" />
     <Compile Include="ViewModels\SiteViewModel.cs" />
-    <Compile Include="Test\CommentViewModelTest.cs" />
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
-    <Compile Include="Test\TestSite.cs" />
-    <Compile Include="Test\TestSiteOptionsPagePanel.xaml.cs">
-      <DependentUpon>TestSiteOptionsPagePanel.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
@@ -137,10 +132,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\OptionsView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Test\TestSiteOptionsPagePanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

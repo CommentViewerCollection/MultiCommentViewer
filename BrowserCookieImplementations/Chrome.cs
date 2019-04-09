@@ -6,10 +6,15 @@ using System.Text;
 using System.IO;
 namespace ryu_s.BrowserCookie
 {
+    public class ChromeBetaManager : ChromeManager
+    {
+        public override BrowserType Type => BrowserType.ChromeBeta;
+        protected override string ChromeSettingsDirPath=> Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome Beta\User Data\";
+    }
     public class ChromeManager : IChromeManager
     {
         #region IChromeManager
-        public BrowserType Type { get; }
+        public virtual BrowserType Type => BrowserType.Chrome;
         public List<IBrowserProfile> GetProfiles()
         {
             var list = new List<IBrowserProfile>();
@@ -21,7 +26,7 @@ namespace ryu_s.BrowserCookie
             var defaultDbFilePath = ChromeSettingsDirPath + _defaultProfileName + "\\" + _dbFilename;
             if (System.IO.File.Exists(defaultDbFilePath))
             {
-                list.Add(new ChromeProfile(defaultDbFilePath, _defaultProfileName));
+                list.Add(new ChromeProfile(Type, defaultDbFilePath, _defaultProfileName));
             }
             var dirs = System.IO.Directory.GetDirectories(ChromeSettingsDirPath);
             foreach (var dir in dirs)
@@ -31,7 +36,7 @@ namespace ryu_s.BrowserCookie
                 if (dirName.StartsWith("Profile", StringComparison.CurrentCultureIgnoreCase) && System.IO.File.Exists(testPath))
                 {
                     var profileName = dirName;
-                    list.Add(new ChromeProfile(ChromeSettingsDirPath + profileName + "\\" + _dbFilename, profileName));
+                    list.Add(new ChromeProfile(Type, ChromeSettingsDirPath + profileName + "\\" + _dbFilename, profileName));
                 }
             }
             return list;
@@ -39,11 +44,10 @@ namespace ryu_s.BrowserCookie
         #endregion
         private readonly string _dbFilename = "Cookies";
         private readonly string _defaultProfileName = "Default";
-        string ChromeSettingsDirPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\"; } }
+        protected virtual string ChromeSettingsDirPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\"; } }
 
         public ChromeManager()
         {
-            Type = BrowserType.Chrome;
         }
         class ChromeProfile : IBrowserProfile
         {
@@ -69,11 +73,11 @@ namespace ryu_s.BrowserCookie
             #endregion
 
             #region Constructors
-            public ChromeProfile(string path, string profileName)
+            public ChromeProfile(BrowserType type, string path, string profileName)
             {
                 Path = path;
                 ProfileName = profileName;
-                Type = BrowserType.Chrome;
+                Type = type;
             }
             #endregion
 

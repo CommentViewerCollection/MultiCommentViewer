@@ -98,6 +98,7 @@
       <DependentUpon>AppNoStartupUri.xaml</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TestCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwicasCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\OpenrecCommentViewModel.cs" />
@@ -276,6 +277,14 @@
     <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj">
       <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>
       <Name>OpenrecSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj">
+      <Project>{242d4286-7214-422f-be7c-be784c815e0f}</Project>
+      <Name>PeriscopeIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PeriscopeSitePlugin\PeriscopeSitePlugin.csproj">
+      <Project>{95335a9e-4a33-45bb-8d5e-10d3c7c34bc1}</Project>
+      <Name>PeriscopeSitePlugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
       <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>

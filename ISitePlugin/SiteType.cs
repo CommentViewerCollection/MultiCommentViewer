@@ -19,5 +19,6 @@
         Mirrativ,
         Twicas,
         Twitch,
+        Periscope,
     }
 }

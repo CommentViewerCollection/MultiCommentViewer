@@ -87,7 +87,13 @@ namespace SitePluginCommon
                         client.DefaultRequestHeaders.AcceptLanguage.Add(la);
                     }
                 }
-
+                if (options.Headers != null)
+                {
+                    foreach (var kv in options.Headers)
+                    {
+                        client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
+                    }
+                }
                 var result = await client.PostAsync(options.Url, content);
                 result.EnsureSuccessStatusCode();
                 return result;

@@ -70,6 +70,8 @@ namespace MultiCommentViewer
         Color WhowatchForeColor { get; set; }
         Color MirrativBackColor { get; set; }
         Color MirrativForeColor { get; set; }
+        Color PeriscopeBackColor { get; set; }
+        Color PeriscopeForeColor { get; set; }
 
         InfoType ShowingInfoLevel { get; set; }
     }

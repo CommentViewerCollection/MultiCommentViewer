@@ -120,7 +120,7 @@ namespace OpenrecYoyakuPlugin
         public string GetSettingsFilePath()
         {
             var dir = Host.SettingsDirPath;
-            return Path.Combine(dir, $"{Name}.xml");
+            return Path.Combine(dir, $"{Name}.txt");
         }
 
         public void OnTopmostChanged(bool isTopmost)

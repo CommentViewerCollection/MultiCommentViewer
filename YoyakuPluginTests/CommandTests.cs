@@ -18,26 +18,28 @@ namespace YoyakuPluginTests
     [TestFixture]
     public class Tests
     {
-        PluginBody _plugin;
-        SettingsViewModel _vm;
         [SetUp]
         public void Setup()
         {
 
         }
-        class YtComment : IYouTubeLiveComment
+        private IYouTubeLiveComment CreateMessage(string name, string message, string userId)
         {
-            public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Comment;
-            public string Id { get; set; }
-            public string UserId { get; set; }
-            public string PostTime { get; set; }
-            public IMessageImage UserIcon { get; set; }
-            public string Raw { get; set; }
-            public SiteType SiteType { get; } = SiteType.YouTubeLive;
-            public IEnumerable<IMessagePart> NameItems { get; set; }
-            public IEnumerable<IMessagePart> CommentItems { get; set; }
-
-            public event EventHandler<ValueChangedEventArgs> ValueChanged;
+            var messageMock = new Mock<IYouTubeLiveComment>();
+            messageMock.Setup(m => m.NameItems).Returns(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(name) });
+            messageMock.Setup(m => m.CommentItems).Returns(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) });
+            messageMock.Setup(m => m.UserId).Returns(userId);
+            return messageMock.Object;
+        }
+        private IPluginHost CreatePluginHost(IOptions options)
+        {
+            var hostMock = new Mock<IPluginHost>();
+            hostMock.Setup(h => h.LoadOptions(It.IsAny<string>())).Returns((Func<string, string>)(s =>
+            {
+                return options.Serialize();
+            }));
+            var host = hostMock.Object;
+            return host;
         }
         [Test]
         public void もともとコテハンが付いていたユーザを登録した時に名前にコテハンは採用されているか()
@@ -46,25 +48,17 @@ namespace YoyakuPluginTests
             {
                 IsEnabled = true,
             };
-            var hostMock = new Mock<IPluginHost>();
-            hostMock.Setup(h => h.LoadOptions(It.IsAny<string>())).Returns((Func<string, string>)(s =>
-            {
-                return options.Serialize();
-            }));
-            var host = hostMock.Object;
+            var host = CreatePluginHost(options);
 
             var vmMock = new Mock<SettingsViewModel>(host, options, Dispatcher.CurrentDispatcher);
             vmMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToLocalTime());
-            _vm = vmMock.Object;
-
-
+            var vm = vmMock.Object;
 
             var pluginMock = new Mock<PluginBody>() { CallBase = true };
-            pluginMock.Protected().Setup<SettingsViewModel>("CreateSettingsViewModel").Returns(_vm);
+            pluginMock.Protected().Setup<SettingsViewModel>("CreateSettingsViewModel").Returns(vm);
             pluginMock.Protected().Setup<IOptions>("LoadOptions").Returns(options);
 
             var plugin = pluginMock.Object;
-            _plugin = plugin;
             plugin.Host = host;
             plugin.OnLoaded();
 
@@ -73,19 +67,15 @@ namespace YoyakuPluginTests
             {
                  Nickname="nick",
             };
-            var message = new YtComment()
-            {
-                NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(oldName) },
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("/yoyaku") },
-                UserId = "1",
-            };
+            var message = CreateMessage(oldName, "/yoyaku", "1");
+
             var messageMetadataMock = new Mock<IMessageMetadata>();
             messageMetadataMock.Setup(x => x.User).Returns(user);
             var messageMetadata = messageMetadataMock.Object;
 
-            _plugin.OnMessageReceived(message, messageMetadata);
+            plugin.OnMessageReceived(message, messageMetadata);
 
-            var ms = _vm.RegisteredUsers.ToArray();
+            var ms = vm.RegisteredUsers.ToArray();
             var pluginUser = ms[0];
 
             Assert.AreEqual("nick", pluginUser.Name);
@@ -97,43 +87,30 @@ namespace YoyakuPluginTests
             {
                 IsEnabled = true,
             };
-            var hostMock = new Mock<IPluginHost>();
-            hostMock.Setup(h => h.LoadOptions(It.IsAny<string>())).Returns((Func<string, string>)(s =>
-            {
-                return options.Serialize();
-            }));
-            var host = hostMock.Object;
+            var host = CreatePluginHost(options);
 
             var vmMock = new Mock<SettingsViewModel>(host, options, Dispatcher.CurrentDispatcher);
             vmMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToLocalTime());
-            _vm = vmMock.Object;
-
-
+            var vm = vmMock.Object;
 
             var pluginMock = new Mock<PluginBody>() { CallBase = true };
-            pluginMock.Protected().Setup<SettingsViewModel>("CreateSettingsViewModel").Returns(_vm);
+            pluginMock.Protected().Setup<SettingsViewModel>("CreateSettingsViewModel").Returns(vm);
             pluginMock.Protected().Setup<IOptions>("LoadOptions").Returns(options);
 
             var plugin = pluginMock.Object;
-            _plugin = plugin;
             plugin.Host = host;
             plugin.OnLoaded();
 
             var oldName = "name";
             var user = new UserTest("1");
-            var message = new YtComment()
-            {
-                NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(oldName) },
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("/yoyaku") },
-                UserId = "1",
-            };
+            var message = CreateMessage(oldName, "/yoyaku", "1");
             var messageMetadataMock = new Mock<IMessageMetadata>();
             messageMetadataMock.Setup(x => x.User).Returns(user);
             var messageMetadata = messageMetadataMock.Object;
 
-            _plugin.OnMessageReceived(message, messageMetadata);
+            plugin.OnMessageReceived(message, messageMetadata);
 
-            var ms = _vm.RegisteredUsers.ToArray();
+            var ms = vm.RegisteredUsers.ToArray();
             var pluginUser = ms[0];
 
             Assert.AreEqual(oldName, pluginUser.Name);
@@ -196,27 +173,12 @@ namespace YoyakuPluginTests
         }
         private void AddComment(string comment, string userId)
         {
-            var message = new YtComment()
-            {
-                NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("name") },
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment) },
-                UserId = userId,
-            };
+            var messageMock = new Mock<IYouTubeLiveComment>();
+            messageMock.Setup(m => m.NameItems).Returns(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("name") });
+            messageMock.Setup(m => m.CommentItems).Returns(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment) });
+            messageMock.Setup(m => m.UserId).Returns(userId);
+            var message = messageMock.Object;
             _plugin.OnMessageReceived(message, _messageMetadata);
-        }
-        class YtComment : IYouTubeLiveComment
-        {
-            public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Comment;
-            public string Id { get; set; }
-            public string UserId { get; set; }
-            public string PostTime { get; set; }
-            public IMessageImage UserIcon { get; set; }
-            public string Raw { get; set; }
-            public SiteType SiteType { get; } = SiteType.YouTubeLive;
-            public IEnumerable<IMessagePart> NameItems { get; set; }
-            public IEnumerable<IMessagePart> CommentItems { get; set; }
-
-            public event EventHandler<ValueChangedEventArgs> ValueChanged;
         }
         [Test]
         public void 登録が可能か()

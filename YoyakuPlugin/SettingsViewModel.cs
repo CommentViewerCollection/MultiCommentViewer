@@ -464,7 +464,26 @@ namespace OpenrecYoyakuPlugin
                 RaisePropertyChanged();
             }
         }
-
+        public double DateWidth
+        {
+            get => _options.DateWidth;
+            set => _options.DateWidth = value;
+        }
+        public double IdWidth
+        {
+            get => _options.IdWidth;
+            set => _options.IdWidth = value;
+        }
+        public double NameWidth
+        {
+            get => _options.NameWidth;
+            set => _options.NameWidth = value;
+        }
+        public double CalledWidth
+        {
+            get => _options.CalledWidth;
+            set => _options.CalledWidth = value;
+        }
         private void WriteComment(string comment)
         {
             _host.PostCommentToAll(comment);

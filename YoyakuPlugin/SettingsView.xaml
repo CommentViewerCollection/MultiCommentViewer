@@ -4,13 +4,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenrecYoyakuPlugin"
+        xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance local:SettingsViewModel, IsDesignTimeCreatable=True}"
         Title="{Binding Title}" Height="351.176" Width="487.941">
     <Window.Resources>
         <local:NotConverter x:Key="notConverter" />
+        <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
     </Window.Resources>
     <Grid Margin="0,0,0,8" Background="#F0F0F0">
+        <!--Element treeに属さないelementにDataContextを渡すためのdummy element-->
+        <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
         <CheckBox x:Name="checkBox" Content="有効" IsChecked="{Binding IsEnabled}" HorizontalAlignment="Left" Margin="16,10,0,0" VerticalAlignment="Top"/>
         <Label x:Name="label" Content="呼び出し" Padding="0" HorizontalAlignment="Left" Margin="1,25,0,0" VerticalAlignment="Top"/>
         <Button x:Name="button" Content="5人" Command="{Binding Call5People}"  HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" Width="75"/>
@@ -74,28 +78,28 @@
                               MouseLeftButtonUp="PositionsGrid_MouseLeftButtonUp"
                               ItemsSource="{Binding RegisteredUsers, IsAsync=True}">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="登録日時">
+                            <DataGridTemplateColumn Header="登録日時" Width="{Binding DataContext.DateWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Date, StringFormat={}{0:yyyy/MM/dd HH:mm}}" Margin="5,0,5,0"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="登録ID">
+                            <DataGridTemplateColumn Header="登録ID" Width="{Binding DataContext.IdWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Id}" Margin="5,0,5,0"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="名前">
+                            <DataGridTemplateColumn Header="名前" Width="{Binding DataContext.NameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Name}" Margin="5,0,5,0"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="呼出済">
+                            <DataGridTemplateColumn Header="呼出済" Width="{Binding DataContext.CalledWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <CheckBox IsChecked="{Binding HadCalled, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />

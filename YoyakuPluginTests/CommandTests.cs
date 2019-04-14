@@ -18,39 +18,6 @@ namespace YoyakuPluginTests
     [TestFixture]
     public class Tests
     {
-        class TestHost : IPluginHost
-        {
-            public string SettingsDirPath { get; } = "";
-            public double MainViewLeft { get; } = 0;
-            public double MainViewTop { get; } = 0;
-            public bool IsTopmost { get; } = false;
-
-            public IEnumerable<IConnectionStatus> GetAllConnectionStatus()
-            {
-                throw new NotImplementedException();
-            }
-
-            public string LoadOptions(string path)
-            {
-                var options = new DynamicOptions()
-                {
-                    IsEnabled = true,
-                };
-                return options.Serialize();
-            }
-
-            public void PostComment(string guid, string comment)
-            {
-            }
-
-            public void PostCommentToAll(string comment)
-            {
-            }
-
-            public void SaveOptions(string path, string s)
-            {
-            }
-        }
         PluginBody _plugin;
         SettingsViewModel _vm;
         [SetUp]
@@ -75,11 +42,16 @@ namespace YoyakuPluginTests
         [Test]
         public void もともとコテハンが付いていたユーザを登録した時に名前にコテハンは採用されているか()
         {
-            var host = new TestHost();
             var options = new DynamicOptions()
             {
                 IsEnabled = true,
             };
+            var hostMock = new Mock<IPluginHost>();
+            hostMock.Setup(h => h.LoadOptions(It.IsAny<string>())).Returns((Func<string, string>)(s =>
+            {
+                return options.Serialize();
+            }));
+            var host = hostMock.Object;
 
             var vmMock = new Mock<SettingsViewModel>(host, options, Dispatcher.CurrentDispatcher);
             vmMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToLocalTime());
@@ -121,11 +93,16 @@ namespace YoyakuPluginTests
         [Test]
         public void コテハンを変えた時に反映されるか()
         {
-            var host = new TestHost();
             var options = new DynamicOptions()
             {
                 IsEnabled = true,
             };
+            var hostMock = new Mock<IPluginHost>();
+            hostMock.Setup(h => h.LoadOptions(It.IsAny<string>())).Returns((Func<string, string>)(s =>
+            {
+                return options.Serialize();
+            }));
+            var host = hostMock.Object;
 
             var vmMock = new Mock<SettingsViewModel>(host, options, Dispatcher.CurrentDispatcher);
             vmMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToLocalTime());
@@ -175,50 +152,22 @@ namespace YoyakuPluginTests
     [TestFixture]
     public class コマンドテスト
     {
-        class TestHost : IPluginHost
-        {
-            public string SettingsDirPath { get; } = "";
-            public double MainViewLeft { get; } = 0;
-            public double MainViewTop { get; } = 0;
-            public bool IsTopmost { get; } = false;
-
-            public IEnumerable<IConnectionStatus> GetAllConnectionStatus()
-            {
-                throw new NotImplementedException();
-            }
-
-            public string LoadOptions(string path)
-            {
-                var options = new DynamicOptions()
-                {
-                    IsEnabled = true,
-                };
-                return options.Serialize();
-            }
-
-            public void PostComment(string guid, string comment)
-            {
-            }
-
-            public void PostCommentToAll(string comment)
-            {
-            }
-
-            public void SaveOptions(string path, string s)
-            {
-            }
-        }
         PluginBody _plugin;
         IMessageMetadata _messageMetadata;
         SettingsViewModel _vm;
         [SetUp]
         public void Setup()
         {
-            var host = new TestHost();
             var options = new DynamicOptions()
             {
                 IsEnabled = true,
             };
+            var hostMock = new Mock<IPluginHost>();
+            hostMock.Setup(h => h.LoadOptions(It.IsAny<string>())).Returns((Func<string, string>)(s =>
+            {
+                return options.Serialize();
+            }));
+            var host = hostMock.Object;
 
             var vmMock = new Mock<SettingsViewModel>(host, options, Dispatcher.CurrentDispatcher);
             vmMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToLocalTime());

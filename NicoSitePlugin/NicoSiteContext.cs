@@ -91,7 +91,10 @@ namespace NicoSitePlugin
         {
             return GetNicoCommentProvider();
         }
-
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
         public void Init()
         {
             _userStore.Init();

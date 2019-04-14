@@ -66,7 +66,10 @@ namespace YouTubeLiveSitePlugin.Test2
             var resolver = new VidResolver();
             return resolver.IsValidInput(input);
         }
-
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var youtubeCommentProvider = commentProvider as CommentProvider;

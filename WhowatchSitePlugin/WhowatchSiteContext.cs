@@ -86,6 +86,10 @@ namespace WhowatchSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
         protected virtual IUserStore CreateUserStore()
         {
             return new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);

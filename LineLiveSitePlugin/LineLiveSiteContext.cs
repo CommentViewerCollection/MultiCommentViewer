@@ -57,6 +57,10 @@ namespace LineLiveSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
         public void Init()
         {
             _userStore.Init();

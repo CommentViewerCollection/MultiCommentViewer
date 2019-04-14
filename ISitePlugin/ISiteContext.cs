@@ -27,6 +27,7 @@ namespace SitePlugin
         /// <returns></returns>
         bool IsValidInput(string input);
         UserControl GetCommentPostPanel(ICommentProvider commentProvider);
+        IUser GetUser(string userId);
     }
 }
 

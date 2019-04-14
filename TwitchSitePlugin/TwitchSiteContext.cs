@@ -75,7 +75,10 @@ namespace TwitchSitePlugin
             var b = Regex.IsMatch(input, "twitch\\.tv/[a-zA-Z0-9_]+");
             return b;
         }
-
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             return null;

@@ -1,37 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Xml;
-using System.Xml.Linq;
 using System.Diagnostics;
 using System.Windows.Threading;
 using Plugin;
 using System.ComponentModel.Composition;
 using SitePlugin;
+using Common;
 
 namespace OpenrecYoyakuPlugin
 {
-    static class MessageItemsExtensions
-    {
-        public static string ToText(this IEnumerable<IMessagePart> parts)
-        {
-            string s = "";
-            if (parts != null)
-            {
-                foreach (var part in parts)
-                {
-                    if (part is IMessageText text)
-                    {
-                        s += text;
-                    }
-                }
-            }
-            return s;
-        }
-    }
     [Export(typeof(IPlugin))]
     public class PluginBody : IPlugin
     {
@@ -56,10 +37,6 @@ namespace OpenrecYoyakuPlugin
 
         public void OnCommentReceived(ICommentData data)
         {
-            if (!_options.IsEnabled || data.IsNgUser)
-                return;
-
-            _vm.SetComment(data);
         }
         public void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata)
         {
@@ -70,7 +47,7 @@ namespace OpenrecYoyakuPlugin
             {
                 var name = comment.NameItems.ToText();
                 var text = comment.CommentItems.ToText();
-                _vm.SetComment(comment.UserId, name, text, messageMetadata.User);
+                _model.SetComment(comment.UserId, name, text, messageMetadata.User);
             }
         }
         SettingsViewModel _vm;
@@ -90,11 +67,16 @@ namespace OpenrecYoyakuPlugin
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _options = LoadOptions();
+            _model = CreateModel();
             _vm = CreateSettingsViewModel();
         }
         protected virtual SettingsViewModel CreateSettingsViewModel()
         {
-            return new SettingsViewModel(Host, _options, _dispatcher);
+            return new SettingsViewModel(_model, _dispatcher);
+        }
+        protected virtual Model CreateModel()
+        {
+            return new Model(_options, Host);
         }
 
         public void OnClosing()
@@ -110,10 +92,12 @@ namespace OpenrecYoyakuPlugin
         {
             var left = Host.MainViewLeft;
             var top = Host.MainViewTop;
-            var view = new SettingsView();
-            view.Left = left;
-            view.Top = top;
-            view.DataContext = _vm;
+            var view = new SettingsView
+            {
+                Left = left,
+                Top = top,
+                DataContext = _vm
+            };
             view.Show();
         }
 
@@ -130,10 +114,9 @@ namespace OpenrecYoyakuPlugin
             //    _settingsView.Topmost = isTopmost;
             //}
         }
-
+        Model _model;
         public PluginBody()
         {
-
         }
     }
 }

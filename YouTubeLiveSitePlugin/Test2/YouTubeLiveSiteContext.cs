@@ -28,7 +28,10 @@ namespace YouTubeLiveSitePlugin.Test2
         public ICommentProvider CreateCommentProvider()
         {
             //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-            return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStore);
+            return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public void LoadOptions(string path, IIo io)

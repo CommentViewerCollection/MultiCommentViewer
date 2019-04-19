@@ -318,6 +318,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(comment, _options, _siteOptions, user, this, isFirst)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 if (_siteOptions.NeedAutoSubNickname)
@@ -340,6 +341,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(join, _options, _siteOptions, user, this, isFirst)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(join, metadata, methods);
@@ -352,6 +354,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(item, _options, _siteOptions, user, this, isFirst)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(item, metadata, methods);
@@ -361,6 +364,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(connected, _options, _siteOptions, null, this, false)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(connected, metadata, methods);
@@ -370,6 +374,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(disconnected, _options, _siteOptions, null, this, false)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(disconnected, metadata, methods);
@@ -481,6 +486,7 @@ namespace MirrativSitePlugin
             var metadata = new MirrativMessageMetadata(comment, _options, _siteOptions, user, this, isFirst)
             {
                 IsInitialComment = isInitialComment,
+                SiteContextGuid = SiteContextGuid,
             };
             var methods = new MirrativMessageMethods();
             if (_siteOptions.NeedAutoSubNickname)
@@ -571,12 +577,13 @@ namespace MirrativSitePlugin
                 Username = currentUser.Name,
             };
         }
-
+        public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly IMirrativSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
+
         public MirrativCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IMirrativSiteOptions siteOptions, IUserStore userStore)
         {
             _server = server;
@@ -584,7 +591,6 @@ namespace MirrativSitePlugin
             _options = options;
             _siteOptions = siteOptions;
             _userStore = userStore;
-
             CanConnect = true;
             CanDisconnect = false;
         }

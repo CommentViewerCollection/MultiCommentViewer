@@ -8,7 +8,7 @@ namespace NicoSitePlugin
 {
     public class NicoSiteContext : INicoSiteContext
     {
-        Guid ISiteContext.Guid => new Guid("5A477452-FF28-4977-9064-3A4BC7C63252");
+        public Guid Guid => new Guid("5A477452-FF28-4977-9064-3A4BC7C63252");
         public string DisplayName => "ニコ生";
 
         IOptionsTabPage ISiteContext.TabPanel
@@ -23,7 +23,10 @@ namespace NicoSitePlugin
 
         private INicoCommentProvider GetNicoCommentProvider()
         {
-            return new NicoCommentProvider(_options, _siteOptions, _server, _logger, _userStore);
+            return new NicoCommentProvider(_options, _siteOptions, _server, _logger, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
         ICommentProvider ISiteContext.CreateCommentProvider()
         {

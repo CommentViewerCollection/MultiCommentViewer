@@ -391,7 +391,10 @@ namespace LineLiveSitePlugin
                     UserIcon = new MessageImage { Url = sender.IconUrl },
                     UserId = sender.Id.ToString(),
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    SiteContextGuid = SiteContextGuid,
+                };
                 var methods = new LineLiveMessageMethods();
                 messageContext = new LineLiveMessageContext(m, metadata, methods);
             }
@@ -408,7 +411,11 @@ namespace LineLiveSitePlugin
                     UserIcon = null,
                     UserId = null,
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    IsInitialComment = isInitialComment,
+                    SiteContextGuid = SiteContextGuid,
+                };
                 var methods = new LineLiveMessageMethods();
                 messageContext = new LineLiveMessageContext(m, metadata, methods);
             }
@@ -425,7 +432,11 @@ namespace LineLiveSitePlugin
                     UserIcon = null,
                     UserId = null,
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    IsInitialComment = isInitialComment,
+                    SiteContextGuid = SiteContextGuid,
+                };
                 var methods = new LineLiveMessageMethods();
                 messageContext = new LineLiveMessageContext(m, metadata, methods);
             }
@@ -462,7 +473,10 @@ namespace LineLiveSitePlugin
                     UserIcon = null,
                     UserId = null,
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    SiteContextGuid = SiteContextGuid,
+                };
                 var methods = new LineLiveMessageMethods();
                 messageContext = new LineLiveMessageContext(m, metadata, methods);
             }
@@ -559,12 +573,13 @@ namespace LineLiveSitePlugin
             };
             return info;
         }
-
+        public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly LineLiveSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
+
         public LineLiveCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStore userStore)
         {
             _server = server;
@@ -572,7 +587,6 @@ namespace LineLiveSitePlugin
             _options = options;
             _siteOptions = siteOptions;
             _userStore = userStore;
-
             CanConnect = true;
             CanDisconnect = false;
         }

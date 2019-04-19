@@ -16,7 +16,10 @@ namespace TestSitePlugin
 
         public ICommentProvider CreateCommentProvider()
         {
-            return new TestCommentProvider(_options, _userStore);
+            return new TestCommentProvider(_options, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)

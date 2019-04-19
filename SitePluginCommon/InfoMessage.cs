@@ -49,7 +49,7 @@ namespace SitePluginCommon
             }
         }
         public bool IsNameWrapping => false;
-
+        public Guid SiteContextGuid { get; set; }
         public event PropertyChangedEventHandler PropertyChanged;
 
         public InfoMessageMetadata(IInfoMessage infoMessage, ICommentOptions options)

@@ -31,7 +31,10 @@ namespace WhowatchSitePlugin
 
         public virtual ICommentProvider CreateCommentProvider()
         {
-            return new WhowatchCommentProvider(_server, _options, _siteOptions, _userStore, _logger);
+            return new WhowatchCommentProvider(_server, _options, _siteOptions, _userStore, _logger)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)

@@ -26,7 +26,10 @@ namespace OpenrecSitePlugin
 
         public ICommentProvider CreateCommentProvider()
         {
-            return new CommentProvider(_options, _siteOptions, _logger, _userStore);
+            return new CommentProvider(_options, _siteOptions, _logger, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)

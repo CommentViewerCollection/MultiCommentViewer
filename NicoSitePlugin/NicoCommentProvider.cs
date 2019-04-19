@@ -528,6 +528,7 @@ namespace NicoSitePlugin
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment)
             {
                 IsInitialComment = isInitialComment,
+                SiteContextGuid = _commentProvider.SiteContextGuid,
             };
             var methods = new NicoMessageMethods();
             messageContext = new NicoMessageContext(message, metadata, methods);
@@ -723,7 +724,7 @@ namespace NicoSitePlugin
             }
             return info;
         }
-
+        public Guid SiteContextGuid { get; set; }
         public NicoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions,IDataSource dataSource, ILogger logger, IUserStore userStore)
         {
             _options = options;

@@ -299,6 +299,7 @@ namespace OpenrecSitePlugin
                 var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
                 {
                     IsInitialComment = isInitialComment,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new OpenrecMessageMethods();
                 messageContext = new OpenrecMessageContext(message, metadata, methods);
@@ -408,6 +409,7 @@ namespace OpenrecSitePlugin
             }, _options);
             MessageReceived?.Invoke(this, context);
         }
+        public Guid SiteContextGuid { get; set; }
         Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();

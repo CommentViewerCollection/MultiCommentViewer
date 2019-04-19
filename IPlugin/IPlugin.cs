@@ -54,6 +54,7 @@ namespace Plugin
         /// <param name="comment"></param>
         void PostComment(string guid, string comment);
         IEnumerable<IConnectionStatus> GetAllConnectionStatus();
+        IUser GetUser(Guid sitePluginGuid, string userId);
     }
     public interface ICommentData
     {

@@ -18,7 +18,7 @@ namespace OpenrecSitePluginTests
             var data = DataLoader.GetSampleData(@"blacklists.txt");
             var serverMock = new Mock<IDataSource>();
             serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string,string>>())).ReturnsAsync(data);
-            var context = new Context();
+            var context = new Context("", "");
             var blacklist = await API.GetBanList(serverMock.Object, context);
 
         }

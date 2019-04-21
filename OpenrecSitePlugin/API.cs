@@ -55,13 +55,13 @@ namespace OpenrecSitePlugin
             }
             return me;
         }
-        public static async Task<Low.External.Movies.RootObject> GetMovieInfo(IDataSource dataSource, string liveId, CookieContainer cc)
+        public static async Task<MovieInfo> GetMovieInfo(IDataSource dataSource, string liveId, CookieContainer cc)
         {
             //https://public.openrec.tv/external/api/v5/movies/pC8n3HQX5gh
             var url = "https://public.openrec.tv/external/api/v5/movies/" + liveId;
             var ret = await dataSource.GetAsync(url, cc);
             var obj = Tools.Deserialize<Low.External.Movies.RootObject>(ret);
-            return obj;
+            return new MovieInfo(obj);
         }
         public static async Task<Low.External.Movies.RootObject[]> GetChannelMovies(IDataSource dataSource, string channelId)
         {
@@ -149,12 +149,12 @@ namespace OpenrecSitePlugin
         /// <param name="postTime">投稿日時（JST）</param>
         /// <param name="cc"></param>
         /// <returns></returns>
-        public static async Task PostCommentAsync(IDataSource server, string liveId, string comment, DateTime postTime, string uuid, string accessToken)
+        public static async Task PostCommentAsync(IDataSource server, string liveId, string comment, DateTime postTime, Context context)
         {
             var headers = new Dictionary<string, string>
             {
-                { "uuid", uuid },
-                { "access-token", accessToken },
+                { "uuid", context.Uuid },
+                { "access-token", context.AccessToken },
             };
             var url = $"https://apiv5.openrec.tv/api/v5/movies/{liveId}/chats";
             var data = $"{{\"message\":\"{comment}\",\"quality_type\":0,\"messaged_at\":\"{postTime.ToString("yyyy-MM-ddTHH:mm:ss.fff+09:00")}\",\"league_key\":\"\",\"to_user_id\":\"\"}}";

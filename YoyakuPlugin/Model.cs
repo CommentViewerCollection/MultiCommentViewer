@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using Plugin;
 using SitePlugin;
@@ -153,7 +154,7 @@ namespace OpenrecYoyakuPlugin
             }
         }
         public List<User> RegisteredUsers { get; } = new List<User>();
-        private void AddUser(User user)
+        public void AddUser(User user)
         {
             lock (RegisteredUsers)
             {
@@ -197,7 +198,7 @@ namespace OpenrecYoyakuPlugin
         {
             return comment.StartsWith("/kakunin") || comment.StartsWith("/確認");
         }
-        public void SetComment(string userId, string name, string comment, IUser user)
+        public void SetComment(string userId, string name, string comment, IUser user, Guid siteContextGuid)
         {
             //"/yoyaku"
             //"/torikeshi"
@@ -219,8 +220,12 @@ namespace OpenrecYoyakuPlugin
             {
                 if (FindUser(userId) == null)
                 {
+                    if(siteContextGuid == Guid.Empty)
+                    {
+                        Debugger.Break();
+                    }
                     //未登録なら登録する
-                    var pluginUser = new User(user) { Date = GetCurrentDateTime(), Id = userId, Name = defaultName, HadCalled = false };
+                    var pluginUser = new User(user) { Date = GetCurrentDateTime(), Id = userId, Name = defaultName, HadCalled = false, SitePluginGuid = siteContextGuid };
                     AddUser(pluginUser);
                     WriteComment(Reserved_Message.Replace("$name", defaultName));
                 }

@@ -47,7 +47,7 @@ namespace OpenrecYoyakuPlugin
             {
                 var name = comment.NameItems.ToText();
                 var text = comment.CommentItems.ToText();
-                _model.SetComment(comment.UserId, name, text, messageMetadata.User);
+                _model.SetComment(comment.UserId, name, text, messageMetadata.User, messageMetadata.SiteContextGuid);
             }
         }
         SettingsViewModel _vm;
@@ -68,8 +68,61 @@ namespace OpenrecYoyakuPlugin
             _dispatcher = Dispatcher.CurrentDispatcher;
             _options = LoadOptions();
             _model = CreateModel();
+            _model.UsersListChanged += Model_UsersListChanged;
             _vm = CreateSettingsViewModel();
+            LoadRegisteredUsers();
         }
+        private string GetPath()
+        {
+            var dir = Host.SettingsDirPath;
+            var path = Path.Combine(dir, $"{Name}_users.txt");
+            return path;
+        }
+        private void LoadRegisteredUsers()
+        {
+            var path = GetPath();
+            var s = Host.LoadOptions(path);
+            var lines = s.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            foreach(var line in lines)
+            {
+                var arr = line.Split('\t');
+                if (arr.Length != 5) continue;
+                try
+                {
+                    var userId = arr[0];
+                    var name = arr[1];
+                    var date = DateTime.Parse(arr[2]);
+                    var hasCalled = arr[3] == "True";
+                    var guid = new Guid(arr[4]);
+                    var user = Host.GetUser(guid, userId);
+                    _model.AddUser(new User(user)
+                    {
+                        Date = date,
+                        HadCalled = hasCalled,
+                        Id = userId,
+                        Name = name,
+                        SitePluginGuid = guid,
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            }
+        }
+
+        private void Model_UsersListChanged(object sender, EventArgs e)
+        {
+            var users = _model.RegisteredUsers.ToArray();
+            var s = "";
+            foreach(var user in users)
+            {
+                s += $"{user.Id}\t{user.Name}\t{user.Date}\t{user.HadCalled}\t{user.SitePluginGuid}" + Environment.NewLine;
+            }
+            var path = GetPath();
+            Host.SaveOptions(path, s);
+        }
+
         protected virtual SettingsViewModel CreateSettingsViewModel()
         {
             return new SettingsViewModel(_model, _dispatcher);

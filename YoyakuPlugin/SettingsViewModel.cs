@@ -294,6 +294,7 @@ namespace OpenrecYoyakuPlugin
         {
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
             {
+                _model = new Model(null, null);
                 IsEnabled = true;
                 IsListSelected = false;
             }

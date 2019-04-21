@@ -1,4 +1,5 @@
 ﻿using System;
+using Common;
 using GalaSoft.MvvmLight;
 using SitePlugin;
 
@@ -61,6 +62,7 @@ namespace OpenrecYoyakuPlugin
                 RaisePropertyChanged();
             }
         }
+        public Guid SitePluginGuid { get; set; }
         private bool _hasCalled;
         private readonly IUser _user;
 

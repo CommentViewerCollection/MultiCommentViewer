@@ -30,7 +30,9 @@ namespace NicoSitePlugin
     {
         private readonly ICommentOptions _options;
         private readonly INicoSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
+
+        //private readonly IUserStore _userStore;
         private readonly IDataSource _dataSource;
         private readonly ILogger _logger;
         private readonly ICommentProvider _commentProvider;
@@ -81,11 +83,11 @@ namespace NicoSitePlugin
                 return (false, null, null);
             }
         }
-        public NicoCasCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStore userStore, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
+        public NicoCasCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
         {
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _dataSource = dataSource;
             _logger = logger;
             _commentProvider = commentProvider;
@@ -95,7 +97,7 @@ namespace NicoSitePlugin
     {
         private readonly ICommentOptions _options;
         private readonly INicoSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
         private readonly IDataSource _dataSource;
         private readonly ILogger _logger;
         private readonly ICommentProvider _commentProvider;
@@ -148,6 +150,10 @@ namespace NicoSitePlugin
             await _roomCommentProvider.ReceiveAsync();
             await Task.CompletedTask;
         }
+        private IUser GetUser(string userId)
+        {
+            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
+        }
         private NicoMessageContext CreateMessageContext(Chat chat, string roomName, bool isInitialComment)
         {
             Debug.WriteLine(chat.Text);
@@ -163,7 +169,7 @@ namespace NicoSitePlugin
                 _userCommentCountDict.AddOrUpdate(userId, 1, (s0, n) => n);
                 isFirstComment = true;
             }
-            var user = _userStore.GetUser(userId);
+            var user = GetUser(userId);
             var message = Convert(chat, roomName);
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment)
             {
@@ -225,11 +231,11 @@ namespace NicoSitePlugin
             var id = ExtractJikkyoId(input);
             return id.HasValue;
         }
-        public JikkyoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStore userStore, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
+        public JikkyoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
         {
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _dataSource = dataSource;
             _logger = logger;
             _commentProvider = commentProvider;
@@ -429,7 +435,7 @@ namespace NicoSitePlugin
         string _mainRoomThreadId;
         private readonly ICommentOptions _options;
         private readonly INicoSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
         private readonly IDataSource _dataSource;
         private readonly ILogger _logger;
         private readonly ICommentProvider _commentProvider;
@@ -492,14 +498,18 @@ namespace NicoSitePlugin
             }
         }
 
-        public CommunityCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStore userStore, IDataSource dataSource, ILogger logger,ICommentProvider commentProvider)
+        public CommunityCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger,ICommentProvider commentProvider)
         {
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _dataSource = dataSource;
             _logger = logger;
             _commentProvider = commentProvider;
+        }
+        private IUser GetUser(string userId)
+        {
+            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
         }
         private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
         public async Task<NicoMessageContext> CreateMessageContext(IChat chat, IXmlWsRoomInfo roomInfo, bool isInitialComment)
@@ -507,7 +517,7 @@ namespace NicoSitePlugin
             NicoMessageContext messageContext = null;
 
             var userId = chat.UserId;
-            var user = _userStore.GetUser(userId);
+            var user = GetUser(userId);
 
             var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions.IsAutoSetNickname, _mainRoomThreadId, _logger, _siteOptions);
             if(message == null)
@@ -541,7 +551,7 @@ namespace NicoSitePlugin
         private readonly INicoSiteOptions _siteOptions;
         private readonly IDataSource _dataSource;
         private readonly ILogger _logger;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
 
         private bool _canConnect;
         public bool CanConnect
@@ -603,20 +613,20 @@ namespace NicoSitePlugin
             catch { }
             return cc;
         }
-        static List<INicoCommentProviderInternal> GetCommentProviderInternals(ICommentOptions options, INicoSiteOptions siteOptions, IUserStore userStore,IDataSource dataSource,ILogger logger, ICommentProvider cp)
+        static List<INicoCommentProviderInternal> GetCommentProviderInternals(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager,IDataSource dataSource,ILogger logger, ICommentProvider cp)
         {
             var list = new List<INicoCommentProviderInternal>
             {
-                new NicoCasCommentProvider(options,siteOptions,userStore,dataSource,logger,cp),
-                new CommunityCommentProvider(options,siteOptions,userStore,dataSource,logger,cp),
-                new JikkyoCommentProvider(options,siteOptions,userStore,dataSource,logger,cp),
+                new NicoCasCommentProvider(options,siteOptions,userStoreManager,dataSource,logger,cp),
+                new CommunityCommentProvider(options,siteOptions,userStoreManager,dataSource,logger,cp),
+                new JikkyoCommentProvider(options,siteOptions,userStoreManager,dataSource,logger,cp),
 
             };
             return list;
         }
-        public static bool IsValidInput(ICommentOptions options, INicoSiteOptions siteOptions, IUserStore userStore, IDataSource dataSource, ILogger logger, ICommentProvider cp, string input)
+        public static bool IsValidInput(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider cp, string input)
         {
-            foreach(var cpin in GetCommentProviderInternals(options, siteOptions, userStore, dataSource, logger, cp))
+            foreach(var cpin in GetCommentProviderInternals(options, siteOptions, userStoreManager, dataSource, logger, cp))
             {
                 if(cpin.IsValidInput(input))
                 {
@@ -630,7 +640,7 @@ namespace NicoSitePlugin
         {
             var cc = GetCookieContainer(browserProfile);
 
-            var list = GetCommentProviderInternals(_options, _siteOptions, _userStore, _dataSource, _logger, this);
+            var list = GetCommentProviderInternals(_options, _siteOptions, _userStoreManager, _dataSource, _logger, this);
             var cu = await GetCurrentUserInfo(browserProfile);
             if (cu.IsLoggedIn)
             {
@@ -647,7 +657,7 @@ namespace NicoSitePlugin
             else
             {
                 //未ログインでもWebSocket経由なら取れる。
-                var f = new NicoCasCommentProvider(_options, _siteOptions, _userStore, _dataSource, _logger, this);
+                var f = new NicoCasCommentProvider(_options, _siteOptions, _userStoreManager, _dataSource, _logger, this);
                 var isValid = f.IsValidInput(input);
                 if (isValid)
                 {
@@ -679,7 +689,7 @@ namespace NicoSitePlugin
 
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
         }
 
 
@@ -725,13 +735,13 @@ namespace NicoSitePlugin
             return info;
         }
         public Guid SiteContextGuid { get; set; }
-        public NicoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions,IDataSource dataSource, ILogger logger, IUserStore userStore)
+        public NicoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions,IDataSource dataSource, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
             _siteOptions = siteOptions;
             _dataSource = dataSource;
             _logger = logger;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
 
             CanConnect = true;
             CanDisconnect = false;

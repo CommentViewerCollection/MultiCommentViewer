@@ -1,5 +1,6 @@
 ﻿using Common;
 using SitePlugin;
+using SitePluginCommon;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -23,7 +24,7 @@ namespace NicoSitePlugin
 
         private INicoCommentProvider GetNicoCommentProvider()
         {
-            return new NicoCommentProvider(_options, _siteOptions, _server, _logger, _userStore)
+            return new NicoCommentProvider(_options, _siteOptions, _server, _logger, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
@@ -68,7 +69,7 @@ namespace NicoSitePlugin
 
         bool ISiteContext.IsValidInput(string input)
         {
-            return NicoCommentProvider.IsValidInput(_options, _siteOptions, _userStore, _server, _logger, null, input);
+            return NicoCommentProvider.IsValidInput(_options, _siteOptions, _userStoreManager, _server, _logger, null, input);
         }
 
         UserControl ISiteContext.GetCommentPostPanel(ICommentProvider commentProvider)
@@ -96,15 +97,15 @@ namespace NicoSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
         }
         public void Init()
         {
-            _userStore.Init();
+            _userStoreManager.Init(SiteType.NicoLive);
         }
         public void Save()
         {
-            _userStore.Save();
+            _userStoreManager.Save(SiteType.NicoLive);
         }
         protected virtual IUserStore CreateUserStore()
         {
@@ -117,15 +118,18 @@ namespace NicoSitePlugin
 
         //private readonly Action<IStreamSocket> _streamSocketFactory;
         private readonly ILogger _logger;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
+        //private readonly IUserStore _userStore;
 
-        public NicoSiteContext(ICommentOptions options, IDataSource server,Func<string,int,int,ISplitBuffer,IStreamSocket> StreamSocketFactory, ILogger logger)
+        public NicoSiteContext(ICommentOptions options, IDataSource server,Func<string,int,int,ISplitBuffer,IStreamSocket> StreamSocketFactory, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
             _server = server;
             _streamSocketFactory = StreamSocketFactory;
             _logger = logger;
-            _userStore = CreateUserStore();
+            _userStoreManager = userStoreManager;
+            //_userStore = CreateUserStore();
+            userStoreManager.SetUserStore(SiteType.NicoLive, new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger));
         }
     }
 }

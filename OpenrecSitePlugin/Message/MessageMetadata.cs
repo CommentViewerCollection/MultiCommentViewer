@@ -130,7 +130,7 @@ namespace OpenrecSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
-
+        public Guid SiteContextGuid { get; set; }
         public MessageMetadata(IOpenrecMessage message, ICommentOptions options, IOpenrecSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;

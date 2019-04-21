@@ -403,33 +403,25 @@ namespace OpenrecSitePlugin
             var json = Encoding.UTF8.GetString(bytes, len, size);
             return json;
         }
-        public static Context GetContext(System.Net.CookieContainer cc)
+        public static Context GetContext(List<Cookie> cookieList)
         {
-            if (cc == null)
-            {
-                throw new ArgumentNullException(nameof(cc));
-            }
-            var cookieList = cc.GetCookies(new Uri("https://www.openrec.tv/live"));
-            var context = new Context();
-            foreach (System.Net.Cookie cookie in cookieList)
+            if (cookieList == null) throw new ArgumentNullException(nameof(cookieList));
+
+            var uuid = "";
+            var accessToken = "";
+            foreach (var cookie in cookieList)
             {
                 switch (cookie.Name.ToLower())
                 {
                     case "uuid":
-                        context.Uuid = cookie.Value;
+                        uuid = cookie.Value;
                         break;
-                    //case "token":
-                    //    context.Token = cookie.Value;
-                    //    break;
-                    //case "random":
-                    //    context.Random = cookie.Value;
-                    //    break;
                     case "access_token":
-                        context.AccessToken = cookie.Value;
+                        accessToken = cookie.Value;
                         break;
                 }
             }
-            return context;
+            return new Context(uuid, accessToken);
         }
         public static string DecodeHtmlEntity(string str)
         {

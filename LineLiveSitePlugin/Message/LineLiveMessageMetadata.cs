@@ -117,6 +117,7 @@ namespace LineLiveSitePlugin
         public bool Is184 { get; }
         public IUser User { get; }
         public ICommentProvider CommentProvider { get; }
+        public Guid SiteContextGuid { get; set; }
         public bool IsVisible
         {
             get
@@ -139,7 +140,6 @@ namespace LineLiveSitePlugin
             IsFirstComment = isFirstComment;
             User = user;
             CommentProvider = cp;
-
             //TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
 
             options.PropertyChanged += Options_PropertyChanged;

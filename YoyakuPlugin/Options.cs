@@ -72,6 +72,10 @@ namespace OpenrecYoyakuPlugin
 
         public string HcgSettingFilePath { get => GetValue(); set => SetValue(value); }
         public bool IsEnabled { get => GetValue(); set => SetValue(value); }
+        public double DateWidth { get => GetValue(); set => SetValue(value); }
+        public double IdWidth { get => GetValue(); set => SetValue(value); }
+        public double NameWidth { get => GetValue(); set => SetValue(value); }
+        public double CalledWidth { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(Reserved_Se), new Item { DefaultValue = Default_Reserved_Se, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
@@ -101,6 +105,11 @@ namespace OpenrecYoyakuPlugin
 
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(HcgSettingFilePath), new Item { DefaultValue = _hcgSettingFilePath, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
+
+            Dict.Add(nameof(DateWidth), new Item { DefaultValue = 106, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IdWidth), new Item { DefaultValue = 51, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(NameWidth), new Item { DefaultValue = 95, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(CalledWidth), new Item { DefaultValue = 74, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
         }
 
         private static readonly string _hcgSettingFilePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"hcg\setting.xml");

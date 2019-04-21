@@ -13,29 +13,6 @@ using System.Threading.Tasks;
 
 namespace MirrativSitePlugin
 {
-    class FirstCommentDetector
-    {
-        Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
-        public bool IsFirstComment(string userId)
-        {
-            bool isFirstComment;
-            if (_userCommentCountDict.ContainsKey(userId))
-            {
-                _userCommentCountDict[userId]++;
-                isFirstComment = false;
-            }
-            else
-            {
-                _userCommentCountDict.Add(userId, 1);
-                isFirstComment = true;
-            }
-            return isFirstComment;
-        }
-        public void Reset()
-        {
-            _userCommentCountDict = new Dictionary<string, int>();
-        }
-    }
     class MetadataProvider
     {
         private readonly IDataServer _server;
@@ -318,6 +295,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(comment, _options, _siteOptions, user, this, isFirst)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 if (_siteOptions.NeedAutoSubNickname)
@@ -340,6 +318,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(join, _options, _siteOptions, user, this, isFirst)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(join, metadata, methods);
@@ -352,6 +331,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(item, _options, _siteOptions, user, this, isFirst)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(item, metadata, methods);
@@ -361,6 +341,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(connected, _options, _siteOptions, null, this, false)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(connected, metadata, methods);
@@ -370,6 +351,7 @@ namespace MirrativSitePlugin
                 var metadata = new MirrativMessageMetadata(disconnected, _options, _siteOptions, null, this, false)
                 {
                     IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(disconnected, metadata, methods);
@@ -391,23 +373,6 @@ namespace MirrativSitePlugin
             {
                 _provider.Disconnect();
             }
-        }
-
-        private MirrativMessageContext CreateConnectedMessageContext()
-        {
-            var connected = new MirrativConnected("");
-            var metadata = new MirrativMessageMetadata(connected, _options, _siteOptions, null, this, false);
-            var methods = new MirrativMessageMethods();
-            var context = new MirrativMessageContext(connected, metadata, methods);
-            return context;
-        }
-        private MirrativMessageContext CreateDisconnectedMessageContext()
-        {
-            var connected = new MirrativDisconnected("");
-            var metadata = new MirrativMessageMetadata(connected, _options, _siteOptions, null, this, false);
-            var methods = new MirrativMessageMethods();
-            var context = new MirrativMessageContext(connected, metadata, methods);
-            return context;
         }
         /// <summary>
         /// 指定されたユーザの配信中の放送IDを取得する
@@ -445,26 +410,6 @@ namespace MirrativSitePlugin
             var liveInfo = e;
             MetadataUpdated?.Invoke(this, LiveInfo2Meta(liveInfo));
         }
-        private void SetLinkedLiveOwnerName(Message message, dynamic json)
-        {
-            if (json.IsDefined("linked_live_owner_name"))
-            {
-                var linkedLiveOwnerName = json["linked_live_owner_name"];
-                message.Comment += $"（{linkedLiveOwnerName}さんの配信からのリンク経由）";
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="raw"></param>
-        /// <param name="json"></param>
-        /// <returns></returns>
-        private MirrativMessageContext CreateMessageContext(Message message, bool isInitialComment, string raw, dynamic json)
-        {
-            SetLinkedLiveOwnerName(message, json);
-            return CreateMessageContext(message, isInitialComment, raw);
-        }
         /// <summary>
         /// 
         /// </summary>
@@ -481,6 +426,7 @@ namespace MirrativSitePlugin
             var metadata = new MirrativMessageMetadata(comment, _options, _siteOptions, user, this, isFirst)
             {
                 IsInitialComment = isInitialComment,
+                SiteContextGuid = SiteContextGuid,
             };
             var methods = new MirrativMessageMethods();
             if (_siteOptions.NeedAutoSubNickname)
@@ -571,12 +517,13 @@ namespace MirrativSitePlugin
                 Username = currentUser.Name,
             };
         }
-
+        public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly IMirrativSiteOptions _siteOptions;
         private readonly IUserStore _userStore;
+
         public MirrativCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IMirrativSiteOptions siteOptions, IUserStore userStore)
         {
             _server = server;
@@ -584,7 +531,6 @@ namespace MirrativSitePlugin
             _options = options;
             _siteOptions = siteOptions;
             _userStore = userStore;
-
             CanConnect = true;
             CanDisconnect = false;
         }

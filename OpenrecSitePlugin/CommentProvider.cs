@@ -22,8 +22,7 @@ namespace OpenrecSitePlugin
     class CommentProvider : ICommentProvider
     {
         string _liveId;
-        string _uuid;
-        string _accessToken;
+        Context _context;
         #region ICommentProvider
         #region Events
         public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
@@ -81,6 +80,16 @@ namespace OpenrecSitePlugin
             CanConnect = true;
             CanDisconnect = false;
         }
+        protected virtual List<Cookie> GetCookies(IBrowserProfile browserProfile)
+        {
+            List<Cookie> cookies = null;
+            try
+            {
+                cookies = browserProfile.GetCookieCollection("openrec.tv");
+            }
+            catch { }
+            return cookies ?? new List<Cookie>();
+        }
         protected virtual CookieContainer CreateCookieContainer(IBrowserProfile browserProfile)
         {
             var cc = new CookieContainer();
@@ -95,6 +104,7 @@ namespace OpenrecSitePlugin
             catch { }
             return cc;
         }
+        //protected virtual Extract()
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnecting();
@@ -102,19 +112,9 @@ namespace OpenrecSitePlugin
             {
                 throw new InvalidOperationException("");
             }
-            _cc = CreateCookieContainer(browserProfile);
-            var cookieList = Tools.ExtractCookies(_cc);
-            foreach(var cookie in cookieList)
-            {
-                if (cookie.Name == "uuid")
-                {
-                    _uuid = cookie.Value;
-                }
-                else if(cookie.Name == "access_token")
-                {
-                    _accessToken = cookie.Value;
-                }
-            }
+            var cookies = GetCookies(browserProfile);
+            _cc = CreateCookieContainer(cookies);
+            _context = Tools.GetContext(cookies);
             string liveId;
             try
             {
@@ -129,7 +129,7 @@ namespace OpenrecSitePlugin
                 return;
             }
 
-            var movieContext2 = await API.GetMovieInfo(_dataSource, liveId, _cc);
+            var movieContext2 = await GetMovieInfo(liveId);
             var movieId = movieContext2.MovieId;
             if (movieId == 0)
             {
@@ -137,7 +137,7 @@ namespace OpenrecSitePlugin
                 AfterDisconnected();
                 return;
             }
-            if(movieContext2.OnairStatus == 2)
+            if (movieContext2.OnairStatus == 2)
             {
                 SendSystemInfo("この放送は終了しています", InfoType.Error);
                 AfterDisconnected();
@@ -147,10 +147,9 @@ namespace OpenrecSitePlugin
 
             _startAt = movieContext2.StartedAt.DateTime;
             _500msTimer.Enabled = true;
-            
-            var _context = Tools.GetContext(_cc);
-            var chats = await API.GetChats(_dataSource, movieContext2.Id, DateTime.Now, _cc);
-            foreach(var item in chats)
+
+            var chats = await GetChats(movieContext2);
+            foreach (var item in chats)
             {
                 var comment = Tools.Parse(item);
                 var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
@@ -160,19 +159,18 @@ namespace OpenrecSitePlugin
                     MessageReceived?.Invoke(this, messageContext);
                 }
             }
-            foreach(var user in _userStore.GetAllUsers())
+            foreach (var user in _userStore.GetAllUsers())
             {
                 if (!(user is IUser2 user2)) continue;
-                _userDict.AddOrUpdate(user2.UserId, user2, (id,u)=> u);
+                _userDict.AddOrUpdate(user2.UserId, user2, (id, u) => u);
             }
         Reconnect:
-            _ws = new OpenrecWebsocket(_logger);
+            _ws = CreateOpenrecWebsocket();
             _ws.Received += WebSocket_Received;
-            
-            var userAgent = GetUserAgent(browserProfile.Type);
-            var wsTask = _ws.ReceiveAsync(movieId.ToString(), userAgent, _cc);
 
-            var blackListProvider = new BlackListProvider(_dataSource, _logger);
+            var userAgent = GetUserAgent(browserProfile.Type);
+            var wsTask = _ws.ReceiveAsync(movieId.ToString(), userAgent, cookies);
+            var blackListProvider = CreateBlacklistProvider();
             blackListProvider.Received += BlackListProvider_Received;
             var blackTask = blackListProvider.ReceiveAsync(movieId.ToString(), _context);
 
@@ -229,13 +227,47 @@ namespace OpenrecSitePlugin
             //2019/03/12 heartbeatを送っているのにも関わらずwebsocketが切断されてしまう場合を確認。ブラウザでも配信中に切断されて再接続するのを確認済み。
             if (!_isExpectedDisconnect)
             {
-                var movieInfo = await API.GetMovieInfo(_dataSource, liveId, _cc);
-                if(movieInfo.OnairStatus == 1)
+                var movieInfo = await GetMovieInfo(liveId);
+                if (movieInfo.OnairStatus == 1)
                 {
                     goto Reconnect;
                 }
             }
             AfterDisconnected();
+        }
+
+        protected virtual IBlackListProvider CreateBlacklistProvider()
+        {
+            return new BlackListProvider(_dataSource, _logger);
+        }
+
+        protected virtual IOpenrecWebsocket CreateOpenrecWebsocket()
+        {
+            return new OpenrecWebsocket(_logger);
+        }
+
+        protected virtual async Task<Low.Chats.RootObject[]> GetChats(MovieInfo movieContext2)
+        {
+            return await API.GetChats(_dataSource, movieContext2.Id, DateTime.Now, _cc);
+        }
+
+        protected virtual async Task<MovieInfo> GetMovieInfo(string liveId)
+        {
+            return await API.GetMovieInfo(_dataSource, liveId, _cc);
+        }
+
+        private CookieContainer CreateCookieContainer(List<Cookie> cookies)
+        {
+            var cc = new CookieContainer();
+            try
+            {
+                foreach (var cookie in cookies)
+                {
+                    cc.Add(cookie);
+                }
+            }
+            catch { }
+            return cc;
         }
 
         private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData, bool isInitialComment)
@@ -299,6 +331,7 @@ namespace OpenrecSitePlugin
                 var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
                 {
                     IsInitialComment = isInitialComment,
+                    SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new OpenrecMessageMethods();
                 messageContext = new OpenrecMessageContext(message, metadata, methods);
@@ -338,7 +371,7 @@ namespace OpenrecSitePlugin
             }
         }
 
-        OpenrecWebsocket _ws;
+        IOpenrecWebsocket _ws;
         /// <summary>
         /// ユーザが意図した切断か
         /// </summary>
@@ -408,6 +441,7 @@ namespace OpenrecSitePlugin
             }, _options);
             MessageReceived?.Invoke(this, context);
         }
+        public Guid SiteContextGuid { get; set; }
         Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
@@ -495,7 +529,7 @@ namespace OpenrecSitePlugin
         }
         public async Task PostCommentAsync(string str)
         {
-            await API.PostCommentAsync(_dataSource, _liveId, str, DateTime.Now, _uuid, _accessToken);
+            await API.PostCommentAsync(_dataSource, _liveId, str, DateTime.Now, _context);
         }
 
         public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)

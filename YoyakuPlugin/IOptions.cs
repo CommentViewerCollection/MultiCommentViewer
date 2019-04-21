@@ -20,6 +20,10 @@
         string NotReserved_Se { get; set; }
         string Reserved_Message { get; set; }
         string Reserved_Se { get; set; }
+        double DateWidth { get; set; }
+        double IdWidth { get; set; }
+        double NameWidth { get; set; }
+        double CalledWidth { get; set; }
 
         void Deserialize(string s);
         string Serialize();

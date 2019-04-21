@@ -16,7 +16,10 @@ namespace TestSitePlugin
 
         public ICommentProvider CreateCommentProvider()
         {
-            return new TestCommentProvider(_options, new TestUserStore());
+            return new TestCommentProvider(_options, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)
@@ -54,9 +57,15 @@ namespace TestSitePlugin
         public void SaveOptions(string path, IIo io)
         {
         }
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
+        private readonly IUserStore _userStore;
         public TestSiteContext(ICommentOptions options)
         {
             _options = options;
+            _userStore = new TestUserStore();
         }
     }
 }

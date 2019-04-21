@@ -45,6 +45,7 @@ namespace SitePlugin
 
         //bool IsConnected { get; }
         Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile);
+        Guid SiteContextGuid { get; }
     }
     public class ConnectedEventArgs : EventArgs
     {

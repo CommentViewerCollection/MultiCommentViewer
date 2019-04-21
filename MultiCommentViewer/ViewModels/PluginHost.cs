@@ -54,6 +54,15 @@ namespace MultiCommentViewer
             return _vm.Connections.Cast<IConnectionStatus>();
         }
 
+        public IUser GetUser(Guid sitePluginGuid, string userId)
+        {
+            var siteContext = GetSiteContext(sitePluginGuid);
+            return siteContext.GetUser(userId);
+        }
+        private ISiteContext GetSiteContext(Guid sitePluginGuid)
+        {
+            return _vm.GetSiteContext(sitePluginGuid);
+        }
         private readonly MainViewModel _vm;
         private readonly IOptions _options;
         private readonly IIo _io;

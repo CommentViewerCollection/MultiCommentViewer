@@ -25,7 +25,10 @@ namespace LineLiveSitePlugin
 
         public virtual ICommentProvider CreateCommentProvider()
         {
-            return new LineLiveCommentProvider(_server, _logger, _options, _siteOptions, _userStore);
+            return new LineLiveCommentProvider(_server, _logger, _options, _siteOptions, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
         private LineLiveSiteOptions _siteOptions;
         public void LoadOptions(string path, IIo io)
@@ -56,6 +59,10 @@ namespace LineLiveSitePlugin
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex, "", $"path={path}");
             }
+        }
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
         }
         public void Init()
         {

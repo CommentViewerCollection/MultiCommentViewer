@@ -264,6 +264,7 @@ namespace TwicasSitePlugin
                 LoggedInStateChanged?.Invoke(this, EventArgs.Empty);
             }
         }
+        public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;

@@ -8,7 +8,7 @@ using Common;
 
 namespace OpenrecSitePlugin
 {
-    class BlackListProvider
+    class BlackListProvider : IBlackListProvider
     {
         private CancellationTokenSource _cts;
         private readonly IDataSource _dataSource;
@@ -31,7 +31,7 @@ namespace OpenrecSitePlugin
                 }
                 try
                 {
-                    await Task.Delay(60 * 1000,_cts.Token);
+                    await Task.Delay(60 * 1000, _cts.Token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -42,7 +42,7 @@ namespace OpenrecSitePlugin
         }
         public void Disconnect()
         {
-            if(_cts != null)
+            if (_cts != null)
             {
                 _cts.Cancel();
             }

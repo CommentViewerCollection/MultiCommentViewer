@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
@@ -22,7 +23,7 @@ namespace TestSitePlugin
         public ICommentProvider CommentProvider { get; }
         public bool IsVisible { get; } = true;
         public bool IsNameWrapping { get; } = false;
-
+        public Guid SiteContextGuid { get; set; }
         public event PropertyChangedEventHandler PropertyChanged;
         public TestMetadata(IUser user)
         {

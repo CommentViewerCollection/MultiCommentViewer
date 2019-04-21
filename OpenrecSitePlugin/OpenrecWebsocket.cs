@@ -7,16 +7,15 @@ using Common;
 
 namespace OpenrecSitePlugin
 {
-    class OpenrecWebsocket
+    class OpenrecWebsocket : IOpenrecWebsocket
     {
         private Websocket _websocket;
         private readonly ILogger _logger;
         //public event EventHandler<IOpenrecCommentData> CommentReceived;
         public event EventHandler<IPacket> Received;
 
-        public async Task ReceiveAsync(string movieId, string userAgent, CookieContainer cc)
+        public async Task ReceiveAsync(string movieId, string userAgent, List<Cookie> cookies)
         {
-            var cookies = cc.GetCookies(new Uri("https://chat.openrec.tv"));
             var cookieList = new List<KeyValuePair<string, string>>();
             foreach (Cookie cookie in cookies)
             {
@@ -65,7 +64,7 @@ namespace OpenrecSitePlugin
 
         public async Task SendAsync(IPacket packet)
         {
-            if(packet is PacketPing ping)
+            if (packet is PacketPing ping)
             {
                 await SendAsync(ping.Raw);
             }
@@ -98,7 +97,7 @@ namespace OpenrecSitePlugin
             }
         }
 
-        internal void Disconnect()
+        public void Disconnect()
         {
             _websocket.Disconnect();
         }

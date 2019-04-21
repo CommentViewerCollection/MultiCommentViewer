@@ -130,6 +130,10 @@ namespace MultiCommentViewer
         private readonly ILogger _logger;
         private IPluginManager _pluginManager;
         private readonly ISitePluginLoader _sitePluginLoader;
+        public ISiteContext GetSiteContext(Guid siteContextGuid)
+        {
+            return _sitePluginLoader.GetSiteContext(siteContextGuid);
+        }
         private readonly IBrowserLoader _browserLoader;
         private readonly IIo _io;
         IOptions _options;

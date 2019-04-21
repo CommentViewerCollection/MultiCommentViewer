@@ -160,6 +160,7 @@ namespace WhowatchSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
+        public Guid SiteContextGuid { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -478,6 +479,7 @@ namespace WhowatchSitePlugin
                     var messageMetadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
                     {
                         IsInitialComment = true,
+                        SiteContextGuid = SiteContextGuid,
                     };
                     var methods = new WhowatchMessageMethods();
                     MessageReceived?.Invoke(this, new WhowatchMessageContext(message, messageMetadata, methods));
@@ -593,7 +595,11 @@ Retry:
 
         private IMessageContext CreateCommentContext(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, bool isFirstComment)
         {
-            var metadata = new MessageMetadata(message, options, siteOptions, user, this, isFirstComment);
+            var metadata = new MessageMetadata(message, options, siteOptions, user, this, isFirstComment)
+            {
+                IsInitialComment = false,
+                SiteContextGuid = SiteContextGuid,
+            };
             var methods = new WhowatchMessageMethods();
             return new WhowatchMessageContext(message, metadata, methods);
         }
@@ -644,7 +650,7 @@ Retry:
         {
             var res = await Api.PostCommentAsync(_server, _live_id, _lastUpdatedAt, text, _cc);
         }
-
+        public Guid SiteContextGuid { get; set; }
 
         #endregion //ICommentProvider
         public WhowatchCommentProvider(IDataServer server, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUserStore userStore, ILogger logger)

@@ -60,6 +60,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler Connected;
+        public Guid SiteContextGuid { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -539,6 +540,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var metadata = new YouTubeLiveMessageMetadata(message, _options, _siteOptions, user, _cp, isFirstComment)
             {
                 IsInitialComment = isInitialComment,
+                 SiteContextGuid= SiteContextGuid,
             };
             return metadata;
         }

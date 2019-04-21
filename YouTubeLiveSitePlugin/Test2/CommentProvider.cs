@@ -199,7 +199,10 @@ namespace YouTubeLiveSitePlugin.Test2
 
             _cc = CreateCookieContainer(browserProfile);
             Dictionary<string, int> userCommentCountDict = new Dictionary<string, int>();
-            _connection = new EachConnection(_logger, _cc, _options, _server, _siteOptions, userCommentCountDict, _receivedCommentIds, this, _userStore);
+            _connection = new EachConnection(_logger, _cc, _options, _server, _siteOptions, userCommentCountDict, _receivedCommentIds, this, _userStore)
+            {
+                SiteContextGuid = SiteContextGuid,
+            };
             _connection.Connected += (s, e) =>
             {
                 Connected?.Invoke(this, new ConnectedEventArgs { IsInputStoringNeeded = isInputStoringNeeded });
@@ -299,7 +302,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return currentUserInfo;
         }
-
+        public Guid SiteContextGuid { get; set; }
         IYouTubeLibeServer _server;
         public CommentProvider(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStore userStore)
         {

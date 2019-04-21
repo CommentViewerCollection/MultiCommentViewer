@@ -28,7 +28,10 @@ namespace YouTubeLiveSitePlugin.Test2
         public ICommentProvider CreateCommentProvider()
         {
             //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-            return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStore);
+            return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public void LoadOptions(string path, IIo io)
@@ -66,7 +69,10 @@ namespace YouTubeLiveSitePlugin.Test2
             var resolver = new VidResolver();
             return resolver.IsValidInput(input);
         }
-
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var youtubeCommentProvider = commentProvider as CommentProvider;

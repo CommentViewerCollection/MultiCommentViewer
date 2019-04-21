@@ -25,7 +25,10 @@ namespace MirrativSitePlugin
 
         public ICommentProvider CreateCommentProvider()
         {
-            return new MirrativCommentProvider(_server, _logger, _options, _siteOptions, _userStore);
+            return new MirrativCommentProvider(_server, _logger, _options, _siteOptions, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
         private MirrativSiteOptions _siteOptions;
         public void LoadOptions(string path, IIo io)
@@ -72,6 +75,10 @@ namespace MirrativSitePlugin
         public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             return null;
+        }
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
         }
         protected virtual IUserStore CreateUserStore()
         {

@@ -53,7 +53,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly Dictionary<string, int> _userCommentCountDict;
         private readonly SynchronizedCollection<string> _receivedCommentIds;
         private readonly ICommentProvider _cp;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
         ChatProvider _chatProvider;
         DisconnectReason _disconnectReason;
 
@@ -505,6 +505,10 @@ namespace YouTubeLiveSitePlugin.Test2
 
             return message;
         }
+        private IUser GetUser(string userId)
+        {
+            return _userStoreManager.GetUser(SiteType.YouTubeLive, userId);
+        }
         private YouTubeLiveMessageMetadata CreateMetadata(IYouTubeLiveMessage message, bool isInitialComment)
         {
             string userId = null;
@@ -530,7 +534,7 @@ namespace YouTubeLiveSitePlugin.Test2
                     _userCommentCountDict.Add(userId, 1);
                     isFirstComment = true;
                 }
-                user = _userStore.GetUser(userId);
+                user = GetUser(userId);
             }
             else
             {
@@ -546,7 +550,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public EachConnection(ILogger logger, CookieContainer cc, ICommentOptions options, IYouTubeLibeServer server, 
             YouTubeLiveSiteOptions siteOptions, Dictionary<string, int> userCommentCountDict, SynchronizedCollection<string> receivedCommentIds,
-            ICommentProvider cp, IUserStore userStore)
+            ICommentProvider cp, IUserStoreManager userStoreManager)
         {
             _logger = logger;
             _cc = cc;
@@ -556,7 +560,7 @@ namespace YouTubeLiveSitePlugin.Test2
             _userCommentCountDict = userCommentCountDict;
             _receivedCommentIds = receivedCommentIds;
             _cp = cp;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
         }
     }
 }

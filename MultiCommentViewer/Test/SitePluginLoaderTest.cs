@@ -7,13 +7,14 @@ using SitePlugin;
 using Common;
 using System.Windows.Threading;
 using System.Windows.Controls;
+using SitePluginCommon;
 
 namespace MultiCommentViewer.Test
 {
     public class SitePluginLoaderTest : ISitePluginLoader
     {
         Dictionary<Guid, ISiteContext> _dict = new Dictionary<Guid, ISiteContext>();
-        public IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger)
+        public IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
         {
             var list = new List<ISiteContext>
             {

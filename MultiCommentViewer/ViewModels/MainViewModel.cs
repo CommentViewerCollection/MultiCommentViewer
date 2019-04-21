@@ -224,7 +224,8 @@ namespace MultiCommentViewer
             {
                 //Observable.Interval()
                 //_optionsLoader.LoadAsync().
-                var a = _sitePluginLoader.LoadSitePlugins(_options, _logger);
+                var userStoreManager = new UserStoreManager();
+                var a = _sitePluginLoader.LoadSitePlugins(_options, _logger, userStoreManager);
                 var siteVms = new List<SiteViewModel>();
                 foreach (var (displayName, guid) in a)
                 {

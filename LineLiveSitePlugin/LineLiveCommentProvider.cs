@@ -108,6 +108,7 @@ namespace LineLiveSitePlugin
             _isFirstConnection = true;
             _channelName = "";
             _cts = new CancellationTokenSource();
+            _first.Reset();
         }
         private void AfterDisconnected()
         {
@@ -144,6 +145,7 @@ namespace LineLiveSitePlugin
         {
             return Api.GetLiveInfo(_server, channelId, liveId);
         }
+        FirstCommentDetector _first = new FirstCommentDetector();
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnect();
@@ -376,12 +378,13 @@ namespace LineLiveSitePlugin
         {
             return Tools.FromUnixTime(unixTime).ToString("HH:mm:ss");
         }
-        private LineLiveMessageContext CreateMessageContext(ParseMessage.IMessage message, ParseMessage.IUser sender, string raw, bool isFirstComment)
+        private LineLiveMessageContext CreateMessageContext(ParseMessage.IMessage message, ParseMessage.IUser sender, string raw, bool isInitialComment)
         {
             LineLiveMessageContext messageContext;
             if (message is ParseMessage.IMessageData comment)
             {
                 var user = _userStore.GetUser(sender.Id.ToString());
+                var isFirstComment = _first.IsFirstComment(user.UserId);
                 var m = new LineLiveComment(raw)
                 {
                     CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment.Message) },
@@ -393,6 +396,7 @@ namespace LineLiveSitePlugin
                 };
                 var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
                 {
+                    IsInitialComment = isInitialComment,
                     SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new LineLiveMessageMethods();
@@ -401,6 +405,7 @@ namespace LineLiveSitePlugin
             else if (message is ParseMessage.ILove love)
             {
                 var user = _userStore.GetUser(sender.Id.ToString());
+                var isFirstComment = _first.IsFirstComment(user.UserId);
                 var str = sender.DisplayName + "さんがハートを送りました！";
                 var m = new LineLiveItem(raw)
                 {
@@ -422,6 +427,7 @@ namespace LineLiveSitePlugin
             else if (message is ParseMessage.IFollowStartData follow)
             {
                 var user = _userStore.GetUser(sender.Id.ToString());
+                var isFirstComment = _first.IsFirstComment(user.UserId);
                 var msg = sender.DisplayName + "さんがフォローしました！";
                 var m = new LineLiveItem(raw)
                 {
@@ -443,6 +449,7 @@ namespace LineLiveSitePlugin
             else if (message is ParseMessage.IGiftMessage gift)
             {
                 var user = _userStore.GetUser(sender.Id.ToString());
+                var isFirstComment = _first.IsFirstComment(user.UserId);
                 if (_loveIconUrlDict.ContainsKey(gift.ItemId))
                 {
                     gift.Url = _loveIconUrlDict[gift.ItemId];
@@ -475,6 +482,7 @@ namespace LineLiveSitePlugin
                 };
                 var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
                 {
+                    IsInitialComment = isInitialComment,
                     SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new LineLiveMessageMethods();

@@ -39,6 +39,7 @@ namespace YoyakuPluginTests
             {
                 return options.Serialize();
             }));
+            hostMock.Setup(h => h.SettingsDirPath).Returns("");
             var host = hostMock.Object;
             return host;
         }
@@ -163,6 +164,7 @@ namespace YoyakuPluginTests
             {
                 return options.Serialize();
             }));
+            hostMock.Setup(h => h.SettingsDirPath).Returns("");
             var host = hostMock.Object;
             return host;
         }

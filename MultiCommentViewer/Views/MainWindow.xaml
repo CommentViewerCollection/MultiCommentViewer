@@ -52,6 +52,7 @@
         </Grid.RowDefinitions>
         <Menu HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="0">
             <MenuItem Header="ファイル">
+                <MenuItem Header="ユーザ一覧" Command="{Binding ShowUserListCommand}" />
                 <Separator />
                 <MenuItem Header="終了" Command="{Binding ExitCommand}" />
             </MenuItem>

@@ -133,6 +133,10 @@
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
+    <Compile Include="Views\UserListView.xaml.cs">
+      <DependentUpon>UserListView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\UserListViewModel.cs" />
     <Compile Include="Views\UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
@@ -170,6 +174,10 @@
     <Page Include="Views\OptionsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserListView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\UserView.xaml">
       <SubType>Designer</SubType>

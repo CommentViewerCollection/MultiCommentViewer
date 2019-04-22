@@ -20,6 +20,10 @@ namespace NicoSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 else if (_message is INicoConnected)
                 {
                     return _options.InfoBackColor;
@@ -43,6 +47,10 @@ namespace NicoSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 else if (_message is INicoConnected)
                 {

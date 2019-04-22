@@ -50,6 +50,10 @@ namespace WhowatchSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 else if (_message is IWhowatchItem item)
                 {
                     return _siteOptions.ItemBackColor;
@@ -69,6 +73,10 @@ namespace WhowatchSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 else if (_message is IWhowatchItem item)
                 {

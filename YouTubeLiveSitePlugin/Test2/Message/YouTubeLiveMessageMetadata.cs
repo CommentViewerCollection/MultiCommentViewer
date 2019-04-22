@@ -21,6 +21,10 @@ namespace YouTubeLiveSitePlugin.Test2
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 else if (_message is IYouTubeLiveSuperchat item)
                 {
                     return _siteOptions.PaidCommentBackColor;
@@ -40,6 +44,10 @@ namespace YouTubeLiveSitePlugin.Test2
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 else if (_message is IYouTubeLiveSuperchat item)
                 {

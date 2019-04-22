@@ -20,6 +20,10 @@ namespace OpenrecSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 //if (_message is IOpenrecItem item)
                 //{
                 //    return _siteOptions.ItemBackColor;
@@ -39,6 +43,10 @@ namespace OpenrecSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 //if (_message is IOpenrecItem item)
                 //{

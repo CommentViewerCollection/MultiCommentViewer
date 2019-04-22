@@ -57,6 +57,16 @@
   <PropertyGroup>
     <StartupObject>MultiCommentViewer.Program</StartupObject>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
+    <OutputPath>bin\Beta\</OutputPath>
+    <DefineConstants>TRACE;BETA</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -362,7 +372,10 @@
     <PreBuildEvent>:: 余分なファイルをリリースしてしまわないように一旦全部消す
 if $(ConfigurationName) == Release (
   rd /s /q "$(TargetDir)"
+) else if $(ConfigurationName) == Beta (
+  rd /s /q "$(TargetDir)"
 )
+
 </PreBuildEvent>
   </PropertyGroup>
   <Target Name="PostBuildMacros">
@@ -380,6 +393,8 @@ if $(ConfigurationName) == Release (
     </PostBuildEventDependsOn>
     <PostBuildEvent>:: フォルダがごちゃごちゃしていると実行ファイルを見つけにくいからdllディレクトリを作成し、全部突っ込む
 if $(ConfigurationName) == Release (
+  powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)\postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)
+) else if $(ConfigurationName) == Beta (
   powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)\postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)
 )
 
@@ -409,7 +424,10 @@ powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList
 ::zip化
 if $(ConfigurationName) == Release (
   powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip' -Force
-)</PostBuildEvent>
+) else if $(ConfigurationName) == Beta (
+  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber)b.zip' -Force
+)
+</PostBuildEvent>
   </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

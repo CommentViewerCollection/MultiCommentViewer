@@ -11,5 +11,6 @@
         <Label Content="公式放送で取得する部屋数" HorizontalAlignment="Left" Margin="17,27,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.132,-0.192"/>
         <CheckBox Content="184コメントを表示する" IsChecked="{Binding IsShow184}" HorizontalAlignment="Left" Margin="30,135,0,0" VerticalAlignment="Top"/>
         <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="30,105,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="184IDをユーザ名として表示する" IsChecked="{Binding IsShow184Id}" HorizontalAlignment="Left" Margin="30,165,0,0" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>

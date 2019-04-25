@@ -16,6 +16,7 @@ namespace NicoSitePlugin
         public virtual bool IsShow184 { get => GetValue(); set => SetValue(value); }
 
         public bool IsAutoSetNickname { get => GetValue(); set => SetValue(value); }
+        public bool IsShow184Id { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(OfficialRoomsRetrieveCount), new Item { DefaultValue = 3, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
@@ -27,6 +28,7 @@ namespace NicoSitePlugin
 
             Dict.Add(nameof(IsShow184), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsAutoSetNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShow184Id), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
         internal NicoSiteOptions Clone()
         {

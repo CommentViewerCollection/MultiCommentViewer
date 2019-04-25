@@ -28,8 +28,9 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private NicoCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+        private NicoCommentViewModel(NicoSitePlugin.INicoMessage message, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
         {
+            _message = message;
             _metadata = metadata;
             _methods = methods;
 
@@ -57,6 +58,15 @@ namespace MultiCommentViewer
                     case nameof(options.IsEnabledSiteConnectionColor):
                         RaisePropertyChanged(nameof(Background));
                         RaisePropertyChanged(nameof(Foreground));
+                        break;
+                }
+            };
+            _message.ValueChanged += (s, e) =>
+            {
+                switch (e.PropertyName)
+                {
+                    case nameof(_message.NameItems):
+                        RaisePropertyChanged(nameof(NameItems));
                         break;
                 }
             };
@@ -107,10 +117,8 @@ namespace MultiCommentViewer
             }
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
+            : this(comment as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
-            _message = comment;
-
             _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
@@ -136,13 +144,13 @@ namespace MultiCommentViewer
         //    PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
         //}
         public NicoCommentViewModel(NicoSitePlugin.INicoConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
+            : this(connected as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
             _message = connected;
             MessageItems = connected.CommentItems;
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
+            : this(disconnected as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
             MessageItems = disconnected.CommentItems;

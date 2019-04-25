@@ -185,7 +185,7 @@ namespace NicoSitePlugin
             {
                 id = roomName;
             }
-            var message = new NicoComment(chat.Raw)
+            var message = new NicoComment(chat.Raw, _siteOptions)
             {
                 ChatNo = chat.No,
                 CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(chat.Text) },
@@ -509,7 +509,7 @@ namespace NicoSitePlugin
             var userId = chat.UserId;
             var user = _userStore.GetUser(userId);
 
-            var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions.IsAutoSetNickname, _mainRoomThreadId, _logger);
+            var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions.IsAutoSetNickname, _mainRoomThreadId, _logger, _siteOptions);
             if(message == null)
             {
                 return null;

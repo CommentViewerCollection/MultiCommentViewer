@@ -15,6 +15,11 @@ namespace NicoSitePlugin
             get => _changed.IsShow184;
             set => _changed.IsShow184 = value;
         }
+        public bool IsShow184Id
+        {
+            get => _changed.IsShow184Id;
+            set => _changed.IsShow184Id = value;
+        }
         public bool IsAutoSetNickname
         {
             get { return ChangedOptions.IsAutoSetNickname; }

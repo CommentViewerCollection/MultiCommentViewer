@@ -193,9 +193,9 @@ namespace YouTubeLiveSitePluginTests
             serverMock.Setup(s => s.PostAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CookieContainer>())).Returns(Task.FromResult(data));
             var siteOptions = new YouTubeLiveSiteOptions();
             var loggerMock = new Mock<ILogger>();
-            var userStore = new Mock<IUserStore>();
+            var userStoreManagerMock = new Mock<IUserStoreManager>();
             var broweserProfileMock = new Mock<IBrowserProfile>();
-            var cpMock = new Mock<EachConnection>(loggerMock.Object, new CookieContainer(), optionsMock.Object, serverMock.Object, siteOptions, new Dictionary<string, int>(), new System.Collections.Generic.SynchronizedCollection<string>(), new Mock<ICommentProvider>().Object, userStore.Object);
+            var cpMock = new Mock<EachConnection>(loggerMock.Object, new CookieContainer(), optionsMock.Object, serverMock.Object, siteOptions, new Dictionary<string, int>(), new System.Collections.Generic.SynchronizedCollection<string>(), new Mock<ICommentProvider>().Object, userStoreManagerMock.Object);
             //var cpMock = new Mock<EachConnection>(options.Object, serverMock.Object, siteOptions, loggerMock.Object, userStore.Object);
             cpMock.Protected().Setup<PostCommentContext>("PostCommentContext").Returns(new PostCommentContext() { Sej = "" });
             var cp = cpMock.Object;

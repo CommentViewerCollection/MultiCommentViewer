@@ -907,11 +907,7 @@ namespace MultiCommentViewer
         public bool Topmost
         {
             get { return _options.IsTopmost; }
-            set
-            {
-                _options.IsTopmost = value;
-                RaisePropertyChanged();
-            }
+            set { _options.IsTopmost = value; }
         }
         public double MainViewHeight
         {
@@ -1184,6 +1180,10 @@ namespace MultiCommentViewer
                     case nameof(_options.IsEnabledSiteConnectionColor):
                     case nameof(_options.SiteConnectionColorType):
                         RaisePropertyChanged(nameof(ConnectionColorColumnWidth));
+                        break;
+                    case nameof(_options.IsTopmost):
+                        _pluginManager.OnTopmostChanged(_options.IsTopmost);
+                        RaisePropertyChanged(nameof(Topmost));
                         break;
                 }
             };

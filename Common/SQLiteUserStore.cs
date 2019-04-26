@@ -21,10 +21,14 @@ namespace Common
         public event EventHandler<IUser> UserAdded;
         public void Init()
         {
-            foreach (var user in LoadAllUserInfo())
-            {
-                _cacheDict.TryAdd(user.UserId, user);
-            }
+            //foreach (var user in LoadAllUserInfo())
+            //{
+            //    _cacheDict.TryAdd(user.UserId, user);
+            //}
+        }
+        public void ClearCache()
+        {
+            _cacheDict.Clear();
         }
         public IEnumerable<IUser> GetAllUsers()
         {
@@ -41,15 +45,19 @@ namespace Common
             //TODO:最初にデータベース上のユーザ情報を全てメモリに読み込むべきでは？その方が絶対に効率がいい。
             if (TryGet(userId, out IUser userInfo))
             {
-                _cacheDict.TryAdd(userId, userInfo);
+                AddUser(userInfo);
                 return userInfo;
             }
 
             //キャッシュにもデータベースにも無いので、新たに作成
             userInfo = new UserTest(userId);
-            _cacheDict.TryAdd(userId, userInfo);
-            UserAdded?.Invoke(this, userInfo);
+            AddUser(userInfo);
             return userInfo;
+        }
+        private void AddUser(IUser userInfo)
+        {
+            _cacheDict.TryAdd(userInfo.UserId, userInfo);
+            UserAdded?.Invoke(this, userInfo);
         }
         private List<IUser> LoadAllUserInfo()
         {
@@ -287,9 +295,9 @@ namespace Common
                         else
                         {
                             reader.Read();
-                            var nickname = reader.GetString(0);
+                            var json = reader.GetString(0);
                             var update = reader.GetDateTime(1);
-                            userInfo = new UserTest(userId) { Nickname = nickname };
+                            userInfo = FromJson(json);
                             return true;
                         }
                     }

@@ -1245,6 +1245,7 @@ namespace MultiCommentViewer
         {
             if (!_userViewModelDict.TryGetValue(userId, out var uvm))
             {
+                Debug.WriteLine($"{nameof(_userViewModelDict)}にuserId={userId}が存在しない");
                 return;
             }
             MessengerInstance.Send(new ShowUserViewMessage(uvm));

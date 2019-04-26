@@ -19,6 +19,7 @@
         <xctk:ColorPicker  SelectedColor="{Binding KiitosBackColor}" Margin="145,258,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="3.467,1.727" />
         <Label Content="キートス文字色" HorizontalAlignment="Left" Margin="45,285,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.109,-0.577"/>
         <xctk:ColorPicker SelectedColor="{Binding KiitosForeColor}" Margin="145,289,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.4,2.591" />
+        <CheckBox Content="アイテムを表示する" IsChecked="{Binding IsShowItem}" HorizontalAlignment="Left" Margin="46,155,0,0" VerticalAlignment="Top"/>
 
 
     </Grid>

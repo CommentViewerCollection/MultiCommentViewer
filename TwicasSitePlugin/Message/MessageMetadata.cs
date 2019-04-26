@@ -138,6 +138,7 @@ namespace TwicasSitePlugin
             get
             {
                 if (IsNgUser || IsSiteNgUser) return false;
+                if (_message is ITwicasItem) return _siteOptions.IsShowItem;
 
                 //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
                 //→Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
@@ -204,6 +205,12 @@ namespace TwicasSitePlugin
                     if (_message is ITwicasKiitos)
                     {
                         RaisePropertyChanged(nameof(ForeColor));
+                    }
+                    break;
+                case nameof(_siteOptions.IsShowItem):
+                    if(_message is ITwicasItem)
+                    {
+                        RaisePropertyChanged(nameof(IsVisible));
                     }
                     break;
             }

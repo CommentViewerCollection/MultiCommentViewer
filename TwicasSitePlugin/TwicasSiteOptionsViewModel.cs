@@ -36,6 +36,11 @@ namespace TwicasSitePlugin
             get { return ChangedOptions.IsAutoSetNickname; }
             set { ChangedOptions.IsAutoSetNickname = value; }
         }
+        public bool IsShowItem
+        {
+            get => ChangedOptions.IsShowItem;
+            set => ChangedOptions.IsShowItem = value;
+        }
         private readonly TwicasSiteOptions _origin;
         private readonly TwicasSiteOptions changed;
         internal TwicasSiteOptions OriginOptions { get { return _origin; } }

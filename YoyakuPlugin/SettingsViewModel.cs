@@ -148,7 +148,19 @@ namespace OpenrecYoyakuPlugin
             }
         }
         #endregion
-
+        public bool Topmost
+        {
+            get
+            {
+                return _topmost;
+            }
+            set
+            {
+                if (_topmost == value) return;
+                _topmost = value;
+                RaisePropertyChanged();
+            }
+        }
         public ObservableCollection<User> RegisteredUsers { get; } = new ObservableCollection<User>();
         public User SelectedUser
         {
@@ -165,6 +177,8 @@ namespace OpenrecYoyakuPlugin
             get { return "予約管理plugin for やります！アンコちゃん　のオマージュプラグイン"; }
         }
         private bool _isListSelected;
+        private bool _topmost;
+
         public bool IsListSelected
         {
             get { return _isListSelected; }
@@ -294,7 +308,8 @@ namespace OpenrecYoyakuPlugin
         {
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
             {
-                _model = new Model(null, null);
+                var options = new DynamicOptions();
+                _model = new Model(options, null);
                 IsEnabled = true;
                 IsListSelected = false;
             }

@@ -7,7 +7,7 @@
         xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance local:SettingsViewModel, IsDesignTimeCreatable=True}"
-        Title="{Binding Title}" Height="351.176" Width="487.941">
+        Title="{Binding Title}" Height="351.176" Width="487.941" Topmost="{Binding Topmost}">
     <Window.Resources>
         <local:NotConverter x:Key="notConverter" />
         <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />

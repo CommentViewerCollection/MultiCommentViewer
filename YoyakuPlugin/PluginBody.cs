@@ -162,10 +162,10 @@ namespace OpenrecYoyakuPlugin
 
         public void OnTopmostChanged(bool isTopmost)
         {
-            //if (_settingsView != null)
-            //{
-            //    _settingsView.Topmost = isTopmost;
-            //}
+            if (_vm != null)
+            {
+                _vm.Topmost = isTopmost;
+            }
         }
         Model _model;
         public PluginBody()

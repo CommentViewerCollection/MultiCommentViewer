@@ -25,12 +25,23 @@ namespace MultiCommentViewer
     /// </summary>
     public abstract class CommentDataGridViewModelBase : ViewModelBase
     {
-        public ICollectionView Comments { get; protected set; }
+        public ICollectionView Comments
+        {
+            get
+            {
+                return _comments;
+            }
+            set
+            {
+                _comments = value;
+                RaisePropertyChanged();
+            }
+        }
         public System.Windows.Controls.ScrollUnit ScrollUnit
         {
             get
             {
-                if(_options.IsPixelScrolling)
+                if (_options.IsPixelScrolling)
                 {
                     return System.Windows.Controls.ScrollUnit.Pixel;
                 }
@@ -169,13 +180,14 @@ namespace MultiCommentViewer
         }
         public IMcvCommentViewModel SelectedComment { get; set; }
         private readonly IOptions _options;
+        private ICollectionView _comments;
 
         public CommentDataGridViewModelBase(IOptions options)
         {
             _options = options;
             Comments = CollectionViewSource.GetDefaultView(new ObservableCollection<ICommentViewModel>());
         }
-        public CommentDataGridViewModelBase(IOptions options,ICollectionView comments)
+        public CommentDataGridViewModelBase(IOptions options, ICollectionView comments)
         {
             _options = options;
             Comments = comments;

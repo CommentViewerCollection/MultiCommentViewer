@@ -1227,18 +1227,7 @@ namespace MultiCommentViewer
         }
         private UserViewModel CreateUserViewModel(IUser user)
         {
-            var userId = user.UserId;
-            var view = new CollectionViewSource { Source = _comments }.View;
-            view.Filter = obj =>
-            {
-                if (!(obj is IMcvCommentViewModel cvm))
-                {
-                    return false;
-                }
-                return cvm.UserId == userId;
-            };
-
-            var uvm = new UserViewModel(user, _options, view);
+            var uvm = new UserViewModel(user, _options);
             return uvm;
         }
         public void ShowUserInfo(string userId)
@@ -1248,6 +1237,16 @@ namespace MultiCommentViewer
                 Debug.WriteLine($"{nameof(_userViewModelDict)}にuserId={userId}が存在しない");
                 return;
             }
+            var view = new CollectionViewSource { Source = _comments }.View;
+            view.Filter = obj =>
+            {
+                if (!(obj is IMcvCommentViewModel cvm))
+                {
+                    return false;
+                }
+                return cvm.UserId == userId;
+            };
+            uvm.Comments = view;
             MessengerInstance.Send(new ShowUserViewMessage(uvm));
         }
         private void ShowUserInfo()

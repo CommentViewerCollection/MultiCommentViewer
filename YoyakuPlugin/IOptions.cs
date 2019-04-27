@@ -1,7 +1,11 @@
-﻿namespace OpenrecYoyakuPlugin
+﻿using System.ComponentModel;
+
+namespace OpenrecYoyakuPlugin
 {
-    public interface IOptions
+    public interface IOptions : INotifyPropertyChanged
     {
+        string ReserveCommandPattern { get; set; }
+        string DeleteCommandPattern { get; set; }
         string AlreadyReserved_Message { get; set; }
         string AlreadyReserved_Se { get; set; }
         string Call_Message { get; set; }

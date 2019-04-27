@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Plugin;
 using SitePlugin;
 
@@ -13,7 +14,16 @@ namespace OpenrecYoyakuPlugin
         private readonly IOptions _options;
         private readonly IPluginHost _host;
         private User _currentUser;
-
+        public string ReserveCommandPattern
+        {
+            get { return _options.ReserveCommandPattern; }
+            set { _options.ReserveCommandPattern = value; }
+        }
+        public string DeleteCommandPattern
+        {
+            get { return _options.DeleteCommandPattern; }
+            set { _options.DeleteCommandPattern = value; }
+        }
         public string Reserved_Se
         {
             get { return _options.Reserved_Se; }
@@ -118,7 +128,63 @@ namespace OpenrecYoyakuPlugin
         {
             _options = options;
             _host = host;
+            options.PropertyChanged += Options_PropertyChanged;
+
+            TestComment = "abc";
+            TestPattern = "abc";
+            SetReserveCommandPattern(options.ReserveCommandPattern);
+            SetDeleteCommandPattern(options.DeleteCommandPattern);
         }
+        private Regex _reserveCommandRegex;
+        private Regex _deleteCommandRegex;
+        private void SetReserveCommandPattern(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern)) return;
+
+            Regex regex;
+            try
+            {
+                regex = CreateCommandRegex(pattern);
+            }
+            catch (Exception)
+            {
+                regex = CreateCommandRegex("/yoyaku");
+            }
+            _reserveCommandRegex = regex;
+        }
+        private Regex CreateCommandRegex(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern)) throw new ArgumentNullException(nameof(pattern));
+            return new Regex(EscapePattern(pattern), RegexOptions.Singleline | RegexOptions.Compiled);
+        }
+        private void SetDeleteCommandPattern(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern)) return;
+
+            Regex regex;
+            try
+            {
+                regex = CreateCommandRegex(pattern);
+            }
+            catch (Exception)
+            {
+                regex = CreateCommandRegex("/torikeshi");
+            }
+            _deleteCommandRegex = regex;
+        }
+        private void Options_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(_options.ReserveCommandPattern):
+                    SetReserveCommandPattern(_options.ReserveCommandPattern);
+                    break;
+                case nameof(_options.DeleteCommandPattern):
+                    SetDeleteCommandPattern(_options.DeleteCommandPattern);
+                    break;
+            }
+        }
+
         /// <summary>
         /// 登録済みのN人を呼び出す
         /// </summary>
@@ -188,11 +254,11 @@ namespace OpenrecYoyakuPlugin
         }
         private bool IsYoyakuCommand(string comment)
         {
-            return comment.StartsWith("/yoyaku") || comment.StartsWith("/予約");
+            return _reserveCommandRegex.IsMatch(comment);
         }
         private bool IsTorikeshiCommand(string comment)
         {
-            return comment.StartsWith("/torikeshi") || comment.StartsWith("/取消");
+            return _deleteCommandRegex.IsMatch(comment);
         }
         private bool IsKakuninCommand(string comment)
         {
@@ -220,7 +286,7 @@ namespace OpenrecYoyakuPlugin
             {
                 if (FindUser(userId) == null)
                 {
-                    if(siteContextGuid == Guid.Empty)
+                    if (siteContextGuid == Guid.Empty)
                     {
                         Debugger.Break();
                     }
@@ -318,17 +384,96 @@ namespace OpenrecYoyakuPlugin
             get => _options.IsEnabled;
             set => _options.IsEnabled = value;
         }
+        public string TestPattern
+        {
+            get
+            {
+                return _testPattern;
+            }
+            set
+            {
+                _testPattern = value;
+                Test();
+            }
+        }
+        /// <summary>
+        /// 予約管理プラグインの正規表現に不要な正規表現を制限する
+        /// </summary>
+        /// <param name="raw">ユーザが入力したパターンの生の値</param>
+        /// <returns>不要な正規表現を無効化したパターン</returns>
+        private string EscapePattern(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return raw;
+            var s = raw;
+            s = s.Replace("(", "\\(");
+            s = s.Replace(")", "\\)");
+            return s;
+        }
+        public string TestResult
+        {
+            get
+            {
+                return _testResult;
+            }
+            set
+            {
+                _testResult = value;
+                RaisePropertyChanged();
+            }
+        }
+        public string TestComment
+        {
+            get
+            {
+                return _testComment;
+            }
+            set
+            {
+                _testComment = value;
+                Test();
+            }
+        }
+        private void Test()
+        {
+            string result;
+            if (string.IsNullOrEmpty(TestPattern))
+            {
+                result = $"{nameof(TestPattern)}が空欄です";
+            }
+            else if (string.IsNullOrEmpty(TestComment))
+            {
+                result = $"{nameof(TestComment)}が空欄です";
+            }
+            else
+            {
+                try
+                {
+                    var regex = CreateCommandRegex(TestPattern);
+                    result = regex.IsMatch(TestComment).ToString();
+                }
+                catch (Exception ex)
+                {
+                    result = ex.Message;
+                }
+            }
+            TestResult = result;
+        }
         private void WriteComment(string comment)
         {
             _host.PostCommentToAll(comment);
         }
+        private string _testPattern;
+        private string _testResult;
+        private string _testComment;
+
         #region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
+
         /// <summary>
         /// 
         /// </summary>
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
+        public virtual event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
         {
             add { _propertyChanged += value; }
             remove { _propertyChanged -= value; }

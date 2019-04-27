@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using System.ComponentModel;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
+using System.Diagnostics;
 
 namespace OpenrecYoyakuPlugin
 {
@@ -198,6 +199,16 @@ namespace OpenrecYoyakuPlugin
         {
             get { return IsListSelected ? Visibility.Hidden : Visibility.Visible; }
         }
+        public string ReserveCommandPattern
+        {
+            get { return _model.ReserveCommandPattern; }
+            set { _model.ReserveCommandPattern = value; }
+        }
+        public string DeleteCommandPattern
+        {
+            get { return _model.DeleteCommandPattern; }
+            set { _model.DeleteCommandPattern = value; }
+        }
         public string Reserved_Se
         {
             get { return _model.Reserved_Se; }
@@ -298,6 +309,23 @@ namespace OpenrecYoyakuPlugin
             get => _model.CalledWidth;
             set => _model.CalledWidth = value;
         }
+        public string TestPattern
+        {
+            get => _model.TestPattern;
+            set => _model.TestPattern = value;
+        }
+        public string TestComment
+        {
+            get => _model.TestComment;
+            set => _model.TestComment = value;
+        }
+        public string TestResult
+        {
+            get
+            {
+                return _model.TestResult;
+            }
+        }
         protected virtual DateTime GetCurrentDateTime()
         {
             return DateTime.Now;
@@ -309,7 +337,11 @@ namespace OpenrecYoyakuPlugin
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
             {
                 var options = new DynamicOptions();
-                _model = new Model(options, null);
+                _model = new Model(options, null)
+                {
+                    TestPattern = "/yoyaku",
+                    TestComment = "/yoyaku",
+                };
                 IsEnabled = true;
                 IsListSelected = false;
             }
@@ -320,7 +352,17 @@ namespace OpenrecYoyakuPlugin
             _model = model;
             _dispatcher = dispatcher;
             IsListSelected = true;
+            model.PropertyChanged += Model_PropertyChanged;
             _model.UsersListChanged += Model_UsersListChanged;
+        }
+        private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(_model.TestResult):
+                    RaisePropertyChanged(nameof(TestResult));
+                    break;
+            }
         }
 
         private void Model_UsersListChanged(object sender, EventArgs e)

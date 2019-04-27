@@ -20,6 +20,10 @@ namespace TwicasSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 else if (_message is ITwicasKiitos)
                 {
                     return _siteOptions.KiitosBackColor;
@@ -43,6 +47,10 @@ namespace TwicasSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 else if (_message is ITwicasKiitos)
                 {
@@ -130,6 +138,7 @@ namespace TwicasSitePlugin
             get
             {
                 if (IsNgUser || IsSiteNgUser) return false;
+                if (_message is ITwicasItem) return _siteOptions.IsShowItem;
 
                 //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
                 //→Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
@@ -138,7 +147,7 @@ namespace TwicasSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
-
+        public Guid SiteContextGuid { get; set; }
         public MessageMetadata(ITwicasMessage message, ICommentOptions options, ITwicasSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
@@ -196,6 +205,12 @@ namespace TwicasSitePlugin
                     if (_message is ITwicasKiitos)
                     {
                         RaisePropertyChanged(nameof(ForeColor));
+                    }
+                    break;
+                case nameof(_siteOptions.IsShowItem):
+                    if(_message is ITwicasItem)
+                    {
+                        RaisePropertyChanged(nameof(IsVisible));
                     }
                     break;
             }

@@ -80,6 +80,7 @@ namespace TwicasSitePlugin
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, _cp, isFirstComment)
             {
                 IsInitialComment = isInitialComment,
+                SiteContextGuid = SiteContextGuid,
             };
             var methods = new TwicasMessageMethods();
             var messageContext = new TwicasMessageContext(message, metadata, methods);
@@ -216,7 +217,11 @@ namespace TwicasSitePlugin
                             if (itemMessage != null)
                             {
                                 var user = _userStore.GetUser(item.SenderName);
-                                var metadata = new MessageMetadata(itemMessage, _options, _siteOptions, user, _cp, false);
+                                var metadata = new MessageMetadata(itemMessage, _options, _siteOptions, user, _cp, false)
+                                {
+                                    IsInitialComment = false,
+                                    SiteContextGuid = SiteContextGuid,
+                                };
                                 var methods = new TwicasMessageMethods();
                                 var context = new TwicasMessageContext(itemMessage, metadata, methods);
                                 MessageReceived?.Invoke(this, context);
@@ -333,6 +338,7 @@ namespace TwicasSitePlugin
                 _cts.Cancel();
             }
         }
+        public Guid SiteContextGuid { get; set; }
         private CancellationTokenSource _cts;
         private readonly IDataServer _server;
         private readonly ITwicasSiteOptions _siteOptions;

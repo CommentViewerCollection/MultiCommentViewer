@@ -233,7 +233,11 @@ namespace TwitchSitePlugin
                                 PostTime = commentData.SentAt.ToString("HH:mm:ss"),
                                 UserId = commentData.UserId,
                             };
-                            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
+                            {
+                                IsInitialComment = false,
+                                SiteContextGuid = SiteContextGuid,
+                            };
                             var methods = new TwitchMessageMethods();
                             var messageContext = new TwitchMessageContext(message, metadata, methods);
                             MessageReceived?.Invoke(this, messageContext);
@@ -311,6 +315,7 @@ namespace TwitchSitePlugin
             var s = $"PRIVMSG #{_channelName} :{text}";
             await _provider.SendAsync(s);
         }
+        public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;

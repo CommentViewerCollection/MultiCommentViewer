@@ -31,7 +31,10 @@ namespace WhowatchSitePlugin
 
         public virtual ICommentProvider CreateCommentProvider()
         {
-            return new WhowatchCommentProvider(_server, _options, _siteOptions, _userStore, _logger);
+            return new WhowatchCommentProvider(_server, _options, _siteOptions, _userStore, _logger)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)
@@ -85,6 +88,10 @@ namespace WhowatchSitePlugin
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex, "", $"path={path}");
             }
+        }
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
         }
         protected virtual IUserStore CreateUserStore()
         {

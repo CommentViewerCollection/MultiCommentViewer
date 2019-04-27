@@ -20,6 +20,7 @@ namespace MultiCommentViewer
         void SetMessage(IMessage message, IMessageMetadata messageMetadata);
         void OnLoaded();
         void OnClosing();
+        void OnTopmostChanged(bool isTopmost);
         //event EventHandler<string> PostingCommentReceived;
     }
     public class PluginManager : IPluginManager
@@ -139,6 +140,14 @@ namespace MultiCommentViewer
             foreach (var plugin in _plugins)
             {
                 plugin.OnMessageReceived(message, messageMetadata);
+            }
+        }
+
+        public void OnTopmostChanged(bool isTopmost)
+        {
+            foreach (var plugin in _plugins)
+            {
+                plugin.OnTopmostChanged(isTopmost);
             }
         }
 

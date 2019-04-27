@@ -22,6 +22,10 @@ namespace MirrativSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 else if (_message is IMirrativConnected)
                 {
                     return _options.BroadcastInfoBackColor;
@@ -53,6 +57,10 @@ namespace MirrativSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 else if (_message is IMirrativConnected)
                 {
@@ -156,7 +164,7 @@ namespace MirrativSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
-
+        public Guid SiteContextGuid { get; set; }
         public MirrativMessageMetadata(IMirrativMessage message, ICommentOptions options, IMirrativSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;

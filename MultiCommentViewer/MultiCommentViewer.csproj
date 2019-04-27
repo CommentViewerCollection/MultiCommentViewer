@@ -16,6 +16,21 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -38,6 +53,19 @@
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>mcv_icon2.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>MultiCommentViewer.Program</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
+    <OutputPath>bin\Beta\</OutputPath>
+    <DefineConstants>TRACE;BETA</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -66,6 +94,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AppNoStartupUri.xaml.cs">
+      <DependentUpon>AppNoStartupUri.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TestCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwicasCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\OpenrecCommentViewModel.cs" />
@@ -101,12 +134,20 @@
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
+    <Compile Include="Views\UserListView.xaml.cs">
+      <DependentUpon>UserListView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\UserListViewModel.cs" />
     <Compile Include="Views\UserView.xaml.cs">
       <DependentUpon>UserView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\UserStoreTest.cs" />
     <Compile Include="ViewModels\UserViewModel.cs" />
     <Compile Include="ViewModels\ViewModelLocator.cs" />
+    <Page Include="AppNoStartupUri.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\CommentDataGrid.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -134,6 +175,10 @@
     <Page Include="Views\OptionsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserListView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\UserView.xaml">
       <SubType>Designer</SubType>
@@ -233,6 +278,14 @@
       <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>
       <Name>OpenrecSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj">
+      <Project>{242d4286-7214-422f-be7c-be784c815e0f}</Project>
+      <Name>PeriscopeIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PeriscopeSitePlugin\PeriscopeSitePlugin.csproj">
+      <Project>{95335a9e-4a33-45bb-8d5e-10d3c7c34bc1}</Project>
+      <Name>PeriscopeSitePlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
       <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
       <Name>SitePluginCommon</Name>
@@ -319,12 +372,27 @@
     <Resource Include="mcv_icon2.ico" />
     <Content Include="ReadMe.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.6.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.6.2 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>:: 余分なファイルをリリースしてしまわないように一旦全部消す
 if $(ConfigurationName) == Release (
   rd /s /q "$(TargetDir)"
+) else if $(ConfigurationName) == Beta (
+  rd /s /q "$(TargetDir)"
 )
+
 </PreBuildEvent>
   </PropertyGroup>
   <Target Name="PostBuildMacros">
@@ -342,6 +410,8 @@ if $(ConfigurationName) == Release (
     </PostBuildEventDependsOn>
     <PostBuildEvent>:: フォルダがごちゃごちゃしていると実行ファイルを見つけにくいからdllディレクトリを作成し、全部突っ込む
 if $(ConfigurationName) == Release (
+  powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)\postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)
+) else if $(ConfigurationName) == Beta (
   powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)\postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)
 )
 
@@ -371,7 +441,10 @@ powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList
 ::zip化
 if $(ConfigurationName) == Release (
   powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip' -Force
-)</PostBuildEvent>
+) else if $(ConfigurationName) == Beta (
+  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber)b.zip' -Force
+)
+</PostBuildEvent>
   </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

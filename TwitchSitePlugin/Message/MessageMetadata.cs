@@ -20,6 +20,10 @@ namespace TwitchSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 //if (_message is ITwitchItem item)
                 //{
                 //    return _siteOptions.ItemBackColor;
@@ -39,6 +43,10 @@ namespace TwitchSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 //if (_message is ITwitchItem item)
                 //{
@@ -130,7 +138,7 @@ namespace TwitchSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
-
+        public Guid SiteContextGuid { get; set; }
         public MessageMetadata(ITwitchMessage message, ICommentOptions options, ITwitchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;

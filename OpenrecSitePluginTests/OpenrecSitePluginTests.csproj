@@ -31,6 +31,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
+    <OutputPath>bin\Beta\</OutputPath>
+    <DefineConstants>TRACE;BETA</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
@@ -45,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
+    <Compile Include="CommentProviderTests.cs" />
     <Compile Include="CommentViewModelTests.cs" />
     <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -52,6 +62,10 @@
     <Compile Include="ToolsTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">
+      <Project>{CDBBBF25-AD0C-4EAF-B673-EB0BB198585A}</Project>
+      <Name>BrowserCookieInterfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
       <Name>Common</Name>

@@ -93,7 +93,9 @@ namespace MultiCommentViewer.Test
         public Color WhowatchForeColor { get => GetValue(); set => SetValue(value); }
         public Color MirrativBackColor { get => GetValue(); set => SetValue(value); }
         public Color MirrativForeColor { get => GetValue(); set => SetValue(value); }
-        
+        public Color PeriscopeBackColor { get => GetValue(); set => SetValue(value); }
+        public Color PeriscopeForeColor { get => GetValue(); set => SetValue(value); }
+
         protected override void Init()
         {
             Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
@@ -183,6 +185,8 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(WhowatchForeColor), new Item { DefaultValue = ColorFromArgb("#FF4B0082"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(MirrativBackColor), new Item { DefaultValue = ColorFromArgb("#FFFA8072"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(MirrativForeColor), new Item { DefaultValue = ColorFromArgb("#FF008080"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(PeriscopeBackColor), new Item { DefaultValue = ColorFromArgb("#FFFA8072"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(PeriscopeForeColor), new Item { DefaultValue = ColorFromArgb("#FF008080"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
         }
         public ICommentOptions Clone()
         {

@@ -7,24 +7,26 @@ using SitePlugin;
 using Common;
 using System.Windows.Threading;
 using System.Windows.Controls;
+using SitePluginCommon;
 
 namespace MultiCommentViewer.Test
 {
     public class SitePluginLoaderTest : ISitePluginLoader
     {
         Dictionary<Guid, ISiteContext> _dict = new Dictionary<Guid, ISiteContext>();
-        public IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger)
+        public IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
         {
             var list = new List<ISiteContext>
             {
-                new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, new YouTubeLiveSitePlugin.Test2.YouTubeLiveServer(), logger),
+                new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, new YouTubeLiveSitePlugin.Test2.YouTubeLiveServer(), logger, userStoreManager),
                 new OpenrecSitePlugin.OpenrecSiteContext(options, logger),
                 new TwitchSitePlugin.TwitchSiteContext(options,new TwitchSitePlugin.TwitchServer(), logger),
-                new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), (addr,port,size,buffer)=> new NicoSitePlugin.StreamSocket(addr,port,size,buffer), logger),
+                new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), (addr,port,size,buffer)=> new NicoSitePlugin.StreamSocket(addr,port,size,buffer), logger, userStoreManager),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger),
                 new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger),
                 new WhowatchSitePlugin.WhowatchSiteContext(options, logger),
                 new MirrativSitePlugin.MirrativSiteContext(options,new MirrativSitePlugin.MirrativServer(), logger),
+                new PeriscopeSitePlugin.PeriscopeSiteContext(options,new PeriscopeSitePlugin.PeriscopeServer(), logger,userStoreManager),
 #if DEBUG
                 new TestSitePlugin.TestSiteContext(options),
 #endif

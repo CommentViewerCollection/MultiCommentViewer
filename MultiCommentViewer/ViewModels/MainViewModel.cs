@@ -118,6 +118,7 @@ namespace MultiCommentViewer
         public ICommand ShowDevelopersTwitterCommand { get; }
         public ICommand CheckUpdateCommand { get; }
         public ICommand ShowUserInfoCommand { get; }
+        public ICommand ShowUserListCommand { get; }
         public ICommand RemoveSelectedConnectionCommand { get; }
         public ICommand AddNewConnectionCommand { get; }
         public ICommand ClearAllCommentsCommand { get; }
@@ -130,6 +131,10 @@ namespace MultiCommentViewer
         private readonly ILogger _logger;
         private IPluginManager _pluginManager;
         private readonly ISitePluginLoader _sitePluginLoader;
+        public ISiteContext GetSiteContext(Guid siteContextGuid)
+        {
+            return _sitePluginLoader.GetSiteContext(siteContextGuid);
+        }
         private readonly IBrowserLoader _browserLoader;
         private readonly IIo _io;
         IOptions _options;
@@ -212,6 +217,7 @@ namespace MultiCommentViewer
                 yield return _sitePluginLoader.GetSiteContext(siteVm.Guid);
             }
         }
+        IUserStoreManager _userStoreManager;
         private async void ContentRendered()
         {
             //なんか気持ち悪い書き方だけど一応動く。
@@ -220,7 +226,9 @@ namespace MultiCommentViewer
             {
                 //Observable.Interval()
                 //_optionsLoader.LoadAsync().
-                var a = _sitePluginLoader.LoadSitePlugins(_options, _logger);
+                _userStoreManager = new UserStoreManager();
+                _userStoreManager.UserAdded += UserStoreManager_UserAdded;
+                var a = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
                 var siteVms = new List<SiteViewModel>();
                 foreach (var (displayName, guid) in a)
                 {
@@ -230,7 +238,8 @@ namespace MultiCommentViewer
                         var siteContext = _sitePluginLoader.GetSiteContext(guid);
                         siteContext.LoadOptions(path, _io);
                         siteVms.Add(new SiteViewModel(displayName, guid));
-                    }catch(Exception ex)
+                    }
+                    catch (Exception ex)
                     {
                         _logger.LogException(ex);
                     }
@@ -258,7 +267,7 @@ namespace MultiCommentViewer
                 {
                     Color backColor;
                     Color foreColor;
-                    if(!string.IsNullOrEmpty(serializer.BackColorArgb) && !string.IsNullOrEmpty(serializer.ForeColorArgb))
+                    if (!string.IsNullOrEmpty(serializer.BackColorArgb) && !string.IsNullOrEmpty(serializer.ForeColorArgb))
                     {
                         backColor = Common.Utils.ColorFromArgb(serializer.BackColorArgb);
                         foreColor = Common.Utils.ColorFromArgb(serializer.ForeColorArgb);
@@ -269,7 +278,7 @@ namespace MultiCommentViewer
                         backColor = colorPair.BackColor;
                         foreColor = colorPair.ForeColor;
                     }
-                    
+
                     AddNewConnection(serializer.Name, serializer.SiteName, serializer.Url, serializer.BrowserName, true, backColor, foreColor);
                 }
                 if (_options.IsAutoCheckIfUpdateExists)
@@ -542,7 +551,23 @@ namespace MultiCommentViewer
             }
         }
         #endregion //Methods
+        public event EventHandler<EventArgs> CloseRequested;
+        public void RequestClose()
+        {
+            OnCloseRequested(EventArgs.Empty);
+        }
 
+        protected virtual void OnCloseRequested(EventArgs e)
+        {
+            CloseRequested?.Invoke(this, e);
+        }
+
+        public async Task InitializeAsync()
+        {
+            //use this to test the exception handling
+            //throw new NotImplementedException();
+            await Task.CompletedTask;
+        }
         private void AddComment(ICommentViewModel cvm, IConnectionStatus connectionName)
         {
             if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
@@ -693,6 +718,29 @@ namespace MultiCommentViewer
                     mcvCvm = new TwicasCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
+            else if(messageContext.Message is PeriscopeSitePlugin.IPeriscopeMessage periscopeMessage)
+            {
+                if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeComment comment)
+                {
+                    mcvCvm = new PeriscopeCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeConnected connected)
+                {
+                    mcvCvm = new PeriscopeCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeDisconnected disconnected)
+                {
+                    mcvCvm = new PeriscopeCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeJoin join)
+                {
+                    mcvCvm = new PeriscopeCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeLeave leave)
+                {
+                    mcvCvm = new PeriscopeCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
             else if(messageContext.Message is TestSitePlugin.ITestMessage testMessage)
             {
                 if(testMessage is TestSitePlugin.ITestComment comment)
@@ -702,7 +750,10 @@ namespace MultiCommentViewer
             }
             if (mcvCvm != null)
             {
-                _comments.Add(mcvCvm);
+                _dispatcher.Invoke(() =>
+                {
+                    _comments.Add(mcvCvm);
+                });
             }
         }
         #region EventHandler
@@ -879,11 +930,7 @@ namespace MultiCommentViewer
         public bool Topmost
         {
             get { return _options.IsTopmost; }
-            set
-            {
-                _options.IsTopmost = value;
-                RaisePropertyChanged();
-            }
+            set { _options.IsTopmost = value; }
         }
         public double MainViewHeight
         {
@@ -1111,6 +1158,7 @@ namespace MultiCommentViewer
             RemoveSelectedConnectionCommand = new RelayCommand(RemoveSelectedConnection);
             ClearAllCommentsCommand = new RelayCommand(ClearAllComments);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
+            ShowUserListCommand = new RelayCommand(ShowUserList);
             ActivatedCommand = new RelayCommand(Activated);
             LoadedCommand = new RelayCommand(Loaded);
             CommentCopyCommand = new RelayCommand(CopyComment);
@@ -1156,6 +1204,10 @@ namespace MultiCommentViewer
                     case nameof(_options.SiteConnectionColorType):
                         RaisePropertyChanged(nameof(ConnectionColorColumnWidth));
                         break;
+                    case nameof(_options.IsTopmost):
+                        _pluginManager.OnTopmostChanged(_options.IsTopmost);
+                        RaisePropertyChanged(nameof(Topmost));
+                        break;
                 }
             };
             RaisePropertyChanged(nameof(Topmost));
@@ -1177,7 +1229,49 @@ namespace MultiCommentViewer
                 _logger.LogException(ex);
             }
         }
-
+        private readonly Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
+        private readonly ObservableCollection<UserViewModel> _userViewModels = new ObservableCollection<UserViewModel>();
+        private async void UserStoreManager_UserAdded(object sender, IUser e)
+        {
+            //IUserStore.UserAddedに配信サイトかSiteContextを識別するものが必要かも
+            await _dispatcher.BeginInvoke((Action)(() =>
+            {
+                try
+                {
+                    var uvm = CreateUserViewModel(e);
+                    _userViewModelDict.Add(e.UserId, uvm);
+                    _userViewModels.Add(uvm);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
+            }), DispatcherPriority.Normal);
+        }
+        private UserViewModel CreateUserViewModel(IUser user)
+        {
+            var uvm = new UserViewModel(user, _options);
+            return uvm;
+        }
+        public void ShowUserInfo(string userId)
+        {
+            if (!_userViewModelDict.TryGetValue(userId, out var uvm))
+            {
+                Debug.WriteLine($"{nameof(_userViewModelDict)}にuserId={userId}が存在しない");
+                return;
+            }
+            var view = new CollectionViewSource { Source = _comments }.View;
+            view.Filter = obj =>
+            {
+                if (!(obj is IMcvCommentViewModel cvm))
+                {
+                    return false;
+                }
+                return cvm.UserId == userId;
+            };
+            uvm.Comments = view;
+            MessengerInstance.Send(new ShowUserViewMessage(uvm));
+        }
         private void ShowUserInfo()
         {
             var current = SelectedComment;
@@ -1192,41 +1286,17 @@ namespace MultiCommentViewer
                     Debug.WriteLine("UserIdがnull");
                     return;
                 }
-                var view = new CollectionViewSource { Source = _comments }.View;
-                view.Filter = obj =>
-                {
-                    if(!(obj is IMcvCommentViewModel cvm))
-                    {
-                        return false;
-                    }
-                    return cvm.UserId == userId;
-                };
-                //ICommentProviderが必要。。。ConnectionViewModel経由で取れないだろうか。
-                //Connectionを切断したり、サイトを変更してもコメントは残る。残ったコメントのユーザ情報を見ようとした時にConnectionViewModel経由で取るのは無理だろう。
-                //やっぱりCommentViewModelにICommentProviderを持たせるしかなさそう。
-                ICommentProvider commentProvider = current.CommentProvider;
-                var user = commentProvider.GetUser(userId);
-                //var s = commentProvider.GetUserComments(current.User) as ObservableCollection<ICommentViewModel>;
-                //var collection = new ObservableCollection<McvCommentViewModel>(s.Select(m => new McvCommentViewModel(m, current.ConnectionName));
-
-                //s.CollectionChanged += (sender, e) =>
-                //{
-                //    switch (e.Action)
-                //    {
-                //        case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
-                //            break;
-                //    }
-                //};
-                //var userStore = _dict2[commentProvider];
-                //var user = userStore.GetUser(userId);
-                var uvm = new UserViewModel(user, _options, view);
-                MessengerInstance.Send(new ShowUserViewMessage(uvm));
+                ShowUserInfo(userId);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex);
             }
+        }
+        private void ShowUserList()
+        {
+            MessengerInstance.Send(new ShowUserListViewMessage(_userViewModels, this));
         }
         private async void CheckUpdate()
         {

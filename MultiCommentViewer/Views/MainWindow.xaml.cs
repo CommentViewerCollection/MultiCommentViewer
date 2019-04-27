@@ -79,6 +79,24 @@ namespace MultiCommentViewer
                     Debug.WriteLine(ex.Message);
                 }
             });
+            Messenger.Default.Register<ShowUserListViewMessage>(this, message =>
+            {
+                try
+                {
+                    var uvms = message.UserViewModels;
+                    var mainVm = message.MainVm;
+                    var vm = new ViewModels.UserListViewModel(uvms, mainVm);
+                    var userView = new View.UserListView
+                    {
+                        DataContext = vm,
+                    };
+                    userView.Show();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            });
             Messenger.Default.Register<Common.AutoUpdate.ShowUpdateDialogMessage>(this, message =>
             {
                 var logger = message.Logger;

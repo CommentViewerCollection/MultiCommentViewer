@@ -18,6 +18,7 @@ namespace CommentViewerCommon
             var managers = new List<IBrowserManager>
             {
                 new ChromeManager(),
+                new ChromeBetaManager(),
                 new FirefoxManager(),
                 new IEManager(),
                 new OperaManager(),

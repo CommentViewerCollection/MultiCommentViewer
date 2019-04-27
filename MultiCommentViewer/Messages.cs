@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using SitePlugin;
 using System.Windows.Controls;
+using System.Collections.ObjectModel;
 
 namespace MultiCommentViewer
 {
@@ -19,6 +20,17 @@ namespace MultiCommentViewer
         public ShowUserViewMessage(UserViewModel uvm)
         {
             Uvm = uvm;
+        }
+    }
+    class ShowUserListViewMessage : GalaSoft.MvvmLight.Messaging.MessageBase
+    {
+        public ObservableCollection<UserViewModel> UserViewModels { get; }
+        public MainViewModel MainVm { get; }
+
+        public ShowUserListViewMessage(ObservableCollection<UserViewModel> userViewModels, MainViewModel mainVm)
+        {
+            UserViewModels = userViewModels;
+            MainVm = mainVm;
         }
     }
     class SetPostCommentPanel : GalaSoft.MvvmLight.Messaging.MessageBase

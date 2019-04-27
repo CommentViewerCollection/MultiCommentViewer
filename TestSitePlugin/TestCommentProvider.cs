@@ -109,7 +109,10 @@ namespace TestSitePlugin
                 var userId = arr[0];
                 var user = _userStore.GetUser(userId);
                 var comment = new TestComment(arr[0], arr[1]);
-                var metadata = new TestMetadata(user);
+                var metadata = new TestMetadata(user)
+                {
+                    SiteContextGuid = SiteContextGuid,
+                };
                 var methods = new TestMethods();
                 var context = new MessageContext(comment, metadata, methods);
                 MessageReceived?.Invoke(this, context);
@@ -120,7 +123,10 @@ namespace TestSitePlugin
                 var user = _userStore.GetUser(userId);
                 var name = arr[1];
                 var comment = new TestComment(userId, name, arr[2]);
-                var metadata = new TestMetadata(user);
+                var metadata = new TestMetadata(user)
+                {
+                    SiteContextGuid = SiteContextGuid,
+                };
                 var methods = new TestMethods();
                 var context = new MessageContext(comment, metadata, methods);
                 MessageReceived?.Invoke(this, context);
@@ -142,6 +148,7 @@ namespace TestSitePlugin
             }, _options);
             MessageReceived?.Invoke(this, context);
         }
+        public Guid SiteContextGuid { get; set; }
         public TestCommentProvider(ICommentOptions options, IUserStore userStore)
         {
             _options = options;

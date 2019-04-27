@@ -14,6 +14,9 @@ namespace OpenrecYoyakuPlugin
 {
     public class DynamicOptions : DynamicOptionsBase, IOptions
     {
+        internal const string Default_ReserveCommandPattern = "/yoyaku";
+        internal const string Default_DeleteCommandPattern = "/torikeshi";
+
         internal const string Default_Reserved_Se = "";
         internal const string Default_Reserved_Message = "$nameさんの予約うけつけましたー";
 
@@ -38,6 +41,8 @@ namespace OpenrecYoyakuPlugin
         internal const string Default_Explain_Se = "";
         internal const string Default_Explain_Message = "予約の仕方 /yoyaku 予約 /torikeshi 取り消し";
 
+        public string ReserveCommandPattern { get => GetValue(); set => SetValue(value); }
+        public string DeleteCommandPattern { get => GetValue(); set => SetValue(value); }
         public string Reserved_Se { get => GetValue(); set => SetValue(value); }
 
         public string Reserved_Message { get => GetValue(); set => SetValue(value); }
@@ -72,8 +77,15 @@ namespace OpenrecYoyakuPlugin
 
         public string HcgSettingFilePath { get => GetValue(); set => SetValue(value); }
         public bool IsEnabled { get => GetValue(); set => SetValue(value); }
+        public double DateWidth { get => GetValue(); set => SetValue(value); }
+        public double IdWidth { get => GetValue(); set => SetValue(value); }
+        public double NameWidth { get => GetValue(); set => SetValue(value); }
+        public double CalledWidth { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
+            Dict.Add(nameof(ReserveCommandPattern), new Item { DefaultValue = Default_ReserveCommandPattern, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
+            Dict.Add(nameof(DeleteCommandPattern), new Item { DefaultValue = Default_DeleteCommandPattern, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
+
             Dict.Add(nameof(Reserved_Se), new Item { DefaultValue = Default_Reserved_Se, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
             Dict.Add(nameof(Reserved_Message), new Item { DefaultValue = Default_Reserved_Message, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
 
@@ -101,6 +113,11 @@ namespace OpenrecYoyakuPlugin
 
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(HcgSettingFilePath), new Item { DefaultValue = _hcgSettingFilePath, Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
+
+            Dict.Add(nameof(DateWidth), new Item { DefaultValue = 106, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IdWidth), new Item { DefaultValue = 51, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(NameWidth), new Item { DefaultValue = 95, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(CalledWidth), new Item { DefaultValue = 74, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
         }
 
         private static readonly string _hcgSettingFilePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"hcg\setting.xml");

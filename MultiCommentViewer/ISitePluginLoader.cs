@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using SitePlugin;
 using Common;
 using System.Windows.Threading;
+using SitePluginCommon;
+
 namespace MultiCommentViewer
 {
     public interface ISitePluginLoader
     {
-        IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger);
+        IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager);
         /// <summary>
         /// 終了処理
         /// 終了処理的な名前にしたい

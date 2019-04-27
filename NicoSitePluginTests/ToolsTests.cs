@@ -11,6 +11,12 @@ namespace NicoSitePluginTests
     class ToolsTests
     {
         [Test]
+        public void Is184UserIdTest()
+        {
+            Assert.IsTrue(Tools.Is184UserId("edJpZLUT3Fk-gRGaw34IXGnr8zc"));
+            Assert.IsFalse(Tools.Is184UserId("123456"));
+        }
+        [Test]
         public void ExtractChannelScreenNameTest()
         {
             Assert.AreEqual("access-ann", Tools.ExtractChannelScreenName("http://ch.nicovideo.jp/access-ann"));

@@ -20,6 +20,10 @@ namespace OpenrecSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 //if (_message is IOpenrecItem item)
                 //{
                 //    return _siteOptions.ItemBackColor;
@@ -39,6 +43,10 @@ namespace OpenrecSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 //if (_message is IOpenrecItem item)
                 //{
@@ -130,7 +138,7 @@ namespace OpenrecSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
-
+        public Guid SiteContextGuid { get; set; }
         public MessageMetadata(IOpenrecMessage message, ICommentOptions options, IOpenrecSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;

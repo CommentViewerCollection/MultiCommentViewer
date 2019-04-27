@@ -8,6 +8,7 @@ using Moq;
 using NicoSitePlugin;
 using NUnit.Framework;
 using SitePlugin;
+using SitePluginCommon;
 
 namespace NicoSitePluginTests
 {
@@ -34,10 +35,10 @@ namespace NicoSitePluginTests
             var optionsMock = new Mock<ICommentOptions>();
             var siteOptionsMock = new Mock<INicoSiteOptions>();
             siteOptionsMock.Setup(s => s.IsAutoSetNickname).Returns(true);
-            var userStoreMock = new Mock<IUserStore>();
+            var userStoreMock = new Mock<IUserStoreManager>();
             var userId = "G-lRat9seQmpK-gcgcQXSFxr14c";
             var user = new UserTest(userId);
-            userStoreMock.Setup(s => s.GetUser(userId)).Returns(user);
+            userStoreMock.Setup(s => s.GetUser(SiteType.NicoLive, userId)).Returns(user);
 
             var serverMock = new Mock<IDataSource>();
             var loggerMock = new Mock<ILogger>();

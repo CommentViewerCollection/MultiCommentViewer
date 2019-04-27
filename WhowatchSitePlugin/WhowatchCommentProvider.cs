@@ -50,6 +50,10 @@ namespace WhowatchSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 else if (_message is IWhowatchItem item)
                 {
                     return _siteOptions.ItemBackColor;
@@ -69,6 +73,10 @@ namespace WhowatchSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 else if (_message is IWhowatchItem item)
                 {
@@ -160,6 +168,7 @@ namespace WhowatchSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
+        public Guid SiteContextGuid { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -389,6 +398,7 @@ namespace WhowatchSitePlugin
             CanConnect = false;
             CanDisconnect = true;
             _cts = new CancellationTokenSource();
+            _first.Reset();
             SendMessage(new WhowatchConnected(""), null);
         }
         private void AfterDisconnected()
@@ -402,6 +412,7 @@ namespace WhowatchSitePlugin
         {
             MessageReceived?.Invoke(this, new WhowatchMessageContext(message, new MessageMetadata(message, _options, _siteOptions,user,this, isFirstComment), new WhowatchMessageMethods()));
         }
+        FirstCommentDetector _first = new FirstCommentDetector();
         public virtual async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             //lastUpdatedAt==0でLiveDataを取る
@@ -472,9 +483,11 @@ namespace WhowatchSitePlugin
                         UserId = initialComment.User.Id.ToString(),
                         UserPath = initialComment.User.UserPath,
                     };
-                    var messageMetadata = new MessageMetadata(message, _options, _siteOptions, user, this, false)
+                    var isFirstComment = _first.IsFirstComment(user.UserId);
+                    var messageMetadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
                     {
                         IsInitialComment = true,
+                        SiteContextGuid = SiteContextGuid,
                     };
                     var methods = new WhowatchMessageMethods();
                     MessageReceived?.Invoke(this, new WhowatchMessageContext(message, messageMetadata, methods));
@@ -559,7 +572,7 @@ Retry:
                 if (whowatchMessage is IWhowatchComment comment)
                 {
                     var user = GetUser(comment.UserId.ToString());
-                    var isFirstComment = false;//TODO:要初コメ検知機能追加
+                    var isFirstComment = _first.IsFirstComment(user.UserId);
                     var messageText = Common.MessagePartsTools.ToText(comment.CommentItems);
                     SetNickname(messageText, user);
                     commentContext = CreateCommentContext(whowatchMessage, _options, _siteOptions, user, isFirstComment);
@@ -567,7 +580,7 @@ Retry:
                 else if(whowatchMessage is IWhowatchItem item)
                 {
                     var user = GetUser(item.UserId.ToString());
-                    var isFirstComment = false;//TODO:要初コメ検知機能追加
+                    var isFirstComment = _first.IsFirstComment(user.UserId);
                     var messageText = Common.MessagePartsTools.ToText(item.CommentItems);
                     SetNickname(messageText, user);
                     commentContext = CreateCommentContext(whowatchMessage, _options, _siteOptions, user, isFirstComment);
@@ -590,7 +603,11 @@ Retry:
 
         private IMessageContext CreateCommentContext(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, bool isFirstComment)
         {
-            var metadata = new MessageMetadata(message, options, siteOptions, user, this, isFirstComment);
+            var metadata = new MessageMetadata(message, options, siteOptions, user, this, isFirstComment)
+            {
+                IsInitialComment = false,
+                SiteContextGuid = SiteContextGuid,
+            };
             var methods = new WhowatchMessageMethods();
             return new WhowatchMessageContext(message, metadata, methods);
         }
@@ -641,7 +658,7 @@ Retry:
         {
             var res = await Api.PostCommentAsync(_server, _live_id, _lastUpdatedAt, text, _cc);
         }
-
+        public Guid SiteContextGuid { get; set; }
 
         #endregion //ICommentProvider
         public WhowatchCommentProvider(IDataServer server, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUserStore userStore, ILogger logger)

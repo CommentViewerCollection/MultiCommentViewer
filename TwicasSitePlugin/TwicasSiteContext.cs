@@ -48,7 +48,10 @@ namespace TwicasSitePlugin
 
         public ICommentProvider CreateCommentProvider()
         {
-            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStore);
+            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
 
         public bool IsValidInput(string input)
@@ -102,6 +105,10 @@ namespace TwicasSitePlugin
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex, "", $"path={path}");
             }
+        }
+        public IUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
         }
         public void Init()
         {

@@ -64,7 +64,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly ICommentOptions _options;
         private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
         //ChatProvider _chatProvider;
         //IMetadataProvider _metaProvider;
         //IActiveCounter<string> _activeCounter;
@@ -199,7 +199,10 @@ namespace YouTubeLiveSitePlugin.Test2
 
             _cc = CreateCookieContainer(browserProfile);
             Dictionary<string, int> userCommentCountDict = new Dictionary<string, int>();
-            _connection = new EachConnection(_logger, _cc, _options, _server, _siteOptions, userCommentCountDict, _receivedCommentIds, this, _userStore);
+            _connection = new EachConnection(_logger, _cc, _options, _server, _siteOptions, userCommentCountDict, _receivedCommentIds, this, _userStoreManager)
+            {
+                SiteContextGuid = SiteContextGuid,
+            };
             _connection.Connected += (s, e) =>
             {
                 Connected?.Invoke(this, new ConnectedEventArgs { IsInputStoringNeeded = isInputStoringNeeded });
@@ -263,7 +266,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.YouTubeLive, userId);
         }
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
@@ -299,14 +302,14 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return currentUserInfo;
         }
-
+        public Guid SiteContextGuid { get; set; }
         IYouTubeLibeServer _server;
-        public CommentProvider(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStore userStore)
+        public CommentProvider(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
             _siteOptions = siteOptions;
             _logger = logger;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _server = server;
 
             CanConnect = true;

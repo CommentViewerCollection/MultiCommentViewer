@@ -20,6 +20,10 @@ namespace LineLiveSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
                 //if (_message is ILineLiveItem item)
                 //{
                 //    return _siteOptions.ItemBackColor;
@@ -39,6 +43,10 @@ namespace LineLiveSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
                 }
                 //if (_message is ILineLiveItem item)
                 //{
@@ -117,6 +125,7 @@ namespace LineLiveSitePlugin
         public bool Is184 { get; }
         public IUser User { get; }
         public ICommentProvider CommentProvider { get; }
+        public Guid SiteContextGuid { get; set; }
         public bool IsVisible
         {
             get
@@ -139,7 +148,6 @@ namespace LineLiveSitePlugin
             IsFirstComment = isFirstComment;
             User = user;
             CommentProvider = cp;
-
             //TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
 
             options.PropertyChanged += Options_PropertyChanged;

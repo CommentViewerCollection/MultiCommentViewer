@@ -10,10 +10,9 @@
         xmlns:command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        DataContext="{Binding Main, Source={StaticResource Locator}}"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
         d:DesignWidth="1000"
-        Title="{Binding Title}" Topmost="{Binding Topmost}"
+        Title="{Binding Title}" Topmost="{Binding Topmost, Mode=TwoWay}"
         Height="{Binding MainViewHeight, Mode=TwoWay}" Width="{Binding MainViewWidth, Mode=TwoWay}"
         Left="{Binding MainViewLeft, Mode=TwoWay}" Top="{Binding MainViewTop, Mode=TwoWay}"
         >
@@ -53,6 +52,7 @@
         </Grid.RowDefinitions>
         <Menu HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="0">
             <MenuItem Header="ファイル">
+                <MenuItem Header="ユーザ一覧" Command="{Binding ShowUserListCommand}" />
                 <Separator />
                 <MenuItem Header="終了" Command="{Binding ExitCommand}" />
             </MenuItem>

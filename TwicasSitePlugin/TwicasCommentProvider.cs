@@ -156,7 +156,10 @@ namespace TwicasSitePlugin
             }
             try
             {
-                _messageProvider = new MessageProvider(_server,_siteOptions, _cc,_userStore,_options,this, _logger);
+                _messageProvider = new MessageProvider(_server, _siteOptions, _cc, _userStore, _options, this, _logger)
+                {
+                    SiteContextGuid = SiteContextGuid,
+                };
                 _messageProvider.MetaReceived += MessageProvider_MetaReceived;
                 _messageProvider.MessageReceived += MessageProvider_MessageReceived;
                 _messageProvider.InfoOccured += MessageProvider_InfoOccured;

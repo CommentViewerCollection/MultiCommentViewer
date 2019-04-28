@@ -6,12 +6,14 @@
              xmlns:local="clr-namespace:TestSitePlugin"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance local:CommentPostPanelViewModel, IsDesignTimeCreatable=True}"
-             d:DesignWidth="800" Height="50">
+             d:DesignWidth="200" Height="50">
     <Grid>
-        <TextBox HorizontalAlignment="Stretch" Height="23" Margin="5,0,100,5" TextWrapping="Wrap" Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Bottom" Width="Auto"/>
-        <Button Content="投稿" Command="{Binding PostCommand}" HorizontalAlignment="Right" Margin="715,0,5,5" VerticalAlignment="Bottom" Width="75">
-            
-        </Button>
+        <TextBox HorizontalAlignment="Stretch" Height="23" Margin="5,0,100,5" TextWrapping="NoWrap" Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Bottom" Width="Auto">
+            <TextBox.InputBindings>
+                <KeyBinding Command="{Binding PostCommentCommand}" Key="Return" />
+            </TextBox.InputBindings>
+        </TextBox>
+        <Button Content="投稿" Command="{Binding PostCommand}" HorizontalAlignment="Right" Margin="0,0,5,5" VerticalAlignment="Bottom" Width="75" />
 
     </Grid>
 </UserControl>

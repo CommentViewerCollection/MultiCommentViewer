@@ -9,7 +9,7 @@ namespace MirrativSitePlugin
         public IMessageMetadata Metadata { get; }
 
         public IMessageMethods Methods { get; }
-        public MirrativMessageContext(IMirrativMessage message, MirrativMessageMetadata metadata, IMessageMethods methods)
+        public MirrativMessageContext(IMirrativMessage message, IMirrativMessageMetadata metadata, IMessageMethods methods)
         {
             Message = message;
             Metadata = metadata;

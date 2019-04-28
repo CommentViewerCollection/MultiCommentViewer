@@ -43,7 +43,7 @@ namespace SitePluginTests
                 var messageMock = new Mock<IMirrativComment>();
                 var siteOptionsMock = new Mock<IMirrativSiteOptions>();
                 var userMock = new Mock<IUser>();
-                return new MirrativSitePlugin.MirrativMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+                return new MirrativSitePlugin.CommentMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
             }
         }
         class NicoMetadataFactory : MetadataFactory
@@ -199,7 +199,7 @@ namespace SitePluginTests
                 var messageMock = new Mock<IMirrativComment>();
                 var siteOptionsMock = new Mock<IMirrativSiteOptions>();
                 var userMock = new Mock<IUser>();
-                return new MirrativSitePlugin.MirrativMessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
+                return new MirrativSitePlugin.CommentMessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
             }
         }
         class NicoMetadataFactory : MetadataFactory

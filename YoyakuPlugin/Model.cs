@@ -271,6 +271,7 @@ namespace OpenrecYoyakuPlugin
             //"/kakunin"
 
             if (string.IsNullOrEmpty(userId)) return;
+            if (siteContextGuid == Guid.Empty) throw new ArgumentNullException(nameof(siteContextGuid));
 
             string defaultName;
             if (user != null && !string.IsNullOrEmpty(user.Nickname))
@@ -286,10 +287,6 @@ namespace OpenrecYoyakuPlugin
             {
                 if (FindUser(userId) == null)
                 {
-                    if (siteContextGuid == Guid.Empty)
-                    {
-                        Debugger.Break();
-                    }
                     //未登録なら登録する
                     var pluginUser = new User(user) { Date = GetCurrentDateTime(), Id = userId, Name = defaultName, HadCalled = false, SitePluginGuid = siteContextGuid };
                     AddUser(pluginUser);

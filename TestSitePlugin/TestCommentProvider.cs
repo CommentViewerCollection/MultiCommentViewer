@@ -107,8 +107,9 @@ namespace TestSitePlugin
             if(arr.Length == 2)
             {
                 var userId = arr[0];
+                var content = arr[1];
                 var user = _userStore.GetUser(userId);
-                var comment = new TestComment(arr[0], arr[1]);
+                var comment = new TestComment(userId, content);
                 var metadata = new TestMetadata(user)
                 {
                     SiteContextGuid = SiteContextGuid,
@@ -120,9 +121,10 @@ namespace TestSitePlugin
             else if(arr.Length == 3)
             {
                 var userId = arr[0];
-                var user = _userStore.GetUser(userId);
                 var name = arr[1];
-                var comment = new TestComment(userId, name, arr[2]);
+                var content = arr[2];
+                var user = _userStore.GetUser(userId);
+                var comment = new TestComment(userId, name, content);
                 var metadata = new TestMetadata(user)
                 {
                     SiteContextGuid = SiteContextGuid,

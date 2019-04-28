@@ -222,46 +222,60 @@ namespace MultiCommentViewer
         {
             //なんか気持ち悪い書き方だけど一応動く。
             //ここでawaitするとそれ以降が実行されないからこうするしかない。
+
+            //2019/04/28 初期化として必須の部分はあえて例外をcatchしないようにした。
+
+            //UserStoreManagerの作成
+            _userStoreManager = new UserStoreManager();
+            _userStoreManager.UserAdded += UserStoreManager_UserAdded;
+
+
+            //SitePluginの読み込み
+            var a = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
+            var siteVms = new List<SiteViewModel>();
+            foreach (var (displayName, guid) in a)
+            {
+                try
+                {
+                    var path = GetSiteOptionsPath(displayName);
+                    var siteContext = _sitePluginLoader.GetSiteContext(guid);
+                    siteContext.LoadOptions(path, _io);
+                    siteVms.Add(new SiteViewModel(displayName, guid));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
+            }
+            _siteVms = siteVms;
+
+            _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
+            //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
+            if (_browserVms.Count() == 0)
+            {
+                _browserVms = new List<BrowserViewModel>
+                {
+                    new BrowserViewModel( new EmptyBrowserProfile()),
+                };
+            }
+
+            //PluginManagerの作成とプラグインの読み込み・初期化
+            _pluginManager = new PluginManager(_options);
+            _pluginManager.PluginAdded += PluginManager_PluginAdded;
             try
             {
-                //Observable.Interval()
-                //_optionsLoader.LoadAsync().
-                _userStoreManager = new UserStoreManager();
-                _userStoreManager.UserAdded += UserStoreManager_UserAdded;
-                var a = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
-                var siteVms = new List<SiteViewModel>();
-                foreach (var (displayName, guid) in a)
-                {
-                    try
-                    {
-                        var path = GetSiteOptionsPath(displayName);
-                        var siteContext = _sitePluginLoader.GetSiteContext(guid);
-                        siteContext.LoadOptions(path, _io);
-                        siteVms.Add(new SiteViewModel(displayName, guid));
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                }
-                _siteVms = siteVms;
-
-                _browserVms = _browserLoader.LoadBrowsers().Select(b => new BrowserViewModel(b));
-                //もしブラウザが無かったらclass EmptyBrowserProfileを使う。
-                if (_browserVms.Count() == 0)
-                {
-                    _browserVms = new List<BrowserViewModel>
-                            {
-                                new BrowserViewModel( new EmptyBrowserProfile()),
-                            };
-                }
-
-                _pluginManager = new PluginManager(_options);
-                _pluginManager.PluginAdded += PluginManager_PluginAdded;
                 _pluginManager.LoadPlugins(new PluginHost(this, _options, _io, _logger));
-
                 _pluginManager.OnLoaded();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                Debug.WriteLine(ex.Message);
+            }
 
+            //前回保存したConnectionの読み込み
+            try
+            {
                 var connectionSerializerList = _connectionSerializerLoader.Load();
                 foreach (var serializer in connectionSerializerList)
                 {
@@ -281,15 +295,18 @@ namespace MultiCommentViewer
 
                     AddNewConnection(serializer.Name, serializer.SiteName, serializer.Url, serializer.BrowserName, true, backColor, foreColor);
                 }
-                if (_options.IsAutoCheckIfUpdateExists)
-                {
-                    await CheckIfUpdateExists(true);
-                }
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
                 Debug.WriteLine(ex.Message);
+            }
+
+            //アップデートチェック
+            //ここの例外をcatchしてしまうとずっとアップデートに気づかない可能性がある
+            if (_options.IsAutoCheckIfUpdateExists)
+            {
+                await CheckIfUpdateExists(true);
             }
         }
 

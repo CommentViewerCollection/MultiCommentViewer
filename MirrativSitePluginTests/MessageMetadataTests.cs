@@ -27,7 +27,7 @@ namespace MirrativSitePluginTests
             var siteOptions = siteOptionsMock.Object;
             var user = userMock.Object;
 
-            var metadata = new MirrativMessageMetadata(message, options, siteOptions, user, null, false);
+            var metadata = new CommentMessageMetadata(message, options, siteOptions, user, null, false);
             Assert.AreEqual(Colors.Red, metadata.BackColor);
             Assert.AreEqual(Colors.Blue, metadata.ForeColor);
         }
@@ -48,7 +48,7 @@ namespace MirrativSitePluginTests
             var siteOptions = siteOptionsMock.Object;
             var user = userMock.Object;
 
-            var metadata = new MirrativMessageMetadata(message, options, siteOptions, user, null, false);
+            var metadata = new CommentMessageMetadata(message, options, siteOptions, user, null, false);
             var backColorRaised = false;
             var foreColorRaised = false;
             metadata.PropertyChanged += (s, e) =>

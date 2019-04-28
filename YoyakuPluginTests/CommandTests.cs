@@ -90,6 +90,7 @@ namespace YoyakuPluginTests
 
             var messageMetadataMock = new Mock<IMessageMetadata>();
             messageMetadataMock.Setup(x => x.User).Returns(user);
+            messageMetadataMock.Setup(x => x.SiteContextGuid).Returns(Guid.NewGuid());
             var messageMetadata = messageMetadataMock.Object;
 
             plugin.OnMessageReceived(message, messageMetadata);
@@ -122,6 +123,7 @@ namespace YoyakuPluginTests
             var message = CreateMessage(oldName, "/yoyaku", "1");
             var messageMetadataMock = new Mock<IMessageMetadata>();
             messageMetadataMock.Setup(x => x.User).Returns(user);
+            messageMetadataMock.Setup(x => x.SiteContextGuid).Returns(Guid.NewGuid());
             var messageMetadata = messageMetadataMock.Object;
 
             plugin.OnMessageReceived(message, messageMetadata);
@@ -205,6 +207,7 @@ namespace YoyakuPluginTests
 
             var messageMetadataMock = new Mock<IMessageMetadata>();
             messageMetadataMock.Setup(m => m.User).Returns(new UserTest("1"));
+            messageMetadataMock.Setup(x => x.SiteContextGuid).Returns(Guid.NewGuid());
             var messageMetadata = messageMetadataMock.Object;
             _messageMetadata = messageMetadata;
 

@@ -14,8 +14,8 @@ namespace OpenrecYoyakuPlugin
 {
     public class DynamicOptions : DynamicOptionsBase, IOptions
     {
-        internal const string Default_ReserveCommandPattern = "/yoyaku";
-        internal const string Default_DeleteCommandPattern = "/torikeshi";
+        internal const string Default_ReserveCommandPattern = "/yoyaku|/予約";
+        internal const string Default_DeleteCommandPattern = "/torikeshi|/取消";
 
         internal const string Default_Reserved_Se = "";
         internal const string Default_Reserved_Message = "$nameさんの予約うけつけましたー";

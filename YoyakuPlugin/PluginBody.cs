@@ -82,6 +82,7 @@ namespace OpenrecYoyakuPlugin
         {
             var path = GetPath();
             var s = Host.LoadOptions(path);
+            if (s == null) return;
             var lines = s.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
             foreach(var line in lines)
             {

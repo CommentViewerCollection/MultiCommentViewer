@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BouyomiPlugin"
         mc:Ignorable="d"
+        d:DesignHeight="1000"
         d:DataContext="{d:DesignInstance local:ConfigViewModel, IsDesignTimeCreatable=True}"
         Title="棒読みちゃん連携プラグイン" Height="452" Width="439" Background="#F0F0F0">
     <Grid>
@@ -130,7 +131,7 @@
                             <TextBlock Text="Mirrativ" Margin="5" />
                         </Border>
                         <Border Grid.Row="2" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
-                            <Grid Grid.Row="2" Grid.Column="1" Margin="5">
+                            <Grid Margin="5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
@@ -160,10 +161,43 @@
                         </Border>
 
                         <Border Grid.Row="3" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
-                            <TextBlock Text="その他" Margin="5" />
+                            <TextBlock Text="Periscope" Margin="5" />
                         </Border>
                         <Border Grid.Row="3" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
-                            <Grid Grid.Row="3" Grid.Column="1" Margin="5">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsPeriscopeConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsPeriscopeDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckPeriscopeComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsPeriscopeComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckPeriscopeComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsPeriscopeCommentNickname}" Content="コテハン" />
+                                </Grid>
+                                <CheckBox Grid.Row="3" IsChecked="{Binding IsPeriscopeJoin}" Content="入室" />
+                                <CheckBox Grid.Row="4" IsChecked="{Binding IsPeriscopeLeave}" Content="退室" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="4" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <TextBlock Text="その他" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="4" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <Grid Margin="5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />

@@ -1,4 +1,5 @@
 ﻿using MirrativSitePlugin;
+using PeriscopeSitePlugin;
 using Plugin;
 using SitePlugin;
 using System;
@@ -260,6 +261,50 @@ namespace BouyomiPlugin
                         {
                             name = null;
                             comment = (mirrativMessage as IMirrativItem).CommentItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is IPeriscopeMessage PeriscopeMessage)
+            {
+                switch (PeriscopeMessage.PeriscopeMessageType)
+                {
+                    case PeriscopeMessageType.Connected:
+                        if (_options.IsPeriscopeConnect)
+                        {
+                            name = null;
+                            comment = (PeriscopeMessage as IPeriscopeConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case PeriscopeMessageType.Disconnected:
+                        if (_options.IsPeriscopeDisconnect)
+                        {
+                            name = null;
+                            comment = (PeriscopeMessage as IPeriscopeDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case PeriscopeMessageType.Comment:
+                        if (_options.IsPeriscopeComment)
+                        {
+                            if (_options.IsPeriscopeCommentNickname)
+                            {
+                                name = (PeriscopeMessage as IPeriscopeComment).NameItems.ToText();
+                            }
+                            comment = (PeriscopeMessage as IPeriscopeComment).CommentItems.ToText();
+                        }
+                        break;
+                    case PeriscopeMessageType.Join:
+                        if (_options.IsPeriscopeJoin)
+                        {
+                            name = null;
+                            comment = (PeriscopeMessage as IPeriscopeJoin).CommentItems.ToText();
+                        }
+                        break;
+                    case PeriscopeMessageType.Leave:
+                        if (_options.IsPeriscopeLeave)
+                        {
+                            name = null;
+                            comment = (PeriscopeMessage as IPeriscopeLeave).CommentItems.ToText();
                         }
                         break;
                 }

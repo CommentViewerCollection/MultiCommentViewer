@@ -38,6 +38,12 @@ namespace BouyomiPlugin
         public bool IsMirrativJoinRoom { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMirrativItem { get { return GetValue(); } set { SetValue(value); } }
 
+        public bool IsPeriscopeConnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsPeriscopeDisconnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsPeriscopeComment { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsPeriscopeCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsPeriscopeJoin { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsPeriscopeLeave { get { return GetValue(); } set { SetValue(value); } }
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -70,6 +76,13 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsMirrativCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMirrativJoinRoom), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMirrativItem), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(IsPeriscopeConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsPeriscopeDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsPeriscopeComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsPeriscopeCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsPeriscopeJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsPeriscopeLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
         }
     }

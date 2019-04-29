@@ -26,7 +26,10 @@ namespace PeriscopeSitePlugin
 
         public virtual ICommentProvider CreateCommentProvider()
         {
-            return new PeriscopeCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager);
+            return new PeriscopeCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
+            {
+                SiteContextGuid = Guid,
+            };
         }
         public IUser GetUser(string userId)
         {

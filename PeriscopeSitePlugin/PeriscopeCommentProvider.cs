@@ -57,6 +57,13 @@ namespace PeriscopeSitePlugin
             AfterDisconnected();
         }
         FirstCommentDetector _first = new FirstCommentDetector();
+        private MessageMetadata CreateMessageMetadata(IPeriscopeMessage message, IUser user, bool isFirstComment)
+        {
+            return new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
+            {
+                SiteContextGuid = SiteContextGuid,
+            };
+        }
         private void MessageProvider_Received(object sender, IInternalMessage e)
         {
             if(e is Kind1Type1 kind1Type1)
@@ -65,7 +72,7 @@ namespace PeriscopeSitePlugin
                 var userId = message.UserId;
                 var isFirstComment = _first.IsFirstComment(userId);
                 var user = GetUser(userId);
-                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
             }
@@ -75,7 +82,7 @@ namespace PeriscopeSitePlugin
                 var userId = message.UserId;
                 var isFirstComment = false;
                 var user = GetUser(userId);
-                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
             }
@@ -85,7 +92,7 @@ namespace PeriscopeSitePlugin
                 var userId = message.UserId;
                 var isFirstComment = false;
                 var user = GetUser(userId);
-                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment);
+                var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
             }

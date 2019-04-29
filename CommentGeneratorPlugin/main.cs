@@ -124,10 +124,10 @@ namespace CommentViewer.Plugin
             {
                 siteName = "linelive";
             }
-            //else if (message is PeriscopeSitePlugin.IPeriscopeComment)
-            //{
-            //    siteName = "periscope";
-            //}
+            else if (message is PeriscopeSitePlugin.IPeriscopeComment)
+            {
+                siteName = "periscope";
+            }
             //else if (message is MixerSitePlugin.IMixerComment)
             //{
             //    siteName = "mixer";

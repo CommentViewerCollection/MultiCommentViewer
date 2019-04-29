@@ -85,6 +85,10 @@
       <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
       <Name>MirrativIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj">
+      <Project>{242D4286-7214-422F-BE7C-BE784C815E0F}</Project>
+      <Name>PeriscopeIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
       <Project>{5a83afc8-e6ce-4dd2-8389-1f43a731388f}</Project>
       <Name>WhowatchIF</Name>

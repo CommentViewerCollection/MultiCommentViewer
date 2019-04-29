@@ -205,6 +205,57 @@ namespace BouyomiPlugin
         }
         #endregion //Mirrativ
 
+        #region Periscope
+        /// <summary>
+        /// Periscopeの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsPeriscopeConnect
+        {
+            get => _options.IsPeriscopeConnect;
+            set => _options.IsPeriscopeConnect = value;
+        }
+        /// <summary>
+        /// Periscopeの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsPeriscopeDisconnect
+        {
+            get => _options.IsPeriscopeDisconnect;
+            set => _options.IsPeriscopeDisconnect = value;
+        }
+        /// <summary>
+        /// Periscopeのコメントを読み上げるか
+        /// </summary>
+        public bool IsPeriscopeComment
+        {
+            get => _options.IsPeriscopeComment;
+            set => _options.IsPeriscopeComment = value;
+        }
+        /// <summary>
+        /// Periscopeのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsPeriscopeCommentNickname
+        {
+            get => _options.IsPeriscopeCommentNickname;
+            set => _options.IsPeriscopeCommentNickname = value;
+        }
+        /// <summary>
+        /// Periscopeの入室メッセージを読み上げるか
+        /// </summary>
+        public bool IsPeriscopeJoinRoom
+        {
+            get => _options.IsPeriscopeJoin;
+            set => _options.IsPeriscopeJoin = value;
+        }
+        /// <summary>
+        /// Periscopeのアイテムを読み上げるか
+        /// </summary>
+        public bool IsPeriscopeLeaveRoom
+        {
+            get => _options.IsPeriscopeLeave;
+            set => _options.IsPeriscopeLeave = value;
+        }
+        #endregion //Periscope
+
         public ICommand ShowFilePickerCommand { get; }
         private void ShowFilePicker()
         {

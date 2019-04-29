@@ -100,6 +100,10 @@
       <Project>{02a55625-e735-4909-a470-e8405eee1a32}</Project>
       <Name>OpenrecIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj">
+      <Project>{242d4286-7214-422f-be7c-be784c815e0f}</Project>
+      <Name>PeriscopeIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
       <Project>{4da33b17-792d-44d7-93f6-d0561788676d}</Project>
       <Name>TwicasIF</Name>

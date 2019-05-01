@@ -125,24 +125,20 @@ namespace MultiCommentViewer
             Id = comment.Id.ToString();
             PostTime = comment.PostTime;
         }
-        //public NicoCommentViewModel(NicoSitePlugin.INicoItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
-        //    : this(metadata, methods, connectionStatus)
-        //{
-        //    var comment = item;
-        //    _message = comment;
-
-        //    _nameItems = comment.NameItems;
-        //    MessageItems = comment.CommentItems;
-        //    Thumbnail = new Common.MessageImage
-        //    {
-        //        Url = comment.UserIconUrl,
-        //        Alt = "",
-        //        Height = 40,//_optionsにcolumnの幅を動的に入れて、ここで反映させたい。propertyChangedはどうやって発生させるか
-        //        Width = 40,
-        //    };
-        //    Id = comment.Id.ToString();
-        //    PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
-        //}
+        public NicoCommentViewModel(NicoSitePlugin.INicoAd ad, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(ad as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
+        {
+            _nameItems = ad.NameItems;
+            MessageItems = ad.CommentItems;
+            PostTime = ad.PostTime;
+        }
+        public NicoCommentViewModel(NicoSitePlugin.INicoInfo info, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(info as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
+        {
+            _nameItems = info.NameItems;
+            MessageItems = info.CommentItems;
+            PostTime = info.PostTime;
+        }
         public NicoCommentViewModel(NicoSitePlugin.INicoConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(connected as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {

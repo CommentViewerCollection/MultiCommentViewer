@@ -53,7 +53,7 @@ namespace SitePluginTests
                 var messageMock = new Mock<INicoComment>();
                 var siteOptionsMock = new Mock<INicoSiteOptions>();
                 var userMock = new Mock<IUser>();
-                return new NicoSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+                return new NicoSitePlugin.CommentMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
             }
         }
         class OpenrecMetadataFactory : MetadataFactory
@@ -216,7 +216,7 @@ namespace SitePluginTests
                 var messageMock = new Mock<INicoComment>();
                 var siteOptionsMock = new Mock<INicoSiteOptions>();
                 var userMock = new Mock<IUser>();
-                return new NicoSitePlugin.MessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
+                return new NicoSitePlugin.CommentMessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
             }
         }
         //class TwicasMetadataFactory : MetadataFactory

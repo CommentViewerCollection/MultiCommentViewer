@@ -1,7 +1,9 @@
-﻿using Common;
+﻿using Codeplex.Data;
+using Common;
 using SitePlugin;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -13,37 +15,81 @@ namespace NicoSitePlugin
 {
     static class Tools
     {
-        public static async Task<INicoMessage> CreateNicoCommentAsync(IChat chat, string roomName, IUser user,IDataSource _dataSource,bool isAutoSetNickname, string _mainRoomThreadId,ILogger logger, INicoSiteOptions siteOptions)
+        public static bool IsKickCommand(IChat chat)
         {
-            if (chat.Premium.HasValue)
+            return chat.Text.StartsWith("/hb ifseetno ");
+        }
+        public static NicoMessageType GetMessageType(IChat chat, string mainRoomThreadId)
+        {
+            NicoMessageType type;
+            if (IsKickCommand(chat))
             {
-                Debug.WriteLine($"{chat.Thread},{chat.Premium.Value},{chat.Text}");
-            }
-            //追い出しコマンドは除外
-            if (chat.Text.StartsWith("/hb ifseetno "))
-            {
-                //SendSystemInfo($"kick command={chat.Text}", InfoType.Debug);
-                return null;
+                type = NicoMessageType.Kick;
             }
             //アリーナ以外の運営コメントは除外
-            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Thread != _mainRoomThreadId)
+            else if ((chat.Premium == 2 || chat.Premium == 3 || chat.Premium == 7) && chat.Thread != mainRoomThreadId)
             {
-                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
+                type = NicoMessageType.Ignored;
             }
-            if ((chat.Premium == 2 || chat.Premium == 3) && chat.Text.StartsWith("/uadpoint"))
+            else if ((chat.Premium == 2 || chat.Premium == 3 || chat.Premium == 7) && chat.Text.StartsWith("/uadpoint"))
             {
-                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
+                type = NicoMessageType.Ignored;
             }
             //アリーナ以外のBSPコメントは除外
-            if (chat.IsBsp && chat.Thread != _mainRoomThreadId)
+            else if (chat.IsBsp && chat.Thread != mainRoomThreadId)
             {
-                //SendSystemInfo($"{chat.Text}", InfoType.Debug);
-                return null;
+                type = NicoMessageType.Ignored;
+            }
+            else if (IsAdRanking(chat))
+            {
+                type = NicoMessageType.Ignored;
+            }
+            else if (IsAd(chat))
+            {
+                type = NicoMessageType.Ad;
+            }
+            else if (IsInfo(chat))
+            {
+                type = NicoMessageType.Info;
+            }
+            else
+            {
+                type = NicoMessageType.Comment;
+            }
+            return type;
+        }
+        public static async Task<INicoComment> CreateNicoComment(IChat chat, IUser user, INicoSiteOptions _siteOptions, string roomName,Func<string,Task<IUserInfo>> f, ILogger logger)
+        {
+            var userId = chat.UserId;
+            var is184 = Tools.Is184UserId(userId);
+            if (_siteOptions.IsAutoSetNickname)
+            {
+                var messageText = chat.Text;
+                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
+                if (!string.IsNullOrEmpty(nick))
+                {
+                    user.Nickname = nick;
+                }
             }
 
-            var userId = chat.UserId;
+            string thumbnailUrl = null;
+            List<IMessagePart> nameItems = null;
+            try
+            {
+
+                if (!is184 && userId != "900000000")
+                {
+                    var userInfo = await f(userId);//API.GetUserInfo(_dataSource, userId);
+                    thumbnailUrl = userInfo.ThumbnailUrl;
+                    nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
+                    user.Name = nameItems;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogException(ex);
+            }
+
             string id;
             if (chat.No.HasValue)
             {
@@ -54,78 +100,85 @@ namespace NicoSitePlugin
             {
                 id = roomName;
             }
-            if (isAutoSetNickname)
+            var comment = chat.Text;
+            return new NicoComment(chat.Raw, _siteOptions)
             {
-                var messageText = chat.Text;
-                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
-                if (!string.IsNullOrEmpty(nick))
+                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
+                Id = id,
+                NameItems = nameItems,
+                PostTime = chat.Date.ToString("HH:mm:ss"),
+                UserIcon = thumbnailUrl != null ? new MessageImage
                 {
-                    user.Nickname = nick;
-                }
-            }
-            var is184 = Tools.Is184UserId(chat.UserId);
-            string thumbnailUrl = null;
-            List<IMessagePart> nameItems = null;
-            try
+                    Url = thumbnailUrl,
+                    Alt = null,
+                    Height = 40,
+                    Width = 40,
+                } : null,
+                UserId = userId,
+                ChatNo = chat.No,
+                RoomName = roomName,
+                Is184 = is184,
+            };
+        }
+
+        private static bool IsInfo(IChat chat)
+        {
+            return chat.Text.StartsWith("/info ");
+        }
+
+        private static bool IsAd(IChat chat)
+        {
+            return chat.Text.StartsWith("/nicoad ") && chat.Text.Contains("message");
+        }
+
+        private static bool IsAdRanking(IChat chat)
+        {
+            return chat.Text.StartsWith("/nicoad ") && chat.Text.Contains("contributionRanking");
+        }
+
+        public static INicoAd CreateNicoAd(IChat chat, string roomName, INicoSiteOptions siteOptions)
+        {
+            var jsonStr = chat.Text.Substring(8);
+            var d = Codeplex.Data.DynamicJson.Parse(jsonStr);
+            if (d.version == "1")
             {
-                if (!is184 && userId != "900000000")
+                var content = (string)d.message;
+                return new NicoAd(chat.Raw, siteOptions)
                 {
-                    var userInfo = await API.GetUserInfo(_dataSource, userId);
-                    thumbnailUrl = userInfo.ThumbnailUrl;
-                    nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
-                    user.Name = nameItems;
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogException(ex);
-            }
-            INicoMessage message;
-            if (chat.Text.StartsWith("/nicoad "))
-            {
-                var comment = Tools.GetAdComment(chat.Text);
-                message = new NicoAd(chat.Raw)
-                {
-                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
-                    Id = id,
-                    NameItems = nameItems,
+                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
+                    NameItems = null,
                     PostTime = chat.Date.ToString("HH:mm:ss"),
-                    UserIcon = thumbnailUrl != null ? new MessageImage
-                    {
-                        Url = thumbnailUrl,
-                        Alt = null,
-                        Height = 40,
-                        Width = 40,
-                    } : null,
                     UserId = chat.UserId,
-                    ChatNo = chat.No,
                     RoomName = roomName,
-                    Is184 = is184,
                 };
             }
             else
             {
-                var comment = chat.Text;
-                message = new NicoComment(chat.Raw, siteOptions)
+                throw new ParseException(chat.Raw);
+            }
+        }
+
+        public static INicoInfo CreateNicoInfo(IChat chat, string roomName, INicoSiteOptions siteOptions)
+        {
+            var match = Regex.Match(chat.Text, "^/info (?<no>\\d+) (?<content>.+)$", RegexOptions.Singleline);
+            if (match.Success)
+            {
+                var no = int.Parse(match.Groups["no"].Value);
+                var content = match.Groups["content"].Value;
+                return new NicoInfo(chat.Raw, siteOptions)
                 {
-                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
-                    Id = id,
-                    NameItems = nameItems,
+                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
+                    NameItems = null,
                     PostTime = chat.Date.ToString("HH:mm:ss"),
-                    UserIcon = thumbnailUrl != null ? new MessageImage
-                    {
-                        Url = thumbnailUrl,
-                        Alt = null,
-                        Height = 40,
-                        Width = 40,
-                    } : null,
                     UserId = chat.UserId,
-                    ChatNo = chat.No,
                     RoomName = roomName,
-                    Is184 = is184,
+                    No = no,
                 };
             }
-            return message;
+            else
+            {
+                throw new ParseException(chat.Raw);
+            }
         }
         public static string GetAdComment(string nicoad)
         {

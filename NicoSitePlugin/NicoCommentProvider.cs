@@ -26,22 +26,11 @@ namespace NicoSitePlugin
         bool IsValidInput(string input);
     }
     
-    class NicoCasCommentProvider: INicoCommentProviderInternal
+    class NicoCasCommentProvider: CommentProviderInternalBase, INicoCommentProviderInternal
     {
-        private readonly ICommentOptions _options;
-        private readonly INicoSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
-
-        //private readonly IUserStore _userStore;
-        private readonly IDataSource _dataSource;
-        private readonly ILogger _logger;
-        private readonly ICommentProvider _commentProvider;
-        private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
-
         public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler<ConnectedEventArgs> Connected;
-
         public void AfterDisconnected()
         {
         }
@@ -84,25 +73,107 @@ namespace NicoSitePlugin
             }
         }
         public NicoCasCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
+            :base(options,siteOptions,userStoreManager,dataSource, logger)
+        {
+        }
+    }
+
+    class CommentProviderInternalBase
+    {
+        protected readonly ICommentOptions _options;
+        protected readonly INicoSiteOptions _siteOptions;
+        protected readonly IUserStoreManager _userStoreManager;
+        protected readonly IDataSource _dataSource;
+        protected readonly ILogger _logger;
+        protected readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
+        /// <summary>
+        /// 現在の放送の部屋のThreadIdで一番小さいもの。
+        /// 基本的にはアリーナがこれに該当するが、自分の部屋しか取れない場合もあるためそれを考慮してこういう形にした。
+        /// </summary>
+        protected string _mainRoomThreadId;
+        private IUser GetUser(string userId)
+        {
+            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
+        }
+        public async Task<NicoMessageContext> CreateMessageContextAsync(IChat chat, string roomName, bool isInitialComment)
+        {
+            NicoMessageContext messageContext = null;
+            INicoMessageMetadata metadata;
+
+            var userId = chat.UserId;
+
+
+            INicoMessage message;
+            var messageType = Tools.GetMessageType(chat, _mainRoomThreadId);
+            switch (messageType)
+            {
+                case NicoMessageType.Comment:
+                    {
+                        var user = GetUser(userId);
+                        var comment = await Tools.CreateNicoComment(chat, user, _siteOptions, roomName, async userid => await API.GetUserInfo(_dataSource, userid), _logger);
+
+                        bool isFirstComment;
+                        if (_userCommentCountDict.ContainsKey(userId))
+                        {
+                            _userCommentCountDict[userId]++;
+                            isFirstComment = false;
+                        }
+                        else
+                        {
+                            _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
+                            isFirstComment = true;
+                        }
+                        message = comment;
+                        metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, _cp, isFirstComment)
+                        {
+                            IsInitialComment = isInitialComment,
+                            SiteContextGuid = SiteContextGuid,
+                        };
+                    }
+                    break;
+                case NicoMessageType.Info:
+                    {
+                        var info = Tools.CreateNicoInfo(chat, roomName, _siteOptions);
+                        message = info;
+                        metadata = new InfoMessageMetadata(info, _options, _siteOptions);
+                    }
+                    break;
+                case NicoMessageType.Ad:
+                    {
+                        var ad = Tools.CreateNicoAd(chat, roomName, _siteOptions);
+                        message = ad;
+                        metadata = new AdMessageMetadata(ad, _options, _siteOptions);
+                    }
+                    break;
+                default:
+                    message = null;
+                    metadata = null;
+                    break;
+            }
+            if (message == null || metadata == null)
+            {
+                return null;
+            }
+            else
+            {
+                var methods = new NicoMessageMethods();
+                messageContext = new NicoMessageContext(message, metadata, methods);
+                return messageContext;
+            }
+        }
+        public CommentProviderInternalBase(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger)
         {
             _options = options;
             _siteOptions = siteOptions;
             _userStoreManager = userStoreManager;
             _dataSource = dataSource;
             _logger = logger;
-            _commentProvider = commentProvider;
         }
+        public Guid SiteContextGuid { get; set; }
+        public ICommentProvider _cp;
     }
-    class JikkyoCommentProvider : INicoCommentProviderInternal
+    class JikkyoCommentProvider : CommentProviderInternalBase, INicoCommentProviderInternal
     {
-        private readonly ICommentOptions _options;
-        private readonly INicoSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
-        private readonly IDataSource _dataSource;
-        private readonly ILogger _logger;
-        private readonly ICommentProvider _commentProvider;
-        private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
-
         public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler<ConnectedEventArgs> Connected;
@@ -114,6 +185,7 @@ namespace NicoSitePlugin
         public void BeforeConnect()
         {
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -129,56 +201,49 @@ namespace NicoSitePlugin
                 return;
             }
             var jkInfo = await API.GetJikkyoInfoAsync(_dataSource, channelId.Value);
+            _mainRoomThreadId = jkInfo.ThreadId;
             _roomCommentProvider = new Next20181012.XmlSocketRoomCommentProvider(jkInfo.Name, jkInfo.ThreadId, 1000, CreateStreamSoket(jkInfo.XmlSocketAddr, jkInfo.XmlSocketPort));
-            _roomCommentProvider.CommentReceived += (s, e) =>
+            _roomCommentProvider.CommentReceived +=async (s, e) =>
             {
                 var chat = e;
                 Debug.WriteLine(chat.Text);
-                var context = CreateMessageContext(chat, jkInfo.Name, false);
-                MessageReceived?.Invoke(this, context);
+                try
+                {
+                    var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
+                    if (context != null)
+                    {
+                        MessageReceived?.Invoke(this, context);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
             };
-            _roomCommentProvider.InitialCommentsReceived += (s, e) =>
+            _roomCommentProvider.InitialCommentsReceived +=async (s, e) =>
             {
                 var chats = e;
                 foreach (var chat in chats)
                 {
                     Debug.WriteLine(chat.Text);
-                    var context = CreateMessageContext(chat, jkInfo.Name, true);
-                    MessageReceived?.Invoke(this, context);
+                    try
+                    {
+                        var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
+                        if (context != null)
+                        {
+                            MessageReceived?.Invoke(this, context);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
                 }
             };
             await _roomCommentProvider.ReceiveAsync();
             await Task.CompletedTask;
         }
-        private IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
-        }
-        private NicoMessageContext CreateMessageContext(Chat chat, string roomName, bool isInitialComment)
-        {
-            Debug.WriteLine(chat.Text);
-            var userId = chat.UserId;
-            bool isFirstComment;
-            if (_userCommentCountDict.ContainsKey(userId))
-            {
-                _userCommentCountDict[userId]++;
-                isFirstComment = false;
-            }
-            else
-            {
-                _userCommentCountDict.AddOrUpdate(userId, 1, (s0, n) => n);
-                isFirstComment = true;
-            }
-            var user = GetUser(userId);
-            var message = Convert(chat, roomName);
-            var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment)
-            {
-                IsInitialComment = isInitialComment,
-            };
-            var methods = new NicoMessageMethods();
-            var context = new NicoMessageContext(message, metadata, methods);
-            return context;
-        }
+
         private NicoComment Convert(Chat chat, string roomName)
         {
             string id;
@@ -232,16 +297,11 @@ namespace NicoSitePlugin
             return id.HasValue;
         }
         public JikkyoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
+            :base(options, siteOptions, userStoreManager, dataSource, logger)
         {
-            _options = options;
-            _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
-            _dataSource = dataSource;
-            _logger = logger;
-            _commentProvider = commentProvider;
         }
     }
-    class CommunityCommentProvider:INicoCommentProviderInternal
+    class CommunityCommentProvider: CommentProviderInternalBase, INicoCommentProviderInternal
     {
         #region INicoCommentProviderInternal
         public event EventHandler<IMessageContext> MessageReceived;
@@ -308,7 +368,6 @@ namespace NicoSitePlugin
         #endregion
 
         //TimeSpan _serverTimeDiff;
-
 
         private void SendSystemInfo(string message, InfoType type)
         {
@@ -428,17 +487,6 @@ namespace NicoSitePlugin
         ChatProvider _chatProvider;
         ProgramInfoProvider _programInfoProvider;
         List<IXmlWsRoomInfo> _rooms;
-        /// <summary>
-        /// 現在の放送の部屋のThreadIdで一番小さいもの。
-        /// 基本的にはアリーナがこれに該当するが、自分の部屋しか取れない場合もあるためそれを考慮してこういう形にした。
-        /// </summary>
-        string _mainRoomThreadId;
-        private readonly ICommentOptions _options;
-        private readonly INicoSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
-        private readonly IDataSource _dataSource;
-        private readonly ILogger _logger;
-        private readonly ICommentProvider _commentProvider;
 
         private void ProgramInfoProvider_ProgramInfoReceived(object sender, IProgramInfo e)
         {
@@ -466,7 +514,7 @@ namespace NicoSitePlugin
             {                
                 foreach(var chat in e.Chat)
                 {
-                    var messageContext = await CreateMessageContext(chat, e.RoomInfo, true);
+                    var messageContext = await CreateMessageContextAsync(chat, e.RoomInfo.Name, true);
                     if (messageContext == null) continue;
                     MessageReceived?.Invoke(this, messageContext);
                 }
@@ -483,7 +531,7 @@ namespace NicoSitePlugin
         {
             try
             {
-                var messageContext = await CreateMessageContext(e.Chat, e.RoomInfo, false);
+                var messageContext = await CreateMessageContextAsync(e.Chat, e.RoomInfo.Name, false);
                 if (messageContext == null) return;
                 MessageReceived?.Invoke(this, messageContext);
 
@@ -499,51 +547,14 @@ namespace NicoSitePlugin
         }
 
         public CommunityCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger,ICommentProvider commentProvider)
+            :base(options, siteOptions, userStoreManager, dataSource,logger)
         {
-            _options = options;
-            _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
-            _dataSource = dataSource;
-            _logger = logger;
-            _commentProvider = commentProvider;
         }
         private IUser GetUser(string userId)
         {
             return _userStoreManager.GetUser(SiteType.NicoLive, userId);
         }
         private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
-        public async Task<NicoMessageContext> CreateMessageContext(IChat chat, IXmlWsRoomInfo roomInfo, bool isInitialComment)
-        {
-            NicoMessageContext messageContext = null;
-
-            var userId = chat.UserId;
-            var user = GetUser(userId);
-
-            var message = await Tools.CreateNicoCommentAsync(chat, roomInfo.Name, user, _dataSource, _siteOptions.IsAutoSetNickname, _mainRoomThreadId, _logger, _siteOptions);
-            if(message == null)
-            {
-                return null;
-            }
-            bool isFirstComment;
-            if (_userCommentCountDict.ContainsKey(userId))
-            {
-                _userCommentCountDict[userId]++;
-                isFirstComment = false;
-            }
-            else
-            {
-                _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
-                isFirstComment = true;
-            }
-            var metadata = new MessageMetadata(message, _options, _siteOptions, user, _commentProvider, isFirstComment)
-            {
-                IsInitialComment = isInitialComment,
-                SiteContextGuid = _commentProvider.SiteContextGuid,
-            };
-            var methods = new NicoMessageMethods();
-            messageContext = new NicoMessageContext(message, metadata, methods);
-            return messageContext;
-        }
     }
     class NicoCommentProvider : INicoCommentProvider
     {
@@ -613,20 +624,29 @@ namespace NicoSitePlugin
             catch { }
             return cc;
         }
-        static List<INicoCommentProviderInternal> GetCommentProviderInternals(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager,IDataSource dataSource,ILogger logger, ICommentProvider cp)
+        static List<INicoCommentProviderInternal> GetCommentProviderInternals(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager,IDataSource dataSource,ILogger logger, ICommentProvider cp,Guid SiteContextGuid)
         {
             var list = new List<INicoCommentProviderInternal>
             {
-                new NicoCasCommentProvider(options,siteOptions,userStoreManager,dataSource,logger,cp),
-                new CommunityCommentProvider(options,siteOptions,userStoreManager,dataSource,logger,cp),
-                new JikkyoCommentProvider(options,siteOptions,userStoreManager,dataSource,logger,cp),
+                new NicoCasCommentProvider(options, siteOptions, userStoreManager, dataSource, logger, cp)
+                {
+                    SiteContextGuid=SiteContextGuid,
+                },
+                new CommunityCommentProvider(options, siteOptions, userStoreManager, dataSource, logger, cp)
+                {
+                    SiteContextGuid=SiteContextGuid,
+                },
+                new JikkyoCommentProvider(options,siteOptions,userStoreManager,dataSource,logger,cp)
+                {
+                    SiteContextGuid=SiteContextGuid,
+                },
 
             };
             return list;
         }
-        public static bool IsValidInput(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider cp, string input)
+        public static bool IsValidInput(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider cp, string input, Guid siteContextGuid)
         {
-            foreach(var cpin in GetCommentProviderInternals(options, siteOptions, userStoreManager, dataSource, logger, cp))
+            foreach(var cpin in GetCommentProviderInternals(options, siteOptions, userStoreManager, dataSource, logger, cp, siteContextGuid))
             {
                 if(cpin.IsValidInput(input))
                 {
@@ -640,7 +660,7 @@ namespace NicoSitePlugin
         {
             var cc = GetCookieContainer(browserProfile);
 
-            var list = GetCommentProviderInternals(_options, _siteOptions, _userStoreManager, _dataSource, _logger, this);
+            var list = GetCommentProviderInternals(_options, _siteOptions, _userStoreManager, _dataSource, _logger, this, SiteContextGuid);
             var cu = await GetCurrentUserInfo(browserProfile);
             if (cu.IsLoggedIn)
             {

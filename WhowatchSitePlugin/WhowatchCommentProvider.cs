@@ -466,24 +466,16 @@ namespace WhowatchSitePlugin
                 {
                     Debug.WriteLine(initialComment.Message);
                     var user = GetUser(initialComment.User.Id.ToString());
-                    var message = new WhowatchComment("")
+                    var message = MessageParser.ParseMessage(initialComment, "");
+                    bool isFirstComment;
+                    if (message is IWhowatchItem)
                     {
-                        AccountName = initialComment.User.AccountName,
-                        CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(initialComment.Message) },
-                        Id = initialComment.Id.ToString(),
-                        NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(initialComment.User.Name) },
-                        PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(initialComment.PostedAt / 1000).ToString("HH:mm:ss"),
-                        UserIcon = new Common.MessageImage
-                        {
-                            Url = initialComment.User.IconUrl,
-                            Alt = "",
-                            Height = 40,//_optionsにcolumnの幅を動的に入れて、ここで反映させたい。propertyChangedはどうやって発生させるか
-                            Width = 40,
-                        },
-                        UserId = initialComment.User.Id.ToString(),
-                        UserPath = initialComment.User.UserPath,
-                    };
-                    var isFirstComment = _first.IsFirstComment(user.UserId);
+                        isFirstComment = false;
+                    }
+                    else
+                    {
+                        isFirstComment = _first.IsFirstComment(user.UserId);
+                    }
                     var messageMetadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
                     {
                         IsInitialComment = true,

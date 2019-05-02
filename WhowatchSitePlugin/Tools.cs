@@ -69,6 +69,7 @@ namespace WhowatchSitePlugin
                 PlayItemPatternId = low.PlayItemPatternId,
                 User = Parse(low.User),
                 PostedAt =low.PostedAt,
+                NgWordIncluded = low.NgWordIncluded,
             };
             return comment;
         }

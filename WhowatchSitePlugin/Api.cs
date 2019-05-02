@@ -32,6 +32,7 @@ namespace WhowatchSitePlugin
         public virtual string Message { get; set; }
         public virtual CommentUser User { get; set; }
         public long PostedAt { get; set; }
+        public bool NgWordIncluded { get; set; }
     }
     internal class Live
     {

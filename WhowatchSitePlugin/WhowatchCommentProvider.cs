@@ -28,132 +28,35 @@ namespace WhowatchSitePlugin
         public IMessageMetadata Metadata { get; }
 
         public IMessageMethods Methods { get; }
-        public WhowatchMessageContext(IWhowatchMessage message, MessageMetadata metadata, IMessageMethods methods)
+        public WhowatchMessageContext(IWhowatchMessage message, IMessageMetadata metadata, IMessageMethods methods)
         {
             Message = message;
             Metadata = metadata;
             Methods = methods;
         }
     }
-    internal class MessageMetadata : IMessageMetadata
+    internal abstract class MessageMetadataBase : IMessageMetadata
     {
-        private readonly IWhowatchMessage _message;
-        private readonly ICommentOptions _options;
-        private readonly IWhowatchSiteOptions _siteOptions;
+        protected readonly ICommentOptions _options;
+        protected readonly IWhowatchSiteOptions _siteOptions;
 
-        public Color BackColor
-        {
-            get
-            {
-                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
-                {
-                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
-                    return color;
-                }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentBackColor;
-                }
-                else if (_message is IWhowatchItem item)
-                {
-                    return _siteOptions.ItemBackColor;
-                }
-                else
-                {
-                    return _options.BackColor;
-                }
-            }
-        }
+        public virtual Color BackColor => _options.BackColor;
 
-        public Color ForeColor
-        {
-            get
-            {
-                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
-                {
-                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
-                    return color;
-                }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentForeColor;
-                }
-                else if (_message is IWhowatchItem item)
-                {
-                    return _siteOptions.ItemForeColor;
-                }
-                else
-                {
-                    return _options.ForeColor;
-                }
-            }
-        }
+        public virtual Color ForeColor => _options.ForeColor;
 
-        public FontFamily FontFamily
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontFamily;
-                }
-                else
-                {
-                    return _options.FontFamily;
-                }
-            }
-        }
+        public virtual FontFamily FontFamily => _options.FontFamily;
 
-        public int FontSize
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontSize;
-                }
-                else
-                {
-                    return _options.FontSize;
-                }
-            }
-        }
+        public virtual int FontSize => _options.FontSize;
 
-        public FontWeight FontWeight
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontWeight;
-                }
-                else
-                {
-                    return _options.FontWeight;
-                }
-            }
-        }
+        public virtual FontWeight FontWeight => _options.FontWeight;
 
-        public FontStyle FontStyle
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontStyle;
-                }
-                else
-                {
-                    return _options.FontStyle;
-                }
-            }
-        }
+        public virtual FontStyle FontStyle => _options.FontStyle;
 
-        public bool IsNgUser => User != null ? User.IsNgUser : false;
+        public virtual bool IsNgUser => false;
         public bool IsSiteNgUser => false;//TODO:IUserにIsSiteNgUserを追加する
-        public bool IsFirstComment { get; }
+        public virtual bool IsFirstComment { get; protected set; }
         public bool Is184 { get; }
-        public IUser User { get; }
+        public IUser User { get; protected set; }
         public ICommentProvider CommentProvider { get; }
         public bool IsVisible
         {
@@ -178,58 +81,20 @@ namespace WhowatchSitePlugin
         /// <param name="user">null可</param>
         /// <param name="cp"></param>
         /// <param name="isFirstComment"></param>
-        public MessageMetadata(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
+        public MessageMetadataBase(ICommentOptions options, IWhowatchSiteOptions siteOptions, ICommentProvider cp)
         {
-            _message = message;
             _options = options;
             _siteOptions = siteOptions;
-            IsFirstComment = isFirstComment;
-            User = user;
             CommentProvider = cp;
-
-            //TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
 
             options.PropertyChanged += Options_PropertyChanged;
             siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
-            if (user != null)
-            {
-                user.PropertyChanged += User_PropertyChanged;
-            }
-        }
-
-        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(User.IsNgUser):
-                    //case nameof(User.IsSiteNgUser):
-                    RaisePropertyChanged(nameof(IsVisible));
-                    break;
-                case nameof(User.BackColorArgb):
-                    RaisePropertyChanged(nameof(BackColor));
-                    break;
-                case nameof(User.ForeColorArgb):
-                    RaisePropertyChanged(nameof(ForeColor));
-                    break;
-            }
         }
 
         private void SiteOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
-                case nameof(_siteOptions.ItemBackColor):
-                    if (_message is IWhowatchItem)
-                    {
-                        RaisePropertyChanged(nameof(BackColor));
-                    }
-                    break;
-                case nameof(_siteOptions.ItemForeColor):
-                    if (_message is IWhowatchItem)
-                    {
-                        RaisePropertyChanged(nameof(ForeColor));
-                    }
-                    break;
             }
         }
 
@@ -292,7 +157,135 @@ namespace WhowatchSitePlugin
             _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
         #endregion
+    }
+    internal class CommentMessageMetadata : MessageMetadataBase
+    {
+        public override Color BackColor
+        {
+            get
+            {
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                {
+                    return Common.Utils.ColorFromArgb(User.BackColorArgb);
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
+                else
+                {
+                    return base.BackColor;
+                }
+            }
+        }
+        public override Color ForeColor
+        {
+            get
+            {
+                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
+                {
+                    return Common.Utils.ColorFromArgb(User.ForeColorArgb);
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
+                }
+                else
+                {
+                    return base.ForeColor;
+                }
+            }
+        }
+        public override FontFamily FontFamily
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontFamily;
+                }
+                else
+                {
+                    return base.FontFamily;
+                }
+            }
+        }
+        public override int FontSize
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontSize;
+                }
+                else
+                {
+                    return base.FontSize;
+                }
+            }
+        }
+        public override FontStyle FontStyle
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontStyle;
+                }
+                else
+                {
+                    return base.FontStyle;
+                }
+            }
+        }
+        public override FontWeight FontWeight
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontWeight;
+                }
+                else
+                {
+                    return base.FontWeight;
+                }
+            }
+        }
+        public override bool IsNgUser => User.IsNgUser;
+        public CommentMessageMetadata(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
+            : base(options, siteOptions, cp)
+        {
+            User = user;
+            IsFirstComment = isFirstComment;
+            user.PropertyChanged += User_PropertyChanged;
+        }
 
+        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(User.IsNgUser):
+                    //case nameof(User.IsSiteNgUser):
+                    RaisePropertyChanged(nameof(IsVisible));
+                    break;
+                case nameof(User.BackColorArgb):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(User.ForeColorArgb):
+                    RaisePropertyChanged(nameof(ForeColor));
+                    break;
+            }
+        }
+    }
+    internal class ItemMessageMetadata : MessageMetadataBase
+    {
+        public override Color BackColor => _siteOptions.ItemBackColor;
+        public override Color ForeColor => _siteOptions.ItemForeColor;
+        public ItemMessageMetadata(IWhowatchItem message, ICommentOptions options, IWhowatchSiteOptions siteOptions, ICommentProvider cp)
+            : base(options, siteOptions, cp)
+        {
+        }
     }
     internal class WhowatchMessageMethods : IMessageMethods
     {
@@ -399,18 +392,22 @@ namespace WhowatchSitePlugin
             CanDisconnect = true;
             _cts = new CancellationTokenSource();
             _first.Reset();
-            SendMessage(new WhowatchConnected(""), null);
+            SendConnectedMessage();
         }
         private void AfterDisconnected()
         {
             CanConnect = true;
             CanDisconnect = false;
             _me = null;
-            SendMessage(new WhowatchDisconnected(""), null);
+            SendDisconnectedMessage();
         }
-        private void SendMessage(IWhowatchMessage message,IUser user, bool isFirstComment = false)
+        private void SendConnectedMessage()
         {
-            MessageReceived?.Invoke(this, new WhowatchMessageContext(message, new MessageMetadata(message, _options, _siteOptions,user,this, isFirstComment), new WhowatchMessageMethods()));
+
+        }
+        private void SendDisconnectedMessage()
+        {
+
         }
         FirstCommentDetector _first = new FirstCommentDetector();
         public virtual async Task ConnectAsync(string input, IBrowserProfile browserProfile)
@@ -465,24 +462,13 @@ namespace WhowatchSitePlugin
                 foreach (var initialComment in Enumerable.Reverse(liveData.Comments))
                 {
                     Debug.WriteLine(initialComment.Message);
-                    var user = GetUser(initialComment.User.Id.ToString());
+
                     var message = MessageParser.ParseMessage(initialComment, "");
-                    bool isFirstComment;
-                    if (message is IWhowatchItem)
+                    var context = CreateMessageContext(message);
+                    if(context != null)
                     {
-                        isFirstComment = false;
+                        MessageReceived?.Invoke(this, context);
                     }
-                    else
-                    {
-                        isFirstComment = _first.IsFirstComment(user.UserId);
-                    }
-                    var messageMetadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-                    {
-                        IsInitialComment = true,
-                        SiteContextGuid = SiteContextGuid,
-                    };
-                    var methods = new WhowatchMessageMethods();
-                    MessageReceived?.Invoke(this, new WhowatchMessageContext(message, messageMetadata, methods));
                 }
 
                 var internalCommentProvider = new InternalCommentProvider();
@@ -518,6 +504,37 @@ Retry:
             //TODO:Disconnectedメッセージ
             AfterDisconnected();
         }
+
+        private WhowatchMessageContext CreateMessageContext(IWhowatchMessage message)
+        {
+            IMessageMetadata metadata = null;
+            if (message is IWhowatchComment comment)
+            {
+                var user = GetUser(comment.UserId);
+                var isFirstComment = _first.IsFirstComment(user.UserId);
+                metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    IsInitialComment = true,
+                    SiteContextGuid = SiteContextGuid,
+                };
+            }
+            else if (message is IWhowatchItem item)
+            {
+                metadata = new ItemMessageMetadata(item, _options, _siteOptions, this)
+                {
+                    IsInitialComment = true,
+                    SiteContextGuid = SiteContextGuid,
+                };
+            }
+            WhowatchMessageContext context = null;
+            if (metadata != null)
+            {
+                var methods = new WhowatchMessageMethods();
+                context = new WhowatchMessageContext(message, metadata, methods);
+            }
+            return context;
+        }
+
         InternalCommentProvider _internalCommentProvider;
         /// <summary>
         /// 
@@ -560,30 +577,10 @@ Retry:
             var whowatchMessage = e;
             try
             {
-                IMessageContext commentContext;
-                if (whowatchMessage is IWhowatchComment comment)
+                var context = CreateMessageContext(whowatchMessage);
+                if (context != null)
                 {
-                    var user = GetUser(comment.UserId.ToString());
-                    var isFirstComment = _first.IsFirstComment(user.UserId);
-                    var messageText = Common.MessagePartsTools.ToText(comment.CommentItems);
-                    SetNickname(messageText, user);
-                    commentContext = CreateCommentContext(whowatchMessage, _options, _siteOptions, user, isFirstComment);
-                }
-                else if(whowatchMessage is IWhowatchItem item)
-                {
-                    var user = GetUser(item.UserId.ToString());
-                    var isFirstComment = _first.IsFirstComment(user.UserId);
-                    var messageText = Common.MessagePartsTools.ToText(item.CommentItems);
-                    SetNickname(messageText, user);
-                    commentContext = CreateCommentContext(whowatchMessage, _options, _siteOptions, user, isFirstComment);
-                }
-                else
-                {
-                    commentContext = null;
-                }
-                if (commentContext != null)
-                {
-                    MessageReceived?.Invoke(this, commentContext);
+                    MessageReceived?.Invoke(this, context);
                 }
             }
             catch (Exception ex)
@@ -591,17 +588,6 @@ Retry:
                 Debug.WriteLine(whowatchMessage.Raw);
                 _logger.LogException(ex);
             }
-        }
-
-        private IMessageContext CreateCommentContext(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, bool isFirstComment)
-        {
-            var metadata = new MessageMetadata(message, options, siteOptions, user, this, isFirstComment)
-            {
-                IsInitialComment = false,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new WhowatchMessageMethods();
-            return new WhowatchMessageContext(message, metadata, methods);
         }
         /// <summary>
         /// 文字列から@ニックネームを抽出する

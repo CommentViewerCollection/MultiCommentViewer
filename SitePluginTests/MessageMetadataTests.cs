@@ -93,7 +93,7 @@ namespace SitePluginTests
                 var messageMock = new Mock<IWhowatchComment>();
                 var siteOptionsMock = new Mock<IWhowatchSiteOptions>();
                 var userMock = new Mock<IUser>();
-                return new WhowatchSitePlugin.MessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
+                return new WhowatchSitePlugin.CommentMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
             }
         }
         class YouTubeLiveMetadataFactory : MetadataFactory
@@ -267,7 +267,7 @@ namespace SitePluginTests
                 var messageMock = new Mock<IWhowatchComment>();
                 var siteOptionsMock = new Mock<IWhowatchSiteOptions>();
                 var userMock = new Mock<IUser>();
-                return new WhowatchSitePlugin.MessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
+                return new WhowatchSitePlugin.CommentMessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
             }
         }
         class YouTubeLiveMetadataFactory : MetadataFactory

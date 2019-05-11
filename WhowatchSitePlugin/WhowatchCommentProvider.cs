@@ -282,9 +282,21 @@ namespace WhowatchSitePlugin
     {
         public override Color BackColor => _siteOptions.ItemBackColor;
         public override Color ForeColor => _siteOptions.ItemForeColor;
-        public ItemMessageMetadata(IWhowatchItem message, ICommentOptions options, IWhowatchSiteOptions siteOptions, ICommentProvider cp)
+        public ItemMessageMetadata(IWhowatchItem message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, ICommentProvider cp)
             : base(options, siteOptions, cp)
         {
+            User = user;
+            user.PropertyChanged += User_PropertyChanged;
+        }
+        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(User.IsNgUser):
+                    //case nameof(User.IsSiteNgUser):
+                    RaisePropertyChanged(nameof(IsVisible));
+                    break;
+            }
         }
     }
     internal class WhowatchMessageMethods : IMessageMethods
@@ -511,6 +523,7 @@ Retry:
             if (message is IWhowatchComment comment)
             {
                 var user = GetUser(comment.UserId);
+                user.Name = comment.NameItems;
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
                 {
@@ -520,7 +533,9 @@ Retry:
             }
             else if (message is IWhowatchItem item)
             {
-                metadata = new ItemMessageMetadata(item, _options, _siteOptions, this)
+                var user = GetUser(item.UserId.ToString());
+                user.Name = item.NameItems;
+                metadata = new ItemMessageMetadata(item, _options, _siteOptions, user, this)
                 {
                     IsInitialComment = true,
                     SiteContextGuid = SiteContextGuid,

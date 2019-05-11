@@ -89,12 +89,18 @@
       <Project>{33c8afd8-24f3-481e-ad0c-9f24ad6cdee4}</Project>
       <Name>LineLiveSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
+      <Name>SitePluginCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="SampleData\ChannelInfo.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="SampleData\LiveInfo.txt" />
+    <Content Include="SampleData\LiveInfo.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="SampleData\Loves.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

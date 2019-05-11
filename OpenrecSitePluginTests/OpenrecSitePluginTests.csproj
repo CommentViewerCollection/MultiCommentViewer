@@ -82,6 +82,10 @@
       <Project>{b56f2f0d-197a-4a29-a29a-1f92ecd81902}</Project>
       <Name>OpenrecSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
+      <Name>SitePluginCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Moq">

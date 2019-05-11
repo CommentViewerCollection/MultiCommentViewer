@@ -93,6 +93,10 @@
       <Project>{c6f57847-d6c3-4f64-b0a4-c778d7cea333}</Project>
       <Name>MirrativSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
+      <Name>SitePluginCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Moq">

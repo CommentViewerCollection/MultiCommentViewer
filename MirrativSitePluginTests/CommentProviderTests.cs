@@ -3,6 +3,7 @@ using MirrativSitePlugin;
 using Moq;
 using NUnit.Framework;
 using SitePlugin;
+using SitePluginCommon;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,9 +24,9 @@ namespace MirrativSitePluginTests
             var optionsMock = new Mock<ICommentOptions>();
             var siteOptionsMock = new Mock<IMirrativSiteOptions>();
             siteOptionsMock.Setup(s => s.NeedAutoSubNickname).Returns(true);
-            var userStoreMock = new Mock<IUserStore>();
+            var userStoreMock = new Mock<IUserStoreManager>();
             var user = new UserTest("5867403");
-            userStoreMock.Setup(u => u.GetUser("5867403")).Returns(user);
+            userStoreMock.Setup(u => u.GetUser(SiteType.Mirrativ, "5867403")).Returns(user);
 
             var server = serverMock.Object;
             var logger = loggerMock.Object;

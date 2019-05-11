@@ -159,7 +159,7 @@ namespace OpenrecSitePlugin
                     MessageReceived?.Invoke(this, messageContext);
                 }
             }
-            foreach (var user in _userStore.GetAllUsers())
+            foreach (var user in _userStoreManager.GetAllUsers(SiteType.Openrec))
             {
                 if (!(user is IUser2 user2)) continue;
                 _userDict.AddOrUpdate(user2.UserId, user2, (id, u) => u);
@@ -273,7 +273,7 @@ namespace OpenrecSitePlugin
         private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData, bool isInitialComment)
         {
             var userId = commentData.UserId;
-            var user = _userStore.GetUser(userId) as IUser2;
+            var user = GetUser(userId) as IUser2;
             if (!_userDict.ContainsKey(userId))
             {
                 _userDict.AddOrUpdate(user.UserId, user, (id, u) => u);
@@ -387,7 +387,7 @@ namespace OpenrecSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.Openrec, userId);
         }
         #endregion //ICommentProvider
 
@@ -396,19 +396,19 @@ namespace OpenrecSitePlugin
         private ICommentOptions _options;
         private OpenrecSiteOptions _siteOptions;
         private ILogger _logger;
-        private IUserStore _userStore;
+        private IUserStoreManager _userStoreManager;
         private readonly IDataSource _dataSource;
         private CookieContainer _cc;
         #endregion //Fields
 
         #region ctors
         System.Timers.Timer _500msTimer = new System.Timers.Timer();
-        public CommentProvider(ICommentOptions options, OpenrecSiteOptions siteOptions,ILogger logger, IUserStore userStore)
+        public CommentProvider(ICommentOptions options, OpenrecSiteOptions siteOptions,ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
             _siteOptions = siteOptions;
             _logger = logger;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _dataSource = new DataSource();
             _500msTimer.Interval = 500;
             _500msTimer.Elapsed += _500msTimer_Elapsed;

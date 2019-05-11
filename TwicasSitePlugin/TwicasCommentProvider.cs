@@ -156,7 +156,7 @@ namespace TwicasSitePlugin
             }
             try
             {
-                _messageProvider = new MessageProvider(_server, _siteOptions, _cc, _userStore, _options, this, _logger)
+                _messageProvider = new MessageProvider(_server, _siteOptions, _cc, _userStoreManager, _options, this, _logger)
                 {
                     SiteContextGuid = SiteContextGuid,
                 };
@@ -211,7 +211,7 @@ namespace TwicasSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.Twicas, userId);
         }
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
@@ -272,14 +272,14 @@ namespace TwicasSitePlugin
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly ITwicasSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
-        public TwicasCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, TwicasSiteOptions siteOptions, IUserStore userStore)
+        private readonly IUserStoreManager _userStoreManager;
+        public TwicasCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, TwicasSiteOptions siteOptions, IUserStoreManager userStoreManager)
         {
             _server = server;
             _logger = logger;
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
 
             CanConnect = true;
             CanDisconnect = false;

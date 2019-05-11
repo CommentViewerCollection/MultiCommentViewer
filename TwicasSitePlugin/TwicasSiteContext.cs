@@ -5,6 +5,7 @@ using SitePlugin;
 using System.Windows.Controls;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using SitePluginCommon;
 
 namespace TwicasSitePlugin
 {
@@ -30,13 +31,13 @@ namespace TwicasSitePlugin
             _panel = panel;
         }
     }
-    public class TwicasSiteContext : ISiteContext
+    public class TwicasSiteContext : SiteContextBase
     {
-        public Guid Guid => new Guid("8649A30C-D9C8-4ADB-862D-E0DAAEA24CE2");
+        public override Guid Guid => new Guid("8649A30C-D9C8-4ADB-862D-E0DAAEA24CE2");
 
-        public string DisplayName => "Twicas";
-
-        public IOptionsTabPage TabPanel
+        public override string DisplayName => "Twicas";
+        protected override SiteType SiteType => SiteType.Twicas;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -46,15 +47,15 @@ namespace TwicasSitePlugin
             }
         }
 
-        public ICommentProvider CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
-            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStore)
+            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
         }
 
-        public bool IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             return Tools.IsValidUrl(input);
         }
@@ -77,7 +78,7 @@ namespace TwicasSitePlugin
         }
 
         private TwicasSiteOptions _siteOptions;
-        public void LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new TwicasSiteOptions();
             try
@@ -93,7 +94,7 @@ namespace TwicasSitePlugin
             }
         }
 
-        public void SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -106,19 +107,7 @@ namespace TwicasSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStore.GetUser(userId);
-        }
-        public void Init()
-        {
-            _userStore.Init();
-        }
-        public void Save()
-        {
-            _userStore.Save();
-        }
-        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var youtubeCommentProvider = commentProvider as TwicasCommentProvider;
             Debug.Assert(youtubeCommentProvider != null);
@@ -133,18 +122,13 @@ namespace TwicasSitePlugin
             };
             return panel;
         }
-        protected virtual IUserStore CreateUserStore()
-        {
-            return new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);
-        }
         private readonly ICommentOptions _options;
         private readonly ILogger _logger;
-        private readonly IUserStore _userStore;
-        public TwicasSiteContext(ICommentOptions options, ILogger logger)
+        public TwicasSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _logger = logger;
-            _userStore = CreateUserStore();
         }
     }
 }

@@ -28,7 +28,10 @@ namespace TwitchSitePlugin
 
         public ICommentProvider CreateCommentProvider()
         {
-            return new TwitchCommentProvider(_server, _logger, _options, _siteOptions,_userStore);
+            return new TwitchCommentProvider(_server, _logger, _options, _siteOptions, _userStore)
+            {
+                SiteContextGuid = Guid,
+            };
         }
         private TwitchSiteOptions _siteOptions;
         public void LoadOptions(string path, IIo io)

@@ -80,7 +80,6 @@ namespace TwicasSitePlugin
         }
         private CookieContainer _cc;
         MessageProvider _messageProvider;
-        string _csSessionId;
         string _broadcasterId;
         long _liveId = -1;
         FirstCommentDetector _first = new FirstCommentDetector();
@@ -116,7 +115,6 @@ namespace TwicasSitePlugin
                     audienceId = context.AudienceId;
                     SendSystemInfo($"ログイン済みユーザID:{audienceId}", InfoType.Notice);
                     IsLoggedIn = true;
-                    _csSessionId = context.CsSessionId;
                 }
                 else
                 {
@@ -220,7 +218,7 @@ namespace TwicasSitePlugin
 
         public async Task PostCommentAsync(string text)
         {
-            var (comments, raw) = await API.PostCommentAsync(_server, _broadcasterId, _liveId, _lastCommentId, text, _csSessionId, _cc);
+            var (comments, raw) = await API.PostCommentAsync(_server, _broadcasterId, _liveId, _lastCommentId, text, _cc);
             //var ms = new List<ICommentData>();
             //foreach(var c in comments)
             //{

@@ -93,7 +93,7 @@ namespace TwicasSitePlugin
             var str = await dataSource.GetAsync(url, userAgent, cc);
             var context = new LowObject.LiveContext();
             {
-                var match0 = Regex.Match(str, "var movie_cnum = (?<cnum>[\\d]+);");
+                var match0 = Regex.Match(str, "data-cnum=\"(?<cnum>[\\d]+)\"");
                 if (match0.Success)
                 {
                     context.MovieCnum = int.Parse(match0.Groups["cnum"].Value);
@@ -104,7 +104,7 @@ namespace TwicasSitePlugin
                 }
             }
             {
-                var match1 = Regex.Match(str, "var movieid = \"(\\d+)\"");
+                var match1 = Regex.Match(str, "data-movie-id=\"(\\d+)\"");
                 if (match1.Success)
                 {
                     context.MovieId = long.Parse(match1.Groups[1].Value);
@@ -115,7 +115,7 @@ namespace TwicasSitePlugin
                 }
             }
             {
-                var match = Regex.Match(str, "a href=\"/([^\"/]+)/notification");
+                var match = Regex.Match(str, "data-audience-id=\"([^\"]+)\"");
                 if (match.Success)
                 {
                     var audienceId = match.Groups[1].Value;
@@ -124,14 +124,6 @@ namespace TwicasSitePlugin
                 else
                 {
                     context.AudienceId = null;
-                }
-            }
-            {
-                var match = Regex.Match(str, "\"cs_session_id\":\"([^\"]+)\"");
-                if (match.Success)
-                {
-                    var csSessionId = match.Groups[1].Value;
-                    context.CsSessionId = csSessionId;
                 }
             }
             return (context, str);
@@ -160,7 +152,7 @@ namespace TwicasSitePlugin
         }
 
         internal static async Task<(LowObject.Comment[],string raw)> PostCommentAsync(
-            IDataServer dataSource, string broadcasterId,long liveId, long lastCommentId, string comment, string csSessionId, CookieContainer cc)
+            IDataServer dataSource, string broadcasterId,long liveId, long lastCommentId, string comment, CookieContainer cc)
         {
             var url = $"https://twitcasting.tv/{broadcasterId}/userajax.php?c=post";
             var data = new Dictionary<string, string>
@@ -169,7 +161,6 @@ namespace TwicasSitePlugin
                 {"s", comment },
                 {"o", broadcasterId },
                 {"k", lastCommentId.ToString() },
-                {"cs_session_id", csSessionId },
                 {"nt", "2" },
             };
 

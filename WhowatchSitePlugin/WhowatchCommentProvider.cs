@@ -317,7 +317,7 @@ namespace WhowatchSitePlugin
         private readonly IDataServer _server;
         private readonly ICommentOptions _options;
         private readonly IWhowatchSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
         private readonly ILogger _logger;
 
         public bool IsConnected => CanConnect;
@@ -629,7 +629,7 @@ Retry:
 
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.Whowatch, userId);
         }
 
         public async Task PostCommentAsync(string text)
@@ -639,12 +639,12 @@ Retry:
         public Guid SiteContextGuid { get; set; }
 
         #endregion //ICommentProvider
-        public WhowatchCommentProvider(IDataServer server, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUserStore userStore, ILogger logger)
+        public WhowatchCommentProvider(IDataServer server, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUserStoreManager userStoreManager, ILogger logger)
         {
             _server = server;
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _logger = logger;
             CanConnect = true;
             CanDisconnect = false;

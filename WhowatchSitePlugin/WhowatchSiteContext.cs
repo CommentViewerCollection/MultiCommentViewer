@@ -1,5 +1,6 @@
 ﻿using Common;
 using SitePlugin;
+using SitePluginCommon;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -8,18 +9,18 @@ using System.Text.RegularExpressions;
 
 namespace WhowatchSitePlugin
 {
-    public class WhowatchSiteContext : ISiteContext
+    public class WhowatchSiteContext : SiteContextBase
     {
         private IWhowatchSiteOptions _siteOptions;
         private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly IUserStore _userStore;
 
-        public Guid Guid => new Guid("EA695072-BABB-4FC9-AB9F-2F87D829AE7D");
+        public override Guid Guid => new Guid("EA695072-BABB-4FC9-AB9F-2F87D829AE7D");
 
-        public string DisplayName => "ふわっち";
-        public IOptionsTabPage TabPanel
+        public override string DisplayName => "ふわっち";
+        protected override SiteType SiteType => SiteType.Whowatch;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -29,25 +30,20 @@ namespace WhowatchSitePlugin
             }
         }
 
-        public virtual ICommentProvider CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
-            return new WhowatchCommentProvider(_server, _options, _siteOptions, _userStore, _logger)
+            return new WhowatchCommentProvider(_server, _options, _siteOptions, _userStoreManager, _logger)
             {
                 SiteContextGuid = Guid,
             };
         }
 
-        public System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        public override System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             return null;
         }
 
-        public void Init()
-        {
-            _userStore.Init();
-        }
-
-        public bool IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             return Tools.IsValidUrl(input);
         }
@@ -55,7 +51,7 @@ namespace WhowatchSitePlugin
         {
             return new WhowatchSiteOptions();
         }
-        public void LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = CreateWhowatchSiteOptions();
             try
@@ -71,12 +67,7 @@ namespace WhowatchSitePlugin
             }
         }
 
-        public void Save()
-        {
-            _userStore.Save();
-        }
-
-        public void SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -89,24 +80,16 @@ namespace WhowatchSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStore.GetUser(userId);
-        }
-        protected virtual IUserStore CreateUserStore()
-        {
-            return new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);
-        }
         protected virtual IDataServer CreateServer()
         {
             return new DataServer();
         }
-        public WhowatchSiteContext(ICommentOptions options, ILogger logger)
+        public WhowatchSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _server = CreateServer();
             _logger = logger;
-            _userStore = CreateUserStore();
         }
     }
 }

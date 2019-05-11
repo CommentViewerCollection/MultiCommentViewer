@@ -40,7 +40,18 @@ namespace WhowatchSitePlugin
 
         public override System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            return null;
+            var cp = commentProvider as WhowatchCommentProvider;
+            Debug.Assert(cp != null);
+            if (cp == null)
+                return null;
+
+            var vm = new CommentPostPanelViewModel(cp, _logger);
+            var panel = new CommentPostPanel
+            {
+                //IsEnabled = false,
+                DataContext = vm
+            };
+            return panel;
         }
 
         public override bool IsValidInput(string input)

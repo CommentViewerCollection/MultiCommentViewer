@@ -461,6 +461,7 @@ namespace WhowatchSitePlugin
                     }
                 }
                 System.Diagnostics.Debug.Assert(live_id != -1);
+                _live_id = live_id;
 
                 var lastUpdatedAt = 0;
                 var liveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);

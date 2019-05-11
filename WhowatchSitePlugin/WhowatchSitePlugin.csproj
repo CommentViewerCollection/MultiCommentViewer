@@ -59,6 +59,10 @@
   <ItemGroup>
     <Compile Include="Api.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="CommentPostPanel.xaml.cs">
+      <DependentUpon>CommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CommentPostPanelViewModel.cs" />
     <Compile Include="DataServer.cs" />
     <Compile Include="DynamicJson.cs" />
     <Compile Include="Exceptions.cs" />
@@ -122,6 +126,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="CommentPostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="TabPagePanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

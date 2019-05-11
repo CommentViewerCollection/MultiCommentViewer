@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Codeplex.Data;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,6 +78,16 @@ namespace WhowatchSitePlugin
             //"Origin"を"https://whowatch.tv/"と間違って送信したら以下の文字列が返ってきた。コメント投稿に失敗した場合のレスポンスが来たら例外を投げるようにしたい。
             //また、その例外には問題解決のためにlive_idとかcookieとか動的な情報を出来るだけ網羅的に入れ込みたい
             //"{\"error_code\":\"Z-005\",\"error_message\":\"お使いのブラウザではご利用いただけません。お手数ですが、別のブラウザをお試しください。(Z-005)\"}"
+
+            //live_idが0の時に返ってきた
+            //{"error_code":"C-101","error_message":"指定された配信が見つかりません。(C-101)"}
+            var d = DynamicJson.Parse(res);
+            if (d.IsDefined("error_message"))
+            {
+                var errorMessage = (string)d.error_message;
+                //throw new CommentPostFailedException()
+                throw new Exception($"コメント投稿に失敗 error_message={errorMessage}, live_id={live_id}, comment={comment}");
+            }
             var obj = Tools.Deserialize<Low.LiveData.RootObject>(res);
             return Tools.Parse(obj);
         }

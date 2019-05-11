@@ -171,8 +171,10 @@ namespace TwitchSitePlugin
                         tasks.Remove(messageProviderTask);
                         try
                         {
+                            metaProvider.Disconnect();
                             await metaProviderTask;
-                        }catch(Exception ex)
+                        }
+                        catch (Exception ex)
                         {
                             _logger.LogException(ex);
                         }

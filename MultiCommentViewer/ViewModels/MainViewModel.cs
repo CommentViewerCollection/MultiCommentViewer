@@ -1365,7 +1365,7 @@ namespace MultiCommentViewer
         }
         private void Exit()
         {
-
+            this.RequestClose();
         }
     }
 }

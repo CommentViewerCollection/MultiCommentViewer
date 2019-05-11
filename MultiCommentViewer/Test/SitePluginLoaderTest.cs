@@ -23,7 +23,7 @@ namespace MultiCommentViewer.Test
                 new TwitchSitePlugin.TwitchSiteContext(options,new TwitchSitePlugin.TwitchServer(), logger, userStoreManager),
                 new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), (addr,port,size,buffer)=> new NicoSitePlugin.StreamSocket(addr,port,size,buffer), logger, userStoreManager),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger),
-                new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger),
+                new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger, userStoreManager),
                 new WhowatchSitePlugin.WhowatchSiteContext(options, logger),
                 new MirrativSitePlugin.MirrativSiteContext(options,new MirrativSitePlugin.MirrativServer(), logger),
                 new PeriscopeSitePlugin.PeriscopeSiteContext(options,new PeriscopeSitePlugin.PeriscopeServer(), logger,userStoreManager),

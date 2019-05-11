@@ -223,7 +223,7 @@ namespace TwitchSitePlugin
                             var commentData = ParsePrivMsg(result);
                             var userId = commentData.UserId;
                             var isFirstComment = _commentCounter.UpdateCount(userId);
-                            var user = _userStore.GetUser(userId);
+                            var user = GetUser(userId);
 
                             var message = new TwitchComment(result.Raw)
                             {
@@ -303,7 +303,7 @@ namespace TwitchSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.Twitch, userId);
         }
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
@@ -320,14 +320,14 @@ namespace TwitchSitePlugin
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
-        public TwitchCommentProvider( IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStore userStore)
+        private readonly IUserStoreManager _userStoreManager;
+        public TwitchCommentProvider( IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStoreManager userStoreManager)
         {
             _server = server;
             _logger = logger;
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
 
             CanConnect = true;
             CanDisconnect = false;

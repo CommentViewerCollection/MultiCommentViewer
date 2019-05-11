@@ -8,6 +8,8 @@ using TwitchSitePlugin;
 using Moq;
 using SitePlugin;
 using Common;
+using SitePluginCommon;
+
 namespace TwitchSitePluginTests
 {
     [TestFixture]
@@ -20,7 +22,8 @@ namespace TwitchSitePluginTests
             var loggerMock = new Mock<ILogger>();
             var serverMock = new Mock<IDataServer>();
             var webSocket = new Mock<IMessageProvider>();
-            var site = new TwitchSiteContext(optionsMock.Object, serverMock.Object, loggerMock.Object);
+            var userStoreManager = new Mock<IUserStoreManager>();
+            var site = new TwitchSiteContext(optionsMock.Object, serverMock.Object, loggerMock.Object, userStoreManager.Object);
             Assert.IsTrue(site.IsValidInput("https://www.twitch.tv/abc"));
             Assert.IsTrue(site.IsValidInput("https://www.twitch.tv/abc?"));
             Assert.IsTrue(site.IsValidInput("https://www.twitch.tv/abc/"));

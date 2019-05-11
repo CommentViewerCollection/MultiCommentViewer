@@ -9,6 +9,7 @@ using Moq;
 using NUnit.Framework;
 using ryu_s.BrowserCookie;
 using SitePlugin;
+using SitePluginCommon;
 using TwitchSitePlugin;
 
 namespace TwitchSitePluginTests
@@ -50,8 +51,8 @@ namespace TwitchSitePluginTests
             //{
             //    return CommentData;
             //}
-            public C(IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStore userStore) 
-                : base(server, logger, options, siteOptions, userStore)
+            public C(IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStoreManager userStoreManager) 
+                : base(server, logger, options, siteOptions, userStoreManager)
             {
             }
         }
@@ -109,10 +110,10 @@ namespace TwitchSitePluginTests
             {
                 NeedAutoSubNickname = true
             };
-            var userStoreMock = new Mock<IUserStore>();
+            var userStoreMock = new Mock<IUserStoreManager>();
             var userMock = new Mock<IUser>();
             userMock.SetupGet(u => u.UserId).Returns(userid);
-            userStoreMock.Setup(s => s.GetUser(userid)).Returns(userMock.Object);
+            userStoreMock.Setup(s => s.GetUser(SiteType.Twitch, userid)).Returns(userMock.Object);
             var browserProfileMock = new Mock<IBrowserProfile>();
             var messageProvider = new MessageProvider();
             var commentDataMock = new Mock<ICommentData>();

@@ -128,7 +128,18 @@ namespace TwitchSitePlugin
 
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            return null;
+            var twitchCommentProvider = commentProvider as TwitchCommentProvider;
+            Debug.Assert(twitchCommentProvider != null);
+            if (twitchCommentProvider == null)
+                return null;
+
+            var vm = new CommentPostPanelViewModel(twitchCommentProvider, _logger);
+            var panel = new CommentPostPanel
+            {
+                //IsEnabled = false,
+                DataContext = vm
+            };
+            return panel;
         }
         private readonly ICommentOptions _options;
         private readonly IDataServer _server;

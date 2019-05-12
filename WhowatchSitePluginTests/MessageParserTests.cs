@@ -1,5 +1,6 @@
 ﻿using Moq;
 using NUnit.Framework;
+using SitePlugin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,25 +13,6 @@ namespace WhowatchSitePluginTests
     [TestFixture]
     class MessageParserTests
     {
-        //[Test]
-        //public void ShoutParseTest()
-        //{
-        //    var data = "[null,null,\"room:9157783\",\"shout\",{\"topic\":\"room:9157783\",\"event\":\"shout\",\"comment\":{\"user\":{\"user_profile\":{\"is_date_of_birth_today\":false},\"user_path\":\"t:qqzc436d\",\"name\":\"℅\",\"is_admin\":false,\"id\":3606083,\"icon_url\":\"https://img.whowatch.tv/user_files/3606083/profile_icon/1506770923473.jpeg\",\"account_name\":\"@qqzc436d\"},\"tts\":{},\"reply_to_user_id\":0,\"posted_at\":1547395516000,\"not_escaped\":false,\"message\":\"いくらだったの?\",\"live_id\":9157783,\"is_silent_comment\":false,\"is_reply_to_me\":false,\"id\":566671936,\"escaped_message\":\"いくらだったの?\",\"enabled\":true,\"comment_type\":\"BY_PUBLIC\",\"anonymized\":false}}]";
-        //    var message = MessageParser.Parse(data);
-        //    var shout = message as IWhowatchComment;
-        //    Assert.IsNotNull(shout);
-        //    Assert.AreEqual("@qqzc436d", shout.AccountName);
-        //    Assert.AreEqual("いくらだったの?", shout.Comment);
-        //    Assert.AreEqual(566671936, shout.Id);
-        //    Assert.AreEqual(1547395516000, shout.PostedAt);
-        //    Assert.AreEqual(data, shout.Raw);
-        //    Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
-        //    Assert.AreEqual(3606083, shout.UserId);
-        //    Assert.AreEqual("℅", shout.UserName);
-        //    Assert.AreEqual("t:qqzc436d", shout.UserPath);
-        //    Assert.AreEqual(WhowatchMessageType.Comment, shout.WhowatchMessageType);
-        //}
-        //
         private Task<Dictionary<long, PlayItem>> CreatePlayItemsTestData()
         {
             var data = DataLoader.GetSampleData("PlayItems.txt");
@@ -39,27 +21,29 @@ namespace WhowatchSitePluginTests
             var server = serverMock.Object;
             return Api.GetPlayItemsAsync(server);
         }
-        //[Test]
-        //public async Task WhowatchItemParseTest()
-        //{
-        //    var data = "[null,null,\"room:9184711\",\"shout\",{\"topic\":\"room:9184711\",\"event\":\"shout\",\"comment\":{\"user\":{\"user_profile\":{\"is_date_of_birth_today\":false},\"user_path\":\"w:satorou\",\"name\":\"🔹SAPPOROイケチャン🔹休止中\",\"is_admin\":false,\"id\":12764231,\"icon_url\":\"https://img.whowatch.tv/user_files/12764231/profile_icon/1545653225128.jpeg\",\"account_name\":\"ふ:satorou\"},\"tts\":{\"name\":\"SAPPOROイケチャン休止中\"},\"reply_to_user_id\":0,\"posted_at\":1547574410000,\"play_item_pattern_id\":16,\"pickup_time\":2000,\"not_escaped\":false,\"message\":\"メガホンをプレゼントしました。\",\"live_id\":9184711,\"item_count\":1,\"is_silent_comment\":false,\"is_reply_to_me\":false,\"id\":568502964,\"escaped_message\":\"メガホンをプレゼントしました。\",\"enabled\":true,\"comment_type\":\"BY_PLAYITEM\",\"anonymized\":false}}]";
-        //    MessageParser.Resolver = new ItemNameResolver(await CreatePlayItemsTestData());
-        //    var message = MessageParser.Parse(data);
-        //    var shout = message as IWhowatchItem;
-        //    Assert.IsNotNull(shout);
-        //    Assert.AreEqual("ふ:satorou", shout.AccountName);
-        //    Assert.AreEqual("メガホンをプレゼントしました。", shout.Comment);
-        //    Assert.AreEqual(568502964, shout.Id);
-        //    Assert.AreEqual(1547574410000, shout.PostedAt);
-        //    Assert.AreEqual(data, shout.Raw);
-        //    Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
-        //    Assert.AreEqual(12764231, shout.UserId);
-        //    Assert.AreEqual("🔹SAPPOROイケチャン🔹休止中", shout.UserName);
-        //    Assert.AreEqual("w:satorou", shout.UserPath);
-        //    Assert.AreEqual(WhowatchMessageType.Item, shout.WhowatchMessageType);
-        //    Assert.AreEqual(1, shout.ItemCount);
-        //    Assert.AreEqual("メガホン", shout.ItemName);
-        //}
+        [Test]
+        public async Task WhowatchItemParseTest()
+        {
+            var data = "[null,null,\"room:9184711\",\"shout\",{\"topic\":\"room:9184711\",\"event\":\"shout\",\"comment\":{\"user\":{\"user_profile\":{\"is_date_of_birth_today\":false},\"user_path\":\"w:satorou\",\"name\":\"🔹SAPPOROイケチャン🔹休止中\",\"is_admin\":false,\"id\":12764231,\"icon_url\":\"https://img.whowatch.tv/user_files/12764231/profile_icon/1545653225128.jpeg\",\"account_name\":\"ふ:satorou\"},\"tts\":{\"name\":\"SAPPOROイケチャン休止中\"},\"reply_to_user_id\":0,\"posted_at\":1547574410000,\"play_item_pattern_id\":16,\"pickup_time\":2000,\"not_escaped\":false,\"message\":\"メガホンをプレゼントしました。\",\"live_id\":9184711,\"item_count\":1,\"is_silent_comment\":false,\"is_reply_to_me\":false,\"id\":568502964,\"escaped_message\":\"メガホンをプレゼントしました。\",\"enabled\":true,\"comment_type\":\"BY_PLAYITEM\",\"anonymized\":false}}]";
+            MessageParser.Resolver = new ItemNameResolver(await CreatePlayItemsTestData());
+            var internalMessage = MessageParser.ParseRawString2InternalMessage(data);
+            var message = MessageParser.ParseShoutMessage(internalMessage);
+
+            var shout = message as IWhowatchItem;
+            Assert.IsNotNull(shout);
+            Assert.AreEqual("ふ:satorou", shout.AccountName);
+            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("メガホンをプレゼントしました。") }, shout.CommentItems);
+            Assert.AreEqual(568502964, shout.Id);
+            Assert.AreEqual(1547574410000, shout.PostedAt);
+            Assert.AreEqual(data, shout.Raw);
+            Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
+            Assert.AreEqual(12764231, shout.UserId);
+            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("🔹SAPPOROイケチャン🔹休止中") }, shout.NameItems);
+            Assert.AreEqual("w:satorou", shout.UserPath);
+            Assert.AreEqual(WhowatchMessageType.Item, shout.WhowatchMessageType);
+            Assert.AreEqual(1, shout.ItemCount);
+            Assert.AreEqual("メガホン", shout.ItemName);
+        }
         [Test]
         public void Test()
         {

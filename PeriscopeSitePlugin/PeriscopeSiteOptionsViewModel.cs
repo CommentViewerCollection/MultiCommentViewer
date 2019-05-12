@@ -11,6 +11,16 @@ namespace PeriscopeSitePlugin
             get { return ChangedOptions.IsAutoSetNickname; }
             set { ChangedOptions.IsAutoSetNickname = value; }
         }
+        public bool IsShowJoinMessage
+        {
+            get { return ChangedOptions.IsShowJoinMessage; }
+            set { ChangedOptions.IsShowJoinMessage = value; }
+        }
+        public bool IsShowLeaveMessage
+        {
+            get { return ChangedOptions.IsShowLeaveMessage; }
+            set { ChangedOptions.IsShowLeaveMessage = value; }
+        }
 
         internal IPeriscopeSiteOptions OriginOptions { get; }
         internal IPeriscopeSiteOptions ChangedOptions { get; }

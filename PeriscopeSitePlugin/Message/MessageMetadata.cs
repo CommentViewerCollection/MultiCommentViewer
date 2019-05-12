@@ -123,6 +123,14 @@ namespace PeriscopeSitePlugin
             get
             {
                 if (IsNgUser || IsSiteNgUser) return false;
+                if(_message is IPeriscopeJoin)
+                {
+                    return _siteOptions.IsShowJoinMessage;
+                }
+                else if(_message is IPeriscopeLeave)
+                {
+                    return _siteOptions.IsShowLeaveMessage;
+                }
 
                 //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
                 //→Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
@@ -182,6 +190,18 @@ namespace PeriscopeSitePlugin
                 //        RaisePropertyChanged(nameof(ForeColor));
                 //    }
                 //    break;
+                case nameof(_siteOptions.IsShowJoinMessage):
+                    if (_message is IPeriscopeJoin)
+                    {
+                        RaisePropertyChanged(nameof(IsVisible));
+                    }
+                    break;
+                case nameof(_siteOptions.IsShowLeaveMessage):
+                    if (_message is IPeriscopeLeave)
+                    {
+                        RaisePropertyChanged(nameof(IsVisible));
+                    }
+                    break;
             }
         }
 

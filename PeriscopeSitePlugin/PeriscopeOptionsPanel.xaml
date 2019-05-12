@@ -10,5 +10,7 @@
              d:DesignHeight="450" d:DesignWidth="400">
     <Grid>
         <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="31,55,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="入室メッセージを表示する" IsChecked="{Binding IsShowJoinMessage}" HorizontalAlignment="Left" Margin="31,95,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="退室メッセージを表示する" IsChecked="{Binding IsShowLeaveMessage}" HorizontalAlignment="Left" Margin="31,115,0,0" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>

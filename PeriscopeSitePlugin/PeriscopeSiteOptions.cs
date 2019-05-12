@@ -11,11 +11,15 @@ namespace PeriscopeSitePlugin
         public Color ItemCommentBackColor { get => GetValue(); set => SetValue(value); }
         public Color ItemCommentForeColor { get => GetValue(); set => SetValue(value); }
         public bool IsAutoSetNickname { get => GetValue(); set => SetValue(value); }
+        public bool IsShowJoinMessage { get => GetValue(); set => SetValue(value); }
+        public bool IsShowLeaveMessage { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
-            Dict.Add(nameof(ItemCommentBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(ItemCommentForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ItemCommentBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ItemCommentForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(IsAutoSetNickname), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowJoinMessage), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowLeaveMessage), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
         internal PeriscopeSiteOptions Clone()
         {

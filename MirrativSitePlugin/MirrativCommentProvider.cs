@@ -490,7 +490,7 @@ namespace MirrativSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.Mirrativ, userId);
         }
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
@@ -520,15 +520,15 @@ namespace MirrativSitePlugin
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly IMirrativSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
 
-        public MirrativCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IMirrativSiteOptions siteOptions, IUserStore userStore)
+        public MirrativCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IMirrativSiteOptions siteOptions, IUserStoreManager userStoreManager)
         {
             _server = server;
             _logger = logger;
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             CanConnect = true;
             CanDisconnect = false;
         }

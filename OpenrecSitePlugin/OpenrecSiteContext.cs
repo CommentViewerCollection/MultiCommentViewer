@@ -5,16 +5,17 @@ using SitePlugin;
 using Common;
 using System.Windows.Controls;
 using System.Diagnostics;
+using SitePluginCommon;
 
 namespace OpenrecSitePlugin
 {
-    public class OpenrecSiteContext : ISiteContext
+    public class OpenrecSiteContext : SiteContextBase
     {
-        public Guid Guid => new Guid("F4434012-3E68-4DD9-B2A8-F2BD7D601723");
+        public override Guid Guid => new Guid("F4434012-3E68-4DD9-B2A8-F2BD7D601723");
 
-        public string DisplayName => "OPENREC";
-
-        public IOptionsTabPage TabPanel
+        public override string DisplayName => "OPENREC";
+        protected override SiteType SiteType => SiteType.Openrec;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -24,15 +25,15 @@ namespace OpenrecSitePlugin
             }
         }
 
-        public ICommentProvider CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
-            return new CommentProvider(_options, _siteOptions, _logger, _userStore)
+            return new CommentProvider(_options, _siteOptions, _logger, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
         }
 
-        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var nicoCommentProvider = commentProvider as CommentProvider;
             Debug.Assert(nicoCommentProvider != null);
@@ -48,12 +49,12 @@ namespace OpenrecSitePlugin
             return panel;
         }
 
-        public bool IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             return Tools.IsValidUrl(input);
         }
 
-        public void LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new OpenrecSiteOptions();
             try
@@ -69,7 +70,7 @@ namespace OpenrecSitePlugin
             }
         }
 
-        public void SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -82,32 +83,15 @@ namespace OpenrecSitePlugin
                 _logger.LogException(ex, "", path);
             }
         }
-        public void Init()
-        {
-            _userStore.Init();
-        }
-        public void Save()
-        {
-            _userStore.Save();
-        }
-        public IUser GetUser(string userId)
-        {
-            return _userStore.GetUser(userId);
-        }
-        protected virtual IUserStore CreateUserStore()
-        {
-            return new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);
-        }
         private OpenrecSiteOptions _siteOptions;
         private ICommentOptions _options;
         private ILogger _logger;
-        private IUserStore _userStore;
 
-        public OpenrecSiteContext(ICommentOptions options, ILogger logger)
+        public OpenrecSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options,userStoreManager, logger)
         {
             _options = options;
             _logger = logger;
-            _userStore = CreateUserStore();
         }
     }
 }

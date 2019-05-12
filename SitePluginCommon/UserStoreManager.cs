@@ -12,6 +12,7 @@ namespace SitePluginCommon
         event EventHandler<IUser> UserAdded;
 
         IUser GetUser(SiteType siteType, string userId);
+        IEnumerable<IUser> GetAllUsers(SiteType siteType);
         void SetUserStore(SiteType siteType, IUserStore userStore);
         void Init(SiteType siteType);
         void Save(SiteType siteType);
@@ -25,6 +26,11 @@ namespace SitePluginCommon
             var userStore = _dict[siteType];
             var user = userStore.GetUser(userId);
             return user;
+        }
+        public IEnumerable<IUser> GetAllUsers(SiteType siteType)
+        {
+            var userStore = _dict[siteType];
+            return userStore.GetAllUsers();
         }
         public void Save(SiteType siteType)
         {

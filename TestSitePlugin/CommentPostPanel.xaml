@@ -10,7 +10,7 @@
     <Grid>
         <TextBox HorizontalAlignment="Stretch" Height="23" Margin="5,0,100,5" TextWrapping="NoWrap" Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Bottom" Width="Auto">
             <TextBox.InputBindings>
-                <KeyBinding Command="{Binding PostCommentCommand}" Key="Return" />
+                <KeyBinding Command="{Binding PostCommand}" Key="Return" />
             </TextBox.InputBindings>
         </TextBox>
         <Button Content="投稿" Command="{Binding PostCommand}" HorizontalAlignment="Right" Margin="0,0,5,5" VerticalAlignment="Bottom" Width="75" />

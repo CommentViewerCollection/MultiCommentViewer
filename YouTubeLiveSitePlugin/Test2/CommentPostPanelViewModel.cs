@@ -28,7 +28,6 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 if (CanPostComment)
                 {
-                    CanPostComment = false;
                     var commentTemp = Comment;
                     Comment = "";
                     var success = await _commentProvider.PostCommentAsync(commentTemp);
@@ -36,7 +35,6 @@ namespace YouTubeLiveSitePlugin.Test2
                     {
                         Comment = commentTemp;
                     }
-                    CanPostComment = true;
                 }
             }
             catch (Exception ex)

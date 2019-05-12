@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Net;
 using Moq.Protected;
 using System.Threading;
+using SitePluginCommon;
 
 namespace OpenrecSitePluginTests
 {
@@ -60,8 +61,8 @@ namespace OpenrecSitePluginTests
             var loggerMock = new Mock<ILogger>();
             var userMock = new Mock<IUser2>();
             userMock.Setup(u => u.UserId).Returns("123");
-            var userStoreMock = new Mock<IUserStore>();
-            userStoreMock.Setup(u => u.GetUser(It.IsAny<string>())).Returns(userMock.Object);
+            var userStoreMock = new Mock<IUserStoreManager>();
+            userStoreMock.Setup(u => u.GetUser(SiteType.Openrec, It.IsAny<string>())).Returns(userMock.Object);
             var browserProfileMock = new Mock<IBrowserProfile>();
             var ws = new Websocket();
 

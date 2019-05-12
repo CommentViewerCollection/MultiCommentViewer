@@ -98,6 +98,7 @@
       <DependentUpon>AppNoStartupUri.xaml</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="ViewModels\CommentViewModel\InfoCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TestCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwicasCommentViewModel.cs" />

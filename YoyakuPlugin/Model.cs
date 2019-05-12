@@ -220,6 +220,17 @@ namespace OpenrecYoyakuPlugin
             }
         }
         public List<User> RegisteredUsers { get; } = new List<User>();
+        public void ChangeRegisteredUsers(System.Collections.Specialized.NotifyCollectionChangedAction action, int oldIndex, int newIndex)
+        {
+            switch (action)
+            {
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Move:
+                    var item = RegisteredUsers[oldIndex];
+                    RegisteredUsers.Remove(item);
+                    RegisteredUsers.Insert(newIndex, item);
+                    break;
+            }
+        }
         public void AddUser(User user)
         {
             lock (RegisteredUsers)

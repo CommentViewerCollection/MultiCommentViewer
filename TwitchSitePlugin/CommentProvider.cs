@@ -19,6 +19,30 @@ using SitePluginCommon;
 
 namespace TwitchSitePlugin
 {
+    class UserState
+    {
+        public Dictionary<string, string> Tags { get; }
+        public List<string> Params { get; }
+        public UserState(Dictionary<string, string> tags, List<string> @params)
+        {
+            Tags = tags;
+            Params = @params;
+        }
+        public void UpdateTags(Dictionary<string, string> newTags)
+        {
+            foreach(var key in newTags.Keys)
+            {
+                if (Tags.ContainsKey(key))
+                {
+                    Tags[key] = newTags[key];
+                }
+                else
+                {
+                    Tags.Add(key, newTags[key]);
+                }
+            }
+        }
+    }
     class CurrentUserInfo : ICurrentUserInfo
     {
         public string Username { get; set; }
@@ -147,8 +171,10 @@ namespace TwitchSitePlugin
                         tasks.Remove(messageProviderTask);
                         try
                         {
+                            metaProvider.Disconnect();
                             await metaProviderTask;
-                        }catch(Exception ex)
+                        }
+                        catch (Exception ex)
                         {
                             _logger.LogException(ex);
                         }
@@ -201,6 +227,7 @@ namespace TwitchSitePlugin
         }
         string _oauthToken;
         string _name;
+        UserState _userState;
         private async void Provider_Received(object sender, Result e)
         {
             Debug.WriteLine(e.Raw);
@@ -214,33 +241,17 @@ namespace TwitchSitePlugin
                         await _provider.SendAsync("PONG");
                         break;
                     case "GLOBALUSERSTATE":
+                        _userState = new UserState(result.Tags, result.Params);
+                        break;
+                    case "USERSTATE":
+                        _userState.UpdateTags(result.Tags);
                         break;
                     case "PRIVMSG":
                         {
                             //useridが含まれていないPRIVMSGを確認。ホスティングされたことを伝える運営コメント
                             //:jtv!jtv@jtv.tmi.twitch.tv PRIVMSG 3lis_game :GamesFan34260 is now hosting you.
 
-                            var commentData = ParsePrivMsg(result);
-                            var userId = commentData.UserId;
-                            var isFirstComment = _commentCounter.UpdateCount(userId);
-                            var user = _userStore.GetUser(userId);
-
-                            var message = new TwitchComment(result.Raw)
-                            {
-                                CommentItems = Tools.GetMessageItems(result),
-                                Id = commentData.Id,
-                                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Username) },
-                                PostTime = commentData.SentAt.ToString("HH:mm:ss"),
-                                UserId = commentData.UserId,
-                            };
-                            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-                            {
-                                IsInitialComment = false,
-                                SiteContextGuid = SiteContextGuid,
-                            };
-                            var methods = new TwitchMessageMethods();
-                            var messageContext = new TwitchMessageContext(message, metadata, methods);
-                            MessageReceived?.Invoke(this, messageContext);
+                            OnMessageReceived(result);
                             //var cvm = new TwitchCommentViewModel(_options, _siteOptions, commentData, isFirstComment, this, user);
                             //CommentReceived?.Invoke(this, cvm);
                         }
@@ -259,6 +270,32 @@ namespace TwitchSitePlugin
                 _logger.LogException(ex, "", $"raw={result.Raw}");
             }
         }
+
+        private void OnMessageReceived(Result result)
+        {
+            var commentData = ParsePrivMsg(result);
+            var userId = commentData.UserId;
+            var isFirstComment = _commentCounter.UpdateCount(userId);
+            var user = GetUser(userId);
+
+            var message = new TwitchComment(result.Raw)
+            {
+                CommentItems = Tools.GetMessageItems(result),
+                Id = commentData.Id,
+                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Username) },
+                PostTime = commentData.SentAt.ToString("HH:mm:ss"),
+                UserId = commentData.UserId,
+            };
+            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
+            {
+                IsInitialComment = false,
+                SiteContextGuid = SiteContextGuid,
+            };
+            var methods = new TwitchMessageMethods();
+            var messageContext = new TwitchMessageContext(message, metadata, methods);
+            MessageReceived?.Invoke(this, messageContext);
+        }
+
         protected virtual string GetRandomGuestUsername()
         {
             return Tools.GetRandomGuestUsername();
@@ -303,7 +340,7 @@ namespace TwitchSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.Twitch, userId);
         }
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {
@@ -314,20 +351,25 @@ namespace TwitchSitePlugin
         {
             var s = $"PRIVMSG #{_channelName} :{text}";
             await _provider.SendAsync(s);
+
+            //自分が投稿したコメントはサーバから送られてこないため自分で作る必要がある
+            var message = Tools.CreatePrivMsg(_userState, _name, _channelName, text, GetCurrentDateTime());
+            var result = Tools.Parse(message);
+            OnMessageReceived(result);
         }
         public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
-        public TwitchCommentProvider( IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStore userStore)
+        private readonly IUserStoreManager _userStoreManager;
+        public TwitchCommentProvider( IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStoreManager userStoreManager)
         {
             _server = server;
             _logger = logger;
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
 
             CanConnect = true;
             CanDisconnect = false;

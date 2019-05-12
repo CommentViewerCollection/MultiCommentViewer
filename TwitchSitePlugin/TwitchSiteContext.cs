@@ -7,16 +7,18 @@ using System.Windows.Threading;
 using Common;
 using System.Text.RegularExpressions;
 using System.Windows.Controls;
+using SitePluginCommon;
 
 namespace TwitchSitePlugin
 {
-    public class TwitchSiteContext : ISiteContext
+    public class TwitchSiteContext : SiteContextBase
     {
-        public Guid Guid => new Guid("22F7824A-EA1B-411E-85CA-6C9E6BE94E39");
+        public override Guid Guid => new Guid("22F7824A-EA1B-411E-85CA-6C9E6BE94E39");
 
-        public string DisplayName => "Twitch";
+        public override string DisplayName => "Twitch";
 
-        public IOptionsTabPage TabPanel
+        protected override SiteType SiteType => SiteType.Twitch;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -26,12 +28,15 @@ namespace TwitchSitePlugin
             }
         }
 
-        public ICommentProvider CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
-            return new TwitchCommentProvider(_server, _logger, _options, _siteOptions,_userStore);
+            return new TwitchCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
+            {
+                SiteContextGuid = Guid,
+            };
         }
         private TwitchSiteOptions _siteOptions;
-        public void LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new TwitchSiteOptions();
             try
@@ -47,7 +52,7 @@ namespace TwitchSitePlugin
             }
         }
 
-        public void SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -60,43 +65,46 @@ namespace TwitchSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
-        public void Init()
+        public override void Init()
         {
-            _userStore.Init();
+            base.Init();
         }
-        public void Save()
+        public override void Save()
         {
-            _userStore.Save();
+            base.Save();
         }
-        public bool IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             //チャンネル名だけ来られても他のサイトのものの可能性があるからfalse
             //"twitch.tv/"の後に文字列があったらtrueとする。
             var b = Regex.IsMatch(input, "twitch\\.tv/[a-zA-Z0-9_]+");
             return b;
         }
-        public IUser GetUser(string userId)
+
+        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            return _userStore.GetUser(userId);
-        }
-        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
-        {
-            return null;
-        }
-        protected virtual IUserStore CreateUserStore()
-        {
-            return new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);
+            var twitchCommentProvider = commentProvider as TwitchCommentProvider;
+            Debug.Assert(twitchCommentProvider != null);
+            if (twitchCommentProvider == null)
+                return null;
+
+            var vm = new CommentPostPanelViewModel(twitchCommentProvider, _logger);
+            var panel = new CommentPostPanel
+            {
+                //IsEnabled = false,
+                DataContext = vm
+            };
+            return panel;
         }
         private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly IUserStore _userStore;
-        public TwitchSiteContext(ICommentOptions options, IDataServer server, ILogger logger)
+        public TwitchSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _server = server;
             _logger = logger;
-            _userStore = CreateUserStore();
         }
     }
 }

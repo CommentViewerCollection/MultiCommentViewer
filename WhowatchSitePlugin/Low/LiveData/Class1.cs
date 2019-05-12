@@ -77,6 +77,9 @@ namespace WhowatchSitePlugin.Low.LiveData
 
         [JsonProperty("pattern_decoration", NullValueHandling = NullValueHandling.Ignore)]
         public string PatternDecoration { get; set; }
+
+        [JsonProperty("ng_word_included")]
+        public bool NgWordIncluded { get; set; }
     }
 
     public partial class Tts

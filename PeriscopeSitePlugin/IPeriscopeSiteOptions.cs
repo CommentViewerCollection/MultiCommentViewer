@@ -11,6 +11,10 @@ namespace PeriscopeSitePlugin
     }
     interface IPeriscopeSiteOptions: ISiteOptions<IPeriscopeSiteOptions>
     {
+        Color ItemCommentBackColor { get; set; }
+        Color ItemCommentForeColor { get; set; }
         bool IsAutoSetNickname { get; set; }
+        bool IsShowJoinMessage { get; set; }
+        bool IsShowLeaveMessage { get; set; }
     }
 }

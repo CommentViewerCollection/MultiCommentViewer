@@ -604,8 +604,7 @@ namespace MultiCommentViewer
             IMcvCommentViewModel mcvCvm = null;
             if(messageContext.Message is IInfoMessage infoMessage)
             {
-                //TODO:
-                Debug.WriteLine(infoMessage.CommentItems.ToText());
+                mcvCvm = new InfoCommentViewModel(infoMessage, messageContext.Metadata, messageContext.Methods, connectionName, _options);
             }
             else if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
             {
@@ -714,6 +713,22 @@ namespace MultiCommentViewer
                 if (nicoMessage is NicoSitePlugin.INicoComment comment)
                 {
                     mcvCvm = new NicoCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (nicoMessage is NicoSitePlugin.INicoAd ad)
+                {
+                    mcvCvm = new NicoCommentViewModel(ad, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (nicoMessage is NicoSitePlugin.INicoInfo info)
+                {
+                    mcvCvm = new NicoCommentViewModel(info, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (nicoMessage is NicoSitePlugin.INicoConnected connected)
+                {
+                    mcvCvm = new NicoCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (nicoMessage is NicoSitePlugin.INicoDisconnected disconnected)
+                {
+                    mcvCvm = new NicoCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is TwicasSitePlugin.ITwicasMessage twicasMessage)
@@ -1349,7 +1364,7 @@ namespace MultiCommentViewer
         }
         private void Exit()
         {
-
+            this.RequestClose();
         }
     }
 }

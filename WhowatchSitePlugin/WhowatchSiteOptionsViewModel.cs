@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Windows.Media;
 
 namespace WhowatchSitePlugin
 {
@@ -10,6 +11,16 @@ namespace WhowatchSitePlugin
             get => ChangedOptions.NeedAutoSubNickname;
             set => ChangedOptions.NeedAutoSubNickname = value;
         }
+        public Color ItemBackColor
+        {
+            get => ChangedOptions.ItemBackColor;
+            set => ChangedOptions.ItemBackColor = value;
+        }
+        public Color ItemForeColor
+        {
+            get => ChangedOptions.ItemForeColor;
+            set => ChangedOptions.ItemForeColor = value;
+        }
 
         internal IWhowatchSiteOptions OriginOptions { get; }
         internal IWhowatchSiteOptions ChangedOptions { get; }
@@ -18,6 +29,15 @@ namespace WhowatchSitePlugin
         {
             OriginOptions = siteOptions;
             ChangedOptions = siteOptions.Clone();
+        }
+        public WhowatchSiteOptionsViewModel()
+        {
+            OriginOptions = new WhowatchSiteOptions()
+            {
+                ItemBackColor = Colors.Red,
+                ItemForeColor = Colors.Blue,
+                NeedAutoSubNickname = true,
+            };
         }
 
         #region INotifyPropertyChanged

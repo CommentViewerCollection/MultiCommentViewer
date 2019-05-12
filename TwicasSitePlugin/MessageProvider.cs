@@ -44,6 +44,10 @@ namespace TwicasSitePlugin
             }
             return initialDataList;
         }
+        private IUser GetUser(string userId)
+        {
+            return _userStoreManager.GetUser(SiteType.Twicas, userId);
+        }
         private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
         private TwicasMessageContext CreateMessageContext(LowObject.Comment lowComment, bool isInitialComment, string raw) 
         {
@@ -60,7 +64,7 @@ namespace TwicasSitePlugin
                 _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
                 isFirstComment = true;
             }
-            var user = _userStore.GetUser(userId);
+            var user = GetUser(userId);
 
             var message = new TwicasComment(raw)
             {
@@ -216,7 +220,7 @@ namespace TwicasSitePlugin
                             }
                             if (itemMessage != null)
                             {
-                                var user = _userStore.GetUser(item.SenderName);
+                                var user = GetUser(item.SenderName);
                                 var metadata = new MessageMetadata(itemMessage, _options, _siteOptions, user, _cp, false)
                                 {
                                     IsInitialComment = false,
@@ -343,16 +347,16 @@ namespace TwicasSitePlugin
         private readonly IDataServer _server;
         private readonly ITwicasSiteOptions _siteOptions;
         private readonly CookieContainer _cc;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
         private readonly ICommentOptions _options;
         private readonly ICommentProvider _cp;
         private readonly ILogger _logger;
-        public MessageProvider(IDataServer server, ITwicasSiteOptions siteOptions, CookieContainer cc,IUserStore userStore,ICommentOptions options,ICommentProvider cp, ILogger logger)
+        public MessageProvider(IDataServer server, ITwicasSiteOptions siteOptions, CookieContainer cc,IUserStoreManager userStoreManager,ICommentOptions options,ICommentProvider cp, ILogger logger)
         {
             _server = server;
             _siteOptions = siteOptions;
             _cc = cc;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _options = options;
             _cp = cp;
             _logger = logger;

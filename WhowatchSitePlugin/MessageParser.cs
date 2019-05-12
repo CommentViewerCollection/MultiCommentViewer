@@ -87,6 +87,86 @@ namespace WhowatchSitePlugin
                 Payload = payload,
             };
         }
+        public static IWhowatchMessage ParseMessage(Comment rawMessage, string raw)
+        {
+            var comment = rawMessage;
+            IWhowatchMessage message;
+            switch (rawMessage.CommentType)
+            {
+                case "BY_PLAYITEM":
+                    message = new WhowatchItem(raw)
+                    {
+                        AccountName = rawMessage.User.AccountName,
+                        NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(rawMessage.User.Name) },
+                        CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(rawMessage.Message) },
+                        Id = (long)rawMessage.Id,
+                        PostedAt = (long)rawMessage.PostedAt,
+                        UserId = (long)rawMessage.User.Id,
+                        UserPath = rawMessage.User.UserPath,
+                        ItemCount = (int)rawMessage.ItemCount,
+                        ItemName = Resolver.Resolve((int)rawMessage.PlayItemPatternId),
+                        UserIconUrl = rawMessage.User.IconUrl,
+                    };
+                    break;
+                case "BY_PUBLIC":
+                case "BY_FOLLOWER":
+                case "BY_SYSTEM":
+                case "BY_OWNER":
+                    //運営コメント
+
+                    //NGワードを含むコメント。ng_word_includedがtrueで、original_messageがある。
+                    //[null,null,"room:10030668","shout",{"topic":"room_pub:10030668","event":"shout","comment":{"user":{"user_profile":{},"user_path":"w:ryu_s","name":"Ryu","is_admin":false,"id":1614280,"icon_url":"","account_name":"ふ:ryu_s"},"tts":{},"reply_to_user_id":0,"posted_at":1553429971000,"original_message":"あいうえお","not_escaped":false,"ng_word_included":true,"message":"この投稿は視聴者には表示されません。","live_id":10030668,"is_silent_comment":true,"is_reply_to_me":false,"id":633344989,"escaped_original_message":"<span class=\"ngword\">あいうえお</span>","escaped_message":"この投稿は視聴者には表示されません。","enabled":true,"comment_type":"BY_FOLLOWER","anonymized":false}}]
+                    //匿名コメント。anonymizedがtrue
+                    //[null,null,"room:10030668","shout",{"topic":"room_pub:10030668","event":"shout","comment":{"user":{"user_profile":{},"user_path":"w:秘密のチキンボーイ","name":"秘密のチキンボーイ","is_admin":false,"id":1024,"icon_url":"https://img.whowatch.tv/user_files/1024/profile_icon/1505207215448.jpeg","account_name":"ふ:秘密のチキンボーイ"},"reply_to_user_id":0,"posted_at":1553429977000,"play_item_pattern_id":116,"pickup_time":2000,"not_escaped":false,"ng_word_included":false,"message":"ひよこをプレゼントしました。","live_id":10030668,"item_count":1,"is_silent_comment":false,"is_reply_to_me":false,"id":633345152,"escaped_message":"ひよこをプレゼントしました。","enabled":true,"comment_type":"BY_PLAYITEM","anonymized":true}}]
+                    //if (comment.n.IsDefined("ng_word_included") && comment.ng_word_included == true)
+                    if (comment.NgWordIncluded)
+                    {
+                        //NGコメント
+                        message = new WhowatchNgComment(raw)
+                        {
+                            AccountName = comment.User.AccountName,
+                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.User.Name) },
+                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.Message) },
+                            Id = comment.Id.ToString(),
+                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
+                            UserId = comment.User.Id.ToString(),
+                            UserPath = comment.User.UserPath,
+                            //OriginalMessage = comment.OriginalMessage,
+                            UserIcon = new MessageImage
+                            {
+                                Url = (string)comment.User.IconUrl,
+                                Alt = null,
+                                Height = 40,
+                                Width = 40,
+                            }
+                        };
+                    }
+                    else
+                    {
+                        message = new WhowatchComment(raw)
+                        {
+                            AccountName = comment.User.AccountName,
+                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.User.Name) },
+                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.Message) },
+                            Id = comment.Id.ToString(),
+                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
+                            UserId = comment.User.Id.ToString(),
+                            UserPath = comment.User.UserPath,
+                            UserIcon = new MessageImage
+                            {
+                                Url = (string)comment.User.IconUrl,
+                                Alt = null,
+                                Height = 40,
+                                Width = 40,
+                            }
+                        };
+                    }
+                    break;
+                default:
+                    throw new ParseException(raw);
+            }
+            return message;
+        }
         public static IWhowatchMessage ParseShoutMessage(WhowatchInternalMessage shoutMessage)
         {
             IWhowatchMessage message = null;
@@ -165,73 +245,10 @@ namespace WhowatchSitePlugin
                     }
                     break;
                 default:
-                    break;
+                    throw new ParseException(raw);
             }
             return message;
         }
-        //public static IWhowatchMessage Parse(WhowatchInternalMessage internalMessage)
-        //{
-        //    var raw = internalMessage.Raw;
-        //    IWhowatchMessage message = null;
-        //    switch (internalMessage.InternalMessageType)
-        //    {
-        //        case WhowatchInternalMessageType.Shout:
-        //            //
-        //            dynamic d = DynamicJson.Parse(internalMessage.Payload);
-        //            string commentType = d.comment.comment_type;
-        //            var comment = d.comment;
-        //            switch (commentType)
-        //            {
-        //                case "BY_PLAYITEM":
-        //                    message = new WhowatchItem
-        //                    {
-        //                        AccountName = comment.user.account_name,
-        //                        UserName = comment.user.name,
-        //                        Id = (long)comment.id,
-        //                        PostedAt = (long)comment.posted_at,
-        //                        UserId = (long)comment.user.id,
-        //                        UserPath = comment.user.user_path,
-        //                        Raw = raw,
-        //                        Comment = comment.message,
-        //                        ItemCount = (int)comment.item_count,
-        //                        ItemName = Resolver.Resolve((int)comment.play_item_pattern_id),
-        //                    };
-        //                    break;
-        //                case "BY_PUBLIC":
-        //                case "BY_FOLLOWER":
-        //                    message = new WhowatchComment
-        //                    {
-        //                        AccountName = comment.user.account_name,
-        //                        UserName = comment.user.name,
-        //                        Id = (long)comment.id,
-        //                        PostedAt = (long)comment.posted_at,
-        //                        UserId = (long)comment.user.id,
-        //                         UserPath=comment.user.user_path,
-        //                        UserIconUrl = comment.user.icon_url,
-        //                        Raw = raw,
-        //                        Comment = comment.message,
-        //                    };
-        //                    break;
-        //                case "BY_SYSTEM":
-        //                    //運営コメント
-        //                    break;
-        //                default:
-        //                    break;
-        //            }
-        //            //var low = Newtonsoft.Json.JsonConvert.DeserializeObject<MessageParsing.Shout.Payload>(payload);
-        //            //message = new Shout(payload);
-        //            break;
-        //        case WhowatchInternalMessageType.PhxReply:
-        //            break;
-        //        default:
-        //            throw new ParseException(raw);
-        //    }
-        //    if(message == null)
-        //    {
-        //        throw new ParseException(raw);
-        //    }
-        //    return message;
-        //}
     }
 
     internal abstract class Message

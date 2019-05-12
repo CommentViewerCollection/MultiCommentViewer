@@ -57,11 +57,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command.cs" />
+    <Compile Include="CommentPostPanel.xaml.cs">
+      <DependentUpon>CommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CommentPostPanelViewModel.cs" />
     <Compile Include="CommentProvider.cs" />
     <Compile Include="ICommentData.cs" />
     <Compile Include="IMetadataProvider.cs" />
     <Compile Include="ITwitchSiteOptions.cs" />
     <Compile Include="IWebSocket.cs" />
+    <Compile Include="Low\ChannelProduct\Class1.cs" />
     <Compile Include="Low\Class1.cs" />
     <Compile Include="Me.cs" />
     <Compile Include="MessageProvider.cs" />
@@ -110,6 +115,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="CommentPostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="TabPagePanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

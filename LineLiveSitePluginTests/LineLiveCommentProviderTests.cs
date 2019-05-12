@@ -11,6 +11,7 @@ using Moq;
 using NUnit.Framework;
 using ryu_s.BrowserCookie;
 using SitePlugin;
+using SitePluginCommon;
 
 namespace LineLiveSitePluginTests
 {
@@ -63,8 +64,8 @@ namespace LineLiveSitePluginTests
                 _loveIconUrlDict = new Dictionary<string, string>();
                 return Task.CompletedTask;
             }
-            public C(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStore userStore)
-                :base(server, logger, options, siteOptions, userStore)
+            public C(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStoreManager userStoreManager)
+                :base(server, logger, options, siteOptions, userStoreManager)
             {
 
             }
@@ -115,7 +116,7 @@ namespace LineLiveSitePluginTests
             var logger = new Logger();
             var optionsMock = new Mock<ICommentOptions>();
             var siteOptions = new LineLiveSiteOptions();
-            var userStoreMock = new Mock<IUserStore>();
+            var userStoreMock = new Mock<IUserStoreManager>();
             var provider = new C(server, logger, optionsMock.Object, siteOptions, userStoreMock.Object);
             int n = 0;
             provider.BeforeGetLiveInfo += (s, e) =>
@@ -189,8 +190,8 @@ namespace LineLiveSitePluginTests
                 _loveIconUrlDict = new Dictionary<string, string>();
                 return Task.CompletedTask;
             }
-            public C(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStore userStore)
-                : base(server, logger, options, siteOptions, userStore)
+            public C(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStoreManager userStoreManager)
+                : base(server, logger, options, siteOptions, userStoreManager)
             {
 
             }
@@ -251,7 +252,7 @@ namespace LineLiveSitePluginTests
             var logger = new Logger();
             var optionsMock = new Mock<ICommentOptions>();
             var siteOptions = new LineLiveSiteOptions();
-            var userStoreMock = new Mock<IUserStore>();
+            var userStoreMock = new Mock<IUserStoreManager>();
             var provider = new C(server, logger, optionsMock.Object, siteOptions, userStoreMock.Object);
             provider.LiveCheckIntervalMs = 0;
             int n = 0;

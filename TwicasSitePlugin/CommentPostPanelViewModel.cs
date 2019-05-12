@@ -26,7 +26,6 @@ namespace TwicasSitePlugin
         {
             if (CanPostComment)
             {
-                CanPostComment = false;
                 var commentTemp = Comment;
                 Comment = "";
                 try
@@ -38,8 +37,6 @@ namespace TwicasSitePlugin
                     _logger.LogException(ex, "", $"Comment={commentTemp}");
                     Comment = commentTemp;
                 }
-                
-                CanPostComment = true;
             }
         }
         private string _comment;

@@ -13,7 +13,24 @@ namespace TwitchSitePluginTests
     class ApiTests
     {
         [Test]
-        public async Task Test()
+        public async Task GetEmoticonsTest()
+        {
+            //var serverMock = new Mock<IDataServer>();
+            //serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(Task.FromResult(data));
+            //var server = serverMock.Object;
+            //await API.GetEmoticons(new TwitchServer());
+        }
+        [Test]
+        public async Task GetChannelProductsTest()
+        {
+            var data = TestHelper.GetSampleData("ChannelProduct.txt");
+            var serverMock = new Mock<IDataServer>();
+            serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(Task.FromResult(data));
+            var server = serverMock.Object;
+            var products = await API.GetChannelProducts(server, "ukyochi_jp");
+        }
+        [Test]
+        public async Task GetStreamAsyncTest()
         {
             var data = TestHelper.GetSampleData("Streams.txt");
             var serverMock = new Mock<IDataServer>();
@@ -26,7 +43,7 @@ namespace TwitchSitePluginTests
             Assert.AreEqual("live", stream.Type);
         }
         [Test]
-        public async Task Test2()
+        public async Task GetStreamAsyncEmptyTest()
         {
             var data = "{\"data\":[],\"pagination\":{}}";
             var serverMock = new Mock<IDataServer>();

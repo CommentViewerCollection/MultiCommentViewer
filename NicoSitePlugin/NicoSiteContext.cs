@@ -69,7 +69,7 @@ namespace NicoSitePlugin
 
         bool ISiteContext.IsValidInput(string input)
         {
-            return NicoCommentProvider.IsValidInput(_options, _siteOptions, _userStoreManager, _server, _logger, null, input);
+            return NicoCommentProvider.IsValidInput(_options, _siteOptions, _userStoreManager, _server, _logger, null, input, Guid);
         }
 
         UserControl ISiteContext.GetCommentPostPanel(ICommentProvider commentProvider)

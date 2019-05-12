@@ -19,13 +19,13 @@ namespace MultiCommentViewer.Test
             var list = new List<ISiteContext>
             {
                 new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, new YouTubeLiveSitePlugin.Test2.YouTubeLiveServer(), logger, userStoreManager),
-                new OpenrecSitePlugin.OpenrecSiteContext(options, logger),
-                new TwitchSitePlugin.TwitchSiteContext(options,new TwitchSitePlugin.TwitchServer(), logger),
+                new OpenrecSitePlugin.OpenrecSiteContext(options, logger, userStoreManager),
+                new TwitchSitePlugin.TwitchSiteContext(options,new TwitchSitePlugin.TwitchServer(), logger, userStoreManager),
                 new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), (addr,port,size,buffer)=> new NicoSitePlugin.StreamSocket(addr,port,size,buffer), logger, userStoreManager),
-                new TwicasSitePlugin.TwicasSiteContext(options,logger),
-                new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger),
-                new WhowatchSitePlugin.WhowatchSiteContext(options, logger),
-                new MirrativSitePlugin.MirrativSiteContext(options,new MirrativSitePlugin.MirrativServer(), logger),
+                new TwicasSitePlugin.TwicasSiteContext(options,logger, userStoreManager),
+                new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger, userStoreManager),
+                new WhowatchSitePlugin.WhowatchSiteContext(options, logger, userStoreManager),
+                new MirrativSitePlugin.MirrativSiteContext(options,new MirrativSitePlugin.MirrativServer(), logger, userStoreManager),
                 new PeriscopeSitePlugin.PeriscopeSiteContext(options,new PeriscopeSitePlugin.PeriscopeServer(), logger,userStoreManager),
 #if DEBUG
                 new TestSitePlugin.TestSiteContext(options),

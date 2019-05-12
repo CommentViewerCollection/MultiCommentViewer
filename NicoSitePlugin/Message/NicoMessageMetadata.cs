@@ -1,201 +1,70 @@
 ﻿using SitePlugin;
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 
 namespace NicoSitePlugin
 {
-    internal class MessageMetadata : IMessageMetadata
+    internal interface INicoMessageMetadata : IMessageMetadata
     {
-        private readonly INicoMessage _message;
-        private readonly ICommentOptions _options;
-        private readonly INicoSiteOptions _siteOptions;
 
-        public Color BackColor
-        {
-            get
-            {
-                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
-                {
-                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
-                    return color;
-                }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentBackColor;
-                }
-                else if (_message is INicoConnected)
-                {
-                    return _options.InfoBackColor;
-                }
-                else if(_message is INicoDisconnected)
-                {
-                    return _options.InfoBackColor;
-                }
-                else
-                {
-                    return _options.BackColor;
-                }
-            }
-        }
+    }
+    internal abstract class MessageMetadataBase:INicoMessageMetadata
+    {
+        //protected readonly IMirrativMessage _message;
+        protected readonly ICommentOptions _options;
+        protected readonly INicoSiteOptions _siteOptions;
 
-        public Color ForeColor
-        {
-            get
-            {
-                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
-                {
-                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
-                    return color;
-                }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentForeColor;
-                }
-                else if (_message is INicoConnected)
-                {
-                    return _options.InfoForeColor;
-                }
-                else if (_message is INicoDisconnected)
-                {
-                    return _options.InfoForeColor;
-                }
-                else
-                {
-                    return _options.ForeColor;
-                }
-            }
-        }
+        public virtual Color BackColor => _options.BackColor;
 
-        public FontFamily FontFamily
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontFamily;
-                }
-                else
-                {
-                    return _options.FontFamily;
-                }
-            }
-        }
+        public virtual Color ForeColor => _options.ForeColor;
 
-        public int FontSize
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontSize;
-                }
-                else
-                {
-                    return _options.FontSize;
-                }
-            }
-        }
+        public virtual FontFamily FontFamily => _options.FontFamily;
 
-        public FontWeight FontWeight
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontWeight;
-                }
-                else
-                {
-                    return _options.FontWeight;
-                }
-            }
-        }
+        public virtual int FontSize => _options.FontSize;
 
-        public FontStyle FontStyle
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontStyle;
-                }
-                else
-                {
-                    return _options.FontStyle;
-                }
-            }
-        }
+        public virtual FontWeight FontWeight => _options.FontWeight;
 
-        public bool IsNgUser => User != null ? User.IsNgUser : false;
+        public virtual FontStyle FontStyle => _options.FontStyle;
+
+        public virtual bool IsNgUser => false;
         public bool IsSiteNgUser => false;//TODO:IUserにIsSiteNgUserを追加する
-        public bool IsFirstComment { get; }
+        public virtual bool IsFirstComment => false;
+        public string SiteName { get; }
         public bool Is184 { get; }
-        public IUser User { get; }
-        public ICommentProvider CommentProvider { get; }
-        public bool IsVisible
+        public IUser User { get; protected set; }
+        public ICommentProvider CommentProvider { get; protected set; }
+        public virtual bool IsVisible
         {
             get
             {
                 if (IsNgUser || IsSiteNgUser) return false;
 
                 //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
-                //→Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
                 return true;
             }
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
-        public MessageMetadata(INicoMessage message, ICommentOptions options, INicoSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
+        protected MessageMetadataBase(ICommentOptions options, INicoSiteOptions siteOptions)
         {
-            _message = message;
             _options = options;
             _siteOptions = siteOptions;
-            IsFirstComment = isFirstComment;
-            User = user;
-            CommentProvider = cp;
-
-            //TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
-
             options.PropertyChanged += Options_PropertyChanged;
             siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
-            user.PropertyChanged += User_PropertyChanged;
         }
 
-        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+
+        protected void SiteOptions_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
-                case nameof(User.IsNgUser):
-                    //case nameof(User.IsSiteNgUser):
-                    RaisePropertyChanged(nameof(IsVisible));
+                case nameof(_siteOptions.IsAutoSetNickname):
+                    RaisePropertyChanged(nameof(IsNameWrapping));
                     break;
-                case nameof(User.BackColorArgb):
-                    RaisePropertyChanged(nameof(BackColor));
-                    break;
-                case nameof(User.ForeColorArgb):
-                    RaisePropertyChanged(nameof(ForeColor));
-                    break;
-            }
-        }
-
-        private void SiteOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                //case nameof(_siteOptions.ItemBackColor):
-                //    if (_message is INicoItem)
-                //    {
-                //        RaisePropertyChanged(nameof(BackColor));
-                //    }
-                //    break;
-                //case nameof(_siteOptions.ItemForeColor):
-                //    if (_message is INicoItem)
-                //    {
-                //        RaisePropertyChanged(nameof(ForeColor));
-                //    }
-                //    break;
             }
         }
 
@@ -258,6 +127,182 @@ namespace NicoSitePlugin
             _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
         #endregion
+    }
+    internal class CommentMessageMetadata : MessageMetadataBase
+    {
+        public override Color BackColor
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(User.BackColorArgb))
+                {
+                    return Common.Utils.ColorFromArgb(User.BackColorArgb);
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentBackColor;
+                }
+                else
+                {
+                    return base.BackColor;
+                }
+            }
+        }
+        public override Color ForeColor
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(User.ForeColorArgb))
+                {
+                    return Common.Utils.ColorFromArgb(User.ForeColorArgb);
+                }
+                else if (IsFirstComment)
+                {
+                    return _options.FirstCommentForeColor;
+                }
+                else
+                {
+                    return base.ForeColor;
+                }
+            }
+        }
+        public override FontFamily FontFamily
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontFamily;
+                }
+                else
+                {
+                    return base.FontFamily;
+                }
+            }
+        }
 
+        public override int FontSize
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontSize;
+                }
+                else
+                {
+                    return base.FontSize;
+                }
+            }
+        }
+
+        public override FontWeight FontWeight
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontWeight;
+                }
+                else
+                {
+                    return base.FontWeight;
+                }
+            }
+        }
+
+        public override FontStyle FontStyle
+        {
+            get
+            {
+                if (IsFirstComment)
+                {
+                    return _options.FirstCommentFontStyle;
+                }
+                else
+                {
+                    return base.FontStyle;
+                }
+            }
+        }
+        public override bool IsNgUser => User.IsNgUser;
+
+        private readonly INicoComment _comment;
+        private bool _isFirstComment;
+        public override bool IsFirstComment => _isFirstComment;
+        public override bool IsVisible => base.IsVisible;
+        public CommentMessageMetadata(INicoComment comment, ICommentOptions options, INicoSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
+            :base(options,siteOptions)
+        {
+            Debug.Assert(user != null);
+            User = user;
+            CommentProvider = cp;
+            _comment = comment;
+            _isFirstComment = isFirstComment;
+
+            user.PropertyChanged += User_PropertyChanged;
+        }
+        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(User.IsNgUser):
+                    //case nameof(User.IsSiteNgUser):
+                    RaisePropertyChanged(nameof(IsVisible));
+                    break;
+                case nameof(User.BackColorArgb):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(User.ForeColorArgb):
+                    RaisePropertyChanged(nameof(ForeColor));
+                    break;
+            }
+        }
+    }
+    internal class InfoMessageMetadata : MessageMetadataBase
+    {
+        public override Color BackColor => _options.InfoBackColor;
+        public override Color ForeColor => _options.InfoForeColor;
+
+        public InfoMessageMetadata(INicoInfo info, ICommentOptions options, INicoSiteOptions siteOptions)
+            : base(options, siteOptions)
+        {
+        }
+    }
+    internal class ConnectedMessageMetadata : MessageMetadataBase
+    {
+        private readonly INicoConnected _connected;
+
+        public override Color BackColor => _options.InfoBackColor;
+        public override Color ForeColor => _options.InfoForeColor;
+
+        public ConnectedMessageMetadata(INicoConnected connected, ICommentOptions options, INicoSiteOptions siteOptions)
+            : base(options, siteOptions)
+        {
+            _connected = connected;
+        }
+    }
+    internal class AdMessageMetadata : MessageMetadataBase
+    {
+        private readonly INicoAd _ad;
+
+        public override Color BackColor => _options.InfoBackColor;
+        public override Color ForeColor => _options.InfoForeColor;
+
+        public AdMessageMetadata(INicoAd ad, ICommentOptions options, INicoSiteOptions siteOptions)
+            : base(options, siteOptions)
+        {
+            _ad = ad;
+        }
+    }
+    internal class DisconnectedMessageMetadata : MessageMetadataBase
+    {
+        public override Color BackColor => _options.InfoBackColor;
+        public override Color ForeColor => _options.InfoForeColor;
+
+        public DisconnectedMessageMetadata(INicoConnected comment, ICommentOptions options, INicoSiteOptions siteOptions)
+            : base(options, siteOptions)
+        {
+        }
     }
 }

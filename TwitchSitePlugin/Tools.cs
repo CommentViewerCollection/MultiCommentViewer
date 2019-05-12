@@ -9,6 +9,7 @@ using System.Collections;
 using System.Reflection;
 using SitePlugin;
 using Common;
+using TwitchSitePlugin.Low.ChannelProduct;
 
 namespace TwitchSitePlugin
 {
@@ -80,7 +81,15 @@ namespace TwitchSitePlugin
         }
         public static List<IMessagePart> GetMessageItems(Result result)
         {
-            var emotes = result.Tags["emotes"];
+            string emotes;
+            if (result.Tags.ContainsKey("emotes"))
+            {
+                emotes = result.Tags["emotes"];
+            }
+            else
+            {
+                emotes = null;
+            }
             var message = result.Params[1];
             return GetMessageItems(message, emotes);
         }
@@ -226,6 +235,32 @@ namespace TwitchSitePlugin
 
             return cookies;
         }
+
+        public static Product[] CreateProducts(RootObject obj)
+        {
+            if(obj.Plans == null)
+            {
+                var p = new Product(obj);
+                return new[] { p };
+            }
+            else
+            {
+                return obj.Plans.Select(o => new Product(o)).ToArray();
+            }
+        }
+        public static string CreatePrivMsg(UserState userState, string name, string channelName, string text, DateTime time)
+        {
+            var kvList = new List<KeyValuePair<string, string>>();
+            kvList.AddRange(userState.Tags);
+            var millis = (long)(time.ToUniversalTime() - UnixTime).TotalMilliseconds;
+            kvList.Add(new KeyValuePair<string, string>("tmi-sent-ts", millis.ToString()));
+            var tagsStr = string.Join(";", kvList.Select(kv => kv.Key + '=' + kv.Value));
+            var id = Guid.NewGuid();
+            var message = $"@{tagsStr};id={id.ToString()} :{name}!{name}@{name}.tmi.twitch.tv PRIVMSG #{channelName} :{text}";
+            return message;
+        }
+        private static DateTime UnixTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
         public static Result Parse(string s)
         {
             //https://static.twitchcdn.net/assets/vendor-128c346a9442245620332c7c735c08c2.js を移植

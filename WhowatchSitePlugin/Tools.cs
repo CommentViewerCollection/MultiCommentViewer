@@ -9,6 +9,19 @@ namespace WhowatchSitePlugin
 {
     internal static class Tools
     {
+        public static string ElapsedToString(TimeSpan elapsed)
+        {
+            string ret;
+            if (elapsed.Hours == 0)
+            {
+                ret = elapsed.ToString("mm\\:ss");
+            }
+            else
+            {
+                ret = elapsed.ToString("h\\:mm\\:ss");
+            }
+            return ret;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -69,6 +82,7 @@ namespace WhowatchSitePlugin
                 PlayItemPatternId = low.PlayItemPatternId,
                 User = Parse(low.User),
                 PostedAt =low.PostedAt,
+                NgWordIncluded = low.NgWordIncluded,
             };
             return comment;
         }
@@ -107,7 +121,7 @@ namespace WhowatchSitePlugin
         public static string ExtractUserPathFromInput(string input)
         {
             if (string.IsNullOrEmpty(input)) return null;
-            var match = Regex.Match(input, "(?:whowatch\\.tv/profile/)?((t:|w:)[a-z_]+)");
+            var match = Regex.Match(input, "(?:whowatch\\.tv/profile/)?((t:|w:)[a-z0-9_]+)");
             if (match.Success)
             {
                 return match.Groups[1].Value;

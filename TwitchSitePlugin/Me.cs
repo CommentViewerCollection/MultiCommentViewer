@@ -10,7 +10,42 @@ using SitePluginCommon;
 
 namespace TwitchSitePlugin
 {
+    public class Product
+    {
+        public string Name { get; }
+        public string CustomName { get; }
 
+        public EmotIcon[] EmotIcons { get; }
+        public Product(Low.ChannelProduct.RootObject obj)
+        {
+            Name = obj.Name;
+            CustomName = obj.CustomName;
+            EmotIcons = obj.Emoticons.Select(l => new EmotIcon(l)).ToArray();
+
+        }
+    }
+    public class EmotIcon
+    {
+        public long Id { get; }
+        public long Width { get; }
+        public long Height { get; }
+        public string State { get; }
+        public string Regex { get; }
+        public long EmoticonSet { get; }
+        public string Url { get; }
+        public bool SubscriberOnly { get; }
+        public EmotIcon(Low.ChannelProduct.Emoticon low)
+        {
+            Id = low.Id;
+            Width = low.Width;
+            Height = low.Height;
+            State = low.State;
+            Regex = low.Regex;
+            EmoticonSet = low.EmoticonSet;
+            Url = low.Url.ToString();
+            SubscriberOnly = low.SubscriberOnly;
+        }
+    }
     [Serializable]
     public class TwitchException : Exception
     {
@@ -175,6 +210,28 @@ namespace TwitchSitePlugin
             var s = await server.GetAsync($"https://api.twitch.tv/kraken/channels/" + channelId, headers);
             var low = Tools.Deserialize<LowObject.ChannelInfo.RootObject>(s);
             return low;
+        }
+        public static async Task GetEmoticons(IDataServer server)
+        {
+            var url = "https://api.twitch.tv/kraken/chat/emoticons";
+            var headers = new Dictionary<string, string>
+            {
+                { "client-id","jzkbprff40iqj646a697cyrvl0zt2m6" },//固定値
+            };
+            var s = await server.GetAsync(url, headers);
+            return;
+        }
+        //
+        public static async Task<Product[]> GetChannelProducts(IDataServer server, string channelName)
+        {
+            var url = "https://api.twitch.tv/api/channels/" + channelName + "/product";
+            var headers = new Dictionary<string, string>
+            {
+                { "client-id","jzkbprff40iqj646a697cyrvl0zt2m6" },//固定値
+            };
+            var s = await server.GetAsync(url, headers);
+            var obj = Tools.Deserialize<Low.ChannelProduct.RootObject>(s);
+            return Tools.CreateProducts(obj);
         }
     }
     public interface IDataServer

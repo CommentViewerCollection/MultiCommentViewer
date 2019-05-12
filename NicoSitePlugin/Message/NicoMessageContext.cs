@@ -9,7 +9,7 @@ namespace NicoSitePlugin
         public IMessageMetadata Metadata { get; }
 
         public IMessageMethods Methods { get; }
-        public NicoMessageContext(INicoMessage message, MessageMetadata metadata, IMessageMethods methods)
+        public NicoMessageContext(INicoMessage message, INicoMessageMetadata metadata, IMessageMethods methods)
         {
             Message = message;
             Metadata = metadata;

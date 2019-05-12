@@ -10,297 +10,9 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media;
 
 namespace WhowatchSitePlugin
 {
-    class CurrentUserInfo : ICurrentUserInfo
-    {
-        public string Username { get; set; }
-        public string UserId { get; set; }
-        public bool IsLoggedIn { get; set; }
-    }
-    internal class WhowatchMessageContext : IMessageContext
-    {
-        public SitePlugin.IMessage Message { get; }
-
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public WhowatchMessageContext(IWhowatchMessage message, MessageMetadata metadata, IMessageMethods methods)
-        {
-            Message = message;
-            Metadata = metadata;
-            Methods = methods;
-        }
-    }
-    internal class MessageMetadata : IMessageMetadata
-    {
-        private readonly IWhowatchMessage _message;
-        private readonly ICommentOptions _options;
-        private readonly IWhowatchSiteOptions _siteOptions;
-
-        public Color BackColor
-        {
-            get
-            {
-                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
-                {
-                    var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
-                    return color;
-                }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentBackColor;
-                }
-                else if (_message is IWhowatchItem item)
-                {
-                    return _siteOptions.ItemBackColor;
-                }
-                else
-                {
-                    return _options.BackColor;
-                }
-            }
-        }
-
-        public Color ForeColor
-        {
-            get
-            {
-                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
-                {
-                    var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
-                    return color;
-                }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentForeColor;
-                }
-                else if (_message is IWhowatchItem item)
-                {
-                    return _siteOptions.ItemForeColor;
-                }
-                else
-                {
-                    return _options.ForeColor;
-                }
-            }
-        }
-
-        public FontFamily FontFamily
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontFamily;
-                }
-                else
-                {
-                    return _options.FontFamily;
-                }
-            }
-        }
-
-        public int FontSize
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontSize;
-                }
-                else
-                {
-                    return _options.FontSize;
-                }
-            }
-        }
-
-        public FontWeight FontWeight
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontWeight;
-                }
-                else
-                {
-                    return _options.FontWeight;
-                }
-            }
-        }
-
-        public FontStyle FontStyle
-        {
-            get
-            {
-                if (IsFirstComment)
-                {
-                    return _options.FirstCommentFontStyle;
-                }
-                else
-                {
-                    return _options.FontStyle;
-                }
-            }
-        }
-
-        public bool IsNgUser => User != null ? User.IsNgUser : false;
-        public bool IsSiteNgUser => false;//TODO:IUserにIsSiteNgUserを追加する
-        public bool IsFirstComment { get; }
-        public bool Is184 { get; }
-        public IUser User { get; }
-        public ICommentProvider CommentProvider { get; }
-        public bool IsVisible
-        {
-            get
-            {
-                if (IsNgUser || IsSiteNgUser) return false;
-
-                //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
-                //→Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
-                return true;
-            }
-        }
-        public bool IsInitialComment { get; set; }
-        public bool IsNameWrapping => _options.IsUserNameWrapping;
-        public Guid SiteContextGuid { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="options"></param>
-        /// <param name="siteOptions"></param>
-        /// <param name="user">null可</param>
-        /// <param name="cp"></param>
-        /// <param name="isFirstComment"></param>
-        public MessageMetadata(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
-        {
-            _message = message;
-            _options = options;
-            _siteOptions = siteOptions;
-            IsFirstComment = isFirstComment;
-            User = user;
-            CommentProvider = cp;
-
-            //TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
-
-            options.PropertyChanged += Options_PropertyChanged;
-            siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
-            if (user != null)
-            {
-                user.PropertyChanged += User_PropertyChanged;
-            }
-        }
-
-        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(User.IsNgUser):
-                    //case nameof(User.IsSiteNgUser):
-                    RaisePropertyChanged(nameof(IsVisible));
-                    break;
-                case nameof(User.BackColorArgb):
-                    RaisePropertyChanged(nameof(BackColor));
-                    break;
-                case nameof(User.ForeColorArgb):
-                    RaisePropertyChanged(nameof(ForeColor));
-                    break;
-            }
-        }
-
-        private void SiteOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(_siteOptions.ItemBackColor):
-                    if (_message is IWhowatchItem)
-                    {
-                        RaisePropertyChanged(nameof(BackColor));
-                    }
-                    break;
-                case nameof(_siteOptions.ItemForeColor):
-                    if (_message is IWhowatchItem)
-                    {
-                        RaisePropertyChanged(nameof(ForeColor));
-                    }
-                    break;
-            }
-        }
-
-        private void Options_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(_options.BackColor):
-                    RaisePropertyChanged(nameof(BackColor));
-                    break;
-                case nameof(_options.ForeColor):
-                    RaisePropertyChanged(nameof(ForeColor));
-                    break;
-                case nameof(_options.FontFamily):
-                    RaisePropertyChanged(nameof(FontFamily));
-                    break;
-                case nameof(_options.FontStyle):
-                    RaisePropertyChanged(nameof(FontStyle));
-                    break;
-                case nameof(_options.FontWeight):
-                    RaisePropertyChanged(nameof(FontWeight));
-                    break;
-                case nameof(_options.FontSize):
-                    RaisePropertyChanged(nameof(FontSize));
-                    break;
-                case nameof(_options.FirstCommentFontFamily):
-                    RaisePropertyChanged(nameof(FontFamily));
-                    break;
-                case nameof(_options.FirstCommentFontStyle):
-                    RaisePropertyChanged(nameof(FontStyle));
-                    break;
-                case nameof(_options.FirstCommentFontWeight):
-                    RaisePropertyChanged(nameof(FontWeight));
-                    break;
-                case nameof(_options.FirstCommentFontSize):
-                    RaisePropertyChanged(nameof(FontSize));
-                    break;
-                case nameof(_options.IsUserNameWrapping):
-                    RaisePropertyChanged(nameof(IsNameWrapping));
-                    break;
-            }
-        }
-        #region INotifyPropertyChanged
-        [NonSerialized]
-        private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
-        /// <summary>
-        /// 
-        /// </summary>
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
-        {
-            add { _propertyChanged += value; }
-            remove { _propertyChanged -= value; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="propertyName"></param>
-        protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
-        {
-            _propertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
-        }
-        #endregion
-
-    }
-    internal class WhowatchMessageMethods : IMessageMethods
-    {
-        public Task AfterCommentAdded()
-        {
-            return Task.CompletedTask;
-        }
-    }
     internal class WhowatchCommentProvider : ICommentProvider
     {
         #region ICommentProvider
@@ -324,7 +36,7 @@ namespace WhowatchSitePlugin
         private readonly IDataServer _server;
         private readonly ICommentOptions _options;
         private readonly IWhowatchSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
         private readonly ILogger _logger;
 
         public bool IsConnected => CanConnect;
@@ -391,6 +103,7 @@ namespace WhowatchSitePlugin
         public string LoggedInUsername => _me?.Name;
         long _live_id;
         long _lastUpdatedAt;
+        DateTime? _startedAt;
         CookieContainer _cc;
         const string PUBLISHING = "PUBLISHING";
         protected virtual void BeforeConnect()
@@ -399,18 +112,26 @@ namespace WhowatchSitePlugin
             CanDisconnect = true;
             _cts = new CancellationTokenSource();
             _first.Reset();
-            SendMessage(new WhowatchConnected(""), null);
+            SendConnectedMessage();
+            _startedAt = null;
+            _elapsedTimer.Enabled = true;
         }
+        System.Timers.Timer _elapsedTimer = new System.Timers.Timer();
         private void AfterDisconnected()
         {
             CanConnect = true;
             CanDisconnect = false;
             _me = null;
-            SendMessage(new WhowatchDisconnected(""), null);
+            SendDisconnectedMessage();
+            _elapsedTimer.Enabled = false;
         }
-        private void SendMessage(IWhowatchMessage message,IUser user, bool isFirstComment = false)
+        private void SendConnectedMessage()
         {
-            MessageReceived?.Invoke(this, new WhowatchMessageContext(message, new MessageMetadata(message, _options, _siteOptions,user,this, isFirstComment), new WhowatchMessageMethods()));
+
+        }
+        private void SendDisconnectedMessage()
+        {
+
         }
         FirstCommentDetector _first = new FirstCommentDetector();
         public virtual async Task ConnectAsync(string input, IBrowserProfile browserProfile)
@@ -421,6 +142,7 @@ namespace WhowatchSitePlugin
             //websocketでコメントを取り始める
 
             BeforeConnect();
+            LiveData initialLiveData = null;
             try
             {
                 _cc = CreateCookieContainer(browserProfile);
@@ -452,80 +174,149 @@ namespace WhowatchSitePlugin
                     }
                 }
                 System.Diagnostics.Debug.Assert(live_id != -1);
+                _live_id = live_id;
 
                 var lastUpdatedAt = 0;
-                var liveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);
-                if (liveData.Live.LiveStatus != PUBLISHING)
+                initialLiveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);
+                if (initialLiveData.Live.LiveStatus != PUBLISHING)
                 {
-                    SendSystemInfo("LiveStatus: " + liveData.Live.LiveStatus, InfoType.Debug);
+                    SendSystemInfo("LiveStatus: " + initialLiveData.Live.LiveStatus, InfoType.Debug);
                     SendSystemInfo("配信が終了しました", InfoType.Notice);
                     AfterDisconnected();
                     return;
                 }
-                foreach (var initialComment in Enumerable.Reverse(liveData.Comments))
+                RaiseMetadataUpdated(initialLiveData);
+                _startedAt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(initialLiveData.Live.StartedAt);
+                foreach (var initialComment in Enumerable.Reverse(initialLiveData.Comments))
                 {
                     Debug.WriteLine(initialComment.Message);
-                    var user = GetUser(initialComment.User.Id.ToString());
-                    var message = new WhowatchComment("")
-                    {
-                        AccountName = initialComment.User.AccountName,
-                        CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(initialComment.Message) },
-                        Id = initialComment.Id.ToString(),
-                        NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(initialComment.User.Name) },
-                        PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(initialComment.PostedAt / 1000).ToString("HH:mm:ss"),
-                        UserIcon = new Common.MessageImage
-                        {
-                            Url = initialComment.User.IconUrl,
-                            Alt = "",
-                            Height = 40,//_optionsにcolumnの幅を動的に入れて、ここで反映させたい。propertyChangedはどうやって発生させるか
-                            Width = 40,
-                        },
-                        UserId = initialComment.User.Id.ToString(),
-                        UserPath = initialComment.User.UserPath,
-                    };
-                    var isFirstComment = _first.IsFirstComment(user.UserId);
-                    var messageMetadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-                    {
-                        IsInitialComment = true,
-                        SiteContextGuid = SiteContextGuid,
-                    };
-                    var methods = new WhowatchMessageMethods();
-                    MessageReceived?.Invoke(this, new WhowatchMessageContext(message, messageMetadata, methods));
-                }
 
-                var internalCommentProvider = new InternalCommentProvider();
-                _internalCommentProvider = internalCommentProvider;
-                internalCommentProvider.MessageReceived += InternalCommentProvider_MessageReceived;
-                //var d = internal
-
-                var retryCount = 0;
-Retry:
-                var commentProviderTask = internalCommentProvider.ReceiveAsync(live_id, liveData.Jwt);
-                try
-                {
-                    await commentProviderTask;
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    if(retryCount < 3)
+                    var message = MessageParser.ParseMessage(initialComment, "");
+                    var context = CreateMessageContext(message);
+                    if (context != null)
                     {
-                        retryCount++;
-                        goto Retry;
+                        MessageReceived?.Invoke(this, context);
                     }
                 }
             }
             catch (OperationCanceledException)//TaskCancelledもここに来る
             {
-
+                AfterDisconnected();
+                return;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
+                SendSystemInfo(ex.Message, InfoType.Error);
+                AfterDisconnected();
+                return;
             }
-            //TODO:Disconnectedメッセージ
+
+            var internalCommentProvider = new InternalCommentProvider();
+            _internalCommentProvider = internalCommentProvider;
+            internalCommentProvider.MessageReceived += InternalCommentProvider_MessageReceived;
+            //var d = internal
+
+            var retryCount = 0;
+        Retry:
+            var commentProviderTask = internalCommentProvider.ReceiveAsync(_live_id, initialLiveData.Jwt);
+
+
+            var metadataProvider = new MetadataProvider(_server, _siteOptions);
+            metadataProvider.MetadataUpdated += MetadataProvider_MetadataUpdated;
+            var metaProviderTask = metadataProvider.ReceiveAsync(_live_id, initialLiveData.UpdatedAt, _cc);
+
+            var tasks = new List<Task>();
+            tasks.Add(commentProviderTask);
+            tasks.Add(metaProviderTask);
+
+            while (tasks.Count > 0)
+            {
+                var t = await Task.WhenAny(tasks);
+                if (t == commentProviderTask)
+                {
+                    metadataProvider.Disconnect();
+                    try
+                    {
+                        await metaProviderTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaProviderTask);
+                    try
+                    {
+                        await commentProviderTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(commentProviderTask);
+                }
+                else if (t == metaProviderTask)
+                {
+                    try
+                    {
+                        await metaProviderTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaProviderTask);
+                }
+            }
             AfterDisconnected();
         }
+        private void RaiseMetadataUpdated(LiveData liveData)
+        {
+            MetadataUpdated?.Invoke(this, new Metadata
+            {
+                Title = liveData.Live.Title,
+                CurrentViewers = liveData.Live.ViewCount.ToString(),
+                TotalViewers = liveData.Live.TotalViewCount.ToString(),
+            });
+        }
+        private void MetadataProvider_MetadataUpdated(object sender, LiveData e)
+        {
+            RaiseMetadataUpdated(e);
+        }
+
+        private WhowatchMessageContext CreateMessageContext(IWhowatchMessage message)
+        {
+            IMessageMetadata metadata = null;
+            if (message is IWhowatchComment comment)
+            {
+                var user = GetUser(comment.UserId);
+                user.Name = comment.NameItems;
+                var isFirstComment = _first.IsFirstComment(user.UserId);
+                metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
+                {
+                    IsInitialComment = true,
+                    SiteContextGuid = SiteContextGuid,
+                };
+            }
+            else if (message is IWhowatchItem item)
+            {
+                var user = GetUser(item.UserId.ToString());
+                user.Name = item.NameItems;
+                metadata = new ItemMessageMetadata(item, _options, _siteOptions, user, this)
+                {
+                    IsInitialComment = true,
+                    SiteContextGuid = SiteContextGuid,
+                };
+            }
+            WhowatchMessageContext context = null;
+            if (metadata != null)
+            {
+                var methods = new WhowatchMessageMethods();
+                context = new WhowatchMessageContext(message, metadata, methods);
+            }
+            return context;
+        }
+
         InternalCommentProvider _internalCommentProvider;
         /// <summary>
         /// 
@@ -568,30 +359,10 @@ Retry:
             var whowatchMessage = e;
             try
             {
-                IMessageContext commentContext;
-                if (whowatchMessage is IWhowatchComment comment)
+                var context = CreateMessageContext(whowatchMessage);
+                if (context != null)
                 {
-                    var user = GetUser(comment.UserId.ToString());
-                    var isFirstComment = _first.IsFirstComment(user.UserId);
-                    var messageText = Common.MessagePartsTools.ToText(comment.CommentItems);
-                    SetNickname(messageText, user);
-                    commentContext = CreateCommentContext(whowatchMessage, _options, _siteOptions, user, isFirstComment);
-                }
-                else if(whowatchMessage is IWhowatchItem item)
-                {
-                    var user = GetUser(item.UserId.ToString());
-                    var isFirstComment = _first.IsFirstComment(user.UserId);
-                    var messageText = Common.MessagePartsTools.ToText(item.CommentItems);
-                    SetNickname(messageText, user);
-                    commentContext = CreateCommentContext(whowatchMessage, _options, _siteOptions, user, isFirstComment);
-                }
-                else
-                {
-                    commentContext = null;
-                }
-                if (commentContext != null)
-                {
-                    MessageReceived?.Invoke(this, commentContext);
+                    MessageReceived?.Invoke(this, context);
                 }
             }
             catch (Exception ex)
@@ -599,17 +370,6 @@ Retry:
                 Debug.WriteLine(whowatchMessage.Raw);
                 _logger.LogException(ex);
             }
-        }
-
-        private IMessageContext CreateCommentContext(IWhowatchMessage message, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUser user, bool isFirstComment)
-        {
-            var metadata = new MessageMetadata(message, options, siteOptions, user, this, isFirstComment)
-            {
-                IsInitialComment = false,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new WhowatchMessageMethods();
-            return new WhowatchMessageContext(message, metadata, methods);
         }
         /// <summary>
         /// 文字列から@ニックネームを抽出する
@@ -651,7 +411,7 @@ Retry:
 
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.Whowatch, userId);
         }
 
         public async Task PostCommentAsync(string text)
@@ -661,15 +421,32 @@ Retry:
         public Guid SiteContextGuid { get; set; }
 
         #endregion //ICommentProvider
-        public WhowatchCommentProvider(IDataServer server, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUserStore userStore, ILogger logger)
+        public WhowatchCommentProvider(IDataServer server, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUserStoreManager userStoreManager, ILogger logger)
         {
             _server = server;
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             _logger = logger;
             CanConnect = true;
             CanDisconnect = false;
+            _elapsedTimer.Interval = 500;
+            _elapsedTimer.Elapsed += ElapsedTimer_Elapsed;
+        }
+        protected virtual DateTime GetCurrentDateTime()
+        {
+            return DateTime.Now;
+        }
+        private void ElapsedTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (_startedAt.HasValue)
+            {
+                var elapsed = (GetCurrentDateTime().ToUniversalTime() - _startedAt.Value);
+                MetadataUpdated?.Invoke(this, new Metadata
+                {
+                    Elapsed = Tools.ElapsedToString(elapsed),
+                });
+            }
         }
     }
 }

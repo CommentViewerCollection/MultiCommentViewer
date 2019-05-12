@@ -61,6 +61,9 @@
     <Compile Include="CommentViewModelTests.cs" />
     <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="SampleData\ChannelProduct.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="SampleData\Streams.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -86,6 +89,10 @@
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
+      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
+      <Name>SitePluginCommon</Name>
     </ProjectReference>
     <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
       <Project>{aa70074d-1c40-4cc0-9e1c-7acdcbdd7d32}</Project>

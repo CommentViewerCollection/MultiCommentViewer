@@ -1,5 +1,6 @@
 ﻿using Common;
 using SitePlugin;
+using SitePluginCommon;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -7,13 +8,13 @@ using System.Windows.Controls;
 
 namespace MirrativSitePlugin
 {
-    public class MirrativSiteContext : ISiteContext
+    public class MirrativSiteContext : SiteContextBase
     {
-        public Guid Guid => new Guid("6DAFA768-280D-4E70-8494-FD5F31812EF5");
+        public override Guid Guid => new Guid("6DAFA768-280D-4E70-8494-FD5F31812EF5");
 
-        public string DisplayName => "Mirrativ";
-
-        public IOptionsTabPage TabPanel
+        public override string DisplayName => "Mirrativ";
+        protected override SiteType SiteType => SiteType.Mirrativ;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -23,15 +24,15 @@ namespace MirrativSitePlugin
             }
         }
 
-        public ICommentProvider CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
-            return new MirrativCommentProvider(_server, _logger, _options, _siteOptions, _userStore)
+            return new MirrativCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
         }
         private MirrativSiteOptions _siteOptions;
-        public void LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new MirrativSiteOptions();
             try
@@ -47,7 +48,7 @@ namespace MirrativSitePlugin
             }
         }
 
-        public void SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -60,40 +61,23 @@ namespace MirrativSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
-        public void Init()
-        {
-            _userStore.Init();
-        }
-        public void Save()
-        {
-            _userStore.Save();
-        }
-        public bool IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             return Tools.IsValidLiveId(input) || Tools.IsValidUserId(input);
         }
-        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             return null;
-        }
-        public IUser GetUser(string userId)
-        {
-            return _userStore.GetUser(userId);
-        }
-        protected virtual IUserStore CreateUserStore()
-        {
-            return new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);
         }
         private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly IUserStore _userStore;
-        public MirrativSiteContext(ICommentOptions options, IDataServer server, ILogger logger)
+        public MirrativSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _server = server;
             _logger = logger;
-            _userStore = CreateUserStore();
         }
     }
 }

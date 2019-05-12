@@ -323,25 +323,25 @@ namespace LineLiveSitePlugin
         {
             var ids = e;
             if (ids == null) return;
-            SetNgUser(_userStore, _oldBlackListUserIds, ids);
+            SetNgUser(_oldBlackListUserIds, ids);
             _oldBlackListUserIds = ids;
         }
         /// <summary>
         /// 前回取得したブラックリストユーザID
         /// </summary>
         long[] _oldBlackListUserIds;
-        protected virtual void SetNgUser(IUserStore userStore, long[] old, long[] @new)
+        protected virtual void SetNgUser(long[] old, long[] @new)
         {
             var (nochange, added, removed) = Tools.Split(old, @new);
             foreach (var id in removed)
             {
-                var user = userStore.GetUser(id.ToString());
+                var user = GetUser(id.ToString());
                 //TODO:コメビュだけNGにしたい場合に対応できない。手動でNGに入れていたとしても解除されてしまう。
                 user.IsNgUser = false;
             }
             foreach (var id in added)
             {
-                var user = userStore.GetUser(id.ToString());
+                var user = GetUser(id.ToString());
                 user.IsNgUser = true;
             }
         }
@@ -383,7 +383,7 @@ namespace LineLiveSitePlugin
             LineLiveMessageContext messageContext;
             if (message is ParseMessage.IMessageData comment)
             {
-                var user = _userStore.GetUser(sender.Id.ToString());
+                var user = GetUser(sender.Id.ToString());
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 var m = new LineLiveComment(raw)
                 {
@@ -404,7 +404,7 @@ namespace LineLiveSitePlugin
             }
             else if (message is ParseMessage.ILove love)
             {
-                var user = _userStore.GetUser(sender.Id.ToString());
+                var user = GetUser(sender.Id.ToString());
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 var str = sender.DisplayName + "さんがハートを送りました！";
                 var m = new LineLiveItem(raw)
@@ -426,7 +426,7 @@ namespace LineLiveSitePlugin
             }
             else if (message is ParseMessage.IFollowStartData follow)
             {
-                var user = _userStore.GetUser(sender.Id.ToString());
+                var user = GetUser(sender.Id.ToString());
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 var msg = sender.DisplayName + "さんがフォローしました！";
                 var m = new LineLiveItem(raw)
@@ -448,7 +448,7 @@ namespace LineLiveSitePlugin
             }
             else if (message is ParseMessage.IGiftMessage gift)
             {
-                var user = _userStore.GetUser(sender.Id.ToString());
+                var user = GetUser(sender.Id.ToString());
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 if (_loveIconUrlDict.ContainsKey(gift.ItemId))
                 {
@@ -565,7 +565,7 @@ namespace LineLiveSitePlugin
 
         public IUser GetUser(string userId)
         {
-            return _userStore.GetUser(userId);
+            return _userStoreManager.GetUser(SiteType.LineLive, userId);
         }
 
         public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
@@ -586,15 +586,15 @@ namespace LineLiveSitePlugin
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;
         private readonly LineLiveSiteOptions _siteOptions;
-        private readonly IUserStore _userStore;
+        private readonly IUserStoreManager _userStoreManager;
 
-        public LineLiveCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStore userStore)
+        public LineLiveCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStoreManager userStoreManager)
         {
             _server = server;
             _logger = logger;
             _options = options;
             _siteOptions = siteOptions;
-            _userStore = userStore;
+            _userStoreManager = userStoreManager;
             CanConnect = true;
             CanDisconnect = false;
         }

@@ -71,6 +71,9 @@
     <Compile Include="Message\NicoComment.cs" />
     <Compile Include="Message\NicoConnected.cs" />
     <Compile Include="Message\NicoDisconnected.cs" />
+    <Compile Include="Message\NicoInfo.cs" />
+    <Compile Include="Message\NicoKickCommand.cs" />
+    <Compile Include="Message\NicoMessageBase.cs" />
     <Compile Include="Message\NicoMessageContext.cs" />
     <Compile Include="Message\NicoMessageMetadata.cs" />
     <Compile Include="Message\NicoMessageMethods.cs" />

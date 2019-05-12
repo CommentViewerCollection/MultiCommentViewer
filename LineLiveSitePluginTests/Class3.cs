@@ -11,6 +11,7 @@ using Moq;
 using NUnit.Framework;
 using ryu_s.BrowserCookie;
 using SitePlugin;
+using SitePluginCommon;
 
 namespace LineLiveSitePluginTests
 {
@@ -32,14 +33,14 @@ namespace LineLiveSitePluginTests
     }
     class Class3 : LineLiveCommentProvider
     {
-        public Class3(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStore userStore)
-            : base(server, logger, options, siteOptions, userStore)
+        public Class3(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStoreManager userStoreManager)
+            : base(server, logger, options, siteOptions, userStoreManager)
         {
 
         }
-        public void SetNgUserPub(IUserStore userStore, long[] old, long[] @new)
+        public void SetNgUserPub(long[] old, long[] @new)
         {
-            base.SetNgUser(userStore, old, @new);
+            base.SetNgUser(old, @new);
         }
     }
     [TestFixture]
@@ -55,7 +56,7 @@ namespace LineLiveSitePluginTests
         IUser use4;
         IUser use5;
         IUser use6;
-        IUserStore userStore;
+        IUserStoreManager userStoreManager;
 
         [SetUp]
         public void SetUp()
@@ -73,15 +74,15 @@ namespace LineLiveSitePluginTests
             use4 = new UserTest("4");
             use5 = new UserTest("5");
             use6 = new UserTest("6");
-            var userStoreMock = new Mock<IUserStore>();
-            userStoreMock.Setup(s => s.GetUser("1")).Returns(use1);
-            userStoreMock.Setup(s => s.GetUser("2")).Returns(use2);
-            userStoreMock.Setup(s => s.GetUser("3")).Returns(use3);
-            userStoreMock.Setup(s => s.GetUser("4")).Returns(use4);
-            userStoreMock.Setup(s => s.GetUser("5")).Returns(use5);
-            userStoreMock.Setup(s => s.GetUser("6")).Returns(use6);
+            var userStoreMock = new Mock<IUserStoreManager>();
+            userStoreMock.Setup(s => s.GetUser(SiteType.LineLive, "1")).Returns(use1);
+            userStoreMock.Setup(s => s.GetUser(SiteType.LineLive, "2")).Returns(use2);
+            userStoreMock.Setup(s => s.GetUser(SiteType.LineLive, "3")).Returns(use3);
+            userStoreMock.Setup(s => s.GetUser(SiteType.LineLive, "4")).Returns(use4);
+            userStoreMock.Setup(s => s.GetUser(SiteType.LineLive, "5")).Returns(use5);
+            userStoreMock.Setup(s => s.GetUser(SiteType.LineLive, "6")).Returns(use6);
 
-            userStore = userStoreMock.Object;
+            userStoreManager = userStoreMock.Object;
         }
         [Test]
         public void Test()
@@ -93,8 +94,8 @@ namespace LineLiveSitePluginTests
             use5.IsNgUser = false;
             use6.IsNgUser = false;
 
-            var cp = new Class3(server, logger, options, siteOptions, userStore);
-            cp.SetNgUserPub(userStore, new long[] { 1, 2, 3, 4 }, new long[] { 3, 4, 5, 6 });
+            var cp = new Class3(server, logger, options, siteOptions, userStoreManager);
+            cp.SetNgUserPub(new long[] { 1, 2, 3, 4 }, new long[] { 3, 4, 5, 6 });
             Assert.IsFalse(use1.IsNgUser);
             Assert.IsFalse(use2.IsNgUser);
             Assert.IsTrue(use3.IsNgUser);
@@ -109,8 +110,8 @@ namespace LineLiveSitePluginTests
             use2.IsNgUser = false;
             use3.IsNgUser = false;
             use4.IsNgUser = false;
-            var cp = new Class3(server, logger, options, siteOptions, userStore);
-            cp.SetNgUserPub(userStore, null, new long[] { 1, 2, 3, 4 });
+            var cp = new Class3(server, logger, options, siteOptions, userStoreManager);
+            cp.SetNgUserPub(null, new long[] { 1, 2, 3, 4 });
             Assert.IsTrue(use1.IsNgUser);
             Assert.IsTrue(use2.IsNgUser);
             Assert.IsTrue(use3.IsNgUser);
@@ -123,8 +124,8 @@ namespace LineLiveSitePluginTests
             use2.IsNgUser = true;
             use3.IsNgUser = true;
             use4.IsNgUser = true;
-            var cp = new Class3(server, logger, options, siteOptions, userStore);
-            cp.SetNgUserPub(userStore, new long[] { 1, 2, 3, 4 }, null);
+            var cp = new Class3(server, logger, options, siteOptions, userStoreManager);
+            cp.SetNgUserPub(new long[] { 1, 2, 3, 4 }, null);
             Assert.IsFalse(use1.IsNgUser);
             Assert.IsFalse(use2.IsNgUser);
             Assert.IsFalse(use3.IsNgUser);
@@ -139,8 +140,8 @@ namespace LineLiveSitePluginTests
             use4.IsNgUser = true;
             use5.IsNgUser = true;
             use6.IsNgUser = true;
-            var cp = new Class3(server, logger, options, siteOptions, userStore);
-            cp.SetNgUserPub(userStore,null, null);
+            var cp = new Class3(server, logger, options, siteOptions, userStoreManager);
+            cp.SetNgUserPub(null, null);
             Assert.IsTrue(use1.IsNgUser);
             Assert.IsTrue(use2.IsNgUser);
             Assert.IsTrue(use3.IsNgUser);

@@ -331,16 +331,26 @@ namespace BouyomiPlugin
                 //起動していなかったら起動させて、準備ができ次第それ以降のコメントを読んで貰う
 
                 //とりあえず何も確認せずにコメントを送信する。起動していなかったら例外が起きる。
+
+                var dataToRead = "";//棒読みちゃんに読んでもらう文字列
                 if (_options.IsReadHandleName && !string.IsNullOrEmpty(name))
                 {
-                    var nick = name;
+                    dataToRead += name;
 
                     if (_options.IsAppendNickTitle)
-                        nick += _options.NickTitle;
-                    _bouyomiChanClient.AddTalkTask2(nick);
+                    {
+                        dataToRead += _options.NickTitle;
+                    }
                 }
                 if (_options.IsReadComment && !string.IsNullOrEmpty(comment))
-                    _bouyomiChanClient.AddTalkTask2(comment);
+                {
+                    if (!string.IsNullOrEmpty(dataToRead))//空欄で無い場合、つまり名前も読み上げる場合は名前とコメントの間にスペースを入れる。こうすると名前とコメントの間で一呼吸入れてくれる
+                    {
+                        dataToRead += " ";
+                    }
+                    dataToRead += comment;
+                }
+                _bouyomiChanClient.AddTalkTask2(dataToRead);
             }
             catch (System.Runtime.Remoting.RemotingException)
             {

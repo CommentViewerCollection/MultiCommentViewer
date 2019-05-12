@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -71,11 +72,10 @@ namespace OpenrecYoyakuPlugin
 
             var item = RegisteredUserDataGrid.ItemContainerGenerator.Items[_prevRowIndex];
 
-            if (RegisteredUserDataGrid.ItemsSource is IList collection)
+            if(RegisteredUserDataGrid.ItemsSource is ObservableCollection<User> collection)
             {
                 //ItemsSourceのコレクションの要素を移動させる。
-                collection.RemoveAt(_prevRowIndex);
-                collection.Insert(index, item);
+                collection.Move(_prevRowIndex, index);
             }
         }
 

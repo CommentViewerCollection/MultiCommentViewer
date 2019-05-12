@@ -354,7 +354,15 @@ namespace OpenrecYoyakuPlugin
             IsListSelected = true;
             model.PropertyChanged += Model_PropertyChanged;
             _model.UsersListChanged += Model_UsersListChanged;
+            RegisteredUsers.CollectionChanged += RegisteredUsers_CollectionChanged;
         }
+
+        private void RegisteredUsers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            Debug.WriteLine($"Action={e.Action} index {e.OldStartingIndex}->{e.NewStartingIndex}");
+            _model.ChangeRegisteredUsers(e.Action, e.OldStartingIndex, e.NewStartingIndex);
+        }
+
         private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
@@ -364,13 +372,13 @@ namespace OpenrecYoyakuPlugin
                     break;
             }
         }
-
+        private static readonly object _lockObj = new object();
         private void Model_UsersListChanged(object sender, EventArgs e)
         {
             //変更があるたびに全削除して入れ直す
             _dispatcher.Invoke(() =>
             {
-                lock (_model.RegisteredUsers)
+                lock (_lockObj)
                 {
                     RegisteredUsers.Clear();
                     foreach (var user in _model.RegisteredUsers)

@@ -604,8 +604,7 @@ namespace MultiCommentViewer
             IMcvCommentViewModel mcvCvm = null;
             if(messageContext.Message is IInfoMessage infoMessage)
             {
-                //TODO:
-                Debug.WriteLine(infoMessage.CommentItems.ToText());
+                mcvCvm = new InfoCommentViewModel(infoMessage, messageContext.Metadata, messageContext.Methods, connectionName, _options);
             }
             else if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
             {

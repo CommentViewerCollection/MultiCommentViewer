@@ -19,7 +19,7 @@ namespace MultiCommentViewer
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : CustomWindow.CustomChrome
     {
         public MainWindow()
         {
@@ -85,7 +85,8 @@ namespace MultiCommentViewer
                 {
                     var uvms = message.UserViewModels;
                     var mainVm = message.MainVm;
-                    var vm = new ViewModels.UserListViewModel(uvms, mainVm);
+                    var options = message.Options;
+                    var vm = new ViewModels.UserListViewModel(uvms, mainVm, options);
                     var userView = new View.UserListView
                     {
                         DataContext = vm,

@@ -5,10 +5,12 @@ using System.Windows.Input;
 using System.Collections.ObjectModel;
 using Plugin;
 using System.Diagnostics;
+using System.Windows.Media;
+using System.ComponentModel;
 
 namespace MultiCommentViewer
 {
-    public class PluginMenuItemViewModel:ViewModelBase
+    public class PluginMenuItemViewModel:ViewModelBase, INotifyPropertyChanged
     {
         public string Name { get; set; }
         public ObservableCollection<PluginMenuItemViewModel> Children { get; } = new ObservableCollection<PluginMenuItemViewModel>();
@@ -25,12 +27,38 @@ namespace MultiCommentViewer
                 return _show;
             }
         }
+        public Brush MenuBackground
+        {
+            get => new SolidColorBrush(_options.MenuBackColor);
+        }
+        public Brush MenuForeground
+        {
+            get => new SolidColorBrush(_options.MenuForeColor);
+        }
         private readonly IPlugin _plugin;
-        public PluginMenuItemViewModel(IPlugin plugin)// PluginContext plugin, string name, ICommand command)
+        private readonly IOptions _options;
+
+        public PluginMenuItemViewModel(IPlugin plugin, IOptions options)// PluginContext plugin, string name, ICommand command)
         {
             Name = plugin.Name;
             _plugin = plugin;
+            _options = options;
+            options.PropertyChanged += Options_PropertyChanged;
         }
+
+        private void Options_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(_options.MenuBackColor):
+                    RaisePropertyChanged(nameof(MenuBackground));
+                    break;
+                case nameof(_options.MenuForeColor):
+                    RaisePropertyChanged(nameof(MenuForeground));
+                    break;
+            }
+        }
+
         private void Test(IPlugin plugin)
         {
             try

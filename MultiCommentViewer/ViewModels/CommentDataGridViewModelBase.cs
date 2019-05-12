@@ -179,7 +179,7 @@ namespace MultiCommentViewer
             set { _options.SelectedRowForeColor = value; }
         }
         public IMcvCommentViewModel SelectedComment { get; set; }
-        private readonly IOptions _options;
+        protected readonly IOptions _options;
         private ICollectionView _comments;
 
         public CommentDataGridViewModelBase(IOptions options)

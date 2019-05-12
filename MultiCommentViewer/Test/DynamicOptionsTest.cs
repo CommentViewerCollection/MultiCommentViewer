@@ -65,6 +65,8 @@ namespace MultiCommentViewer.Test
         public double InfoWidth { get => GetValue(); set => SetValue(value); }
         public bool IsShowInfo { get => GetValue(); set => SetValue(value); }
         public int InfoDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public bool IsShowVerticalGridLine { get => GetValue(); set => SetValue(value); }
+        public bool IsShowHorizontalGridLine { get => GetValue(); set => SetValue(value); }
 
         public double MetadataViewConnectionNameColumnWidth { get => GetValue(); set => SetValue(value); }
         public double MetadataViewTitleColumnWidth { get => GetValue(); set => SetValue(value); }
@@ -73,6 +75,57 @@ namespace MultiCommentViewer.Test
         public double MetadataViewTotalViewersColumnWidth { get => GetValue(); set => SetValue(value); }
         public double MetadataViewActiveColumnWidth { get => GetValue(); set => SetValue(value); }
         public double MetadataViewOthersColumnWidth { get => GetValue(); set => SetValue(value); }
+
+        public Color TitleForeColor { get => GetValue(); set => SetValue(value); }
+        public Color TitleBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ViewBackColor { get => GetValue(); set => SetValue(value); }
+        public Color WindowBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemButtonBackColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemButtonForeColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemButtonBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemButtonMouseOverBackColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemButtonMouseOverForeColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemButtonMouseOverBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuBackColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuForeColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuItemCheckMarkColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuItemMouseOverBackColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuItemMouseOverForeColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuItemMouseOverBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuItemMouseOverCheckMarkColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuSeparatorBackColor { get => GetValue(); set => SetValue(value); }
+        public Color MenuPopupBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color ButtonBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ButtonForeColor { get => GetValue(); set => SetValue(value); }
+        public Color ButtonBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color CommentListBackColor { get => GetValue(); set => SetValue(value); }
+        public Color CommentListHeaderBackColor { get => GetValue(); set => SetValue(value); }
+        public Color CommentListHeaderForeColor { get => GetValue(); set => SetValue(value); }
+        public Color CommentListHeaderBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color CommentListBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color CommentListSeparatorColor { get => GetValue(); set => SetValue(value); }
+        public Color ConnectionListBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ConnectionListHeaderBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ConnectionListHeaderForeColor { get => GetValue(); set => SetValue(value); }
+        public Color ConnectionListRowBackColor { get => GetValue(); set => SetValue(value); }
+
+        public Color ScrollBarBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarThumbBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarThumbMouseOverBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarThumbPressedBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonForeColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonDisabledBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonDisabledForeColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonDisabledBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonMouseOverBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonMouseOverForeColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonMouseOverBorderColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonPressedBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonPressedForeColor { get => GetValue(); set => SetValue(value); }
+        public Color ScrollBarButtonPressedBorderColor { get => GetValue(); set => SetValue(value); }
 
         public bool IsAutoCheckIfUpdateExists { get => GetValue(); set => SetValue(value); }
         public bool IsAddingNewCommentTop { get => GetValue(); set => SetValue(value); }
@@ -127,6 +180,8 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(MainViewTop), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(ConnectionViewHeight), new Item { DefaultValue = 150, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewHeight), new Item { DefaultValue = 100, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowVerticalGridLine), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowHorizontalGridLine), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             Dict.Add(nameof(HorizontalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(VerticalGridLineColor), new Item { DefaultValue = ColorFromArgb("#FFDCDCDC"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
@@ -168,6 +223,65 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(MetadataViewTotalViewersColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewActiveColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewOthersColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+
+            Dict.Add(nameof(TitleForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(TitleBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ViewBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(WindowBorderColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemButtonBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemButtonForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemButtonBorderColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemButtonMouseOverBackColor), new Item { DefaultValue = ColorFromArgb("#FFE5E5E5"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemButtonMouseOverForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemButtonMouseOverBorderColor), new Item { DefaultValue = ColorFromArgb("#FFE5E5E5"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuBackColor), new Item { DefaultValue = ColorFromArgb("#FFF0F0F0"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuItemCheckMarkColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuItemMouseOverBackColor), new Item { DefaultValue = ColorFromArgb("#FFF0F0F0"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuItemMouseOverForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuItemMouseOverBorderColor), new Item { DefaultValue = ColorFromArgb("#FF0000FF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuItemMouseOverCheckMarkColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuSeparatorBackColor), new Item { DefaultValue = ColorFromArgb("#FFD7D7D7"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MenuPopupBorderColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+
+            Dict.Add(nameof(ButtonBackColor), new Item { DefaultValue = ColorFromArgb("#FFDDDDDD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ButtonForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ButtonBorderColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+            Dict.Add(nameof(CommentListBackColor), new Item { DefaultValue = ColorFromArgb("#FFF0F0F0"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(CommentListBorderColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(CommentListHeaderBackColor), new Item { DefaultValue = ColorFromArgb("#FFF4F5F7"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(CommentListHeaderForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(CommentListHeaderBorderColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+
+            Dict.Add(nameof(CommentListSeparatorColor), new Item { DefaultValue = ColorFromArgb("#FFE4E5E7"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ConnectionListBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ConnectionListHeaderBackColor), new Item { DefaultValue = ColorFromArgb("#FFF8F9FA"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ConnectionListHeaderForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ConnectionListRowBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+            Dict.Add(nameof(ScrollBarBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarBorderColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarThumbBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarThumbMouseOverBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarThumbPressedBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+            Dict.Add(nameof(ScrollBarButtonBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonForeColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonBorderColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonDisabledBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonDisabledForeColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonDisabledBorderColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonMouseOverBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonMouseOverForeColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonMouseOverBorderColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonPressedBackColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonPressedForeColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ScrollBarButtonPressedBorderColor), new Item { DefaultValue = ColorFromArgb("#FFCDCDCD"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+
+
 
             Dict.Add(nameof(IsAutoCheckIfUpdateExists), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 

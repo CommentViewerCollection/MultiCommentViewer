@@ -336,6 +336,10 @@ namespace MultiCommentViewer
 
         public ConnectionContext GetCurrent()
         {
+            if(SelectedSite == null)
+            {
+                return null;
+            }
             var context = new ConnectionContext { ConnectionName = this.ConnectionName, SiteGuid = SelectedSite.Guid, CommentProvider = _commentProvider };
             return context;
         }

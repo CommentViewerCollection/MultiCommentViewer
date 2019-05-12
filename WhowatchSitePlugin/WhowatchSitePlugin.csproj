@@ -59,10 +59,12 @@
   <ItemGroup>
     <Compile Include="Api.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="Message\CommentMessageMetadata.cs" />
     <Compile Include="CommentPostPanel.xaml.cs">
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="CommentPostPanelViewModel.cs" />
+    <Compile Include="CurrentUserInfo.cs" />
     <Compile Include="DataServer.cs" />
     <Compile Include="DynamicJson.cs" />
     <Compile Include="Exceptions.cs" />
@@ -70,15 +72,21 @@
     <Compile Include="IMe.cs" />
     <Compile Include="InternalCommentProvider.cs" />
     <Compile Include="InvalidInputException.cs" />
+    <Compile Include="Message\ItemMessageMetadata.cs" />
     <Compile Include="IWebsocket.cs" />
     <Compile Include="IWhowatchSiteOptions.cs" />
     <Compile Include="Low\LiveData\Class1.cs" />
     <Compile Include="Low\Me\Class1.cs" />
     <Compile Include="Low\PlayItems\Class1.cs" />
     <Compile Include="Low\Profile\Profile.cs" />
-    <Compile Include="Message.cs" />
+    <Compile Include="Message\MessageMetadataBase.cs" />
     <Compile Include="MessageParser.cs" />
     <Compile Include="MessageParsing\Shout.cs" />
+    <Compile Include="Message\WhowatchComment.cs" />
+    <Compile Include="Message\WhowatchConnected.cs" />
+    <Compile Include="Message\WhowatchDisconnected.cs" />
+    <Compile Include="Message\WhowatchItem.cs" />
+    <Compile Include="Message\WhowatchNgComment.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="PlayItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -90,6 +98,8 @@
     <Compile Include="Tools.cs" />
     <Compile Include="WhowatchCommentProvider.cs" />
     <Compile Include="WhowatchInternalMessageType.cs" />
+    <Compile Include="Message\WhowatchMessageContext.cs" />
+    <Compile Include="Message\WhowatchMessageMethods.cs" />
     <Compile Include="WhowatchOptionsTabPage.cs" />
     <Compile Include="WhowatchSiteContext.cs" />
     <Compile Include="WhowatchSiteOptions.cs" />
@@ -146,5 +156,6 @@
       <Version>0.15.2</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

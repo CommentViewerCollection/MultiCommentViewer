@@ -103,6 +103,7 @@ namespace WhowatchSitePlugin
         public string LoggedInUsername => _me?.Name;
         long _live_id;
         long _lastUpdatedAt;
+        DateTime? _startedAt;
         CookieContainer _cc;
         const string PUBLISHING = "PUBLISHING";
         protected virtual void BeforeConnect()
@@ -112,13 +113,17 @@ namespace WhowatchSitePlugin
             _cts = new CancellationTokenSource();
             _first.Reset();
             SendConnectedMessage();
+            _startedAt = null;
+            _elapsedTimer.Enabled = true;
         }
+        System.Timers.Timer _elapsedTimer = new System.Timers.Timer();
         private void AfterDisconnected()
         {
             CanConnect = true;
             CanDisconnect = false;
             _me = null;
             SendDisconnectedMessage();
+            _elapsedTimer.Enabled = false;
         }
         private void SendConnectedMessage()
         {
@@ -137,6 +142,7 @@ namespace WhowatchSitePlugin
             //websocketでコメントを取り始める
 
             BeforeConnect();
+            LiveData initialLiveData = null;
             try
             {
                 _cc = CreateCookieContainer(browserProfile);
@@ -171,58 +177,111 @@ namespace WhowatchSitePlugin
                 _live_id = live_id;
 
                 var lastUpdatedAt = 0;
-                var liveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);
-                if (liveData.Live.LiveStatus != PUBLISHING)
+                initialLiveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);
+                if (initialLiveData.Live.LiveStatus != PUBLISHING)
                 {
-                    SendSystemInfo("LiveStatus: " + liveData.Live.LiveStatus, InfoType.Debug);
+                    SendSystemInfo("LiveStatus: " + initialLiveData.Live.LiveStatus, InfoType.Debug);
                     SendSystemInfo("配信が終了しました", InfoType.Notice);
                     AfterDisconnected();
                     return;
                 }
-                foreach (var initialComment in Enumerable.Reverse(liveData.Comments))
+                RaiseMetadataUpdated(initialLiveData);
+                _startedAt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(initialLiveData.Live.StartedAt);
+                foreach (var initialComment in Enumerable.Reverse(initialLiveData.Comments))
                 {
                     Debug.WriteLine(initialComment.Message);
 
                     var message = MessageParser.ParseMessage(initialComment, "");
                     var context = CreateMessageContext(message);
-                    if(context != null)
+                    if (context != null)
                     {
                         MessageReceived?.Invoke(this, context);
-                    }
-                }
-
-                var internalCommentProvider = new InternalCommentProvider();
-                _internalCommentProvider = internalCommentProvider;
-                internalCommentProvider.MessageReceived += InternalCommentProvider_MessageReceived;
-                //var d = internal
-
-                var retryCount = 0;
-Retry:
-                var commentProviderTask = internalCommentProvider.ReceiveAsync(live_id, liveData.Jwt);
-                try
-                {
-                    await commentProviderTask;
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                    if(retryCount < 3)
-                    {
-                        retryCount++;
-                        goto Retry;
                     }
                 }
             }
             catch (OperationCanceledException)//TaskCancelledもここに来る
             {
-
+                AfterDisconnected();
+                return;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
+                SendSystemInfo(ex.Message, InfoType.Error);
+                AfterDisconnected();
+                return;
             }
-            //TODO:Disconnectedメッセージ
+
+            var internalCommentProvider = new InternalCommentProvider();
+            _internalCommentProvider = internalCommentProvider;
+            internalCommentProvider.MessageReceived += InternalCommentProvider_MessageReceived;
+            //var d = internal
+
+            var retryCount = 0;
+        Retry:
+            var commentProviderTask = internalCommentProvider.ReceiveAsync(_live_id, initialLiveData.Jwt);
+
+
+            var metadataProvider = new MetadataProvider(_server, _siteOptions);
+            metadataProvider.MetadataUpdated += MetadataProvider_MetadataUpdated;
+            var metaProviderTask = metadataProvider.ReceiveAsync(_live_id, initialLiveData.UpdatedAt, _cc);
+
+            var tasks = new List<Task>();
+            tasks.Add(commentProviderTask);
+            tasks.Add(metaProviderTask);
+
+            while (tasks.Count > 0)
+            {
+                var t = await Task.WhenAny(tasks);
+                if (t == commentProviderTask)
+                {
+                    metadataProvider.Disconnect();
+                    try
+                    {
+                        await metaProviderTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaProviderTask);
+                    try
+                    {
+                        await commentProviderTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(commentProviderTask);
+                }
+                else if (t == metaProviderTask)
+                {
+                    try
+                    {
+                        await metaProviderTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaProviderTask);
+                }
+            }
             AfterDisconnected();
+        }
+        private void RaiseMetadataUpdated(LiveData liveData)
+        {
+            MetadataUpdated?.Invoke(this, new Metadata
+            {
+                Title = liveData.Live.Title,
+                CurrentViewers = liveData.Live.ViewCount.ToString(),
+                TotalViewers = liveData.Live.TotalViewCount.ToString(),
+            });
+        }
+        private void MetadataProvider_MetadataUpdated(object sender, LiveData e)
+        {
+            RaiseMetadataUpdated(e);
         }
 
         private WhowatchMessageContext CreateMessageContext(IWhowatchMessage message)
@@ -371,6 +430,23 @@ Retry:
             _logger = logger;
             CanConnect = true;
             CanDisconnect = false;
+            _elapsedTimer.Interval = 500;
+            _elapsedTimer.Elapsed += ElapsedTimer_Elapsed;
+        }
+        protected virtual DateTime GetCurrentDateTime()
+        {
+            return DateTime.Now;
+        }
+        private void ElapsedTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (_startedAt.HasValue)
+            {
+                var elapsed = (GetCurrentDateTime().ToUniversalTime() - _startedAt.Value);
+                MetadataUpdated?.Invoke(this, new Metadata
+                {
+                    Elapsed = Tools.ElapsedToString(elapsed),
+                });
+            }
         }
     }
 }

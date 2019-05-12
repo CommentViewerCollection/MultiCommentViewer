@@ -9,6 +9,19 @@ namespace WhowatchSitePlugin
 {
     internal static class Tools
     {
+        public static string ElapsedToString(TimeSpan elapsed)
+        {
+            string ret;
+            if (elapsed.Hours == 0)
+            {
+                ret = elapsed.ToString("mm\\:ss");
+            }
+            else
+            {
+                ret = elapsed.ToString("h\\:mm\\:ss");
+            }
+            return ret;
+        }
         /// <summary>
         /// 
         /// </summary>

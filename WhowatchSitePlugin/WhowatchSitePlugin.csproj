@@ -88,6 +88,7 @@
     <Compile Include="Message\WhowatchItem.cs" />
     <Compile Include="Message\WhowatchNgComment.cs" />
     <Compile Include="Metadata.cs" />
+    <Compile Include="MetadataProvider.cs" />
     <Compile Include="PlayItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Websocket.cs" />

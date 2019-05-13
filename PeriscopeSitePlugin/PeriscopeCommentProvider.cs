@@ -78,6 +78,11 @@ namespace PeriscopeSitePlugin
             }
             else if(e is Kind2Kind1 kind2kind1)
             {
+                if (!_siteOptions.IsShowJoinMessage)
+                {
+                    //取得する必要がないため無視する
+                    return;
+                }
                 var message = new PeriscopeJoin(kind2kind1);
                 var userId = message.UserId;
                 var isFirstComment = false;
@@ -88,6 +93,11 @@ namespace PeriscopeSitePlugin
             }
             else if(e is Kind2Kind2 kind2Kind2)
             {
+                if (!_siteOptions.IsShowLeaveMessage)
+                {
+                    //取得する必要がないため無視する
+                    return;
+                }
                 var message = new PeriscopeLeave(kind2Kind2);
                 var userId = message.UserId;
                 var isFirstComment = false;

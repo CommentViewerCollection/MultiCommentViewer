@@ -22,7 +22,7 @@ namespace PeriscopeSitePlugin.Low.kind1payloadtype1
         public Sender Sender { get; set; }
 
         [JsonProperty("timestamp")]
-        public double Timestamp { get; set; }
+        public long Timestamp { get; set; }
 
         [JsonProperty("uuid")]
         public string Uuid { get; set; }

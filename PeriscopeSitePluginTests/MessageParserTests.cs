@@ -49,6 +49,25 @@ namespace PeriscopeSitePluginTests
             Assert.AreEqual(2, kind1type1.V);
         }
         [Test]
+        public void ParseKind1Type1_newtype_Test()
+        {
+            var data = "{\"kind\":1,\"payload\":\"{\\\"room\\\":\\\"1MYGNdDegvvxw\\\",\\\"body\\\":\\\"{\\\\\\\"body\\\\\\\":\\\\\\\"lol\\\\\\\",\\\\\\\"eggmojiOverride\\\\\\\":false,\\\\\\\"ntpForBroadcasterFrame\\\\\\\":16178099029025284000,\\\\\\\"ntpForLiveFrame\\\\\\\":16178098946832495000,\\\\\\\"participant_index\\\\\\\":1886231058,\\\\\\\"room\\\\\\\":\\\\\\\"1MYGNdDegvvxw\\\\\\\",\\\\\\\"sender\\\\\\\":{\\\\\\\"display_name\\\\\\\":\\\\\\\"MLCGoddessOfWar\\\\\\\",\\\\\\\"participant_index\\\\\\\":1886231058,\\\\\\\"profile_image_url\\\\\\\":\\\\\\\"https://prod-profile.pscp.tv/1eRKxBgxlwEwA/1a63d43c45a6b058e1337a9637970f05-128.jpg\\\\\\\",\\\\\\\"twitter_id\\\\\\\":\\\\\\\"41855602\\\\\\\",\\\\\\\"user_id\\\\\\\":\\\\\\\"1eRKxBgxlwEwA\\\\\\\",\\\\\\\"username\\\\\\\":\\\\\\\"MLCGoddessOfWar\\\\\\\"},\\\\\\\"type\\\\\\\":1,\\\\\\\"uuid\\\\\\\":\\\\\\\"92fc7d61-d96e-4433-9748-56edf7101268\\\\\\\",\\\\\\\"v\\\\\\\":2}\\\",\\\"lang\\\":\\\"en\\\",\\\"sender\\\":{\\\"user_id\\\":\\\"1eRKxBgxlwEwA\\\",\\\"username\\\":\\\"MLCGoddessOfWar\\\",\\\"display_name\\\":\\\"MLCGoddessOfWar\\\",\\\"profile_image_url\\\":\\\"https://prod-profile.pscp.tv/1eRKxBgxlwEwA/1a63d43c45a6b058e1337a9637970f05-128.jpg\\\",\\\"participant_index\\\":1886231058,\\\"locale\\\":\\\"en\\\",\\\"twitter_id\\\":\\\"41855602\\\",\\\"lang\\\":[\\\"en\\\"],\\\"superfan\\\":true},\\\"timestamp\\\":1557768410080950363,\\\"uuid\\\":\\\"92fc7d61-d96e-4433-9748-56edf7101268\\\"}\",\"signature\":\"37aMXoQrlXF8qISmJftijpC9i2VUX2LGGZp2Pyw\"}";
+            var message = MessageParser.ParseWebsocketMessage(data);
+            var kind1type1 = MessageParser.Parse(message) as Kind1Type1;
+            Assert.AreEqual("lol", kind1type1.Body);
+            Assert.AreEqual("MLCGoddessOfWar", kind1type1.DisplayName);
+            Assert.AreEqual(InternalMessageType.Chat_CHAT, kind1type1.MessageType);
+            Assert.AreEqual(1886231058, kind1type1.ParticipantIndex);
+            Assert.AreEqual("https://prod-profile.pscp.tv/1eRKxBgxlwEwA/1a63d43c45a6b058e1337a9637970f05-128.jpg", kind1type1.ProfileImageUrl);
+            Assert.AreEqual("1eRKxBgxlwEwA", kind1type1.RemoteId);
+            Assert.AreEqual(1557768410080950363, kind1type1.Timestamp);
+            Assert.AreEqual(1, kind1type1.Type);
+            Assert.AreEqual("1eRKxBgxlwEwA", kind1type1.UserId);
+            Assert.AreEqual("MLCGoddessOfWar", kind1type1.Username);
+            Assert.AreEqual("92fc7d61-d96e-4433-9748-56edf7101268", kind1type1.Uuid);
+            Assert.AreEqual(2, kind1type1.V);
+        }
+        [Test]
         public void ParseKind2Kind1Test()
         {
             var data = "{\"kind\":2,\"payload\":\"{\\\"kind\\\":1,\\\"sender\\\":{\\\"user_id\\\":\\\"1YLKJyaYPPQNn\\\",\\\"username\\\":\\\"some30\\\",\\\"display_name\\\":\\\"katsumi someya\\\",\\\"profile_image_url\\\":\\\"https://pbs.twimg.com/profile_images/696179553488613376/lCRMIYAP_reasonably_small.jpg\\\",\\\"participant_index\\\":1386286478,\\\"locale\\\":\\\"ja\\\",\\\"twitter_id\\\":\\\"158356237\\\",\\\"lang\\\":[\\\"ja\\\"]},\\\"body\\\":\\\"{\\\\\\\"room\\\\\\\":\\\\\\\"1ypKdvajqdaJW\\\\\\\",\\\\\\\"following\\\\\\\":false,\\\\\\\"unlimited\\\\\\\":false}\\\"}\",\"signature\":\"3kqHuspmysojsTQ_TccqI5zGPgCINR_Y_bad3fA\"}";

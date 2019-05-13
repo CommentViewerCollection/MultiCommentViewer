@@ -30,5 +30,20 @@
             V = obj.V;
             Raw = raw;
         }
+        public Kind1Type1(Low.kind1payloadtype1.RootObject payload, Low.kind1type1_newtype.RootObject obj, Low.kind1payloadtype1.Sender sender, string raw)
+        {
+            Body = obj.Body;
+            DisplayName = sender.DisplayName;
+            ParticipantIndex = obj.ParticipantIndex;
+            ProfileImageUrl = sender.ProfileImageUrl;
+            RemoteId = sender.UserId;
+            Timestamp = payload.Timestamp;
+            Type = obj.Type;
+            Username = sender.Username;
+            UserId = sender.UserId;
+            Uuid = payload.Uuid;
+            V = obj.V;
+            Raw = raw;
+        }
     }
 }

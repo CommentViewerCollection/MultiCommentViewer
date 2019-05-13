@@ -72,6 +72,7 @@
     <Compile Include="Low\kind1payloadtype1\Class1.cs" />
     <Compile Include="Low\kind1payloadtype2\Class1.cs" />
     <Compile Include="Low\kind1type1\Class1.cs" />
+    <Compile Include="Low\kind1type1_newtype\Class1.cs" />
     <Compile Include="Low\kind1type2\Class1.cs" />
     <Compile Include="Low\kind2kind1\Class1.cs" />
     <Compile Include="Low\kind2kind2\Class1.cs" />

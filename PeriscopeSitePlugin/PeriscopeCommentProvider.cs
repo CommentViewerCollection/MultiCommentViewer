@@ -29,9 +29,8 @@ namespace PeriscopeSitePlugin
         {
             return broadcastInfo.State == "RUNNING";
         }
-        public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
-            BeforeConnect();
             var autoReconnectMode = false;
             var cc = GetCookieContainer(browserProfile, "pscp.tv");
             var broadcastId = Tools.ExtractLiveId(input);
@@ -50,11 +49,26 @@ namespace PeriscopeSitePlugin
             var hostname = Tools.ExtractHostnameFromEndpoint(acp.Endpoint);
             if (hostname.Contains("replay"))
             {
-
+                SendSystemInfo("", InfoType.Error);
+                return;
             }
             await _messageProvider.ReceiveAsync(hostname, acp.AccessToken, broadcastId);
-
-            AfterDisconnected();
+        }
+        public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        {
+            BeforeConnect();
+            try
+            {
+                await ConnectInternalAsync(input, browserProfile);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogException(ex, "", $"input={input}");
+            }
+            finally
+            {
+                AfterDisconnected();
+            }
         }
         FirstCommentDetector _first = new FirstCommentDetector();
         private MessageMetadata CreateMessageMetadata(IPeriscopeMessage message, IUser user, bool isFirstComment)

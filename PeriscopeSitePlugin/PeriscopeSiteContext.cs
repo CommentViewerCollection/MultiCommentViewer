@@ -8,13 +8,13 @@ using System.Windows.Controls;
 
 namespace PeriscopeSitePlugin
 {
-    public class PeriscopeSiteContext : ISiteContext
+    public class PeriscopeSiteContext : SiteContextBase
     {
-        public Guid Guid => new Guid("FB468FFA-D0E5-4423-968C-5B9E1D258730");
+        public override Guid Guid => new Guid("FB468FFA-D0E5-4423-968C-5B9E1D258730");
 
-        public string DisplayName => "Periscope";
-
-        public IOptionsTabPage TabPanel
+        public override string DisplayName => "Periscope";
+        protected override SiteType SiteType => SiteType.Periscope;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -24,19 +24,15 @@ namespace PeriscopeSitePlugin
             }
         }
 
-        public virtual ICommentProvider CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
             return new PeriscopeCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
-        }
         private PeriscopeSiteOptions _siteOptions;
-        public void LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new PeriscopeSiteOptions();
             try
@@ -52,7 +48,7 @@ namespace PeriscopeSitePlugin
             }
         }
 
-        public void SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -65,35 +61,25 @@ namespace PeriscopeSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
-        public void Init()
-        {
-            _userStoreManager.Init(SiteType.Periscope);
-        }
-        public void Save()
-        {
-            _userStoreManager.Save(SiteType.Periscope);
-        }
-        public bool IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             var liveId = Tools.ExtractLiveId(input);
             return !string.IsNullOrEmpty(liveId);
         }
 
-        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             return null;
         }
         private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly IUserStoreManager _userStoreManager;
         public PeriscopeSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _server = server;
             _logger = logger;
-            _userStoreManager = userStoreManager;
-            _userStoreManager.SetUserStore(SiteType.Periscope, new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger));
         }
     }
 }

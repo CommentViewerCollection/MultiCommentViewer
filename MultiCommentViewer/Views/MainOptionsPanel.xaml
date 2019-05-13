@@ -100,6 +100,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -132,6 +133,9 @@
                             <Label Grid.Row="8" Grid.Column="0" Content="Mirrativ" />
                             <xctk:ColorPicker Grid.Row="8" Grid.Column="1" SelectedColor="{Binding MirrativBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
                             <xctk:ColorPicker Grid.Row="8" Grid.Column="2" SelectedColor="{Binding MirrativForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="9" Grid.Column="0" Content="Periscope" />
+                            <xctk:ColorPicker Grid.Row="9" Grid.Column="1" SelectedColor="{Binding PeriscopeBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="9" Grid.Column="2" SelectedColor="{Binding PeriscopeForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
                         </Grid>
                     </ScrollViewer>
                     <RadioButton IsEnabled="{Binding IsChecked, ElementName=SiteConnectionColorCheck}" IsChecked="{Binding SiteConnectionColorType, Converter={StaticResource SiteConnectionColorTypeConverter}, Mode=TwoWay, ConverterParameter=Connection}" GroupName="ColorType" Content="接続毎" Grid.Row="3" VerticalAlignment="Center" />

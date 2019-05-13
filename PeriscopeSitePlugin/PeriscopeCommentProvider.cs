@@ -118,6 +118,7 @@ namespace PeriscopeSitePlugin
         {
             _isUserDisconnected = true;
             _cts?.Cancel();
+            _messageProvider?.Disconnect();
         }
 
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)

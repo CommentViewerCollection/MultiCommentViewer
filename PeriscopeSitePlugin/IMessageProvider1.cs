@@ -10,5 +10,6 @@ namespace PeriscopeSitePlugin
     {
         event EventHandler<IInternalMessage> Received;
         Task ReceiveAsync(string hostname, string accessToken, string roomId);
+        void Disconnect();
     }
 }

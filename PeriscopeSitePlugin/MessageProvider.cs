@@ -30,6 +30,10 @@ namespace PeriscopeSitePlugin
             websocket.Opened += Websocket_Opened;
             websocket.Received += Websocket_Received;
         }
+        public void Disconnect()
+        {
+            _ws.Disconnect();
+        }
 
         private void Websocket_Received(object sender, string e)
         {

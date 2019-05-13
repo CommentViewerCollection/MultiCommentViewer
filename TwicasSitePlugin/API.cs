@@ -100,7 +100,15 @@ namespace TwicasSitePlugin
                 }
                 else
                 {
-                    throw new InvalidBroadcasterIdException(broadcaster);
+                    var match0_2 = Regex.Match(str, "var movie_cnum = (?<cnum>[\\d]+);");
+                    if (match0_2.Success)
+                    {
+                        context.MovieCnum = int.Parse(match0_2.Groups["cnum"].Value);
+                    }
+                    else
+                    {
+                        throw new InvalidBroadcasterIdException(broadcaster);
+                    }
                 }
             }
             {
@@ -111,7 +119,15 @@ namespace TwicasSitePlugin
                 }
                 else
                 {
-                    throw new InvalidBroadcasterIdException(broadcaster);
+                    var match1_2 = Regex.Match(str, "var movieid = \"(\\d+)\"");
+                    if (match1_2.Success)
+                    {
+                        context.MovieId = long.Parse(match1_2.Groups[1].Value);
+                    }
+                    else
+                    {
+                        throw new InvalidBroadcasterIdException(broadcaster);
+                    }
                 }
             }
             {
@@ -123,7 +139,16 @@ namespace TwicasSitePlugin
                 }
                 else
                 {
-                    context.AudienceId = null;
+                    var match_2 = Regex.Match(str, "a href=\"/([^\"/]+)/notification");
+                    if (match_2.Success)
+                    {
+                        var audienceId = match_2.Groups[1].Value;
+                        context.AudienceId = audienceId;
+                    }
+                    else
+                    {
+                        context.AudienceId = null;
+                    }
                 }
             }
             return (context, str);

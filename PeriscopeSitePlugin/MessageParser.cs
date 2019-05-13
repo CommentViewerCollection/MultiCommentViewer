@@ -49,10 +49,22 @@ namespace PeriscopeSitePlugin
                         {
                             case 1://CHAT
                                 {
-                                    //{"body":"Yeah","displayName":"PanAm Style","ntpForBroadcasterFrame":16166206334443356160,"ntpForLiveFrame":16166206323526947868,"participant_index":1043054637,"remoteID":"1WgKgapJvplEv","timestamp":1554999426288,"type":1,"username":"PanamStyle","uuid":"BDDDFC39-FDE0-42D7-8977-D3945E8EC783","v":2}
                                     var kind1payloadtype1Low = Tools.Deserialize<Low.kind1payloadtype1.RootObject>(payload);
-                                    var kind1type1Low = Tools.Deserialize<Low.kind1type1.RootObject>(kind1payloadtype1Low.Body);
-                                    var kind1type1 = new Kind1Type1(kind1type1Low, kind1payloadtype1Low.Sender, raw);
+                                    Kind1Type1 kind1type1;
+                                    if (!kind1payloadtype1Low.Body.Contains("eggmojiOverride"))
+                                    {
+                                        //payload
+                                        //
+                                        //body
+                                        //{"body":"Yeah","displayName":"PanAm Style","ntpForBroadcasterFrame":16166206334443356160,"ntpForLiveFrame":16166206323526947868,"participant_index":1043054637,"remoteID":"1WgKgapJvplEv","timestamp":1554999426288,"type":1,"username":"PanamStyle","uuid":"BDDDFC39-FDE0-42D7-8977-D3945E8EC783","v":2}
+                                        var kind1type1Low = Tools.Deserialize<Low.kind1type1.RootObject>(kind1payloadtype1Low.Body);
+                                        kind1type1 = new Kind1Type1(kind1type1Low, kind1payloadtype1Low.Sender, raw);
+                                    }
+                                    else
+                                    {
+                                        var kind1type1_newtypeLow = Tools.Deserialize<Low.kind1type1_newtype.RootObject>(kind1payloadtype1Low.Body);
+                                        kind1type1 = new Kind1Type1(kind1payloadtype1Low, kind1type1_newtypeLow, kind1payloadtype1Low.Sender, raw);
+                                    }
                                     message = kind1type1;
                                 }
                                 break;

@@ -602,7 +602,7 @@ namespace MultiCommentViewer
             //}
 
             IMcvCommentViewModel mcvCvm = null;
-            if(messageContext.Message is IInfoMessage infoMessage)
+            if(messageContext.Message is IInfoMessage infoMessage && _options.ShowingInfoLevel >= infoMessage.Type)
             {
                 mcvCvm = new InfoCommentViewModel(infoMessage, messageContext.Metadata, messageContext.Methods, connectionName, _options);
             }

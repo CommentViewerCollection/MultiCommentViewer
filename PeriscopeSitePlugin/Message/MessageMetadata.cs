@@ -123,14 +123,6 @@ namespace PeriscopeSitePlugin
             get
             {
                 if (IsNgUser || IsSiteNgUser) return false;
-                if(_message is IPeriscopeJoin)
-                {
-                    return _siteOptions.IsShowJoinMessage;
-                }
-                else if(_message is IPeriscopeLeave)
-                {
-                    return _siteOptions.IsShowLeaveMessage;
-                }
 
                 //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
                 //→Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。

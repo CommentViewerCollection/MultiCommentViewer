@@ -309,6 +309,16 @@ namespace MultiCommentViewer
             set { ChangedOptions.MirrativForeColor = value; }
         }
 
+        public Color PeriscopeBackColor
+        {
+            get { return ChangedOptions.PeriscopeBackColor; }
+            set { ChangedOptions.PeriscopeBackColor = value; }
+        }
+        public Color PeriscopeForeColor
+        {
+            get { return ChangedOptions.PeriscopeForeColor; }
+            set { ChangedOptions.PeriscopeForeColor = value; }
+        }
 
         public IOptions OriginOptions { get; private set; }
         public IOptions ChangedOptions { get; private set; }

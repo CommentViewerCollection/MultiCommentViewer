@@ -24,5 +24,21 @@ namespace PeriscopeSitePluginTests
             Assert.IsNull(comment.UserIcon);
             Assert.AreEqual("1WgKgapJvplEv", comment.UserId);
         }
+        [Test]
+        public void PeriscopeComment_kind1type1_newtypeTest()
+        {
+            var data = "{\"kind\":1,\"payload\":\"{\\\"room\\\":\\\"1MYGNdDegvvxw\\\",\\\"body\\\":\\\"{\\\\\\\"body\\\\\\\":\\\\\\\"lol\\\\\\\",\\\\\\\"eggmojiOverride\\\\\\\":false,\\\\\\\"ntpForBroadcasterFrame\\\\\\\":16178099029025284000,\\\\\\\"ntpForLiveFrame\\\\\\\":16178098946832495000,\\\\\\\"participant_index\\\\\\\":1886231058,\\\\\\\"room\\\\\\\":\\\\\\\"1MYGNdDegvvxw\\\\\\\",\\\\\\\"sender\\\\\\\":{\\\\\\\"display_name\\\\\\\":\\\\\\\"MLCGoddessOfWar\\\\\\\",\\\\\\\"participant_index\\\\\\\":1886231058,\\\\\\\"profile_image_url\\\\\\\":\\\\\\\"https://prod-profile.pscp.tv/1eRKxBgxlwEwA/1a63d43c45a6b058e1337a9637970f05-128.jpg\\\\\\\",\\\\\\\"twitter_id\\\\\\\":\\\\\\\"41855602\\\\\\\",\\\\\\\"user_id\\\\\\\":\\\\\\\"1eRKxBgxlwEwA\\\\\\\",\\\\\\\"username\\\\\\\":\\\\\\\"MLCGoddessOfWar\\\\\\\"},\\\\\\\"type\\\\\\\":1,\\\\\\\"uuid\\\\\\\":\\\\\\\"92fc7d61-d96e-4433-9748-56edf7101268\\\\\\\",\\\\\\\"v\\\\\\\":2}\\\",\\\"lang\\\":\\\"en\\\",\\\"sender\\\":{\\\"user_id\\\":\\\"1eRKxBgxlwEwA\\\",\\\"username\\\":\\\"MLCGoddessOfWar\\\",\\\"display_name\\\":\\\"MLCGoddessOfWar\\\",\\\"profile_image_url\\\":\\\"https://prod-profile.pscp.tv/1eRKxBgxlwEwA/1a63d43c45a6b058e1337a9637970f05-128.jpg\\\",\\\"participant_index\\\":1886231058,\\\"locale\\\":\\\"en\\\",\\\"twitter_id\\\":\\\"41855602\\\",\\\"lang\\\":[\\\"en\\\"],\\\"superfan\\\":true},\\\"timestamp\\\":1557768410080950363,\\\"uuid\\\":\\\"92fc7d61-d96e-4433-9748-56edf7101268\\\"}\",\"signature\":\"37aMXoQrlXF8qISmJftijpC9i2VUX2LGGZp2Pyw\"}";
+            var message = MessageParser.ParseWebsocketMessage(data);
+            var kind1type1 = MessageParser.Parse(message) as Kind1Type1;
+            var comment = new PeriscopeComment(kind1type1);
+            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("lol") }, comment.CommentItems);
+            Assert.AreEqual("92fc7d61-d96e-4433-9748-56edf7101268", comment.Id);
+            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("MLCGoddessOfWar") }, comment.NameItems);
+            Assert.AreEqual(PeriscopeMessageType.Comment, comment.PeriscopeMessageType);
+            Assert.AreEqual("02:26:50", comment.PostTime);
+            Assert.AreEqual(SiteType.Periscope, comment.SiteType);
+            Assert.IsNull(comment.UserIcon);
+            Assert.AreEqual("1eRKxBgxlwEwA", comment.UserId);
+        }
     }
 }

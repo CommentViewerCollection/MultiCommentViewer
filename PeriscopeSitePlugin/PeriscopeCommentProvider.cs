@@ -29,9 +29,8 @@ namespace PeriscopeSitePlugin
         {
             return broadcastInfo.State == "RUNNING";
         }
-        public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
-            BeforeConnect();
             var autoReconnectMode = false;
             var cc = GetCookieContainer(browserProfile, "pscp.tv");
             var broadcastId = Tools.ExtractLiveId(input);
@@ -50,11 +49,26 @@ namespace PeriscopeSitePlugin
             var hostname = Tools.ExtractHostnameFromEndpoint(acp.Endpoint);
             if (hostname.Contains("replay"))
             {
-
+                SendSystemInfo("", InfoType.Error);
+                return;
             }
             await _messageProvider.ReceiveAsync(hostname, acp.AccessToken, broadcastId);
-
-            AfterDisconnected();
+        }
+        public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        {
+            BeforeConnect();
+            try
+            {
+                await ConnectInternalAsync(input, browserProfile);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogException(ex, "", $"input={input}");
+            }
+            finally
+            {
+                AfterDisconnected();
+            }
         }
         FirstCommentDetector _first = new FirstCommentDetector();
         private MessageMetadata CreateMessageMetadata(IPeriscopeMessage message, IUser user, bool isFirstComment)
@@ -72,26 +86,39 @@ namespace PeriscopeSitePlugin
                 var userId = message.UserId;
                 var isFirstComment = _first.IsFirstComment(userId);
                 var user = GetUser(userId);
+                user.Name = message.NameItems;
                 var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
             }
             else if(e is Kind2Kind1 kind2kind1)
             {
+                if (!_siteOptions.IsShowJoinMessage)
+                {
+                    //取得する必要がないため無視する
+                    return;
+                }
                 var message = new PeriscopeJoin(kind2kind1);
                 var userId = message.UserId;
                 var isFirstComment = false;
                 var user = GetUser(userId);
+                user.Name = message.NameItems;
                 var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
             }
             else if(e is Kind2Kind2 kind2Kind2)
             {
+                if (!_siteOptions.IsShowLeaveMessage)
+                {
+                    //取得する必要がないため無視する
+                    return;
+                }
                 var message = new PeriscopeLeave(kind2Kind2);
                 var userId = message.UserId;
                 var isFirstComment = false;
                 var user = GetUser(userId);
+                user.Name = message.NameItems;
                 var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
@@ -108,6 +135,7 @@ namespace PeriscopeSitePlugin
         {
             _isUserDisconnected = true;
             _cts?.Cancel();
+            _messageProvider?.Disconnect();
         }
 
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)

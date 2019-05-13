@@ -156,13 +156,7 @@ namespace MultiCommentViewer
 
         public string Info { get; private set; }
 
-        public bool IsVisible
-        {
-            get
-            {
-                return _options.ShowingInfoLevel >= _message.Type;
-            }
-        }
+        public bool IsVisible => true;
 
         public string PostTime { get; private set; }
 

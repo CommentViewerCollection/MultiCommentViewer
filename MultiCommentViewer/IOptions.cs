@@ -47,6 +47,15 @@ namespace MultiCommentViewer
         double InfoWidth { get; set; }
         bool IsShowInfo { get; set; }
         int InfoDisplayIndex { get; set; }
+
+        double MetadataViewConnectionNameColumnWidth { get; set; }
+        double MetadataViewTitleColumnWidth { get; set; }
+        double MetadataViewElapsedColumnWidth { get; set; }
+        double MetadataViewCurrentViewersColumnWidth { get; set; }
+        double MetadataViewTotalViewersColumnWidth { get; set; }
+        double MetadataViewActiveColumnWidth { get; set; }
+        double MetadataViewOthersColumnWidth { get; set; }
+
         bool IsAutoCheckIfUpdateExists { get; set; }
         bool IsAddingNewCommentTop { get; set; }
 

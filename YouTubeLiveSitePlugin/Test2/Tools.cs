@@ -109,10 +109,7 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public static string ExtractYtcfg(string liveChatHtml)
         {
-            //正規表現だけだとうまくいかないから、まずメインのytcfgのケツ以降を切り捨てる
-            var n = liveChatHtml.IndexOf("});\n");
-            var sub = liveChatHtml.Substring(0, n+5);
-            var match = Regex.Match(sub, "ytcfg\\.set\\(({.+})\\);", RegexOptions.Singleline);
+            var match = Regex.Match(liveChatHtml, "ytcfg\\.set\\(({.+?})\\);\r?\n", RegexOptions.Singleline);
             if (!match.Success)
             {
                 throw new ParseException(liveChatHtml);

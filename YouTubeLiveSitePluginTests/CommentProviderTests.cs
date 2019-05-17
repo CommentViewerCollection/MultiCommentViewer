@@ -103,19 +103,6 @@ namespace YouTubeLiveSitePluginTests
                 _sessionToken = sessionToken;
             }
         }
-        class C: EachConnection
-        {
-            public C(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStoreManager userStore, string clientIdPrefix, string sej, string sessionToken)
-                :base(logger,new CookieContainer(), options,server,siteOptions, new Dictionary<string, int>(), new System.Collections.Generic.SynchronizedCollection<string>(),new Mock<ICommentProvider>().Object,userStore)
-            {
-                PostCommentContext = new PostCommentContext
-                {
-                     ClientIdPrefix = clientIdPrefix,
-                      Sej=sej,
-                       SessionToken=sessionToken,
-                };
-            }
-        }
         [Test]
         public async Task PostTest()
         {
@@ -123,17 +110,42 @@ namespace YouTubeLiveSitePluginTests
             var clientIdPrefix = "a";
             var sej = "b";
             var sessionToken = "c";
-            var options = new Mock<ICommentOptions>();
-            var server = new Server(clientIdPrefix, comment,sej, sessionToken);
+            var cc = new CookieContainer();
+            var optionsMock = new Mock<ICommentOptions>();
+            var options = optionsMock.Object;
+            var server = new Server(clientIdPrefix, comment, sej, sessionToken);
+            var serverMock = new Mock<IYouTubeLibeServer>();
+            //serverMock.Setup(s => s.PostAsync(It.IsAny<string>(), It.IsAny<Dictionary<string,string>>(), It.IsAny<CookieContainer>())).Callback<Task<string>>(a=>PostAsync(a,b,c));
+            //serverMock.Verify(h=>h.PostAsync())
             var siteOptions = new YouTubeLiveSiteOptions();
-            var logger = new Mock<ILogger>();
-            var userStore = new Mock<IUserStoreManager>();
-
-            var cp = new C(options.Object, server, siteOptions, logger.Object, userStore.Object, clientIdPrefix, sej, sessionToken);
-            
+            var loggerMock = new Mock<ILogger>();
+            var logger = loggerMock.Object;
+            var userStoreMock = new Mock<IUserStoreManager>();
+            var userStoreManager = userStoreMock.Object;
+            var userCommentCountDict = new Dictionary<string, int>();
+            var receivedCommentIds = new SynchronizedCollection<string>();
+            var cpMock = CreateCommentProviderMock(options, server, siteOptions, logger, userStoreManager);
+            var cp = cpMock.Object;
+            //var cp = new C(options.Object, server, siteOptions, logger.Object, userStore.Object, clientIdPrefix, sej, sessionToken);
+            var connMock = CreateConnection(logger, cc, options, server, siteOptions, userCommentCountDict, receivedCommentIds, cp, userStoreManager, Guid.NewGuid());
+            connMock.Protected().Setup<PostCommentContext>("PostCommentContext").Returns(new PostCommentContext
+            {
+                ClientIdPrefix = clientIdPrefix,
+                Sej = sej,
+                SessionToken = sessionToken,
+            });
+            var connection = connMock.Object;
             //TODOちゃんとtestという文字列が投稿されるかテストする
-            await cp.PostCommentAsync(comment);
+            await connection.PostCommentAsync(comment);
+
+            connMock.VerifyAll();
         }
+
+        private static Mock<CommentProvider> CreateCommentProviderMock(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
+        {
+            return new Mock<CommentProvider>(options, server, siteOptions, logger, userStoreManager);
+        }
+
         [Test]
         public async Task ConnectedEventTest()
         {

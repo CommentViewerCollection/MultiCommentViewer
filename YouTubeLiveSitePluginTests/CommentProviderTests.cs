@@ -16,12 +16,14 @@ using System.Net.Http;
 using ryu_s.BrowserCookie;
 using YouTubeLiveSitePlugin;
 using SitePluginCommon;
+using System.Diagnostics;
 
 namespace YouTubeLiveSitePluginTests
 {
     [TestFixture]
-    internal class CommentProviderTests
+    public class CommentProviderTests
     {
+
         public class Server : IYouTubeLibeServer
         {
             private readonly string _clientIdPrefix;
@@ -210,6 +212,78 @@ namespace YouTubeLiveSitePluginTests
             };
             await cp.PostCommentAsync("");
             Assert.IsTrue(expectedResult);
+        }
+        private Mock<EachConnection> CreateConnection(ILogger logger, CookieContainer cc, ICommentOptions options, IYouTubeLibeServer server,
+            YouTubeLiveSiteOptions siteOptions, Dictionary<string, int> userCommentCountDict, SynchronizedCollection<string> receivedCommentIds,
+            ICommentProvider cp, IUserStoreManager userStoreManager, Guid siteContextGuid)
+        {
+            var cpMock = new Mock<EachConnection>(logger, cc, options, server, siteOptions, userCommentCountDict, receivedCommentIds, cp, userStoreManager) { CallBase = true };
+            cpMock.Object.SiteContextGuid = siteContextGuid;
+            return cpMock;
+        }
+        [Test]
+        public async Task 再接続時の初期コメントが重複判定されるか()
+        {
+            var optionsMock = new Mock<ICommentOptions>();
+            var options = optionsMock.Object;
+            var serverMock = new Mock<IYouTubeLibeServer>();
+            serverMock.Setup(s => s.GetAsync("https://www.youtube.com/live_chat?v=EiLzFNajLas&is_popout=1", It.Is<CookieContainer>(c => true))).Returns(Task.FromResult(Tools.GetSampleData("LiveChat.txt")));
+            serverMock.Setup(s => s.GetBytesAsync("https://www.youtube.com/live_chat/get_live_chat?continuation=0ofMyAPiARqQAUNpTVNJUW9ZVlVOSGFsWTBZbk5ETkROUGJpMVpkV2xNV21ObVREQjNFZ1V2YkdsMlpScERxcm5CdlFFOUNqdG9kSFJ3Y3pvdkwzZDNkeTU1YjNWMGRXSmxMbU52YlM5c2FYWmxYMk5vWVhRX2RqMUJkVVpQVDFWMFNYbFZXU1pwYzE5d2IzQnZkWFE5TVNBQyiR8P7MuYjcAjAAOABAAUogCAAQABgAIAAqBzY1ZTg4M2Y6AEAASgBQ78C90LmI3AJQoIPEzbmI3AJYgdDVjPqH3AJoBIIBBAgEEACIAQA%253D&pbj=1")).ThrowsAsync(new HttpRequestException());
+            var server = serverMock.Object;
+
+            var siteOptions = new YouTubeLiveSiteOptions();
+            var loggerMock = new Mock<ILogger>();
+            var logger = loggerMock.Object;
+            var userStoreManagerMock = new Mock<IUserStoreManager>();
+            userStoreManagerMock.Setup(u => u.GetUser(SiteType.YouTubeLive, It.IsAny<string>())).Returns(new UserTest("1"));
+            var userStore = userStoreManagerMock.Object;
+            var browserProfileMock = new Mock<IBrowserProfile>();
+            browserProfileMock.Setup(b => b.GetCookieCollection(It.IsAny<string>())).Returns(new List<Cookie>());
+            var browserProfile = browserProfileMock.Object;
+
+            var userCommentCountDict = new Dictionary<string, int>();
+            var receivedCommentIds = new SynchronizedCollection<string>();
+            var cpMock = new Mock<CommentProvider>(options, server, siteOptions, logger, userStore) { CallBase = true };
+            var cp = cpMock.Object;
+            var eachConnectionMock = CreateConnection(logger, new CookieContainer(), options, server, siteOptions, userCommentCountDict, receivedCommentIds, cp, userStore, Guid.NewGuid());
+            eachConnectionMock.Protected().Setup<Task>("CreateMetadataReceivingTask", ItExpr.Ref<IMetadataProvider>.IsAny, ItExpr.IsAny<BrowserType>(), ItExpr.IsAny<string>(), ItExpr.IsAny<string>()).Returns(Task.CompletedTask);
+            cpMock.Protected().Setup<EachConnection>("CreateConnection",
+                ItExpr.IsAny<ILogger>(),
+                ItExpr.IsAny<CookieContainer>(),
+                ItExpr.IsAny<ICommentOptions>(),
+                ItExpr.IsAny<IYouTubeLibeServer>(),
+                ItExpr.IsAny<YouTubeLiveSiteOptions>(),
+                ItExpr.IsAny<Dictionary<string, int>>(),
+                ItExpr.IsAny<SynchronizedCollection<string>>(),
+                ItExpr.IsAny<ICommentProvider>(),
+                ItExpr.IsAny<IUserStoreManager>(),
+                ItExpr.IsAny<Guid>()
+                ).Returns(eachConnectionMock.Object);
+            int i = 0;
+            int j = 0;
+            cp.MessageReceived += (s, e) =>
+            {
+                if(e.Message is YouTubeLiveComment)
+                {
+                    i++;
+                }
+                else if(e.Message is IInfoMessage info && info.Type <= InfoType.Error)
+                {
+                    Debug.WriteLine(info.CommentItems.ToText());
+                    j++;
+                }
+                if(i > 75)
+                {
+                    Assert.Fail();
+                }
+                if(j >= 2)
+                {
+                    cp.Disconnect();
+                }
+            };
+            await cp.ConnectAsync("https://www.youtube.com/watch?v=EiLzFNajLas", browserProfile);
+            Assert.AreEqual(75, i);
+            Assert.AreEqual(2, j);
         }
     }
 }

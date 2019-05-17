@@ -108,7 +108,6 @@ namespace YouTubeLiveSitePlugin.Test2
                     continue;
                 }
                 else
-
                 {
                     _receivedCommentIds.Add(data.Id);
                 }
@@ -221,28 +220,34 @@ namespace YouTubeLiveSitePlugin.Test2
                     _chatProvider = null;
 
                     //chatTaskが終わったらmetaTaskも終了させる
-                    metaProvider.Disconnect();
-                    try
+                    metaProvider?.Disconnect();
+                    if (metaTask != null)
                     {
-                        await metaTask;
+                        try
+                        {
+                            await metaTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex, "metaTaskが終了した原因");
+                        }
+                        tasks.Remove(metaTask);
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex, "metaTaskが終了した原因");
-                    }
-                    tasks.Remove(metaTask);
                     metaProvider = null;
 
                     activeCounter?.Stop();
-                    try
+                    if (activeCounterTask != null)
                     {
-                        await activeCounterTask;
+                        try
+                        {
+                            await activeCounterTask;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogException(ex, "activeCounterTaskが終了した原因");
+                        }
+                        tasks.Remove(activeCounterTask);
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex, "activeCounterTaskが終了した原因");
-                    }
-                    tasks.Remove(activeCounterTask);
                     activeCounter = null;
                 }
             }
@@ -414,7 +419,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var context = new InfoMessageContext(message, metadata, methods);
             MessageReceived?.Invoke(this, context);
         }
-        private Task CreateMetadataReceivingTask(ref IMetadataProvider metaProvider, BrowserType browserType, string vid, string liveChatHtml)
+        protected virtual Task CreateMetadataReceivingTask(ref IMetadataProvider metaProvider, BrowserType browserType, string vid, string liveChatHtml)
         {
             Task metaTask = null;
             string ytCfg = null;

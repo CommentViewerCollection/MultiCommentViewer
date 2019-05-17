@@ -192,7 +192,7 @@ namespace WhowatchSitePlugin
                     Debug.WriteLine(initialComment.Message);
 
                     var message = MessageParser.ParseMessage(initialComment, "");
-                    var context = CreateMessageContext(message);
+                    var context = CreateMessageContext(message, true);
                     if (context != null)
                     {
                         MessageReceived?.Invoke(this, context);
@@ -284,7 +284,7 @@ namespace WhowatchSitePlugin
             RaiseMetadataUpdated(e);
         }
 
-        private WhowatchMessageContext CreateMessageContext(IWhowatchMessage message)
+        private WhowatchMessageContext CreateMessageContext(IWhowatchMessage message, bool isInitialComment)
         {
             IMessageMetadata metadata = null;
             if (message is IWhowatchComment comment)
@@ -294,7 +294,7 @@ namespace WhowatchSitePlugin
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
                 {
-                    IsInitialComment = true,
+                    IsInitialComment = isInitialComment,
                     SiteContextGuid = SiteContextGuid,
                 };
             }
@@ -359,7 +359,7 @@ namespace WhowatchSitePlugin
             var whowatchMessage = e;
             try
             {
-                var context = CreateMessageContext(whowatchMessage);
+                var context = CreateMessageContext(whowatchMessage, false);
                 if (context != null)
                 {
                     MessageReceived?.Invoke(this, context);

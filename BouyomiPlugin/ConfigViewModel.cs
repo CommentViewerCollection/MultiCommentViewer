@@ -241,7 +241,7 @@ namespace BouyomiPlugin
         /// <summary>
         /// Periscopeの入室メッセージを読み上げるか
         /// </summary>
-        public bool IsPeriscopeJoinRoom
+        public bool IsPeriscopeJoin
         {
             get => _options.IsPeriscopeJoin;
             set => _options.IsPeriscopeJoin = value;
@@ -249,7 +249,7 @@ namespace BouyomiPlugin
         /// <summary>
         /// Periscopeのアイテムを読み上げるか
         /// </summary>
-        public bool IsPeriscopeLeaveRoom
+        public bool IsPeriscopeLeave
         {
             get => _options.IsPeriscopeLeave;
             set => _options.IsPeriscopeLeave = value;

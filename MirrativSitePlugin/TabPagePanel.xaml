@@ -14,6 +14,8 @@
         <xctk:ColorPicker x:Name="ClrPcker_Foreground"  SelectedColor="{Binding ItemForeColor}" Margin="97,122,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="10,95,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.109,-0.577"/>
         <xctk:ColorPicker x:Name="ClrPcker_Background"  SelectedColor="{Binding ItemBackColor}" Margin="97,95,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <CheckBox Content="入室メッセージを取得する" IsChecked="{Binding IsShowJoinMessage}" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="退室メッセージを取得する" IsChecked="{Binding IsShowLeaveMessage}" HorizontalAlignment="Left" Margin="10,75,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </UserControl>

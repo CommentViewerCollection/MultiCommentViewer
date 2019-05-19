@@ -309,7 +309,7 @@ namespace MirrativSitePlugin
                 }
                 return new MirrativMessageContext(comment, metadata, methods);
             }
-            else if (message is IMirrativJoinRoom join)
+            else if (message is IMirrativJoinRoom join && _siteOptions.IsShowJoinMessage)
             {
                 var userId = join.UserId;
                 var user = GetUser(userId);

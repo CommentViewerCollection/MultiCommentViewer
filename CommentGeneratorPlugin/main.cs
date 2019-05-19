@@ -280,10 +280,10 @@ namespace CommentViewer.Plugin
                 //Root element is missing.
                 xml = new XElement("log");
             }
-            lock (_commentCollection)
+            lock (_lockObj)
             {
                 var arr = _commentCollection.ToArray();
-                _commentCollection.Clear();
+
                 foreach (var data in arr)
                 {
                     var item = new XElement("comment", data.Comment);
@@ -297,18 +297,21 @@ namespace CommentViewer.Plugin
                     }
                     xml.Add(item);
                 }
-            }
-            try
-            {
-                WriteXml(xml, CommentXmlPath);
-            }
-            catch (IOException ex)
-            {
-                //コメントの流れが早すぎるとused in another processが来てしまう。
-                //この場合、コメントが書き込まれずに消されてしまう。
-                Debug.WriteLine(ex.Message);
+                try
+                {
+                    WriteXml(xml, CommentXmlPath);
+                }
+                catch (IOException ex)
+                {
+                    //コメントの流れが早すぎるとused in another processが来てしまう。
+                    //この場合、コメントが書き込まれずに消されてしまう。
+                    Debug.WriteLine(ex.Message);
+                    return;
+                }
+                _commentCollection.Clear();
             }
         }
+        private static readonly object _lockObj = new object();
         protected virtual DateTime GetCurrentDateTime()
         {
             return DateTime.Now;

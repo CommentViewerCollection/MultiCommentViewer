@@ -230,6 +230,8 @@
         </Grid>
         <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" ResizeDirection="Rows" />
         <Grid Grid.Row="3">
+            <!--Element treeに属さないelementにDataContextを渡すためのdummy element-->
+            <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
             <DataGrid ItemsSource="{Binding MetaCollection, IsAsync=True}" Margin="0" MinHeight="80"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
@@ -243,20 +245,34 @@
                       IsReadOnly="True"
                       >
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}">
+                    <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}"
+                                        Width="{Binding DataContext.MetadataViewConnectionNameColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                        >
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="タイトル" Binding="{Binding Title}">
+                    <DataGridTextColumn Header="タイトル" Binding="{Binding Title}"
+                                        Width="{Binding DataContext.MetadataViewTitleColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                        >
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="経過時間" Binding="{Binding Elapsed}">
+                    <DataGridTextColumn Header="経過時間" Binding="{Binding Elapsed}"
+                                        Width="{Binding DataContext.MetadataViewElapsedColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                        >
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="視聴者数" Binding="{Binding CurrentViewers}">
+                    <DataGridTextColumn Header="視聴者数" Binding="{Binding CurrentViewers}"
+                                        Width="{Binding DataContext.MetadataViewCurrentViewersColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                        >
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="総視聴者数" Binding="{Binding TotalViewers}">
+                    <DataGridTextColumn Header="総視聴者数" Binding="{Binding TotalViewers}"
+                                        Width="{Binding DataContext.MetadataViewTotalViewersColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                        >
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="アクティブ" Binding="{Binding Active}">
+                    <DataGridTextColumn Header="アクティブ" Binding="{Binding Active}"
+                                        Width="{Binding DataContext.MetadataViewActiveColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                        >
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="その他" Binding="{Binding Others}">
+                    <DataGridTextColumn Header="その他" Binding="{Binding Others}"
+                                        Width="{Binding DataContext.MetadataViewOthersColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                                        >
                     </DataGridTextColumn>
                 </DataGrid.Columns>
             </DataGrid>

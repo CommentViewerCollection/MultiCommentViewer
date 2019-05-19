@@ -83,8 +83,13 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             CanConnect = false;
             CanDisconnect = true;
-            _receivedCommentIds = new SynchronizedCollection<string>();
+            _receivedCommentIds = CreateReicedCommentIdsCollection();
+            _disconnectedByUser = false;
             //_userCommentCountDict = new Dictionary<string, int>();
+        }
+        protected virtual SynchronizedCollection<string> CreateReicedCommentIdsCollection()
+        {
+            return new SynchronizedCollection<string>();
         }
         private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
         {
@@ -104,7 +109,7 @@ namespace YouTubeLiveSitePlugin.Test2
             CanConnect = true;
             CanDisconnect = false;
             _connection = null;
-            SendInfo("切断しました", InfoType.Error);
+            SendInfo("切断しました", InfoType.Notice);
         }
 
 
@@ -198,24 +203,26 @@ namespace YouTubeLiveSitePlugin.Test2
             }
 
             _cc = CreateCookieContainer(browserProfile);
-            Dictionary<string, int> userCommentCountDict = new Dictionary<string, int>();
-            _connection = new EachConnection(_logger, _cc, _options, _server, _siteOptions, userCommentCountDict, _receivedCommentIds, this, _userStoreManager)
-            {
-                SiteContextGuid = SiteContextGuid,
-            };
+            var userCommentCountDict = CreateUserCommentCountDict();
+            _connection = CreateConnection(_logger, _cc, _options, _server, _siteOptions, userCommentCountDict, _receivedCommentIds, this, _userStoreManager, SiteContextGuid);
             _connection.Connected += (s, e) =>
             {
                 Connected?.Invoke(this, new ConnectedEventArgs { IsInputStoringNeeded = isInputStoringNeeded });
             };
             _connection.MessageReceived += (s, e) => MessageReceived?.Invoke(s, e);
             _connection.MetadataUpdated += (s, e) => MetadataUpdated?.Invoke(s, e);
-            _connection.LoggedInStateChanged += (s, e) => LoggedInStateChanged(s, e);
+            _connection.LoggedInStateChanged += (s, e) => LoggedInStateChanged?.Invoke(s, e);
             var reloadManager = new ReloadManager()
             {
                 CountLimit = 5,
                 CountCheckTimeRangeMin = 1,
             };
         reload:
+            if (_disconnectedByUser)
+            {
+                AfterConnect();
+                return;
+            }
             if (!reloadManager.CanReload())
             {
                 SendInfo($"{reloadManager.CountCheckTimeRangeMin}分以内に{reloadManager.CountLimit}回再接続を試みました。サーバーに余計な負荷を掛けるのを防ぐため自動再接続を中断します", InfoType.Error);
@@ -252,6 +259,21 @@ namespace YouTubeLiveSitePlugin.Test2
             AfterConnect();
         }
 
+        protected virtual Dictionary<string, int> CreateUserCommentCountDict()
+        {
+            return new Dictionary<string, int>();
+        }
+
+        protected virtual EachConnection CreateConnection(ILogger logger, CookieContainer cc, ICommentOptions options, IYouTubeLibeServer server,
+            YouTubeLiveSiteOptions siteOptions, Dictionary<string, int> userCommentCountDict, SynchronizedCollection<string> receivedCommentIds,
+            ICommentProvider cp, IUserStoreManager userStoreManager, Guid siteContextGuid)
+        {
+            return new EachConnection(logger, cc, options, server, siteOptions, userCommentCountDict, receivedCommentIds, cp, userStoreManager)
+            {
+                 SiteContextGuid=siteContextGuid,
+            };
+        }
+
         protected virtual DateTime GetCurrentDateTime()
         {
             return DateTime.Now;
@@ -259,10 +281,11 @@ namespace YouTubeLiveSitePlugin.Test2
 
 
         SynchronizedCollection<string> _receivedCommentIds;
-
+        bool _disconnectedByUser;
         public void Disconnect()
         {
             _connection?.Disconnect();
+            _disconnectedByUser = true;
         }
         public IUser GetUser(string userId)
         {

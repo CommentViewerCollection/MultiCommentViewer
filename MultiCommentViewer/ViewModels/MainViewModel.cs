@@ -994,6 +994,43 @@ namespace MultiCommentViewer
             get { return _options.MetadataViewHeight; }
             set { _options.MetadataViewHeight = value; }
         }
+        public double MetadataViewConnectionNameColumnWidth
+        {
+            get { return _options.MetadataViewConnectionNameColumnWidth; }
+            set { _options.MetadataViewConnectionNameColumnWidth = value; }
+        }
+        public double MetadataViewTitleColumnWidth
+        {
+            get { return _options.MetadataViewTitleColumnWidth; }
+            set { _options.MetadataViewTitleColumnWidth = value; }
+        }
+        public double MetadataViewElapsedColumnWidth
+        {
+            get { return _options.MetadataViewElapsedColumnWidth; }
+            set { _options.MetadataViewElapsedColumnWidth = value; }
+        }
+        public double MetadataViewCurrentViewersColumnWidth
+        {
+            get { return _options.MetadataViewCurrentViewersColumnWidth; }
+            set { _options.MetadataViewCurrentViewersColumnWidth = value; }
+        }
+        public double MetadataViewTotalViewersColumnWidth
+        {
+            get { return _options.MetadataViewTotalViewersColumnWidth; }
+            set { _options.MetadataViewTotalViewersColumnWidth = value; }
+        }
+        public double MetadataViewActiveColumnWidth
+        {
+            get { return _options.MetadataViewActiveColumnWidth; }
+            set { _options.MetadataViewActiveColumnWidth = value; }
+        }
+        public double MetadataViewOthersColumnWidth
+        {
+            get { return _options.MetadataViewOthersColumnWidth; }
+            set { _options.MetadataViewOthersColumnWidth = value; }
+        }
+
+
         //public Brush HorizontalGridLineBrush
         //{
         //    get { return new SolidColorBrush(_options.HorizontalGridLineColor); }

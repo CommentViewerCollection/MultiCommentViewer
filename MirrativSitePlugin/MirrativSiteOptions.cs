@@ -12,6 +12,8 @@ namespace MirrativSitePlugin
         /// @コテハンを自動登録するか
         /// </summary>
         public bool NeedAutoSubNickname { get => GetValue(); set => SetValue(value); }
+        public bool IsShowJoinMessage { get => GetValue(); set => SetValue(value); }
+        public bool IsShowLeaveMessage { get => GetValue(); set => SetValue(value); }
         public Color ItemForeColor { get => GetValue(); set => SetValue(value); }
         public Color ItemBackColor { get => GetValue(); set => SetValue(value); }
 
@@ -22,6 +24,8 @@ namespace MirrativSitePlugin
         protected override void Init()
         {
             Dict.Add(nameof(NeedAutoSubNickname), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowJoinMessage), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowLeaveMessage), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(ItemForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ItemBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(PollingIntervalSec), new Item { DefaultValue = 1, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });

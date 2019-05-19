@@ -12,6 +12,16 @@ namespace MirrativSitePlugin
             get => changed.NeedAutoSubNickname;
             set => changed.NeedAutoSubNickname = value;
         }
+        public bool IsShowJoinMessage
+        {
+            get => changed.IsShowJoinMessage;
+            set => changed.IsShowJoinMessage = value;
+        }
+        public bool IsShowLeaveMessage
+        {
+            get => changed.IsShowLeaveMessage;
+            set => changed.IsShowLeaveMessage = value;
+        }
         public Color ItemForeColor
         {
             get => changed.ItemForeColor;

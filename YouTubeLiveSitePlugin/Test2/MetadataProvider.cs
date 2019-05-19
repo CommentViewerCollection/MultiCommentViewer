@@ -55,9 +55,7 @@ namespace YouTubeLiveSitePlugin.Test2
 
                 try
                 {
-                    //var bytes = await wc.UploadDataTaskAsync(url, payloadBytes);
-                    //var res = Encoding.UTF8.GetString(bytes);
-                    var res = await _server.PostAsync(new HttpOptions { Url = url, Cc = cc }, new StringContent(payload, Encoding.UTF8, "application/json"));
+                    var res = await GetMetadata(cc, url, payload);
 
                     var json = DynamicJson.Parse(res);
                     if (json.continuation.IsDefined("invalidationContinuationData"))
@@ -108,6 +106,12 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             _cts = null;
         }
+
+        protected virtual async Task<string> GetMetadata(CookieContainer cc, string url, string payload)
+        {
+            return await _server.PostAsync(new HttpOptions { Url = url, Cc = cc }, new StringContent(payload, Encoding.UTF8, "application/json"));
+        }
+
         public MetaDataYoutubeiProvider(IYouTubeLibeServer server, ILogger logger):base(logger)
         {
             _server = server;
@@ -154,23 +158,17 @@ namespace YouTubeLiveSitePlugin.Test2
                 int timeoutMs = 0;
                 try
                 {
-                    var res = await _server.PostAsync(new HttpOptions
-                    {
-                        Url = url,
-                        Cc = cc,
-                        UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0",
-                         
-                    }, new StringContent(encodedContinuation + encodedData, Encoding.UTF8, "application/x-www-form-urlencoded"));
+                    var res = await GetMetadata(cc, url, encodedData + encodedContinuation);
                     var d = DynamicJson.Parse(res);
                     string continuation;
-                    
+
                     if (!d.IsDefined("code") || d.code != "SUCCESS")
                     {
-                        if(res == "{\"errors\":[\"Invalid Request\"]}")
+                        if (res == "{\"errors\":[\"Invalid Request\"]}")
                         {
                             isFatalError = true;
                         }
-                        var v = string.Join("&", data.Select(kv=>kv.Key + "=" + kv.Value));
+                        var v = string.Join("&", data.Select(kv => kv.Key + "=" + kv.Value));
                         //{"code":"ERROR","error":"不明なエラーです。"}
                         //{"code":"ERROR","error":"この機能は現在利用できません。しばらくしてからもう一度お試しください。"}
                         throw new ParseException($"res={res},ytCfg={ytCfg},encoded={v}");
@@ -203,7 +201,7 @@ namespace YouTubeLiveSitePlugin.Test2
                         throw new ParseException(res, ex);
                     }
                 }
-                catch(HttpRequestException ex)
+                catch (HttpRequestException ex)
                 {
                     SendInfo($"メタデータの取得でエラーが発生 ({ex.Message})", InfoType.Notice);
                 }
@@ -244,6 +242,18 @@ namespace YouTubeLiveSitePlugin.Test2
             _cts = null;
             return;
         }
+
+        protected virtual async Task<string> GetMetadata(CookieContainer cc, string url, string data)
+        {
+            return await _server.PostAsync(new HttpOptions
+            {
+                Url = url,
+                Cc = cc,
+                UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0",
+
+            }, new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded"));
+        }
+
         public MetadataProvider(IYouTubeLibeServer server, ILogger logger):base(logger)
         {
             _server = server;

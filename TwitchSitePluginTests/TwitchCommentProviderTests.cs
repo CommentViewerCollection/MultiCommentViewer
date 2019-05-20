@@ -137,5 +137,44 @@ namespace TwitchSitePluginTests
             Assert.AreEqual("9029a587-81b0-4705-8607-38cba9b762d6", comment.Id);
             return;
         }
+        [Test]
+        public async Task 自動コテハン登録が機能するか()
+        {
+            var data = TestHelper.GetSampleData("Streams.txt");
+            var result = Tools.Parse("@badges=subscriber/12,partner/1;color=#FF0000;display-name=harutomaru;id=9029a587-81b0-4705-8607-38cba9b762d6;mod=0;room-id=39587048;subscriber=1;tmi-sent-ts=1518062412116;turbo=0;user-id=72777405;user-type= :harutomaru!harutomaru@harutomaru.tmi.twitch.tv PRIVMSG #mimicchi :あいう @コテハン えお");
+            var userid = "72777405";
+            var serverMock = new Mock<IDataServer>();
+            serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(Task.FromResult(data));
+            var loggerMock = new Mock<ILogger>();
+            var optionsMock = new Mock<ICommentOptions>();
+            var siteOptions = new TwitchSiteOptions
+            {
+                NeedAutoSubNickname = true
+            };
+            var userStoreMock = new Mock<IUserStoreManager>();
+            var user = new UserTest(userid);
+            userStoreMock.Setup(s => s.GetUser(SiteType.Twitch, userid)).Returns(user);
+            var userStoreManager = userStoreMock.Object;
+            var browserProfileMock = new Mock<IBrowserProfile>();
+            var messageProvider = new MessageProvider();
+            var commentDataMock = new Mock<ICommentData>();
+            var commentProvider = new C(serverMock.Object, loggerMock.Object, optionsMock.Object, siteOptions, userStoreManager)
+            {
+                MessageProvider = messageProvider,
+                MetadataProvider = new MetadataProvider(),
+                CommentData = commentDataMock.Object,
+            };
+            IMessageContext actual = null;
+            commentProvider.MessageReceived += (s, e) =>
+            {
+                actual = e;
+                commentProvider.Disconnect();
+            };
+            var t = commentProvider.ConnectAsync("", browserProfileMock.Object);
+            messageProvider.SetResult(result);
+            await t;
+            Assert.AreEqual("コテハン", user.Nickname);
+            return;
+        }
     }
 }

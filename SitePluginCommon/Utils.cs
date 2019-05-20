@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SitePlugin;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -23,6 +24,32 @@ namespace SitePluginCommon
         {
             var dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             return dt.AddSeconds(unixTimeStamp).ToLocalTime();
+        }
+        /// <summary>
+        /// @コテハンがあったら抽出してuser.Nicknameに設定する
+        /// </summary>
+        /// <param name="message">コメント本文</param>
+        /// <param name="user">コメントを投稿したユーザ</param>
+        public static void SetNickname(string message, IUser user)
+        {
+            var nick = ExtractNickname(message);
+            if (!string.IsNullOrEmpty(nick))
+            {
+                user.Nickname = nick;
+            }
+        }
+        /// <summary>
+        /// @コテハンがあったら抽出してuser.Nicknameに設定する
+        /// </summary>
+        /// <param name="message">コメント本文</param>
+        /// <param name="user">コメントを投稿したユーザ</param>
+        public static void SetNickname(string message, IUser2 user)
+        {
+            var nick = ExtractNickname(message);
+            if (!string.IsNullOrEmpty(nick))
+            {
+                user.Nickname = nick;
+            }
         }
         /// <summary>
         /// 文字列から@ニックネームを抽出する

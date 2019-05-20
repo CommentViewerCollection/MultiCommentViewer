@@ -23,5 +23,6 @@ namespace NicoSitePlugin
         bool IsAutoSetNickname { get; set; }
 
         bool IsShow184Id { get; set; }
+        bool IsAutoGetUsername { get; set; }
     }
 }

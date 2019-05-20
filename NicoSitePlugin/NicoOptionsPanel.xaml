@@ -12,5 +12,6 @@
         <CheckBox Content="184コメントを表示する" IsChecked="{Binding IsShow184}" HorizontalAlignment="Left" Margin="30,135,0,0" VerticalAlignment="Top"/>
         <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="30,105,0,0" VerticalAlignment="Top"/>
         <CheckBox Content="184IDをユーザ名として表示する" IsChecked="{Binding IsShow184Id}" HorizontalAlignment="Left" Margin="30,165,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="ユーザ名を自動的に取得する" IsChecked="{Binding IsAutoGetUsername}" HorizontalAlignment="Left" Margin="30,185,0,0" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>

@@ -25,6 +25,11 @@ namespace NicoSitePlugin
             get { return ChangedOptions.IsAutoSetNickname; }
             set { ChangedOptions.IsAutoSetNickname = value; }
         }
+        public bool IsAutoGetUsername
+        {
+            get => ChangedOptions.IsAutoGetUsername;
+            set => ChangedOptions.IsAutoGetUsername = value;
+        }
         private readonly NicoSiteOptions _origin;
         private readonly NicoSiteOptions _changed;
         internal NicoSiteOptions OriginOptions { get { return _origin; } }

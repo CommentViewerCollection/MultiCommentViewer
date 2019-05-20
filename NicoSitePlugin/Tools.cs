@@ -58,6 +58,16 @@ namespace NicoSitePlugin
             }
             return type;
         }
+        /// <summary>
+        /// 生IDか
+        /// </summary>
+        /// <param name="userId">ユーザID</param>
+        /// <returns></returns>
+        public static bool IsNamaId(string userId)
+        {
+            var is184 = Tools.Is184UserId(userId);
+            return !is184 && userId != "900000000";
+        }
         public static async Task<INicoComment> CreateNicoComment(IChat chat, IUser user, INicoSiteOptions _siteOptions, string roomName,Func<string,Task<IUserInfo>> f, ILogger logger)
         {
             var userId = chat.UserId;
@@ -72,12 +82,19 @@ namespace NicoSitePlugin
             try
             {
 
-                if (!is184 && userId != "900000000")
+                if (IsNamaId(userId))
                 {
                     var userInfo = await f(userId);//API.GetUserInfo(_dataSource, userId);
                     thumbnailUrl = userInfo.ThumbnailUrl;
-                    nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
-                    user.Name = nameItems;
+                    if (_siteOptions.IsAutoGetUsername)
+                    {
+                        nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
+                        user.Name = nameItems;
+                    }
+                    else
+                    {
+                        nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userId) };
+                    }
                 }
             }
             catch (Exception ex)

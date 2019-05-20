@@ -64,12 +64,7 @@ namespace NicoSitePlugin
             var is184 = Tools.Is184UserId(userId);
             if (_siteOptions.IsAutoSetNickname)
             {
-                var messageText = chat.Text;
-                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
-                if (!string.IsNullOrEmpty(nick))
-                {
-                    user.Nickname = nick;
-                }
+                SitePluginCommon.Utils.SetNickname(chat.Text, user);
             }
 
             string thumbnailUrl = null;

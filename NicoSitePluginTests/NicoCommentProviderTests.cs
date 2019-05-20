@@ -30,7 +30,7 @@ namespace NicoSitePluginTests
     class Tests
     {
         [Test]
-        public async Task Test()
+        public async Task 自動コテハン登録が機能するか()
         {
             var optionsMock = new Mock<ICommentOptions>();
             var siteOptionsMock = new Mock<INicoSiteOptions>();

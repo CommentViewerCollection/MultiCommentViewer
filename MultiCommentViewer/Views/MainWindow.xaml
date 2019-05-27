@@ -100,7 +100,7 @@
                 </Grid.ColumnDefinitions>
                 <Button Content="接続を追加" Command="{Binding AddNewConnectionCommand}" Margin="0,5" Grid.Column="1" />
                 <Button Content="選択した接続を削除" Command="{Binding RemoveSelectedConnectionCommand}" Margin="0,5" Grid.Column="3" />
-                <Button Content="取得済みコメントを削除" IsEnabled="False" Command="{Binding ClearAllCommentsCommand}" Margin="0,5" Grid.Column="5" />
+                <Button Content="取得済みコメントを削除" IsEnabled="False" Visibility="Hidden" Command="{Binding ClearAllCommentsCommand}" Margin="0,5" Grid.Column="5" />
             </Grid>
             <ListView Grid.Row="1" ItemsSource="{Binding Connections}" 
                   AllowDrop="True" MinHeight="90" 

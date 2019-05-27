@@ -43,6 +43,11 @@ namespace BouyomiPlugin
             get { return _options.Want184Read; }
             set { _options.Want184Read = value; }
         }
+        public bool IsKillBouyomiChan
+        {
+            get { return _options.IsKillBouyomiChan; }
+            set { _options.IsKillBouyomiChan = value; }
+        }
 
         #region ふわっち
         /// <summary>

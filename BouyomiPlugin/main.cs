@@ -78,6 +78,14 @@ namespace BouyomiPlugin
             _settingsView?.ForceClose();
             var s = _options.Serialize();
             Host.SaveOptions(GetSettingsFilePath(), s);
+            if(_bouyomiChanProcess != null && _options.IsKillBouyomiChan)
+            {
+                try
+                {
+                    _bouyomiChanProcess.Kill();
+                }
+                catch(Exception) { }
+            }
         }
         public void OnCommentReceived(ICommentData data)
         {
@@ -107,15 +115,7 @@ namespace BouyomiPlugin
                 {
                     _bouyomiChanProcess = Process.Start(_options.BouyomiChanPath);
                     _bouyomiChanProcess.EnableRaisingEvents = true;
-                    _bouyomiChanProcess.Exited += (s, e) =>
-                    {
-                        try
-                        {
-                            _bouyomiChanProcess?.Close();//2018/03/25ここで_bouyomiChanProcessがnullになる場合があった
-                        }
-                        catch { }
-                        _bouyomiChanProcess = null;
-                    };
+                    _bouyomiChanProcess.Exited += BouyomiChanProcess_Exited;
                 }
                 //起動するまでの間にコメントが投稿されたらここに来てしまうが諦める。
             }
@@ -124,6 +124,17 @@ namespace BouyomiPlugin
 
             }
         }
+
+        private void BouyomiChanProcess_Exited(object sender, EventArgs e)
+        {
+            try
+            {
+                _bouyomiChanProcess?.Close();//2018/03/25ここで_bouyomiChanProcessがnullになる場合があった
+            }
+            catch { }
+            _bouyomiChanProcess = null;
+        }
+
         public void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata)
         {
             if (!_options.IsEnabled || messageMetadata.IsNgUser || messageMetadata.IsInitialComment || (messageMetadata.Is184 && !_options.Want184Read))

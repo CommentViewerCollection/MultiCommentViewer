@@ -413,8 +413,6 @@ namespace OpenrecYoyakuPlugin
         {
             if (string.IsNullOrEmpty(raw)) return raw;
             var s = raw;
-            s = s.Replace("(", "\\(");
-            s = s.Replace(")", "\\)");
             return s;
         }
         public string TestResult

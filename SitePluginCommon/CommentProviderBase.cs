@@ -5,9 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using SitePluginCommon;
 
-namespace PeriscopeSitePlugin
+namespace SitePluginCommon
 {
     public abstract class CommentProviderBase : ICommentProvider
     {

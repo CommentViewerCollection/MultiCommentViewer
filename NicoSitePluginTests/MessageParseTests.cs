@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace NicoSitePluginTests
 {
     [TestFixture]
-    class MessageParseTests
+    class ChatParseTests
     {
         [Test]
         public async Task ParseKickCommandTest()

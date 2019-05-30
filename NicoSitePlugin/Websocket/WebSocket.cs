@@ -19,13 +19,12 @@ namespace NicoSitePlugin.Websocket
             Debug.Write(DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
             Debug.WriteLine(str);
         }
-        public Task ReceiveAsync(string url, List<KeyValuePair<string, string>> cookies, string userAgent, string origin)
+        public Task ReceiveAsync(string url, List<KeyValuePair<string, string>> cookies, string userAgent, string origin, string subProtocol = "")
         {
             if (_ws != null)
                 throw new InvalidOperationException("_ws is not null");
 
             var tcs = new TaskCompletionSource<object>();
-            var subProtocol = "";
             _ws = new WebSocket4Net.WebSocket(url, subProtocol, cookies, null, userAgent, origin, WebSocket4Net.WebSocketVersion.Rfc6455)
             {
                 EnableAutoSendPing = false,
@@ -82,6 +81,11 @@ namespace NicoSitePlugin.Websocket
             };
             _ws.Open();
             return tcs.Task;
+        }
+        public void Send(string str)
+        {
+            if (_ws == null) return;
+            _ws.Send(str);
         }
         public async Task SendAsync(string str)
         {

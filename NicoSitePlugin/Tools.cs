@@ -13,6 +13,14 @@ using System.Threading.Tasks;
 
 namespace NicoSitePlugin
 {
+    enum InputType
+    {
+        Unknown,
+        LiveId,
+        ChannelId,
+        CommunityId,
+        JikkyoId,
+    }
     static class Tools
     {
         public static bool IsKickCommand(IChat chat)
@@ -51,6 +59,26 @@ namespace NicoSitePlugin
             else if (IsInfo(chat))
             {
                 type = NicoMessageType.Info;
+            }
+            else if (chat.Text.StartsWith("/spi "))
+            {
+                //"/spi \"「あみだくじ」が貼られました\""
+                //"/spi \"「第一話 これが私の御主人様!?」が貼られました\""
+                //"/spi \"「お掃除ロボットと猫のいる生活」が貼られました\""
+                //"/spi \"「みんなでつりっくま」が貼られました\""
+                //"/spi \"「日清 カップヌードル 77g×20個」が貼られました\""
+                type = NicoMessageType.Unknown;//Spi
+            }
+            else if (chat.Text.StartsWith("/"))
+            {
+                //"/disconnect"
+                //"/gift champagne 30539469 \"沙耶\" 900 \"\" \"シャンパーン\" 1"
+                //"/gift chocobanana 18986018 \"ハルヒ\" 600 \"\" \"チョコばなな\" 3"
+                using (var sw = new System.IO.StreamWriter("nico_commands.txt", true))
+                {
+                    sw.WriteLine(chat.Raw);
+                }
+                type = NicoMessageType.Unknown;
             }
             else
             {
@@ -291,6 +319,34 @@ namespace NicoSitePlugin
             //officialはコメ番が無いから短縮する必要は無い。そのまま帰す。
             //ただし全角スペースは半角にする。後々何かに使うときのことを考えて。
             return roomName.Replace("　", " ");
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static InputType GetInputType(string input)
+        {
+            if (Regex.IsMatch(input, "lv\\d+"))
+            {
+                return InputType.LiveId;
+            }
+            else if (Regex.IsMatch(input, "co\\d+"))
+            {
+                return InputType.CommunityId;
+            }
+            else if (Regex.IsMatch(input, "ch\\d+"))
+            {
+                return InputType.ChannelId;
+            }
+            else if (Regex.IsMatch(input, "jk\\d+"))
+            {
+                return InputType.JikkyoId;
+            }
+            else
+            {
+                return InputType.Unknown;
+            }
         }
         public static T Deserialize<T>(string json)
         {

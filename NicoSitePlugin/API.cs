@@ -397,6 +397,31 @@ namespace NicoSitePlugin
             }
             throw new ParseException(res);
         }
+
+        public static async Task<WatchDataProps> GetWatchDataProps(IDataSource server, string liveId, CookieContainer cc)
+        {
+            var url = "https://live2.nicovideo.jp/watch/" + liveId;
+            string res;
+            try
+            {
+                res = await server.GetAsync(url, cc);
+            }
+            catch (HttpException ex)
+            {
+                throw new NotImplementedException();
+            }
+            //quot;}}}}}}"></script><script src="http
+            var match = Regex.Match(res, "data-props=\"({.+?})\"></script>");
+            if (!match.Success)
+            {
+                throw new NotImplementedException();
+            }
+            var raw = match.Groups[1].Value;
+            raw = raw.Replace("&quot;", "\"");
+            var obj = Tools.Deserialize<Low.WatchDataProps.RootObject>(raw);
+            return new WatchDataProps(obj);
+        }
+
         class UserInfo : IUserInfo
         {
             public string UserId { get; set; }
@@ -409,5 +434,29 @@ namespace NicoSitePlugin
         string UserId { get; }
         string ThumbnailUrl { get; }
         string Name { get; }
+    }
+    public class WatchDataProps
+    {
+        public string AudienceToken { get; }
+        public string Status { get; }
+        public string Title { get; }
+        public bool IsLoggedIn { get; }
+        public bool IsBroadcaster { get; }
+        public string AccountType { get; }
+        public bool IsOperator { get; }
+        public string BroadcastId { get; }
+        public string WebSocketUrl { get; }
+        public WatchDataProps(Low.WatchDataProps.RootObject low)
+        {
+            AudienceToken = low.Player.AudienceToken;
+            Status = low.Program.Status;
+            Title = low.Program.Title;
+            IsLoggedIn = low.User.IsLoggedIn;
+            IsBroadcaster = low.User.IsBroadcaster;
+            AccountType = low.User.AccountType;
+            IsOperator = low.User.IsOperator;
+            BroadcastId = low.Program.BroadcastId;
+            WebSocketUrl=low.Site.Relive.WebSocketUrl;
+        }
     }
 }

@@ -10,6 +10,16 @@ namespace NicoSitePluginTests
     [TestFixture]
     class ToolsTests
     {
+        [TestCase("lv123", InputType.LiveId)]
+        [TestCase("ch123", InputType.ChannelId)]
+        [TestCase("co123", InputType.CommunityId)]
+        [TestCase("jk4", InputType.JikkyoId)]
+        [TestCase("abc", InputType.Unknown)]
+        public void Test(string input, InputType expected)
+        {
+            var actual = Tools.GetInputType(input);
+            Assert.AreEqual(expected, actual);
+        }
         [Test]
         public void Is184UserIdTest()
         {

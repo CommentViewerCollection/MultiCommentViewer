@@ -163,11 +163,12 @@ namespace MultiCommentViewer
             }
             SitePlugin.ICurrentUserInfo currentUserInfo = null;
             var br = SelectedBrowser;
+            string errorMessage = null;
             if (br != null)
             {
                 _dispatcher.Invoke(() =>
                 {
-                    LoggedInUsername = "";
+                    LoggedInUsername = "(未取得)";
                 });
                 try
                 {
@@ -175,6 +176,7 @@ namespace MultiCommentViewer
                 }
                 catch (Exception ex)
                 {
+                    errorMessage = ex.Message;
                     _logger.LogException(ex);
                 }
             }
@@ -185,7 +187,7 @@ namespace MultiCommentViewer
                 {
                     if (currentUserInfo == null)
                     {
-                        LoggedInUsername = "";
+                        LoggedInUsername = errorMessage ?? "(エラー)";
                     }
                     else
                     {

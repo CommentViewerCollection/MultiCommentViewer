@@ -237,87 +237,94 @@ namespace YouTubeLiveSitePlugin.Test2
         /// <exception cref="NoContinuationException">放送終了</exception>
         public static (IContinuation, List<CommentData>, string sessionToken) ParseGetLiveChat(string getLiveChatJson)
         {
-            var json = DynamicJson.Parse(getLiveChatJson);
-            if (!json.response.IsDefined("continuationContents"))
+            try
             {
-                throw new ContinuationContentsNullException();
-            }
-            
-            if (!json.response.continuationContents.liveChatContinuation.IsDefined("continuations"))
-            {
-                throw new ContinuationNotExistsException();
-            }
+                var json = DynamicJson.Parse(getLiveChatJson);
+                if (!json.response.IsDefined("continuationContents"))
+                {
+                    throw new ContinuationContentsNullException();
+                }
 
-            IContinuation continuation;
-            var continuations = json.response.continuationContents.liveChatContinuation.continuations;
-            if (continuations[0].IsDefined("invalidationContinuationData"))
-            {
-                var invalidation = continuations[0].invalidationContinuationData;
-                var inv = new InvalidationContinuation
+                if (!json.response.continuationContents.liveChatContinuation.IsDefined("continuations"))
                 {
-                    Continuation = invalidation.continuation,
-                    TimeoutMs = (int)invalidation.timeoutMs,
-                    ObjectId = invalidation.invalidationId.objectId,
-                    ObjectSource = (int)invalidation.invalidationId.objectSource,
-                    ProtoCreationTimestampMs = invalidation.invalidationId.protoCreationTimestampMs
-                };
-                continuation = inv;
-            }
-            else
-            {
-                var timed = continuations[0].timedContinuationData;
-                var inv = new TimedContinuation
-                {
-                    Continuation = timed.continuation,
-                    TimeoutMs = (int)timed.timeoutMs,
-                };
-                continuation = inv;
-            }
+                    throw new ContinuationNotExistsException();
+                }
 
-            var dataList = new List<CommentData>();
-            if (json.response.continuationContents.liveChatContinuation.IsDefined("actions"))
-            {
-                var actions = json.response.continuationContents.liveChatContinuation.actions;
-                foreach (var action in actions)
+                IContinuation continuation;
+                var continuations = json.response.continuationContents.liveChatContinuation.continuations;
+                if (continuations[0].IsDefined("invalidationContinuationData"))
                 {
-                    if (action.IsDefined("addChatItemAction"))
+                    var invalidation = continuations[0].invalidationContinuationData;
+                    var inv = new InvalidationContinuation
                     {
-                        var item = action.addChatItemAction.item;
-                        if (item.IsDefined("liveChatTextMessageRenderer"))
+                        Continuation = invalidation.continuation,
+                        TimeoutMs = (int)invalidation.timeoutMs,
+                        ObjectId = invalidation.invalidationId.objectId,
+                        ObjectSource = (int)invalidation.invalidationId.objectSource,
+                        ProtoCreationTimestampMs = invalidation.invalidationId.protoCreationTimestampMs
+                    };
+                    continuation = inv;
+                }
+                else
+                {
+                    var timed = continuations[0].timedContinuationData;
+                    var inv = new TimedContinuation
+                    {
+                        Continuation = timed.continuation,
+                        TimeoutMs = (int)timed.timeoutMs,
+                    };
+                    continuation = inv;
+                }
+
+                var dataList = new List<CommentData>();
+                if (json.response.continuationContents.liveChatContinuation.IsDefined("actions"))
+                {
+                    var actions = json.response.continuationContents.liveChatContinuation.actions;
+                    foreach (var action in actions)
+                    {
+                        if (action.IsDefined("addChatItemAction"))
                         {
-                            dataList.Add(Parser.ParseLiveChatTextMessageRenderer(item.liveChatTextMessageRenderer));
-                        }
-                        else if (item.IsDefined("liveChatPaidMessageRenderer"))
-                        {
-                            var ren = item.liveChatPaidMessageRenderer;
-                            var commentData = Parser.ParseLiveChatPaidMessageRenderer(ren);
-                            dataList.Add(commentData);
+                            var item = action.addChatItemAction.item;
+                            if (item.IsDefined("liveChatTextMessageRenderer"))
+                            {
+                                dataList.Add(Parser.ParseLiveChatTextMessageRenderer(item.liveChatTextMessageRenderer));
+                            }
+                            else if (item.IsDefined("liveChatPaidMessageRenderer"))
+                            {
+                                var ren = item.liveChatPaidMessageRenderer;
+                                var commentData = Parser.ParseLiveChatPaidMessageRenderer(ren);
+                                dataList.Add(commentData);
+                            }
                         }
                     }
                 }
+                var sessionToken = json.xsrf_token;
+                //var actions = lowLiveChat.response.continuationContents.liveChatContinuation.actions;
+                //var actionList = new List<IAction>();
+                //if (actions != null)
+                //{
+                //    foreach (var action in actions)
+                //    {
+                //        if (action.addChatItemAction != null)
+                //        {
+                //            if (action.addChatItemAction.item.liveChatTextMessageRenderer != null)
+                //            {
+                //                actionList.Add(new TextMessage(action.addChatItemAction.item.liveChatTextMessageRenderer));
+                //            }
+                //            else if (action.addChatItemAction.item.liveChatPaidMessageRenderer != null)
+                //            {
+                //                actionList.Add(new PaidMessage(action.addChatItemAction.item.liveChatPaidMessageRenderer));
+                //            }
+                //        }
+                //    }
+                //}
+                //return (continuation, actionList);
+                return (continuation, dataList, sessionToken);
             }
-            var sessionToken = json.xsrf_token;
-            //var actions = lowLiveChat.response.continuationContents.liveChatContinuation.actions;
-            //var actionList = new List<IAction>();
-            //if (actions != null)
-            //{
-            //    foreach (var action in actions)
-            //    {
-            //        if (action.addChatItemAction != null)
-            //        {
-            //            if (action.addChatItemAction.item.liveChatTextMessageRenderer != null)
-            //            {
-            //                actionList.Add(new TextMessage(action.addChatItemAction.item.liveChatTextMessageRenderer));
-            //            }
-            //            else if (action.addChatItemAction.item.liveChatPaidMessageRenderer != null)
-            //            {
-            //                actionList.Add(new PaidMessage(action.addChatItemAction.item.liveChatPaidMessageRenderer));
-            //            }
-            //        }
-            //    }
-            //}
-            //return (continuation, actionList);
-            return (continuation, dataList, sessionToken);
+            catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ex)
+            {
+                throw new ParseException(getLiveChatJson, ex);
+            }
         }
 
     }

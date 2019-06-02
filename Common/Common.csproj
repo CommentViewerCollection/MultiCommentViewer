@@ -96,6 +96,7 @@
     <Compile Include="MessageText.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SQLiteUserStore.cs" />
+    <Compile Include="UnixTimeConverter.cs" />
     <Compile Include="UserStoreTest.cs" />
     <Compile Include="UserTest.cs" />
     <Compile Include="Utils.cs" />

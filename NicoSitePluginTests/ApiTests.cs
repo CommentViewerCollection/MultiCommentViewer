@@ -29,6 +29,7 @@ namespace NicoSitePluginTests
             Assert.IsFalse(dataProps.IsOperator);
             Assert.AreEqual("ON_AIR", dataProps.Status);
             Assert.AreEqual("AutoChess(オートチェス)　スマホ版   ビショップ2段", dataProps.Title);
+            Assert.IsNull(dataProps.UserId);
         }
         [Test]
         public async Task GetWatchDataPropsTest2()
@@ -103,6 +104,16 @@ namespace NicoSitePluginTests
             var s = "code=1&error=invalid_thread&done=true";
             serverMock.Setup(k => k.GetAsync("http://jk.nicovideo.jp/api/v2/getflv?v=jk" + channelId)).Returns(Task.FromResult(s));
             Assert.ThrowsAsync<JikkyoInfoFailedException>(async () => await API.GetJikkyoInfoAsync(serverMock.Object, channelId));
+        }
+        [Test]
+        public async Task GetProgramInfoTest()
+        {
+            var data = TestHelper.GetSampleData("ProgramInfo_onair.txt");
+            var serverMock = new Mock<IDataSource>();
+            serverMock.Setup(k => k.GetAsync(It.IsAny<string>(), It.IsAny<CookieContainer>())).Returns(Task.FromResult(data));
+            var server = serverMock.Object;
+            var programInfo = await API.GetProgramInfo(server, "", new CookieContainer());
+            Assert.AreEqual(1559412000, programInfo.BeginAt);
         }
         [Test]
         public async Task GetUserInfoTest()

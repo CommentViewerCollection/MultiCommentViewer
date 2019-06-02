@@ -72,7 +72,9 @@
     <Compile Include="IChat.cs" />
     <Compile Include="InternalCommentProvider\INicoCommentProviderInternal.cs" />
     <Compile Include="InternalCommentProvider\JikkyoCommentProvider.cs" />
+    <Compile Include="IThread.cs" />
     <Compile Include="Low\Chat\Class1.cs" />
+    <Compile Include="Low\Thread\Class1.cs" />
     <Compile Include="Websocket\MessageProvider.cs" />
     <Compile Include="Websocket\MetaProvider.cs" />
     <Compile Include="InternalCommentProvider\NewLiveInternalProvider.cs" />

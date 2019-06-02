@@ -12,10 +12,6 @@ namespace NicoSitePlugin
 {
     class JikkyoCommentProvider : CommentProviderInternalBase
     {
-        public event EventHandler<IMessageContext> MessageReceived;
-        public event EventHandler<IMetadata> MetadataUpdated;
-        public event EventHandler<ConnectedEventArgs> Connected;
-
         public override void AfterDisconnected()
         {
         }
@@ -50,7 +46,7 @@ namespace NicoSitePlugin
                     var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
                     if (context != null)
                     {
-                        MessageReceived?.Invoke(this, context);
+                        RaiseMessageReceived(context);
                     }
                 }
                 catch (Exception ex)
@@ -69,7 +65,7 @@ namespace NicoSitePlugin
                         var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
                         if (context != null)
                         {
-                            MessageReceived?.Invoke(this, context);
+                            RaiseMessageReceived(context);
                         }
                     }
                     catch (Exception ex)
@@ -134,6 +130,12 @@ namespace NicoSitePlugin
             var id = ExtractJikkyoId(input);
             return id.HasValue;
         }
+
+        public override Task PostCommentAsync(string comment, string mail)
+        {
+            throw new NotImplementedException();
+        }
+
         public JikkyoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
             :base(options, siteOptions, userStoreManager, dataSource, logger)
         {

@@ -129,6 +129,9 @@ namespace NicoSitePlugin
         {
             MetadataUpdated?.Invoke(this, metadata);
         }
+
+        public abstract Task PostCommentAsync(string comment, string mail);
+
         public CommentProviderInternalBase(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger)
         {
             _options = options;

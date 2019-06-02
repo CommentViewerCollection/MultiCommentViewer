@@ -43,6 +43,21 @@ namespace NicoSitePlugin.Websocket
             _wc.Opened += Wc_Opened;
             _wc.Received += Wc_Received;
         }
+        private IThread ParseThread(string raw)
+        {
+            var obj = Tools.Deserialize<Low.Thread.RootObject>(raw);
+            var lowThread = obj.Thread;
+            var thread = new Thread(raw)
+            {
+                LastRes = lowThread.LastRes,
+                Resultcode = lowThread.Resultcode,
+                Revision = lowThread.Revision,
+                ServerTime = lowThread.ServerTime,
+                ThreadId = lowThread.ThreadThread,
+                Ticket = lowThread.Ticket,
+            };
+            return thread;
+        }
         private IChat ParseChat(string raw)
         {
             var obj = Tools.Deserialize<Low.Chat.RootObject>(raw);
@@ -96,7 +111,8 @@ namespace NicoSitePlugin.Websocket
             }
             else if (d.IsDefined("thread"))
             {
-
+                var thread = ParseThread(raw);
+                ThreadReceived?.Invoke(this, thread);
             }
             else
             {
@@ -110,10 +126,26 @@ namespace NicoSitePlugin.Websocket
             var userId = "guest";
             var res_from = 1000;
             var data = $"[{{\"ping\":{{\"content\":\"rs:0\"}}}},{{\"ping\":{{\"content\":\"ps:0\"}}}},{{\"thread\":{{\"thread\":\"{threadId}\",\"version\":\"20061206\",\"fork\":0,\"user_id\":\"{userId}\",\"res_from\":-{res_from},\"with_global\":1,\"scores\":1,\"nicoru\":0}}}},{{\"ping\":{{\"content\":\"pf:0\"}}}},{{\"ping\":{{\"content\":\"rf:0\"}}}}]";
-            _wc.Send(data);
+            Send(data);
 
 
         }
+        public void Send(string str)
+        {
+            _wc.Send(str);
+        }
         public event EventHandler<ReceivedChat> ChatReceived;
+        public event EventHandler<IThread> ThreadReceived;
+
+        internal void PostComment(string threadId, string vpos, string ticket, string userId, string premium, string postkey, string mail, string comment)
+        {
+            var a1 = "{\"ping\":{\"content\":\"rs:1\"}}";
+            var a2 = "{\"ping\":{\"content\":\"ps:5\"}}";
+            var a3 = $"{{\"chat\":{{\"thread\":\"{threadId}\",\"vpos\":{vpos},\"mail\":\"{mail}\",\"ticket\":\"{ticket}\",\"user_id\":\"{userId}\",\"premium\":{premium},\"content\":\"{comment}\",\"postkey\":\"{postkey}\"}}}}";
+            var a4 = "{\"ping\":{\"content\":\"pf:5\"}}";
+            var a5 = "{\"ping\":{\"content\":\"rf:1\"}}";
+            var k = "[" + string.Join(",", a1, a2, a3, a4, a5) + "]";
+            Send(k);
+        }
     }
 }

@@ -437,6 +437,7 @@ namespace NicoSitePlugin
     }
     public class WatchDataProps
     {
+        public string UserId { get; }
         public string AudienceToken { get; }
         public string Status { get; }
         public string Title { get; }
@@ -446,6 +447,8 @@ namespace NicoSitePlugin
         public bool IsOperator { get; }
         public string BroadcastId { get; }
         public string WebSocketUrl { get; }
+        public string Locale { get; }
+        public long ServerTime { get; }
         public WatchDataProps(Low.WatchDataProps.RootObject low)
         {
             AudienceToken = low.Player.AudienceToken;
@@ -457,6 +460,9 @@ namespace NicoSitePlugin
             IsOperator = low.User.IsOperator;
             BroadcastId = low.Program.BroadcastId;
             WebSocketUrl=low.Site.Relive.WebSocketUrl;
+            Locale = low.Site.Locale;
+            UserId = low.User.Id;
+            ServerTime = low.Site.ServerTime;
         }
     }
 }

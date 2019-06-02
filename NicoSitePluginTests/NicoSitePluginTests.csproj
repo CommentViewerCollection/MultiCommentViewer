@@ -63,6 +63,9 @@
     <Compile Include="NicoCommentViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoomTests.cs" />
+    <Content Include="SampleData\ProgramInfo_onair.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="SampleData\watch_onair_loggedin.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

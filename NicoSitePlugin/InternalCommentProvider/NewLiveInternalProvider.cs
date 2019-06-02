@@ -88,6 +88,7 @@ namespace NicoSitePlugin
         string _messageUrl;
         string _threadId;
         string _roomName;
+        string _ticket;
         WatchDataProps _watchDataProps;
         TaskCompletionSource<object> _tcs = new TaskCompletionSource<object>();
         public override void Disconnect()
@@ -111,7 +112,17 @@ namespace NicoSitePlugin
 
             _messageProvider = new MessageProvider();
             _messageProvider.ChatReceived += MessageProvider_ChatReceived;
+            _messageProvider.ThreadReceived += MessageProvider_ThreadReceived;
         }
+
+        private void MessageProvider_ThreadReceived(object sender, IThread e)
+        {
+            if (!string.IsNullOrEmpty(e.Ticket))
+            {
+                _ticket = e.Ticket;
+            }
+        }
+
         private async void MessageProvider_ChatReceived(object sender, ReceivedChat e)
         {
             var chat = e.Message;
@@ -137,6 +148,21 @@ namespace NicoSitePlugin
                     break;
             }
 
+        }
+
+        public override Task PostCommentAsync(string comment, string mail)
+        {
+            //[{"ping":{"content":"rs:1"}},{"ping":{"content":"ps:5"}},{"chat":{"thread":"1651612445","vpos":356587,"mail":"184 ","ticket":"0x3d4e000","user_id":"2297426","premium":1,"content":"？","postkey":".1559405184.b-Obktn_YDybdhLR9Hf9Pa17c4g"}},{"ping":{"content":"pf:5"}},{"ping":{"content":"rf:1"}}]
+
+            var threadId = _threadId;
+            var vpos = "";
+            var ticket = _ticket;
+            var userId = "";
+            var premium = "";
+            var postkey = "";
+
+            _messageProvider.PostComment(threadId, vpos, ticket, userId, premium, postkey, mail, comment);
+            return Task.CompletedTask;
         }
     }
 }

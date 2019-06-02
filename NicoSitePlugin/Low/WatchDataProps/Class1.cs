@@ -1732,6 +1732,15 @@ namespace NicoSitePlugin.Low.WatchDataProps
 
     public partial class User
     {
+        [JsonProperty("id")]
+        public string Id { get; set; }
+
+        [JsonProperty("nickname")]
+        public string Nickname { get; set; }
+
+        [JsonProperty("birthday")]
+        public DateTimeOffset Birthday { get; set; }
+
         [JsonProperty("isExplicitlyLoginable")]
         public bool IsExplicitlyLoginable { get; set; }
 

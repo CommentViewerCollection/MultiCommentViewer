@@ -71,7 +71,7 @@ namespace NicoSitePlugin
             return ContainsLiveId(input) || ContainsCommunityId(input) || ContainsChannelId(input) || IsValidChannelUrl(input);
         }
 
-        //TimeSpan _serverTimeDiff;
+        TimeSpan _serverTimeDiff;
 
 
         protected virtual ChatProvider CreateChatProvider(int res_from)
@@ -82,8 +82,15 @@ namespace NicoSitePlugin
         {
             return new ProgramInfoProvider(dataSource, liveId, cc);
         }
+        static readonly DateTime _baseTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private DateTime ConvertUnixMilliSec2DateTime(long unixtimeMilliSec)
+        {
+            return _baseTime.AddMilliseconds(unixtimeMilliSec);
+        }
+        CookieContainer _cc;
         public override async Task ConnectAsync(string input, CookieContainer cc)
         {
+            _cc = cc;
             string liveId;
             if (ContainsLiveId(input))
             {
@@ -120,6 +127,17 @@ namespace NicoSitePlugin
                 UrlToRestore = null,
             });
             //TODO:現在の部屋情報を取得する。これはコメント投稿にのみ必要
+            var dataProps = await API.GetWatchDataProps(_dataSource, liveId, cc);
+            _userId = dataProps.UserId;
+            _serverTimeDiff = ConvertUnixMilliSec2DateTime(dataProps.ServerTime) - GetCurrentDateTime();
+
+
+            var ps = await API.GetPlayerStatusAsync(_dataSource, liveId, cc);
+            if (ps.Success)
+            {
+                _currentRoomThreadId = ps.PlayerStatus.Ms.Thread;
+            }
+
             var chatProvider = CreateChatProvider(_siteOptions.ResNum);
             _chatProvider = chatProvider;
             chatProvider.TicketReceived += ChatProvider_TicketReceived;
@@ -180,7 +198,18 @@ namespace NicoSitePlugin
         ChatProvider _chatProvider;
         ProgramInfoProvider _programInfoProvider;
         List<IXmlWsRoomInfo> _rooms;
-
+        long _vposBaseAt;
+        string _userId;
+        string _currentRoomThreadId;
+        string _ticket;
+        private DateTime GetCurrentServerTime()
+        {
+            return GetCurrentDateTime() + _serverTimeDiff;
+        }
+        protected virtual DateTime GetCurrentDateTime()
+        {
+            return DateTime.Now;
+        }
         private void ProgramInfoProvider_ProgramInfoReceived(object sender, IProgramInfo e)
         {
             var metadata = new Metadata
@@ -188,6 +217,8 @@ namespace NicoSitePlugin
                 Title = e.Title,
             };
             RaiseMetadataUpdated(metadata);
+
+            _vposBaseAt = e.VposBaseAt;
 
             var newRooms = Tools.Distinct(_rooms, e.Rooms.Cast<IXmlWsRoomInfo>().ToList());
             if (newRooms.Count > 0)
@@ -199,6 +230,11 @@ namespace NicoSitePlugin
         }
         private void ChatProvider_TicketReceived(object sender, TicketReceivedEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine($"{e.RoomInfo.Name}, {e.Ticket}");
+            if(e.RoomInfo.ThreadId == _currentRoomThreadId)
+            {
+                _ticket = e.Ticket;
+            }
         }
 
         private async void ChatProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
@@ -227,7 +263,10 @@ namespace NicoSitePlugin
                 var messageContext = await CreateMessageContextAsync(e.Chat, e.RoomInfo.Name, false);
                 if (messageContext == null) return;
                 RaiseMessageReceived(messageContext);
-
+                if (messageContext.Message is INicoComment comment)
+                {
+                    _latestCommentNo = comment.ChatNo;
+                }
                 //var cvm = CreateCommentViewModel(e.Chat, e.RoomInfo);
                 //if (cvm == null) return;
                 //CommentReceived?.Invoke(this, cvm);
@@ -246,6 +285,39 @@ namespace NicoSitePlugin
         private IUser GetUser(string userId)
         {
             return _userStoreManager.GetUser(SiteType.NicoLive, userId);
+        }
+        int? _latestCommentNo;
+        public override async Task PostCommentAsync(string comment, string mail)
+        {
+            var cc = _cc;
+            var threadId = _currentRoomThreadId;
+            var latestCommentNo = _latestCommentNo;
+            var blockNo = GetBlockNo(latestCommentNo);
+            var postKey = await API.GetPostKey(_dataSource, threadId, blockNo, cc);
+            var nowUnix = Common.UnixTimeConverter.ToUnixTime(GetCurrentServerTime());
+            var baseUnix = _vposBaseAt;
+            int vpos = (int)(nowUnix - baseUnix) * 100;
+            var user_id = _userId;
+            var premium = "1";
+            var locale = "ja-jp";
+            var ticket = _ticket;
+            
+            var encodedText = System.Web.HttpUtility.HtmlEncode(comment);
+            var xml = $"<chat thread=\"{threadId}\" ticket=\"{ticket}\" vpos=\"{vpos}\" postkey=\"{postKey}\" mail=\"{mail}\" user_id=\"{user_id}\" premium=\"{premium}\" locale=\"{locale}\">{encodedText}</chat>\0";
+
+            await _chatProvider.SendAsync(_rooms.First(r => r.ThreadId == _currentRoomThreadId), xml);
+        }
+        private int GetBlockNo(int? latestCommentNo)
+        {
+            if (latestCommentNo.HasValue)
+            {
+                var blockNo = (latestCommentNo.Value + 1) / 100;
+                return blockNo;
+            }
+            else
+            {
+                return 0;
+            }
         }
     }
 }

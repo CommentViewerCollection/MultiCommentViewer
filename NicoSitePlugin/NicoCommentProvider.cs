@@ -174,12 +174,16 @@ namespace NicoSitePlugin
 
         public Task PostCommentAsync(string comment, string mail)
         {
-            throw new NotImplementedException();
+            if(_internal == null)
+            {
+                Debug.WriteLine("_internal is null");
+                return Task.CompletedTask;
+            }
+            return _internal.PostCommentAsync(comment, mail);
         }
-        public async Task PostCommentAsync(string comment)
+        public Task PostCommentAsync(string comment)
         {
-            Debug.WriteLine(comment);
-            await Task.CompletedTask;
+            return PostCommentAsync(comment, "");
         }
 
         public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)

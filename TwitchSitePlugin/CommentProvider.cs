@@ -270,14 +270,16 @@ namespace TwitchSitePlugin
                 _logger.LogException(ex, "", $"raw={result.Raw}");
             }
         }
-
         private void OnMessageReceived(Result result)
         {
             var commentData = ParsePrivMsg(result);
             var userId = commentData.UserId;
             var isFirstComment = _commentCounter.UpdateCount(userId);
             var user = GetUser(userId);
-
+            if (_siteOptions.NeedAutoSubNickname)
+            {
+                SitePluginCommon.Utils.SetNickname(commentData.Message, user);
+            }
             var message = new TwitchComment(result.Raw)
             {
                 CommentItems = Tools.GetMessageItems(result),

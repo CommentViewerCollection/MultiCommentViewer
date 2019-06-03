@@ -8,27 +8,27 @@ namespace NicoSitePlugin.Websocket
 {
     public interface IMessageParser
     {
-        IMessage Parse(string s);
+        IInternalMessage Parse(string s);
     }
     public class MessageParser : IMessageParser
     {
         //{"type":"watch","body":{"command":"disconnect","params":["4840229962359","NO_PERMISSION"]}}
-        public IMessage Parse(string s)
+        public IInternalMessage Parse(string s)
         {
-            IMessage message = null;
+            IInternalMessage message = null;
             var d = DynamicJson.Parse(s);
             if (!d.IsDefined("type"))
             {
-                throw new Exception(s);
+                throw new ParseException(s);
             }
             var type = d.type;
             if (type == "watch")
             {
                 if (!d.IsDefined("body"))
-                    throw new Exception(s);
+                    throw new ParseException(s);
                 var body = d.body;
                 if (!body.IsDefined("command"))
-                    throw new Exception(s);
+                    throw new ParseException(s);
                 var command = body.command;
                 switch (command)
                 {
@@ -50,7 +50,8 @@ namespace NicoSitePlugin.Websocket
                         message = new CurrentRoom { MessageServerUri = room.messageServerUri, MessageServerType = room.messageServerType, RoomName = room.roomName, ThreadId = room.threadId };
                         break;
                     default:
-                        throw new Exception(s);
+                        //{"type":"watch","body":{"currentStream":{"uri":"https://pa1212365f5.dmc.nico/hlslive/ht2_nicolive/nicolive-production-pg14650921976390_e3839d5914a76beceda85885e6733dd52055d5429d597d174ef71ec5207f0423/master.m3u8?ht2_nicolive=2297426.8qhddq_psdgya_1q1h8zfle71tz","name":null,"quality":"abr","qualityTypes":["abr","super_high","high","normal","low","super_low"],"mediaServerType":"dmc","mediaServerAuth":null,"streamingProtocol":"hls"},"command":"currentstream"}}
+                        throw new ParseException(s);
                 }
             }
             else if (type == "ping")
@@ -59,20 +60,20 @@ namespace NicoSitePlugin.Websocket
             }
             else
             {
-                throw new Exception(s);
+                throw new ParseException(s);
             }
             return message;
         }
     }
-    public interface IMessage
+    public interface IInternalMessage
     {
         string Raw { get; }
     }
-    public interface IServertime : IMessage
+    public interface IServertime : IInternalMessage
     {
         string Time { get; }
     }
-    public interface ICurrentRoom : IMessage
+    public interface ICurrentRoom : IInternalMessage
     {
         string MessageServerUri { get; }
         string MessageServerType { get; }
@@ -93,14 +94,14 @@ namespace NicoSitePlugin.Websocket
             }
         }
     }
-    public interface IPermit : IMessage
+    public interface IPermit : IInternalMessage
     {
         string Value { get; }
     }
-    public interface IPing : IMessage
+    public interface IPing : IInternalMessage
     {
     }
-    public interface IStatistics : IMessage
+    public interface IStatistics : IInternalMessage
     {
         string ViewerCount { get; }
         string CommentCount { get; }
@@ -151,7 +152,7 @@ namespace NicoSitePlugin.Websocket
             }
         }
     }
-    public interface ISchedule : IMessage
+    public interface ISchedule : IInternalMessage
     {
         long BeginTime { get; }
         long EndTime { get; }

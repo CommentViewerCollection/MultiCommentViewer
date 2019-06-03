@@ -78,6 +78,11 @@ namespace YouTubeLiveSitePlugin.Test2
         public ChatUnavailableException() { }
     }
     [Serializable]
+    public class YouTubeLiveServerErrorException : Exception
+    {
+        public YouTubeLiveServerErrorException() { }
+    }
+    [Serializable]
     public class SpecChangedException : Exception
     {
         public string Raw { get; }

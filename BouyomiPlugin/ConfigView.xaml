@@ -20,6 +20,7 @@
                     <CheckBox x:Name="checkBox1" Content="コテハンに敬称を付ける" IsChecked="{Binding IsAppendNickTitle}" HorizontalAlignment="Left" Margin="182,25,0,0" VerticalAlignment="Top"/>
                     <TextBox x:Name="textBox1" IsEnabled="{Binding IsChecked, ElementName=checkBox1}" HorizontalAlignment="Left" Height="23" Margin="215,45,0,0" TextWrapping="Wrap" Text="{Binding NickTitle}" VerticalAlignment="Top" Width="120"/>
                     <CheckBox Content="184コメントも読ませる" IsChecked="{Binding Want184Read}" HorizontalAlignment="Left" Margin="182,87,0,0" VerticalAlignment="Top"/>
+                    <CheckBox Content="コメビュ終了時に棒読みちゃんも終了させる（自動起動した場合のみ）" IsChecked="{Binding IsKillBouyomiChan}" HorizontalAlignment="Left" Margin="10,175,0,0" VerticalAlignment="Top"/>
 
                 </Grid>
             </TabItem>

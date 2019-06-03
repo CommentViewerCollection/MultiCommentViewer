@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveCounter.cs" />
+    <Compile Include="CommentProviderBase.cs" />
     <Compile Include="FirstCommentDetector.cs" />
     <Compile Include="IActiveCounter.cs" />
     <Compile Include="InfoMessage.cs" />

@@ -244,10 +244,13 @@ namespace YouTubeLiveSitePlugin.Test2
                         //TODO:SendInfo()
                         break;
                     case DisconnectReason.ChatUnavailable:
-                        //TODO:SendInfo()
+                        SendInfo("この配信ではチャットが無効になっているようです", InfoType.Error);
                         break;
                     case DisconnectReason.YtInitialDataNotFound:
-                        //TODO:SendInfo()
+                        SendInfo("ytInitialDataの取得に失敗しました", InfoType.Error);
+                        break;
+                    case DisconnectReason.ServerError:
+                        SendInfo("サーバでエラーが発生したため接続できませんでした", InfoType.Error);
                         break;
                 }
             }

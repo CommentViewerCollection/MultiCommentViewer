@@ -23,8 +23,21 @@ namespace NicoSitePlugin
         public CommentColor SelectedCommentColor { get; set; }
         private readonly INicoCommentProvider _nicoCommentProvider;
         private readonly ILogger _logger;
+        private string _comment;
+
         public bool Is184 { get; set; }
-        public string Comment { get; set; }
+        public string Comment
+        {
+            get
+            {
+                return _comment;
+            }
+            set
+            {
+                _comment = value;
+                RaisePropertyChanged();
+            }
+        }
         public ICommand PostCommentCommand { get; }
         private async void PostComment()
         {
@@ -42,12 +55,15 @@ namespace NicoSitePlugin
                 color,
             };
             var mail = string.Join(" ", list).Trim().Replace("  ", " ");
+            Comment = "";
             try
             {
                 await _nicoCommentProvider.PostCommentAsync(comment, mail);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
+                Comment = comment;
             }
         }
         /// <summary>
@@ -85,7 +101,7 @@ namespace NicoSitePlugin
             SelectedCommentPosition = CommentPosition.Naka;
 
             CommentColorCollection = new ObservableCollection<CommentColor>();
-            foreach(var color in CommentColor.AllColors.Where(c => c != CommentColor.None))
+            foreach (var color in CommentColor.AllColors.Where(c => c != CommentColor.None))
             {
                 CommentColorCollection.Add(color);
             }

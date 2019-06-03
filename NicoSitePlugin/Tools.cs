@@ -13,6 +13,14 @@ using System.Threading.Tasks;
 
 namespace NicoSitePlugin
 {
+    enum InputType
+    {
+        Unknown,
+        LiveId,
+        ChannelId,
+        CommunityId,
+        JikkyoId,
+    }
     static class Tools
     {
         public static bool IsKickCommand(IChat chat)
@@ -52,11 +60,46 @@ namespace NicoSitePlugin
             {
                 type = NicoMessageType.Info;
             }
+            else if (IsItem(chat))
+            {
+                type = NicoMessageType.Item;
+            }
+            else if (chat.Text.StartsWith("/spi "))
+            {
+                //"/spi \"「あみだくじ」が貼られました\""
+                //"/spi \"「第一話 これが私の御主人様!?」が貼られました\""
+                //"/spi \"「お掃除ロボットと猫のいる生活」が貼られました\""
+                //"/spi \"「みんなでつりっくま」が貼られました\""
+                //"/spi \"「日清 カップヌードル 77g×20個」が貼られました\""
+                type = NicoMessageType.Unknown;//Spi
+            }
+            else if (chat.Text.StartsWith("/"))
+            {
+                //"/disconnect"
+                //"/gift champagne 30539469 \"沙耶\" 900 \"\" \"シャンパーン\" 1"
+                //"/gift chocobanana 18986018 \"ハルヒ\" 600 \"\" \"チョコばなな\" 3"
+                //"/vote start もういいでしょ？ いいよ まだ"
+                using (var sw = new System.IO.StreamWriter("nico_commands.txt", true))
+                {
+                    sw.WriteLine(chat.Raw);
+                }
+                type = NicoMessageType.Unknown;
+            }
             else
             {
                 type = NicoMessageType.Comment;
             }
             return type;
+        }
+        /// <summary>
+        /// 生IDか
+        /// </summary>
+        /// <param name="userId">ユーザID</param>
+        /// <returns></returns>
+        public static bool IsNamaId(string userId)
+        {
+            var is184 = Tools.Is184UserId(userId);
+            return !is184 && userId != "900000000";
         }
         public static async Task<INicoComment> CreateNicoComment(IChat chat, IUser user, INicoSiteOptions _siteOptions, string roomName,Func<string,Task<IUserInfo>> f, ILogger logger)
         {
@@ -64,12 +107,7 @@ namespace NicoSitePlugin
             var is184 = Tools.Is184UserId(userId);
             if (_siteOptions.IsAutoSetNickname)
             {
-                var messageText = chat.Text;
-                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
-                if (!string.IsNullOrEmpty(nick))
-                {
-                    user.Nickname = nick;
-                }
+                SitePluginCommon.Utils.SetNickname(chat.Text, user);
             }
 
             string thumbnailUrl = null;
@@ -77,12 +115,19 @@ namespace NicoSitePlugin
             try
             {
 
-                if (!is184 && userId != "900000000")
+                if (IsNamaId(userId))
                 {
                     var userInfo = await f(userId);//API.GetUserInfo(_dataSource, userId);
                     thumbnailUrl = userInfo.ThumbnailUrl;
-                    nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
-                    user.Name = nameItems;
+                    if (_siteOptions.IsAutoGetUsername)
+                    {
+                        nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
+                        user.Name = nameItems;
+                    }
+                    else
+                    {
+                        nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userId) };
+                    }
                 }
             }
             catch (Exception ex)
@@ -120,7 +165,10 @@ namespace NicoSitePlugin
                 Is184 = is184,
             };
         }
-
+        private static bool IsItem(IChat chat)
+        {
+            return chat.Text.StartsWith("/gift ");
+        }
         private static bool IsInfo(IChat chat)
         {
             return chat.Text.StartsWith("/info ");
@@ -156,6 +204,21 @@ namespace NicoSitePlugin
             {
                 throw new ParseException(chat.Raw);
             }
+        }
+        public static INicoItem CreateNicoItem(IChat chat, string roomName, INicoSiteOptions siteOptions)
+        {
+            //Text
+            ///gift takenoko 41600702 "さーら♔" 600 "" "たけのこ" 1
+
+            var content = chat.Text;
+            return new NicoItem(chat.Raw, siteOptions)
+            {
+                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
+                NameItems = null,
+                PostTime = chat.Date.ToString("HH:mm:ss"),
+                UserId = chat.UserId,
+                RoomName = roomName,
+            };
         }
 
         public static INicoInfo CreateNicoInfo(IChat chat, string roomName, INicoSiteOptions siteOptions)
@@ -279,6 +342,34 @@ namespace NicoSitePlugin
             //officialはコメ番が無いから短縮する必要は無い。そのまま帰す。
             //ただし全角スペースは半角にする。後々何かに使うときのことを考えて。
             return roomName.Replace("　", " ");
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static InputType GetInputType(string input)
+        {
+            if (Regex.IsMatch(input, "lv\\d+"))
+            {
+                return InputType.LiveId;
+            }
+            else if (Regex.IsMatch(input, "co\\d+"))
+            {
+                return InputType.CommunityId;
+            }
+            else if (Regex.IsMatch(input, "ch\\d+"))
+            {
+                return InputType.ChannelId;
+            }
+            else if (Regex.IsMatch(input, "jk\\d+"))
+            {
+                return InputType.JikkyoId;
+            }
+            else
+            {
+                return InputType.Unknown;
+            }
         }
         public static T Deserialize<T>(string json)
         {

@@ -9,6 +9,7 @@ namespace NicoSitePlugin
         Connected,
         Disconnected,
         Ad,
+        Item,
         Kick,
         Info,
         Ignored,
@@ -35,6 +36,14 @@ namespace NicoSitePlugin
         string RoomName { get; }
         int? ChatNo { get; }
         string PostTime { get; }
+    }
+    public interface INicoItem : INicoMessage
+    {
+        string RoomName { get; }
+        int? ChatNo { get; }
+        string PostTime { get; }
+        string ItemName { get; }
+        int ItemCount { get; }
     }
     public interface INicoKickCommand : INicoMessage
     {

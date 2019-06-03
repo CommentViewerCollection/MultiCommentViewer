@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:NicoSitePlugin"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              d:DataContext="{d:DesignInstance local:NicoSiteOptionsViewModel, IsDesignTimeCreatable=True}"
              mc:Ignorable="d" Height="360" Width="405">
     <Grid>
@@ -12,5 +13,18 @@
         <CheckBox Content="184コメントを表示する" IsChecked="{Binding IsShow184}" HorizontalAlignment="Left" Margin="30,135,0,0" VerticalAlignment="Top"/>
         <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="30,105,0,0" VerticalAlignment="Top"/>
         <CheckBox Content="184IDをユーザ名として表示する" IsChecked="{Binding IsShow184Id}" HorizontalAlignment="Left" Margin="30,165,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="ユーザ名を自動的に取得する" IsChecked="{Binding IsAutoGetUsername}" HorizontalAlignment="Left" Margin="30,185,0,0" VerticalAlignment="Top"/>
+
+        <Label Content="広告背景色" HorizontalAlignment="Left" Margin="36,218,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding AdBackColor}" Margin="123,222,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="広告文字色" HorizontalAlignment="Left" Margin="212,222,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding AdForeColor}" Margin="299,222,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        
+        <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="36,245,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="123,249,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="アイテム文字色" HorizontalAlignment="Left" Margin="212,249,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="299,249,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
+
     </Grid>
 </UserControl>

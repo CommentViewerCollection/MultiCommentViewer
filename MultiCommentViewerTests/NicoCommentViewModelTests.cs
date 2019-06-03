@@ -59,6 +59,22 @@ namespace MultiCommentViewerTests
             Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("newnick") }, cvm2.NameItems);
         }
         [Test]
+        public void ItemTest()
+        {
+            var itemMock = new Mock<INicoItem>();
+            var item = itemMock.Object;
+            var metadataMock = new Mock<IMessageMetadata>();
+            var metadata = metadataMock.Object;
+            var methodsMock = new Mock<IMessageMethods>();
+            var methods = methodsMock.Object;
+            var connectionStatusMock = new Mock<IConnectionStatus>();
+            var connectionStatus = connectionStatusMock.Object;
+            var optionsMock = new Mock<IOptions>();
+            var options = optionsMock.Object;
+            var cvm = new NicoCommentViewModel(item, metadata, methods, connectionStatus, options);
+
+        }
+        [Test]
         public void IsVisibleTest()
         {
             var messageMock = new Mock<INicoComment>();

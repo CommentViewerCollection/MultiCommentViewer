@@ -56,12 +56,19 @@
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
     <Compile Include="MessageMetadataTests.cs" />
+    <Compile Include="MessageParserTests.cs" />
     <Compile Include="MessageParseTests.cs" />
     <Compile Include="NicoCasCommentProviderTests.cs" />
     <Compile Include="NicoCommentProviderTests.cs" />
     <Compile Include="NicoCommentViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoomTests.cs" />
+    <Content Include="SampleData\ProgramInfo_onair.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\watch_onair_loggedin.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="TestHelper.cs" />
     <Compile Include="ToolsTests.cs" />
   </ItemGroup>
@@ -103,6 +110,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="SampleData\NicoCasUserInfo.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\watch_onair.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

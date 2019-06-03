@@ -14,6 +14,41 @@ namespace NicoSitePluginTests
     class ApiTests
     {
         [Test]
+        public async Task GetWatchDataProps()
+        {
+            var data = TestHelper.GetSampleData("watch_onair.txt");
+            var serverMock = new Mock<IDataSource>();
+            serverMock.Setup(k => k.GetAsync(It.IsAny<string>(), It.IsAny<CookieContainer>())).Returns(Task.FromResult(data));
+            var server = serverMock.Object;
+
+            var dataProps = await API.GetWatchDataProps(server, "lv123", new System.Net.CookieContainer());
+            Assert.AreEqual("non", dataProps.AccountType);
+            Assert.AreEqual("28354086437446_anonymous-user-d404b836-4733-462f-a6ac-1e3243265641_1559309466_e3836af58e88f48adb6f533314e94f3913906943", dataProps.AudienceToken);
+            Assert.IsFalse(dataProps.IsBroadcaster);
+            Assert.IsFalse(dataProps.IsLoggedIn);
+            Assert.IsFalse(dataProps.IsOperator);
+            Assert.AreEqual("ON_AIR", dataProps.Status);
+            Assert.AreEqual("AutoChess(オートチェス)　スマホ版   ビショップ2段", dataProps.Title);
+            Assert.IsNull(dataProps.UserId);
+        }
+        [Test]
+        public async Task GetWatchDataPropsTest2()
+        {
+            var data = TestHelper.GetSampleData("watch_onair_loggedin.txt");
+            var serverMock = new Mock<IDataSource>();
+            serverMock.Setup(k => k.GetAsync(It.IsAny<string>(), It.IsAny<CookieContainer>())).Returns(Task.FromResult(data));
+            var server = serverMock.Object;
+
+            var dataProps = await API.GetWatchDataProps(server, "lv123", new System.Net.CookieContainer());
+            Assert.AreEqual("premium", dataProps.AccountType);
+            Assert.AreEqual("6914518811206_00000_1559318211_333e922ca31b60a1887203b9cab25dcd4b62ed9d", dataProps.AudienceToken);
+            Assert.IsFalse(dataProps.IsBroadcaster);
+            Assert.IsTrue(dataProps.IsLoggedIn);
+            Assert.IsFalse(dataProps.IsOperator);
+            Assert.AreEqual("ON_AIR", dataProps.Status);
+            Assert.AreEqual("たぶんきっとむしろりょうちんの放送", dataProps.Title);
+        }
+        [Test]
         public async Task GetCurrentCommunityLiveId()
         {
             var data = TestHelper.GetSampleData("CommunityTopHtml_onair.txt");
@@ -69,6 +104,16 @@ namespace NicoSitePluginTests
             var s = "code=1&error=invalid_thread&done=true";
             serverMock.Setup(k => k.GetAsync("http://jk.nicovideo.jp/api/v2/getflv?v=jk" + channelId)).Returns(Task.FromResult(s));
             Assert.ThrowsAsync<JikkyoInfoFailedException>(async () => await API.GetJikkyoInfoAsync(serverMock.Object, channelId));
+        }
+        [Test]
+        public async Task GetProgramInfoTest()
+        {
+            var data = TestHelper.GetSampleData("ProgramInfo_onair.txt");
+            var serverMock = new Mock<IDataSource>();
+            serverMock.Setup(k => k.GetAsync(It.IsAny<string>(), It.IsAny<CookieContainer>())).Returns(Task.FromResult(data));
+            var server = serverMock.Object;
+            var programInfo = await API.GetProgramInfo(server, "", new CookieContainer());
+            Assert.AreEqual(1559412000, programInfo.BeginAt);
         }
         [Test]
         public async Task GetUserInfoTest()

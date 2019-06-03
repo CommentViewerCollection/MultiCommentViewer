@@ -286,13 +286,26 @@ namespace NicoSitePlugin
     {
         private readonly INicoAd _ad;
 
-        public override Color BackColor => _options.InfoBackColor;
-        public override Color ForeColor => _options.InfoForeColor;
+        public override Color BackColor => _siteOptions.AdBackColor;
+        public override Color ForeColor => _siteOptions.AdForeColor;
 
         public AdMessageMetadata(INicoAd ad, ICommentOptions options, INicoSiteOptions siteOptions)
             : base(options, siteOptions)
         {
             _ad = ad;
+        }
+    }
+    internal class ItemMessageMetadata : MessageMetadataBase
+    {
+        private readonly INicoItem _item;
+
+        public override Color BackColor => _siteOptions.ItemBackColor;
+        public override Color ForeColor => _siteOptions.ItemForeColor;
+
+        public ItemMessageMetadata(INicoItem item, ICommentOptions options, INicoSiteOptions siteOptions)
+            : base(options, siteOptions)
+        {
+            _item = item;
         }
     }
     internal class DisconnectedMessageMetadata : MessageMetadataBase

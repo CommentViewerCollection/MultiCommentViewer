@@ -11,4 +11,16 @@ namespace NicoSitePlugin
 
         }
     }
+    internal class NicoItem : NicoMessageBase, INicoItem
+    {
+        public NicoMessageType NicoMessageType { get; } = NicoMessageType.Item;
+        public int? ChatNo { get; set; }
+        public string ItemName { get; }
+        public int ItemCount { get; }
+
+        public NicoItem(string raw, INicoSiteOptions siteOptions) : base(raw, siteOptions)
+        {
+
+        }
+    }
 }

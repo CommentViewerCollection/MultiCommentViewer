@@ -10,13 +10,13 @@ namespace NicoSitePlugin
     public class Chat : IChat
     {
         public string Thread { get; internal set; }
-        public int? No { get; protected set; }
-        private string _vpos_str;
+        public int? No { get; internal set; }
+        public string VposStr { get; internal set; }
         public long? Vpos
         {
             get
             {
-                if (long.TryParse(_vpos_str, out long vpos))
+                if (long.TryParse(VposStr, out long vpos))
                 {
                     return vpos;
                 }
@@ -74,7 +74,7 @@ namespace NicoSitePlugin
                 xmlReader.ReadToFollowing("chat");
                 if (int.TryParse(xmlReader.GetAttribute("no"), out int no_))
                     chat.No = no_;
-                chat._vpos_str = xmlReader.GetAttribute("vpos");
+                chat.VposStr = xmlReader.GetAttribute("vpos");
                 chat.Thread = xmlReader.GetAttribute("thread");
                 chat.DateStr = xmlReader.GetAttribute("date");
                 chat._date_usec_str = xmlReader.GetAttribute("date_usec");
@@ -102,7 +102,7 @@ namespace NicoSitePlugin
                 xmlReader.ReadToFollowing("chat");
                 if (int.TryParse(xmlReader.GetAttribute("no"), out int no_))
                     No = no_;
-                _vpos_str = xmlReader.GetAttribute("vpos");
+                VposStr = xmlReader.GetAttribute("vpos");
                 Thread = xmlReader.GetAttribute("thread");
                 DateStr = xmlReader.GetAttribute("date");
                 _date_usec_str = xmlReader.GetAttribute("date_usec");

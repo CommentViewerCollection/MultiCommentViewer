@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Windows.Media;
 
 namespace NicoSitePlugin
 {
@@ -24,6 +25,31 @@ namespace NicoSitePlugin
         {
             get { return ChangedOptions.IsAutoSetNickname; }
             set { ChangedOptions.IsAutoSetNickname = value; }
+        }
+        public bool IsAutoGetUsername
+        {
+            get => ChangedOptions.IsAutoGetUsername;
+            set => ChangedOptions.IsAutoGetUsername = value;
+        }
+        public Color AdBackColor
+        {
+            get => ChangedOptions.AdBackColor;
+            set => ChangedOptions.AdBackColor = value;
+        }
+        public Color AdForeColor
+        {
+            get => ChangedOptions.AdForeColor;
+            set => ChangedOptions.AdForeColor = value;
+        }
+        public Color ItemBackColor
+        {
+            get => ChangedOptions.ItemBackColor;
+            set => ChangedOptions.ItemBackColor = value;
+        }
+        public Color ItemForeColor
+        {
+            get => ChangedOptions.ItemForeColor;
+            set => ChangedOptions.ItemForeColor = value;
         }
         private readonly NicoSiteOptions _origin;
         private readonly NicoSiteOptions _changed;

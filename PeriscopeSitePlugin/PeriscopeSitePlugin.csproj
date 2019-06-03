@@ -52,7 +52,6 @@
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="CommentPostPanelViewModel.cs" />
-    <Compile Include="CommentProviderBase.cs" />
     <Compile Include="DynamicJson.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="IDataServer.cs" />

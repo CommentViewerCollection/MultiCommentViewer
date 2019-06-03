@@ -39,6 +39,14 @@ namespace YoyakuPluginTests
         [Test]
         public void RegexTestTest()
         {
+            RegexTestInternal("a", "a", "True");
+            RegexTestInternal("予約し(ます|たいです)", "予約します", "True");
+            RegexTestInternal("予約し(ます|たいです)", "予約したいです", "True");
+            RegexTestInternal("予約し(ます|たいです)", "予約し", "False");
+
+        }
+        private void RegexTestInternal(string pattern, string comment, string result)
+        {
             IOptions options = new DynamicOptions();
             var hostMock = new Mock<IPluginHost>();
             var host = hostMock.Object;
@@ -47,14 +55,14 @@ namespace YoyakuPluginTests
             var raised = false;
             model.PropertyChanged += (s, e) =>
             {
-                if(e.PropertyName == nameof(model.TestResult))
+                if (e.PropertyName == nameof(model.TestResult))
                 {
                     raised = true;
                 }
             };
-            model.TestPattern = "a";
-            model.TestComment = "a";
-            Assert.AreEqual("True", model.TestResult);
+            model.TestPattern = pattern;
+            model.TestComment = comment;
+            Assert.AreEqual(result, model.TestResult);
             Assert.IsTrue(raised);
         }
     }

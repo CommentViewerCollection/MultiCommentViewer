@@ -6,7 +6,7 @@ namespace NicoSitePlugin
     /// <summary>
     /// 
     /// </summary>
-    public class Thread
+    public class Thread : IThread
     {
         //<thread resultcode="0" thread="1389881167" last_res="6006" ticket="0x32b22900" revision="1" server_time="1414839575"/>
         /// <summary>
@@ -15,13 +15,14 @@ namespace NicoSitePlugin
         /// 0:問題なし
         /// 1:失敗
         /// 3:threadにversionを入れずにサーバに送ったら帰ってきた。
-        public int? Resultcode { get; private set; }
-        public string ThreadId { get; private set; }
-        public int? LastRes { get; private set; }
-        public string Ticket { get; private set; }
-        public int? Revision { get; private set; }
-        public long? ServerTime { get; private set; }
-        public string Raw { get; private set; }
+        public int? Resultcode { get; internal set; }
+        public string ThreadId { get; internal set; }
+        public int? LastRes { get; internal set; }
+        public string Ticket { get; internal set; }
+        public int? Revision { get; internal set; }
+        public long? ServerTime { get; internal set; }
+        public string Raw { get; internal set; }
+        public Thread() { }
         public Thread(string strThread)
         {
             Raw = strThread;

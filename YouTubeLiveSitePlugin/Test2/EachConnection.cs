@@ -42,6 +42,10 @@ namespace YouTubeLiveSitePlugin.Test2
         /// YtInitialDataが無かった
         /// </summary>
         YtInitialDataNotFound,
+        /// <summary>
+        /// サーバ側でエラーが発生
+        /// </summary>
+        ServerError,
     }
     class EachConnection
     {
@@ -81,6 +85,11 @@ namespace YouTubeLiveSitePlugin.Test2
             try
             {
                 (initialContinuation, initialCommentData) = Tools.ParseYtInitialData(ytInitialData);
+            }
+            catch (YouTubeLiveServerErrorException ex)
+            {
+                _logger.LogException(ex, "サーバエラー", $"ytInitialData={ytInitialData},vid={vid}");
+                return DisconnectReason.ServerError;
             }
             catch (ContinuationNotExistsException)
             {

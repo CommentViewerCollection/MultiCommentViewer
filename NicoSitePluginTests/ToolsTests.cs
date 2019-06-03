@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using NicoSitePlugin;
+using Moq;
+
 namespace NicoSitePluginTests
 {
     [TestFixture]
@@ -62,6 +64,15 @@ namespace NicoSitePluginTests
             };
             var actual = Tools.Distinct(main, newList);
             CollectionAssert.AreEquivalent(expected, actual);
+        }
+        [Test]
+        public void CreateNicoItem()
+        {
+            var chat = new Chat("<chat thread=\"1651358813\" no=\"6352\" vpos=\"429500\" date=\"1558975786\" date_usec=\"735910\" user_id=\"900000000\" premium=\"3\">/gift takenoko 41600702 \"さーら♔\" 600 \"\" \"たけのこ\" 1</chat>");
+            var siteOptionsMock = new Mock<INicoSiteOptions>();
+            var siteOptions = siteOptionsMock.Object;
+            var item = Tools.CreateNicoItem(chat, "roomname", siteOptions);
+            //Assert.AreEqual("", item.CommentItems);
         }
     }
 }

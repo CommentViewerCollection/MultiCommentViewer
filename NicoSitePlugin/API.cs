@@ -414,6 +414,7 @@ namespace NicoSitePlugin
             var match = Regex.Match(res, "data-props=\"({.+?})\"></script>");
             if (!match.Success)
             {
+                //コミュニティフォロワー限定番組です
                 throw new NotImplementedException();
             }
             var raw = match.Groups[1].Value;

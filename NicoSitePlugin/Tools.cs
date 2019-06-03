@@ -60,6 +60,10 @@ namespace NicoSitePlugin
             {
                 type = NicoMessageType.Info;
             }
+            else if (IsItem(chat))
+            {
+                type = NicoMessageType.Item;
+            }
             else if (chat.Text.StartsWith("/spi "))
             {
                 //"/spi \"「あみだくじ」が貼られました\""
@@ -74,6 +78,7 @@ namespace NicoSitePlugin
                 //"/disconnect"
                 //"/gift champagne 30539469 \"沙耶\" 900 \"\" \"シャンパーン\" 1"
                 //"/gift chocobanana 18986018 \"ハルヒ\" 600 \"\" \"チョコばなな\" 3"
+                //"/vote start もういいでしょ？ いいよ まだ"
                 using (var sw = new System.IO.StreamWriter("nico_commands.txt", true))
                 {
                     sw.WriteLine(chat.Raw);
@@ -160,7 +165,10 @@ namespace NicoSitePlugin
                 Is184 = is184,
             };
         }
-
+        private static bool IsItem(IChat chat)
+        {
+            return chat.Text.StartsWith("/gift ");
+        }
         private static bool IsInfo(IChat chat)
         {
             return chat.Text.StartsWith("/info ");
@@ -196,6 +204,21 @@ namespace NicoSitePlugin
             {
                 throw new ParseException(chat.Raw);
             }
+        }
+        public static INicoItem CreateNicoItem(IChat chat, string roomName, INicoSiteOptions siteOptions)
+        {
+            //Text
+            ///gift takenoko 41600702 "さーら♔" 600 "" "たけのこ" 1
+
+            var content = chat.Text;
+            return new NicoItem(chat.Raw, siteOptions)
+            {
+                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
+                NameItems = null,
+                PostTime = chat.Date.ToString("HH:mm:ss"),
+                UserId = chat.UserId,
+                RoomName = roomName,
+            };
         }
 
         public static INicoInfo CreateNicoInfo(IChat chat, string roomName, INicoSiteOptions siteOptions)

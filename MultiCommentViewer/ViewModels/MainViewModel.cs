@@ -718,6 +718,10 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new NicoCommentViewModel(ad, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
+                else if (nicoMessage is NicoSitePlugin.INicoItem item)
+                {
+                    mcvCvm = new NicoCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
                 else if (nicoMessage is NicoSitePlugin.INicoInfo info)
                 {
                     mcvCvm = new NicoCommentViewModel(info, messageContext.Metadata, messageContext.Methods, connectionName, _options);

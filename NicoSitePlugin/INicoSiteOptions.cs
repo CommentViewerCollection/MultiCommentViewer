@@ -15,6 +15,11 @@ namespace NicoSitePlugin
         int ResNum { get; set; }
         Color OperatorBackColor { get; set; }
         Color OperatorForeColor { get; set; }
+        Color AdBackColor { get; set; }
+        Color AdForeColor { get; set; }
+        Color ItemBackColor { get; set; }
+        Color ItemForeColor { get; set; }
+
         /// <summary>
         /// 184コメントを表示するか
         /// </summary>

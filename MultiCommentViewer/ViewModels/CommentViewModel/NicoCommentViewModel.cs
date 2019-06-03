@@ -132,6 +132,13 @@ namespace MultiCommentViewer
             MessageItems = ad.CommentItems;
             PostTime = ad.PostTime;
         }
+        public NicoCommentViewModel(NicoSitePlugin.INicoItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(item as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
+        {
+            _nameItems = item.NameItems;
+            MessageItems = item.CommentItems;
+            PostTime = item.PostTime;
+        }
         public NicoCommentViewModel(NicoSitePlugin.INicoInfo info, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(info as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {

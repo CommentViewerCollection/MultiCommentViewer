@@ -88,6 +88,13 @@ namespace NicoSitePlugin
                         metadata = new AdMessageMetadata(ad, _options, _siteOptions);
                     }
                     break;
+                case NicoMessageType.Item:
+                    {
+                        var item = Tools.CreateNicoItem(chat, roomName, _siteOptions);
+                        message = item;
+                        metadata = new ItemMessageMetadata(item, _options, _siteOptions);
+                    }
+                    break;
                 default:
                     message = null;
                     metadata = null;

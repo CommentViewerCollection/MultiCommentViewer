@@ -212,7 +212,7 @@ namespace WhowatchSitePlugin
                 return;
             }
 
-            var internalCommentProvider = new InternalCommentProvider();
+            var internalCommentProvider = new InternalCommentProvider(_logger);
             _internalCommentProvider = internalCommentProvider;
             internalCommentProvider.MessageReceived += InternalCommentProvider_MessageReceived;
             //var d = internal

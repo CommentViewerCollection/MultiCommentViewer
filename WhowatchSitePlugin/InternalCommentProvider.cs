@@ -66,11 +66,6 @@ namespace WhowatchSitePlugin
             }
         }
         private System.Timers.Timer _heartBeatTimer = new System.Timers.Timer();
-        public InternalCommentProvider()
-        {
-            _heartBeatTimer.Interval = 30 * 1000;//30sec
-            _heartBeatTimer.Elapsed += HeartBeatTimer_Elapsed;
-        }
         ~InternalCommentProvider()
         {
             _heartBeatTimer.Elapsed -= HeartBeatTimer_Elapsed;
@@ -113,6 +108,8 @@ namespace WhowatchSitePlugin
         public InternalCommentProvider(ILogger logger)
         {
             _logger = logger;
+            _heartBeatTimer.Interval = 30 * 1000;//30sec
+            _heartBeatTimer.Elapsed += HeartBeatTimer_Elapsed;
         }
     }
 }

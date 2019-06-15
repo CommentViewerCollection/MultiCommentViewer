@@ -92,10 +92,6 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
     <Compile Include="AppNoStartupUri.xaml.cs">
       <DependentUpon>AppNoStartupUri.xaml</DependentUpon>
     </Compile>
@@ -182,10 +178,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Views\MainOptionsPanel.xaml.cs">
       <DependentUpon>MainOptionsPanel.xaml</DependentUpon>
     </Compile>

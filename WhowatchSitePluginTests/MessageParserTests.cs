@@ -45,6 +45,27 @@ namespace WhowatchSitePluginTests
             Assert.AreEqual("メガホン", shout.ItemName);
         }
         [Test]
+        public async Task WhowatchByOwnerParseTest()
+        {
+            var data = "[null,null,\"room:11089976\",\"shout\",{\"topic\":\"room_pub:11089976\",\"event\":\"shout\",\"comment\":{\"user\":{\"user_profile\":{},\"user_path\":\"t:kv510k\",\"name\":\"Ryu\",\"is_admin\":false,\"id\":1072838,\"icon_url\":\"\",\"account_name\":\"@kv510k\"},\"tts\":{},\"reply_to_user_id\":0,\"posted_at\":1560538378000,\"not_escaped\":false,\"ng_word_included\":false,\"message\":\"てｓｔ\",\"live_id\":11089976,\"is_silent_comment\":false,\"is_reply_to_me\":false,\"id\":714170546,\"escaped_message\":\"てｓｔ\",\"enabled\":true,\"comment_type\":\"BY_OWNER\",\"anonymized\":false}}]";
+            MessageParser.Resolver = new ItemNameResolver(await CreatePlayItemsTestData());
+            var internalMessage = MessageParser.ParseRawString2InternalMessage(data);
+            var message = MessageParser.ParseShoutMessage(internalMessage);
+
+            var shout = message as IWhowatchComment;
+            Assert.IsNotNull(shout);
+            Assert.AreEqual("@kv510k", shout.AccountName);
+            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("てｓｔ") }, shout.CommentItems);
+            Assert.AreEqual("714170546", shout.Id);
+            Assert.AreEqual("03:52:58", shout.PostTime);
+            Assert.AreEqual(data, shout.Raw);
+            Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
+            Assert.AreEqual("1072838", shout.UserId);
+            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("Ryu") }, shout.NameItems);
+            Assert.AreEqual("t:kv510k", shout.UserPath);
+            Assert.AreEqual(WhowatchMessageType.Comment, shout.WhowatchMessageType);
+        }
+        [Test]
         public void Test()
         {
             var data = "[null,null,\"room:9184711\",\"shout\",{\"a\"}]";

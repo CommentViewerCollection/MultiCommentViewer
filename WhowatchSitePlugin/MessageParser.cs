@@ -195,6 +195,7 @@ namespace WhowatchSitePlugin
                 case "BY_PUBLIC":
                 case "BY_FOLLOWER":
                 case "BY_SYSTEM":
+                case "BY_OWNER":
                     //運営コメント
 
                     //NGワードを含むコメント。ng_word_includedがtrueで、original_messageがある。

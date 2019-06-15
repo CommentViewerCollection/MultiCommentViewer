@@ -176,8 +176,8 @@ namespace WhowatchSitePlugin
                 System.Diagnostics.Debug.Assert(live_id != -1);
                 _live_id = live_id;
 
-                var lastUpdatedAt = 0;
-                initialLiveData = await Api.GetLiveDataAsync(_server, live_id, lastUpdatedAt, _cc);
+                _lastUpdatedAt = 0;
+                initialLiveData = await Api.GetLiveDataAsync(_server, live_id, _lastUpdatedAt, _cc);
                 if (initialLiveData.Live.LiveStatus != PUBLISHING)
                 {
                     SendSystemInfo("LiveStatus: " + initialLiveData.Live.LiveStatus, InfoType.Debug);
@@ -187,6 +187,7 @@ namespace WhowatchSitePlugin
                 }
                 RaiseMetadataUpdated(initialLiveData);
                 _startedAt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(initialLiveData.Live.StartedAt);
+                _lastUpdatedAt = initialLiveData.UpdatedAt;
                 foreach (var initialComment in Enumerable.Reverse(initialLiveData.Comments))
                 {
                     Debug.WriteLine(initialComment.Message);
@@ -281,6 +282,7 @@ namespace WhowatchSitePlugin
         }
         private void MetadataProvider_MetadataUpdated(object sender, LiveData e)
         {
+            _lastUpdatedAt = e.UpdatedAt;
             RaiseMetadataUpdated(e);
         }
 

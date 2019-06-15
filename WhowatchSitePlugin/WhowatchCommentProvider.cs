@@ -54,8 +54,6 @@ namespace WhowatchSitePlugin
         #endregion//CanDisconnect
 
         public event EventHandler<ConnectedEventArgs> Connected;
-        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;

@@ -52,8 +52,6 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             get { return _connection != null ? _connection.IsLoggedIn : false; }
         }
-        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;

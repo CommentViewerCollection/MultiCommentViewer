@@ -426,9 +426,7 @@ namespace MultiCommentViewer
                     ForeColor = foreColor,
                 };
                 connection.Renamed += Connection_Renamed;
-                connection.CommentReceived += Connection_CommentReceived;
                 connection.MessageReceived += Connection_MessageReceived;
-                connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
                 var site = GetSiteViewModelFromName(siteName);
@@ -800,27 +798,6 @@ namespace MultiCommentViewer
             }
         }
         #region EventHandler
-        private async void Connection_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
-        {
-            var connectionViewModel = sender as ConnectionViewModel;
-            Debug.Assert(connectionViewModel != null);
-            try
-            {
-                //TODO:Comments.AddRange()が欲しい
-                await _dispatcher.BeginInvoke((Action)(() =>
-                {
-                    foreach (var comment in e)
-                    {
-                        AddComment(comment, connectionViewModel);
-                    }
-                }), DispatcherPriority.Normal);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
-            //TODO:Pluginに渡す
-        }
         private async void Connection_MessageReceived(object sender, IMessageContext e)
         {
             Debug.Assert(e != null);
@@ -856,40 +833,6 @@ namespace MultiCommentViewer
             {
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex, "", $"{e.ToString()}");
-            }
-        }
-        private async void Connection_CommentReceived(object sender, ICommentViewModel e)
-        {
-            var connectionViewModel = sender as ConnectionViewModel;
-            Debug.Assert(connectionViewModel != null);
-            Debug.Assert(e.MessageType != MessageType.Unknown);
-            try
-            {
-                //TODO:Comments.AddRange()が欲しい
-                await _dispatcher.BeginInvoke((Action)(() =>
-                {
-                    var comment = e;
-                    //if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
-                    //{
-                    //    var user = _userStore.GetUser(comment.UserId);
-                    //    uvm = new UserViewModel(user, _options);
-                    //    _userDict.Add(comment.UserId, uvm);
-                    //}
-                    //comment.User = uvm.User;
-                    AddComment(comment, connectionViewModel);
-                    //uvm.Comments.Add(comment);
-                }), DispatcherPriority.Normal);
-                if (IsComment(e.MessageType))
-                {
-                    _pluginManager.SetComments(e);
-                }
-                await e.AfterCommentAdded();
-            }
-            catch (TaskCanceledException) { }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                _logger.LogException(ex);
             }
         }
         bool IsComment(MessageType type)

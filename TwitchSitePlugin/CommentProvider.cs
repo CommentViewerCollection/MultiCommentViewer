@@ -425,8 +425,9 @@ namespace TwitchSitePlugin
                         break;
                     case "twilight-user":
                         {
-                            var val = cookie.Value.Replace("%22", "\"");
-                            var match = Regex.Match(val, "\"displayName\":\"([^\"]+)\"");
+                            //"{\"authToken\":\"rkpavalsbvBovec0qj2l5r5q0mnlm4\",\"displayName\":\"abckk\",\"id\":\"124821926\",\"login\":\"ob112\",\"roles\":{\"isStaff\":false},\"version\":2}"
+                            var decoded = System.Web.HttpUtility.UrlDecode(cookie.Value);
+                            var match = Regex.Match(decoded, "\"displayName\":\"([^\"]+)\"");
                             if (match.Success)
                             {
                                 displayName = match.Groups[1].Value;

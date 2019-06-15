@@ -176,5 +176,40 @@ namespace TwitchSitePluginTests
             Assert.AreEqual("コテハン", user.Nickname);
             return;
         }
+        [Test]
+        public async Task GetCurrentUserInfoTest()
+        {
+            var serverMock = new Mock<IDataServer>();
+            var server = serverMock.Object;
+
+            var loggerMock = new Mock<ILogger>();
+            var logger = loggerMock.Object;
+
+            var optionsMock = new Mock<ICommentOptions>();
+            var options = optionsMock.Object;
+
+            var userStoreManagerMock = new Mock<IUserStoreManager>();
+            var userStoreManager = userStoreManagerMock.Object;
+
+            var siteOptions = new TwitchSiteOptions
+            {
+                NeedAutoSubNickname = true
+            };
+
+            var browserMock = new Mock<IBrowserProfile>();
+            var cookies = new List<Cookie>
+            {
+                new Cookie("name","abc","/","twitch.tv"),
+                new Cookie("twilight-user","{%22authToken%22:%22rkpavglsbv6ovec0qj2l5r5q0mnlm4%22%2C%22displayName%22:%22aokpz%22%2C%22id%22:%22223620888%22%2C%22login%22:%22kv501k%22%2C%22roles%22:{%22isStaff%22:false}%2C%22version%22:2}","/","twitch.tv"),
+            };
+            browserMock.Setup(b => b.GetCookieCollection(It.IsAny<string>())).Returns(cookies);
+            var browser = browserMock.Object;
+
+            var cp = new TwitchCommentProvider(server, logger, options, siteOptions, userStoreManager);
+            var info = await cp.GetCurrentUserInfo(browser);
+            Assert.AreEqual("aokpz", info.Username);
+            Assert.IsTrue(info.IsLoggedIn);
+
+        }
     }
 }

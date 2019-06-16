@@ -26,11 +26,13 @@ namespace MultiCommentViewer
     {
         public ObservableCollection<UserViewModel> UserViewModels { get; }
         public MainViewModel MainVm { get; }
+        public IOptions Options { get; }
 
-        public ShowUserListViewMessage(ObservableCollection<UserViewModel> userViewModels, MainViewModel mainVm)
+        public ShowUserListViewMessage(ObservableCollection<UserViewModel> userViewModels, MainViewModel mainVm, IOptions options)
         {
             UserViewModels = userViewModels;
             MainVm = mainVm;
+            Options = options;
         }
     }
     class SetPostCommentPanel : GalaSoft.MvvmLight.Messaging.MessageBase

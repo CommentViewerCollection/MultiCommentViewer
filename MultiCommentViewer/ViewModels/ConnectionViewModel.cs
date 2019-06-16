@@ -79,9 +79,7 @@ namespace MultiCommentViewer
                     Debug.Assert(before.CanConnect, "接続中に変更はできない");
                     before.CanConnectChanged -= CommentProvider_CanConnectChanged;
                     before.CanDisconnectChanged -= CommentProvider_CanDisconnectChanged;
-                    before.CommentReceived -= CommentProvider_CommentReceived;
                     before.MessageReceived -= CommentProvider_MessageReceived;
-                    before.InitialCommentsReceived -= CommentProvider_InitialCommentsReceived;
                     before.MetadataUpdated -= CommentProvider_MetadataUpdated;
                     before.Connected -= CommentProvider_Connected;
                 }
@@ -90,9 +88,7 @@ namespace MultiCommentViewer
                 var next = _commentProvider = _sitePluginLoader.CreateCommentProvider(nextGuid);
                 next.CanConnectChanged += CommentProvider_CanConnectChanged;
                 next.CanDisconnectChanged += CommentProvider_CanDisconnectChanged;
-                next.CommentReceived += CommentProvider_CommentReceived;
                 next.MessageReceived += CommentProvider_MessageReceived;
-                next.InitialCommentsReceived += CommentProvider_InitialCommentsReceived;
                 next.MetadataUpdated += CommentProvider_MetadataUpdated;
                 next.Connected += CommentProvider_Connected;
                 UpdateLoggedInInfo();
@@ -240,22 +236,11 @@ namespace MultiCommentViewer
             MetadataReceived?.Invoke(this, e);//senderはConnection
         }
         public event EventHandler<RenamedEventArgs> Renamed;
-        [Obsolete("MessageReceivedを使うこと")]
-        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMessageContext> MessageReceived;
-        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
         public event EventHandler<IMetadata> MetadataReceived;
-        private void CommentProvider_CommentReceived(object sender, ICommentViewModel e)
-        {
-            CommentReceived?.Invoke(this, e);
-        }
         private void CommentProvider_MessageReceived(object sender, IMessageContext e)
         {
             MessageReceived?.Invoke(this, e);
-        }
-        private void CommentProvider_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
-        {
-            InitialCommentsReceived?.Invoke(this, e);
         }
         private void CommentProvider_CanDisconnectChanged(object sender, EventArgs e)
         {
@@ -336,6 +321,10 @@ namespace MultiCommentViewer
 
         public ConnectionContext GetCurrent()
         {
+            if(SelectedSite == null)
+            {
+                return null;
+            }
             var context = new ConnectionContext { ConnectionName = this.ConnectionName, SiteGuid = SelectedSite.Guid, CommentProvider = _commentProvider };
             return context;
         }

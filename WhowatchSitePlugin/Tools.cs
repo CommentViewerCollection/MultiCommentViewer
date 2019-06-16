@@ -121,7 +121,7 @@ namespace WhowatchSitePlugin
         public static string ExtractUserPathFromInput(string input)
         {
             if (string.IsNullOrEmpty(input)) return null;
-            var match = Regex.Match(input, "(?:whowatch\\.tv/profile/)?((t:|w:)[a-z0-9_]+)");
+            var match = Regex.Match(input, "(?:whowatch\\.tv/profile/)?((t:|w:)[a-zA-Z0-9_]+)");
             if (match.Success)
             {
                 return match.Groups[1].Value;

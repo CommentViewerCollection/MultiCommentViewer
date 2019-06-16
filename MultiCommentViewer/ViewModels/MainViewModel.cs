@@ -20,6 +20,7 @@ using System.Windows.Data;
 using System.Text.RegularExpressions;
 using CommentViewerCommon;
 using SitePluginCommon;
+using System.Windows;
 
 namespace MultiCommentViewer
 {
@@ -137,7 +138,6 @@ namespace MultiCommentViewer
         }
         private readonly IBrowserLoader _browserLoader;
         private readonly IIo _io;
-        IOptions _options;
         //IEnumerable<ISiteContext> _siteContexts;
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
@@ -426,9 +426,7 @@ namespace MultiCommentViewer
                     ForeColor = foreColor,
                 };
                 connection.Renamed += Connection_Renamed;
-                connection.CommentReceived += Connection_CommentReceived;
                 connection.MessageReceived += Connection_MessageReceived;
-                connection.InitialCommentsReceived += Connection_InitialCommentsReceived;
                 connection.MetadataReceived += Connection_MetadataReceived;
                 connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
                 var site = GetSiteViewModelFromName(siteName);
@@ -786,34 +784,20 @@ namespace MultiCommentViewer
             }
             if (mcvCvm != null)
             {
-                _dispatcher.Invoke(() =>
+                if (_dispatcher != null)
+                {
+                    _dispatcher.Invoke(() =>
+                    {
+                        _comments.Add(mcvCvm);
+                    });
+                }
+                else
                 {
                     _comments.Add(mcvCvm);
-                });
+                }
             }
         }
         #region EventHandler
-        private async void Connection_InitialCommentsReceived(object sender, List<ICommentViewModel> e)
-        {
-            var connectionViewModel = sender as ConnectionViewModel;
-            Debug.Assert(connectionViewModel != null);
-            try
-            {
-                //TODO:Comments.AddRange()が欲しい
-                await _dispatcher.BeginInvoke((Action)(() =>
-                {
-                    foreach (var comment in e)
-                    {
-                        AddComment(comment, connectionViewModel);
-                    }
-                }), DispatcherPriority.Normal);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
-            //TODO:Pluginに渡す
-        }
         private async void Connection_MessageReceived(object sender, IMessageContext e)
         {
             Debug.Assert(e != null);
@@ -849,40 +833,6 @@ namespace MultiCommentViewer
             {
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex, "", $"{e.ToString()}");
-            }
-        }
-        private async void Connection_CommentReceived(object sender, ICommentViewModel e)
-        {
-            var connectionViewModel = sender as ConnectionViewModel;
-            Debug.Assert(connectionViewModel != null);
-            Debug.Assert(e.MessageType != MessageType.Unknown);
-            try
-            {
-                //TODO:Comments.AddRange()が欲しい
-                await _dispatcher.BeginInvoke((Action)(() =>
-                {
-                    var comment = e;
-                    //if (!_userDict.TryGetValue(comment.UserId, out UserViewModel uvm))
-                    //{
-                    //    var user = _userStore.GetUser(comment.UserId);
-                    //    uvm = new UserViewModel(user, _options);
-                    //    _userDict.Add(comment.UserId, uvm);
-                    //}
-                    //comment.User = uvm.User;
-                    AddComment(comment, connectionViewModel);
-                    //uvm.Comments.Add(comment);
-                }), DispatcherPriority.Normal);
-                if (IsComment(e.MessageType))
-                {
-                    _pluginManager.SetComments(e);
-                }
-                await e.AfterCommentAdded();
-            }
-            catch (TaskCanceledException) { }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                _logger.LogException(ex);
             }
         }
         bool IsComment(MessageType type)
@@ -1192,13 +1142,88 @@ namespace MultiCommentViewer
                 }
             }
         }
-        #endregion
+        public System.Windows.Controls.DataGridGridLinesVisibility GridLinesVisibility
+        {
+            get
+            {
+                if (_options.IsShowHorizontalGridLine && _options.IsShowVerticalGridLine)
+                    return System.Windows.Controls.DataGridGridLinesVisibility.All;
+                else if (_options.IsShowHorizontalGridLine)
+                    return System.Windows.Controls.DataGridGridLinesVisibility.Horizontal;
+                else if (_options.IsShowVerticalGridLine)
+                    return System.Windows.Controls.DataGridGridLinesVisibility.Vertical;
+                else
+                    return System.Windows.Controls.DataGridGridLinesVisibility.None;
+            }
+        }
+        public Brush TitleForeground => new SolidColorBrush(_options.TitleForeColor);
+        public Brush TitleBackground => new SolidColorBrush(_options.TitleBackColor);
+        public Brush ViewBackground => new SolidColorBrush(_options.ViewBackColor);
+        public Brush WindowBorderBrush => new SolidColorBrush(_options.WindowBorderColor);
+        public Brush SystemButtonForeground => new SolidColorBrush(_options.SystemButtonForeColor);
+        public Brush SystemButtonBackground => new SolidColorBrush(_options.SystemButtonBackColor);
+        public Brush SystemButtonBorderBrush => new SolidColorBrush(_options.SystemButtonBorderColor);
+        public Brush SystemButtonMouseOverBackground => new SolidColorBrush(_options.SystemButtonMouseOverBackColor);
+        public Brush SystemButtonMouseOverForeground => new SolidColorBrush(_options.SystemButtonMouseOverForeColor);
+        public Brush SystemButtonMouseOverBorderBrush => new SolidColorBrush(_options.SystemButtonMouseOverBorderColor);
+        public Brush MenuBackground => new SolidColorBrush(_options.MenuBackColor);
+        public Brush MenuForeground => new SolidColorBrush(_options.MenuForeColor);
+        public Brush MenuItemCheckMarkBrush => new SolidColorBrush(_options.MenuItemCheckMarkColor);
+        public Brush MenuItemMouseOverBackground => new SolidColorBrush(_options.MenuItemMouseOverBackColor);
+        public Brush MenuItemMouseOverForeground => new SolidColorBrush(_options.MenuItemMouseOverForeColor);
+        public Brush MenuItemMouseOverBorderBrush => new SolidColorBrush(_options.MenuItemMouseOverBorderColor);
+        public Brush MenuItemMouseOverCheckMarkBrush => new SolidColorBrush(_options.MenuItemMouseOverCheckMarkColor);
+        public Brush MenuSeparatorBackground => new SolidColorBrush(_options.MenuSeparatorBackColor);
+        public Brush MenuPopupBorderBrush => new SolidColorBrush(_options.MenuPopupBorderColor);
+        public Brush ButtonBackground => new SolidColorBrush(_options.ButtonBackColor);
+        public Brush ButtonForeground => new SolidColorBrush(_options.ButtonForeColor);
+        public Brush ButtonBorderBrush => new SolidColorBrush(_options.ButtonBorderColor);
+        public Brush CommentListBackground => new SolidColorBrush(_options.CommentListBackColor);
+        public Brush CommentListBorderBrush => new SolidColorBrush(_options.CommentListBorderColor);
+        public Brush CommentListHeaderBackground => new SolidColorBrush(_options.CommentListHeaderBackColor);
+        public Brush CommentListHeaderForeground => new SolidColorBrush(_options.CommentListHeaderForeColor);
+        public Brush CommentListHeaderBorderBrush => new SolidColorBrush(_options.CommentListHeaderBorderColor);        
+        public Brush CommentListSeparatorBrush => new SolidColorBrush(_options.CommentListSeparatorColor);
+        public Brush ConnectionListBackground => new SolidColorBrush(_options.CommentListBackColor);
+        public Brush ConnectionListHeaderBackground => new SolidColorBrush(_options.CommentListHeaderBackColor);
+        public Brush ConnectionListHeaderForeground => new SolidColorBrush(_options.CommentListHeaderForeColor);
+        public Brush ConnectionListHeaderBorderBrush => new SolidColorBrush(_options.CommentListHeaderBorderColor);
+        public Brush ConnectionListBorderBrush => new SolidColorBrush(_options.CommentListBorderColor);
+        public Brush ConnectionListSeparatorBrush => new SolidColorBrush(Colors.Yellow);
+        public Brush ConnectionListRowBackground => new SolidColorBrush(_options.ConnectionListRowBackColor);
+        public Brush ContextMenuBackground => new SolidColorBrush(_options.MenuBackColor);
+        public Brush ContextMenuForeground => new SolidColorBrush(_options.MenuForeColor);
+        public Brush ContextMenuBorderBrush => new SolidColorBrush(_options.MenuPopupBorderColor);
+        public Brush ScrollBarBorderBrush => new SolidColorBrush(_options.ScrollBarBorderColor);
+        public Brush ScrollBarThumbBackground => new SolidColorBrush(_options.ScrollBarThumbBackColor);
+        public Brush ScrollBarThumbMouseOverBackground => new SolidColorBrush(_options.ScrollBarThumbMouseOverBackColor);
+        public Brush ScrollBarThumbPressedBackground => new SolidColorBrush(_options.ScrollBarThumbPressedBackColor);
+        public Brush ScrollBarBackground => new SolidColorBrush(_options.ScrollBarBackColor);
+        public Brush ScrollBarButtonBackground => new SolidColorBrush(_options.ScrollBarButtonBackColor);
+        public Brush ScrollBarButtonForeground => new SolidColorBrush(_options.ScrollBarButtonForeColor);
+        public Brush ScrollBarButtonBorderBrush => new SolidColorBrush(_options.ScrollBarButtonBorderColor);
+        public Brush ScrollBarButtonDisabledBackground => new SolidColorBrush(_options.ScrollBarButtonDisabledBackColor);
+        public Brush ScrollBarButtonDisabledForeground => new SolidColorBrush(_options.ScrollBarButtonDisabledForeColor);
+        public Brush ScrollBarButtonDisabledBorderBrush => new SolidColorBrush(_options.ScrollBarButtonDisabledBorderColor);
+        public Brush ScrollBarButtonMouseOverBackground => new SolidColorBrush(_options.ScrollBarButtonMouseOverBackColor);
+        public Brush ScrollBarButtonMouseOverForeground => new SolidColorBrush(_options.ScrollBarButtonMouseOverForeColor);
+        public Brush ScrollBarButtonMouseOverBorderBrush => new SolidColorBrush(_options.ScrollBarButtonMouseOverBorderColor);
+        public Brush ScrollBarButtonPressedBackground => new SolidColorBrush(_options.ScrollBarButtonPressedBackColor);
+        public Brush ScrollBarButtonPressedForeground => new SolidColorBrush(_options.ScrollBarButtonPressedForeColor);
+        public Brush ScrollBarButtonPressedBorderBrush => new SolidColorBrush(_options.ScrollBarButtonPressedBorderColor);
+
+        private readonly Color _myColor = new Color { A = 0xFF, R = 45, G = 45, B = 48 };
+        #endregion //Properties
 
         public MainViewModel():base(new DynamicOptionsTest())
         {
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
             {
-
+                _dispatcher = Dispatcher.CurrentDispatcher;
+                _siteVms = new List<SiteViewModel> { };// new SiteViewModel("DesignSite", Guid.NewGuid()) };
+                _browserVms = new List<BrowserViewModel>();// { new BrowserViewModel()}
+                AddNewConnection("test", "YouTubeLive","https://google.com", "Chrome", false, Colors.Blue, Colors.Red);
+                SetSystemInfo("test", InfoType.Notice);
             }
             else
             {
@@ -1211,8 +1236,6 @@ namespace MultiCommentViewer
         {
             _io = io;
             _dispatcher = Dispatcher.CurrentDispatcher;
-            
-            _options = options;
 
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;
@@ -1273,6 +1296,163 @@ namespace MultiCommentViewer
                     case nameof(_options.IsShowInfo):
                         RaisePropertyChanged(nameof(IsShowInfo));
                         break;
+
+                    case nameof(_options.TitleBackColor):
+                        RaisePropertyChanged(nameof(TitleBackground));
+                        break;
+                    case nameof(_options.TitleForeColor):
+                        RaisePropertyChanged(nameof(TitleForeground));
+                        break;
+                    case nameof(_options.ViewBackColor):
+                        RaisePropertyChanged(nameof(ViewBackground));
+                        break;
+                    case nameof(_options.WindowBorderColor):
+                        RaisePropertyChanged(nameof(WindowBorderBrush));
+                        break;
+                    case nameof(_options.SystemButtonBackColor):
+                        RaisePropertyChanged(nameof(SystemButtonBackground));
+                        break;
+                    case nameof(_options.SystemButtonForeColor):
+                        RaisePropertyChanged(nameof(SystemButtonForeground));
+                        break;
+                    case nameof(_options.SystemButtonBorderColor):
+                        RaisePropertyChanged(nameof(SystemButtonBorderBrush));
+                        break;
+                    case nameof(_options.SystemButtonMouseOverBackColor):
+                        RaisePropertyChanged(nameof(SystemButtonMouseOverBackground));
+                        break;
+                    case nameof(_options.SystemButtonMouseOverForeColor):
+                        RaisePropertyChanged(nameof(SystemButtonMouseOverForeground));
+                        break;
+                    case nameof(_options.SystemButtonMouseOverBorderColor):
+                        RaisePropertyChanged(nameof(SystemButtonMouseOverBorderBrush));
+                        break;
+
+                    case nameof(_options.MenuBackColor):
+                        RaisePropertyChanged(nameof(MenuBackground));
+                        RaisePropertyChanged(nameof(ContextMenuBackground));
+                        break;
+                    case nameof(_options.MenuForeColor):
+                        RaisePropertyChanged(nameof(MenuForeground));
+                        RaisePropertyChanged(nameof(ContextMenuForeground));
+                        break;
+                    case nameof(_options.MenuPopupBorderColor):
+                        RaisePropertyChanged(nameof(MenuPopupBorderBrush));
+                        break;
+                    case nameof(_options.MenuSeparatorBackColor):
+                        RaisePropertyChanged(nameof(MenuSeparatorBackground));
+                        break;
+                    case nameof(_options.MenuItemCheckMarkColor):
+                        RaisePropertyChanged(nameof(MenuItemCheckMarkBrush));
+                        break;
+                    case nameof(_options.MenuItemMouseOverBackColor):
+                        RaisePropertyChanged(nameof(MenuItemMouseOverBackground));
+                        break;
+                    case nameof(_options.MenuItemMouseOverForeColor):
+                        RaisePropertyChanged(nameof(MenuItemMouseOverForeground));
+                        break;
+                    case nameof(_options.MenuItemMouseOverBorderColor):
+                        RaisePropertyChanged(nameof(MenuItemMouseOverBorderBrush));
+                        break;
+                    case nameof(_options.MenuItemMouseOverCheckMarkColor):
+                        RaisePropertyChanged(nameof(MenuItemMouseOverCheckMarkBrush));
+                        break;
+
+
+                    case nameof(_options.ButtonBackColor):
+                        RaisePropertyChanged(nameof(ButtonBackground));
+                        break;
+                    case nameof(_options.ButtonForeColor):
+                        RaisePropertyChanged(nameof(ButtonForeground));
+                        break;
+                    case nameof(_options.ButtonBorderColor):
+                        RaisePropertyChanged(nameof(ButtonBorderBrush));
+                        break;
+                    case nameof(_options.CommentListBackColor):
+                        RaisePropertyChanged(nameof(CommentListBackground));
+                        RaisePropertyChanged(nameof(ConnectionListBackground));
+                        break;
+                    case nameof(_options.CommentListHeaderBackColor):
+                        RaisePropertyChanged(nameof(CommentListHeaderBackground));
+                        RaisePropertyChanged(nameof(ConnectionListHeaderBackground));
+                        break;
+                    case nameof(_options.CommentListHeaderForeColor):
+                        RaisePropertyChanged(nameof(CommentListHeaderForeground));
+                        RaisePropertyChanged(nameof(ConnectionListHeaderForeground));
+                        break;
+                    case nameof(_options.CommentListHeaderBorderColor):
+                        RaisePropertyChanged(nameof(CommentListHeaderBorderBrush));
+                        RaisePropertyChanged(nameof(ConnectionListHeaderBorderBrush));
+                        break;
+                    case nameof(_options.CommentListBorderColor):
+                        RaisePropertyChanged(nameof(CommentListBorderBrush));
+                        RaisePropertyChanged(nameof(ConnectionListBorderBrush));
+                        break;
+                    case nameof(_options.CommentListSeparatorColor):
+                        RaisePropertyChanged(nameof(CommentListSeparatorBrush));
+                        RaisePropertyChanged(nameof(ConnectionListSeparatorBrush));
+                        break;
+                    //case nameof(_options.ConnectionListBackColor):
+                    //    RaisePropertyChanged(nameof(ConnectionListBackground));
+                    //    break;
+                    //case nameof(_options.ConnectionListHeaderBackColor):
+                    //    RaisePropertyChanged(nameof(ConnectionListHeaderBackground));
+                    //    break;
+                    //case nameof(_options.ConnectionListHeaderForeColor):
+                    //    RaisePropertyChanged(nameof(ConnectionListHeaderForeground));
+                    //    break;
+                    case nameof(_options.ConnectionListRowBackColor):
+                        RaisePropertyChanged(nameof(ConnectionListRowBackground));
+                        break;
+
+                    case nameof(_options.ScrollBarBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarBackground));
+                        break;
+                    case nameof(_options.ScrollBarBorderColor):
+                        RaisePropertyChanged(nameof(ScrollBarBorderBrush));
+                        break;
+                    case nameof(_options.ScrollBarThumbBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarThumbBackground));
+                        break;
+                    case nameof(_options.ScrollBarThumbMouseOverBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarThumbMouseOverBackground));
+                        break;
+                    case nameof(_options.ScrollBarThumbPressedBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarThumbPressedBackground));
+                        break;
+
+
+                    case nameof(_options.ScrollBarButtonBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonBackground));
+                        break;
+                    case nameof(_options.ScrollBarButtonForeColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonForeground));
+                        break;
+                    case nameof(_options.ScrollBarButtonBorderColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonBorderBrush));
+                        break;
+
+
+                    case nameof(_options.ScrollBarButtonDisabledBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonDisabledBackground));
+                        break;
+                    case nameof(_options.ScrollBarButtonDisabledForeColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonDisabledForeground));
+                        break;
+                    case nameof(_options.ScrollBarButtonDisabledBorderColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonDisabledBorderBrush));
+                        break;
+
+                    case nameof(_options.ScrollBarButtonMouseOverBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonMouseOverBackground));
+                        break;
+                    case nameof(_options.ScrollBarButtonPressedBackColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonPressedBackground));
+                        break;
+                    case nameof(_options.ScrollBarButtonPressedBorderColor):
+                        RaisePropertyChanged(nameof(ScrollBarButtonPressedBorderBrush));
+                        break;
+
                     case nameof(_options.IsEnabledSiteConnectionColor):
                     case nameof(_options.SiteConnectionColorType):
                         RaisePropertyChanged(nameof(ConnectionColorColumnWidth));
@@ -1292,7 +1472,7 @@ namespace MultiCommentViewer
             {
                 await _dispatcher.BeginInvoke((Action)(() =>
                 {
-                    var vm = new PluginMenuItemViewModel(e);
+                    var vm = new PluginMenuItemViewModel(e, _options);
                     _pluginMenuItemDict.Add(e, vm);
                     PluginMenuItemCollection.Add(vm);
                 }), DispatcherPriority.Normal);
@@ -1369,7 +1549,7 @@ namespace MultiCommentViewer
         }
         private void ShowUserList()
         {
-            MessengerInstance.Send(new ShowUserListViewMessage(_userViewModels, this));
+            MessengerInstance.Send(new ShowUserListViewMessage(_userViewModels, this, _options));
         }
         private async void CheckUpdate()
         {

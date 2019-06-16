@@ -47,6 +47,8 @@ namespace MultiCommentViewer
         double InfoWidth { get; set; }
         bool IsShowInfo { get; set; }
         int InfoDisplayIndex { get; set; }
+        bool IsShowVerticalGridLine { get; set; }
+        bool IsShowHorizontalGridLine { get; set; }
 
         double MetadataViewConnectionNameColumnWidth { get; set; }
         double MetadataViewTitleColumnWidth { get; set; }
@@ -55,6 +57,58 @@ namespace MultiCommentViewer
         double MetadataViewTotalViewersColumnWidth { get; set; }
         double MetadataViewActiveColumnWidth { get; set; }
         double MetadataViewOthersColumnWidth { get; set; }
+
+        Color TitleForeColor { get; set; }
+        Color TitleBackColor { get; set; }
+        Color ViewBackColor { get; set; }
+        Color WindowBorderColor { get; set; }
+        Color SystemButtonForeColor { get; set; }
+        Color SystemButtonBackColor { get; set; }
+        Color SystemButtonBorderColor { get; set; }
+        Color SystemButtonMouseOverBackColor { get; set; }
+        Color SystemButtonMouseOverForeColor { get; set; }
+        Color SystemButtonMouseOverBorderColor { get; set; }
+        Color MenuBackColor { get; set; }
+        Color MenuForeColor { get; set; }
+        Color MenuItemCheckMarkColor { get; set; }
+        Color MenuItemMouseOverBackColor { get; set; }
+        Color MenuItemMouseOverForeColor { get; set; }
+        Color MenuItemMouseOverBorderColor { get; set; }
+        Color MenuItemMouseOverCheckMarkColor { get; set; }
+        Color MenuSeparatorBackColor { get; set; }
+        Color MenuPopupBorderColor { get; set; }
+        Color ButtonBackColor { get; set; }
+        Color ButtonForeColor { get; set; }
+        Color ButtonBorderColor { get; set; }
+        Color CommentListBackColor { get; set; }
+        Color CommentListHeaderBackColor { get; set; }
+        Color CommentListHeaderForeColor { get; set; }
+        Color CommentListHeaderBorderColor { get; set; }
+        Color CommentListBorderColor { get; set; }
+        Color CommentListSeparatorColor { get; set; }
+        Color ConnectionListBackColor { get; set; }
+        Color ConnectionListHeaderBackColor { get; set; }
+        Color ConnectionListHeaderForeColor { get; set; }
+        Color ConnectionListRowBackColor { get; set; }
+
+        Color ScrollBarBackColor { get; set; }
+        Color ScrollBarBorderColor { get; set; }
+        Color ScrollBarThumbBackColor { get; set; }
+        Color ScrollBarThumbMouseOverBackColor { get; set; }
+        Color ScrollBarThumbPressedBackColor { get; set; }
+        Color ScrollBarButtonBackColor { get; set; }
+        Color ScrollBarButtonForeColor { get; set; }
+        Color ScrollBarButtonBorderColor { get; set; }
+        Color ScrollBarButtonDisabledBackColor { get; set; }
+        Color ScrollBarButtonDisabledForeColor { get; set; }
+        Color ScrollBarButtonDisabledBorderColor { get; set; }
+        Color ScrollBarButtonMouseOverBackColor { get; set; }
+        Color ScrollBarButtonMouseOverForeColor { get; set; }
+        Color ScrollBarButtonMouseOverBorderColor { get; set; }
+        Color ScrollBarButtonPressedBackColor { get; set; }
+        Color ScrollBarButtonPressedForeColor { get; set; }
+        Color ScrollBarButtonPressedBorderColor { get; set; }
+
 
         bool IsAutoCheckIfUpdateExists { get; set; }
         bool IsAddingNewCommentTop { get; set; }
@@ -83,6 +137,7 @@ namespace MultiCommentViewer
         Color PeriscopeForeColor { get; set; }
 
         InfoType ShowingInfoLevel { get; set; }
+
     }
     /// <summary>
     /// 

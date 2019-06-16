@@ -34,21 +34,24 @@ namespace MultiCommentViewer
 
             ConnectionName = connectionStatus;
             _options = options;
-            ConnectionName.PropertyChanged += (s, e) =>
+            if (ConnectionName != null)
             {
-                switch (e.PropertyName)
+                ConnectionName.PropertyChanged += (s, e) =>
                 {
-                    case nameof(ConnectionName.Name):
-                        RaisePropertyChanged(nameof(ConnectionName));
-                        break;
-                    case nameof(ConnectionName.BackColor):
-                        RaisePropertyChanged(nameof(Background));
-                        break;
-                    case nameof(ConnectionName.ForeColor):
-                        RaisePropertyChanged(nameof(Foreground));
-                        break;
-                }
-            };
+                    switch (e.PropertyName)
+                    {
+                        case nameof(ConnectionName.Name):
+                            RaisePropertyChanged(nameof(ConnectionName));
+                            break;
+                        case nameof(ConnectionName.BackColor):
+                            RaisePropertyChanged(nameof(Background));
+                            break;
+                        case nameof(ConnectionName.ForeColor):
+                            RaisePropertyChanged(nameof(Foreground));
+                            break;
+                    }
+                };
+            }
             options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)

@@ -25,8 +25,6 @@ namespace OpenrecSitePlugin
         Context _context;
         #region ICommentProvider
         #region Events
-        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;

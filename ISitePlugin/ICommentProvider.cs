@@ -16,13 +16,6 @@ namespace SitePlugin
     public interface ICommentProvider
     {
         event EventHandler<ConnectedEventArgs> Connected;
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <remarks>棒読みちゃんに読ませないために必要</remarks>
-        event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        [Obsolete("MessageReceivedを使用すること")]
-        event EventHandler<ICommentViewModel> CommentReceived;
         event EventHandler<IMessageContext> MessageReceived;
 
         //event EventHandler<List<ICommentViewModel>> PastCommentsReceived;

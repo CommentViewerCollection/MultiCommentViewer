@@ -41,8 +41,6 @@ namespace TestSitePlugin
         #endregion //CanDisconnect
 
         public event EventHandler<ConnectedEventArgs> Connected;
-        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMessageContext> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;

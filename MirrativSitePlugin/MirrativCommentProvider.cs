@@ -84,8 +84,6 @@ namespace MirrativSitePlugin
                 CanDisconnectChanged?.Invoke(this, EventArgs.Empty);
             }
         }
-        public event EventHandler<List<ICommentViewModel>> InitialCommentsReceived;
-        public event EventHandler<ICommentViewModel> CommentReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
         public event EventHandler CanConnectChanged;
         public event EventHandler CanDisconnectChanged;

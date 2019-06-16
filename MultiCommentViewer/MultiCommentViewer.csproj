@@ -92,13 +92,10 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
     <Compile Include="AppNoStartupUri.xaml.cs">
       <DependentUpon>AppNoStartupUri.xaml</DependentUpon>
     </Compile>
+    <Compile Include="CustomChrome.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ViewModels\CommentViewModel\InfoCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
@@ -137,6 +134,8 @@
     <Compile Include="Test\SitePluginManager.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
+    <Compile Include="Views\MyDataGrid.cs" />
+    <Compile Include="Views\MyScrollBar.cs" />
     <Compile Include="Views\UserListView.xaml.cs">
       <DependentUpon>UserListView.xaml</DependentUpon>
     </Compile>
@@ -151,9 +150,25 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Dictionary1.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Themes\CustomChrome.Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\CommentDataGrid.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DataGridStyle1.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\MainOptionsPanel.xaml">
       <SubType>Designer</SubType>
@@ -163,10 +178,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Views\MainOptionsPanel.xaml.cs">
       <DependentUpon>MainOptionsPanel.xaml</DependentUpon>
     </Compile>
@@ -178,6 +189,10 @@
     <Page Include="Views\OptionsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ScrollBarStyle1.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\UserListView.xaml">
       <Generator>MSBuild:Compile</Generator>

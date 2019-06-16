@@ -19,6 +19,10 @@ namespace MultiCommentViewer.Test
         {
             var totalWaitTime = 0;
             string s = null;
+            if (!File.Exists(path))
+            {
+                return s;
+            }
             while (totalWaitTime < 5000)
             {
                 try
@@ -28,10 +32,6 @@ namespace MultiCommentViewer.Test
                     {
                         s = sr.ReadToEnd();
                     }
-                    break;
-                }
-                catch (FileNotFoundException)
-                {
                     break;
                 }
                 catch (IOException ex)

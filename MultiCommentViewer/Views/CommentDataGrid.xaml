@@ -74,6 +74,7 @@
             
             Margin="5"
             Grid.Row="5"
+            ScrollViewer.ScrollChanged="DataGridScrollChanged"
             >
             <local:MyDataGrid.Resources>
                 <ResourceDictionary>

@@ -141,8 +141,14 @@
                     <RadioButton IsEnabled="{Binding IsChecked, ElementName=SiteConnectionColorCheck}" IsChecked="{Binding SiteConnectionColorType, Converter={StaticResource SiteConnectionColorTypeConverter}, Mode=TwoWay, ConverterParameter=Connection}" GroupName="ColorType" Content="接続毎" Grid.Row="3" VerticalAlignment="Center" />
                 </Grid>
             </GroupBox>
-            <Label Content="表示欄背景色" Margin="44,769,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
-            <xctk:ColorPicker SelectedColor="{Binding CommentListBackColor, Mode=TwoWay}" Margin="225,769,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+            <Label Content="表示欄背景色" Margin="53,769,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.744,0.423" />
+            <xctk:ColorPicker SelectedColor="{Binding CommentListBackColor, Mode=TwoWay}" Margin="148,773,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
+            <Label Content="行グリッド線の色" HorizontalAlignment="Left" Margin="53,800,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.467,-1.231"/>
+            <xctk:ColorPicker SelectedColor="{Binding HorizontalGridLineColor}" Margin="148,800,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+            <Label Content="列グリッド線の色" HorizontalAlignment="Left" Margin="53,834,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.422,2.154"/>
+            <xctk:ColorPicker  SelectedColor="{Binding VerticalGridLineColor}" Margin="148,834,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
         </Grid>
     </ScrollViewer>
 </UserControl>

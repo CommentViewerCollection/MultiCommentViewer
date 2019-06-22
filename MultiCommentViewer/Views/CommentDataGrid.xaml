@@ -47,6 +47,8 @@
             BorderBrush="{Binding CommentListBorderBrush}"
             VerticalScrollBarVisibility="Visible"
             HorizontalScrollBarVisibility="Visible"
+            VerticalGridLinesBrush="{Binding VerticalGridLineBrush}"
+            HorizontalGridLinesBrush="{Binding HorizontalGridLineBrush}"
             Margin="5"
             Grid.Row="5"
             ScrollViewer.ScrollChanged="DataGridScrollChanged"

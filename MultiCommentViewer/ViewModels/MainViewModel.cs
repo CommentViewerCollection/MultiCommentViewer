@@ -1461,6 +1461,17 @@ namespace MultiCommentViewer
                         _pluginManager.OnTopmostChanged(_options.IsTopmost);
                         RaisePropertyChanged(nameof(Topmost));
                         break;
+
+                    case nameof(_options.IsShowHorizontalGridLine):
+                        break;
+                    case nameof(_options.HorizontalGridLineColor):
+                        RaisePropertyChanged(nameof(HorizontalGridLineBrush));
+                        break;
+                    case nameof(_options.IsShowVerticalGridLine):
+                        break;
+                    case nameof(_options.VerticalGridLineColor):
+                        RaisePropertyChanged(nameof(VerticalGridLineBrush));
+                        break;
                 }
             };
             RaisePropertyChanged(nameof(Topmost));

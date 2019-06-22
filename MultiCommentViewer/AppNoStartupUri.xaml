@@ -2,14 +2,13 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <!--<ResourceDictionary Source="/MultiCommentViewer;component/Dictionary1.xaml" />-->
-                <!--<ResourceDictionary Source="pack://application:,,,/MultiCommentViewer;component/DataGridStyles.xaml" />-->
-
-                <!--<ResourceDictionary Source="/MultiCommentViewer;component/DataGridStyle1.xaml" />-->
-                <ResourceDictionary Source="/MultiCommentViewer;component/ScrollBarStyle1.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
+        <Style TargetType="{x:Type DataGrid}">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+        </Style>
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        </Style>
+        
     </Application.Resources>    
 </Application>

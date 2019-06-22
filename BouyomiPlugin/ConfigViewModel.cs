@@ -159,6 +159,65 @@ namespace BouyomiPlugin
         }
         #endregion //YouTubeLive
 
+        #region ニコ生
+        /// <summary>
+        /// ニコ生の接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsNicoConnect
+        {
+            get => _options.IsNicoConnect;
+            set => _options.IsNicoConnect = value;
+        }
+        /// <summary>
+        /// ニコ生の切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsNicoDisconnect
+        {
+            get => _options.IsNicoDisconnect;
+            set => _options.IsNicoDisconnect = value;
+        }
+        /// <summary>
+        /// ニコ生のコメントを読み上げるか
+        /// </summary>
+        public bool IsNicoComment
+        {
+            get => _options.IsNicoComment;
+            set => _options.IsNicoComment = value;
+        }
+        /// <summary>
+        /// ニコ生のコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsNicoCommentNickname
+        {
+            get => _options.IsNicoCommentNickname;
+            set => _options.IsNicoCommentNickname = value;
+        }
+        /// <summary>
+        /// ニコ生のアイテムを読み上げるか
+        /// </summary>
+        public bool IsNicoItem
+        {
+            get => _options.IsNicoItem;
+            set => _options.IsNicoItem = value;
+        }
+        /// <summary>
+        /// ニコ生のアイテムのコテハンを読み上げるか
+        /// </summary>
+        public bool IsNicoItemNickname
+        {
+            get => _options.IsNicoItemNickname;
+            set => _options.IsNicoItemNickname = value;
+        }
+        /// <summary>
+        /// ニコ生の広告を読み上げるか
+        /// </summary>
+        public bool IsNicoAd
+        {
+            get => _options.IsNicoAd;
+            set => _options.IsNicoAd = value;
+        }
+        #endregion //ニコ生
+
         #region Mirrativ
         /// <summary>
         /// Mirrativの接続メッセージを読み上げるか

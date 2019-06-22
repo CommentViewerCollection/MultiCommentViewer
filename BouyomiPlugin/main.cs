@@ -1,4 +1,5 @@
 ﻿using MirrativSitePlugin;
+using NicoSitePlugin;
 using PeriscopeSitePlugin;
 using Plugin;
 using SitePlugin;
@@ -228,6 +229,53 @@ namespace BouyomiPlugin
                             }
                             //TODO:superchat中のスタンプも読ませるべきでは？
                             comment = (youTubeLiveMessage as IYouTubeLiveSuperchat).CommentItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is INicoMessage NicoMessage)
+            {
+                switch (NicoMessage.NicoMessageType)
+                {
+                    case NicoMessageType.Connected:
+                        if (_options.IsNicoConnect)
+                        {
+                            name = null;
+                            comment = (NicoMessage as INicoConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case NicoMessageType.Disconnected:
+                        if (_options.IsNicoDisconnect)
+                        {
+                            name = null;
+                            comment = (NicoMessage as INicoDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case NicoMessageType.Comment:
+                        if (_options.IsNicoComment)
+                        {
+                            if (_options.IsNicoCommentNickname)
+                            {
+                                name = (NicoMessage as INicoComment).NameItems.ToText();
+                            }
+                            comment = (NicoMessage as INicoComment).CommentItems.ToText();
+                        }
+                        break;
+                    case NicoMessageType.Item:
+                        if (_options.IsNicoItem)
+                        {
+                            if (_options.IsNicoItemNickname)
+                            {
+                                name = (NicoMessage as INicoItem).NameItems.ToText();
+                            }
+                            comment = (NicoMessage as INicoItem).CommentItems.ToText();
+                        }
+                        break;
+                    case NicoMessageType.Ad:
+                        if (_options.IsNicoAd)
+                        {
+                            name = null;
+                            comment = (NicoMessage as INicoAd).CommentItems.ToText();
                         }
                         break;
                 }

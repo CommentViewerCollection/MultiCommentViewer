@@ -31,6 +31,16 @@ namespace BouyomiPlugin
         public bool IsYouTubeLiveSuperchat { get { return GetValue(); } set { SetValue(value); } }
         public bool IsYouTubeLiveSuperchatNickname { get { return GetValue(); } set { SetValue(value); } }
 
+        //ニコ生
+        public bool IsNicoConnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoDisconnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoComment { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoItem { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoItemNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoAd { get { return GetValue(); } set { SetValue(value); } }
+
+        //Mirrativ
         public bool IsMirrativConnect { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMirrativDisconnect { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMirrativComment { get { return GetValue(); } set { SetValue(value); } }
@@ -70,6 +80,14 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsYouTubeLiveCommentStamp), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsYouTubeLiveSuperchat), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsYouTubeLiveSuperchatNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(IsNicoConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoItem), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoItemNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoAd), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             Dict.Add(nameof(IsMirrativConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMirrativDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

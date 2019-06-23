@@ -81,6 +81,10 @@
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj">
+      <Project>{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}</Project>
+      <Name>LineLiveIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
       <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
       <Name>MirrativIF</Name>
@@ -89,9 +93,21 @@
       <Project>{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}</Project>
       <Name>NicoLiveIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
+      <Project>{02A55625-E735-4909-A470-E8405EEE1A32}</Project>
+      <Name>OpenrecIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj">
       <Project>{242D4286-7214-422F-BE7C-BE784C815E0F}</Project>
       <Name>PeriscopeIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
+      <Project>{4DA33B17-792D-44D7-93F6-D0561788676D}</Project>
+      <Name>TwicasIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
+      <Project>{AA70074D-1C40-4CC0-9E1C-7ACDCBDD7D32}</Project>
+      <Name>TwitchIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
       <Project>{5a83afc8-e6ce-4dd2-8389-1f43a731388f}</Project>

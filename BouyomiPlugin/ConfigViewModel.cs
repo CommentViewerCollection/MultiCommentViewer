@@ -49,57 +49,6 @@ namespace BouyomiPlugin
             set { _options.IsKillBouyomiChan = value; }
         }
 
-        #region ふわっち
-        /// <summary>
-        /// ふわっちの接続メッセージを読み上げるか
-        /// </summary>
-        public bool IsWhowatchConnect
-        {
-            get => _options.IsWhowatchConnect;
-            set => _options.IsWhowatchConnect = value;
-        }
-        /// <summary>
-        /// ふわっちの切断メッセージを読み上げるか
-        /// </summary>
-        public bool IsWhowatchDisconnect
-        {
-            get => _options.IsWhowatchDisconnect;
-            set => _options.IsWhowatchDisconnect = value;
-        }
-        /// <summary>
-        /// ふわっちのコメントを読み上げるか
-        /// </summary>
-        public bool IsWhowatchComment
-        {
-            get => _options.IsWhowatchComment;
-            set => _options.IsWhowatchComment = value;
-        }
-        /// <summary>
-        /// ふわっちのコメントのコテハンを読み上げるか
-        /// </summary>
-        public bool IsWhowatchCommentNickname
-        {
-            get => _options.IsWhowatchCommentNickname;
-            set => _options.IsWhowatchCommentNickname = value;
-        }
-        /// <summary>
-        /// ふわっちのアイテムを読み上げるか
-        /// </summary>
-        public bool IsWhowatchItem
-        {
-            get => _options.IsWhowatchItem;
-            set => _options.IsWhowatchItem = value;
-        }
-        /// <summary>
-        /// ふわっちのアイテムのコテハンを読み上げるか
-        /// </summary>
-        public bool IsWhowatchItemNickname
-        {
-            get => _options.IsWhowatchItemNickname;
-            set => _options.IsWhowatchItemNickname = value;
-        }
-        #endregion //ふわっち
-
         #region YouTubeLive
         /// <summary>
         /// YouTubeLiveの接続メッセージを読み上げるか
@@ -159,6 +108,108 @@ namespace BouyomiPlugin
         }
         #endregion //YouTubeLive
 
+        #region OPENREC
+        /// <summary>
+        /// OPENRECの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsOpenrecConnect
+        {
+            get => _options.IsOpenrecConnect;
+            set => _options.IsOpenrecConnect = value;
+        }
+        /// <summary>
+        /// OPENRECの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsOpenrecDisconnect
+        {
+            get => _options.IsOpenrecDisconnect;
+            set => _options.IsOpenrecDisconnect = value;
+        }
+        /// <summary>
+        /// OPENRECのコメントを読み上げるか
+        /// </summary>
+        public bool IsOpenrecComment
+        {
+            get => _options.IsOpenrecComment;
+            set => _options.IsOpenrecComment = value;
+        }
+        /// <summary>
+        /// OPENRECのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsOpenrecCommentNickname
+        {
+            get => _options.IsOpenrecCommentNickname;
+            set => _options.IsOpenrecCommentNickname = value;
+        }
+        ///// <summary>
+        ///// OPENRECのアイテムを読み上げるか
+        ///// </summary>
+        //public bool IsOpenrecItem
+        //{
+        //    get => _options.IsOpenrecItem;
+        //    set => _options.IsOpenrecItem = value;
+        //}
+        ///// <summary>
+        ///// OPENRECのアイテムのコテハンを読み上げるか
+        ///// </summary>
+        //public bool IsOpenrecItemNickname
+        //{
+        //    get => _options.IsOpenrecItemNickname;
+        //    set => _options.IsOpenrecItemNickname = value;
+        //}
+        #endregion //OPENREC
+
+        #region Twitch
+        /// <summary>
+        /// Twitchの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsTwitchConnect
+        {
+            get => _options.IsTwitchConnect;
+            set => _options.IsTwitchConnect = value;
+        }
+        /// <summary>
+        /// Twitchの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsTwitchDisconnect
+        {
+            get => _options.IsTwitchDisconnect;
+            set => _options.IsTwitchDisconnect = value;
+        }
+        /// <summary>
+        /// Twitchのコメントを読み上げるか
+        /// </summary>
+        public bool IsTwitchComment
+        {
+            get => _options.IsTwitchComment;
+            set => _options.IsTwitchComment = value;
+        }
+        /// <summary>
+        /// Twitchのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsTwitchCommentNickname
+        {
+            get => _options.IsTwitchCommentNickname;
+            set => _options.IsTwitchCommentNickname = value;
+        }
+        ///// <summary>
+        ///// Twitchのアイテムを読み上げるか
+        ///// </summary>
+        //public bool IsTwitchItem
+        //{
+        //    get => _options.IsTwitchItem;
+        //    set => _options.IsTwitchItem = value;
+        //}
+        ///// <summary>
+        ///// Twitchのアイテムのコテハンを読み上げるか
+        ///// </summary>
+        //public bool IsTwitchItemNickname
+        //{
+        //    get => _options.IsTwitchItemNickname;
+        //    set => _options.IsTwitchItemNickname = value;
+        //}
+        #endregion //Twitch
+
         #region ニコ生
         /// <summary>
         /// ニコ生の接続メッセージを読み上げるか
@@ -217,6 +268,159 @@ namespace BouyomiPlugin
             set => _options.IsNicoAd = value;
         }
         #endregion //ニコ生
+
+        #region Twicas
+        /// <summary>
+        /// Twicasの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsTwicasConnect
+        {
+            get => _options.IsTwicasConnect;
+            set => _options.IsTwicasConnect = value;
+        }
+        /// <summary>
+        /// Twicasの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsTwicasDisconnect
+        {
+            get => _options.IsTwicasDisconnect;
+            set => _options.IsTwicasDisconnect = value;
+        }
+        /// <summary>
+        /// Twicasのコメントを読み上げるか
+        /// </summary>
+        public bool IsTwicasComment
+        {
+            get => _options.IsTwicasComment;
+            set => _options.IsTwicasComment = value;
+        }
+        /// <summary>
+        /// Twicasのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsTwicasCommentNickname
+        {
+            get => _options.IsTwicasCommentNickname;
+            set => _options.IsTwicasCommentNickname = value;
+        }
+        ///// <summary>
+        ///// Twicasのアイテムを読み上げるか
+        ///// </summary>
+        //public bool IsTwicasItem
+        //{
+        //    get => _options.IsTwicasItem;
+        //    set => _options.IsTwicasItem = value;
+        //}
+        ///// <summary>
+        ///// Twicasのアイテムのコテハンを読み上げるか
+        ///// </summary>
+        //public bool IsTwicasItemNickname
+        //{
+        //    get => _options.IsTwicasItemNickname;
+        //    set => _options.IsTwicasItemNickname = value;
+        //}
+        #endregion //Twicas
+
+        #region LINELIVE
+        /// <summary>
+        /// LINELIVEの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsLineLiveConnect
+        {
+            get => _options.IsLineLiveConnect;
+            set => _options.IsLineLiveConnect = value;
+        }
+        /// <summary>
+        /// LINELIVEの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsLineLiveDisconnect
+        {
+            get => _options.IsLineLiveDisconnect;
+            set => _options.IsLineLiveDisconnect = value;
+        }
+        /// <summary>
+        /// LINELIVEのコメントを読み上げるか
+        /// </summary>
+        public bool IsLineLiveComment
+        {
+            get => _options.IsLineLiveComment;
+            set => _options.IsLineLiveComment = value;
+        }
+        /// <summary>
+        /// LINELIVEのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsLineLiveCommentNickname
+        {
+            get => _options.IsLineLiveCommentNickname;
+            set => _options.IsLineLiveCommentNickname = value;
+        }
+        ///// <summary>
+        ///// LINELIVEのアイテムを読み上げるか
+        ///// </summary>
+        //public bool IsLineLiveItem
+        //{
+        //    get => _options.IsLineLiveItem;
+        //    set => _options.IsLineLiveItem = value;
+        //}
+        ///// <summary>
+        ///// LINELIVEのアイテムのコテハンを読み上げるか
+        ///// </summary>
+        //public bool IsLineLiveItemNickname
+        //{
+        //    get => _options.IsLineLiveItemNickname;
+        //    set => _options.IsLineLiveItemNickname = value;
+        //}
+        #endregion //LINELIVE
+
+        #region ふわっち
+        /// <summary>
+        /// ふわっちの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsWhowatchConnect
+        {
+            get => _options.IsWhowatchConnect;
+            set => _options.IsWhowatchConnect = value;
+        }
+        /// <summary>
+        /// ふわっちの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsWhowatchDisconnect
+        {
+            get => _options.IsWhowatchDisconnect;
+            set => _options.IsWhowatchDisconnect = value;
+        }
+        /// <summary>
+        /// ふわっちのコメントを読み上げるか
+        /// </summary>
+        public bool IsWhowatchComment
+        {
+            get => _options.IsWhowatchComment;
+            set => _options.IsWhowatchComment = value;
+        }
+        /// <summary>
+        /// ふわっちのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsWhowatchCommentNickname
+        {
+            get => _options.IsWhowatchCommentNickname;
+            set => _options.IsWhowatchCommentNickname = value;
+        }
+        /// <summary>
+        /// ふわっちのアイテムを読み上げるか
+        /// </summary>
+        public bool IsWhowatchItem
+        {
+            get => _options.IsWhowatchItem;
+            set => _options.IsWhowatchItem = value;
+        }
+        /// <summary>
+        /// ふわっちのアイテムのコテハンを読み上げるか
+        /// </summary>
+        public bool IsWhowatchItemNickname
+        {
+            get => _options.IsWhowatchItemNickname;
+            set => _options.IsWhowatchItemNickname = value;
+        }
+        #endregion //ふわっち
 
         #region Mirrativ
         /// <summary>

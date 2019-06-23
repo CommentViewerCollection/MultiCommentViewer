@@ -90,9 +90,67 @@
                         </Border>
 
                         <Border Grid.Row="1" Grid.Column="0" BorderBrush="Black" BorderThickness="0 0 0 1">
-                            <TextBlock Text="ニコ生" Margin="5" />
+                            <TextBlock Text="OPENREC" Margin="5" />
                         </Border>
                         <Border Grid.Row="1" Grid.Column="1" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsOpenrecConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsOpenrecDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckOpenrecComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsOpenrecComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckOpenrecComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsOpenrecCommentNickname}" Content="コテハン" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="2" Grid.Column="0" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <TextBlock Text="Twitch" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="2" Grid.Column="1" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsTwitchConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsTwitchDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckTwitchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwitchComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentNickname}" Content="コテハン" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="3" Grid.Column="0" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <TextBlock Text="ニコ生" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="3" Grid.Column="1" BorderBrush="Black" BorderThickness="0 0 0 1">
                             <Grid Grid.Row="0" Grid.Column="1" Margin="5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
@@ -132,6 +190,64 @@
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckNicoItem}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsNicoItemNickname}" Content="コテハン" />
                                 </Grid>
                                 <CheckBox Grid.Row="4" IsChecked="{Binding IsNicoAd}" Content="広告" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="4" Grid.Column="0" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <TextBlock Text="Twicas" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="4" Grid.Column="1" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsTwicasConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsTwicasDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckTwicasComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwicasComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwicasComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwicasCommentNickname}" Content="コテハン" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="5" Grid.Column="0" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <TextBlock Text="LINELIVE" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="5" Grid.Column="1" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsLineLiveConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsLineLiveDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckLineLiveComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsLineLiveComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckLineLiveComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsLineLiveCommentNickname}" Content="コテハン" />
+                                </Grid>
                             </Grid>
                         </Border>
 
@@ -178,8 +294,6 @@
                                 </Grid>
                             </Grid>
                         </Border>
-
-
 
                         <Border Grid.Row="7" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
                             <TextBlock Text="Mirrativ" Margin="5" />

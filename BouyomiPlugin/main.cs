@@ -1,5 +1,7 @@
-﻿using MirrativSitePlugin;
+﻿using LineLiveSitePlugin;
+using MirrativSitePlugin;
 using NicoSitePlugin;
+using OpenrecSitePlugin;
 using PeriscopeSitePlugin;
 using Plugin;
 using SitePlugin;
@@ -7,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using TwicasSitePlugin;
+using TwitchSitePlugin;
 using WhowatchSitePlugin;
 using YouTubeLiveSitePlugin;
 
@@ -145,47 +149,8 @@ namespace BouyomiPlugin
 
             string name = null;
             string comment = null;
-            if(message is IWhowatchMessage whowatchMessage)
-            {
-                switch (whowatchMessage.WhowatchMessageType)
-                {
-                    case WhowatchMessageType.Connected:
-                        if (_options.IsWhowatchConnect)
-                        {
-                            name = null;
-                            comment = (whowatchMessage as IWhowatchConnected).CommentItems.ToText();
-                        }
-                        break;
-                    case WhowatchMessageType.Disconnected:
-                        if (_options.IsWhowatchDisconnect)
-                        {
-                            name = null;
-                            comment = (whowatchMessage as IWhowatchDisconnected).CommentItems.ToText();
-                        }
-                        break;
-                    case WhowatchMessageType.Comment:
-                        if (_options.IsWhowatchComment)
-                        {
-                            if (_options.IsWhowatchCommentNickname)
-                            {
-                                name = (whowatchMessage as IWhowatchComment).NameItems.ToText();
-                            }
-                            comment = (whowatchMessage as IWhowatchComment).CommentItems.ToText();
-                        }
-                        break;
-                    case WhowatchMessageType.Item:
-                        if (_options.IsWhowatchItem)
-                        {
-                            if (_options.IsWhowatchItemNickname)
-                            {
-                                name = (whowatchMessage as IWhowatchItem).NameItems.ToText();
-                            }
-                            comment = (whowatchMessage as IWhowatchItem).CommentItems.ToText();
-                        }
-                        break;
-                }
-            }
-            else if(message is IYouTubeLiveMessage youTubeLiveMessage)
+            if (false) { }
+            else if (message is IYouTubeLiveMessage youTubeLiveMessage)
             {
                 switch (youTubeLiveMessage.YouTubeLiveMessageType)
                 {
@@ -233,6 +198,66 @@ namespace BouyomiPlugin
                         break;
                 }
             }
+            else if (message is IOpenrecMessage openrecMessage)
+            {
+                switch (openrecMessage.OpenrecMessageType)
+                {
+                    case OpenrecMessageType.Connected:
+                        if (_options.IsOpenrecConnect)
+                        {
+                            name = null;
+                            comment = (openrecMessage as IOpenrecConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case OpenrecMessageType.Disconnected:
+                        if (_options.IsOpenrecDisconnect)
+                        {
+                            name = null;
+                            comment = (openrecMessage as IOpenrecDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case OpenrecMessageType.Comment:
+                        if (_options.IsOpenrecComment)
+                        {
+                            if (_options.IsOpenrecCommentNickname)
+                            {
+                                name = (openrecMessage as IOpenrecComment).NameItems.ToText();
+                            }
+                            comment = (openrecMessage as IOpenrecComment).CommentItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is ITwitchMessage twitchMessage)
+            {
+                switch (twitchMessage.TwitchMessageType)
+                {
+                    case TwitchMessageType.Connected:
+                        if (_options.IsTwitchConnect)
+                        {
+                            name = null;
+                            comment = (twitchMessage as ITwitchConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case TwitchMessageType.Disconnected:
+                        if (_options.IsTwitchDisconnect)
+                        {
+                            name = null;
+                            comment = (twitchMessage as ITwitchDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case TwitchMessageType.Comment:
+                        if (_options.IsTwitchComment)
+                        {
+                            if (_options.IsTwitchCommentNickname)
+                            {
+                                name = (twitchMessage as ITwitchComment).NameItems.ToText();
+                            }
+                            comment = (twitchMessage as ITwitchComment).CommentItems.ToText();
+                        }
+                        break;
+                }
+            }
             else if (message is INicoMessage NicoMessage)
             {
                 switch (NicoMessage.NicoMessageType)
@@ -276,6 +301,106 @@ namespace BouyomiPlugin
                         {
                             name = null;
                             comment = (NicoMessage as INicoAd).CommentItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is ITwicasMessage twicasMessage)
+            {
+                switch (twicasMessage.TwicasMessageType)
+                {
+                    case TwicasMessageType.Connected:
+                        if (_options.IsTwicasConnect)
+                        {
+                            name = null;
+                            comment = (twicasMessage as ITwicasConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case TwicasMessageType.Disconnected:
+                        if (_options.IsTwicasDisconnect)
+                        {
+                            name = null;
+                            comment = (twicasMessage as ITwicasDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case TwicasMessageType.Comment:
+                        if (_options.IsTwicasComment)
+                        {
+                            if (_options.IsTwicasCommentNickname)
+                            {
+                                name = (twicasMessage as ITwicasComment).NameItems.ToText();
+                            }
+                            comment = (twicasMessage as ITwicasComment).CommentItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is ILineLiveMessage lineLiveMessage)
+            {
+                switch (lineLiveMessage.LineLiveMessageType)
+                {
+                    case LineLiveMessageType.Connected:
+                        if (_options.IsLineLiveConnect)
+                        {
+                            name = null;
+                            comment = (lineLiveMessage as ILineLiveConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case LineLiveMessageType.Disconnected:
+                        if (_options.IsLineLiveDisconnect)
+                        {
+                            name = null;
+                            comment = (lineLiveMessage as ILineLiveDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case LineLiveMessageType.Comment:
+                        if (_options.IsLineLiveComment)
+                        {
+                            if (_options.IsLineLiveCommentNickname)
+                            {
+                                name = (lineLiveMessage as ILineLiveComment).NameItems.ToText();
+                            }
+                            comment = (lineLiveMessage as ILineLiveComment).CommentItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is IWhowatchMessage whowatchMessage)
+            {
+                switch (whowatchMessage.WhowatchMessageType)
+                {
+                    case WhowatchMessageType.Connected:
+                        if (_options.IsWhowatchConnect)
+                        {
+                            name = null;
+                            comment = (whowatchMessage as IWhowatchConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case WhowatchMessageType.Disconnected:
+                        if (_options.IsWhowatchDisconnect)
+                        {
+                            name = null;
+                            comment = (whowatchMessage as IWhowatchDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case WhowatchMessageType.Comment:
+                        if (_options.IsWhowatchComment)
+                        {
+                            if (_options.IsWhowatchCommentNickname)
+                            {
+                                name = (whowatchMessage as IWhowatchComment).NameItems.ToText();
+                            }
+                            comment = (whowatchMessage as IWhowatchComment).CommentItems.ToText();
+                        }
+                        break;
+                    case WhowatchMessageType.Item:
+                        if (_options.IsWhowatchItem)
+                        {
+                            if (_options.IsWhowatchItemNickname)
+                            {
+                                name = (whowatchMessage as IWhowatchItem).NameItems.ToText();
+                            }
+                            comment = (whowatchMessage as IWhowatchItem).CommentItems.ToText();
                         }
                         break;
                 }

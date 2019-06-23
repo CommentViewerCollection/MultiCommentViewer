@@ -17,7 +17,7 @@ namespace Common
         private readonly ILogger _logger;
         //private readonly Dictionary<string, IUser> _cacheDict = new Dictionary<string, IUser>();
         private readonly ConcurrentDictionary<string,IUser> _cacheDict = new ConcurrentDictionary<string, IUser>();
-
+        private static readonly object _createTableLockObject = new object();
         public event EventHandler<IUser> UserAdded;
         public void Init()
         {
@@ -56,8 +56,10 @@ namespace Common
         }
         private void AddUser(IUser userInfo)
         {
-            _cacheDict.TryAdd(userInfo.UserId, userInfo);
-            UserAdded?.Invoke(this, userInfo);
+            if (_cacheDict.TryAdd(userInfo.UserId, userInfo))
+            {
+                UserAdded?.Invoke(this, userInfo);
+            }
         }
         private List<IUser> LoadAllUserInfo()
         {
@@ -112,12 +114,15 @@ namespace Common
         }
         private static void CreateTable(SQLiteConnection conn)
         {
-            if (!TableExists(conn, tableName))
+            lock (_createTableLockObject)
             {
-                var query = $"CREATE TABLE {tableName} ({col1Name} TEXT PRIMARY KEY, {col2Name} TEXT, {col3Name} TEXT)";
-                using (var cmd = new SQLiteCommand(query, conn))
+                if (!TableExists(conn, tableName))
                 {
-                    cmd.ExecuteNonQuery();
+                    var query = $"CREATE TABLE {tableName} ({col1Name} TEXT PRIMARY KEY, {col2Name} TEXT, {col3Name} TEXT)";
+                    using (var cmd = new SQLiteCommand(query, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }

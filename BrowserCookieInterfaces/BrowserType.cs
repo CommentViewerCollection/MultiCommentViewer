@@ -8,6 +8,7 @@
         IE,
         Edge,
         Opera,
+        OperaGx,
         Unknown,
     }
 }

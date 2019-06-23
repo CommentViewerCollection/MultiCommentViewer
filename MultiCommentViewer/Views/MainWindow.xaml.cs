@@ -19,13 +19,16 @@ namespace MultiCommentViewer
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : CustomWindow.CustomChrome
+    public partial class MainWindow : Window
     {
         public MainWindow()
         {
             InitializeComponent();
-            
-            //dataGrid.MouseRightButtonUp += DataGrid_MouseRightButtonUp;
+
+            Messenger.Default.Register<SetAddingCommentDirection>(this, message =>
+            {
+                _addingCommentToTop = message.IsTop;
+            });
             Messenger.Default.Register<SetPostCommentPanel>(this, message =>
             {
                 PostCommentPanelPlaceHolder.Children.Clear();
@@ -163,8 +166,8 @@ namespace MultiCommentViewer
         //private bool neverTouch = true;
         private void DataGridScrollChanged(object sender, RoutedEventArgs e)
         {
-            //if (_addingCommentToTop)
-            //    return;
+            if (_addingCommentToTop)
+                return;
             if (sender == null)
                 return;
             ScrollViewer scrollViewer;

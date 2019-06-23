@@ -1,4 +1,4 @@
-﻿<custom:CustomChrome x:Class="MultiCommentViewer.MainWindow"
+﻿<Window x:Class="MultiCommentViewer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,7 +9,6 @@
         xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         xmlns:command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Platform"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:custom="clr-namespace:CustomWindow"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
         d:DesignWidth="1000"
@@ -32,21 +31,15 @@
             <command:EventToCommand Command="{Binding MainViewClosingCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <custom:CustomChrome.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/MultiCommentViewer;component/DataGridStyle1.xaml" />
-                <ResourceDictionary Source="/MultiCommentViewer;component/Dictionary1.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-            <w:NotConverter x:Key="notConverter" />
-            <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
-            <w:IntToFontSizeConverter x:Key="intToFontConverter" />
-            <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
-            <w:GridLengthConverter x:Key="gridLengthConverter" />
-            <local:MessageConverter x:Key="messageConverter" />
-            <local:NameConverter x:Key="nameConverter" />
-        </ResourceDictionary>
-    </custom:CustomChrome.Resources>
+    <Window.Resources>
+        <w:NotConverter x:Key="notConverter" />
+        <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
+        <w:IntToFontSizeConverter x:Key="intToFontConverter" />
+        <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
+        <w:GridLengthConverter x:Key="gridLengthConverter" />
+        <local:MessageConverter x:Key="messageConverter" />
+        <local:NameConverter x:Key="nameConverter" />
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
@@ -200,9 +193,9 @@
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <Button Content="接続を追加" Command="{Binding AddNewConnectionCommand}" Margin="0,5" Grid.Column="1" Style="{StaticResource ButtonStyle}" />
-                <Button Content="選択した接続を削除" Command="{Binding RemoveSelectedConnectionCommand}" Margin="0,5" Grid.Column="3" Style="{StaticResource ButtonStyle}" />
-                <Button Content="取得済みコメントを削除" IsEnabled="False" Visibility="Hidden" Command="{Binding ClearAllCommentsCommand}" Margin="0,5" Grid.Column="5" Style="{StaticResource ButtonStyle}" />
+                <Button Content="接続を追加" Command="{Binding AddNewConnectionCommand}" Margin="0,5" Grid.Column="1" />
+                <Button Content="選択した接続を削除" Command="{Binding RemoveSelectedConnectionCommand}" Margin="0,5" Grid.Column="3" />
+                <Button Content="取得済みコメントを削除" IsEnabled="False" Visibility="Hidden" Command="{Binding ClearAllCommentsCommand}" Margin="0,5" Grid.Column="5" />
             </Grid>
             <ListView Grid.Row="1" ItemsSource="{Binding Connections}" 
                   AllowDrop="True" MinHeight="90"
@@ -349,46 +342,18 @@
         <Grid Grid.Row="3">
             <!--Element treeに属さないelementにDataContextを渡すためのdummy element-->
             <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
-            <local:MyDataGrid
+            <DataGrid
                 ItemsSource="{Binding MetaCollection, IsAsync=True}"
                 Margin="5,0,5,0"
                 MinHeight="80"
-            Style="{DynamicResource DataGridStyle1}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             Background="{Binding CommentListBackground}"
             BorderBrush="{Binding CommentListBorderBrush}"
-            DataGridColumnHeaderBackground="{Binding CommentListHeaderBackground}"
-            DataGridColumnHeaderForeground="{Binding CommentListHeaderForeground}"
-            DataGridColumnHeaderBorderBrush="{Binding CommentListHeaderBorderBrush}"
-            ScrollBarThumbBackground="{Binding ScrollBarThumbBackground, Mode=OneWay}"
-            ScrollBarThumbMouseOverBackground="{Binding ScrollBarThumbMouseOverBackground, Mode=OneWay}"
-            ScrollBarThumbPressedBackground="{Binding ScrollBarThumbPressedBackground, Mode=OneWay}"
-            ScrollBarBackground="{Binding ScrollBarBackground, Mode=OneWay}"
-            ScrollBarBorderBrush="{Binding ScrollBarBorderBrush, Mode=OneWay}"
-            ScrollBarButtonBackground="{Binding ScrollBarButtonBackground, Mode=OneWay}"
-            ScrollBarButtonForeground="{Binding ScrollBarButtonForeground, Mode=OneWay}"
-            ScrollBarButtonBorderBrush="{Binding ScrollBarButtonBorderBrush, Mode=OneWay}"
-            ScrollBarButtonDisabledBackground="{Binding ScrollBarButtonDisabledBackground, Mode=OneWay}"
-            ScrollBarButtonDisabledForeground="{Binding ScrollBarButtonDisabledForeground, Mode=OneWay}"
-            ScrollBarButtonDisabledBorderBrush="{Binding ScrollBarButtonDisabledBorderBrush, Mode=OneWay}"
-            ScrollBarButtonMouseOverBackground="{Binding ScrollBarButtonMouseOverBackground, Mode=OneWay}"
-            ScrollBarButtonMouseOverForeground="{Binding ScrollBarButtonMouseOverForeground, Mode=OneWay}"
-            ScrollBarButtonMouseOverBorderBrush="{Binding ScrollBarButtonMouseOverBorderBrush, Mode=OneWay}"
-            ScrollBarButtonPressedBackground="{Binding ScrollBarButtonPressedBackground, Mode=OneWay}"
-            ScrollBarButtonPressedForeground="{Binding ScrollBarButtonPressedForeground, Mode=OneWay}"
-            ScrollBarButtonPressedBorderBrush="{Binding ScrollBarButtonPressedBorderBrush, Mode=OneWay}"
             VerticalScrollBarVisibility="Visible"
             HorizontalScrollBarVisibility="Visible"
                       >
-                <local:MyDataGrid.Resources>
-                    <ResourceDictionary>
-                        <ResourceDictionary.MergedDictionaries>
-                            <ResourceDictionary Source="/MultiCommentViewer;component/DataGridStyle1.xaml" />
-                        </ResourceDictionary.MergedDictionaries>
-                    </ResourceDictionary>
-                </local:MyDataGrid.Resources>
-                    <local:MyDataGrid.Columns>
+                    <DataGrid.Columns>
                     <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}"
                                         Width="{Binding DataContext.MetadataViewConnectionNameColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                         >
@@ -418,8 +383,8 @@
                                         Width="{Binding DataContext.MetadataViewOthersColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                                         >
                     </DataGridTextColumn>
-                </local:MyDataGrid.Columns>
-            </local:MyDataGrid>
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
         <GridSplitter Grid.Row="4" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" ResizeDirection="Rows"  />
         <local:CommentDataGrid IsShowUserInfoMenuItem="True" ForceShowInvisibleComments="False" Margin="5" Grid.Row="5" />
@@ -432,4 +397,4 @@
             <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" x:Name="PostCommentPanelPlaceHolder" Grid.Column="2" />
         </Grid>
     </Grid>
-</custom:CustomChrome>
+</Window>

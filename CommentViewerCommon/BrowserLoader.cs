@@ -22,6 +22,7 @@ namespace CommentViewerCommon
                 new FirefoxManager(),
                 new IEManager(),
                 new OperaManager(),
+                new OperaGxManager(),
             };
             foreach (var manager in managers)
             {

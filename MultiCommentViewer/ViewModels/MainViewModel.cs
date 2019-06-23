@@ -583,15 +583,6 @@ namespace MultiCommentViewer
             //throw new NotImplementedException();
             await Task.CompletedTask;
         }
-        private void AddComment(ICommentViewModel cvm, IConnectionStatus connectionName)
-        {
-            if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
-            {
-                return;
-            }
-            var mcvCvm = new McvCommentViewModel(cvm, connectionName);
-            _comments.Add(mcvCvm);
-        }
         private void AddComment(IMessageContext messageContext, IConnectionStatus connectionName)
         {
             //if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
@@ -788,13 +779,25 @@ namespace MultiCommentViewer
                 {
                     _dispatcher.Invoke(() =>
                     {
-                        _comments.Add(mcvCvm);
+                        AddComment(mcvCvm);
                     });
                 }
                 else
                 {
-                    _comments.Add(mcvCvm);
+                    AddComment(mcvCvm);
                 }
+            }
+        }
+
+        private void AddComment(IMcvCommentViewModel mcvCvm)
+        {
+            if (_options.IsAddingNewCommentTop)
+            {
+                _comments.Insert(0, mcvCvm);
+            }
+            else
+            {
+                _comments.Add(mcvCvm);
             }
         }
         #region EventHandler
@@ -1460,6 +1463,17 @@ namespace MultiCommentViewer
                     case nameof(_options.IsTopmost):
                         _pluginManager.OnTopmostChanged(_options.IsTopmost);
                         RaisePropertyChanged(nameof(Topmost));
+                        break;
+
+                    case nameof(_options.IsShowHorizontalGridLine):
+                        break;
+                    case nameof(_options.HorizontalGridLineColor):
+                        RaisePropertyChanged(nameof(HorizontalGridLineBrush));
+                        break;
+                    case nameof(_options.IsShowVerticalGridLine):
+                        break;
+                    case nameof(_options.VerticalGridLineColor):
+                        RaisePropertyChanged(nameof(VerticalGridLineBrush));
                         break;
                 }
             };

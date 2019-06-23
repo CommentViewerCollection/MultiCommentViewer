@@ -52,5 +52,35 @@ namespace CommonTests
                 }
             }
         }
+        [Test]
+        public void 同じユーザIDでUserAddedが重複して発生しないかテスト()
+        {
+            var loggerMock = new Mock<ILogger>();
+            var logger = loggerMock.Object;
+            var store = new Common.SQLiteUserStore(":memory:", logger);
+            var dict = new Dictionary<string, IUser>();
+            store.UserAdded += (s, e) =>
+            {
+                Assert.IsFalse(dict.ContainsKey(e.UserId));
+            };
+            store.Init();
+
+            var list = new List<string>
+            {
+                "30662259",
+                "30662259",
+                "30662259",
+                "30662259",
+                "30662259",
+                "30662259",
+                "30662259",
+                "30662259",
+            };
+
+            System.Threading.Tasks.Parallel.ForEach(list, s =>
+            {
+                var user = store.GetUser(s);
+            });
+        }
     }
 }

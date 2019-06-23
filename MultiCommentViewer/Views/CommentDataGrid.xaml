@@ -38,83 +38,70 @@
     <Grid>
         <!--Element treeに属さないelementにDataContextを渡すためのdummy element-->
         <FrameworkElement x:Name="dummyElement" Visibility="Collapsed" DataContext="{Binding}"/>
-        <local:MyDataGrid
+        <DataGrid
             x:Name="dataGrid"
             ItemsSource="{Binding Comments, IsAsync=True}"
-            Style="{DynamicResource DataGridStyle1}"
+            SelectedValue="{Binding SelectedComment}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             Background="{Binding CommentListBackground}"
             BorderBrush="{Binding CommentListBorderBrush}"
-            DataGridColumnHeaderContextMenu="{StaticResource CommentDataGridHeaderContextMenu}"
-            DataGridColumnHeaderBackground="{Binding CommentListHeaderBackground}"
-            DataGridColumnHeaderForeground="{Binding CommentListHeaderForeground}"
-            DataGridColumnHeaderBorderBrush="{Binding CommentListHeaderBorderBrush}"
-            ScrollBarThumbBackground="{Binding ScrollBarThumbBackground, Mode=OneWay}"
-            ScrollBarThumbMouseOverBackground="{Binding ScrollBarThumbMouseOverBackground, Mode=OneWay}"
-            ScrollBarThumbPressedBackground="{Binding ScrollBarThumbPressedBackground, Mode=OneWay}"
-            ScrollBarBackground="{Binding ScrollBarBackground, Mode=OneWay}"
-            ScrollBarBorderBrush="{Binding ScrollBarBorderBrush, Mode=OneWay}"
-            ScrollBarButtonBackground="{Binding ScrollBarButtonBackground, Mode=OneWay}"
-            ScrollBarButtonForeground="{Binding ScrollBarButtonForeground, Mode=OneWay}"
-            ScrollBarButtonBorderBrush="{Binding ScrollBarButtonBorderBrush, Mode=OneWay}"
-            ScrollBarButtonDisabledBackground="{Binding ScrollBarButtonDisabledBackground, Mode=OneWay}"
-            ScrollBarButtonDisabledForeground="{Binding ScrollBarButtonDisabledForeground, Mode=OneWay}"
-            ScrollBarButtonDisabledBorderBrush="{Binding ScrollBarButtonDisabledBorderBrush, Mode=OneWay}"
-            ScrollBarButtonMouseOverBackground="{Binding ScrollBarButtonMouseOverBackground, Mode=OneWay}"
-            ScrollBarButtonMouseOverForeground="{Binding ScrollBarButtonMouseOverForeground, Mode=OneWay}"
-            ScrollBarButtonMouseOverBorderBrush="{Binding ScrollBarButtonMouseOverBorderBrush, Mode=OneWay}"
-            ScrollBarButtonPressedBackground="{Binding ScrollBarButtonPressedBackground, Mode=OneWay}"
-            ScrollBarButtonPressedForeground="{Binding ScrollBarButtonPressedForeground, Mode=OneWay}"
-            ScrollBarButtonPressedBorderBrush="{Binding ScrollBarButtonPressedBorderBrush, Mode=OneWay}"
             VerticalScrollBarVisibility="Visible"
             HorizontalScrollBarVisibility="Visible"
-            
-
-            
+            VerticalGridLinesBrush="{Binding VerticalGridLineBrush}"
+            HorizontalGridLinesBrush="{Binding HorizontalGridLineBrush}"
+            VirtualizingStackPanel.ScrollUnit="{Binding ScrollUnit}"
             Margin="5"
             Grid.Row="5"
             ScrollViewer.ScrollChanged="DataGridScrollChanged"
             >
-            <local:MyDataGrid.Resources>
-                <ResourceDictionary>
-                    <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="/MultiCommentViewer;component/DataGridStyle1.xaml" />
-                    </ResourceDictionary.MergedDictionaries>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}" />
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}"/>
-                    <ContextMenu x:Key="commentContext" DataContext="{Binding DataContext, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
-                        <MenuItem Header="コメントをコピー" Command="{Binding CommentCopyCommand}" />
-                        <MenuItem Header="URLを開く" IsEnabled="{Binding ContainsUrl}" Command="{Binding OpenUrlCommand}" />
-                        <Separator />
-                        <MenuItem x:Name="UserInfoMenuItem" Header="ユーザ情報" Command="{Binding ShowUserInfoCommand}" />
-                    </ContextMenu>
-                    <Style TargetType="{x:Type DataGridRow}">
-                        <Setter Property="FontFamily" Value="{Binding FontFamily}" />
-                        <Setter Property="FontStyle" Value="{Binding FontStyle}" />
-                        <Setter Property="FontWeight" Value="{Binding FontWeight}" />
-                        <Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>
-                        <Setter Property="Background" Value="{Binding Background}" />
-                        <Setter Property="Foreground" Value="{Binding Foreground}" />
-                        <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />
-                        <!--<Setter Property="IsSelected" Value="{Binding IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />-->
-                        <Style.Triggers>
-                            <!--IsVisible==false&&ForceShowInvisibleComments==falseの時にだけVisibilityがCollapsedになる-->
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding IsVisible}" Value="False" />
-                                    <Condition Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:CommentDataGrid}}, Path=ForceShowInvisibleComments}" Value="False" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                            </MultiDataTrigger>
-                        </Style.Triggers>
+            <DataGrid.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{Binding SelectedRowBackColor}"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{Binding SelectedRowForeColor}"/>
+                <ContextMenu x:Key="commentContext" DataContext="{Binding DataContext, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
+                    <MenuItem Header="コメントをコピー" Command="{Binding CommentCopyCommand}" />
+                    <MenuItem Header="URLを開く" IsEnabled="{Binding ContainsUrl}" Command="{Binding OpenUrlCommand}" />
+                    <Separator />
+                    <MenuItem x:Name="UserInfoMenuItem" Header="ユーザ情報" Command="{Binding ShowUserInfoCommand}" />
+                </ContextMenu>
+                <Style TargetType="{x:Type DataGridRow}">
+                    <Setter Property="FontFamily" Value="{Binding FontFamily}" />
+                    <Setter Property="FontStyle" Value="{Binding FontStyle}" />
+                    <Setter Property="FontWeight" Value="{Binding FontWeight}" />
+                    <Setter Property="FontSize" Value="{Binding FontSize, Converter={StaticResource intToFontConverter}}"/>
+                    <Setter Property="Background" Value="{Binding Background}" />
+                    <Setter Property="Foreground" Value="{Binding Foreground}" />
+                    <Setter Property="ContextMenu" Value="{StaticResource commentContext}" />
+                    <!--<Setter Property="IsSelected" Value="{Binding IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />-->
+                    <Style.Triggers>
+                        <!--IsVisible==false&&ForceShowInvisibleComments==falseの時にだけVisibilityがCollapsedになる-->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsVisible}" Value="False" />
+                                <Condition Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:CommentDataGrid}}, Path=ForceShowInvisibleComments}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+                <ContextMenu x:Key="listViewHeaderContext" DataContext="{Binding DataContext, Source={x:Reference dummyElement}}">
+                    <MenuItem Header="接続名" IsChecked="{Binding IsShowConnectionName, Mode=TwoWay}" IsCheckable="True" />
+                    <MenuItem Header="サムネ" IsChecked="{Binding IsShowThumbnail, Mode=TwoWay}" IsCheckable="True" />
+                    <MenuItem Header="コメントID" IsChecked="{Binding IsShowCommentId, Mode=TwoWay}" IsCheckable="True" />
+                    <MenuItem Header="ユーザ名" IsChecked="{Binding IsShowUsername, Mode=TwoWay}" IsCheckable="True" />
+                    <!--<MenuItem Header="ユーザID" IsChecked="{Binding IsShowUserId, Mode=TwoWay}" IsCheckable="True" />-->
 
-                    </Style>
-                </ResourceDictionary>
-            </local:MyDataGrid.Resources>
-            <local:MyDataGrid.Columns>
+                    <MenuItem Header="投稿時間" IsChecked="{Binding IsShowPostTime, Mode=TwoWay}" IsCheckable="True" />
+                    <!--<MenuItem Header="経過時間" IsChecked="{Binding IsShowPostElapsed, Mode=TwoWay}" IsCheckable="True" />-->
+                    <MenuItem Header="情報" IsChecked="{Binding IsShowInfo, Mode=TwoWay}" IsCheckable="True" />
+                </ContextMenu>
+                <Style TargetType="{x:Type DataGridColumnHeader}">
+                    <Setter Property="ContextMenu" Value="{StaticResource listViewHeaderContext}" />
+                </Style>
+            </DataGrid.Resources>
+            <DataGrid.Columns>
                 <DataGridTemplateColumn Header="接続名" 
                                             DisplayIndex="{Binding DataContext.ConnectionNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=0}"
                                             Width="{Binding DataContext.ConnectionNameWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
@@ -190,7 +177,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-            </local:MyDataGrid.Columns>
-        </local:MyDataGrid>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </UserControl>

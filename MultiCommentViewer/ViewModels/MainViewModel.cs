@@ -583,15 +583,6 @@ namespace MultiCommentViewer
             //throw new NotImplementedException();
             await Task.CompletedTask;
         }
-        private void AddComment(ICommentViewModel cvm, IConnectionStatus connectionName)
-        {
-            if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)
-            {
-                return;
-            }
-            var mcvCvm = new McvCommentViewModel(cvm, connectionName);
-            _comments.Add(mcvCvm);
-        }
         private void AddComment(IMessageContext messageContext, IConnectionStatus connectionName)
         {
             //if (cvm is IInfoCommentViewModel info && info.Type > _options.ShowingInfoLevel)

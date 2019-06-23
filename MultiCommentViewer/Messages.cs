@@ -6,6 +6,10 @@ using System.Collections.ObjectModel;
 
 namespace MultiCommentViewer
 {
+    internal class SetAddingCommentDirection : GalaSoft.MvvmLight.Messaging.MessageBase
+    {
+        public bool IsTop { get; set; }
+    }
     class ShowOptionsViewMessage: GalaSoft.MvvmLight.Messaging.MessageBase
     {
         public IEnumerable<IOptionsTabPage> Tabs { get; }

@@ -779,13 +779,25 @@ namespace MultiCommentViewer
                 {
                     _dispatcher.Invoke(() =>
                     {
-                        _comments.Add(mcvCvm);
+                        AddComment(mcvCvm);
                     });
                 }
                 else
                 {
-                    _comments.Add(mcvCvm);
+                    AddComment(mcvCvm);
                 }
+            }
+        }
+
+        private void AddComment(IMcvCommentViewModel mcvCvm)
+        {
+            if (_options.IsAddingNewCommentTop)
+            {
+                _comments.Insert(0, mcvCvm);
+            }
+            else
+            {
+                _comments.Add(mcvCvm);
             }
         }
         #region EventHandler

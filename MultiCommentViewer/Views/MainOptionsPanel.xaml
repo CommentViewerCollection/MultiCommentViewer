@@ -41,7 +41,7 @@
             <xctk:ColorPicker  SelectedColor="{Binding SiteInfoForeColor}" Margin="322,116,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
             <CheckBox Content="名前が長くて表示しきれない時は折り返す" IsChecked="{Binding IsUserNameWrapping}" HorizontalAlignment="Left" Margin="27,371,0,0" VerticalAlignment="Top"/>
-            <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" IsEnabled="False" HorizontalAlignment="Left" Margin="27,391,0,0" VerticalAlignment="Top"/>
+            <CheckBox x:Name="checkBox" Content="新しいコメントを上に追加する" IsChecked="{Binding IsAddingNewCommentTop}" HorizontalAlignment="Left" Margin="27,391,0,0" VerticalAlignment="Top"/>
             <Label x:Name="label7" Content="変更後、コメビュを再起動してください" IsEnabled="False" Foreground="Red" HorizontalAlignment="Left" Margin="190,385,0,0" VerticalAlignment="Top"/>
             <CheckBox Content="起動時にアップデートがあるか確認する" IsChecked="{Binding IsAutoCheckIfUpdateExists}" HorizontalAlignment="Left" Margin="27,416,0,0" VerticalAlignment="Top"/>
             <CheckBox Content="パフォーマンスを改善する" IsChecked="{Binding IsPixelScrolling, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="27,446,0,0" VerticalAlignment="Top"/>

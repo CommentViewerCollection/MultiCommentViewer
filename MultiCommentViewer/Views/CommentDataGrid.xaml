@@ -41,6 +41,7 @@
         <DataGrid
             x:Name="dataGrid"
             ItemsSource="{Binding Comments, IsAsync=True}"
+            SelectedValue="{Binding SelectedComment}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             Background="{Binding CommentListBackground}"
@@ -49,6 +50,7 @@
             HorizontalScrollBarVisibility="Visible"
             VerticalGridLinesBrush="{Binding VerticalGridLineBrush}"
             HorizontalGridLinesBrush="{Binding HorizontalGridLineBrush}"
+            VirtualizingStackPanel.ScrollUnit="{Binding ScrollUnit}"
             Margin="5"
             Grid.Row="5"
             ScrollViewer.ScrollChanged="DataGridScrollChanged"

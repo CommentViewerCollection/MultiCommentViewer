@@ -213,6 +213,12 @@ namespace TwitchSitePlugin
                 case nameof(_options.FontSize):
                     RaisePropertyChanged(nameof(FontSize));
                     break;
+                case nameof(_options.FirstCommentBackColor):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(_options.FirstCommentForeColor):
+                    RaisePropertyChanged(nameof(ForeColor));
+                    break;
                 case nameof(_options.FirstCommentFontFamily):
                     RaisePropertyChanged(nameof(FontFamily));
                     break;

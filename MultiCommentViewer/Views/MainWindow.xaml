@@ -346,43 +346,84 @@
                 ItemsSource="{Binding MetaCollection, IsAsync=True}"
                 Margin="5,0,5,0"
                 MinHeight="80"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Background="{Binding CommentListBackground}"
-            BorderBrush="{Binding CommentListBorderBrush}"
-            VerticalScrollBarVisibility="Visible"
-            HorizontalScrollBarVisibility="Visible"
-                      >
-                    <DataGrid.Columns>
-                    <DataGridTextColumn Header="接続名" Binding="{Binding ConnectionName}"
-                                        Width="{Binding DataContext.MetadataViewConnectionNameColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                        >
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="タイトル" Binding="{Binding Title}"
-                                        Width="{Binding DataContext.MetadataViewTitleColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                        >
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="経過時間" Binding="{Binding Elapsed}"
-                                        Width="{Binding DataContext.MetadataViewElapsedColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                        >
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="視聴者数" Binding="{Binding CurrentViewers}"
-                                        Width="{Binding DataContext.MetadataViewCurrentViewersColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                        >
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="総視聴者数" Binding="{Binding TotalViewers}"
-                                        Width="{Binding DataContext.MetadataViewTotalViewersColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                        >
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="アクティブ" Binding="{Binding Active}"
-                                        Width="{Binding DataContext.MetadataViewActiveColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                        >
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="その他" Binding="{Binding Others}"
-                                        Width="{Binding DataContext.MetadataViewOthersColumnWidth, Mode=TwoWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
-                                        >
-                    </DataGridTextColumn>
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Background="{Binding CommentListBackground}"
+                BorderBrush="{Binding CommentListBorderBrush}"
+                VerticalScrollBarVisibility="Visible"
+                HorizontalScrollBarVisibility="Visible"
+                >
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn
+                        Header="接続名"
+                        Width="{Binding DataContext.MetadataViewConnectionNameColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                        >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ConnectionName}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Header="タイトル"
+                        Width="{Binding DataContext.MetadataViewTitleColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                        >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Title}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Header="経過時間"
+                        Width="{Binding DataContext.MetadataViewElapsedColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                        >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Elapsed}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Header="視聴者数"
+                        Width="{Binding DataContext.MetadataViewCurrentViewersColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                        >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding CurrentViewers}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Header="総視聴者数"
+                        Width="{Binding DataContext.MetadataViewTotalViewersColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                        >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding TotalViewers}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Header="アクティブ"
+                        Width="{Binding DataContext.MetadataViewActiveColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                        >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Active}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn
+                        Header="その他"
+                        Width="{Binding DataContext.MetadataViewOthersColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
+                        >
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Others}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>

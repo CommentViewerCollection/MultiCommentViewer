@@ -1,30 +1,27 @@
 ﻿using SitePlugin;
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 
-namespace TwitchSitePlugin
+namespace ShowRoomSitePlugin
 {
     internal class MessageMetadata : IMessageMetadata
     {
-        private readonly ITwitchMessage _message;
+        private readonly IShowRoomMessage _message;
         private readonly ICommentOptions _options;
-        private readonly ITwitchSiteOptions _siteOptions;
+        private readonly IShowRoomSiteOptions _siteOptions;
 
         public Color BackColor
         {
             get
             {
-                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                if(User != null && !string.IsNullOrEmpty(User.BackColorArgb))
                 {
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentBackColor;
-                }
-                //if (_message is ITwitchItem item)
+                //if (_message is IShowRoomItem item)
                 //{
                 //    return _siteOptions.ItemBackColor;
                 //}
@@ -44,11 +41,7 @@ namespace TwitchSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
                 }
-                else if (IsFirstComment)
-                {
-                    return _options.FirstCommentForeColor;
-                }
-                //if (_message is ITwitchItem item)
+                //if (_message is IShowRoomItem item)
                 //{
                 //    return _siteOptions.ItemForeColor;
                 //}
@@ -139,8 +132,9 @@ namespace TwitchSitePlugin
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
-        public MessageMetadata(ITwitchMessage message, ICommentOptions options, ITwitchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
+        public MessageMetadata(IShowRoomMessage message, ICommentOptions options, IShowRoomSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
+            Debug.Assert(user != null);
             _message = message;
             _options = options;
             _siteOptions = siteOptions;
@@ -177,17 +171,29 @@ namespace TwitchSitePlugin
             switch (e.PropertyName)
             {
                 //case nameof(_siteOptions.ItemBackColor):
-                //    if (_message is ITwitchItem)
+                //    if (_message is IShowRoomItem)
                 //    {
                 //        RaisePropertyChanged(nameof(BackColor));
                 //    }
                 //    break;
                 //case nameof(_siteOptions.ItemForeColor):
-                //    if (_message is ITwitchItem)
+                //    if (_message is IShowRoomItem)
                 //    {
                 //        RaisePropertyChanged(nameof(ForeColor));
                 //    }
                 //    break;
+                case nameof(_siteOptions.IsShowJoinMessage):
+                    if (_message is IShowRoomJoin)
+                    {
+                        RaisePropertyChanged(nameof(IsVisible));
+                    }
+                    break;
+                case nameof(_siteOptions.IsShowLeaveMessage):
+                    if (_message is IShowRoomLeave)
+                    {
+                        RaisePropertyChanged(nameof(IsVisible));
+                    }
+                    break;
             }
         }
 
@@ -212,12 +218,6 @@ namespace TwitchSitePlugin
                     break;
                 case nameof(_options.FontSize):
                     RaisePropertyChanged(nameof(FontSize));
-                    break;
-                case nameof(_options.FirstCommentBackColor):
-                    RaisePropertyChanged(nameof(BackColor));
-                    break;
-                case nameof(_options.FirstCommentForeColor):
-                    RaisePropertyChanged(nameof(ForeColor));
                     break;
                 case nameof(_options.FirstCommentFontFamily):
                     RaisePropertyChanged(nameof(FontFamily));

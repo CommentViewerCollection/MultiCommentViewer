@@ -202,7 +202,31 @@ namespace NicoSitePlugin
             var info = new CurrentUserInfo();
             if (!string.IsNullOrEmpty(userId))
             {
-                var displayName = await API.GetDisplayNameFromUserId(_dataSource, userId);
+                string displayName = null;
+                try
+                {
+                    displayName = await API.GetDisplayNameFromUserId(_dataSource, userId);
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogException(ex, $"user_id={userId}");
+                }
+                if(string.IsNullOrEmpty(displayName))
+                {
+                    try
+                    {
+                        var cauUser = await API.GetNicoCasUserInfo(_dataSource, userId);
+                        displayName = cauUser.Name;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex, $"user_id={userId}");
+                    }
+                }
+                if (string.IsNullOrEmpty(displayName))
+                {
+                    displayName = "（不明）";
+                }
                 info.IsLoggedIn = true;
                 info.Username = displayName;
                 info.UserId = userId;

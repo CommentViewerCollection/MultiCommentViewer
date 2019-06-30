@@ -135,6 +135,8 @@ namespace MultiCommentViewer
         Color MirrativForeColor { get; set; }
         Color PeriscopeBackColor { get; set; }
         Color PeriscopeForeColor { get; set; }
+        Color ShowRoomBackColor { get; set; }
+        Color ShowRoomForeColor { get; set; }
 
         InfoType ShowingInfoLevel { get; set; }
 

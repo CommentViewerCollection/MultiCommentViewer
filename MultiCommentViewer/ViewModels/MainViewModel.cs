@@ -530,13 +530,25 @@ namespace MultiCommentViewer
         {
             get { return $""; }
         }
+        string AppDirName
+        {
+            get
+            {
+#if BETA
+                return Name + "_Beta";
+#else
+                return Name;
+#endif
+            }
+        }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
         {
             //新しいバージョンがあるか確認
-            Common.AutoUpdate.LatestVersionInfo latestVersionInfo;            
+            Common.AutoUpdate.LatestVersionInfo latestVersionInfo;
+            string name = AppDirName;
             try
             {
-                latestVersionInfo = await Common.AutoUpdate.Tools.GetLatestVersionInfo(Name);
+                latestVersionInfo = await Common.AutoUpdate.Tools.GetLatestVersionInfo(name);
             }
             catch (Exception ex)
             {
@@ -565,7 +577,7 @@ namespace MultiCommentViewer
                 }
             }
         }
-        #endregion //Methods
+#endregion //Methods
         public event EventHandler<EventArgs> CloseRequested;
         public void RequestClose()
         {
@@ -800,7 +812,7 @@ namespace MultiCommentViewer
                 _comments.Add(mcvCvm);
             }
         }
-        #region EventHandler
+#region EventHandler
         private async void Connection_MessageReceived(object sender, IMessageContext e)
         {
             Debug.Assert(e != null);
@@ -873,12 +885,12 @@ namespace MultiCommentViewer
                 }
             }
         }
-        #endregion //EventHandler
+#endregion //EventHandler
 
 
 
 
-        #region Properties
+#region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         private readonly ObservableCollection<IMcvCommentViewModel> _comments = new ObservableCollection<IMcvCommentViewModel>();
@@ -910,7 +922,9 @@ namespace MultiCommentViewer
                 var ver = asm.GetName().Version;
                 var title = asm.GetName().Name;
                 var s = $"{title} v{ver.Major}.{ver.Minor}.{ver.Build}";
-#if DEBUG
+#if BETA
+                s += "b (ベータ版)";
+#elif DEBUG
                 s += " (DEBUG)";
 #endif
                 return s;
@@ -1216,7 +1230,7 @@ namespace MultiCommentViewer
         public Brush ScrollBarButtonPressedBorderBrush => new SolidColorBrush(_options.ScrollBarButtonPressedBorderColor);
 
         private readonly Color _myColor = new Color { A = 0xFF, R = 45, G = 45, B = 48 };
-        #endregion //Properties
+#endregion //Properties
 
         public MainViewModel():base(new DynamicOptionsTest())
         {

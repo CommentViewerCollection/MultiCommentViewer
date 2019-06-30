@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{242D4286-7214-422F-BE7C-BE784C815E0F}</ProjectGuid>
+    <ProjectGuid>{AFC8CDCD-02E7-4517-8A8B-3623B913F6C7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PeriscopeIF</RootNamespace>
-    <AssemblyName>PeriscopeIF</AssemblyName>
+    <RootNamespace>ShowRoomSitePluginTests</RootNamespace>
+    <AssemblyName>ShowRoomSitePluginTests</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -41,14 +41,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Message.cs" />
+    <Compile Include="MessageParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
-      <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
-      <Name>SitePlugin</Name>
+    <ProjectReference Include="..\ShowRoomSitePlugin\ShowRoomSitePlugin.csproj">
+      <Project>{3cb5f930-60ca-4430-8b79-3106868a7f51}</Project>
+      <Name>ShowRoomSitePlugin</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NUnit">
+      <Version>3.12.0</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -27,6 +27,7 @@ namespace MultiCommentViewer.Test
                 new WhowatchSitePlugin.WhowatchSiteContext(options, logger, userStoreManager),
                 new MirrativSitePlugin.MirrativSiteContext(options,new MirrativSitePlugin.MirrativServer(), logger, userStoreManager),
                 new PeriscopeSitePlugin.PeriscopeSiteContext(options,new PeriscopeSitePlugin.PeriscopeServer(), logger,userStoreManager),
+                new ShowRoomSitePlugin.ShowRoomSiteContext(options,new ShowRoomSitePlugin.ShowRoomServer(), logger,userStoreManager),
 #if DEBUG
                 new TestSitePlugin.TestSiteContext(options),
 #endif

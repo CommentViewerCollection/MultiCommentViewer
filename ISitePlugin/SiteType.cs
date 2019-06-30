@@ -20,5 +20,6 @@
         Twicas,
         Twitch,
         Periscope,
+        ShowRoom,
     }
 }

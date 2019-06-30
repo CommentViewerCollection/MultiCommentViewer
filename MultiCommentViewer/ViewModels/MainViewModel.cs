@@ -778,6 +778,29 @@ namespace MultiCommentViewer
                     mcvCvm = new PeriscopeCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
+            else if (messageContext.Message is ShowRoomSitePlugin.IShowRoomMessage showRoomMessage)
+            {
+                if (showRoomMessage is ShowRoomSitePlugin.IShowRoomComment comment)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomConnected connected)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomDisconnected disconnected)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomJoin join)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomLeave leave)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
             else if(messageContext.Message is TestSitePlugin.ITestMessage testMessage)
             {
                 if(testMessage is TestSitePlugin.ITestComment comment)

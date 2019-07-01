@@ -369,6 +369,7 @@
                 <DataGrid.Columns>
                     <DataGridTemplateColumn
                         Header="接続名"
+                        DisplayIndex="{Binding DataContext.MetadataViewConnectionNameDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=0}"
                         Width="{Binding DataContext.MetadataViewConnectionNameColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                         Visibility="{Binding DataContext.IsShowMetaConnectionName, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
                         >
@@ -380,6 +381,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Header="タイトル"
+                        DisplayIndex="{Binding DataContext.MetadataViewTitleDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=1}"
                         Width="{Binding DataContext.MetadataViewTitleColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                         Visibility="{Binding DataContext.IsShowMetaTitle, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
                         >
@@ -391,6 +393,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Header="経過時間"
+                        DisplayIndex="{Binding DataContext.MetadataViewElapsedDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=2}"
                         Width="{Binding DataContext.MetadataViewElapsedColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                         Visibility="{Binding DataContext.IsShowMetaElapse, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
                         >
@@ -402,6 +405,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Header="視聴者数"
+                        DisplayIndex="{Binding DataContext.MetadataViewCurrentViewersDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=3}"
                         Width="{Binding DataContext.MetadataViewCurrentViewersColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                         Visibility="{Binding DataContext.IsShowMetaCurrentViewers, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
                         >
@@ -413,6 +417,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Header="総視聴者数"
+                        DisplayIndex="{Binding DataContext.MetadataViewTotalViewersDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=4}"
                         Width="{Binding DataContext.MetadataViewTotalViewersColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                         Visibility="{Binding DataContext.IsShowMetaTotalViewers, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
                         >
@@ -424,6 +429,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Header="アクティブ"
+                        DisplayIndex="{Binding DataContext.MetadataViewActiveDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=5}"
                         Width="{Binding DataContext.MetadataViewActiveColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                         Visibility="{Binding DataContext.IsShowMetaActive, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
                         >
@@ -435,6 +441,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Header="その他"
+                        DisplayIndex="{Binding DataContext.MetadataViewOthersDisplayIndex, Mode=TwoWay, Source={x:Reference dummyElement}, FallbackValue=6}"
                         Width="{Binding DataContext.MetadataViewOthersColumnWidth, Mode=OneWay, Source={x:Reference dummyElement}, Converter={StaticResource dataGridLengthConverter}}"
                         Visibility="{Binding DataContext.IsShowMetaOthers, Source={x:Reference dummyElement}, Converter={StaticResource booleanToVisibilityConverter}}"
                         >

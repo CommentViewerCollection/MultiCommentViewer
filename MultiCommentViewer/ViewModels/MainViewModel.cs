@@ -1140,36 +1140,78 @@ namespace MultiCommentViewer
             get => _options.IsShowMetaConnectionName;
             set => _options.IsShowMetaConnectionName = value;
         }
+        public int MetadataViewConnectionNameDisplayIndex
+        {
+            get => _options.MetadataViewConnectionNameDisplayIndex;
+            set => _options.MetadataViewConnectionNameDisplayIndex = value;
+        }
+
         public bool IsShowMetaTitle
         {
             get => _options.IsShowMetaTitle;
             set => _options.IsShowMetaTitle = value;
         }
+        public int MetadataViewTitleDisplayIndex
+        {
+            get => _options.MetadataViewTitleDisplayIndex;
+            set => _options.MetadataViewTitleDisplayIndex = value;
+        }
+
         public bool IsShowMetaElapse
         {
             get => _options.IsShowMetaElapse;
             set => _options.IsShowMetaElapse = value;
         }
+        public int MetadataViewElapsedDisplayIndex
+        {
+            get => _options.MetadataViewElapsedDisplayIndex;
+            set => _options.MetadataViewElapsedDisplayIndex = value;
+        }
+
         public bool IsShowMetaCurrentViewers
         {
             get => _options.IsShowMetaCurrentViewers;
             set => _options.IsShowMetaCurrentViewers = value;
         }
+        public int MetadataViewCurrentViewersDisplayIndex
+        {
+            get => _options.MetadataViewCurrentViewersDisplayIndex;
+            set => _options.MetadataViewCurrentViewersDisplayIndex = value;
+        }
+
         public bool IsShowMetaTotalViewers
         {
             get => _options.IsShowMetaTotalViewers;
             set => _options.IsShowMetaTotalViewers = value;
         }
+        public int MetadataViewTotalViewersDisplayIndex
+        {
+            get => _options.MetadataViewTotalViewersDisplayIndex;
+            set => _options.MetadataViewTotalViewersDisplayIndex = value;
+        }
+
         public bool IsShowMetaActive
         {
             get => _options.IsShowMetaActive;
             set => _options.IsShowMetaActive = value;
         }
+        public int MetadataViewActiveDisplayIndex
+        {
+            get => _options.MetadataViewActiveDisplayIndex;
+            set => _options.MetadataViewActiveDisplayIndex = value;
+        }
+
         public bool IsShowMetaOthers
         {
             get => _options.IsShowMetaOthers;
             set => _options.IsShowMetaOthers = value;
         }
+        public int MetadataViewOthersDisplayIndex
+        {
+            get => _options.MetadataViewOthersDisplayIndex;
+            set => _options.MetadataViewOthersDisplayIndex = value;
+        }
+
         public bool ContainsUrl
         {
             get

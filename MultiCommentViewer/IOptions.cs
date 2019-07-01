@@ -21,12 +21,25 @@ namespace MultiCommentViewer
         double MetadataViewHeight { get; set; }
 
         bool IsShowMetaConnectionName { get; set; }
+        int MetadataViewConnectionNameDisplayIndex { get; set; }
+
         bool IsShowMetaTitle { get; set; }
+        int MetadataViewTitleDisplayIndex { get; set; }
+
         bool IsShowMetaElapse { get; set; }
+        int MetadataViewElapsedDisplayIndex { get; set; }
+
         bool IsShowMetaCurrentViewers { get; set; }
+        int MetadataViewCurrentViewersDisplayIndex { get; set; }
+
         bool IsShowMetaTotalViewers { get; set; }
+        int MetadataViewTotalViewersDisplayIndex { get; set; }
+
         bool IsShowMetaActive { get; set; }
+        int MetadataViewActiveDisplayIndex { get; set; }
+
         bool IsShowMetaOthers { get; set; }
+        int MetadataViewOthersDisplayIndex { get; set; }
 
         double ConnectionNameWidth { get; set; }
         bool IsShowConnectionName { get; set; }

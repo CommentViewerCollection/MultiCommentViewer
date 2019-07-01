@@ -20,6 +20,14 @@ namespace MultiCommentViewer
         double ConnectionViewHeight { get; set; }
         double MetadataViewHeight { get; set; }
 
+        bool IsShowMetaConnectionName { get; set; }
+        bool IsShowMetaTitle { get; set; }
+        bool IsShowMetaElapse { get; set; }
+        bool IsShowMetaCurrentViewers { get; set; }
+        bool IsShowMetaTotalViewers { get; set; }
+        bool IsShowMetaActive { get; set; }
+        bool IsShowMetaOthers { get; set; }
+
         double ConnectionNameWidth { get; set; }
         bool IsShowConnectionName { get; set; }
         int ConnectionNameDisplayIndex { get; set; }

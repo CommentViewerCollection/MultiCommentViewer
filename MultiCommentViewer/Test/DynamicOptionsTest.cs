@@ -68,6 +68,13 @@ namespace MultiCommentViewer.Test
         public bool IsShowVerticalGridLine { get => GetValue(); set => SetValue(value); }
         public bool IsShowHorizontalGridLine { get => GetValue(); set => SetValue(value); }
 
+        public bool IsShowMetaConnectionName { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaTitle { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaElapse { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaCurrentViewers { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaTotalViewers { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaActive { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaOthers { get => GetValue(); set => SetValue(value); }
         public double MetadataViewConnectionNameColumnWidth { get => GetValue(); set => SetValue(value); }
         public double MetadataViewTitleColumnWidth { get => GetValue(); set => SetValue(value); }
         public double MetadataViewElapsedColumnWidth { get => GetValue(); set => SetValue(value); }
@@ -218,6 +225,13 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(IsShowPostTime), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowInfo), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
+            Dict.Add(nameof(IsShowMetaConnectionName), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaTitle), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaElapse), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaCurrentViewers), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaTotalViewers), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaActive), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaOthers), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(MetadataViewConnectionNameColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewTitleColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewElapsedColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });

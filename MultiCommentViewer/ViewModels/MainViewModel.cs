@@ -946,7 +946,7 @@ namespace MultiCommentViewer
                 var title = asm.GetName().Name;
                 var s = $"{title} v{ver.Major}.{ver.Minor}.{ver.Build}";
 #if BETA
-                s += "b (ベータ版)";
+                s += " (ベータ版)";
 #elif DEBUG
                 s += " (DEBUG)";
 #endif

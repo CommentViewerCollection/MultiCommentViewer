@@ -447,7 +447,7 @@ powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList
 if $(ConfigurationName) == Release (
   powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip' -Force
 ) else if $(ConfigurationName) == Beta (
-  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber)b.zip' -Force
+  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_Beta_v@(VersionNumber).zip' -Force
 )
 </PostBuildEvent>
   </PropertyGroup>

@@ -276,7 +276,7 @@ namespace TwitchSitePlugin
             var user = GetUser(userId);
             if (_siteOptions.NeedAutoSubNickname)
             {
-                SitePluginCommon.Utils.SetNickname(commentData.Message, user);
+                SitePluginCommon.Utils.SetNickname(commentData.Message, user, _siteOptions.NeedAutoSubNicknameStr);
             }
             var message = new TwitchComment(result.Raw)
             {

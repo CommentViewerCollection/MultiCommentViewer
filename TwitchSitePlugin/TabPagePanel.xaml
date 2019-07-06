@@ -7,7 +7,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
-        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding NeedAutoSubNickname}" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top"/>
-
+        <CheckBox Content="コテハン認識文字のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding NeedAutoSubNickname}" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top"/>
+        <Label Content="コテハン認識文字" HorizontalAlignment="Left" Margin="10,79,0,0" VerticalAlignment="Top"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="120,79,0,0" TextWrapping="Wrap" Text="{Binding NeedAutoSubNicknameStr}" VerticalAlignment="Top" Width="120"/>
     </Grid>
 </UserControl>

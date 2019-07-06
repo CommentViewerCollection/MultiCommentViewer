@@ -5,5 +5,6 @@ namespace TwitchSitePlugin
     interface ITwitchSiteOptions: INotifyPropertyChanged
     {
         bool NeedAutoSubNickname { get; }
+        string NeedAutoSubNicknameStr { get; }
     }
 }

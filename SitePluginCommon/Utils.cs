@@ -30,7 +30,7 @@ namespace SitePluginCommon
         /// </summary>
         /// <param name="message">コメント本文</param>
         /// <param name="user">コメントを投稿したユーザ</param>
-        public static void SetNickname(string message, IUser user)
+        public static void SetNickname(string message, IUser user, string matchStr = "@|＠")
         {
             var nick = ExtractNickname(message);
             if (!string.IsNullOrEmpty(nick))
@@ -58,11 +58,11 @@ namespace SitePluginCommon
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        public static string ExtractNickname(string text)
+        public static string ExtractNickname(string text, string matchStr = "@|＠")
         {
             if (string.IsNullOrEmpty(text))
                 return null;
-            var matches = Regex.Matches(text, "(?:@|＠)([^@＠\\s]+)", RegexOptions.Singleline);
+            var matches = Regex.Matches(text, "(?:\\" + matchStr + ")([^\\" + string.Join("", matchStr.Split('|')) + "\\s]+)", RegexOptions.Singleline);
             if (matches.Count > 0)
             {
                 foreach (Match match in matches.Cast<Match>().Reverse())

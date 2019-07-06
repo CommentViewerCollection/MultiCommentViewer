@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using Moq;
+using NUnit.Framework;
+using SitePlugin;
 using SitePluginCommon;
 
 namespace SitePluginCommonTests
@@ -17,5 +19,37 @@ namespace SitePluginCommonTests
             Assert.AreEqual("test", Utils.ExtractNickname("@abc@test"));
             Assert.AreEqual("test", Utils.ExtractNickname("@@test"));
         }
+        [TestCase("@", "abc@def@test", "test")]
+        [TestCase("@|＠", "abc@def＠test", "test")]
+        [TestCase("$", "abc\\@test", null)]
+        [TestCase("$", "abc\\$test", "test")]
+        [TestCase("\\", "abc\\test", "test")]
+        [TestCase("\"", "abc\"test", "test")]
+        [TestCase("(", "abc(test", "test")]
+        [TestCase(")", "abc)test", "test")]
+        [TestCase("[", "abc[test", "test")]
+        [TestCase("]", "abc]test", "test")]
+        [TestCase(":", "abc:test", "test")]
+        [TestCase("\\|?", "abc\\test", "test")]
+        [TestCase("\\|?", "abc?test", "test")]
+        [TestCase("|", "abc|test", "test")]
+        [TestCase("| ", "abc| test", "test")]
+        [TestCase("| ", "abc|test", null)]
+        [TestCase("$|", "abc$test", null, Description = "\"|\"の前後にあいう")]
+        public void SetNicknameTest(string matchStr, string text, string expected)
+        {
+            var userMock = new Mock<IUser>();
+            Utils.SetNickname(text, userMock.Object, matchStr);
+            if (string.IsNullOrEmpty(expected))
+            {
+                userMock.VerifySet(u => u.Nickname = expected, Times.Never);
+            }
+            else
+            {
+                userMock.VerifySet(u => u.Nickname = expected);
+            }
+
+        }
     }
 }
+

@@ -73,11 +73,14 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             _disconnectReason = DisconnectReason.Unknown;
             string liveChatHtml = await GetLiveChatHtml(vid);
-            string ytInitialData = ExtractYtInitialData(liveChatHtml);
-            if (string.IsNullOrEmpty(ytInitialData))
+            string ytInitialData;
+            try
             {
-                //これが無いとコメントが取れないから終了
-                //SendInfo("ytInitialDataの取得に失敗しました", InfoType.Error);
+                ytInitialData = Tools.ExtractYtInitialDataFromLiveChatHtml(liveChatHtml);
+            }
+            catch (ParseException ex)
+            {
+                _logger.LogException(ex, "live_chatからのytInitialDataの抜き出しに失敗", liveChatHtml);
                 return DisconnectReason.YtInitialDataNotFound;
             }
             IContinuation initialContinuation;
@@ -267,21 +270,6 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             _chatProvider?.Disconnect();
             _disconnectReason = DisconnectReason.ByUser;
-        }
-
-        private string ExtractYtInitialData(string liveChatHtml)
-        {
-            string ytInitialData = null;
-            try
-            {
-                ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
-            }
-            catch (ParseException ex)
-            {
-                _logger.LogException(ex, "live_chatからのytInitialDataの抜き出しに失敗", liveChatHtml);
-            }
-
-            return ytInitialData;
         }
 
         /// <summary>

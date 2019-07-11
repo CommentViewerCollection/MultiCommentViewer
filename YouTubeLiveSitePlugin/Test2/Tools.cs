@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Diagnostics;
+using System.Text;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -117,7 +118,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var ytCfg = match.Groups[1].Value;
             return ytCfg;
         }
-        public static string ExtractYtInitialData(string liveChatHtml)
+        public static string ExtractYtInitialDataFromLiveChatHtml(string liveChatHtml)
         {
             var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+});\\s*</script>", RegexOptions.Singleline);
             if (!match.Success)
@@ -125,6 +126,32 @@ namespace YouTubeLiveSitePlugin.Test2
                 throw new ParseException(liveChatHtml);
             }
             var ytInitialData = match.Groups[1].Value;
+            return ytInitialData;
+        }
+        public static string ExtractYtInitialDataFromChannelHtml(string channelHtml)
+        {
+            //2019/07/11 仕様変更があったようで、下記のような形式になっていた
+            //window["ytInitialData"] = JSON.parse("{\"responseContext\":{\"se
+            var match = Regex.Match(channelHtml, "window\\[\"ytInitialData\"\\]\\s*=\\s*(.+?})(?:\"\\))?;", RegexOptions.Singleline);
+            if (!match.Success)
+            {
+                throw new ParseException(channelHtml);
+            }
+            var preYtInitialData = match.Groups[1].Value;
+            string ytInitialData;
+            if (preYtInitialData.StartsWith("JSON"))
+            {
+                var preJson = preYtInitialData.Substring(12);//先頭の"JSON.parse(\""を消す
+                //preJsonは\や"がエスケープされた状態になっているため外す
+                var sb = new StringBuilder(preJson);
+                sb.Replace("\\\\", "\\");
+                sb.Replace("\\\"", "\"");
+                ytInitialData = sb.ToString();
+            }
+            else
+            {
+                ytInitialData = preYtInitialData;
+            }
             return ytInitialData;
         }
         /// <summary>

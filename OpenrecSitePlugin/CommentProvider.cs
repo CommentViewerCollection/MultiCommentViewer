@@ -103,9 +103,8 @@ namespace OpenrecSitePlugin
             return cc;
         }
         //protected virtual Extract()
-        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
-            BeforeConnecting();
             if (_ws != null)
             {
                 throw new InvalidOperationException("");
@@ -146,16 +145,23 @@ namespace OpenrecSitePlugin
             _startAt = movieContext2.StartedAt.DateTime;
             _500msTimer.Enabled = true;
 
-            var chats = await GetChats(movieContext2);
-            foreach (var item in chats)
+            var (chats, raw) = await GetChats(movieContext2);
+            try
             {
-                var comment = Tools.Parse(item);
-                var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                var messageContext = CreateMessageContext(comment, commentData, true);
-                if (messageContext != null)
+                foreach (var item in chats)
                 {
-                    MessageReceived?.Invoke(this, messageContext);
+                    var comment = Tools.Parse(item);
+                    var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
+                    var messageContext = CreateMessageContext(comment, commentData, true);
+                    if (messageContext != null)
+                    {
+                        MessageReceived?.Invoke(this, messageContext);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex, "", "raw=" + raw);
             }
             foreach (var user in _userStoreManager.GetAllUsers(SiteType.Openrec))
             {
@@ -231,7 +237,18 @@ namespace OpenrecSitePlugin
                     goto Reconnect;
                 }
             }
-            AfterDisconnected();
+        }
+        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        {
+            BeforeConnecting();
+            try
+            {
+                await ConnectInternalAsync(input, browserProfile);
+            }
+            finally
+            {
+                AfterDisconnected();
+            }
         }
 
         protected virtual IBlackListProvider CreateBlacklistProvider()
@@ -244,7 +261,7 @@ namespace OpenrecSitePlugin
             return new OpenrecWebsocket(_logger);
         }
 
-        protected virtual async Task<Low.Chats.RootObject[]> GetChats(MovieInfo movieContext2)
+        protected virtual async Task<(Low.Chats.RootObject[], string raw)> GetChats(MovieInfo movieContext2)
         {
             return await API.GetChats(_dataSource, movieContext2.Id, DateTime.Now, _cc);
         }

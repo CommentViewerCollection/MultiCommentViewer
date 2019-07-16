@@ -205,8 +205,12 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             var url = $"https://www.youtube.com/channel/{channelId}/videos?flow=list&view=0";
             var html = await server.GetEnAsync(url);
-            var match = Regex.Match(html, "window\\[\"ytInitialData\"\\]\\s*=\\s*({.+?});\\s+", RegexOptions.Singleline);
-            if (!match.Success)
+            string ytInitialData;
+            try
+            {
+                ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
+            }
+            catch(ParseException)
             {
                 if (!html.Contains("ytInitialData"))
                 {
@@ -223,7 +227,6 @@ namespace YouTubeLiveSitePlugin.Test2
             var list = new List<string>();
             try
             {
-                var ytInitialData = match.Groups[1].Value;
                 var json = JsonConvert.DeserializeObject<Low.ChannelYtInitialData.RootObject>(ytInitialData);
                 var tabs = json.contents.twoColumnBrowseResultsRenderer.tabs;
                 Low.ChannelYtInitialData.Tab videosTab = null;

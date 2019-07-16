@@ -232,7 +232,12 @@ namespace OpenrecSitePlugin
                 Nickname = obj.User.Nickname,
                 PostedAt = obj.PostedAt.DateTime,
                 StampUrl = obj.Stamp?.ImageUrl,
-                UserId = obj.User.Id,
+                //2019/07/09 obj.User.Idはnullの場合があったため変更した
+                //User.Idはユーザページの「ユーザ情報」で変更できる。
+                //「 ユーザーIDを設定すると、チャットやコメントが可能になります。」との記載があるため、
+                //コメントを投稿できている時点でnullは無いと思っていた。
+                //恐らく設定直後で反映されていないんだろう。
+                UserId = obj.User.OpenrecUserId.ToString(),
                 YellPoints = obj.Yell?.Points,
                  UserIconUrl=obj.User.IconImageUrl,
             };

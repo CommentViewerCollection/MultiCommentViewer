@@ -35,7 +35,16 @@ namespace NicoSitePlugin
                 return;
             }
             var liveId = match.Groups[1].Value;
-            _watchDataProps = await API.GetWatchDataProps(_server, liveId, cc).ConfigureAwait(false);
+            try
+            {
+                _watchDataProps = await API.GetWatchDataProps(_server, liveId, cc).ConfigureAwait(false);
+            }
+            catch (MembersOnlyCommunityException)
+            {
+                SendSystemInfo("メンバー限定コミュニティのためコメントを取得できませんでした", InfoType.Error);
+                AfterDisconnected();
+                return;
+            }
             var url = _watchDataProps.WebSocketUrl;
             var metaTask= _metaProvider.ReceiveAsync(url, _watchDataProps.BroadcastId);
 

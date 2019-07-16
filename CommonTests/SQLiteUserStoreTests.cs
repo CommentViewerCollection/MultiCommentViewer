@@ -17,6 +17,59 @@ namespace CommonTests
     public class SQLiteUserStoreTests
     {
         [Test]
+        public void SaveTest()
+        {
+            var dbPath = GetTestDBPath();
+            try
+            {
+                var loggerMock = new Mock<ILogger>();
+                var logger = loggerMock.Object;
+                var store1 = new Common.SQLiteUserStore(dbPath, logger);
+
+                //ユーザ１，ユーザ２，ユーザ３を作成し、保存して終了する。
+                store1.Init();
+                {
+                    var user1 = store1.GetUser("1");
+                    user1.Nickname = "user1";
+                    var user2 = store1.GetUser("2");
+                    user2.Nickname = "user2";
+                    var user3 = store1.GetUser("3");
+                    user3.Nickname = "user3";
+                }
+                store1.Save();
+                store1.ClearCache();
+
+                //ユーザ１とユーザ３のみを読み込んでから保存する。
+                store1.Init();
+                {
+                    var user1 = store1.GetUser("1");
+                    var user3 = store1.GetUser("3");
+                }
+                store1.Save();
+                store1.ClearCache();
+
+                //ユーザ２を読み込んでコテハンが保存されているかチェックする
+                store1.Init();
+                {
+                    var user2 = store1.GetUser("2");
+                    Assert.AreEqual("user2", user2.Nickname);
+                }
+            }
+            finally
+            {
+                if (File.Exists(dbPath))
+                {
+                    File.Delete(dbPath);
+                }
+            }
+        }
+        private string GetTestDBPath()
+        {
+            var dir = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var path = System.IO.Path.Combine(dir, "test.db");
+            return path;
+        }
+        [Test]
         public void RestoreTest()
         {
             var dir = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

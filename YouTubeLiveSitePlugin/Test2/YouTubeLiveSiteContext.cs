@@ -7,13 +7,13 @@ using SitePluginCommon;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    public class YouTubeLiveSiteContext : IYouTubeSiteContext
+    public class YouTubeLiveSiteContext : SiteContextBase, IYouTubeSiteContext
     {
-        public Guid Guid => new Guid("F1631B64-6572-4530-ABAF-21707F15D893");
+        public override Guid Guid => new Guid("F1631B64-6572-4530-ABAF-21707F15D893");
 
-        public string DisplayName => "YouTubeLive";
-
-        public IOptionsTabPage TabPanel
+        public override string DisplayName => "YouTubeLive";
+        protected override SiteType SiteType => SiteType.YouTubeLive;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -22,11 +22,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 return new YouTubeListOptionsTabPage(DisplayName, panel);
             }
         }
-        public void Init()
-        {
-            _userStoreManager.Init(SiteType.YouTubeLive);
-        }
-        public ICommentProvider CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
             //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
             return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStoreManager)
@@ -35,7 +31,7 @@ namespace YouTubeLiveSitePlugin.Test2
             };
         }
 
-        public void LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new YouTubeLiveSiteOptions();
             try
@@ -51,7 +47,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
 
-        public void SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -65,16 +61,12 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
 
-        public bool IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             var resolver = new VidResolver();
             return resolver.IsValidInput(input);
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.YouTubeLive, userId);
-        }
-        public UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var youtubeCommentProvider = commentProvider as CommentProvider;
             Debug.Assert(youtubeCommentProvider != null);
@@ -90,24 +82,16 @@ namespace YouTubeLiveSitePlugin.Test2
             return panel;
         }
 
-        public void Save()
-        {
-            _userStoreManager.Save(SiteType.YouTubeLive);
-        }
-
         private readonly ICommentOptions _options;
         private readonly IYouTubeLibeServer _server;
         private readonly ILogger _logger;
-        private readonly IUserStoreManager _userStoreManager;
         private Test2.YouTubeLiveSiteOptions _siteOptions;
         public YouTubeLiveSiteContext(ICommentOptions options, IYouTubeLibeServer server, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _server = server;
             _logger = logger;
-            _userStoreManager = userStoreManager;
-            var userStore = new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);
-            userStoreManager.SetUserStore(SiteType.YouTubeLive, userStore);
         }
     }
 }

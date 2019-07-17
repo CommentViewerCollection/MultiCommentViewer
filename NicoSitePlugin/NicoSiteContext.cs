@@ -7,12 +7,12 @@ using System.Text.RegularExpressions;
 using System.Windows.Controls;
 namespace NicoSitePlugin
 {
-    public class NicoSiteContext : INicoSiteContext
+    public class NicoSiteContext : SiteContextBase, INicoSiteContext
     {
-        public Guid Guid => new Guid("5A477452-FF28-4977-9064-3A4BC7C63252");
-        public string DisplayName => "ニコ生";
-
-        IOptionsTabPage ISiteContext.TabPanel
+        public override Guid Guid => new Guid("5A477452-FF28-4977-9064-3A4BC7C63252");
+        public override string DisplayName => "ニコ生";
+        protected override SiteType SiteType => SiteType.NicoLive;
+        public override IOptionsTabPage TabPanel
         {
             get
             {
@@ -29,15 +29,11 @@ namespace NicoSitePlugin
                 SiteContextGuid = Guid,
             };
         }
-        ICommentProvider ISiteContext.CreateCommentProvider()
+        public override ICommentProvider CreateCommentProvider()
         {
             return GetNicoCommentProvider();
         }
-        private string GetOptionsPath(string dir)
-        {
-            return System.IO.Path.Combine(dir, DisplayName + ".txt");
-        }
-        void ISiteContext.LoadOptions(string path, IIo io)
+        public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new NicoSiteOptions();
             try
@@ -53,7 +49,7 @@ namespace NicoSitePlugin
             }
         }
 
-        void ISiteContext.SaveOptions(string path, IIo io)
+        public override void SaveOptions(string path, IIo io)
         {
             try
             {
@@ -67,12 +63,12 @@ namespace NicoSitePlugin
             }
         }
 
-        bool ISiteContext.IsValidInput(string input)
+        public override bool IsValidInput(string input)
         {
             return NicoCommentProvider.IsValidInput(_options, _siteOptions, _userStoreManager, _server, _logger, null, input, Guid);
         }
 
-        UserControl ISiteContext.GetCommentPostPanel(ICommentProvider commentProvider)
+        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var nicoCommentProvider = commentProvider as INicoCommentProvider;
             Debug.Assert(nicoCommentProvider != null);
@@ -95,18 +91,6 @@ namespace NicoSitePlugin
         {
             return GetNicoCommentProvider();
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.NicoLive, userId);
-        }
-        public void Init()
-        {
-            _userStoreManager.Init(SiteType.NicoLive);
-        }
-        public void Save()
-        {
-            _userStoreManager.Save(SiteType.NicoLive);
-        }
         protected virtual IUserStore CreateUserStore()
         {
             return new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger);
@@ -114,22 +98,14 @@ namespace NicoSitePlugin
         private NicoSiteOptions _siteOptions;
         private readonly ICommentOptions _options;
         private readonly IDataSource _server;
-        private readonly Func<string, int, int, ISplitBuffer, IStreamSocket> _streamSocketFactory;
-
-        //private readonly Action<IStreamSocket> _streamSocketFactory;
         private readonly ILogger _logger;
-        private readonly IUserStoreManager _userStoreManager;
-        //private readonly IUserStore _userStore;
 
-        public NicoSiteContext(ICommentOptions options, IDataSource server,Func<string,int,int,ISplitBuffer,IStreamSocket> StreamSocketFactory, ILogger logger, IUserStoreManager userStoreManager)
+        public NicoSiteContext(ICommentOptions options, IDataSource server, Func<string, int, int, ISplitBuffer, IStreamSocket> _, ILogger logger, IUserStoreManager userStoreManager)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _server = server;
-            _streamSocketFactory = StreamSocketFactory;
             _logger = logger;
-            _userStoreManager = userStoreManager;
-            //_userStore = CreateUserStore();
-            userStoreManager.SetUserStore(SiteType.NicoLive, new SQLiteUserStore(_options.SettingsDirPath + "\\" + "users_" + DisplayName + ".db", _logger));
         }
     }
 }

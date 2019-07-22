@@ -16,6 +16,14 @@ namespace NicoSitePlugin
         }
     }
     [Serializable]
+    public class MembersOnlyCommunityException : Exception
+    {
+        public string LiveId { get; set; }
+        public MembersOnlyCommunityException()
+        {
+        }
+    }
+    [Serializable]
     public class JikkyoInfoFailedException : Exception
     {
         public string Reason { get; }

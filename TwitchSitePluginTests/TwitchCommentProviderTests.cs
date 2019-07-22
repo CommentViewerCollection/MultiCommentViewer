@@ -199,7 +199,7 @@ namespace TwitchSitePluginTests
             var browserMock = new Mock<IBrowserProfile>();
             var cookies = new List<Cookie>
             {
-                new Cookie("name","abc","/","twitch.tv"),
+                new Cookie("login","abc","/","twitch.tv"),
                 new Cookie("twilight-user","{%22authToken%22:%22rkpavglsbv6ovec0qj2l5r5q0mnlm4%22%2C%22displayName%22:%22aokpz%22%2C%22id%22:%22223620888%22%2C%22login%22:%22kv501k%22%2C%22roles%22:{%22isStaff%22:false}%2C%22version%22:2}","/","twitch.tv"),
             };
             browserMock.Setup(b => b.GetCookieCollection(It.IsAny<string>())).Returns(cookies);

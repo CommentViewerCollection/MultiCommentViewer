@@ -312,8 +312,15 @@ namespace MultiCommentViewer
 
         private void Closing(CancelEventArgs e)
         {
-            _connectionSerializerLoader.Save(Connections);
-            
+            try
+            {
+                _connectionSerializerLoader.Save(Connections);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                Debug.WriteLine(ex.Message);
+            }
             foreach (var site in GetSiteContexts())
             {
                 try
@@ -327,9 +334,25 @@ namespace MultiCommentViewer
                     Debug.WriteLine(ex.Message);
                 }
             }
-            _pluginManager?.OnClosing();
+            try
+            {
+                _pluginManager?.OnClosing();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                Debug.WriteLine(ex.Message);
+            }
 
-            _sitePluginLoader.Save();
+            try
+            {
+                _sitePluginLoader.Save();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                Debug.WriteLine(ex.Message);
+            }
         }
         private void RemoveSelectedConnection()
         {

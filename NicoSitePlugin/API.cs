@@ -408,6 +408,7 @@ namespace NicoSitePlugin
             }
             catch (HttpException ex)
             {
+                //エラーメッセージを解析する
                 throw new NotImplementedException();
             }
             //quot;}}}}}}"></script><script src="http
@@ -415,7 +416,7 @@ namespace NicoSitePlugin
             if (!match.Success)
             {
                 //コミュニティフォロワー限定番組です
-                throw new NotImplementedException();
+                throw new MembersOnlyCommunityException { LiveId = liveId };
             }
             var raw = match.Groups[1].Value;
             raw = raw.Replace("&quot;", "\"");

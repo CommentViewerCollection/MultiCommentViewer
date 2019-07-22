@@ -61,6 +61,15 @@
     <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReloadManagerTests.cs" />
+    <Content Include="SampleData\Channel_live.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\Channel_live_off_air.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\GetLiveChatJson_Reload.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Tools.cs" />
     <Compile Include="ToolsTests.cs" />
     <Compile Include="VidResolverTests.cs" />

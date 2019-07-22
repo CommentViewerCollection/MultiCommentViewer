@@ -36,15 +36,26 @@ namespace YouTubeLiveSitePluginTests
             Assert.AreEqual("Rs-WxTGgVus", ((VidResult)result2).Vid);
         }
         [Test]
-        public async Task ResolveVidFromChannelUrl()
+        public async Task ResolveVidFromChanneLivelUrl()
         {
-            var sample = Tools.GetSampleData("Channel_some_archives.txt");            
+            var sample = Tools.GetSampleData("Channel_live.txt");
             var s = new VidResolver();
             var serverMock = new Mock<IYouTubeLibeServer>();
-            serverMock.Setup(k => k.GetEnAsync("https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg/videos?flow=list&view=0")).Returns(Task.FromResult(sample));
-            var result1 = await s.GetVid(serverMock.Object, "https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg");
-            Assert.IsTrue(result1 is NoVidResult);
+            serverMock.Setup(k => k.GetEnAsync(It.IsAny<string>())).Returns(Task.FromResult(sample));
+            var result1 = await s.GetVid(serverMock.Object, "https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg") as VidResult;
+            Assert.IsTrue(result1 is VidResult);
+            Assert.AreEqual("klvzbBP7zM8", ((VidResult)result1).Vid);
         }
+        //[Test]
+        //public async Task ResolveVidFromChannelUrl()
+        //{
+        //    var sample = Tools.GetSampleData("Channel_some_archives.txt");            
+        //    var s = new VidResolver();
+        //    var serverMock = new Mock<IYouTubeLibeServer>();
+        //    serverMock.Setup(k => k.GetEnAsync("https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg/videos?flow=list&view=0")).Returns(Task.FromResult(sample));
+        //    var result1 = await s.GetVid(serverMock.Object, "https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg");
+        //    Assert.IsTrue(result1 is NoVidResult);
+        //}
         [Test]
         public async Task GetVidsFromChannelId_CC_label_Test()
         {

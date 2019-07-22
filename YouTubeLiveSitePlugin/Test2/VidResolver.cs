@@ -179,7 +179,7 @@ namespace YouTubeLiveSitePlugin.Test2
             if (string.IsNullOrEmpty(channelId))
                 throw new ArgumentNullException(nameof(channelId));
 
-            var vids = await GetVidsFromChannelId(server, channelId);
+            var vids = await GetVidsFromChannelId2(server, channelId);
             if (vids.Count == 1)
             {
                 return new VidResult { Vid = vids[0] };
@@ -193,6 +193,39 @@ namespace YouTubeLiveSitePlugin.Test2
                 return new MultiVidsResult { Vids = vids };
             }
         }
+        internal async Task<List<string>> GetVidsFromChannelId2(IYouTubeLibeServer server, string channelId)
+        {
+            var url = $"https://www.youtube.com/channel/{channelId}/live";
+            var html = await server.GetEnAsync(url);
+            string ytInitialData;
+            try
+            {
+                ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
+            }
+            catch (ParseException)
+            {
+                if (!html.Contains("ytInitialData"))
+                {
+                    //条件がわからないけど結構よくある。
+                    throw new YtInitialDataNotFoundException(url: url, html: html);
+                }
+                else
+                {
+                    //空白が無くなったりだとかそういう系だろうか
+                    throw new SpecChangedException(html);
+                }
+            }
+            var vids = new List<string>();
+            var d = DynamicJson.Parse(ytInitialData);
+            //2019/07/19この方法だと直近の生放送を取得する。今現在生放送中とは限らない。数年間生放送していなければ数年前のものを取得することになる。
+            //生放送中かどうかの判定ができればこれでも良いと思う。
+            if(d.IsDefined("currentVideoEndpoint") && d.currentVideoEndpoint.IsDefined("watchEndpoint")&& d.currentVideoEndpoint.watchEndpoint.IsDefined("videoId"))
+            {
+                var vid=(string)d.currentVideoEndpoint.watchEndpoint.videoId;
+                vids.Add(vid);
+            }
+            return vids;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -201,6 +234,7 @@ namespace YouTubeLiveSitePlugin.Test2
         /// <returns></returns>
         /// <exception cref="YtInitialDataNotFoundException"></exception>
         /// <exception cref="SpecChangedException"></exception>
+        [Obsolete("2019/07/18放送開始から５分程度経過しないとvidを取得できなくなっている")]
         internal async Task<List<string>> GetVidsFromChannelId(IYouTubeLibeServer server, string channelId)
         {
             var url = $"https://www.youtube.com/channel/{channelId}/videos?flow=list&view=0";

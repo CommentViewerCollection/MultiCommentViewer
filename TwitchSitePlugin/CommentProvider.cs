@@ -331,7 +331,7 @@ namespace TwitchSitePlugin
         }
         protected virtual bool IsLoggedIn()
         {
-            return !string.IsNullOrEmpty(_oauthToken);
+            return !string.IsNullOrEmpty(_name) && !string.IsNullOrEmpty(_oauthToken);
         }
 
         public void Disconnect()

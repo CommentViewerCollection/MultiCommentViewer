@@ -530,13 +530,25 @@ namespace MultiCommentViewer
         {
             get { return $""; }
         }
+        string AppDirName
+        {
+            get
+            {
+#if BETA
+                return Name + "_Beta";
+#else
+                return Name;
+#endif
+            }
+        }
         private async Task CheckIfUpdateExists(bool isAutoCheck)
         {
             //新しいバージョンがあるか確認
-            Common.AutoUpdate.LatestVersionInfo latestVersionInfo;            
+            Common.AutoUpdate.LatestVersionInfo latestVersionInfo;
+            string name = AppDirName;
             try
             {
-                latestVersionInfo = await Common.AutoUpdate.Tools.GetLatestVersionInfo(Name);
+                latestVersionInfo = await Common.AutoUpdate.Tools.GetLatestVersionInfo(name);
             }
             catch (Exception ex)
             {
@@ -565,7 +577,7 @@ namespace MultiCommentViewer
                 }
             }
         }
-        #endregion //Methods
+#endregion //Methods
         public event EventHandler<EventArgs> CloseRequested;
         public void RequestClose()
         {
@@ -766,6 +778,29 @@ namespace MultiCommentViewer
                     mcvCvm = new PeriscopeCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
+            else if (messageContext.Message is ShowRoomSitePlugin.IShowRoomMessage showRoomMessage)
+            {
+                if (showRoomMessage is ShowRoomSitePlugin.IShowRoomComment comment)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomConnected connected)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomDisconnected disconnected)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomJoin join)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (showRoomMessage is ShowRoomSitePlugin.IShowRoomLeave leave)
+                {
+                    mcvCvm = new ShowRoomCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
             else if(messageContext.Message is TestSitePlugin.ITestMessage testMessage)
             {
                 if(testMessage is TestSitePlugin.ITestComment comment)
@@ -800,7 +835,7 @@ namespace MultiCommentViewer
                 _comments.Add(mcvCvm);
             }
         }
-        #region EventHandler
+#region EventHandler
         private async void Connection_MessageReceived(object sender, IMessageContext e)
         {
             Debug.Assert(e != null);
@@ -873,12 +908,12 @@ namespace MultiCommentViewer
                 }
             }
         }
-        #endregion //EventHandler
+#endregion //EventHandler
 
 
 
 
-        #region Properties
+#region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         private readonly ObservableCollection<IMcvCommentViewModel> _comments = new ObservableCollection<IMcvCommentViewModel>();
@@ -910,7 +945,9 @@ namespace MultiCommentViewer
                 var ver = asm.GetName().Version;
                 var title = asm.GetName().Name;
                 var s = $"{title} v{ver.Major}.{ver.Minor}.{ver.Build}";
-#if DEBUG
+#if BETA
+                s += " (ベータ版)";
+#elif DEBUG
                 s += " (DEBUG)";
 #endif
                 return s;
@@ -1098,6 +1135,83 @@ namespace MultiCommentViewer
         //    get { return _options.SelectedRowForeColor; }
         //    set { _options.SelectedRowForeColor = value; }
         //}
+        public bool IsShowMetaConnectionName
+        {
+            get => _options.IsShowMetaConnectionName;
+            set => _options.IsShowMetaConnectionName = value;
+        }
+        public int MetadataViewConnectionNameDisplayIndex
+        {
+            get => _options.MetadataViewConnectionNameDisplayIndex;
+            set => _options.MetadataViewConnectionNameDisplayIndex = value;
+        }
+
+        public bool IsShowMetaTitle
+        {
+            get => _options.IsShowMetaTitle;
+            set => _options.IsShowMetaTitle = value;
+        }
+        public int MetadataViewTitleDisplayIndex
+        {
+            get => _options.MetadataViewTitleDisplayIndex;
+            set => _options.MetadataViewTitleDisplayIndex = value;
+        }
+
+        public bool IsShowMetaElapse
+        {
+            get => _options.IsShowMetaElapse;
+            set => _options.IsShowMetaElapse = value;
+        }
+        public int MetadataViewElapsedDisplayIndex
+        {
+            get => _options.MetadataViewElapsedDisplayIndex;
+            set => _options.MetadataViewElapsedDisplayIndex = value;
+        }
+
+        public bool IsShowMetaCurrentViewers
+        {
+            get => _options.IsShowMetaCurrentViewers;
+            set => _options.IsShowMetaCurrentViewers = value;
+        }
+        public int MetadataViewCurrentViewersDisplayIndex
+        {
+            get => _options.MetadataViewCurrentViewersDisplayIndex;
+            set => _options.MetadataViewCurrentViewersDisplayIndex = value;
+        }
+
+        public bool IsShowMetaTotalViewers
+        {
+            get => _options.IsShowMetaTotalViewers;
+            set => _options.IsShowMetaTotalViewers = value;
+        }
+        public int MetadataViewTotalViewersDisplayIndex
+        {
+            get => _options.MetadataViewTotalViewersDisplayIndex;
+            set => _options.MetadataViewTotalViewersDisplayIndex = value;
+        }
+
+        public bool IsShowMetaActive
+        {
+            get => _options.IsShowMetaActive;
+            set => _options.IsShowMetaActive = value;
+        }
+        public int MetadataViewActiveDisplayIndex
+        {
+            get => _options.MetadataViewActiveDisplayIndex;
+            set => _options.MetadataViewActiveDisplayIndex = value;
+        }
+
+        public bool IsShowMetaOthers
+        {
+            get => _options.IsShowMetaOthers;
+            set => _options.IsShowMetaOthers = value;
+        }
+        public int MetadataViewOthersDisplayIndex
+        {
+            get => _options.MetadataViewOthersDisplayIndex;
+            set => _options.MetadataViewOthersDisplayIndex = value;
+        }
+
         public bool ContainsUrl
         {
             get
@@ -1216,7 +1330,7 @@ namespace MultiCommentViewer
         public Brush ScrollBarButtonPressedBorderBrush => new SolidColorBrush(_options.ScrollBarButtonPressedBorderColor);
 
         private readonly Color _myColor = new Color { A = 0xFF, R = 45, G = 45, B = 48 };
-        #endregion //Properties
+#endregion //Properties
 
         public MainViewModel():base(new DynamicOptionsTest())
         {
@@ -1475,6 +1589,30 @@ namespace MultiCommentViewer
                     case nameof(_options.VerticalGridLineColor):
                         RaisePropertyChanged(nameof(VerticalGridLineBrush));
                         break;
+
+                    case nameof(_options.IsShowMetaConnectionName):
+                        RaisePropertyChanged(nameof(IsShowMetaConnectionName));
+                        break;
+                    case nameof(_options.IsShowMetaTitle):
+                        RaisePropertyChanged(nameof(IsShowMetaTitle));
+                        break;
+                    case nameof(_options.IsShowMetaElapse):
+                        RaisePropertyChanged(nameof(IsShowMetaElapse));
+                        break;
+                    case nameof(_options.IsShowMetaCurrentViewers):
+                        RaisePropertyChanged(nameof(IsShowMetaCurrentViewers));
+                        break;
+                    case nameof(_options.IsShowMetaTotalViewers):
+                        RaisePropertyChanged(nameof(IsShowMetaTotalViewers));
+                        break;
+                    case nameof(_options.IsShowMetaActive):
+                        RaisePropertyChanged(nameof(IsShowMetaActive));
+                        break;
+                    case nameof(_options.IsShowMetaOthers):
+                        RaisePropertyChanged(nameof(IsShowMetaOthers));
+                        break;
+
+
                 }
             };
             RaisePropertyChanged(nameof(Topmost));

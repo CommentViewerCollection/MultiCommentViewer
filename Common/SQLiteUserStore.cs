@@ -112,17 +112,27 @@ namespace Common
         {
             return new SQLiteConnection($"Data Source={dbPath}");
         }
-        private static void CreateTable(SQLiteConnection conn)
+        /// <summary>
+        /// usersテーブルを作成する
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <returns>テーブルを作成したか。既に存在していた場合は作成せずfalseを返す</returns>
+        private static bool CreateUsersTable(SQLiteConnection conn)
         {
             lock (_createTableLockObject)
             {
-                if (!TableExists(conn, tableName))
+                if (TableExists(conn, tableName))
+                {
+                    return false;
+                }
+                else
                 {
                     var query = $"CREATE TABLE {tableName} ({col1Name} TEXT PRIMARY KEY, {col2Name} TEXT, {col3Name} TEXT)";
                     using (var cmd = new SQLiteCommand(query, conn))
                     {
                         cmd.ExecuteNonQuery();
                     }
+                    return true;
                 }
             }
         }
@@ -184,28 +194,12 @@ namespace Common
             var user = new UserTest(userId) { Name = nameItems, Nickname = nick, BackColorArgb = backColor, ForeColorArgb = foreColor, IsNgUser = isNg };
             return user;
         }
-        public void Save()
+        /// <summary>
+        /// 空のusersテーブルに_cacheDictに登録されたユーザ情報全てを挿入する
+        /// </summary>
+        /// <param name="conn"></param>
+        private void InsertAllUsersToUsersTable(SQLiteConnection conn)
         {
-            CreateDB(_dbPath);
-
-            //usersテーブルの前行を削除
-            var deleteAllRows = $"DELETE FROM {tableName}";
-            try
-            {
-                using (var conn = CreateConnection(_dbPath))
-                using (var cmd = new SQLiteCommand(deleteAllRows, conn))
-                {
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-                _logger.LogException(ex);
-            }
-
-            ///
             const string param1Name = "@param1";
             const string param2Name = "@param2";
             const string param3Name = "@param3";
@@ -214,7 +208,6 @@ namespace Common
             {
                 lock (_cacheDict)
                 {
-                    using (var conn = CreateConnection(_dbPath))
                     using (var cmd = new SQLiteCommand(query, conn))
                     {
                         conn.Open();
@@ -260,6 +253,118 @@ namespace Common
             {
                 Debug.WriteLine(ex.Message);
                 _logger.LogException(ex);
+            }
+        }
+        public void Save()
+        {
+            using (var conn = CreateConnection(_dbPath))
+            {
+                //テーブルが既に存在したらユーザID毎にレコードの存在をチェックしながらupdateかinsertをする。
+                //テーブルが無ければ全部insert
+                if (CreateUsersTable(conn))
+                {
+                    InsertAllUsersToUsersTable(conn);
+                }
+                else
+                {
+                    UpdateUsers(conn);
+                }
+            }
+        }
+        const string Param1Name = "@param1";
+        const string Param2Name = "@param2";
+        const string Param3Name = "@param3";
+        const string UpdateQuery = "UPDATE "+tableName+" SET "+col2Name+"="+Param2Name+","+col3Name+"="+Param3Name+
+                " WHERE "+col1Name+"="+Param1Name;
+        const string InsertQuery = "INSERT INTO " + tableName + " (" + col1Name + ", " + col2Name + ", " + col3Name + ") VALUES(" + Param1Name + ", " + Param2Name + ", " + Param3Name + ")";
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cmd"></param>
+        /// <param name="user"></param>
+        /// <returns>影響があった行数</returns>
+        private int UpdateUser(SQLiteCommand cmd, IUser user)
+        {
+            var json = ToJson(user);
+
+            /*
+             * {
+             *      "Name": [
+             *          {
+             *              "type":"Text",
+             *              "Value":"Ryu",
+             *          },
+             *          {
+             *              "type":"RemoteIcon",
+             *              "url":"",
+             *          }
+             *      ]
+             * }
+             * 
+             */
+            cmd.CommandText = UpdateQuery;
+            cmd.Parameters.Add(new SQLiteParameter(Param1Name, user.UserId));
+            cmd.Parameters.Add(new SQLiteParameter(Param2Name, json));
+            //
+            cmd.Parameters.Add(new SQLiteParameter(Param3Name, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
+
+            return cmd.ExecuteNonQuery();
+        }
+        private void InsertUser(SQLiteCommand cmd, IUser user)
+        {
+            var json = ToJson(user);
+
+            /*
+             * {
+             *      "Name": [
+             *          {
+             *              "type":"Text",
+             *              "Value":"Ryu",
+             *          },
+             *          {
+             *              "type":"RemoteIcon",
+             *              "url":"",
+             *          }
+             *      ]
+             * }
+             * 
+             */
+            cmd.CommandText = InsertQuery;
+            cmd.Parameters.Add(new SQLiteParameter(Param1Name, user.UserId));
+            cmd.Parameters.Add(new SQLiteParameter(Param2Name, json));
+            //
+            cmd.Parameters.Add(new SQLiteParameter(Param3Name, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
+
+            cmd.ExecuteNonQuery();
+        }
+        /// <summary>
+        /// usersテーブルのユーザ情報を_cacheDictのものに書き換える。
+        /// ただし、_cacheDictにあってusersには無いユーザはINSERTする。
+        /// </summary>
+        /// <param name="conn"></param>
+        private void UpdateUsers(SQLiteConnection conn)
+        {
+            lock (_cacheDict)
+            {
+                using (var cmd = new SQLiteCommand(conn))
+                {
+                    if (!IsOpen(conn)) conn.Open();
+                    using (var transaction = conn.BeginTransaction())
+                    {
+                        foreach (var kv in _cacheDict)
+                        {
+                            var user = kv.Value;
+
+                            var lineCount = UpdateUser(cmd, user);
+                            if (lineCount == 0)
+                            {
+                                //このユーザのデータはテーブル上には無いからInsertする
+                                InsertUser(cmd, user);
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
             }
         }
         /// <summary>
@@ -329,8 +434,12 @@ namespace Common
             using (var conn = CreateConnection(dbPath))
             {
                 conn.Open();
-                CreateTable(conn);
+                CreateUsersTable(conn);
             }
+        }
+        private static bool IsOpen(SQLiteConnection conn)
+        {
+            return conn != null && conn.State.HasFlag(System.Data.ConnectionState.Open);
         }
         private static bool TableExists(SQLiteConnection conn, string tableName)
         {
@@ -344,6 +453,7 @@ namespace Common
 
             using (var cmd = new SQLiteCommand(query, conn))
             {
+                if (!IsOpen(conn)) conn.Open();
                 cmd.Parameters.Add(new SQLiteParameter(param1Name, tableName));
 
                 using (var reader = cmd.ExecuteReader())

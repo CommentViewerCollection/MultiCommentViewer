@@ -61,13 +61,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
     <OutputPath>bin\Beta\</OutputPath>
-    <DefineConstants>TRACE;BETA</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DefineConstants>DEBUG;TRACE;BETA</DefineConstants>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -97,6 +98,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="ViewModels\CommentViewModel\InfoCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\ShowRoomCommentViewModel .cs" />
     <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TestCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TwicasCommentViewModel.cs" />
@@ -281,6 +283,14 @@
       <Project>{95335a9e-4a33-45bb-8d5e-10d3c7c34bc1}</Project>
       <Name>PeriscopeSitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj">
+      <Project>{9d866a6c-39d6-470a-a25d-f704a2a28a23}</Project>
+      <Name>ShowRoomIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ShowRoomSitePlugin\ShowRoomSitePlugin.csproj">
+      <Project>{3cb5f930-60ca-4430-8b79-3106868a7f51}</Project>
+      <Name>ShowRoomSitePlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
       <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
       <Name>SitePluginCommon</Name>
@@ -437,7 +447,7 @@ powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList
 if $(ConfigurationName) == Release (
   powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip' -Force
 ) else if $(ConfigurationName) == Beta (
-  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber)b.zip' -Force
+  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_Beta_v@(VersionNumber).zip' -Force
 )
 </PostBuildEvent>
   </PropertyGroup>

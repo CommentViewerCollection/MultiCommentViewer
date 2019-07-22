@@ -203,7 +203,7 @@ namespace YouTubeLiveSitePlugin.Test2
         /// <exception cref="SpecChangedException"></exception>
         internal async Task<List<string>> GetVidsFromChannelId(IYouTubeLibeServer server, string channelId)
         {
-            var url = $"https://www.youtube.com/channel/{channelId}/videos?flow=list&view=2";
+            var url = $"https://www.youtube.com/channel/{channelId}/videos?flow=list&view=0";
             var html = await server.GetEnAsync(url);
             string ytInitialData;
             try

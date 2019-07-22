@@ -41,7 +41,7 @@ namespace YouTubeLiveSitePluginTests
             var sample = Tools.GetSampleData("Channel_some_archives.txt");            
             var s = new VidResolver();
             var serverMock = new Mock<IYouTubeLibeServer>();
-            serverMock.Setup(k => k.GetEnAsync("https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg/videos?flow=list&view=2")).Returns(Task.FromResult(sample));
+            serverMock.Setup(k => k.GetEnAsync("https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg/videos?flow=list&view=0")).Returns(Task.FromResult(sample));
             var result1 = await s.GetVid(serverMock.Object, "https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg");
             Assert.IsTrue(result1 is NoVidResult);
         }
@@ -51,7 +51,7 @@ namespace YouTubeLiveSitePluginTests
             var html = Tools.GetSampleData("Channel_some_archives_with_cc_label.txt");
             var server = new Mock<IYouTubeLibeServer>();
             var channelId = "UCBL9Blq9GDhPGAQbfUJIYXQ";
-            server.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/" + channelId + "/videos?flow=list&view=2")).Returns(Task.FromResult(html));
+            server.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/" + channelId + "/videos?flow=list&view=0")).Returns(Task.FromResult(html));
             var resolver = new VidResolver();
             var vids = await resolver.GetVidsFromChannelId(server.Object, channelId);
             Assert.IsTrue(vids.Count == 0);
@@ -62,7 +62,7 @@ namespace YouTubeLiveSitePluginTests
             var html = Tools.GetSampleData("Channel_on_air.txt");
             var server = new Mock<IYouTubeLibeServer>();
             var channelId = "UCBL9Blq9GDhPGAQbfUJIYXQ";
-            server.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/" + channelId + "/videos?flow=list&view=2")).Returns(Task.FromResult(html));
+            server.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/" + channelId + "/videos?flow=list&view=0")).Returns(Task.FromResult(html));
             var resolver = new VidResolver();
             var vids = await resolver.GetVidsFromChannelId(server.Object, channelId);
             Assert.IsTrue(vids.Count == 1);
@@ -74,7 +74,7 @@ namespace YouTubeLiveSitePluginTests
             var html = Tools.GetSampleData("Channel_Three_on_air.txt");
             var server = new Mock<IYouTubeLibeServer>();
             var channelId = "UCBL9Blq9GDhPGAQbfUJIYXQ";
-            server.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/" + channelId + "/videos?flow=list&view=2")).Returns(Task.FromResult(html));
+            server.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/" + channelId + "/videos?flow=list&view=0")).Returns(Task.FromResult(html));
             var resolver = new VidResolver();
             var vids = await resolver.GetVidsFromChannelId(server.Object, channelId);
             Assert.IsTrue(vids.Count == 3);

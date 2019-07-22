@@ -132,13 +132,13 @@ namespace OpenrecSitePlugin
             var packet = Packet.Parse(str) as PacketOpen;
             return packet.Context;
         }
-        public static async Task<Low.Chats.RootObject[]> GetChats(IDataSource dataSource, string liveId, DateTime toCreatedAt, CookieContainer cc)
+        public static async Task<(Low.Chats.RootObject[], string raw)> GetChats(IDataSource dataSource, string liveId, DateTime toCreatedAt, CookieContainer cc)
         {
             //https://public.openrec.tv/external/api/v5/movies/9PgmVnlqtMz/chats?to_created_at=2018-07-24T19:32:50.395Z
             var url = "https://public.openrec.tv/external/api/v5/movies/" + liveId + "/chats?to_created_at=" + toCreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             var res = await dataSource.GetAsync(url, cc);
             var obj = Tools.Deserialize<Low.Chats.RootObject[]>(res);
-            return obj;
+            return (obj, res);
         }
         /// <summary>
         /// 

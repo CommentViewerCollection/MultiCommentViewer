@@ -10,7 +10,6 @@ namespace YouTubeLiveSitePlugin.Test2
         private readonly IYouTubeLiveMessage _message;
         private readonly ICommentOptions _options;
         private readonly IYouTubeLiveSiteOptions _siteOptions;
-        private readonly bool _isFirstComment;
 
         public Color BackColor
         {
@@ -64,7 +63,7 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             get
             {
-                if (_isFirstComment)
+                if (IsFirstComment)
                 {
                     return _options.FirstCommentFontFamily;
                 }
@@ -79,7 +78,7 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             get
             {
-                if (_isFirstComment)
+                if (IsFirstComment)
                 {
                     return _options.FirstCommentFontSize;
                 }
@@ -94,7 +93,7 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             get
             {
-                if (_isFirstComment)
+                if (IsFirstComment)
                 {
                     return _options.FirstCommentFontWeight;
                 }
@@ -109,7 +108,7 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             get
             {
-                if (_isFirstComment)
+                if (IsFirstComment)
                 {
                     return _options.FirstCommentFontStyle;
                 }
@@ -147,7 +146,7 @@ namespace YouTubeLiveSitePlugin.Test2
             _siteOptions = siteOptions;
             User = user;
             CommentProvider = cp;
-            _isFirstComment = isFirstComment;
+            IsFirstComment = isFirstComment;
 
             options.PropertyChanged += Options_PropertyChanged;
             user.PropertyChanged += User_PropertyChanged;
@@ -191,6 +190,12 @@ namespace YouTubeLiveSitePlugin.Test2
                     break;
                 case nameof(_options.FontSize):
                     RaisePropertyChanged(nameof(FontSize));
+                    break;
+                case nameof(_options.FirstCommentBackColor):
+                    RaisePropertyChanged(nameof(BackColor));
+                    break;
+                case nameof(_options.FirstCommentForeColor):
+                    RaisePropertyChanged(nameof(ForeColor));
                     break;
                 case nameof(_options.FirstCommentFontFamily):
                     RaisePropertyChanged(nameof(FontFamily));

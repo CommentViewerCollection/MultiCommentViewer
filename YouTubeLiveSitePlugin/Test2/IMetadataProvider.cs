@@ -64,6 +64,10 @@ namespace YouTubeLiveSitePlugin.Test2
                             metadata.CurrentViewers = new string(lowViewCount.Where(char.IsDigit).ToArray());
                         }
                     }
+                    else
+                    {
+                        metadata.CurrentViewers = "0";
+                    }
                 }
                 else if (action.IsDefined("updateTitleAction"))
                 {

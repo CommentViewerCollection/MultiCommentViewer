@@ -68,13 +68,34 @@ namespace MultiCommentViewer.Test
         public bool IsShowVerticalGridLine { get => GetValue(); set => SetValue(value); }
         public bool IsShowHorizontalGridLine { get => GetValue(); set => SetValue(value); }
 
+
         public double MetadataViewConnectionNameColumnWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaConnectionName { get => GetValue(); set => SetValue(value); }
+        public int MetadataViewConnectionNameDisplayIndex { get => GetValue(); set => SetValue(value); }
+
         public double MetadataViewTitleColumnWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaTitle { get => GetValue(); set => SetValue(value); }
+        public int MetadataViewTitleDisplayIndex { get => GetValue(); set => SetValue(value); }
+
         public double MetadataViewElapsedColumnWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaElapse { get => GetValue(); set => SetValue(value); }
+        public int MetadataViewElapsedDisplayIndex { get => GetValue(); set => SetValue(value); }
+
         public double MetadataViewCurrentViewersColumnWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaCurrentViewers { get => GetValue(); set => SetValue(value); }
+        public int MetadataViewCurrentViewersDisplayIndex { get => GetValue(); set => SetValue(value); }
+
         public double MetadataViewTotalViewersColumnWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaTotalViewers { get => GetValue(); set => SetValue(value); }
+        public int MetadataViewTotalViewersDisplayIndex { get => GetValue(); set => SetValue(value); }
+
         public double MetadataViewActiveColumnWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaActive { get => GetValue(); set => SetValue(value); }
+        public int MetadataViewActiveDisplayIndex { get => GetValue(); set => SetValue(value); }
+
         public double MetadataViewOthersColumnWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowMetaOthers { get => GetValue(); set => SetValue(value); }
+        public int MetadataViewOthersDisplayIndex { get => GetValue(); set => SetValue(value); }
 
         public Color TitleForeColor { get => GetValue(); set => SetValue(value); }
         public Color TitleBackColor { get => GetValue(); set => SetValue(value); }
@@ -157,6 +178,8 @@ namespace MultiCommentViewer.Test
         public Color MirrativForeColor { get => GetValue(); set => SetValue(value); }
         public Color PeriscopeBackColor { get => GetValue(); set => SetValue(value); }
         public Color PeriscopeForeColor { get => GetValue(); set => SetValue(value); }
+        public Color ShowRoomBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ShowRoomForeColor { get => GetValue(); set => SetValue(value); }
 
         protected override void Init()
         {
@@ -216,6 +239,20 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(IsShowPostTime), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsShowInfo), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
+            Dict.Add(nameof(MetadataViewConnectionNameDisplayIndex), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(MetadataViewTitleDisplayIndex), new Item { DefaultValue = 1, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(MetadataViewElapsedDisplayIndex), new Item { DefaultValue = 2, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(MetadataViewCurrentViewersDisplayIndex), new Item { DefaultValue = 3, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(MetadataViewTotalViewersDisplayIndex), new Item { DefaultValue = 4, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(MetadataViewActiveDisplayIndex), new Item { DefaultValue = 5, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(MetadataViewOthersDisplayIndex), new Item { DefaultValue = 6, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(IsShowMetaConnectionName), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaTitle), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaElapse), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaCurrentViewers), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaTotalViewers), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaActive), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsShowMetaOthers), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(MetadataViewConnectionNameColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewTitleColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewElapsedColumnWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
@@ -318,6 +355,8 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(MirrativForeColor), new Item { DefaultValue = ColorFromArgb("#FF008080"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(PeriscopeBackColor), new Item { DefaultValue = ColorFromArgb("#FFFA8072"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(PeriscopeForeColor), new Item { DefaultValue = ColorFromArgb("#FF008080"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ShowRoomBackColor), new Item { DefaultValue = ColorFromArgb("#FFFA8072"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ShowRoomForeColor), new Item { DefaultValue = ColorFromArgb("#FF008080"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
         }
         public ICommentOptions Clone()
         {

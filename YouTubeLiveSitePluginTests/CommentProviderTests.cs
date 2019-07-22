@@ -151,7 +151,7 @@ namespace YouTubeLiveSitePluginTests
         {
             var options = new Mock<ICommentOptions>();
             var serverMock = new Mock<IYouTubeLibeServer>();
-            serverMock.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/UCv1fFr156jc65EMiLbaLImw/videos?flow=list&view=2")).Returns(Task.FromResult(Tools.GetSampleData("Channel_on_air.txt")));
+            serverMock.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/UCv1fFr156jc65EMiLbaLImw/videos?flow=list&view=0")).Returns(Task.FromResult(Tools.GetSampleData("Channel_on_air.txt")));
             serverMock.Setup(s => s.GetAsync("https://www.youtube.com/live_chat?v=AuFOOUtIyUY&is_popout=1",It.Is<CookieContainer>(c=>true))).Returns(Task.FromResult(Tools.GetSampleData("LiveChat.txt")));
             var siteOptions = new YouTubeLiveSiteOptions();
             var logger = new Mock<ILogger>();

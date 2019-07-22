@@ -292,7 +292,7 @@ namespace YouTubeLiveSitePlugin.Test2
                     };
                     continuation = inv;
                 }
-                else
+                else if(continuations[0].IsDefined("timedContinuationData"))
                 {
                     var timed = continuations[0].timedContinuationData;
                     var inv = new TimedContinuation
@@ -301,6 +301,19 @@ namespace YouTubeLiveSitePlugin.Test2
                         TimeoutMs = (int)timed.timeoutMs,
                     };
                     continuation = inv;
+                }
+                else if (continuations[0].IsDefined("reloadContinuationData"))
+                {
+                    var reload = continuations[0].reloadContinuationData;
+                    var inv = new ReloadContinuation
+                    {
+                        Continuation = reload.continuation,
+                    };
+                    continuation = inv;
+                }
+                else
+                {
+                    throw new ParseException(getLiveChatJson);
                 }
 
                 var dataList = new List<CommentData>();

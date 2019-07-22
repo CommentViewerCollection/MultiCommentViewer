@@ -68,10 +68,18 @@ namespace YouTubeLiveSitePlugin.Test2
                                 await Task.Delay(interval, _cts.Token);
                             }
                         }
-                        else
+                        else if(c is IInvalidationContinuation invalid)
                         {
                             ActionsReceived?.Invoke(this, a);
                             await Task.Delay(1000, _cts.Token);
+                        }
+                        else if(c is IReloadContinuation)
+                        {
+                            throw new ReloadException();
+                        }
+                        else
+                        {
+
                         }
                     }
                     else
@@ -133,7 +141,10 @@ namespace YouTubeLiveSitePlugin.Test2
         string Continuation { get; }
         int TimeoutMs { get; }
     }
-    interface ITimedContinuation: IContinuation
+    interface IReloadContinuation : IContinuation
+    {
+    }
+    interface ITimedContinuation : IContinuation
     {
     }
     interface IInvalidationContinuation : IContinuation
@@ -141,6 +152,11 @@ namespace YouTubeLiveSitePlugin.Test2
         int ObjectSource { get; }
         string ProtoCreationTimestampMs { get; }
         string ObjectId { get; }
+    }
+    public class ReloadContinuation : IReloadContinuation
+    {
+        public string Continuation { get; set; }
+        public int TimeoutMs { get; } = 0;
     }
     public class TimedContinuation : ITimedContinuation
     {

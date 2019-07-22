@@ -132,7 +132,7 @@ namespace TwitchSitePlugin
                     if(cookie.Name == "auth-token")
                     {
                         _oauthToken = cookie.Value;
-                    }else if(cookie.Name == "name")
+                    }else if(cookie.Name == "login")
                     {
                         _name = cookie.Value;
                     }
@@ -418,7 +418,7 @@ namespace TwitchSitePlugin
             {
                 switch (cookie.Name)
                 {
-                    case "name":
+                    case "login":
                         name = cookie.Value;
                         break;
                     case "twilight-user":

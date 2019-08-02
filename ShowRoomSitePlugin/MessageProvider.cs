@@ -20,13 +20,36 @@ namespace ShowRoomSitePlugin
         }
         public abstract InternalMessageType MessageType { get;}
         public string Raw { get; }
+    }
+    abstract class MsgInternalMessageBase : InternalMessageBase
+    {
         protected string GetRawData()
         {
             var pos = Raw.IndexOf('{');
             return Raw.Substring(pos);
         }
+        public MsgInternalMessageBase(string raw) : base(raw)
+        {
+
+        }
     }
-    class T1 : InternalMessageBase
+    class Ping : InternalMessageBase
+    {
+        public override InternalMessageType MessageType => InternalMessageType.Ping;
+        public Ping(string raw) : base(raw)
+        {
+
+        }
+    }
+    class Pong : InternalMessageBase
+    {
+        public override InternalMessageType MessageType => InternalMessageType.Pong;
+        public Pong(string raw) : base(raw)
+        {
+
+        }
+    }
+    class T1 : MsgInternalMessageBase
     {
         /// <summary>
         /// comment
@@ -64,7 +87,7 @@ namespace ShowRoomSitePlugin
         }
         public override InternalMessageType MessageType { get; } = InternalMessageType.t1;
     }
-    class T2 : InternalMessageBase
+    class T2 : MsgInternalMessageBase
     {
         public long N { get; }
         public long Av { get; }
@@ -93,7 +116,7 @@ namespace ShowRoomSitePlugin
         }
         public override InternalMessageType MessageType { get; } = InternalMessageType.t2;
     }
-    class T6 : InternalMessageBase
+    class T6 : MsgInternalMessageBase
     {
         public long CreatedAt { get; }
         public long U { get; }
@@ -112,31 +135,58 @@ namespace ShowRoomSitePlugin
     {
         public static IInternalMessage Parse(string raw)
         {
-            var match = Regex.Match(raw, "\"t\":\"?(\\d+)");
-            if (!match.Success)
+            var arr = raw.Split('\t');
+            if(arr.Length == 0)
             {
                 throw new ParseException(raw);
             }
+            var command = arr[0];
             IInternalMessage internalMessage;
-            var type = match.Groups[1].Value;
-            switch (type)
+            switch (command)
             {
-                case "1":
-                    internalMessage = new T1(raw);
+                case "MSG":
+                    {
+                        var match = Regex.Match(raw, "\"t\":\"?(\\d+)");
+                        if (!match.Success)
+                        {
+                            //MSG	70724a:VGEKqmGT	{"av":1010794,"d":8,"ac":"@LTFismar_","cm":"頑張って...
+                            //MSG	70724a:VGEKqmGT	{"av":1018790,"d":0,"ac":"やいず216","cm":"みさきちゃん頑張ろうね！
+                            throw new ParseException(raw);
+                        }
+                        var type = match.Groups[1].Value;
+                        switch (type)
+                        {
+                            case "1":
+                                internalMessage = new T1(raw);
+                                break;
+                            case "2":
+                                internalMessage = new T2(raw);
+                                break;
+                            case "6":
+                                internalMessage = new T6(raw);
+                                break;
+                            case "8":
+                                internalMessage = null;
+                                break;
+                            default:
+                                //"MSG\t6ce05f:8Jvx9D6M\t{\"created_at\":1561899486,\"t\":100}"
+                                //"MSG\t6ce05f:8Jvx9D6M\t{\"telops\":[{\"color\":{\"r\":255,\"b\":255,\"g\":255},\"text\":\"最高です！ありがとう！ファミマ行けー！\",\"type\":\"user\"}],\"telop\":\"最高です！ありがとう！ファミマ行けー！\",\"interval\":6000,\"t\":8,\"api\":\"https://www.showroom-live.com/live/telop?live_id=7135327\"}"
+                                throw new ParseException(raw);
+                        }
+                    }
                     break;
-                case "2":
-                    internalMessage = new T2(raw);
+                case "PING":
+                    internalMessage = new Ping(raw);
                     break;
-                case "6":
-                    internalMessage = new T6(raw);
-                    break;
-                case "8":
-                    internalMessage = null;
+                case "PONG":
+                    internalMessage = new Pong(raw);
                     break;
                 default:
-                    //"MSG\t6ce05f:8Jvx9D6M\t{\"created_at\":1561899486,\"t\":100}"
-                    //"MSG\t6ce05f:8Jvx9D6M\t{\"telops\":[{\"color\":{\"r\":255,\"b\":255,\"g\":255},\"text\":\"最高です！ありがとう！ファミマ行けー！\",\"type\":\"user\"}],\"telop\":\"最高です！ありがとう！ファミマ行けー！\",\"interval\":6000,\"t\":8,\"api\":\"https://www.showroom-live.com/live/telop?live_id=7135327\"}"
                     throw new ParseException(raw);
+            }
+            if(internalMessage == null)
+            {
+                throw new ParseException(raw);
             }
             return internalMessage;
         }
@@ -189,10 +239,13 @@ namespace ShowRoomSitePlugin
                 _logger.LogException(ex);
             }
         }
-
+        public async Task SendAsync(string message)
+        {
+            await _ws.SendAsync(message);
+        }
         private async void Websocket_Opened(object sender, EventArgs e)
         {
-            await _ws.SendAsync($"SUB\t{_bcsvr_key}");
+            await SendAsync($"SUB\t{_bcsvr_key}");
         }
     }
 }

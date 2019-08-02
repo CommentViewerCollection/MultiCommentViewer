@@ -14,6 +14,7 @@ namespace ShowRoomSitePlugin
 {
     internal class ShowRoomCommentProvider : CommentProviderBase
     {
+        System.Timers.Timer _pingTimer = new System.Timers.Timer();
         protected override void BeforeConnect()
         {
             base.BeforeConnect();
@@ -82,7 +83,15 @@ namespace ShowRoomSitePlugin
                 //放送終了？
                 return;
             }
-            await _messageProvider.ReceiveAsync(liveInfo.BcsvrHost, liveInfo.BcsvrKey);
+            _pingTimer.Enabled = true;
+            try
+            {
+                await _messageProvider.ReceiveAsync(liveInfo.BcsvrHost, liveInfo.BcsvrKey);
+            }
+            finally
+            {
+                _pingTimer.Enabled = false;
+            }
             return;
         }
         private string GetRoomNameFromInput(string input)
@@ -160,6 +169,20 @@ namespace ShowRoomSitePlugin
             _options = options;
             _siteOptions = siteOptions;
             _userStoreManager = userStoreManager;
+            _pingTimer.Interval = 1 * 60 * 1000;
+            _pingTimer.Elapsed += PingTimer_Elapsed;
+        }
+
+        private async void PingTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                await _messageProvider.SendAsync("PING\tshowroom");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
     }
     class CurrentUserInfo : ICurrentUserInfo

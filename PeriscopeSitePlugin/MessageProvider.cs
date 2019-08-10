@@ -37,10 +37,11 @@ namespace PeriscopeSitePlugin
 
         private void Websocket_Received(object sender, string e)
         {
-            Debug.WriteLine(e);
+            var raw = e;
+            Debug.WriteLine(raw);
             try
             {
-                var websocketMessage = MessageParser.ParseWebsocketMessage(e);
+                var websocketMessage = MessageParser.ParseWebsocketMessage(raw);
                 var internalMessage = MessageParser.Parse(websocketMessage);
                 if (internalMessage != null)
                 {

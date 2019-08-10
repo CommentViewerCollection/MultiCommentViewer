@@ -34,12 +34,15 @@ namespace PeriscopeSitePlugin
             var autoReconnectMode = false;
             var cc = GetCookieContainer(browserProfile, "pscp.tv");
             var broadcastId = Tools.ExtractLiveId(input);
+            if (string.IsNullOrEmpty(broadcastId))
+            {
+                return;
+            }
             var (avp, broadcastInfo) = await Api.GetAccessVideoPublicAsync(_server, broadcastId);
-            await Api.GetAccessVideoAsync(_server, broadcastId, cc);
+            //await Api.GetAccessVideoAsync(_server, broadcastId, cc);
             if (!IsBroadcastRunning(broadcastInfo))
             {
                 SendSystemInfo("放送が終了しているため切断します", InfoType.Notice);
-                AfterDisconnected();
                 return;
             }
             var acp = await Api.GetAccessChatPublicAsync(_server, avp.ChatToken);

@@ -1244,6 +1244,10 @@ namespace MultiCommentViewer
         }
         private string GetUrlFromSelectedComment()
         {
+            if(SelectedComment == null)
+            {
+                return null;
+            }
             var message = SelectedComment.MessageItems.ToText();
             var match = Regex.Match(message, "(https?://([\\w-]+.)+[\\w-]+(?:/[\\w- ./?%&=]))?");
             if (match.Success)

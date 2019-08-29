@@ -87,6 +87,15 @@ namespace BouyomiPlugin
         public bool IsPeriscopeCommentNickname { get { return GetValue(); } set { SetValue(value); } }
         public bool IsPeriscopeJoin { get { return GetValue(); } set { SetValue(value); } }
         public bool IsPeriscopeLeave { get { return GetValue(); } set { SetValue(value); } }
+
+        //Mixer
+        public bool IsMixerConnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerDisconnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerComment { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerJoin { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerLeave { get { return GetValue(); } set { SetValue(value); } }
+
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -168,6 +177,14 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsPeriscopeCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsPeriscopeJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsPeriscopeLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            //Mixer
+            Dict.Add(nameof(IsMixerConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
     }
 }

@@ -5,7 +5,7 @@ namespace MirrativSitePlugin
 {
     internal class MirrativJoinRoom : MessageBase, IMirrativJoinRoom
     {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
+        public override SiteType SiteType { get; } = SiteType.Mixer;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.JoinRoom;
         //public string Comment { get; set; }
         public string Id { get; set; }

@@ -557,6 +557,57 @@ namespace BouyomiPlugin
         }
         #endregion //Periscope
 
+        #region Mixer
+        /// <summary>
+        /// Mixerの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixerConnect
+        {
+            get => _options.IsMixerConnect;
+            set => _options.IsMixerConnect = value;
+        }
+        /// <summary>
+        /// Mixerの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixerDisconnect
+        {
+            get => _options.IsMixerDisconnect;
+            set => _options.IsMixerDisconnect = value;
+        }
+        /// <summary>
+        /// Mixerのコメントを読み上げるか
+        /// </summary>
+        public bool IsMixerComment
+        {
+            get => _options.IsMixerComment;
+            set => _options.IsMixerComment = value;
+        }
+        /// <summary>
+        /// Mixerのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsMixerCommentNickname
+        {
+            get => _options.IsMixerCommentNickname;
+            set => _options.IsMixerCommentNickname = value;
+        }
+        /// <summary>
+        /// Mixerの入室メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixerJoin
+        {
+            get => _options.IsMixerJoin;
+            set => _options.IsMixerJoin = value;
+        }
+        /// <summary>
+        /// Mixerのアイテムを読み上げるか
+        /// </summary>
+        public bool IsMixerLeave
+        {
+            get => _options.IsMixerLeave;
+            set => _options.IsMixerLeave = value;
+        }
+        #endregion //Mixer
+
         public ICommand ShowFilePickerCommand { get; }
         private void ShowFilePicker()
         {

@@ -98,6 +98,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="ViewModels\CommentViewModel\InfoCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\MixerCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\ShowRoomCommentViewModel .cs" />
     <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\TestCommentViewModel.cs" />
@@ -257,6 +258,14 @@
     <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj">
       <Project>{c6f57847-d6c3-4f64-b0a4-c778d7cea333}</Project>
       <Name>MirrativSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MixerIF\MixerIF.csproj">
+      <Project>{cef10332-bbd8-49fd-b69b-b830bcad4e63}</Project>
+      <Name>MixerIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MixerSitePlugin\MixerSitePlugin.csproj">
+      <Project>{09138bc4-f121-43ca-a6e8-4132c567d96a}</Project>
+      <Name>MixerSitePlugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
       <Project>{daf5e126-c37f-4181-aae5-89e8fc89aae4}</Project>

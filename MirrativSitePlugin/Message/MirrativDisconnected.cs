@@ -5,7 +5,7 @@ namespace MirrativSitePlugin
 {
     internal class MirrativDisconnected : MessageBase, IMirrativDisconnected
     {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
+        public override SiteType SiteType { get; } = SiteType.Mixer;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Disconnected;
         public MirrativDisconnected(string raw) : base(raw)
         {

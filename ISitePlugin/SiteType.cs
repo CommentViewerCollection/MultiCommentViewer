@@ -21,5 +21,6 @@
         Twitch,
         Periscope,
         ShowRoom,
+        Mixer,
     }
 }

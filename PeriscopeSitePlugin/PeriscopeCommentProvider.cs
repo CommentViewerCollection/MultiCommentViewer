@@ -12,57 +12,199 @@ using SitePluginCommon;
 
 namespace PeriscopeSitePlugin
 {
+    public class AutoReconnector
+    {
+        private readonly IConnector _connector;
+        private readonly MessageUntara _message;
+
+        protected virtual DateTime GetCurrentDateTime() => DateTime.Now;
+        public async Task AutoConnect()
+        {
+            DateTime? beforeTrialTime = null;
+            SendSystemInfo("接続しました", InfoType.Notice);
+            while (true)
+            {
+                var disconnectReason = DisconnectReason.Unknown;
+                if (await _connector.IsLivingAsync())
+                {
+                    beforeTrialTime = GetCurrentDateTime();
+                    disconnectReason = await _connector.ConnectAsync();
+                }
+                else
+                {
+                    SendSystemInfo("配信が終了しました", InfoType.Notice);
+                    break;
+                }
+                if(disconnectReason == DisconnectReason.User)
+                {
+                    SendSystemInfo("切断しました", InfoType.Notice);
+                    break;
+                }
+                if (disconnectReason == DisconnectReason.Finished)
+                {
+                    SendSystemInfo("配信が終了しました", InfoType.Notice);
+                    break;
+                }
+                //再接続が、暴走しないようにインターバルを設ける。
+                if (beforeTrialTime.HasValue)
+                {
+                    var elapsed = GetCurrentDateTime() - beforeTrialTime.Value;
+                    if (elapsed < new TimeSpan(0, 0, ReconnectionIntervalMinimamSec))
+                    {
+                        var waitTime = new TimeSpan(0, 0, ReconnectionIntervalMinimamSec) - elapsed;
+                        await Task.Delay(waitTime);
+                    }
+                }
+            }
+        }
+        private void SendSystemInfo(string message, InfoType type)
+        {
+            _message.Set(message, type);
+        }
+        /// <summary>
+        /// 前回接続試行時から最低限経過しているべき秒数
+        /// </summary>
+        public int ReconnectionIntervalMinimamSec { get; set; } = 5;
+        public AutoReconnector(IConnector connector, MessageUntara message)
+        {
+            _connector = connector;
+            _message = message;
+        }
+
+        public void Disconnect()
+        {
+            _connector.Disconnect();
+        }
+    }
+    public enum DisconnectReason
+    {
+        Unknown,
+        User,
+        Error,
+        Finished,
+    }
+    public interface IConnector
+    {
+        Task<bool> IsLivingAsync();
+        Task<DisconnectReason> ConnectAsync();
+        void Disconnect();
+    }
+    class PeriscopeConnector : IConnector
+    {
+        private readonly IDataServer _server;
+        private readonly string _broadcastId;
+        private readonly IMessageProvider _messageProvider;
+        private readonly ILogger _logger;
+        DisconnectReason _disconnectReason = DisconnectReason.Unknown;
+        public async Task<DisconnectReason> ConnectAsync()
+        {
+            _disconnectReason = DisconnectReason.Unknown;
+            var (avp, broadcastInfo) = await Api.GetAccessVideoPublicAsync(_server, _broadcastId);
+            if (!IsBroadcastRunning(broadcastInfo))
+            {
+                return DisconnectReason.Finished;
+            }
+            var acp = await Api.GetAccessChatPublicAsync(_server, avp.ChatToken);
+            var hostname = Tools.ExtractHostnameFromEndpoint(acp.Endpoint);
+            if (hostname.Contains("replay"))
+            {
+                return DisconnectReason.Finished;
+            }
+
+            try
+            {
+                await _messageProvider.ReceiveAsync(hostname, acp.AccessToken, _broadcastId);
+                //ここに来るのは、ユーザによる意図的な切断、配信終了、サーバ側が原因の異常な切断の場合。
+            }
+            catch(Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            return _disconnectReason;
+        }
+        public void Disconnect()
+        {
+            _messageProvider.Disconnect();
+            _disconnectReason = DisconnectReason.User;
+        }
+
+        public async Task<bool> IsLivingAsync()
+        {
+            var (_, broadcastInfo) = await Api.GetAccessVideoPublicAsync(_server, _broadcastId);
+            return IsBroadcastRunning(broadcastInfo);
+        }
+        private bool IsBroadcastRunning(BroadcastInfo broadcastInfo)
+        {
+            Debug.WriteLine($"Periscope BroadcastInfo.State: {broadcastInfo.State}");
+            return broadcastInfo.State == "RUNNING";
+        }
+        public PeriscopeConnector(IDataServer server, string broadcastId, IMessageProvider messageProvider, ILogger logger)
+        {
+            _server = server;
+            _broadcastId = broadcastId;
+            _messageProvider = messageProvider;
+            _logger = logger;
+        }
+    }
+    public class SystemInfoEventArgs : EventArgs
+    {
+        public string Message { get; }
+        public InfoType Type { get; }
+        public SystemInfoEventArgs(string message, InfoType type)
+        {
+            Message = message;
+            Type = type;
+        }
+    }
+    public class MessageUntara
+    {
+        public event EventHandler<SystemInfoEventArgs> SystemInfoReiceved;
+        public void Set(string message, InfoType type)
+        {
+            SystemInfoReiceved?.Invoke(this, new SystemInfoEventArgs(message, type));
+        }
+    }
     internal class PeriscopeCommentProvider : CommentProviderBase
     {
         protected override void BeforeConnect()
         {
             base.BeforeConnect();
-            _isUserDisconnected = false;
-            _cts = new CancellationTokenSource();
         }
         protected override void AfterDisconnected()
         {
             base.AfterDisconnected();
-            _messageProvider = null;
+            _autoReconnector = null;
         }
-        private bool IsBroadcastRunning(BroadcastInfo broadcastInfo)
+        private async Task ConnectInternal2Async(string input, IBrowserProfile browserProfile)
         {
-            return broadcastInfo.State == "RUNNING";
-        }
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
-        {
-            var autoReconnectMode = false;
-            var cc = GetCookieContainer(browserProfile, "pscp.tv");
             var broadcastId = Tools.ExtractLiveId(input);
             if (string.IsNullOrEmpty(broadcastId))
             {
                 return;
             }
-            var (avp, broadcastInfo) = await Api.GetAccessVideoPublicAsync(_server, broadcastId);
-            //await Api.GetAccessVideoAsync(_server, broadcastId, cc);
-            if (!IsBroadcastRunning(broadcastInfo))
-            {
-                SendSystemInfo("放送が終了しているため切断します", InfoType.Notice);
-                return;
-            }
-            var acp = await Api.GetAccessChatPublicAsync(_server, avp.ChatToken);
-            _messageProvider = new MessageProvider(new Websocket(), _logger);
-            //_messageProvider.
-            _messageProvider.Received += MessageProvider_Received;
-            var hostname = Tools.ExtractHostnameFromEndpoint(acp.Endpoint);
-            if (hostname.Contains("replay"))
-            {
-                SendSystemInfo("", InfoType.Error);
-                return;
-            }
-            await _messageProvider.ReceiveAsync(hostname, acp.AccessToken, broadcastId);
+            var messageProvider = new MessageProvider(new Websocket(), _logger);
+            messageProvider.Received += MessageProvider_Received;
+            var connector = new PeriscopeConnector(_server, broadcastId, messageProvider, _logger);
+            var me = new MessageUntara();
+            me.SystemInfoReiceved += Me_SystemInfoReiceved;
+            _autoReconnector = new AutoReconnector(connector, me);
+            await _autoReconnector.AutoConnect();
+            me.SystemInfoReiceved -= Me_SystemInfoReiceved;
+            messageProvider.Received -= MessageProvider_Received;
         }
+
+        private void Me_SystemInfoReiceved(object sender, SystemInfoEventArgs e)
+        {
+            SendSystemInfo(e.Message, e.Type);
+        }
+
+        AutoReconnector _autoReconnector;
         public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnect();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternal2Async(input, browserProfile);
             }
             catch(Exception ex)
             {
@@ -127,18 +269,9 @@ namespace PeriscopeSitePlugin
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
             }
         }
-
-        IMessageProvider _messageProvider;
-        /// <summary>
-        /// ユーザによる切断か
-        /// </summary>
-        bool _isUserDisconnected;
-        CancellationTokenSource _cts;
         public override void Disconnect()
         {
-            _isUserDisconnected = true;
-            _cts?.Cancel();
-            _messageProvider?.Disconnect();
+            _autoReconnector?.Disconnect();
         }
 
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)

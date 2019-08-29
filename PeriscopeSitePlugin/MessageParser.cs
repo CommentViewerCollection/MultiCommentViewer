@@ -45,7 +45,8 @@ namespace PeriscopeSitePlugin
                         //またsenderの要素にも違いがある
                         //type1:user_id,username,display_name,profile_image_url,participant_index,locale,twitter_id,lang_superfan
                         //type2:user_id,particiant_index
-                        switch (GetType(payload))
+                        var type = GetType(payload);
+                        switch (type)
                         {
                             case 1://CHAT
                                 {
@@ -143,6 +144,11 @@ namespace PeriscopeSitePlugin
                                 {
                                     //{"kind":1,"payload":"{\"room\":\"1BRKjvpBpzRKw\",\"body\":\"{\\\"callInsEnabled\\\":false,\\\"displayName\\\":\\\"gsg\\\",\\\"guestBroadcastingEvent\\\":2,\\\"guestChatMessageAPIVersion\\\":2,\\\"isAudioOnlyEnabled\\\":false,\\\"ntpForBroadcasterFrame\\\":0,\\\"ntpForLiveFrame\\\":0,\\\"participant_index\\\":570583730,\\\"programDateTime\\\":\\\"2019-04-11T21:01:54.302+0000\\\",\\\"remoteID\\\":\\\"1dvKOrXrrLVQX\\\",\\\"timestamp\\\":1555016538358,\\\"type\\\":40,\\\"uuid\\\":\\\"0452C6CE-6832-4956-9EB2-D06B0761175B\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"1dvKOrXrrLVQX\",\"username\":\"cullen_cdog\",\"display_name\":\"gsg\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/509479313880932352/W1fpIYvl_reasonably_small.jpeg\",\"participant_index\":570583730,\"locale\":\"en\",\"twitter_id\":\"1146174307\",\"lang\":[\"en\"]},\"timestamp\":1555016538397696033,\"uuid\":\"0452C6CE-6832-4956-9EB2-D06B0761175B\"}","signature":"3r5yuzFSBbo9Z0pnirxVkk86OiCmLYIMWO50H1w"}
                                     //{"kind":1,"payload":"{\"room\":\"1BRKjvpBpzRKw\",\"body\":\"{\\\"callInsEnabled\\\":false,\\\"displayName\\\":\\\"Seb Gruszecki\\\",\\\"guestBroadcastingEvent\\\":2,\\\"guestChatMessageAPIVersion\\\":2,\\\"isAudioOnlyEnabled\\\":false,\\\"ntpForBroadcasterFrame\\\":0,\\\"ntpForLiveFrame\\\":0,\\\"participant_index\\\":187989079,\\\"programDateTime\\\":\\\"2019-04-11T21:07:09.450+0000\\\",\\\"remoteID\\\":\\\"1eRKxqbDgPGjw\\\",\\\"timestamp\\\":1555016851284,\\\"type\\\":40,\\\"uuid\\\":\\\"39466129-85C4-4E1F-B47F-766EF9ED6AAC\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"1eRKxqbDgPGjw\",\"username\":\"SebGruszecki13\",\"display_name\":\"Seb Gruszecki\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1113546381166354433/CkKRCLCM_reasonably_small.jpg\",\"participant_index\":187989079,\"locale\":\"en\",\"twitter_id\":\"523615135\",\"lang\":[\"en\"]},\"timestamp\":1555016851301259873,\"uuid\":\"39466129-85C4-4E1F-B47F-766EF9ED6AAC\"}","signature":"3lJ54INV5s_f0rdDOgx9Rwl_ymdK_r7KKQr_wvA"}
+                                }
+                                break;
+                            case 44:
+                                {
+                                    //{"kind":1,"payload":"{\"room\":\"1MYGNPZYkdpxw\",\"body\":\"{\\\"displayName\\\":\\\"hiro＊m\\\",\\\"ntpForBroadcasterFrame\\\":16216494652412469248,\\\"ntpForLiveFrame\\\":16216494636659197952,\\\"participant_index\\\":1263469185,\\\"remoteID\\\":\\\"1eRKxAadOvAjw\\\",\\\"timestamp\\\":1566708087733,\\\"type\\\":44,\\\"uuid\\\":\\\"D985EA1A-BA4F-4FAF-B4AB-1EB17C8077B0\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"1eRKxAadOvAjw\",\"username\":\"hiro7exe12\",\"display_name\":\"hiro＊m\",\"profile_image_url\":\"https://prod-profile.pscp.tv/1eRKxAadOvAjw/0f0780ad20e277b020d60fb859e0bc11-128.jpg\",\"participant_index\":1263469185,\"locale\":\"ja\",\"twitter_id\":\"3237931897\",\"lang\":[\"ja\"]},\"timestamp\":1566708087744406838,\"uuid\":\"D985EA1A-BA4F-4FAF-B4AB-1EB17C8077B0\"}","signature":"35i-lRkHQybTztj0EO9VXScMa2Kbo8hK9JoH1VA"}
                                 }
                                 break;
                             default:

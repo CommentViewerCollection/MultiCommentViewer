@@ -24,64 +24,71 @@ namespace PeriscopeSitePlugin
             var uri = new Uri(endpoint);
             return uri.Host;
         }
-        public static string ExtractLiveId(string input)
+        public static (string channelName, string liveId) ExtractChannelNameAndLiveId(string input)
         {
-            if (string.IsNullOrWhiteSpace(input)) return null;
+            //2019/09/01
+            //PeriscopeのURLは2種類ある。
+            //Type1
+            //https://www.periscope.tv/w/(LIVE_ID)
+            //Type2
+            //https://www.periscope.tv/(CHANNEL_NAME)/(LIVE_ID)
+            //
+            //Type1にはチャンネル名が付加される場合もある
+            //https://www.periscope.tv/w/(LIVE_ID)?channel=(CHANNEL_NAME)
+            //
+            //また、ドメイン名はperiscope.tvとpscp.tvがあり、常に可換。
 
-            //https://www.pscp.tv/w/1ypJdvRwXQVKW?channel=fave-musician
-            //https://www.pscp.tv/w/1ypKdvbyAmpJW?channel=featured-broadcasts
-            var list = new List<Func<string, string>>
+            if (string.IsNullOrWhiteSpace(input)) return (null, null);
+
+            var list = new List<Func<string, (string,string)>>
             {
-                ExtractLiveIdFromPscpUrl,
-                Extra,
-                ExtractLiveIdFromLivePageUrl,
+                ExtractChannelNameAndLiveIdFromUrlType1,
+                ExtractChannelNameAndLiveIdFromUrlType2,
             };
-            foreach(var func in list)
+            foreach (var func in list)
             {
-                var ret1 = func(input);
-                if (!string.IsNullOrEmpty(ret1))
+                var (channel,liveid)= func(input);
+                if (!string.IsNullOrEmpty(liveid))
                 {
-                    return ret1;
+                    return (channel,liveid);
                 }
             }
-            return null;
+            return (null, null);
+
         }
-        private static string ExtractLiveIdFromPscpUrl(string input)
-        {
-            var match = Regex.Match(input, "pscp\\.tv/w/([0-9a-zA-Z-_]+)");
-            if (match.Success)
-            {
-                return match.Groups[1].Value;
-            }
-            else
-            {
-                return null;
-            }
-        }
-        private static string Extra(string input)
-        {
-            //https://www.periscope.tv/Lovelylndeed/1jMJgvLrMEjGL
-            var match = Regex.Match(input, "periscope\\.tv/(?<channelname>[0-9a-zA-Z-_]+)/(?<liveid>[0-9a-zA-Z-_]+)");
-            if (match.Success)
-            {
-                return match.Groups["liveid"].Value;
-            }
-            else
-            {
-                return null;
-            }
-        }
-        private static string ExtractLiveIdFromLivePageUrl(string input)
+        private static (string channelName, string liveId) ExtractChannelNameAndLiveIdFromUrlType1(string input)
         {
             //https://www.periscope.tv/w/1jMJgvLrMEjGL
-            var match = Regex.Match(input, "periscope\\.tv/w/(?<liveid>[0-9a-zA-Z-_]+)");
+            //https://www.periscope.tv/w/1jMJgvLrMEjGL?channel=abc
+            var match = Regex.Match(input, "(?:periscope|pscp)\\.tv/w/(?<liveid>[0-9a-zA-Z-_]+)(\\?channel=(?<channel>[^/]+))?");
             if (match.Success)
             {
-                return match.Groups["liveid"].Value;
+                var liveid= match.Groups["liveid"].Value;
+                var channel = match.Groups["channel"].Value;
+                if (string.IsNullOrEmpty(channel))
+                {
+                    channel = null;
+                }
+                return (channel, liveid);
             }
             else
             {
-                return null;
+                return (null, null);
+            }
+        }
+        private static (string channelName, string liveId) ExtractChannelNameAndLiveIdFromUrlType2(string input)
+        {
+            //https://www.periscope.tv/Lovelylndeed/1jMJgvLrMEjGL
+            var match = Regex.Match(input, "periscope\\.tv/(?<channel>[0-9a-zA-Z-_]+)/(?<liveid>[0-9a-zA-Z-_]+)");
+            if (match.Success)
+            {
+                var liveid = match.Groups["liveid"].Value;
+                var channel = match.Groups["channel"].Value;
+                return (channel, liveid);
+            }
+            else
+            {
+                return (null, null);
             }
         }
         /// <summary>

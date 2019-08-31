@@ -63,7 +63,7 @@ namespace PeriscopeSitePlugin
         }
         public override bool IsValidInput(string input)
         {
-            var liveId = Tools.ExtractLiveId(input);
+            var (_, liveId) = Tools.ExtractChannelNameAndLiveId(input);
             return !string.IsNullOrEmpty(liveId);
         }
 

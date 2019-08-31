@@ -177,7 +177,7 @@ namespace PeriscopeSitePlugin
         }
         private async Task ConnectInternal2Async(string input, IBrowserProfile browserProfile)
         {
-            var broadcastId = Tools.ExtractLiveId(input);
+            var (channelName, broadcastId) = Tools.ExtractChannelNameAndLiveId(input);
             if (string.IsNullOrEmpty(broadcastId))
             {
                 return;

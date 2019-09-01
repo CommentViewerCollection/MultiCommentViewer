@@ -72,7 +72,7 @@ namespace Common
                 using (var conn = CreateConnection(_dbPath))
                 using (var cmd = new SQLiteCommand(query, conn))
                 {
-                    conn.Open();
+                    OpenConnectionSafely(conn);
                     using (var reader = cmd.ExecuteReader())
                     {
                         if (reader.HasRows)
@@ -210,7 +210,7 @@ namespace Common
                 {
                     using (var cmd = new SQLiteCommand(query, conn))
                     {
-                        conn.Open();
+                        OpenConnectionSafely(conn);
                         using (cmd.Transaction = conn.BeginTransaction())
                         {
                             foreach (var kv in _cacheDict)
@@ -348,7 +348,7 @@ namespace Common
             {
                 using (var cmd = new SQLiteCommand(conn))
                 {
-                    if (!IsOpen(conn)) conn.Open();
+                    OpenConnectionSafely(conn);
                     using (var transaction = conn.BeginTransaction())
                     {
                         foreach (var kv in _cacheDict)
@@ -393,7 +393,7 @@ namespace Common
                 using (var conn = CreateConnection(_dbPath))
                 using (var cmd = new SQLiteCommand(query, conn))
                 {
-                    conn.Open();
+                    OpenConnectionSafely(conn);
                     cmd.Parameters.Add(new SQLiteParameter(param1Name, userId));
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -437,6 +437,18 @@ namespace Common
                 CreateUsersTable(conn);
             }
         }
+        /// <summary>
+        /// ConnectionをOpen()する
+        /// 既にOpenの場合は何もしない
+        /// </summary>
+        /// <param name="conn"></param>
+        private static void OpenConnectionSafely(SQLiteConnection conn)
+        {
+            if (!IsOpen(conn))
+            {
+                conn.Open();
+            }
+        }
         private static bool IsOpen(SQLiteConnection conn)
         {
             return conn != null && conn.State.HasFlag(System.Data.ConnectionState.Open);
@@ -453,7 +465,7 @@ namespace Common
 
             using (var cmd = new SQLiteCommand(query, conn))
             {
-                if (!IsOpen(conn)) conn.Open();
+                OpenConnectionSafely(conn);
                 cmd.Parameters.Add(new SQLiteParameter(param1Name, tableName));
 
                 using (var reader = cmd.ExecuteReader())

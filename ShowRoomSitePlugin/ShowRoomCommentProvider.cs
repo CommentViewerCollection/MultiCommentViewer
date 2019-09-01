@@ -9,19 +9,76 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
 using SitePluginCommon;
+using SitePluginCommon.AutoReconnector;
 
 namespace ShowRoomSitePlugin
 {
-    internal class ShowRoomCommentProvider : CommentProviderBase
+
+    class PeriscopeConnector : IConnector
     {
         System.Timers.Timer _pingTimer = new System.Timers.Timer();
-        protected override void BeforeConnect()
+        private readonly IDataServer _server;
+        private readonly string _broadcastId;
+        private readonly IMessageProvider _messageProvider;
+        private readonly ILogger _logger;
+        DisconnectReason _disconnectReason = DisconnectReason.Unknown;
+        public async Task<DisconnectReason> ConnectAsync()
         {
-            base.BeforeConnect();
-            _cts = new CancellationTokenSource();
-            _messageProvider = new MessageProvider(new Websocket(), _logger);
-            _messageProvider.Received += MessageProvider_Received;
+            _disconnectReason = DisconnectReason.Unknown;
+            var liveInfo = await Api.GetLiveInfo(_server, _broadcastId);
+            _pingTimer.Enabled = true;
+            try
+            {
+                await _messageProvider.ReceiveAsync(liveInfo.BcsvrHost, liveInfo.BcsvrKey);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            _pingTimer.Enabled = false;
+            return _disconnectReason;
         }
+        public void Disconnect()
+        {
+            _messageProvider.Disconnect();
+            _disconnectReason = DisconnectReason.User;
+        }
+
+        public async Task<bool> IsLivingAsync()
+        { 
+            var liveInfo = await Api.GetLiveInfo(_server, _broadcastId);
+            return IsBroadcastRunning(liveInfo);
+        }
+        private bool IsBroadcastRunning(LiveInfo liveInfo)
+        {
+            Debug.WriteLine($"SHOWROOM LiveInfo.LiveStatus: {liveInfo.LiveStatus}");
+            return liveInfo.LiveStatus == 2;
+        }
+        public PeriscopeConnector(IDataServer server, string broadcastId, IMessageProvider messageProvider, ILogger logger)
+        {
+            _server = server;
+            _broadcastId = broadcastId;
+            _messageProvider = messageProvider;
+            _logger = logger;
+            _pingTimer.Interval = 1 * 60 * 1000;
+            _pingTimer.Elapsed += PingTimer_Elapsed;
+        }
+        private async void PingTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                await _messageProvider.SendAsync("PING\tshowroom");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+        }
+    }
+
+
+    internal class ShowRoomCommentProvider : CommentProviderBase
+    {
         private MessageMetadata CreateMessageMetadata(IShowRoomComment message, IUser user, bool isFirstComment)
         {
             return new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
@@ -55,13 +112,16 @@ namespace ShowRoomSitePlugin
                     break;
             }
         }
-
+        protected override void BeforeConnect()
+        {
+            base.BeforeConnect();
+        }
         protected override void AfterDisconnected()
         {
             base.AfterDisconnected();
-            _messageProvider.Received -= MessageProvider_Received;
-            _messageProvider = null;
+            _autoReconnector = null;
         }
+        AutoReconnector _autoReconnector;
         private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
             var roomName = GetRoomNameFromInput(input);
@@ -77,22 +137,36 @@ namespace ShowRoomSitePlugin
                 throw new Exception("room_idが無い");
             }
             var room_id = match.Groups[1].Value;
-            var liveInfo = await Api.GetLiveInfo(_server, room_id);
-            if(liveInfo.LiveStatus == 1)
-            {
-                //放送終了？
-                return;
-            }
-            _pingTimer.Enabled = true;
-            try
-            {
-                await _messageProvider.ReceiveAsync(liveInfo.BcsvrHost, liveInfo.BcsvrKey);
-            }
-            finally
-            {
-                _pingTimer.Enabled = false;
-            }
-            return;
+
+            var messageProvider = new MessageProvider(new Websocket(), _logger);
+            messageProvider.Received += MessageProvider_Received;
+            var connector = new PeriscopeConnector(_server, room_id, messageProvider, _logger);
+            var me = new MessageUntara();
+            me.SystemInfoReiceved += Me_SystemInfoReiceved;
+            _autoReconnector = new AutoReconnector(connector, me);
+            await _autoReconnector.AutoConnect();
+            me.SystemInfoReiceved -= Me_SystemInfoReiceved;
+            messageProvider.Received -= MessageProvider_Received;
+            //var liveInfo = await Api.GetLiveInfo(_server, room_id);
+            //if(liveInfo.LiveStatus == 1)
+            //{
+            //    //放送終了？
+            //    return;
+            //}
+            //_pingTimer.Enabled = true;
+            //try
+            //{
+            //    await _messageProvider.ReceiveAsync(liveInfo.BcsvrHost, liveInfo.BcsvrKey);
+            //}
+            //finally
+            //{
+            //    _pingTimer.Enabled = false;
+            //}
+            //return;
+        }
+        private void Me_SystemInfoReiceved(object sender, SystemInfoEventArgs e)
+        {
+            SendSystemInfo(e.Message, e.Type);
         }
         private string GetRoomNameFromInput(string input)
         {
@@ -123,13 +197,9 @@ namespace ShowRoomSitePlugin
             }
         }
         FirstCommentDetector _first = new FirstCommentDetector();
-
-        IMessageProvider _messageProvider;
-        CancellationTokenSource _cts;
         public override void Disconnect()
         {
-            _cts?.Cancel();
-            _messageProvider?.Disconnect();
+            _autoReconnector?.Disconnect();
         }
 
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
@@ -169,20 +239,6 @@ namespace ShowRoomSitePlugin
             _options = options;
             _siteOptions = siteOptions;
             _userStoreManager = userStoreManager;
-            _pingTimer.Interval = 1 * 60 * 1000;
-            _pingTimer.Elapsed += PingTimer_Elapsed;
-        }
-
-        private async void PingTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            try
-            {
-                await _messageProvider.SendAsync("PING\tshowroom");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
         }
     }
     class CurrentUserInfo : ICurrentUserInfo

@@ -9,86 +9,10 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
 using SitePluginCommon;
+using SitePluginCommon.AutoReconnector;
 
 namespace PeriscopeSitePlugin
 {
-    public class AutoReconnector
-    {
-        private readonly IConnector _connector;
-        private readonly MessageUntara _message;
-
-        protected virtual DateTime GetCurrentDateTime() => DateTime.Now;
-        public async Task AutoConnect()
-        {
-            DateTime? beforeTrialTime = null;
-            SendSystemInfo("接続しました", InfoType.Notice);
-            while (true)
-            {
-                var disconnectReason = DisconnectReason.Unknown;
-                if (await _connector.IsLivingAsync())
-                {
-                    beforeTrialTime = GetCurrentDateTime();
-                    disconnectReason = await _connector.ConnectAsync();
-                }
-                else
-                {
-                    SendSystemInfo("配信が終了しました", InfoType.Notice);
-                    break;
-                }
-                if(disconnectReason == DisconnectReason.User)
-                {
-                    SendSystemInfo("切断しました", InfoType.Notice);
-                    break;
-                }
-                if (disconnectReason == DisconnectReason.Finished)
-                {
-                    SendSystemInfo("配信が終了しました", InfoType.Notice);
-                    break;
-                }
-                //再接続が、暴走しないようにインターバルを設ける。
-                if (beforeTrialTime.HasValue)
-                {
-                    var elapsed = GetCurrentDateTime() - beforeTrialTime.Value;
-                    if (elapsed < new TimeSpan(0, 0, ReconnectionIntervalMinimamSec))
-                    {
-                        var waitTime = new TimeSpan(0, 0, ReconnectionIntervalMinimamSec) - elapsed;
-                        await Task.Delay(waitTime);
-                    }
-                }
-            }
-        }
-        private void SendSystemInfo(string message, InfoType type)
-        {
-            _message.Set(message, type);
-        }
-        /// <summary>
-        /// 前回接続試行時から最低限経過しているべき秒数
-        /// </summary>
-        public int ReconnectionIntervalMinimamSec { get; set; } = 5;
-        public AutoReconnector(IConnector connector, MessageUntara message)
-        {
-            _connector = connector;
-            _message = message;
-        }
-
-        public void Disconnect()
-        {
-            _connector.Disconnect();
-        }
-    }
-    public enum DisconnectReason
-    {
-        Unknown,
-        User,
-        Error,
-        Finished,
-    }
-    public interface IConnector
-    {
-        Task<bool> IsLivingAsync();
-        Task<DisconnectReason> ConnectAsync();
-        void Disconnect();
-    }
     class PeriscopeConnector : IConnector
     {
         private readonly IDataServer _server;
@@ -144,24 +68,6 @@ namespace PeriscopeSitePlugin
             _broadcastId = broadcastId;
             _messageProvider = messageProvider;
             _logger = logger;
-        }
-    }
-    public class SystemInfoEventArgs : EventArgs
-    {
-        public string Message { get; }
-        public InfoType Type { get; }
-        public SystemInfoEventArgs(string message, InfoType type)
-        {
-            Message = message;
-            Type = type;
-        }
-    }
-    public class MessageUntara
-    {
-        public event EventHandler<SystemInfoEventArgs> SystemInfoReiceved;
-        public void Set(string message, InfoType type)
-        {
-            SystemInfoReiceved?.Invoke(this, new SystemInfoEventArgs(message, type));
         }
     }
     internal class PeriscopeCommentProvider : CommentProviderBase

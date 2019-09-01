@@ -291,10 +291,9 @@ namespace CommentViewer.Plugin
                     item.SetAttributeValue("time", ToUnixTime(GetCurrentDateTime()));
                     item.SetAttributeValue("owner", 0);
                     item.SetAttributeValue("service", data.SiteName);
-                    if (!string.IsNullOrEmpty(data.Nickname))
-                    {
-                        item.SetAttributeValue("handle", data.Nickname);
-                    }
+                    //2019/08/25 コメジェネの仕様で、handleタグが無いと"0コメ"に置換されてしまう。だから空欄でも良いからhandleタグは必須。
+                    var handle = string.IsNullOrEmpty(data.Nickname) ? "" : data.Nickname;
+                    item.SetAttributeValue("handle", handle);
                     xml.Add(item);
                 }
                 try

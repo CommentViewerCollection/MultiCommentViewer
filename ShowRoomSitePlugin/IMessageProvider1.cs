@@ -11,5 +11,6 @@ namespace ShowRoomSitePlugin
         event EventHandler<IInternalMessage> Received;
         Task ReceiveAsync(string bcsvr_host, string bcsvr_key);
         void Disconnect();
+        Task SendAsync(string message);
     }
 }

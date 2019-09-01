@@ -12,10 +12,14 @@ namespace PeriscopeSitePluginTests
     class ToolsTests
     {
         [Test]
-        public void ExtractLiveIdTest()
+        public void ExtractChannelNameAndLiveIdTest()
         {
-            Assert.AreEqual("1ypJdvRwXQVKW", Tools.ExtractLiveId("https://www.pscp.tv/w/1ypJdvRwXQVKW?channel=fave-musician"));
-            Assert.IsNull(Tools.ExtractLiveId("a"));
+            Assert.AreEqual(("fave-musician", "1ypJdvRwXQVKW"), Tools.ExtractChannelNameAndLiveId("https://www.periscope.tv/fave-musician/1ypJdvRwXQVKW"));
+            Assert.AreEqual(("fave-musician", "1ypJdvRwXQVKW"), Tools.ExtractChannelNameAndLiveId("https://www.periscope.tv/w/1ypJdvRwXQVKW?channel=fave-musician"));
+            Assert.AreEqual(("fave-musician", "1ypJdvRwXQVKW"), Tools.ExtractChannelNameAndLiveId("https://www.pscp.tv/w/1ypJdvRwXQVKW?channel=fave-musician"));
+            Assert.AreEqual(((string)null, "1ypJdvRwXQVKW"), Tools.ExtractChannelNameAndLiveId("https://www.periscope.tv/w/1ypJdvRwXQVKW"));
+            Assert.AreEqual(((string)null, "1ypJdvRwXQVKW"), Tools.ExtractChannelNameAndLiveId("https://www.pscp.tv/w/1ypJdvRwXQVKW"));
+            Assert.AreEqual(((string)null, (string)null), Tools.ExtractChannelNameAndLiveId("a"));
         }
         [Test]
         public void ExtractHostnameFromEndpointTest()

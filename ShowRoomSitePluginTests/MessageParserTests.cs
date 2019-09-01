@@ -12,6 +12,20 @@ namespace ShowRoomSitePluginTests
     public class MessageParserTests
     {
         [Test]
+        public void PingParseTest()
+        {
+            var data = "PING\tshowroom";
+            var internalMessage = MessageParser.Parse(data) as Ping;
+            Assert.IsNotNull(internalMessage);
+        }
+        [Test]
+        public void PongParseTest()
+        {
+            var data = "PONG\tshowroom";
+            var internalMessage = MessageParser.Parse(data) as Pong;
+            Assert.IsNotNull(internalMessage);
+        }
+        [Test]
         public void Type1ParseTest()
         {
             var data = "MSG\t6cda70:87HHYS8k\t{\"av\":1014474,\"d\":0,\"ac\":\"しまやん♥\",\"cm\":\"マイクが小さい\",\"u\":2370410,\"created_at\":1561880210,\"at\":0,\"t\":\"1\"}";

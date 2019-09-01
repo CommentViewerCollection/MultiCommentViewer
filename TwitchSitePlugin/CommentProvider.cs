@@ -244,6 +244,12 @@ namespace TwitchSitePlugin
             {
                 switch (result.Command)
                 {
+                    case "CLEARCHAT":
+                        //"@ban-duration=10;room-id=37402112;target-msg-id=4830aaeb-1610-47b1-911e-9da2637816c5;target-user-id=87037096;tmi-sent-ts=1567069654595 :tmi.twitch.tv CLEARCHAT #shroud :derzackenausderkrone"
+                        break;
+                    case "CLEARMSG":
+                        //"@login=kale9222;room-id=;target-msg-id=759454c4-d09f-4fed-a8d6-3a20335995ec;tmi-sent-ts=1567075260054 :tmi.twitch.tv CLEARMSG #shroud :stop playing this game man :D"
+                        break;
                     case "PING":
                         await _provider.SendAsync("PONG");
                         break;
@@ -252,6 +258,12 @@ namespace TwitchSitePlugin
                         break;
                     case "USERSTATE":
                         _userState.UpdateTags(result.Tags);
+                        break;
+                    case "USERNOTICE":
+                        //"@badge-info=subscriber/11;badges=subscriber/6,bits/100;color=#FF00FF;display-name=Kosnes;emotes=205480:0-10;flags=;id=b0dbd1a7-86fe-4f54-9d4b-1cdd47a49628;login=kosnes;mod=0;msg-id=resub;msg-param-cumulative-months=11;msg-param-months=0;msg-param-should-share-streak=1;msg-param-streak-months=11;msg-param-sub-plan-name=Channel\\sSubscription\\s(meclipse);msg-param-sub-plan=Prime;room-id=37402112;subscriber=1;system-msg=Kosnes\\ssubscribed\\swith\\sTwitch\\sPrime.\\sThey've\\ssubscribed\\sfor\\s11\\smonths,\\scurrently\\son\\sa\\s11\\smonth\\sstreak!;tmi-sent-ts=1567069704460;user-id=42814323;user-type= :tmi.twitch.tv USERNOTICE #shroud :shroud4Head"
+                        break;
+                    case "ROOMSTATE":
+                        //"@emote-only=0;followers-only=10;r9k=0;rituals=0;room-id=37402112;slow=5;subs-only=0 :tmi.twitch.tv ROOMSTATE #shroud"
                         break;
                     case "PRIVMSG":
                         {
@@ -266,6 +278,38 @@ namespace TwitchSitePlugin
                     //case "NOTICE":
                     //    //@msg-id=msg_channel_suspended :tmi.twitch.tv NOTICE #videos :This channel has been suspended.
                     //    break;
+                    case "CAP":
+                        break;
+                    case "JOIN":
+                        //":kv501k!kv501k@kv501k.tmi.twitch.tv JOIN #shroud"
+                        break;
+                    case "001":
+                        //":tmi.twitch.tv 001 kv501k :Welcome, GLHF!"
+                        break;
+                    case "002":
+                        //":tmi.twitch.tv 001 kv501k :Welcome, GLHF!"
+                        break;
+                    case "003":
+                        //":tmi.twitch.tv 003 kv501k :This server is rather new"
+                        break;
+                    case "004":
+                        //":tmi.twitch.tv 004 kv501k :-"
+                        break;
+                    case "353":
+                        //":kv501k.tmi.twitch.tv 353 kv501k = #shroud :kv501k"
+                        break;
+                    case "366":
+                        //":kv501k.tmi.twitch.tv 366 kv501k #shroud :End of /NAMES list"
+                        break;
+                    case "372":
+                        //":tmi.twitch.tv 372 kv501k :You are in a maze of twisty passages, all alike."
+                        break;
+                    case "375":
+                        //":tmi.twitch.tv 375 kv501k :-"
+                        break;
+                    case "376":
+                        //":tmi.twitch.tv 376 kv501k :>"
+                        break;
                     default:
                         Debug.WriteLine($"Twitch unknown command={result.Command}");
                         SendSystemInfo(result.Raw, InfoType.Debug);
@@ -285,7 +329,7 @@ namespace TwitchSitePlugin
             var user = GetUser(userId);
             if (_siteOptions.NeedAutoSubNickname)
             {
-                SitePluginCommon.Utils.SetNickname(commentData.Message, user);
+                SitePluginCommon.Utils.SetNickname(commentData.Message, user, _siteOptions.NeedAutoSubNicknameStr);
             }
             var message = new TwitchComment(result.Raw)
             {

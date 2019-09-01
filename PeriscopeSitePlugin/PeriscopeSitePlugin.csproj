@@ -75,8 +75,10 @@
     <Compile Include="Low\kind1type2\Class1.cs" />
     <Compile Include="Low\kind2kind1\Class1.cs" />
     <Compile Include="Low\kind2kind2\Class1.cs" />
+    <Compile Include="Low\kind2kind4\Class1.cs" />
     <Compile Include="Low\kind2payloadkind1\Class1.cs" />
     <Compile Include="Low\kind2payloadkind2\Class1.cs" />
+    <Compile Include="Low\kind2payloadkind4\Class1.cs" />
     <Compile Include="MessageParser.cs" />
     <Compile Include="Message\MessageContext.cs" />
     <Compile Include="Message\MessageMetadata.cs" />

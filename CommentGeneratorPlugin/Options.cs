@@ -53,10 +53,13 @@ namespace CommentViewer.Plugin
             Options options = null;
             try
             {
-                var serializer = new DataContractSerializer(typeof(Options));
-                using (var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open))
+                if (System.IO.File.Exists(filePath))
                 {
-                    options = serializer.ReadObject(fs) as Options;
+                    var serializer = new DataContractSerializer(typeof(Options));
+                    using (var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open))
+                    {
+                        options = serializer.ReadObject(fs) as Options;
+                    }
                 }
             }
             catch (System.IO.FileNotFoundException) { }

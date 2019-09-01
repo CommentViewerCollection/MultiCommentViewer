@@ -9,57 +9,108 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
 using SitePluginCommon;
+using SitePluginCommon.AutoReconnector;
 
 namespace PeriscopeSitePlugin
 {
+    class PeriscopeConnector : IConnector
+    {
+        private readonly IDataServer _server;
+        private readonly string _broadcastId;
+        private readonly IMessageProvider _messageProvider;
+        private readonly ILogger _logger;
+        DisconnectReason _disconnectReason = DisconnectReason.Unknown;
+        public async Task<DisconnectReason> ConnectAsync()
+        {
+            _disconnectReason = DisconnectReason.Unknown;
+            var (avp, broadcastInfo) = await Api.GetAccessVideoPublicAsync(_server, _broadcastId);
+            if (!IsBroadcastRunning(broadcastInfo))
+            {
+                return DisconnectReason.Finished;
+            }
+            var acp = await Api.GetAccessChatPublicAsync(_server, avp.ChatToken);
+            var hostname = Tools.ExtractHostnameFromEndpoint(acp.Endpoint);
+            if (hostname.Contains("replay"))
+            {
+                return DisconnectReason.Finished;
+            }
+
+            try
+            {
+                await _messageProvider.ReceiveAsync(hostname, acp.AccessToken, _broadcastId);
+                //ここに来るのは、ユーザによる意図的な切断、配信終了、サーバ側が原因の異常な切断の場合。
+            }
+            catch(Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            return _disconnectReason;
+        }
+        public void Disconnect()
+        {
+            _messageProvider.Disconnect();
+            _disconnectReason = DisconnectReason.User;
+        }
+
+        public async Task<bool> IsLivingAsync()
+        {
+            var (_, broadcastInfo) = await Api.GetAccessVideoPublicAsync(_server, _broadcastId);
+            return IsBroadcastRunning(broadcastInfo);
+        }
+        private bool IsBroadcastRunning(BroadcastInfo broadcastInfo)
+        {
+            Debug.WriteLine($"Periscope BroadcastInfo.State: {broadcastInfo.State}");
+            return broadcastInfo.State == "RUNNING";
+        }
+        public PeriscopeConnector(IDataServer server, string broadcastId, IMessageProvider messageProvider, ILogger logger)
+        {
+            _server = server;
+            _broadcastId = broadcastId;
+            _messageProvider = messageProvider;
+            _logger = logger;
+        }
+    }
     internal class PeriscopeCommentProvider : CommentProviderBase
     {
         protected override void BeforeConnect()
         {
             base.BeforeConnect();
-            _isUserDisconnected = false;
-            _cts = new CancellationTokenSource();
         }
         protected override void AfterDisconnected()
         {
             base.AfterDisconnected();
-            _messageProvider = null;
+            _autoReconnector = null;
         }
-        private bool IsBroadcastRunning(BroadcastInfo broadcastInfo)
+        private async Task ConnectInternal2Async(string input, IBrowserProfile browserProfile)
         {
-            return broadcastInfo.State == "RUNNING";
-        }
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
-        {
-            var autoReconnectMode = false;
-            var cc = GetCookieContainer(browserProfile, "pscp.tv");
-            var broadcastId = Tools.ExtractLiveId(input);
-            var (avp, broadcastInfo) = await Api.GetAccessVideoPublicAsync(_server, broadcastId);
-            await Api.GetAccessVideoAsync(_server, broadcastId, cc);
-            if (!IsBroadcastRunning(broadcastInfo))
+            var (channelName, broadcastId) = Tools.ExtractChannelNameAndLiveId(input);
+            if (string.IsNullOrEmpty(broadcastId))
             {
-                SendSystemInfo("放送が終了しているため切断します", InfoType.Notice);
-                AfterDisconnected();
                 return;
             }
-            var acp = await Api.GetAccessChatPublicAsync(_server, avp.ChatToken);
-            _messageProvider = new MessageProvider(new Websocket(), _logger);
-            //_messageProvider.
-            _messageProvider.Received += MessageProvider_Received;
-            var hostname = Tools.ExtractHostnameFromEndpoint(acp.Endpoint);
-            if (hostname.Contains("replay"))
-            {
-                SendSystemInfo("", InfoType.Error);
-                return;
-            }
-            await _messageProvider.ReceiveAsync(hostname, acp.AccessToken, broadcastId);
+            var messageProvider = new MessageProvider(new Websocket(), _logger);
+            messageProvider.Received += MessageProvider_Received;
+            var connector = new PeriscopeConnector(_server, broadcastId, messageProvider, _logger);
+            var me = new MessageUntara();
+            me.SystemInfoReiceved += Me_SystemInfoReiceved;
+            _autoReconnector = new AutoReconnector(connector, me);
+            await _autoReconnector.AutoConnect();
+            me.SystemInfoReiceved -= Me_SystemInfoReiceved;
+            messageProvider.Received -= MessageProvider_Received;
         }
+
+        private void Me_SystemInfoReiceved(object sender, SystemInfoEventArgs e)
+        {
+            SendSystemInfo(e.Message, e.Type);
+        }
+
+        AutoReconnector _autoReconnector;
         public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnect();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternal2Async(input, browserProfile);
             }
             catch(Exception ex)
             {
@@ -124,18 +175,9 @@ namespace PeriscopeSitePlugin
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
             }
         }
-
-        IMessageProvider _messageProvider;
-        /// <summary>
-        /// ユーザによる切断か
-        /// </summary>
-        bool _isUserDisconnected;
-        CancellationTokenSource _cts;
         public override void Disconnect()
         {
-            _isUserDisconnected = true;
-            _cts?.Cancel();
-            _messageProvider?.Disconnect();
+            _autoReconnector?.Disconnect();
         }
 
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)

@@ -1,6 +1,7 @@
 ﻿using SitePlugin;
 using System;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SitePluginCommon
@@ -30,9 +31,9 @@ namespace SitePluginCommon
         /// </summary>
         /// <param name="message">コメント本文</param>
         /// <param name="user">コメントを投稿したユーザ</param>
-        public static void SetNickname(string message, IUser user)
+        public static void SetNickname(string message, IUser user, string matchStr = "@|＠")
         {
-            var nick = ExtractNickname(message);
+            var nick = ExtractNickname(message, matchStr);
             if (!string.IsNullOrEmpty(nick))
             {
                 user.Nickname = nick;
@@ -58,11 +59,27 @@ namespace SitePluginCommon
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        public static string ExtractNickname(string text)
+        public static string ExtractNickname(string text, string matchStr = "@|＠")
         {
             if (string.IsNullOrEmpty(text))
                 return null;
-            var matches = Regex.Matches(text, "(?:@|＠)([^@＠\\s]+)", RegexOptions.Singleline);
+            //2019/08/03 "|"の前後はcharに制限すべき。文字列を指定される可能性を考えたらほとんど使われないくせに複雑すぎる
+            //やっぱりComboBoxで選んでもらう形式にしたい。面倒くさい。候補はenumで用意する。
+            //
+            //var sb = new StringBuilder();
+            //sb.Replace("\\", "\\\\");
+            //sb.Replace("?", "\\?");
+            //sb.Replace("$", "\\$");
+            //sb.Replace("(", "\\(");
+            //sb.Replace(")", "\\)");
+            //sb.Replace("[", "\\[");
+            //sb.Replace("]", "\\]");
+            var splitted = matchStr.Split('|').Where(k=>!string.IsNullOrWhiteSpace(k)).Select(k=>Regex.Escape(k)).ToList();
+            var matchStrEscaped = splitted.Count == 0 ? Regex.Escape(matchStr) : string.Join("|", splitted);// sb.ToString();
+            var a = splitted.Count == 0 ? Regex.Escape(matchStr) : string.Join("", splitted);// sb.ToString();
+
+            var s = "(?:" + matchStrEscaped + ")([^" + a + "\\s]+)";
+            var matches = Regex.Matches(text, s, RegexOptions.Singleline);
             if (matches.Count > 0)
             {
                 foreach (Match match in matches.Cast<Match>().Reverse())

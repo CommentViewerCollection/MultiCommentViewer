@@ -45,7 +45,8 @@ namespace PeriscopeSitePlugin
                         //またsenderの要素にも違いがある
                         //type1:user_id,username,display_name,profile_image_url,participant_index,locale,twitter_id,lang_superfan
                         //type2:user_id,particiant_index
-                        switch (GetType(payload))
+                        var type = GetType(payload);
+                        switch (type)
                         {
                             case 1://CHAT
                                 {
@@ -99,6 +100,11 @@ namespace PeriscopeSitePlugin
                                     //{"kind":1,"payload":"{\"room\":\"1vOxwqbdgNvGB\",\"body\":\"{\\\"body\\\":\\\"*%s* invited followers\\\",\\\"displayName\\\":\\\"#OwnVoices Curator Janice Temple 🎙️\\\",\\\"initials\\\":\\\"\\\",\\\"invited_count\\\":0,\\\"ntpForBroadcasterFrame\\\":16166541913558127476,\\\"ntpForLiveFrame\\\":16166541822689504395,\\\"participant_index\\\":1131066516,\\\"timestamp\\\":1555077559,\\\"type\\\":6,\\\"user_id\\\":\\\"12878263\\\",\\\"username\\\":\\\"JaniceTemple\\\",\\\"uuid\\\":\\\"282a8545-72c2-451c-a517-ec4772c2b47f\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"12878263\",\"username\":\"JaniceTemple\",\"display_name\":\"#OwnVoices Curator Janice Temple 🎙️\",\"profile_image_url\":\"https://prod-profile.pscp.tv/12878263/466c46e33839a84d85c9fac4cac8fe8e-128.jpg\",\"participant_index\":1131066516,\"locale\":\"en\",\"vip\":\"gold\",\"twitter_id\":\"43377345\",\"lang\":[\"en\"],\"superfan\":true},\"timestamp\":1555077560289135080,\"uuid\":\"282a8545-72c2-451c-a517-ec4772c2b47f\"}","signature":"3H7euavYgpZyM-0jnkTOW_hwynvvjTB2M3l0A0w"}
                                 }
                                 break;
+                            case 9:
+                                {
+                                    //{"kind":1,"payload":"{\"room\":\"1nAKEzrkZBOGL\",\"body\":\"{\\\"ntpForBroadcasterFrame\\\":0,\\\"ntpForLiveFrame\\\":0,\\\"timestamp\\\":1564853368785,\\\"timestampPlaybackOffset\\\":6.619704008102417,\\\"type\\\":9,\\\"uuid\\\":\\\"3ECA53AE-C00C-4430-A5B7-0F6F4E3B6C58\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"1PXEdBqYmmoKe\",\"username\":\"moecheru0221\",\"display_name\":\"moe🐣\",\"profile_image_url\":\"https://prod-profile.pscp.tv/1PXEdBqYmmoKe/eb2fa0bbcad5744a22939b3a3c233062-128.jpg\",\"locale\":\"en\",\"lang\":[\"en\",\"ja\"]},\"timestamp\":1564853368791216016,\"uuid\":\"3ECA53AE-C00C-4430-A5B7-0F6F4E3B6C58\"}","signature":"3xY5t2FvJv8C4j6OLBm8uLNXSisWYXmBYLmKgaw"}
+                                }
+                                break;
                             case 12:
                                 {
                                     //{"kind":1,"payload":"{\"room\":\"1yoJMEQYAjWJQ\",\"body\":\"{\\\"broadcasterBlockedMessageBody\\\":\\\"tu stop la ton dessin ok !!!!!!!!\\\",\\\"broadcasterBlockedRemoteID\\\":\\\"1wBKAYWNBaXKP\\\",\\\"broadcasterBlockedUsername\\\":\\\"OXYS_1\\\",\\\"ntpForBroadcasterFrame\\\":16171680149849646301,\\\"ntpForLiveFrame\\\":16171680149849646301,\\\"timestamp\\\":1556273897,\\\"type\\\":12,\\\"uuid\\\":\\\"9fd0d2fd-11e5-4f81-92df-da79c4f41b00\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"1XJQkVDmmgVEL\",\"username\":\"Life660\",\"display_name\":\"Life660\",\"profile_image_url\":\"https://prod-profile.pscp.tv/1XJQkVDmmgVEL/9b7f10cc4f8b7f1e8319ca578f116151-128.jpg\",\"locale\":\"fr\",\"vip\":\"gold\",\"twitter_id\":\"1041748771938426881\",\"lang\":[\"fr\"]},\"timestamp\":1556273898394781529,\"uuid\":\"9fd0d2fd-11e5-4f81-92df-da79c4f41b00\"}","signature":"3rp4y2rXulwSOAx933p6pjAGPJO6PbNyE3ESskA"}
@@ -140,6 +146,11 @@ namespace PeriscopeSitePlugin
                                     //{"kind":1,"payload":"{\"room\":\"1BRKjvpBpzRKw\",\"body\":\"{\\\"callInsEnabled\\\":false,\\\"displayName\\\":\\\"Seb Gruszecki\\\",\\\"guestBroadcastingEvent\\\":2,\\\"guestChatMessageAPIVersion\\\":2,\\\"isAudioOnlyEnabled\\\":false,\\\"ntpForBroadcasterFrame\\\":0,\\\"ntpForLiveFrame\\\":0,\\\"participant_index\\\":187989079,\\\"programDateTime\\\":\\\"2019-04-11T21:07:09.450+0000\\\",\\\"remoteID\\\":\\\"1eRKxqbDgPGjw\\\",\\\"timestamp\\\":1555016851284,\\\"type\\\":40,\\\"uuid\\\":\\\"39466129-85C4-4E1F-B47F-766EF9ED6AAC\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"1eRKxqbDgPGjw\",\"username\":\"SebGruszecki13\",\"display_name\":\"Seb Gruszecki\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1113546381166354433/CkKRCLCM_reasonably_small.jpg\",\"participant_index\":187989079,\"locale\":\"en\",\"twitter_id\":\"523615135\",\"lang\":[\"en\"]},\"timestamp\":1555016851301259873,\"uuid\":\"39466129-85C4-4E1F-B47F-766EF9ED6AAC\"}","signature":"3lJ54INV5s_f0rdDOgx9Rwl_ymdK_r7KKQr_wvA"}
                                 }
                                 break;
+                            case 44:
+                                {
+                                    //{"kind":1,"payload":"{\"room\":\"1MYGNPZYkdpxw\",\"body\":\"{\\\"displayName\\\":\\\"hiro＊m\\\",\\\"ntpForBroadcasterFrame\\\":16216494652412469248,\\\"ntpForLiveFrame\\\":16216494636659197952,\\\"participant_index\\\":1263469185,\\\"remoteID\\\":\\\"1eRKxAadOvAjw\\\",\\\"timestamp\\\":1566708087733,\\\"type\\\":44,\\\"uuid\\\":\\\"D985EA1A-BA4F-4FAF-B4AB-1EB17C8077B0\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"1eRKxAadOvAjw\",\"username\":\"hiro7exe12\",\"display_name\":\"hiro＊m\",\"profile_image_url\":\"https://prod-profile.pscp.tv/1eRKxAadOvAjw/0f0780ad20e277b020d60fb859e0bc11-128.jpg\",\"participant_index\":1263469185,\"locale\":\"ja\",\"twitter_id\":\"3237931897\",\"lang\":[\"ja\"]},\"timestamp\":1566708087744406838,\"uuid\":\"D985EA1A-BA4F-4FAF-B4AB-1EB17C8077B0\"}","signature":"35i-lRkHQybTztj0EO9VXScMa2Kbo8hK9JoH1VA"}
+                                }
+                                break;
                             default:
                                 //{"kind":1,"payload":"{\"room\":\"1BRKjvpBpzRKw\",\"body\":\"{\\\"displayName\\\":\\\"えいいち\\\",\\\"ntpForBroadcasterFrame\\\":16166282458676879949,\\\"ntpForLiveFrame\\\":16166282053472485376,\\\"participant_index\\\":1646829248,\\\"programDateTime\\\":\\\"1970-01-01T09:00:04.926+0900\\\",\\\"timestamp\\\":1555017344,\\\"type\\\":13,\\\"user_id\\\":\\\"tw-124755397\\\",\\\"username\\\":\\\"e_ez\\\",\\\"uuid\\\":\\\"ff4cc90b-45e1-4094-accc-e9312c044989\\\",\\\"v\\\":2}\",\"lang\":\"\",\"sender\":{\"user_id\":\"tw-124755397\",\"username\":\"e_ez\",\"display_name\":\"えいいち\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/872681069/F1010027_reasonably_small.jpg\",\"participant_index\":1646829248,\"locale\":\"ja\",\"twitter_id\":\"124755397\",\"lang\":[\"ja\"]},\"timestamp\":1555017150502478139,\"uuid\":\"ff4cc90b-45e1-4094-accc-e9312c044989\"}","signature":"3XXZMx7kXGmTztS1-db-PtbWY7Auz24OCsFRT9g"}
                                 //
@@ -174,6 +185,10 @@ namespace PeriscopeSitePlugin
                             case 4:
                                 {
                                     //{"kind":4,"sender":{"user_id":""},"body":"{\"room\":\"1lPKqorLvldJb\",\"occupancy\":50,\"total_participants\":740}"}
+                                    var kind2payloadkind4Low = Tools.Deserialize<Low.kind2payloadkind4.RootObject>(payload);
+                                    var kind2kind4Low = Tools.Deserialize<Low.kind2kind4.RootObject>(kind2payloadkind4Low.Body);
+                                    var kind2kind4 = new Kind2Kind4(kind2kind4Low, kind2payloadkind4Low.Sender, raw);
+                                    message = kind2kind4;
                                 }
                                 break;
                             default:

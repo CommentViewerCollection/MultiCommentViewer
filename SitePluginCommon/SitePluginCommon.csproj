@@ -53,6 +53,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveCounter.cs" />
+    <Compile Include="AutoReconnector\AutoReconnector.cs" />
+    <Compile Include="AutoReconnector\DisconnectReason.cs" />
+    <Compile Include="AutoReconnector\IConnector.cs" />
+    <Compile Include="AutoReconnector\MessageUntara.cs" />
+    <Compile Include="AutoReconnector\SystemInfoEventArgs.cs" />
     <Compile Include="CommentProviderBase.cs" />
     <Compile Include="FirstCommentDetector.cs" />
     <Compile Include="IActiveCounter.cs" />

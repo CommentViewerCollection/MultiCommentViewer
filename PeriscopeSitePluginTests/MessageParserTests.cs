@@ -100,8 +100,10 @@ namespace PeriscopeSitePluginTests
         {
             var data = "{\"kind\":2,\"payload\":\"{\\\"kind\\\":4,\\\"sender\\\":{\\\"user_id\\\":\\\"\\\"},\\\"body\\\":\\\"{\\\\\\\"room\\\\\\\":\\\\\\\"1lPKqorLvldJb\\\\\\\",\\\\\\\"occupancy\\\\\\\":50,\\\\\\\"total_participants\\\\\\\":740}\\\"}\"}";
             var message = MessageParser.ParseWebsocketMessage(data);
-            var internalMessage = MessageParser.Parse(message);
-
+            var internalMessage = MessageParser.Parse(message) as Kind2Kind4;
+            Assert.AreEqual("1lPKqorLvldJb", internalMessage.RoomId);
+            Assert.AreEqual(50, internalMessage.Occupancy);
+            Assert.AreEqual(740, internalMessage.TotalParticipants);
         }
     }
 }

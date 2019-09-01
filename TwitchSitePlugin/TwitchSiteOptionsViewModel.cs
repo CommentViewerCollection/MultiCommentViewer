@@ -9,6 +9,11 @@ namespace TwitchSitePlugin
             get => changed.NeedAutoSubNickname;
             set => changed.NeedAutoSubNickname = value;
         }
+        public string NeedAutoSubNicknameStr
+        {
+            get => changed.NeedAutoSubNicknameStr;
+            set => changed.NeedAutoSubNicknameStr = value;
+        }
         private readonly TwitchSiteOptions _origin;
         private readonly TwitchSiteOptions changed;
         internal TwitchSiteOptions OriginOptions { get { return _origin; } }

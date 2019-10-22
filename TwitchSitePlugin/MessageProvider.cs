@@ -55,11 +55,9 @@ namespace TwitchSitePlugin
 
         private void _ws_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            var arr = e.Message.Split(new [] { "\r\n" }, StringSplitOptions.None );
+            var arr = e.Message.Split(new [] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries );
             foreach (var message in arr)
             {
-                if (string.IsNullOrEmpty(message))
-                    continue;
                 var result = Tools.Parse(message);
                 Received?.Invoke(this, result);
             }

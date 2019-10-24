@@ -39,6 +39,10 @@ namespace TwitchSitePlugin
             {
                 commentData.UserId = userId;
             }
+            if (result.Tags.TryGetValue("display-name", out string displayName))
+            {
+                commentData.DisplayName = displayName;
+            }
             if(result.Tags.TryGetValue("tmi-sent-ts", out string ts))
             {
                 var unix = new DateTime(1970, 1, 1).AddMilliseconds(long.Parse(ts));

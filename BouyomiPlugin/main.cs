@@ -108,10 +108,10 @@ namespace BouyomiPlugin
 
                     if (_options.IsAppendNickTitle)
                         nick += _options.NickTitle;
-                    _bouyomiChanClient.AddTalkTask2(nick);
+                    TalkText(nick);
                 }
                 if (_options.IsReadComment)
-                    _bouyomiChanClient.AddTalkTask2(data.Comment);
+                    TalkText(data.Comment);
             }
             catch (System.Runtime.Remoting.RemotingException)
             {
@@ -534,7 +534,7 @@ namespace BouyomiPlugin
                     }
                     dataToRead += comment;
                 }
-                _bouyomiChanClient.AddTalkTask2(dataToRead);
+                TalkText(dataToRead);
             }
             catch (System.Runtime.Remoting.RemotingException)
             {
@@ -560,6 +560,25 @@ namespace BouyomiPlugin
 
             }
         }
+
+        private int TalkText(string text)
+        {
+            if (_options.IsVoiceTypeSpecfied)
+            {
+                return _bouyomiChanClient.AddTalkTask2(
+                    text,
+                    _options.VoiceSpeed,
+                    _options.VoiceTone,
+                    _options.VoiceVolume,
+                    (FNF.Utility.VoiceType)Enum.ToObject(typeof(FNF.Utility.VoiceType), _options.VoiceTypeIndex)
+                );
+            }
+            else
+            {
+                return _bouyomiChanClient.AddTalkTask2(text);
+            }
+        }
+
         public IPluginHost Host { get; set; }
         public string GetSettingsFilePath()
         {

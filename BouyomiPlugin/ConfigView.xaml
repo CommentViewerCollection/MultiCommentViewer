@@ -21,7 +21,39 @@
                     <TextBox x:Name="textBox1" IsEnabled="{Binding IsChecked, ElementName=checkBox1}" HorizontalAlignment="Left" Height="23" Margin="215,45,0,0" TextWrapping="Wrap" Text="{Binding NickTitle}" VerticalAlignment="Top" Width="120"/>
                     <CheckBox Content="184コメントも読ませる" IsChecked="{Binding Want184Read}" HorizontalAlignment="Left" Margin="182,87,0,0" VerticalAlignment="Top"/>
                     <CheckBox Content="コメビュ終了時に棒読みちゃんも終了させる（自動起動した場合のみ）" IsChecked="{Binding IsKillBouyomiChan}" HorizontalAlignment="Left" Margin="10,175,0,0" VerticalAlignment="Top"/>
-
+                    <CheckBox x:Name="voiceTypeSpecifiedCheckBox" Content="読み上げ音声を指定する" IsChecked="{Binding IsVoiceTypeSpecfied}" HorizontalAlignment="Left" Margin="10,204,0,0" VerticalAlignment="Top"/>
+                    <Grid IsEnabled="{Binding IsChecked, ElementName=voiceTypeSpecifiedCheckBox}" Margin="15,224,10,10">
+                        <Label Content="声質" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                        <ComboBox SelectedIndex="{Binding VoiceTypeSelectedIndex}" HorizontalAlignment="Left" Margin="49,12,0,0" VerticalAlignment="Top" Width="120">
+                            <ComboBoxItem Content="デフォルト"/>
+                            <ComboBoxItem Content="女性１"/>
+                            <ComboBoxItem Content="女性２"/>
+                            <ComboBoxItem Content="男性１"/>
+                            <ComboBoxItem Content="男性２"/>
+                            <ComboBoxItem Content="中性"/>
+                            <ComboBoxItem Content="ロボット"/>
+                            <ComboBoxItem Content="機械１"/>
+                            <ComboBoxItem Content="機械２"/>
+                            <ComboBoxItem Content="SAPI5#1"/>
+                            <ComboBoxItem Content="SAPI5#2"/>
+                            <ComboBoxItem Content="SAPI5#3"/>
+                            <ComboBoxItem Content="SAPI5#4"/>
+                            <ComboBoxItem Content="SAPI5#5"/>
+                            <ComboBoxItem Content="SAPI5#6"/>
+                            <ComboBoxItem Content="SAPI5#7"/>
+                            <ComboBoxItem Content="SAPI5#8"/>
+                            <ComboBoxItem Content="SAPI5#9"/>
+                        </ComboBox>
+                        <Label Content="音量" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top"/>
+                        <Slider x:Name="voiceVolumeSlider" Minimum="-1" Maximum="100" Value="{Binding VoiceVolume}" TickFrequency="1" IsSnapToTickEnabled="True" HorizontalAlignment="Left" Margin="49,39,0,0" VerticalAlignment="Top" Width="120"/>
+                        <TextBlock Text="{Binding Value, ElementName=voiceVolumeSlider}" HorizontalAlignment="Left" Margin="174,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="40"/>
+                        <Label Content="速度" HorizontalAlignment="Left" Margin="10,61,0,0" VerticalAlignment="Top"/>
+                        <Slider x:Name="voiceSpeedSlider" Minimum="50" Maximum="300" Value="{Binding VoiceSpeed}" TickFrequency="1" IsSnapToTickEnabled="True" HorizontalAlignment="Left" Margin="49,65,0,0" VerticalAlignment="Top" Width="120"/>
+                        <TextBlock Text="{Binding Value, ElementName=voiceSpeedSlider}" HorizontalAlignment="Left" Margin="174,66,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="40"/>
+                        <Label Content="音程" HorizontalAlignment="Left" Margin="10,87,0,0" VerticalAlignment="Top"/>
+                        <Slider x:Name="voiceToneSlider" Minimum="50" Maximum="200" Value="{Binding VoiceTone}" TickFrequency="1" IsSnapToTickEnabled="True" HorizontalAlignment="Left" Margin="49,91,0,0" VerticalAlignment="Top" Width="120"/>
+                        <TextBlock Text="{Binding Value, ElementName=voiceToneSlider}" HorizontalAlignment="Left" Margin="174,92,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="40"/>
+                    </Grid>
                 </Grid>
             </TabItem>
             <TabItem Header="読んでもらうメッセージ">

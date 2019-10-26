@@ -91,7 +91,24 @@ namespace TwitchSitePlugin
                 emotes = null;
             }
             var message = result.Params[1];
+
+            message = RemoveActionFormat(message);
             return GetMessageItems(message, emotes);
+        }
+        /// <summary>
+        /// "/me abc"コマンド使用時に"\u0001ACTION abc\u0001"という形式になっているから"abc"だけにする
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public static string RemoveActionFormat(string message)
+        {
+            var s = message;
+            var match = Regex.Match(s, "^\u0001ACTION ([^\u0001]+)\u0001$");
+            if (match.Success)
+            {
+                s = match.Groups[1].Value;
+            }
+            return s;
         }
         public static List<IMessagePart> GetMessageItems(string message, string emotes)
         { 

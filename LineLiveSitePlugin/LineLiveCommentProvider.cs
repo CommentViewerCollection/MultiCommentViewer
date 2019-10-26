@@ -237,48 +237,22 @@ namespace LineLiveSitePlugin
                     var t = await Task.WhenAny(tasks);
                     if (t == messageProviderTask)
                     {
-                        try
-                        {
-                            await messageProviderTask;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogException(ex);
-                        }
-                        tasks.Remove(messageProviderTask);
-                        try
-                        {
-                            promptyStatsProvider.Disconnect();
-                            await promptyStatsTask;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogException(ex);
-                        }
-                        tasks.Remove(promptyStatsTask);
+                        //messageProviderTaskが何かしらの理由で終了したから色々終了させる。
+                        promptyStatsProvider.Disconnect();
+                        blacklistProvider.Disconnect();
+                        await RemoveTaskFromList(messageProviderTask, tasks);
+                        await RemoveTaskFromList(promptyStatsTask, tasks);
+                        await RemoveTaskFromList(blackListTask, tasks);
+
                         break;
                     }
                     else if (t == promptyStatsTask)
                     {
-                        try
-                        {
-                            await promptyStatsTask;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogException(ex);
-                        }
+                        await RemoveTaskFromList(promptyStatsTask, tasks);
                     }
                     else if (t == blackListTask)
                     {
-                        try
-                        {
-                            await blackListTask;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogException(ex);
-                        }
+                        await RemoveTaskFromList(blackListTask, tasks);
                     }
                 }
                 SendSystemInfo("websocketが切断", InfoType.Debug);
@@ -305,6 +279,24 @@ namespace LineLiveSitePlugin
                 });
             }
             AfterDisconnected();
+        }
+        /// <summary>
+        /// taskの終了を待ち、tasksから取り除く
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="tasks"></param>
+        /// <returns></returns>
+        private async Task RemoveTaskFromList(Task task, List<Task> tasks)
+        {
+            try
+            {
+                await task;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            tasks.Remove(task);
         }
 
         private IBlackListProvider CreateBlackListProvider()

@@ -46,5 +46,12 @@ namespace TwitchSitePluginTests
             var s = Tools.GetRandomGuestUsername();
             Assert.IsTrue(System.Text.RegularExpressions.Regex.IsMatch(s, "justinfan\\d+"));
         }
+        [Test]
+        public void RemoveActionFormatTestsz()//(string input, string expected)
+        {
+            //[TestCase]だと何故か認識されない　https://github.com/nunit/nunit3-vs-adapter/issues/484
+            Assert.AreEqual("abc", Tools.RemoveActionFormat("\u0001ACTION abc\u0001"));
+            Assert.AreEqual("xyz", Tools.RemoveActionFormat("xyz"));
+        }
     }
 }

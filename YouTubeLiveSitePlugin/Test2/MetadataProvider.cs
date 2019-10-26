@@ -158,7 +158,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 int timeoutMs = 0;
                 try
                 {
-                    var res = await GetMetadata(cc, url, encodedData + encodedContinuation);
+                    var res = await GetMetadata(cc, url, encodedContinuation + encodedData);
                     var d = DynamicJson.Parse(res);
                     string continuation;
 
@@ -203,10 +203,13 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
                 catch (HttpRequestException ex)
                 {
+                    _logger.LogException(ex);
                     SendInfo($"メタデータの取得でエラーが発生 ({ex.Message})", InfoType.Notice);
+                    break;
                 }
                 catch (HttpException ex)
                 {
+                    _logger.LogException(ex);
                     SendInfo($"メタデータの取得でエラーが発生 ({ex.Message})", InfoType.Notice);
                     break;
                 }
@@ -249,7 +252,7 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 Url = url,
                 Cc = cc,
-                UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0",
+                UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36",
 
             }, new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded"));
         }

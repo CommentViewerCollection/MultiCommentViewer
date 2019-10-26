@@ -25,6 +25,15 @@ namespace OpenrecSitePlugin
                     var list = await API.GetBanList(_dataSource, context);
                     Received?.Invoke(this, list);
                 }
+                catch(System.Net.Http.HttpRequestException ex)
+                {
+                    _logger.LogException(ex);
+                    if (ex.Message.Contains("401"))
+                    {
+                        //401が出てたら回復の見込み無し
+                        break;
+                    }
+                }
                 catch (Exception ex)
                 {
                     _logger.LogException(ex);

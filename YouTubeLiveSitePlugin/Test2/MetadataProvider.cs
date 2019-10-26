@@ -158,7 +158,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 int timeoutMs = 0;
                 try
                 {
-                    var res = await GetMetadata(cc, url, encodedData + encodedContinuation);
+                    var res = await GetMetadata(cc, url, encodedContinuation + encodedData);
                     var d = DynamicJson.Parse(res);
                     string continuation;
 

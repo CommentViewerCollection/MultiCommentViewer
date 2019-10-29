@@ -304,7 +304,7 @@ namespace WhowatchSitePlugin
                 user.Name = item.NameItems;
                 metadata = new ItemMessageMetadata(item, _options, _siteOptions, user, this)
                 {
-                    IsInitialComment = true,
+                    IsInitialComment = isInitialComment,
                     SiteContextGuid = SiteContextGuid,
                 };
             }

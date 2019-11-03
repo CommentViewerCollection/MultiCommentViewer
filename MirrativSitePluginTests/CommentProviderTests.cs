@@ -26,7 +26,7 @@ namespace MirrativSitePluginTests
             siteOptionsMock.Setup(s => s.NeedAutoSubNickname).Returns(true);
             var userStoreMock = new Mock<IUserStoreManager>();
             var user = new UserTest("5867403");
-            userStoreMock.Setup(u => u.GetUser(SiteType.Mirrativ, "5867403")).Returns(user);
+            userStoreMock.Setup(u => u.GetUser(SiteType.Mixer, "5867403")).Returns(user);
 
             var server = serverMock.Object;
             var logger = loggerMock.Object;

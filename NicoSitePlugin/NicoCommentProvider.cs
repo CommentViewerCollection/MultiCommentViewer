@@ -154,6 +154,8 @@ namespace NicoSitePlugin
             }
             finally
             {
+                _internal.MetadataUpdated -= (s, e) => MetadataUpdated?.Invoke(s, e);
+                _internal.MessageReceived -= (s, e) => MessageReceived?.Invoke(s, e);
                 AfterDisconnected();
             }
         }

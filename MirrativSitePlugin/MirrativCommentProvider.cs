@@ -475,7 +475,7 @@ namespace MirrativSitePlugin
             {
                 CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
                 NameItems = null,
-                SiteType = SiteType.Mirrativ,
+                SiteType = SiteType.Mixer,
                 Type = type,
             }, _options);
             MessageReceived?.Invoke(this, context);
@@ -488,7 +488,7 @@ namespace MirrativSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStoreManager.GetUser(SiteType.Mirrativ, userId);
+            return _userStoreManager.GetUser(SiteType.Mixer, userId);
         }
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
         {

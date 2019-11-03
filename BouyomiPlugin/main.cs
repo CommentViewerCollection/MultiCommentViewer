@@ -1,5 +1,6 @@
 ﻿using LineLiveSitePlugin;
 using MirrativSitePlugin;
+using MixerSitePlugin;
 using NicoSitePlugin;
 using OpenrecSitePlugin;
 using PeriscopeSitePlugin;
@@ -108,10 +109,10 @@ namespace BouyomiPlugin
 
                     if (_options.IsAppendNickTitle)
                         nick += _options.NickTitle;
-                    _bouyomiChanClient.AddTalkTask2(nick);
+                    TalkText(nick);
                 }
                 if (_options.IsReadComment)
-                    _bouyomiChanClient.AddTalkTask2(data.Comment);
+                    TalkText(data.Comment);
             }
             catch (System.Runtime.Remoting.RemotingException)
             {
@@ -493,6 +494,50 @@ namespace BouyomiPlugin
                         break;
                 }
             }
+            else if (message is IMixerMessage MixerMessage)
+            {
+                switch (MixerMessage.MixerMessageType)
+                {
+                    case MixerMessageType.Connected:
+                        if (_options.IsMixerConnect)
+                        {
+                            name = null;
+                            comment = (MixerMessage as IMixerConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case MixerMessageType.Disconnected:
+                        if (_options.IsMixerDisconnect)
+                        {
+                            name = null;
+                            comment = (MixerMessage as IMixerDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case MixerMessageType.Comment:
+                        if (_options.IsMixerComment)
+                        {
+                            if (_options.IsMixerCommentNickname)
+                            {
+                                name = (MixerMessage as IMixerComment).NameItems.ToText();
+                            }
+                            comment = (MixerMessage as IMixerComment).CommentItems.ToText();
+                        }
+                        break;
+                    //case MixerMessageType.Join:
+                    //    if (_options.IsMixerJoin)
+                    //    {
+                    //        name = null;
+                    //        comment = (MixerMessage as IMixerJoin).CommentItems.ToText();
+                    //    }
+                    //    break;
+                    //case MixerMessageType.Leave:
+                    //    if (_options.IsMixerLeave)
+                    //    {
+                    //        name = null;
+                    //        comment = (MixerMessage as IMixerLeave).CommentItems.ToText();
+                    //    }
+                    //    break;
+                }
+            }
             else
             {
                 if (_options.IsReadHandleName)
@@ -534,7 +579,7 @@ namespace BouyomiPlugin
                     }
                     dataToRead += comment;
                 }
-                _bouyomiChanClient.AddTalkTask2(dataToRead);
+                TalkText(dataToRead);
             }
             catch (System.Runtime.Remoting.RemotingException)
             {
@@ -560,6 +605,25 @@ namespace BouyomiPlugin
 
             }
         }
+
+        private int TalkText(string text)
+        {
+            if (_options.IsVoiceTypeSpecfied)
+            {
+                return _bouyomiChanClient.AddTalkTask2(
+                    text,
+                    _options.VoiceSpeed,
+                    _options.VoiceTone,
+                    _options.VoiceVolume,
+                    (FNF.Utility.VoiceType)Enum.ToObject(typeof(FNF.Utility.VoiceType), _options.VoiceTypeIndex)
+                );
+            }
+            else
+            {
+                return _bouyomiChanClient.AddTalkTask2(text);
+            }
+        }
+
         public IPluginHost Host { get; set; }
         public string GetSettingsFilePath()
         {

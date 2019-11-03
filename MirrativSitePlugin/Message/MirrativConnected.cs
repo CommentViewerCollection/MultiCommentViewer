@@ -5,7 +5,7 @@ namespace MirrativSitePlugin
 {
     internal class MirrativConnected : MessageBase, IMirrativConnected
     {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
+        public override SiteType SiteType { get; } = SiteType.Mixer;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Connected;
 
         public MirrativConnected(string raw) : base(raw)

@@ -5,7 +5,7 @@ namespace MirrativSitePlugin
 {
     internal class MirrativComment : MessageBase, IMirrativComment
     {
-        public override SiteType SiteType { get; } = SiteType.Mirrativ;
+        public override SiteType SiteType { get; } = SiteType.Mixer;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Comment;
         //public string Comment { get; set; }
         public string Id { get; set; }

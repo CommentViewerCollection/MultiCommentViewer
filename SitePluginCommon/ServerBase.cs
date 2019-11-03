@@ -17,7 +17,7 @@ namespace SitePluginCommon
     }
     public abstract class ServerBase
     {
-        protected async Task<HttpResponseMessage> GetInternalAsync(HttpOptions options)
+        protected async Task<HttpResponseMessage> GetInternalAsync(HttpOptions options, bool throwWhenNotSuccess = true)
         {
             if (string.IsNullOrEmpty(options.Url))
             {
@@ -51,7 +51,10 @@ namespace SitePluginCommon
                     }
                 }
                 var ret = await client.GetAsync(options.Url);
-                ret.EnsureSuccessStatusCode();
+                if (throwWhenNotSuccess)
+                {
+                    ret.EnsureSuccessStatusCode();
+                }
                 return ret;
             }
         }

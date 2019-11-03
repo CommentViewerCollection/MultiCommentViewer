@@ -7,6 +7,9 @@ namespace BouyomiPlugin
 {
     class ConfigViewModel : ViewModelBase
     {
+        private const int VoiceTypeSapi5Offset = 10001;
+        private readonly int VoiceTypeLength = Enum.GetNames(typeof(FNF.Utility.VoiceType)).Length;
+
         private readonly Options _options;
         public bool IsEnabled
         {
@@ -47,6 +50,36 @@ namespace BouyomiPlugin
         {
             get { return _options.IsKillBouyomiChan; }
             set { _options.IsKillBouyomiChan = value; }
+        }
+
+        public bool IsVoiceTypeSpecfied
+        {
+            get { return _options.IsVoiceTypeSpecfied; }
+            set { _options.IsVoiceTypeSpecfied = value; }
+        }
+
+        public int VoiceTypeSelectedIndex
+        {
+            get { var index = _options.VoiceTypeIndex; return index >= VoiceTypeSapi5Offset ? (index - VoiceTypeSapi5Offset) + VoiceTypeLength : index; }
+            set { _options.VoiceTypeIndex = value < 0 ? 0 : value >= VoiceTypeLength ? VoiceTypeSapi5Offset + value - VoiceTypeLength : value; }
+        }
+
+        public int VoiceVolume
+        {
+            get { return _options.VoiceVolume; }
+            set { _options.VoiceVolume = value; }
+        }
+
+        public int VoiceSpeed
+        {
+            get { return _options.VoiceSpeed; }
+            set { _options.VoiceSpeed = value; }
+        }
+
+        public int VoiceTone
+        {
+            get { return _options.VoiceTone; }
+            set { _options.VoiceTone = value; }
         }
 
         #region YouTubeLive
@@ -524,6 +557,57 @@ namespace BouyomiPlugin
         }
         #endregion //Periscope
 
+        #region Mixer
+        /// <summary>
+        /// Mixerの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixerConnect
+        {
+            get => _options.IsMixerConnect;
+            set => _options.IsMixerConnect = value;
+        }
+        /// <summary>
+        /// Mixerの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixerDisconnect
+        {
+            get => _options.IsMixerDisconnect;
+            set => _options.IsMixerDisconnect = value;
+        }
+        /// <summary>
+        /// Mixerのコメントを読み上げるか
+        /// </summary>
+        public bool IsMixerComment
+        {
+            get => _options.IsMixerComment;
+            set => _options.IsMixerComment = value;
+        }
+        /// <summary>
+        /// Mixerのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsMixerCommentNickname
+        {
+            get => _options.IsMixerCommentNickname;
+            set => _options.IsMixerCommentNickname = value;
+        }
+        /// <summary>
+        /// Mixerの入室メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixerJoin
+        {
+            get => _options.IsMixerJoin;
+            set => _options.IsMixerJoin = value;
+        }
+        /// <summary>
+        /// Mixerのアイテムを読み上げるか
+        /// </summary>
+        public bool IsMixerLeave
+        {
+            get => _options.IsMixerLeave;
+            set => _options.IsMixerLeave = value;
+        }
+        #endregion //Mixer
+
         public ICommand ShowFilePickerCommand { get; }
         private void ShowFilePicker()
         {
@@ -574,6 +658,9 @@ namespace BouyomiPlugin
                         break;
                     case nameof(_options.IsReadComment):
                         RaisePropertyChanged(nameof(IsReadComment));
+                        break;
+                    case nameof(_options.IsVoiceTypeSpecfied):
+                        RaisePropertyChanged(nameof(IsVoiceTypeSpecfied));
                         break;
                 }
             };

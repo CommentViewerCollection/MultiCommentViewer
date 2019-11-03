@@ -118,7 +118,6 @@
     <Compile Include="ConnectionName.cs" />
     <Compile Include="ViewModels\CommentData.cs" />
     <Compile Include="ViewModels\ConnectionViewModel.cs" />
-    <Compile Include="Converter.cs" />
     <Compile Include="GridColumnWidthReseterBehaviour.cs" />
     <Compile Include="IOptions.cs" />
     <Compile Include="IOptionsLoader.cs" />

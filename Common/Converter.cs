@@ -31,11 +31,26 @@ namespace Common.Wpf
                 bi.StreamSource = new System.IO.MemoryStream(wc.DownloadData(uri));
                 bi.EndInit();
                 bi.Freeze();
+                var x = remoteIcon.X;
+                var y = remoteIcon.Y;
+                var width = remoteIcon.Width ?? (int)bi.Width;
+                var height = remoteIcon.Height ?? (int)bi.Height;
+                ImageSource imageSource;
+                if (x.HasValue && y.HasValue)
+                {
+                    //目的のサイズに切り出す。
+                    imageSource = new CroppedBitmap(bi, new Int32Rect(x.Value, y.Value, width, height));
+                }
+                else
+                {
+                    //切らずにそのまま使う
+                    imageSource = bi;
+                }
                 image = new Image()
                 {
                     Width = remoteIcon.Width ?? bi.Width,
                     Height = remoteIcon.Height ?? bi.Height,
-                    Source = bi,
+                    Source = imageSource,
                 };
                 if (!string.IsNullOrEmpty(remoteIcon.Alt))
                 {

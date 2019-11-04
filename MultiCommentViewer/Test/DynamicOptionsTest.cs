@@ -328,11 +328,7 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(IsPixelScrolling), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsEnabledSiteConnectionColor), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(SiteConnectionColorType), new Item { DefaultValue = SiteConnectionColorType.Site, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => SiteConnectionColorTypeRelatedOperations.ToSiteConnectionColorType(s) });
-#if DEBUG
             Dict.Add(nameof(ShowingInfoLevel), new Item { DefaultValue = InfoType.Notice, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => InfoTypeRelatedOperations.ToInfoType(s) });
-#else
-            Dict.Add(nameof(ShowingInfoLevel), new Item { DefaultValue = InfoType.Notice, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-#endif
             Dict.Add(nameof(IsActiveCountEnabled), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(ActiveCountIntervalSec), new Item { DefaultValue = 1, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
             Dict.Add(nameof(ActiveMeasureSpanMin), new Item { DefaultValue = 10, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });

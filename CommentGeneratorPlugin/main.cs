@@ -128,10 +128,10 @@ namespace CommentViewer.Plugin
             {
                 siteName = "periscope";
             }
-            //else if (message is MixerSitePlugin.IMixerComment)
-            //{
-            //    siteName = "mixer";
-            //}
+            else if (message is MixerSitePlugin.IMixerComment)
+            {
+                siteName = "mixer";
+            }
             else
             {
                 siteName = "";

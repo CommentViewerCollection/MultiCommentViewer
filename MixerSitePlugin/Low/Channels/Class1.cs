@@ -55,7 +55,7 @@ namespace MixerSitePlugin.Low.Channels
         public bool Partnered { get; set; }
 
         [JsonProperty("transcodingProfileId")]
-        public long TranscodingProfileId { get; set; }
+        public long? TranscodingProfileId { get; set; }
 
         [JsonProperty("viewersCurrent")]
         public long ViewersCurrent { get; set; }
@@ -91,10 +91,10 @@ namespace MixerSitePlugin.Low.Channels
         public bool Suspended { get; set; }
 
         [JsonProperty("thumbnailId")]
-        public long ThumbnailId { get; set; }
+        public long? ThumbnailId { get; set; }
 
         [JsonProperty("typeId")]
-        public long TypeId { get; set; }
+        public long? TypeId { get; set; }
 
         [JsonProperty("updatedAt")]
         public DateTimeOffset UpdatedAt { get; set; }

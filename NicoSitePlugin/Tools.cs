@@ -152,6 +152,7 @@ namespace NicoSitePlugin
                 Id = id,
                 NameItems = nameItems,
                 PostTime = chat.Date.ToString("HH:mm:ss"),
+                PostedDate = chat.Date,
                 UserIcon = thumbnailUrl != null ? new MessageImage
                 {
                     Url = thumbnailUrl,
@@ -196,6 +197,7 @@ namespace NicoSitePlugin
                     CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
                     NameItems = null,
                     PostTime = chat.Date.ToString("HH:mm:ss"),
+                    PostedDate = chat.Date,
                     UserId = chat.UserId,
                     RoomName = roomName,
                 };
@@ -216,6 +218,7 @@ namespace NicoSitePlugin
                 CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
                 NameItems = null,
                 PostTime = chat.Date.ToString("HH:mm:ss"),
+                PostedDate = chat.Date,
                 UserId = chat.UserId,
                 RoomName = roomName,
             };
@@ -233,6 +236,7 @@ namespace NicoSitePlugin
                     CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
                     NameItems = null,
                     PostTime = chat.Date.ToString("HH:mm:ss"),
+                    PostedDate = chat.Date,
                     UserId = chat.UserId,
                     RoomName = roomName,
                     No = no,

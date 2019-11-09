@@ -281,16 +281,16 @@ namespace TwitchSitePlugin
             }
             if (commentData.Username.Equals(displayName))
             {
-                displayName = "";
+                displayName = userId;
             } else
             {
-                displayName = " (" + displayName + ")";
+                displayName = displayName + " (" + userId + ")";
             }
             var message = new TwitchComment(result.Raw)
             {
                 CommentItems = Tools.GetMessageItems(result),
                 Id = commentData.Id,
-                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Username), MessagePartFactory.CreateMessageText(displayName) },
+                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(displayName) },
                 PostTime = commentData.SentAt.ToString("HH:mm:ss"),
                 UserId = commentData.UserId,
             };

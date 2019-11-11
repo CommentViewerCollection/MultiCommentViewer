@@ -10,6 +10,13 @@ namespace MixerSitePlugin
 {
     static class Api
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="server"></param>
+        /// <param name="cc"></param>
+        /// <returns></returns>
+        /// <exception cref="ParseException"></exception>
         public static async Task<UserInfoBase> GetCurrentUserInfo(IDataServer server, CookieContainer cc)
         {
             var url = "https://mixer.com/api/v1/users/current";

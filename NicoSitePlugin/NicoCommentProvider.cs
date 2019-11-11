@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Text;
 using SitePluginCommon;
+using System.Collections.Concurrent;
 
 namespace NicoSitePlugin
 {
@@ -104,10 +105,12 @@ namespace NicoSitePlugin
             return false;
         }
         INicoCommentProviderInternal _internal;
+        MultipleCommentsBlocker _blocker = new MultipleCommentsBlocker();
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
+            _blocker.Reset();
             var cc = GetCookieContainer(browserProfile);
-
+            
             var list = GetCommentProviderInternals(_options, _siteOptions, _userStoreManager, _dataSource, _logger, this, SiteContextGuid);
             var cu = await GetCurrentUserInfo(browserProfile);
             if (cu.IsLoggedIn)
@@ -143,7 +146,21 @@ namespace NicoSitePlugin
             }
             BeforeConnect();
             _internal.MetadataUpdated += (s, e) => MetadataUpdated?.Invoke(s, e);
-            _internal.MessageReceived += (s, e) => MessageReceived?.Invoke(s, e);
+            _internal.MessageReceived += (s, e) =>
+            {
+                if (e.Message is INicoComment nicoComment)
+                {
+                    var userId = e.Metadata.User.UserId;
+                    var comment = e.Message.CommentItems.ToText();
+                    var postedDate = nicoComment.PostedDate;
+                    if (!_blocker.IsUniqueComment(userId, comment, postedDate))
+                    {
+                        Debug.WriteLine("ニコ生で二重コメントを発見したため無視します");
+                        return;
+                    }
+                }
+                MessageReceived?.Invoke(s, e);
+            };
             try
             {
                 await _internal.ConnectAsync(input, cc);
@@ -247,6 +264,34 @@ namespace NicoSitePlugin
             CanConnect = true;
             CanDisconnect = false;
 
+        }
+    }
+    class MultipleCommentsBlocker
+    {
+        ConcurrentDictionary<string, (string comment, DateTime postedDate)> _dict = new ConcurrentDictionary<string, (string comment, DateTime postedDate)>();
+        public void Reset()
+        {
+            _dict.Clear();
+        }
+        public bool IsUniqueComment(string userId, string comment, DateTime postedDate)
+        {
+            if (_dict.TryGetValue(userId, out var a))
+            {
+                if (a.comment == comment && a.postedDate.AddSeconds(5) > postedDate)
+                {
+                    return false;
+                }
+                else
+                {
+                    _dict.AddOrUpdate(userId, id => (comment, postedDate), (k, c) => (comment, postedDate));
+                    return true;
+                }
+            }
+            else
+            {
+                _dict.AddOrUpdate(userId, id => (comment, postedDate), (k, c) => (comment, postedDate));
+                return true;
+            }
         }
     }
 }

@@ -148,7 +148,7 @@ namespace MixerSitePlugin.Low.CurrentUser
         public string Token { get; set; }
 
         [JsonProperty("transcodingProfileId")]
-        public long TranscodingProfileId { get; set; }
+        public long? TranscodingProfileId { get; set; }
 
         [JsonProperty("typeId")]
         public object TypeId { get; set; }

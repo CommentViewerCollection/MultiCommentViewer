@@ -58,6 +58,7 @@
     <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="MessageParserTests.cs" />
     <Compile Include="MessageParseTests.cs" />
+    <Compile Include="MultipleCommentsBlocker.cs" />
     <Compile Include="NicoCasCommentProviderTests.cs" />
     <Compile Include="NicoCommentProviderTests.cs" />
     <Compile Include="NicoCommentViewModelTests.cs" />

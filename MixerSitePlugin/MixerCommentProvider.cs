@@ -113,6 +113,7 @@ namespace MixerSitePlugin
             }
             catch (Exception ex)
             {
+                SendSystemInfo(ex.Message, InfoType.Error);
                 _logger.LogException(ex, "", $"input={input}");
             }
             finally

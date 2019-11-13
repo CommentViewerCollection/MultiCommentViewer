@@ -8,6 +8,7 @@ namespace TwitchSitePlugin
     {
         public override MessageType MessageType { get; protected set; }
         public override string UserId { get; }
+        public string DisplayName { get; }
         private readonly ITwitchSiteOptions _siteOptions;
         public TwitchCommentViewModel(ICommentOptions options, ITwitchSiteOptions siteOptions,
             ICommentData commentData, bool isFirstComment, ICommentProvider commentProvider, IUser user)
@@ -17,6 +18,7 @@ namespace TwitchSitePlugin
             _siteOptions = siteOptions;
             Id = commentData.Id;
             UserId = commentData.UserId;
+            DisplayName = commentData.DisplayName;
             PostTime = commentData.SentAt.ToString("HH:mm:ss");
 
             var name = commentData.Username;

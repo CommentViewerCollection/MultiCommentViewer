@@ -343,7 +343,15 @@ namespace YouTubeLiveSitePlugin.Test2
                         if (json.IsDefined("data") && json.data.IsDefined("errorMessage"))
                         {
                             var k = string.Join("&", data.Select(kv => kv.Key + "=" + kv.Value));
-                            var errorText = json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.simpleText;
+                            string errorText;
+                            if (json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.IsDefined("simpleText"))
+                            {
+                                errorText = json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.simpleText;
+                            }
+                            else
+                            {
+                                errorText = "";
+                            }
                             throw new PostingCommentFailedException("コメント投稿に失敗しました（" + errorText + "）", $"data={k}, res={res}");
                         }
                         else if (json.IsDefined("data") && json.data.IsDefined("actions"))

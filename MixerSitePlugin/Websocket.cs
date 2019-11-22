@@ -11,10 +11,11 @@ namespace MixerSitePlugin
         event EventHandler<string> Received;
 
         void Disconnect();
-        Task ReceiveAsync(string url);
+        Task ReceiveAsync();
         Task SendAsync(string s);
         void Send(string s);
     }
+
     /// <summary>
     /// websocketを使ってサーバと文字列のやり取りをするクラス
     /// </summary>
@@ -25,8 +26,11 @@ namespace MixerSitePlugin
         public event EventHandler<string> Received;
         WebSocket4Net.WebSocket _ws;
         TaskCompletionSource<object> _tcs;
-        public Task ReceiveAsync(string url)
+        private readonly string _url;
+
+        public Task ReceiveAsync()
         {
+            var url = _url;
             _tcs = new TaskCompletionSource<object>();
             var cookies = new List<KeyValuePair<string, string>>();
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36";
@@ -89,9 +93,9 @@ namespace MixerSitePlugin
             _ws?.Close();
             _ws = null;
         }
-        public Websocket()
+        public Websocket(string url)
         {
-
+            _url = url;
         }
     }
 }

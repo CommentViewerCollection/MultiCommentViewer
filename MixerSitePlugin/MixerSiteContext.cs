@@ -26,7 +26,7 @@ namespace MixerSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new MixerCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
+            return new MixerCommentProvider2(_server, _logger, _options, _siteOptions, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };

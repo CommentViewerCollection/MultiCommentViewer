@@ -68,6 +68,7 @@
     <Compile Include="Message\MirrativMessageMethods.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="MixerCommentProvider.cs" />
+    <Compile Include="MixerCommentProvider2.cs" />
     <Compile Include="MixerCommentViewModel.cs" />
     <Compile Include="MixerOptionsTabPage.cs" />
     <Compile Include="MixerServer.cs" />

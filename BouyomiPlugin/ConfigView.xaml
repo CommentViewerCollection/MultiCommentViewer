@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BouyomiPlugin"
         mc:Ignorable="d"
-        d:DesignHeight="2000"
+        d:DesignHeight="1500"
         d:DataContext="{d:DesignInstance local:ConfigViewModel, IsDesignTimeCreatable=True}"
         Title="棒読みちゃん連携プラグイン"  Width="439" Background="#F0F0F0">
     <Grid>
@@ -20,9 +20,10 @@
                     <CheckBox x:Name="checkBox1" Content="コテハンに敬称を付ける" IsChecked="{Binding IsAppendNickTitle}" HorizontalAlignment="Left" Margin="182,25,0,0" VerticalAlignment="Top"/>
                     <TextBox x:Name="textBox1" IsEnabled="{Binding IsChecked, ElementName=checkBox1}" HorizontalAlignment="Left" Height="23" Margin="215,45,0,0" TextWrapping="Wrap" Text="{Binding NickTitle}" VerticalAlignment="Top" Width="120"/>
                     <CheckBox Content="184コメントも読ませる" IsChecked="{Binding Want184Read}" HorizontalAlignment="Left" Margin="182,87,0,0" VerticalAlignment="Top"/>
-                    <CheckBox Content="コメビュ終了時に棒読みちゃんも終了させる（自動起動した場合のみ）" IsChecked="{Binding IsKillBouyomiChan}" HorizontalAlignment="Left" Margin="10,175,0,0" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="voiceTypeSpecifiedCheckBox" Content="読み上げ音声を指定する" IsChecked="{Binding IsVoiceTypeSpecfied}" HorizontalAlignment="Left" Margin="10,204,0,0" VerticalAlignment="Top"/>
-                    <Grid IsEnabled="{Binding IsChecked, ElementName=voiceTypeSpecifiedCheckBox}" Margin="15,224,10,10">
+                    <CheckBox Content="コメビュ起動時に棒読みちゃんも起動する" IsChecked="{Binding IsExecBouyomiChanAtBoot}" HorizontalAlignment="Left" Margin="10,175,0,0" VerticalAlignment="Top"/>
+                    <CheckBox Content="コメビュ終了時に棒読みちゃんも終了させる（自動起動した場合のみ）" IsChecked="{Binding IsKillBouyomiChan}" HorizontalAlignment="Left" Margin="10,195,0,0" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="voiceTypeSpecifiedCheckBox" Content="読み上げ音声を指定する" IsChecked="{Binding IsVoiceTypeSpecfied}" HorizontalAlignment="Left" Margin="10,224,0,0" VerticalAlignment="Top"/>
+                    <Grid IsEnabled="{Binding IsChecked, ElementName=voiceTypeSpecifiedCheckBox}" Margin="15,250,10,10">
                         <Label Content="声質" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
                         <ComboBox SelectedIndex="{Binding VoiceTypeSelectedIndex}" HorizontalAlignment="Left" Margin="49,12,0,0" VerticalAlignment="Top" Width="120">
                             <ComboBoxItem Content="デフォルト"/>

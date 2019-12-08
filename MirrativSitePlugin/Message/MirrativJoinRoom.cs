@@ -5,7 +5,7 @@ namespace MirrativSitePlugin
 {
     internal class MirrativJoinRoom : MessageBase, IMirrativJoinRoom
     {
-        public override SiteType SiteType { get; } = SiteType.Mixer;
+        public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.JoinRoom;
         //public string Comment { get; set; }
         public string Id { get; set; }
@@ -14,7 +14,7 @@ namespace MirrativSitePlugin
         public string PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
         public int OnlineViewerNum { get; set; }
-        public MirrativJoinRoom(Message commentData,string raw) : base(raw)
+        public MirrativJoinRoom(Message commentData, string raw) : base(raw)
         {
             UserId = commentData.UserId;
             Id = commentData.Id;

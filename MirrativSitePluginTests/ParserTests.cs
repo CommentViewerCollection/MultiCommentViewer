@@ -43,7 +43,7 @@ namespace MirrativSitePluginTests
             Assert.IsNull(photoGift.PhotoGiftId);
             Assert.IsNull(photoGift.PostTime);
             Assert.AreEqual("@KURORO966_Blackさん,@akatukihawk3さん,@usausa_otomeさん,@0609_spitzさん,@uru_umiさん,カルルンバ🎨さんとの  #エモモスナップ！ #エモモ #ミラティブ", photoGift.ShareText);
-            Assert.AreEqual(SiteType.Mixer, photoGift.SiteType);
+            Assert.AreEqual(SiteType.Mirrativ, photoGift.SiteType);
             Assert.AreEqual("4353835", photoGift.UserId);
         }
         [Test]

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 
 namespace MirrativSitePlugin
-{ 
+{
     internal class MirrativPhotoGift : MessageBase, IMirrativPhotoGift
     {
-        public override SiteType SiteType { get; } = SiteType.Mixer;
+        public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Item;
         public string UserId { get; }
         public string PostTime { get; }
@@ -29,7 +29,7 @@ namespace MirrativSitePlugin
     }
     internal class MirrativGift : MessageBase, IMirrativGift
     {
-        public override SiteType SiteType { get; } = SiteType.Mixer;
+        public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Item;
         public string UserId { get; }
         public string PostTime { get; }

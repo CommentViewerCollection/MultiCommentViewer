@@ -12,6 +12,7 @@ namespace BouyomiPlugin
         public bool IsAppendNickTitle { get { return GetValue(); } set { SetValue(value); } }
         public string NickTitle { get { return GetValue(); } set { SetValue(value); } }
         public bool Want184Read { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsExecBouyomiChanAtBoot { get { return GetValue(); } set { SetValue(value); } }
         public bool IsKillBouyomiChan { get { return GetValue(); } set { SetValue(value); } }
         public bool IsVoiceTypeSpecfied { get { return GetValue(); } set { SetValue(value); } }
         public int VoiceTypeIndex { get { return GetValue(); } set { SetValue(value); } }
@@ -105,6 +106,7 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsAppendNickTitle), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(NickTitle), new Item { DefaultValue = "さん", Predicate = s => true, Serializer = s => s, Deserializer = s => s });
             Dict.Add(nameof(Want184Read), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsExecBouyomiChanAtBoot), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsKillBouyomiChan), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsVoiceTypeSpecfied), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(VoiceTypeIndex), new Item { DefaultValue = 0, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = n => int.Parse(n) });

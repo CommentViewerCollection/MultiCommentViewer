@@ -29,11 +29,12 @@ namespace MultiCommentViewer.Test
                 new PeriscopeSitePlugin.PeriscopeSiteContext(options,new PeriscopeSitePlugin.PeriscopeServer(), logger,userStoreManager),
                 new ShowRoomSitePlugin.ShowRoomSiteContext(options,new ShowRoomSitePlugin.ShowRoomServer(), logger,userStoreManager),
                 new MixerSitePlugin.MixerSiteContext(options, new MixerSitePlugin.MixerServer(), logger, userStoreManager),
+                new MildomSitePlugin.MildomSiteContext(options, new MildomSitePlugin.MildomServer(),logger, userStoreManager),
 #if DEBUG
                 new TestSitePlugin.TestSiteContext(options),
 #endif
             };
-            foreach(var site in list)
+            foreach (var site in list)
             {
                 site.Init();
                 _dict.Add(site.Guid, site);
@@ -42,7 +43,7 @@ namespace MultiCommentViewer.Test
         }
         public void Init()
         {
-            foreach(var siteContext in GetSiteContexts())
+            foreach (var siteContext in GetSiteContexts())
             {
                 siteContext.Init();
             }
@@ -69,7 +70,7 @@ namespace MultiCommentViewer.Test
         }
         public Guid GetValidSiteGuid(string input)
         {
-            foreach(var siteContext in GetSiteContexts())
+            foreach (var siteContext in GetSiteContexts())
             {
                 var b = siteContext.IsValidInput(input);
                 if (b)

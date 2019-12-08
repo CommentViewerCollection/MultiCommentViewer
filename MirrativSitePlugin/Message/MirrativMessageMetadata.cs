@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace MirrativSitePlugin
 {
-    internal interface IMirrativMessageMetadata: IMessageMetadata
+    internal interface IMirrativMessageMetadata : IMessageMetadata
     {
 
     }
@@ -157,6 +157,33 @@ namespace MirrativSitePlugin
             CommentProvider = cp;
         }
     }
+    internal class ItemMessageMetadata : MessageMetadataBase
+    {
+        private readonly IMirrativItem _item;
+
+        public override Color BackColor => _siteOptions.ItemBackColor;
+        public override Color ForeColor => _siteOptions.ItemForeColor;
+
+        public ItemMessageMetadata(IMirrativItem item, ICommentOptions options, IMirrativSiteOptions siteOptions, IUser user, ICommentProvider cp)
+            : base(options, siteOptions)
+        {
+            _item = item;
+            User = user;
+            CommentProvider = cp;
+
+            user.PropertyChanged += User_PropertyChanged;
+        }
+        private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(User.IsNgUser):
+                    //case nameof(User.IsSiteNgUser):
+                    RaisePropertyChanged(nameof(IsVisible));
+                    break;
+            }
+        }
+    }
     internal class CommentMessageMetadata : MessageMetadataBase
     {
         public override Color BackColor
@@ -263,7 +290,7 @@ namespace MirrativSitePlugin
             }
         }
         public CommentMessageMetadata(IMirrativComment comment, ICommentOptions options, IMirrativSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
-            :base (options, siteOptions)
+            : base(options, siteOptions)
         {
             User = user;
             CommentProvider = cp;

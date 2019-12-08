@@ -29,7 +29,7 @@ namespace BouyomiPlugin
         public bool IsReadComment
         {
             get { return _options.IsReadComment; }
-            set {  _options.IsReadComment = value; }
+            set { _options.IsReadComment = value; }
         }
         public bool IsAppendNickTitle
         {
@@ -45,6 +45,11 @@ namespace BouyomiPlugin
         {
             get { return _options.Want184Read; }
             set { _options.Want184Read = value; }
+        }
+        public bool IsExecBouyomiChanAtBoot
+        {
+            get { return _options.IsExecBouyomiChanAtBoot; }
+            set { _options.IsExecBouyomiChanAtBoot = value; }
         }
         public bool IsKillBouyomiChan
         {

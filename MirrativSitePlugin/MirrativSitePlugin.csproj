@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Api.cs" />
+    <Compile Include="DummyImpl.cs" />
     <Compile Include="DynamicJson.cs" />
     <Compile Include="IDataServer.cs" />
     <Compile Include="ILiveInfo.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Metadata.cs" />
     <Compile Include="Message\MirrativComment.cs" />
     <Compile Include="MirrativCommentProvider.cs" />
+    <Compile Include="MirrativCommentProvider2.cs" />
     <Compile Include="MirrativCommentViewModel.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Message\MirrativMessageMetadata.cs" />
@@ -139,5 +141,6 @@
       <Version>0.15.2</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

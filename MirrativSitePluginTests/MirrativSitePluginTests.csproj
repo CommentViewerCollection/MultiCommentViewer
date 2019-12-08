@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApiTests.cs" />
+    <Compile Include="AutoReconnectionTests.cs" />
     <Compile Include="CommentProviderTests.cs" />
     <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="ParserTests.cs" />

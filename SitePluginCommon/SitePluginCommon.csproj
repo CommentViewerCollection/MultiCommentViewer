@@ -53,6 +53,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveCounter.cs" />
+    <Compile Include="AutoReconnection\ConnectionManager.cs" />
+    <Compile Include="AutoReconnection\IDummy.cs" />
+    <Compile Include="AutoReconnection\IProvider.cs" />
+    <Compile Include="AutoReconnection\MessageUntara.cs" />
+    <Compile Include="AutoReconnection\NewAutoReconnector.cs" />
+    <Compile Include="AutoReconnection\ProviderFinishReason.cs" />
     <Compile Include="AutoReconnector\AutoReconnector.cs" />
     <Compile Include="AutoReconnector\DisconnectReason.cs" />
     <Compile Include="AutoReconnector\IConnector.cs" />

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace SitePluginCommon.AutoReconnector
 {
+    [Obsolete]
     public class AutoReconnector
     {
         private readonly IConnector _connector;

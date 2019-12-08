@@ -22,5 +22,6 @@
         Periscope,
         ShowRoom,
         Mixer,
+        Mildom,
     }
 }

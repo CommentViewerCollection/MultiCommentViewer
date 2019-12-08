@@ -14,7 +14,7 @@ using SitePlugin;
 namespace CommentViewer.Plugin
 {
     [Export(typeof(IPlugin))]
-    public class CommentGeneratorPlugin: IPlugin,IDisposable
+    public class CommentGeneratorPlugin : IPlugin, IDisposable
     {
         protected virtual Options Options { get; set; }
         //string _hcgPath = "";
@@ -132,13 +132,17 @@ namespace CommentViewer.Plugin
             {
                 siteName = "mixer";
             }
+            else if (message is MildomSitePlugin.IMildomComment)
+            {
+                siteName = "mildom";
+            }
             else
             {
                 siteName = "";
             }
 
             string name;
-            if(messageMetadata.User != null && !string.IsNullOrEmpty(messageMetadata.User.Nickname))
+            if (messageMetadata.User != null && !string.IsNullOrEmpty(messageMetadata.User.Nickname))
             {
                 name = messageMetadata.User.Nickname;
             }
@@ -150,7 +154,7 @@ namespace CommentViewer.Plugin
             {
                 Comment = comment.CommentItems.ToText(),
                 Nickname = name,
-                 SiteName=siteName,
+                SiteName = siteName,
             };
             _commentCollection.Add(data);
         }
@@ -200,7 +204,7 @@ namespace CommentViewer.Plugin
                 xml = XElement.Load(CommentXmlPath);
                 var arr = xml.Elements().ToArray();
                 var count = arr.Length;
-                if(count > 1000)
+                if (count > 1000)
                 {
                     //1000件以上だったら、最後の100件以外を全て削除
                     xml.RemoveAll();

@@ -98,6 +98,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="ViewModels\CommentViewModel\InfoCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\McvMildomCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\MixerCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\ShowRoomCommentViewModel .cs" />
     <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
@@ -250,6 +251,14 @@
     <ProjectReference Include="..\LineLiveSitePlugin\LineLiveSitePlugin.csproj">
       <Project>{33c8afd8-24f3-481e-ad0c-9f24ad6cdee4}</Project>
       <Name>LineLiveSitePlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MildomIF\MildomIF.csproj">
+      <Project>{fd868431-6667-4394-89df-44764aafcae5}</Project>
+      <Name>MildomIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MildomSitePlugin\MildomSitePlugin.csproj">
+      <Project>{991729d3-3ce5-4b4e-b48f-90dd196dc0e4}</Project>
+      <Name>MildomSitePlugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
       <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>

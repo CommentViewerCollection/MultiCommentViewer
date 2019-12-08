@@ -34,6 +34,29 @@ namespace MirrativSitePlugin
             }
         }
         NewAutoReconnector _autoReconnector;
+        /// <summary>
+        /// 放送IDを取得する
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns>ユーザページのURLを入力した場合に配信中で無ければnull</returns>
+        private async Task<string> GetCurrentLiveIdAsync(string input)
+        {
+            string liveId = null;
+            if (Tools.IsValidUserId(input))
+            {
+                var userId = Tools.ExtractUserId(input);
+                var userProfile = await Api.GetUserProfileAsync(_server, userId);
+                if (!string.IsNullOrEmpty(userProfile.OnLiveLiveId))
+                {
+                    liveId = userProfile.OnLiveLiveId;
+                }
+            }
+            else if (Tools.IsValidLiveId(input))
+            {
+                liveId = Tools.ExtractLiveId(input);
+            }
+            return liveId;
+        }
         private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
             var p1 = new MessageProvider2(new WebSocket("wss://online.mirrativ.com/"), _logger);
@@ -47,6 +70,23 @@ namespace MirrativSitePlugin
                 var dummy = new DummyImpl(_server, input, _logger, _siteOptions, p1, p2);
                 var connectionManager = new ConnectionManager(_logger);
                 _autoReconnector = new NewAutoReconnector(connectionManager, dummy, new MessageUntara(), _logger);
+
+                //isInitialCommentを取得する
+                var liveId = await GetCurrentLiveIdAsync(input);
+                if (!string.IsNullOrEmpty(liveId))
+                {
+                    var initialComments = await Api.GetLiveComments(_server, liveId);
+                    foreach (var c in initialComments)
+                    {
+                        var userId = c.UserId;
+                        var isFirstComment = _first.IsFirstComment(userId);
+                        var user = GetUser(userId);
+                        var context = CreateMessageContext(c, true, "");
+                        RaiseMessageReceived(context);
+                    }
+                }
+
+                //接続開始
                 await _autoReconnector.AutoReconnectAsync();
             }
             finally
@@ -59,12 +99,21 @@ namespace MirrativSitePlugin
 
         private void P2_MetadataUpdated(object sender, ILiveInfo e)
         {
+            var liveInfo = e;
+            RaiseMetadataUpdated(new Metadata
+            {
+                IsLive = liveInfo.IsLive,
+                Title = liveInfo.Title,
+                TotalViewers = liveInfo.TotalViewerNum.ToString(),
+                CurrentViewers = liveInfo.OnlineUserNum.ToString(),
+            });
 
         }
 
         private void P1_MetadataUpdated(object sender, IMetadata e)
         {
-
+            var metadata = e;
+            RaiseMetadataUpdated(metadata);
         }
 
         private void P1_MessageReceived(object sender, IMirrativMessage e)
@@ -75,6 +124,29 @@ namespace MirrativSitePlugin
             {
                 RaiseMessageReceived(messageContext);
             }
+        }
+        private MirrativMessageContext CreateMessageContext(Message message, bool isInitialComment, string raw)
+        {
+            var userId = message.UserId;
+            var isFirst = _first.IsFirstComment(userId);
+            var user = GetUser(userId);
+            var comment = new MirrativComment(message, raw);//InitialCommentにギフトが含まれている場合があったらバグ。
+            var metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirst)
+            {
+                IsInitialComment = isInitialComment,
+                SiteContextGuid = SiteContextGuid,
+            };
+            var methods = new MirrativMessageMethods();
+            if (_siteOptions.NeedAutoSubNickname)
+            {
+                var messageText = message.Comment;
+                var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
+                if (!string.IsNullOrEmpty(nick))
+                {
+                    user.Nickname = nick;
+                }
+            }
+            return new MirrativMessageContext(comment, metadata, methods);
         }
         private MirrativMessageContext CreateMessageContext(IMirrativMessage message)
         {
@@ -113,19 +185,28 @@ namespace MirrativSitePlugin
                 var methods = new MirrativMessageMethods();
                 return new MirrativMessageContext(join, metadata, methods);
             }
-            //else if (message is IMirrativItem item)
-            //{
-            //    var userId = item.UserId;
-            //    var isFirst = false;
-            //    var user = GetUser(userId);
-            //    var metadata = new  MirrativMessageMetadata(item, _options, _siteOptions, user, this, isFirst)
-            //    {
-            //        IsInitialComment = false,
-            //        SiteContextGuid = SiteContextGuid,
-            //    };
-            //    var methods = new MirrativMessageMethods();
-            //    return new MirrativMessageContext(item, metadata, methods);
-            //}
+            else if (message is IMirrativItem item)
+            {
+                var userId = item.UserId;
+                var isFirst = _first.IsFirstComment(userId);
+                var user = GetUser(userId);
+                var metadata = new ItemMessageMetadata(item, _options, _siteOptions, user, this)
+                {
+                    IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
+                };
+                var methods = new MirrativMessageMethods();
+                if (_siteOptions.NeedAutoSubNickname)
+                {
+                    var messageText = message.CommentItems.ToText();
+                    var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
+                    if (!string.IsNullOrEmpty(nick))
+                    {
+                        user.Nickname = nick;
+                    }
+                }
+                return new MirrativMessageContext(item, metadata, methods);
+            }
             else if (message is IMirrativConnected connected)
             {
                 var metadata = new ConnectedMessageMetadata(connected, _options, _siteOptions)

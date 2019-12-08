@@ -70,7 +70,8 @@
     <Compile Include="Message\MirrativItem.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="Message\MirrativComment.cs" />
-    <Compile Include="MirrativCommentProvider.cs" />
+    <Compile Include="MetadataProvider2.cs" />
+    <Compile Include="CurrentUserInfo.cs" />
     <Compile Include="MirrativCommentProvider2.cs" />
     <Compile Include="MirrativCommentViewModel.cs" />
     <Compile Include="Exceptions.cs" />

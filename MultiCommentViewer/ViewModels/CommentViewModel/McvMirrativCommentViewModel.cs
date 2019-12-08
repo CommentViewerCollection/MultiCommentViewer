@@ -137,7 +137,7 @@ namespace MultiCommentViewer
             _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = null;
-            Id = null;
+            Id = item.Id;
             PostTime = comment.PostTime;
         }
         public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)

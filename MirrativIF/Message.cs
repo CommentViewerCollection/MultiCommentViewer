@@ -42,24 +42,24 @@ namespace MirrativSitePlugin
         string PostTime { get; }
         //IMessageImage UserIcon { get; set; }
     }
-    public interface IMirrativPhotoGift : IMirrativItem
-    {
-        string GiftTitle { get; }
-        string PhotoGiftId { get; }
-        string BUrl { get; }
-        int Coins { get; }
-        string GiftSmallImageUrl { get; }
+    //public interface IMirrativPhotoGift : IMirrativItem
+    //{
+    //    string GiftTitle { get; }
+    //    string PhotoGiftId { get; }
+    //    string BUrl { get; }
+    //    int Coins { get; }
+    //    string GiftSmallImageUrl { get; }
 
-        string ShareText { get; }
-    }
-    public interface IMirrativGift : IMirrativItem
-    {
-        string GiftTitle { get; }
-        string PhotoGiftId { get; }
-        string BUrl { get; }
-        int Coins { get; }
-        string GiftSmallImageUrl { get; }
+    //    string ShareText { get; }
+    //}
+    //public interface IMirrativGift : IMirrativItem
+    //{
+    //    string GiftTitle { get; }
+    //    string PhotoGiftId { get; }
+    //    string BUrl { get; }
+    //    int Coins { get; }
+    //    string GiftSmallImageUrl { get; }
 
-        int Count { get; }
-    }
+    //    int Count { get; }
+    //}
 }

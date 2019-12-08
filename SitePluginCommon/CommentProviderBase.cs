@@ -76,6 +76,10 @@ namespace SitePluginCommon
         {
             MessageReceived?.Invoke(this, context);
         }
+        protected void RaiseMetadataUpdated(IMetadata metadata)
+        {
+            MetadataUpdated?.Invoke(this, metadata);
+        }
         public abstract Task ConnectAsync(string input, IBrowserProfile browserProfile);
 
         public abstract void Disconnect();

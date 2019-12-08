@@ -36,32 +36,10 @@ namespace MirrativSitePlugin
                         {
                             try
                             {
-                                //2019/01/02 dictにあるキー
-                                //
-
-                                //2019/01/02 Mirrativから送られてきたデータにバグ発見
-                                //おそらく"created_at":"1546434659"とするつもりだと思うんだけど、
-                                //"":"created_at","1546434659":nullとなっている。
-                                long? createdAtNullable = null;
-                                if (json.IsDefined("created_at"))
-                                {
-                                    createdAtNullable = (long)json["created_at"];
-                                }
-                                else
-                                {
-                                    foreach (var key in json.GetDynamicMemberNames())
-                                    {
-                                        if (long.TryParse(key, out long createdAt))
-                                        {
-                                            createdAtNullable = createdAt;
-                                            break;
-                                        }
-                                    }
-                                }
                                 var message = new Message
                                 {
                                     Comment = json["ac"] + "が入室しました",
-                                    CreatedAt = createdAtNullable ?? 0,
+                                    CreatedAt = (long)json["created_at"],
                                     Type = MessageType.BroadcastInfo,
                                     UserId = json["u"],
                                     Username = json["ac"],

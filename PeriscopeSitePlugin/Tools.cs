@@ -79,7 +79,7 @@ namespace PeriscopeSitePlugin
         private static (string channelName, string liveId) ExtractChannelNameAndLiveIdFromUrlType2(string input)
         {
             //https://www.periscope.tv/Lovelylndeed/1jMJgvLrMEjGL
-            var match = Regex.Match(input, "periscope\\.tv/(?<channel>[0-9a-zA-Z-_]+)/(?<liveid>[0-9a-zA-Z-_]+)");
+            var match = Regex.Match(input, "(?:periscope|pscp)\\.tv/(?<channel>[0-9a-zA-Z-_]+)/(?<liveid>[0-9a-zA-Z-_]+)");
             if (match.Success)
             {
                 var liveid = match.Groups["liveid"].Value;

@@ -53,6 +53,9 @@
     </Content>
     <Compile Include="TestHelper.cs" />
     <Compile Include="ToolsTests.cs" />
+    <Content Include="SampleData\ChannelPageHtml_Running.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="SampleData\AccessVideoPublic.txt">

@@ -31,6 +31,10 @@ namespace MildomSitePlugin
         public DateTime PostedAt { get; internal set; }
         public string Raw { get; set; }
     }
+    class OnBroadcast : IInternalMessage
+    {
+        public string Raw { get; set; }
+    }
     internal class OnLiveEnd : IInternalMessage
     {
         public OnLiveEnd(string raw)
@@ -105,7 +109,10 @@ namespace MildomSitePlugin
                 case "onBroadcast":
                     //{"area": 2000, "clickColor": "#F8AC07", "clickLink": "https://event.mildom.com/activity/view?series_id=11&week=2", "clickText": "こちらをクリック！", "cmd": "onBroadcast", "msg": "配信ランキングに挑戦！${click.text}", "msgColor": "#3C8BF9", "reqId": 0, "roomId": 10038336, "rst": 0, "type": 3, "userName": "guest809480"}
                     //{"area": 2000, "clickColor": "#F6C145", "clickLink": "https://wia.mildom.com/views/rule/message.html", "clickText": "クリックして詳細を表示", "cmd": "onBroadcast", "msg": "注意:ポルノ、暴力、喫煙などの不適切なコンテンツは厳しく禁止されています。${click.text}", "msgColor": "#68B9FF", "reqId": 0, "roomId": 10037397, "rst": 0, "type": 3, "userName": "kv510k"}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = new OnBroadcast
+                    {
+                        Raw = raw,
+                    };
                     break;
                 case "onGift":
                     //{"area": 2000, "avatarDecortaion": 0, "category": 1, "cmd": "onGift", "comboEffect": 0, "count": 1, "countSum": 1, "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "giftCoin": 106187, "giftId": 1086, "guestOrder": null, "level": 21, "medals": null, "nobleLevel": 0, "reqId": 0, "roomId": 10038336, "toAvatarDecortaion": 0, "toId": 10038336, "toLevel": 25, "toName": "Nephrite【ネフライト】", "toUserImg": "http://pbs.twimg.com/profile_images/1127227613058039809/xhm1svMM.png", "type": 3, "userId": 10073272, "userImg": "https://profile.line-scdn.net/0hARjarbzhHn1XGDHTaddhKmtdEBAgNhg1LypXE3QQExopfVkib3lVGSJMR0RyKlEvY3ZZHScdRh9_", "userName": "Yumiko♥"}

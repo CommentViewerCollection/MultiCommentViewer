@@ -69,6 +69,7 @@ namespace MildomSitePlugin
         NewAutoReconnector _autoReconnector;
         private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
+            _isBeeingSentInitialComments = true;
             var mayBeRoomId = Tools.ExtractRoomId(input);
             if (!mayBeRoomId.HasValue)
             {
@@ -117,13 +118,21 @@ namespace MildomSitePlugin
         private void P1_MessageReceived(object sender, IInternalMessage e)
         {
             var message = e;
-
+            if (message is OnBroadcast)
+            {
+                _isBeeingSentInitialComments = false;
+            }
             var messageContext = CreateMessageContext(message);
             if (messageContext != null)
             {
                 RaiseMessageReceived(messageContext);
             }
         }
+        /// <summary>
+        /// 初期コメントが送られてきているか。
+        /// 接続直後はサーバから初期コメントが送られてくる。その後OnBroadcastメッセージが来るから、それ以降はリアルタイムのコメント。
+        /// </summary>
+        bool _isBeeingSentInitialComments;
         private MildomMessageContext CreateMessageContext(IInternalMessage message)
         {
             if (message is OnChatMessage chat)
@@ -134,7 +143,7 @@ namespace MildomSitePlugin
                 var comment = new MildomComment(chat, chat.Raw);
                 var metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirst)
                 {
-                    IsInitialComment = false,
+                    IsInitialComment = _isBeeingSentInitialComments,
                     SiteContextGuid = SiteContextGuid,
                 };
                 var methods = new MildomMessageMethods();

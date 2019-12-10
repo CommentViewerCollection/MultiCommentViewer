@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 
 namespace PeriscopeSitePlugin
 {
-    interface IWebsocket
+    /// <summary>
+    /// あいうえお
+    /// </summary>
+    interface IMessageProvider
     {
-        event EventHandler Opened;
-        event EventHandler<string> Received;
-
+        event EventHandler<IInternalMessage> Received;
+        Task ReceiveAsync(string hostname, string accessToken, string roomId);
         void Disconnect();
-        Task ReceiveAsync(string url);
-        Task SendAsync(string s);
     }
 }

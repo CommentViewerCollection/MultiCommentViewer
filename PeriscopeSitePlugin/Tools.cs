@@ -40,17 +40,18 @@ namespace PeriscopeSitePlugin
 
             if (string.IsNullOrWhiteSpace(input)) return (null, null);
 
-            var list = new List<Func<string, (string,string)>>
+            var list = new List<Func<string, (string, string)>>
             {
                 ExtractChannelNameAndLiveIdFromUrlType1,
                 ExtractChannelNameAndLiveIdFromUrlType2,
+                ExtractChannelNameFromUrlType2,
             };
             foreach (var func in list)
             {
-                var (channel,liveid)= func(input);
-                if (!string.IsNullOrEmpty(liveid))
+                var (channel, liveid) = func(input);
+                if (!string.IsNullOrEmpty(channel) || !string.IsNullOrEmpty(liveid))
                 {
-                    return (channel,liveid);
+                    return (channel, liveid);
                 }
             }
             return (null, null);
@@ -63,7 +64,7 @@ namespace PeriscopeSitePlugin
             var match = Regex.Match(input, "(?:periscope|pscp)\\.tv/w/(?<liveid>[0-9a-zA-Z-_]+)(\\?channel=(?<channel>[^/]+))?");
             if (match.Success)
             {
-                var liveid= match.Groups["liveid"].Value;
+                var liveid = match.Groups["liveid"].Value;
                 var channel = match.Groups["channel"].Value;
                 if (string.IsNullOrEmpty(channel))
                 {
@@ -79,7 +80,7 @@ namespace PeriscopeSitePlugin
         private static (string channelName, string liveId) ExtractChannelNameAndLiveIdFromUrlType2(string input)
         {
             //https://www.periscope.tv/Lovelylndeed/1jMJgvLrMEjGL
-            var match = Regex.Match(input, "periscope\\.tv/(?<channel>[0-9a-zA-Z-_]+)/(?<liveid>[0-9a-zA-Z-_]+)");
+            var match = Regex.Match(input, "(?:periscope|pscp)\\.tv/(?<channel>[0-9a-zA-Z-_]+)/(?<liveid>[0-9a-zA-Z-_]+)");
             if (match.Success)
             {
                 var liveid = match.Groups["liveid"].Value;
@@ -91,6 +92,51 @@ namespace PeriscopeSitePlugin
                 return (null, null);
             }
         }
+        private static (string channelName, string liveId) ExtractChannelNameFromUrlType2(string input)
+        {
+            //https://www.periscope.tv/Lovelylndeed
+            var match = Regex.Match(input, "(?:periscope|pscp)\\.tv/(?<channel>[0-9a-zA-Z-_]+)");
+            if (match.Success)
+            {
+                var channel = match.Groups["channel"].Value;
+                return (channel, null);
+            }
+            else
+            {
+                return (null, null);
+            }
+        }
+
+        internal static IUrl GetUrl(string input)
+        {
+            var (channelid, liveid) = ExtractChannelNameAndLiveId(input);
+            if (!string.IsNullOrEmpty(liveid))
+            {
+                return new LivePageUrl(input);
+            }
+            else if (!string.IsNullOrEmpty(channelid))
+            {
+                return new ChannelUrl(input);
+            }
+            else
+            {
+                return new UnknownUrl(input);
+            }
+        }
+        public static string ExtractChannelPageJson(string channelPageHtml)
+        {
+            var match = Regex.Match(channelPageHtml, " data-store=\"({.+})\">");
+            if (match.Success)
+            {
+                var raw = match.Groups[1].Value;
+                return raw.Replace("&quot;", "\"");
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>

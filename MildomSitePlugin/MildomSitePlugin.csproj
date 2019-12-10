@@ -67,7 +67,6 @@
     <Compile Include="Message\MirrativMessageContext.cs" />
     <Compile Include="Message\MirrativMessageMetadata.cs" />
     <Compile Include="Message\MirrativMessageMethods.cs" />
-    <Compile Include="Metadata.cs" />
     <Compile Include="MildomCommentProvider.cs" />
     <Compile Include="MildomOptionsTabPage.cs" />
     <Compile Include="MildomServer.cs" />

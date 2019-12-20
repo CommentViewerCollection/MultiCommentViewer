@@ -325,17 +325,22 @@ namespace TwitchSitePlugin
         {
             var commentData = ParsePrivMsg(result);
             var userId = commentData.UserId;
+            var displayName = commentData.DisplayName;
             var isFirstComment = _commentCounter.UpdateCount(userId);
             var user = GetUser(userId);
             if (_siteOptions.NeedAutoSubNickname)
             {
                 SitePluginCommon.Utils.SetNickname(commentData.Message, user, _siteOptions.NeedAutoSubNicknameStr);
             }
+            if (displayName != commentData.Username)
+            {
+                displayName += " (" + commentData.Username + ")";
+            }
             var message = new TwitchComment(result.Raw)
             {
                 CommentItems = Tools.GetMessageItems(result),
                 Id = commentData.Id,
-                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Username) },
+                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(displayName) },
                 PostTime = commentData.SentAt.ToString("HH:mm:ss"),
                 UserId = commentData.UserId,
             };
@@ -497,37 +502,11 @@ namespace TwitchSitePlugin
     {
         public string UserId { get; set; }
         public string Username { get; set; }
+        public string DisplayName { get; set; }
         public string Message { get; set; }
         public string Emotes { get; set; }
         public string Id { get; set; }
         public DateTime SentAt { get; internal set; }
-    }
-    public class MessageImage : IMessageImage
-    {
-        public int? Width { get; set; }
-
-        public int? Height { get; set; }
-
-        public string Url { get; set; }
-
-        public string Alt { get; set; }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-            {
-                return false;
-            }
-            if (obj is MessageImage image)
-            {
-                return this.Url.Equals(image.Url) && this.Alt.Equals(image.Alt);
-            }
-            return false;
-        }
-        public override int GetHashCode()
-        {
-            return Url.GetHashCode() ^ Alt.GetHashCode();
-        }
     }
     class CommentCounter
     {

@@ -1,5 +1,6 @@
 ﻿using LineLiveSitePlugin;
 using MirrativSitePlugin;
+using MixerSitePlugin;
 using NicoSitePlugin;
 using OpenrecSitePlugin;
 using PeriscopeSitePlugin;
@@ -20,7 +21,7 @@ namespace BouyomiPlugin
     {
         public static string ToText(this IEnumerable<IMessagePart> parts)
         {
-            string s="";
+            string s = "";
             if (parts != null)
             {
                 foreach (var part in parts)
@@ -44,7 +45,7 @@ namespace BouyomiPlugin
                     {
                         s += text;
                     }
-                    else if(part is IMessageImage image)
+                    else if (part is IMessageImage image)
                     {
                         s += image.Alt;
                     }
@@ -64,7 +65,7 @@ namespace BouyomiPlugin
         public string Description => "棒読みソフトとうまく連携できるか試してみるプラグインです。";
         public void OnTopmostChanged(bool isTopmost)
         {
-            if(_settingsView != null)
+            if (_settingsView != null)
             {
                 _settingsView.Topmost = isTopmost;
             }
@@ -77,24 +78,51 @@ namespace BouyomiPlugin
                 _options.Deserialize(s);
             }
             catch (System.IO.FileNotFoundException) { }
+            try
+            {
+                if (_options.IsExecBouyomiChanAtBoot && !IsExecutingProcess("BouyomiChan"))
+                {
+                    StartBouyomiChan();
+                }
+            }
+            catch (Exception) { }
         }
+        /// <summary>
+        /// 指定したプロセス名を持つプロセスが起動中か
+        /// </summary>
+        /// <param name="processName">プロセス名</param>
+        /// <returns></returns>
+        private bool IsExecutingProcess(string processName)
+        {
+            return Process.GetProcessesByName(processName).Length > 0;
+        }
+
         public void OnClosing()
         {
             _settingsView?.ForceClose();
             var s = _options.Serialize();
             Host.SaveOptions(GetSettingsFilePath(), s);
-            if(_bouyomiChanProcess != null && _options.IsKillBouyomiChan)
+            if (_bouyomiChanProcess != null && _options.IsKillBouyomiChan)
             {
                 try
                 {
                     _bouyomiChanProcess.Kill();
                 }
-                catch(Exception) { }
+                catch (Exception) { }
+            }
+        }
+        private void StartBouyomiChan()
+        {
+            if (_bouyomiChanProcess == null && System.IO.File.Exists(_options.BouyomiChanPath))
+            {
+                _bouyomiChanProcess = Process.Start(_options.BouyomiChanPath);
+                _bouyomiChanProcess.EnableRaisingEvents = true;
+                _bouyomiChanProcess.Exited += BouyomiChanProcess_Exited;
             }
         }
         public void OnCommentReceived(ICommentData data)
         {
-            if (!_options.IsEnabled || data.IsNgUser || data.IsFirstComment || (data.Is184&& !_options.Want184Read))
+            if (!_options.IsEnabled || data.IsNgUser || data.IsFirstComment || (data.Is184 && !_options.Want184Read))
                 return;
             try
             {
@@ -108,20 +136,15 @@ namespace BouyomiPlugin
 
                     if (_options.IsAppendNickTitle)
                         nick += _options.NickTitle;
-                    _bouyomiChanClient.AddTalkTask2(nick);
+                    TalkText(nick);
                 }
                 if (_options.IsReadComment)
-                    _bouyomiChanClient.AddTalkTask2(data.Comment);
+                    TalkText(data.Comment);
             }
             catch (System.Runtime.Remoting.RemotingException)
             {
                 //多分棒読みちゃんが起動していない。
-                if (_bouyomiChanProcess == null && System.IO.File.Exists(_options.BouyomiChanPath))
-                {
-                    _bouyomiChanProcess = Process.Start(_options.BouyomiChanPath);
-                    _bouyomiChanProcess.EnableRaisingEvents = true;
-                    _bouyomiChanProcess.Exited += BouyomiChanProcess_Exited;
-                }
+                StartBouyomiChan();
                 //起動するまでの間にコメントが投稿されたらここに来てしまうが諦める。
             }
             catch (Exception)
@@ -493,6 +516,50 @@ namespace BouyomiPlugin
                         break;
                 }
             }
+            else if (message is IMixerMessage MixerMessage)
+            {
+                switch (MixerMessage.MixerMessageType)
+                {
+                    case MixerMessageType.Connected:
+                        if (_options.IsMixerConnect)
+                        {
+                            name = null;
+                            comment = (MixerMessage as IMixerConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case MixerMessageType.Disconnected:
+                        if (_options.IsMixerDisconnect)
+                        {
+                            name = null;
+                            comment = (MixerMessage as IMixerDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case MixerMessageType.Comment:
+                        if (_options.IsMixerComment)
+                        {
+                            if (_options.IsMixerCommentNickname)
+                            {
+                                name = (MixerMessage as IMixerComment).NameItems.ToText();
+                            }
+                            comment = (MixerMessage as IMixerComment).CommentItems.ToText();
+                        }
+                        break;
+                        //case MixerMessageType.Join:
+                        //    if (_options.IsMixerJoin)
+                        //    {
+                        //        name = null;
+                        //        comment = (MixerMessage as IMixerJoin).CommentItems.ToText();
+                        //    }
+                        //    break;
+                        //case MixerMessageType.Leave:
+                        //    if (_options.IsMixerLeave)
+                        //    {
+                        //        name = null;
+                        //        comment = (MixerMessage as IMixerLeave).CommentItems.ToText();
+                        //    }
+                        //    break;
+                }
+            }
             else
             {
                 if (_options.IsReadHandleName)
@@ -534,7 +601,7 @@ namespace BouyomiPlugin
                     }
                     dataToRead += comment;
                 }
-                _bouyomiChanClient.AddTalkTask2(dataToRead);
+                TalkText(dataToRead);
             }
             catch (System.Runtime.Remoting.RemotingException)
             {
@@ -560,6 +627,25 @@ namespace BouyomiPlugin
 
             }
         }
+
+        private int TalkText(string text)
+        {
+            if (_options.IsVoiceTypeSpecfied)
+            {
+                return _bouyomiChanClient.AddTalkTask2(
+                    text,
+                    _options.VoiceSpeed,
+                    _options.VoiceTone,
+                    _options.VoiceVolume,
+                    (FNF.Utility.VoiceType)Enum.ToObject(typeof(FNF.Utility.VoiceType), _options.VoiceTypeIndex)
+                );
+            }
+            else
+            {
+                return _bouyomiChanClient.AddTalkTask2(text);
+            }
+        }
+
         public IPluginHost Host { get; set; }
         public string GetSettingsFilePath()
         {
@@ -570,7 +656,7 @@ namespace BouyomiPlugin
         ConfigView _settingsView;
         public void ShowSettingView()
         {
-            if(_settingsView == null)
+            if (_settingsView == null)
             {
                 _settingsView = new ConfigView
                 {
@@ -580,7 +666,7 @@ namespace BouyomiPlugin
             _settingsView.Topmost = Host.IsTopmost;
             _settingsView.Left = Host.MainViewLeft;
             _settingsView.Top = Host.MainViewTop;
-            
+
             _settingsView.Show();
         }
         public BouyomiPlugin()
@@ -608,7 +694,7 @@ namespace BouyomiPlugin
                 _disposedValue = true;
             }
         }
-        
+
         ~BouyomiPlugin()
         {
             Dispose(false);

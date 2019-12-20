@@ -98,6 +98,7 @@ namespace NicoSitePlugin
                 Is184 = Tools.Is184UserId(chat.UserId),
                 NameItems = null,
                 PostTime = chat.Date.ToString("HH:mm:ss"),
+                PostedDate = chat.Date,
                 RoomName = roomName,
                 UserIcon = null,
                 UserId = chat.UserId,

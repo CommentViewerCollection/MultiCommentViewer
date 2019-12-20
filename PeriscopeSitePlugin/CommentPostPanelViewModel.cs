@@ -7,7 +7,7 @@ using System.Windows.Input;
 
 namespace PeriscopeSitePlugin
 {
-    class CommentPostPanelViewModel:ViewModelBase
+    class CommentPostPanelViewModel : ViewModelBase
     {
 
         private bool _canPostComment;
@@ -38,12 +38,12 @@ namespace PeriscopeSitePlugin
                     _logger.LogException(ex, "", $"Comment={commentTemp}");
                     Comment = commentTemp;
                 }
-                
+
                 CanPostComment = true;
             }
         }
         private string _comment;
-        private readonly PeriscopeCommentProvider _commentProvider;
+        private readonly PeriscopeCommentProvider2 _commentProvider;
         private readonly ILogger _logger;
 
         public string Comment
@@ -56,7 +56,7 @@ namespace PeriscopeSitePlugin
                 RaisePropertyChanged();
             }
         }
-        public CommentPostPanelViewModel(PeriscopeCommentProvider commentProvider, ILogger logger)
+        public CommentPostPanelViewModel(PeriscopeCommentProvider2 commentProvider, ILogger logger)
         {
             _commentProvider = commentProvider;
             _logger = logger;

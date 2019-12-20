@@ -1,5 +1,8 @@
-﻿namespace SitePluginCommon.AutoReconnector
+﻿using System;
+
+namespace SitePluginCommon.AutoReconnector
 {
+    [Obsolete]
     public enum DisconnectReason
     {
         Unknown,

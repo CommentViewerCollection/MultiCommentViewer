@@ -12,7 +12,13 @@ namespace BouyomiPlugin
         public bool IsAppendNickTitle { get { return GetValue(); } set { SetValue(value); } }
         public string NickTitle { get { return GetValue(); } set { SetValue(value); } }
         public bool Want184Read { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsExecBouyomiChanAtBoot { get { return GetValue(); } set { SetValue(value); } }
         public bool IsKillBouyomiChan { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsVoiceTypeSpecfied { get { return GetValue(); } set { SetValue(value); } }
+        public int VoiceTypeIndex { get { return GetValue(); } set { SetValue(value); } }
+        public int VoiceVolume { get { return GetValue(); } set { SetValue(value); } }
+        public int VoiceSpeed { get { return GetValue(); } set { SetValue(value); } }
+        public int VoiceTone { get { return GetValue(); } set { SetValue(value); } }
 
         //YouTubeLive
         public bool IsYouTubeLiveConnect { get { return GetValue(); } set { SetValue(value); } }
@@ -82,6 +88,15 @@ namespace BouyomiPlugin
         public bool IsPeriscopeCommentNickname { get { return GetValue(); } set { SetValue(value); } }
         public bool IsPeriscopeJoin { get { return GetValue(); } set { SetValue(value); } }
         public bool IsPeriscopeLeave { get { return GetValue(); } set { SetValue(value); } }
+
+        //Mixer
+        public bool IsMixerConnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerDisconnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerComment { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerJoin { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixerLeave { get { return GetValue(); } set { SetValue(value); } }
+
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -91,7 +106,13 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsAppendNickTitle), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(NickTitle), new Item { DefaultValue = "さん", Predicate = s => true, Serializer = s => s, Deserializer = s => s });
             Dict.Add(nameof(Want184Read), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsExecBouyomiChanAtBoot), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsKillBouyomiChan), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsVoiceTypeSpecfied), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(VoiceTypeIndex), new Item { DefaultValue = 0, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = n => int.Parse(n) });
+            Dict.Add(nameof(VoiceVolume), new Item { DefaultValue = 100, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = n => int.Parse(n) });
+            Dict.Add(nameof(VoiceSpeed), new Item { DefaultValue = 100, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = n => int.Parse(n) });
+            Dict.Add(nameof(VoiceTone), new Item { DefaultValue = 100, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = n => int.Parse(n) });
 
             //YouTubeLive
             Dict.Add(nameof(IsYouTubeLiveConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -158,6 +179,14 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsPeriscopeCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsPeriscopeJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsPeriscopeLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            //Mixer
+            Dict.Add(nameof(IsMixerConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixerLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
     }
 }

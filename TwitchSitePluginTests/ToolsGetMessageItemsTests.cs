@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using SitePlugin;
+using Common;
 
 namespace TwitchSitePluginTests
 {

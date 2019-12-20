@@ -14,7 +14,7 @@ namespace MirrativSitePlugin
         public string PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
         public int OnlineViewerNum { get; set; }
-        public MirrativJoinRoom(Message commentData,string raw) : base(raw)
+        public MirrativJoinRoom(Message commentData, string raw) : base(raw)
         {
             UserId = commentData.UserId;
             Id = commentData.Id;

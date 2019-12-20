@@ -37,8 +37,6 @@
         <w:IntToFontSizeConverter x:Key="intToFontConverter" />
         <w:DataGridLengthValueConverter x:Key="dataGridLengthConverter" />
         <w:GridLengthConverter x:Key="gridLengthConverter" />
-        <local:MessageConverter x:Key="messageConverter" />
-        <local:NameConverter x:Key="nameConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>

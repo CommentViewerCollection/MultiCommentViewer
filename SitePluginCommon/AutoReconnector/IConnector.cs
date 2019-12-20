@@ -1,7 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace SitePluginCommon.AutoReconnector
 {
+    [Obsolete]
     public interface IConnector
     {
         Task<bool> IsLivingAsync();

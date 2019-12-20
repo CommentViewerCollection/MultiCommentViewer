@@ -13,6 +13,8 @@ namespace SitePlugin
     }
     public interface IMessageImage : IMessagePart
     {
+        int? X { get; }
+        int? Y { get; }
         int? Width { get; }
         int? Height { get; }
         string Url { get; }

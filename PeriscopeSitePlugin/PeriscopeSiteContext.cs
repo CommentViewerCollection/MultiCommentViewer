@@ -26,7 +26,7 @@ namespace PeriscopeSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new PeriscopeCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
+            return new PeriscopeCommentProvider2(_server, _logger, _options, _siteOptions, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
@@ -63,8 +63,8 @@ namespace PeriscopeSitePlugin
         }
         public override bool IsValidInput(string input)
         {
-            var (_, liveId) = Tools.ExtractChannelNameAndLiveId(input);
-            return !string.IsNullOrEmpty(liveId);
+            var (channelId, liveId) = Tools.ExtractChannelNameAndLiveId(input);
+            return !string.IsNullOrEmpty(channelId) || !string.IsNullOrEmpty(liveId);
         }
 
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)

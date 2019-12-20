@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 
 namespace MirrativSitePlugin
-{ 
-    internal class MirrativPhotoGift : MessageBase, IMirrativPhotoGift
+{
+    internal class MirrativPhotoGift : MessageBase, IMirrativItem
     {
         public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Item;
@@ -24,10 +24,10 @@ namespace MirrativSitePlugin
             CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Comment) };
             NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Username) };
             //UserIcon = null;
-            PostTime = null;
+            PostTime = Tools.UnixTime2DateTime(commentData.CreatedAt).ToString("HH:mm:ss");
         }
     }
-    internal class MirrativGift : MessageBase, IMirrativGift
+    internal class MirrativGift : MessageBase, IMirrativItem
     {
         public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Item;
@@ -49,7 +49,7 @@ namespace MirrativSitePlugin
             CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Comment) };
             NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Username) };
             //UserIcon = null;
-            PostTime = null;
+            PostTime = Tools.UnixTime2DateTime(commentData.CreatedAt).ToString("HH:mm:ss");
         }
     }
 }

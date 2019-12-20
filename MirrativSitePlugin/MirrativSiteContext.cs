@@ -26,7 +26,7 @@ namespace MirrativSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new MirrativCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
+            return new MirrativCommentProvider2(_server, _logger, _options, _siteOptions, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };

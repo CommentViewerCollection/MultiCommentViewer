@@ -13,7 +13,7 @@ namespace MirrativSitePlugin
         public string UserId { get; set; }
         public string PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
-        public MirrativComment(Message commentData,string raw) : base(raw)
+        public MirrativComment(Message commentData, string raw) : base(raw)
         {
             UserId = commentData.UserId;
             Id = commentData.Id;

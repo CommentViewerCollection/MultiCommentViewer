@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace SitePluginCommon.AutoReconnector
 {
+    [Obsolete]
     public class AutoReconnector
     {
         private readonly IConnector _connector;
@@ -44,9 +45,9 @@ namespace SitePluginCommon.AutoReconnector
                 if (beforeTrialTime.HasValue)
                 {
                     var elapsed = GetCurrentDateTime() - beforeTrialTime.Value;
-                    if (elapsed < new TimeSpan(0, 0, ReconnectionIntervalMinimamSec))
+                    if (elapsed < new TimeSpan(0, 0, ReconnectionIntervalMinimumSec))
                     {
-                        var waitTime = new TimeSpan(0, 0, ReconnectionIntervalMinimamSec) - elapsed;
+                        var waitTime = new TimeSpan(0, 0, ReconnectionIntervalMinimumSec) - elapsed;
                         await Task.Delay(waitTime);
                     }
                 }
@@ -59,7 +60,7 @@ namespace SitePluginCommon.AutoReconnector
         /// <summary>
         /// 前回接続試行時から最低限経過しているべき秒数
         /// </summary>
-        public int ReconnectionIntervalMinimamSec { get; set; } = 5;
+        public int ReconnectionIntervalMinimumSec { get; set; } = 5;
         public AutoReconnector(IConnector connector, MessageUntara message)
         {
             _connector = connector;

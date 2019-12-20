@@ -24,6 +24,7 @@ namespace NicoSitePlugin
             }
         }
         public string PostTime { get; set; }
+        public DateTime PostedDate { get; set; }
         public bool Is184
         {
             get

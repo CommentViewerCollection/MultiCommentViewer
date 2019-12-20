@@ -10,22 +10,24 @@ namespace PeriscopeSitePlugin
     /// 
     /// </summary>
     /// <remarks>接続毎にインスタンスを作る</remarks>
-    class Websocket : IWebsocket
+    public class WebSocket : IWebsocket
     {
         public event EventHandler Opened;
 
         public event EventHandler<string> Received;
-        WebSocket _ws;
+        WebSocket4Net.WebSocket _ws;
         TaskCompletionSource<object> _tcs;
-        public Task ReceiveAsync(string url)
+        private readonly string _url;
+
+        public Task ReceiveAsync()
         {
             _tcs = new TaskCompletionSource<object>();
             var cookies = new List<KeyValuePair<string, string>>();
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36";
-            _ws = new WebSocket(url, "", cookies, null, userAgent)
+            _ws = new WebSocket4Net.WebSocket(_url, "", cookies, null, userAgent)
             {
                 EnableAutoSendPing = true,
-                AutoSendPingInterval = 10*1000,
+                AutoSendPingInterval = 10 * 1000,
                 ReceiveBufferSize = 8192,
                 NoDelay = true
             };
@@ -56,21 +58,12 @@ namespace PeriscopeSitePlugin
         {
             Debug.WriteLine("send: " + s);
             await Task.Yield();
-            //_ws.Send(s + "\r\n");
             _ws.Send(s);
         }
 
-        private void _ws_MessageReceived(object sender, MessageReceivedEventArgs e)
+        private void _ws_MessageReceived(object sender, WebSocket4Net.MessageReceivedEventArgs e)
         {
             Received?.Invoke(this, e.Message);
-            //var arr = e.Message.Split(new[] { "\r\n" }, StringSplitOptions.None);
-            //foreach (var message in arr)
-            //{
-            //    if (string.IsNullOrEmpty(message))
-            //        continue;
-            //    var result = Tools.Parse(message);
-            //    Received?.Invoke(this, result);
-            //}
         }
 
         public void Disconnect()
@@ -78,9 +71,9 @@ namespace PeriscopeSitePlugin
             _ws?.Close();
             _ws = null;
         }
-        public Websocket()
+        public WebSocket(string url)
         {
-
+            _url = url;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System;
 
 namespace NicoSitePlugin
 {
@@ -30,6 +31,7 @@ namespace NicoSitePlugin
         bool Is184 { get; }
         string RoomName { get; }
         int? ChatNo { get; }
+        DateTime PostedDate { get; }
     }
     public interface INicoAd : INicoMessage
     {

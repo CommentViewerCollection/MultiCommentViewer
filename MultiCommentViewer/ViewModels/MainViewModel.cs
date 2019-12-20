@@ -212,7 +212,7 @@ namespace MultiCommentViewer
         }
         private IEnumerable<ISiteContext> GetSiteContexts()
         {
-            foreach(var siteVm in _siteVms)
+            foreach (var siteVm in _siteVms)
             {
                 yield return _sitePluginLoader.GetSiteContext(siteVm.Guid);
             }
@@ -403,9 +403,9 @@ namespace MultiCommentViewer
             {
                 return null;
             }
-            foreach(var siteViewModel in _siteVms)
+            foreach (var siteViewModel in _siteVms)
             {
-                if(siteViewModel.DisplayName == siteName)
+                if (siteViewModel.DisplayName == siteName)
                 {
                     return siteViewModel;
                 }
@@ -418,9 +418,9 @@ namespace MultiCommentViewer
             {
                 return null;
             }
-            foreach(var browserViewModel in _browserVms)
+            foreach (var browserViewModel in _browserVms)
             {
-                if(browserViewModel.DisplayName == browserName)
+                if (browserViewModel.DisplayName == browserName)
                 {
                     return browserViewModel;
                 }
@@ -453,12 +453,12 @@ namespace MultiCommentViewer
                 connection.MetadataReceived += Connection_MetadataReceived;
                 connection.SelectedSiteChanged += Connection_SelectedSiteChanged;
                 var site = GetSiteViewModelFromName(siteName);
-                if(site != null)
+                if (site != null)
                 {
                     connection.SelectedSite = site;
                 }
                 var browser = GetBrowserViewModelFromName(browserName);
-                if(browser != null)
+                if (browser != null)
                 {
                     connection.SelectedBrowser = browser;
                 }
@@ -525,7 +525,7 @@ namespace MultiCommentViewer
             var context = connection.GetCurrent();
             //SetDict(context);
 
-            if(SelectedConnection == null)
+            if (SelectedConnection == null)
             {
                 SelectedConnection = connection;
             }
@@ -600,7 +600,7 @@ namespace MultiCommentViewer
                 }
             }
         }
-#endregion //Methods
+        #endregion //Methods
         public event EventHandler<EventArgs> CloseRequested;
         public void RequestClose()
         {
@@ -626,11 +626,11 @@ namespace MultiCommentViewer
             //}
 
             IMcvCommentViewModel mcvCvm = null;
-            if(messageContext.Message is IInfoMessage infoMessage && _options.ShowingInfoLevel >= infoMessage.Type)
+            if (messageContext.Message is IInfoMessage infoMessage && _options.ShowingInfoLevel >= infoMessage.Type)
             {
                 mcvCvm = new InfoCommentViewModel(infoMessage, messageContext.Metadata, messageContext.Methods, connectionName, _options);
             }
-            else if(messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
+            else if (messageContext.Message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
             {
                 if (whowatchMessage is WhowatchSitePlugin.IWhowatchComment comment)
                 {
@@ -727,7 +727,7 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
-                else if(lineliveMessage is LineLiveSitePlugin.ILineLiveItem item)
+                else if (lineliveMessage is LineLiveSitePlugin.ILineLiveItem item)
                 {
                     mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
@@ -778,7 +778,7 @@ namespace MultiCommentViewer
                     mcvCvm = new TwicasCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
-            else if(messageContext.Message is PeriscopeSitePlugin.IPeriscopeMessage periscopeMessage)
+            else if (messageContext.Message is PeriscopeSitePlugin.IPeriscopeMessage periscopeMessage)
             {
                 if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeComment comment)
                 {
@@ -824,9 +824,23 @@ namespace MultiCommentViewer
                     mcvCvm = new ShowRoomCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
-            else if(messageContext.Message is TestSitePlugin.ITestMessage testMessage)
+            else if (messageContext.Message is MixerSitePlugin.IMixerMessage mixerMessage)
             {
-                if(testMessage is TestSitePlugin.ITestComment comment)
+                if (mixerMessage is MixerSitePlugin.IMixerComment comment)
+                {
+                    mcvCvm = new MixerCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
+            else if (messageContext.Message is MildomSitePlugin.IMildomMessage mildomMessage)
+            {
+                if (mildomMessage is MildomSitePlugin.IMildomComment comment)
+                {
+                    mcvCvm = new McvMildomCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
+            else if (messageContext.Message is TestSitePlugin.ITestMessage testMessage)
+            {
+                if (testMessage is TestSitePlugin.ITestComment comment)
                 {
                     mcvCvm = new TestCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
@@ -858,7 +872,7 @@ namespace MultiCommentViewer
                 _comments.Add(mcvCvm);
             }
         }
-#region EventHandler
+        #region EventHandler
         private async void Connection_MessageReceived(object sender, IMessageContext e)
         {
             Debug.Assert(e != null);
@@ -931,12 +945,12 @@ namespace MultiCommentViewer
                 }
             }
         }
-#endregion //EventHandler
+        #endregion //EventHandler
 
 
 
 
-#region Properties
+        #region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new ObservableCollection<MetadataViewModel>();
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         private readonly ObservableCollection<IMcvCommentViewModel> _comments = new ObservableCollection<IMcvCommentViewModel>();
@@ -1244,7 +1258,7 @@ namespace MultiCommentViewer
         }
         private string GetUrlFromSelectedComment()
         {
-            if(SelectedComment == null)
+            if (SelectedComment == null)
             {
                 return null;
             }
@@ -1276,7 +1290,7 @@ namespace MultiCommentViewer
         {
             get
             {
-                if(_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
+                if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
                 {
                     return 100;
                 }
@@ -1326,7 +1340,7 @@ namespace MultiCommentViewer
         public Brush CommentListBorderBrush => new SolidColorBrush(_options.CommentListBorderColor);
         public Brush CommentListHeaderBackground => new SolidColorBrush(_options.CommentListHeaderBackColor);
         public Brush CommentListHeaderForeground => new SolidColorBrush(_options.CommentListHeaderForeColor);
-        public Brush CommentListHeaderBorderBrush => new SolidColorBrush(_options.CommentListHeaderBorderColor);        
+        public Brush CommentListHeaderBorderBrush => new SolidColorBrush(_options.CommentListHeaderBorderColor);
         public Brush CommentListSeparatorBrush => new SolidColorBrush(_options.CommentListSeparatorColor);
         public Brush ConnectionListBackground => new SolidColorBrush(_options.CommentListBackColor);
         public Brush ConnectionListHeaderBackground => new SolidColorBrush(_options.CommentListHeaderBackColor);
@@ -1357,16 +1371,16 @@ namespace MultiCommentViewer
         public Brush ScrollBarButtonPressedBorderBrush => new SolidColorBrush(_options.ScrollBarButtonPressedBorderColor);
 
         private readonly Color _myColor = new Color { A = 0xFF, R = 45, G = 45, B = 48 };
-#endregion //Properties
+        #endregion //Properties
 
-        public MainViewModel():base(new DynamicOptionsTest())
+        public MainViewModel() : base(new DynamicOptionsTest())
         {
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
             {
                 _dispatcher = Dispatcher.CurrentDispatcher;
                 _siteVms = new List<SiteViewModel> { };// new SiteViewModel("DesignSite", Guid.NewGuid()) };
                 _browserVms = new List<BrowserViewModel>();// { new BrowserViewModel()}
-                AddNewConnection("test", "YouTubeLive","https://google.com", "Chrome", false, Colors.Blue, Colors.Red);
+                AddNewConnection("test", "YouTubeLive", "https://google.com", "Chrome", false, Colors.Blue, Colors.Red);
                 SetSystemInfo("test", InfoType.Notice);
             }
             else
@@ -1376,7 +1390,7 @@ namespace MultiCommentViewer
         }
         [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         public MainViewModel(IIo io, ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader)
-            :base(options)
+            : base(options)
         {
             _io = io;
             _dispatcher = Dispatcher.CurrentDispatcher;
@@ -1757,7 +1771,8 @@ namespace MultiCommentViewer
             try
             {
                 System.Diagnostics.Process.Start("https://ryu-s.github.io/app/multicommentviewer");
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
             }

@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace MildomSitePlugin
 {
-    internal interface IMildomMessageMetadata: IMessageMetadata
+    internal interface IMildomMessageMetadata : IMessageMetadata
     {
 
     }
@@ -150,7 +150,7 @@ namespace MildomSitePlugin
     {
         public override Color BackColor => _options.BroadcastInfoBackColor;
         public override Color ForeColor => _options.BroadcastInfoForeColor;
-        public JoinMessageMetadata(IMildomJoinRoom join, ICommentOptions options, IMildomSiteOptions siteOptions, IUser user, ICommentProvider cp)
+        public JoinMessageMetadata(IMildomJoinRoom _, ICommentOptions options, IMildomSiteOptions siteOptions, IUser user, ICommentProvider cp)
             : base(options, siteOptions)
         {
             User = user;
@@ -263,7 +263,7 @@ namespace MildomSitePlugin
             }
         }
         public CommentMessageMetadata(IMildomComment comment, ICommentOptions options, IMildomSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
-            :base (options, siteOptions)
+            : base(options, siteOptions)
         {
             User = user;
             CommentProvider = cp;

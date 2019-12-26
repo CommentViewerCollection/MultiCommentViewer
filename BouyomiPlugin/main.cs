@@ -1,4 +1,5 @@
 ﻿using LineLiveSitePlugin;
+using MildomSitePlugin;
 using MirrativSitePlugin;
 using MixerSitePlugin;
 using NicoSitePlugin;
@@ -556,6 +557,50 @@ namespace BouyomiPlugin
                         //    {
                         //        name = null;
                         //        comment = (MixerMessage as IMixerLeave).CommentItems.ToText();
+                        //    }
+                        //    break;
+                }
+            }
+            else if (message is IMildomMessage MildomMessage)
+            {
+                switch (MildomMessage.MildomMessageType)
+                {
+                    case MildomMessageType.Connected:
+                        if (_options.IsMildomConnect)
+                        {
+                            name = null;
+                            comment = (MildomMessage as IMildomConnected).CommentItems.ToText();
+                        }
+                        break;
+                    case MildomMessageType.Disconnected:
+                        if (_options.IsMildomDisconnect)
+                        {
+                            name = null;
+                            comment = (MildomMessage as IMildomDisconnected).CommentItems.ToText();
+                        }
+                        break;
+                    case MildomMessageType.Comment:
+                        if (_options.IsMildomComment)
+                        {
+                            if (_options.IsMildomCommentNickname)
+                            {
+                                name = (MildomMessage as IMildomComment).NameItems.ToText();
+                            }
+                            comment = (MildomMessage as IMildomComment).CommentItems.ToText();
+                        }
+                        break;
+                    case MildomMessageType.JoinRoom:
+                        if (_options.IsMildomJoin)
+                        {
+                            name = null;
+                            comment = (MildomMessage as IMildomJoinRoom).CommentItems.ToText();
+                        }
+                        break;
+                        //case MildomMessageType.Leave:
+                        //    if (_options.IsMildomLeave)
+                        //    {
+                        //        name = null;
+                        //        comment = (MildomMessage as IMildomLeave).CommentItems.ToText();
                         //    }
                         //    break;
                 }

@@ -75,6 +75,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition />
                         </Grid.RowDefinitions>
                         <Border Grid.Row="0" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
@@ -429,9 +430,42 @@
                         </Border>
 
                         <Border Grid.Row="10" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
-                            <TextBlock Text="その他" Margin="5" />
+                            <TextBlock Text="Mildom" Margin="5" />
                         </Border>
                         <Border Grid.Row="10" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsMildomConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsMildomDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckMildomComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMildomComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMildomComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMildomCommentNickname}" Content="コテハン" />
+                                </Grid>
+                                <CheckBox Grid.Row="3" IsChecked="{Binding IsMildomJoin}" Content="入室" />
+                                <CheckBox Grid.Row="4" IsChecked="{Binding IsMildomLeave}" Content="退室" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="11" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <TextBlock Text="その他" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="11" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
                             <Grid Margin="5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />

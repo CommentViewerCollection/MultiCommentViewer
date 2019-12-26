@@ -837,6 +837,10 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new McvMildomCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
+                else if (mildomMessage is MildomSitePlugin.IMildomJoinRoom join)
+                {
+                    mcvCvm = new McvMildomCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
             }
             else if (messageContext.Message is TestSitePlugin.ITestMessage testMessage)
             {

@@ -85,6 +85,10 @@
       <Project>{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}</Project>
       <Name>LineLiveIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MildomIF\MildomIF.csproj">
+      <Project>{FD868431-6667-4394-89DF-44764AAFCAE5}</Project>
+      <Name>MildomIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
       <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
       <Name>MirrativIF</Name>

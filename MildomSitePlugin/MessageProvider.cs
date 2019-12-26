@@ -193,7 +193,7 @@ namespace MildomSitePlugin
                 var userName = loggedin.Loginname;
                 var userImg = "";
                 var accessToken = loggedin.AccessToken;
-                var guestId = "";
+                var guestId = loggedin.Gid;
                 var nonopara = "";
                 var roomId = RoomId;
                 //{"userId":10104058,"level":1,"medals":[],"userName":"kv510k","userImg":"http://pbs.twimg.com/profile_images/1014534803364827139/vuSCBJ15.jpg","accessToken":"e1b8213d-93cd-4b10-ae55-5384794a2ec5","guestId":"pc-gp-cb7af220-7301-4072-88b8-314cac78f26c","nonopara":"fr=web`sfr=pc`devi=Windows 10 64-bit`la=ja`gid=pc-gp-cb7af220-7301-4072-88b8-314cac78f26c`na=Japan`loc=Japan|Kanagawa`clu=aws_japan`wh=1920*1080`rtm=2019-11-28T06:27:27.664Z`ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36`uid=10104058`loginname=kv510k`level=1`aid=10001683`live_type=2`live_subtype=2`game_key=Overwatch`game_type=pc`host_official_type=official_game`isHomePage=false","roomId":10001683,"cmd":"enterRoom","reConnect":0,"nobleLevel":0,"avatarDecortaion":0,"enterroomEffect":0,"nobleClose":0,"nobleSeatClose":0,"reqId":1}

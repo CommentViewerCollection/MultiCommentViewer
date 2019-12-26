@@ -21,12 +21,15 @@ namespace MildomSitePlugin
         public string UserId { get; }
         public string Loginname { get; }
         public Guid AccessToken { get; }
-        public LoggedinUserInfo(Low.UserInfo.RootObject low)
+        public string Gid { get; }
+
+        public LoggedinUserInfo(Low.UserInfo.RootObject low, string gid)
         {
             MyId = low.MyId.ToString();
             UserId = low.UserId.ToString();
             Loginname = low.Loginname;
             AccessToken = low.AccessToken;
+            Gid = gid;
         }
     }
     public class AnonymousUserInfo : IMyUserInfo

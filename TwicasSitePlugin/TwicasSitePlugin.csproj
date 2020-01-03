@@ -44,6 +44,7 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
@@ -61,10 +62,13 @@
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="CommentPostPanelViewModel.cs" />
+    <Compile Include="DynamicJson.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="ICommentData.cs" />
     <Compile Include="IDataServer.cs" />
+    <Compile Include="IMessageProvider.cs" />
     <Compile Include="LowObjects.cs" />
+    <Compile Include="Low\Comment\Class1.cs" />
     <Compile Include="MessageProvider.cs" />
     <Compile Include="Message\ItemType.cs" />
     <Compile Include="Message\MessageMetadata.cs" />
@@ -76,10 +80,13 @@
     <Compile Include="Message\TwicasMessageContext.cs" />
     <Compile Include="Message\TwicasMessageMethods.cs" />
     <Compile Include="Metadata.cs" />
+    <Compile Include="MetadataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StreamChecker2.cs" />
     <Compile Include="Tools.cs" />
-    <Compile Include="TwicasCommentProvider.cs" />
+    <Compile Include="CurrentUserInfo.cs" />
+    <Compile Include="TwicasAutoReconnector.cs" />
+    <Compile Include="TwicasCommentProvider2.cs" />
     <Compile Include="TwicasCommentViewModel.cs" />
     <Compile Include="TwicasOptionsPanel.xaml.cs">
       <DependentUpon>TwicasOptionsPanel.xaml</DependentUpon>
@@ -88,6 +95,7 @@
     <Compile Include="TwicasSiteContext.cs" />
     <Compile Include="TwicasSiteOptions.cs" />
     <Compile Include="TwicasSiteOptionsViewModel.cs" />
+    <Compile Include="WebsocketMessageProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">

@@ -49,7 +49,7 @@ namespace TwicasSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new TwicasCommentProvider(new TwicasServer(), _logger, _options, _siteOptions, _userStoreManager)
+            return new TwicasCommentProvider2(new TwicasServer(), _logger, _options, _siteOptions, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
@@ -109,7 +109,7 @@ namespace TwicasSitePlugin
         }
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            var youtubeCommentProvider = commentProvider as TwicasCommentProvider;
+            var youtubeCommentProvider = commentProvider as TwicasCommentProvider2;
             Debug.Assert(youtubeCommentProvider != null);
             if (youtubeCommentProvider == null)
                 return null;

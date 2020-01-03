@@ -75,7 +75,7 @@ namespace TwicasSitePlugin
             MessageReceived?.Invoke(this, context);
         }
         private CookieContainer _cc;
-        MessageProvider _messageProvider;
+        IMessageProvider _messageProvider;
         string _broadcasterId;
         long _liveId = -1;
         FirstCommentDetector _first = new FirstCommentDetector();

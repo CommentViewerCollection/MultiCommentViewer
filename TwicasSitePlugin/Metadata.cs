@@ -15,5 +15,6 @@ namespace TwicasSitePlugin
         public string TotalViewers { get; set; }
 
         public bool? IsLive { get; set; }
+        public long? LiveId { get; set; }
     }
 }

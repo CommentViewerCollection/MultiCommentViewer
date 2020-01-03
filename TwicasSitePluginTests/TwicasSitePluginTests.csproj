@@ -62,7 +62,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InternalItemTest.cs" />
     <Compile Include="MessageMetadataTests.cs" />
+    <Compile Include="MessageParserTests.cs" />
     <Compile Include="StreamCheckerParseTests.cs" />
     <Compile Include="ToolsTests.cs" />
     <Compile Include="TwicasCommentViewModelTests.cs" />

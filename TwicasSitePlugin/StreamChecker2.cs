@@ -54,6 +54,8 @@ namespace TwicasSitePlugin.LowObject
             r.StartedAt = offset;
 
             r.Items = ParseItemData(arr[16]);
+            var nextPollingDuration = int.Parse(arr[4]);
+            //arr[11]はSNSのID？Twitterの場合は数字の羅列、Twicasアカウントの場合はUserIdと同値(c:～)
             return r;
         }
         private static List<Item> ParseItemData(string data)

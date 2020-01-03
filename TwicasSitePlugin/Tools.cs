@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Net;
 using System.Reflection;
 using System.Collections;
+using TwicasSitePlugin.LowObject;
 
 namespace TwicasSitePlugin
 {
@@ -93,34 +94,6 @@ namespace TwicasSitePlugin
         public static bool IsKiitos(Item item)
         {
             return item.ItemImage.Contains("item_funding_stamp");
-        }
-        public static ITwicasKiitos CreateKiitosMessage(Item item)
-        {
-            Debug.Assert(Tools.IsKiitos(item));
-            var itemName = "キートス";
-            var message = $"[{item.t13}] {item.Message}{Environment.NewLine}";
-            var itemImage = new MessageImage
-            {
-                Url = item.ItemImage,
-                Alt = itemName,
-                Height = 40,
-                Width = 40,
-            };
-            return new TwicasKiitos(item.Raw)
-            {
-                UserIcon = new MessageImage
-                {
-                    Url = item.SenderImage,
-                    Alt = null,
-                    Height = 40,
-                    Width = 40,
-                },
-                ItemName = itemName,
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message), itemImage },
-                UserName = item.t12,
-                UserId = item.SenderName,
-                ItemId = item.Id,
-            };
         }
         public static string DecodeBase64(string encoded)
         {
@@ -213,86 +186,6 @@ namespace TwicasSitePlugin
             }
             return low;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="low"></param>
-        /// <exception cref="ParseException"></exception>
-        /// <returns></returns>
-        public static ICommentData Parse(LowObject.Comment low)
-        {
-            var (name, preThumbnailUrl, message) = SplitHtml(low.html);
-            string thumbnailUrl;
-            if (preThumbnailUrl.StartsWith("https://"))
-            {
-                thumbnailUrl = preThumbnailUrl;
-            }
-            else if (preThumbnailUrl.StartsWith("//"))
-            {
-                thumbnailUrl = "http:" + preThumbnailUrl;
-            }
-            else
-            {
-                throw new ParseException(low.html);
-            }
-            var data = new CommentData
-            {
-                Id = low.id,
-                UserId = low.uid,
-                Name = ReplaceHtmlEntities(name),
-                Message = ParseMessage(message),
-                ThumbnailUrl = thumbnailUrl,
-                ThumbnailHeight = 50,
-                ThumbnailWidth = 50,
-                Date = DateTime.Parse(low.date),//"Sat, 28 Apr 2018 02:21:28 +0900"
-            };
-            return data;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="html"></param>
-        /// <exception cref="SpecChangedException"></exception>
-        /// <returns></returns>
-        public static (string name, string thumbnailUrl, string message) SplitHtml(string html)
-        {
-            string thumbnailUrl;
-            string name;
-            string message;
-
-            var match = Regex.Match(html, "<img src=\"(?<thumbnail>[^\"]+)\" width=\"\\d+\" height=\"\\d+\"");
-            if (match.Success)
-            {
-                thumbnailUrl = match.Groups["thumbnail"].Value;
-            }
-            else
-            {
-                throw new SpecChangedException("仕様変更があったかも", html);
-            }
-
-            //名前に"<"とか">"が含まれることがある。
-            //2018/05/11 名前に改行が含まれている場合があったためRegexOptions.Singlelineを追加
-            var match1 = Regex.Match(html, "<span class=\"user\"><a .+?>(?<name>.*?)</a>", RegexOptions.Singleline);
-            if (match1.Success)
-            {
-                name = match1.Groups["name"].Value;
-            }
-            else
-            {
-                throw new SpecChangedException("仕様変更があったかも", html);
-            }
-            var match2 = Regex.Match(html, "<span class=\"comment-text\">(?<message>.+?)</span>");
-            if (match2.Success)
-            {
-                message = match2.Groups["message"].Value;
-            }
-            else
-            {
-                throw new SpecChangedException("仕様変更があったかも", html);
-            }
-            return (name, thumbnailUrl, message);
-        }
         public static string ReplaceLink(string str)
         {
             return Regex.Replace(str, "<a href=\"(?<url>[^\"]+)\" .+?>.+?</a>", m =>
@@ -304,6 +197,7 @@ namespace TwicasSitePlugin
         {
             var sb = new StringBuilder(html);
             sb.Replace("&#039;", "'");
+            sb.Replace("&apos;", "'");
             sb.Replace("&quot;", "\"");
             sb.Replace("&nbsp;", " ");
             sb.Replace("<wbr>", "");
@@ -396,6 +290,106 @@ namespace TwicasSitePlugin
         public static bool IsValidUrl(string input)
         {
             return Regex.IsMatch(input, "twitcasting\\.tv/([a-zA-Z0-9:_]+)");
+        }
+
+        internal static InternalComment Parse(Comment low)
+        {
+            var (name, preThumbnailUrl, message) = SplitHtml(low.html);
+            string thumbnailUrl;
+            if (preThumbnailUrl.StartsWith("https://"))
+            {
+                thumbnailUrl = preThumbnailUrl;
+            }
+            else if (preThumbnailUrl.StartsWith("//"))
+            {
+                thumbnailUrl = "https:" + preThumbnailUrl;
+            }
+            else
+            {
+                throw new ParseException(low.html);
+            }
+
+            //var inter = new InternalComment
+            //{
+            //    Id = comment.Id,
+            //    Message = comment.Message,
+            //    RawMessage = comment.RawMessage,
+            //    HasMention = comment.HasMention,
+            //    CreatedAt = UnixTime2DateTime(comment.CreatedAt / 1000),
+            //    SpecialImage = comment.SpecialImage,
+            //    UserId = comment.Author.Id,
+            //    UserName = comment.Author.ScreenName,//2020/01/04 Twicasのバグだろうか。NameとScreenNameが逆な気がする
+            //    ScreenName = comment.Author.Name,
+            //    ProfileImageUrl = profileImageUrl,
+            //    Grade = comment.Author.Grade,
+            //    Raw = raw,
+            //};
+            //var data = new CommentData
+            //{
+            //    Id = low.id,
+            //    UserId = low.uid,
+            //    Name = ReplaceHtmlEntities(name),
+            //    Message = ParseMessage(message),
+            //    ThumbnailUrl = thumbnailUrl,
+            //    ThumbnailHeight = 50,
+            //    ThumbnailWidth = 50,
+            //    Date = DateTime.Parse(low.date),//"Sat, 28 Apr 2018 02:21:28 +0900"
+            //};
+            //return data;
+            return new InternalComment
+            {
+                Message = message,
+                ScreenName = name,
+                UserName = low.screen,
+                UserId = low.uid,
+                CreatedAt = DateTime.Parse(low.date),
+                Id = low.id,
+                ProfileImageUrl = thumbnailUrl,
+            };
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="html"></param>
+        /// <exception cref="SpecChangedException"></exception>
+        /// <returns></returns>
+        public static (string name, string thumbnailUrl, string message) SplitHtml(string html)
+        {
+            string thumbnailUrl;
+            string name;
+            string message;
+
+            var match = Regex.Match(html, "<img src=\"(?<thumbnail>[^\"]+)\" width=\"\\d+\" height=\"\\d+\"");
+            if (match.Success)
+            {
+                thumbnailUrl = match.Groups["thumbnail"].Value;
+            }
+            else
+            {
+                throw new SpecChangedException("仕様変更があったかも", html);
+            }
+
+            //名前に"<"とか">"が含まれることがある。
+            //2018/05/11 名前に改行が含まれている場合があったためRegexOptions.Singlelineを追加
+            var match1 = Regex.Match(html, "<span class=\"user\"><a .+?>(?<name>.*?)</a>", RegexOptions.Singleline);
+            if (match1.Success)
+            {
+                name = match1.Groups["name"].Value;
+            }
+            else
+            {
+                throw new SpecChangedException("仕様変更があったかも", html);
+            }
+            var match2 = Regex.Match(html, "<span class=\"comment-text\">(?<message>.+?)</span>");
+            if (match2.Success)
+            {
+                message = match2.Groups["message"].Value;
+            }
+            else
+            {
+                throw new SpecChangedException("仕様変更があったかも", html);
+            }
+            return (name, thumbnailUrl, message);
         }
     }
 }

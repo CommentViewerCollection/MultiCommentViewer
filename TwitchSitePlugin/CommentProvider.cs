@@ -332,17 +332,15 @@ namespace TwitchSitePlugin
             {
                 SitePluginCommon.Utils.SetNickname(commentData.Message, user, _siteOptions.NeedAutoSubNicknameStr);
             }
-            if (displayName != commentData.Username)
-            {
-                displayName += " (" + commentData.Username + ")";
-            }
             var message = new TwitchComment(result.Raw)
             {
                 CommentItems = Tools.GetMessageItems(result),
                 Id = commentData.Id,
-                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(displayName) },
+                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Username) },
                 PostTime = commentData.SentAt.ToString("HH:mm:ss"),
                 UserId = commentData.UserId,
+                IsDisplayNameSame = commentData.Username == commentData.DisplayName,
+                DisplayName = commentData.DisplayName,
             };
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
             {

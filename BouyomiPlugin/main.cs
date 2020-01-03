@@ -275,7 +275,7 @@ namespace BouyomiPlugin
                         {
                             if (_options.IsTwitchCommentNickname)
                             {
-                                name = (twitchMessage as ITwitchComment).NameItems.ToText();
+                                name = (twitchMessage as ITwitchComment).DisplayName;
                             }
                             comment = (twitchMessage as ITwitchComment).CommentItems.ToText();
                         }

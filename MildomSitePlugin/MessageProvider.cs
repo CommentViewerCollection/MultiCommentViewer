@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Codeplex.Data;
 using Common;
+using Newtonsoft.Json.Linq;
 using SitePlugin;
 using SitePluginCommon.AutoReconnection;
 
@@ -42,6 +43,16 @@ namespace MildomSitePlugin
             Raw = raw;
         }
         public string Raw { get; }
+    }
+    internal class OnAddMessage : IInternalMessage
+    {
+        public string Message { get; set; }
+        public int Level { get; set; }
+        public long UserId { get; set; }
+        public string UserImg { get; set; }
+        public string UserName { get; set; }
+        public DateTime PostedAt { get; internal set; }
+        public string Raw { get; set; }
     }
     class MessageParser
     {
@@ -104,7 +115,18 @@ namespace MildomSitePlugin
                     break;
                 case "onAdd":
                     //{"area": 1000, "avatarDecortaion": 0, "cmd": "onAdd", "enterroomEffect": 0, "level": 18, "loveCountSum": 0, "medals": null, "nobleLevel": 0, "reqId": 0, "roomId": 10038336, "rst": 0, "type": 3, "userCount": 239, "userId": 10088217, "userImg": "https://lh3.googleusercontent.com/a-/AAuE7mC4Jiq49Foq6-k-TmPrkeim6cc1Rq197AC7SSM7=s120", "userName": "ぼつすけ"}
-                    internalMessage = new UnImplementedMessage();
+                    var username = d.userName;
+                    var message = $"{username}さんが入室しました";
+                    internalMessage = new OnAddMessage
+                    {
+                        Message = message,
+                        Level = (int)d.level,
+                        UserId = (long)d.userId,
+                        UserName = username,
+                        UserImg = d.userImg,
+                        PostedAt = GetCurrentDateTime(),
+                        Raw = raw,
+                    };
                     break;
                 case "onBroadcast":
                     //{"area": 2000, "clickColor": "#F8AC07", "clickLink": "https://event.mildom.com/activity/view?series_id=11&week=2", "clickText": "こちらをクリック！", "cmd": "onBroadcast", "msg": "配信ランキングに挑戦！${click.text}", "msgColor": "#3C8BF9", "reqId": 0, "roomId": 10038336, "rst": 0, "type": 3, "userName": "guest809480"}
@@ -193,7 +215,7 @@ namespace MildomSitePlugin
                 var userName = loggedin.Loginname;
                 var userImg = "";
                 var accessToken = loggedin.AccessToken;
-                var guestId = "";
+                var guestId = loggedin.Gid;
                 var nonopara = "";
                 var roomId = RoomId;
                 //{"userId":10104058,"level":1,"medals":[],"userName":"kv510k","userImg":"http://pbs.twimg.com/profile_images/1014534803364827139/vuSCBJ15.jpg","accessToken":"e1b8213d-93cd-4b10-ae55-5384794a2ec5","guestId":"pc-gp-cb7af220-7301-4072-88b8-314cac78f26c","nonopara":"fr=web`sfr=pc`devi=Windows 10 64-bit`la=ja`gid=pc-gp-cb7af220-7301-4072-88b8-314cac78f26c`na=Japan`loc=Japan|Kanagawa`clu=aws_japan`wh=1920*1080`rtm=2019-11-28T06:27:27.664Z`ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36`uid=10104058`loginname=kv510k`level=1`aid=10001683`live_type=2`live_subtype=2`game_key=Overwatch`game_type=pc`host_official_type=official_game`isHomePage=false","roomId":10001683,"cmd":"enterRoom","reConnect":0,"nobleLevel":0,"avatarDecortaion":0,"enterroomEffect":0,"nobleClose":0,"nobleSeatClose":0,"reqId":1}

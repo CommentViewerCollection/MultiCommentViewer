@@ -1,4 +1,6 @@
 ﻿using SitePlugin;
+using System;
+using System.Collections.Generic;
 
 namespace MildomSitePlugin
 {
@@ -27,13 +29,10 @@ namespace MildomSitePlugin
     }
     public interface IMildomJoinRoom : IMildomMessage
     {
-        //string Comment { get; }
-        string Id { get; }
-        //string UserName { get; }
+        //string Id { get; }
         string UserId { get; }
         string PostTime { get; }
         IMessageImage UserIcon { get; set; }
-        int OnlineViewerNum { get; }
     }
     public interface IMildomItem : IMildomMessage
     {

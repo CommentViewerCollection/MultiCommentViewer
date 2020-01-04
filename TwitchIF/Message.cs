@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System.Collections.Generic;
 
 namespace TwitchSitePlugin
 {
@@ -24,6 +25,11 @@ namespace TwitchSitePlugin
     }
     public interface ITwitchComment : ITwitchMessage, IMessageComment
     {
+        /// <summary>
+        /// NameItemsとDisplayNameが同値か
+        /// </summary>
+        bool IsDisplayNameSame { get; }
+        string DisplayName { get; }
     }
     //public interface ITwitchItem : ITwitchMessage
     //{

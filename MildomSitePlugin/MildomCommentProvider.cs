@@ -21,12 +21,15 @@ namespace MildomSitePlugin
         public string UserId { get; }
         public string Loginname { get; }
         public Guid AccessToken { get; }
-        public LoggedinUserInfo(Low.UserInfo.RootObject low)
+        public string Gid { get; }
+
+        public LoggedinUserInfo(Low.UserInfo.RootObject low, string gid)
         {
             MyId = low.MyId.ToString();
             UserId = low.UserId.ToString();
             Loginname = low.Loginname;
             AccessToken = low.AccessToken;
+            Gid = gid;
         }
     }
     public class AnonymousUserInfo : IMyUserInfo
@@ -181,18 +184,19 @@ namespace MildomSitePlugin
             //    }
             //    return new MildomMessageContext(comment, metadata, methods);
             //}
-            //else if (message is IMildomJoinRoom join && _siteOptions.IsShowJoinMessage)
-            //{
-            //    var userId = join.UserId;
-            //    var user = GetUser(userId);
-            //    var metadata = new JoinMessageMetadata(join, _options, _siteOptions, user, this)
-            //    {
-            //        IsInitialComment = false,
-            //        SiteContextGuid = SiteContextGuid,
-            //    };
-            //    var methods = new MildomMessageMethods();
-            //    return new MildomMessageContext(join, metadata, methods);
-            //}
+            else if (message is OnAddMessage add && _siteOptions.IsShowJoinMessage)
+            {
+                var userId = add.UserId.ToString();
+                var user = GetUser(userId);
+                var join = new MildomJoinRoom(add);
+                var metadata = new JoinMessageMetadata(join, _options, _siteOptions, user, this)
+                {
+                    IsInitialComment = false,
+                    SiteContextGuid = SiteContextGuid,
+                };
+                var methods = new MildomMessageMethods();
+                return new MildomMessageContext(join, metadata, methods);
+            }
             ////else if (message is IMildomItem item)
             ////{
             ////    var userId = item.UserId;

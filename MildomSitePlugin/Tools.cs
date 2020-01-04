@@ -18,7 +18,16 @@ namespace MildomSitePlugin
                 var val = cookie.Value;
                 var decoded = System.Web.HttpUtility.UrlDecode(val);
                 var userInfoLow = Tools.Deserialize<Low.UserInfo.RootObject>(decoded);
-                return new LoggedinUserInfo(userInfoLow);
+                string gid;
+                if (cookies.Exists(c => c.Name == "gid"))
+                {
+                    gid = cookies.Where(item => item.Name == "gid").First().Value;
+                }
+                else
+                {
+                    gid = "";
+                }
+                return new LoggedinUserInfo(userInfoLow, gid);
             }
             else if (cookies.Exists(item => item.Name == "gid"))
             {

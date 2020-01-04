@@ -104,7 +104,7 @@ namespace NicoSitePlugin
             else if (ContainsCommunityId(input))
             {
                 var communityId = ExtractId("co", input);
-                liveId = await API.GetCurrentCommunityLiveId(_dataSource, communityId,cc);
+                liveId = await API.GetCurrentCommunityLiveId(_dataSource, communityId, cc);
             }
             else if (ContainsChannelId(input))
             {
@@ -183,6 +183,7 @@ namespace NicoSitePlugin
                     {
                         SendSystemInfo($"{ex.Message}", InfoType.Notice);
                     }
+                    tasks.Remove(piTask);
                     try
                     {
                         await chatTask;
@@ -191,6 +192,7 @@ namespace NicoSitePlugin
                     {
                         SendSystemInfo($"{ex.Message}", InfoType.Notice);
                     }
+                    tasks.Remove(chatTask);
                     break;
                 }
             }
@@ -231,7 +233,7 @@ namespace NicoSitePlugin
         private void ChatProvider_TicketReceived(object sender, TicketReceivedEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine($"{e.RoomInfo.Name}, {e.Ticket}");
-            if(e.RoomInfo.ThreadId == _currentRoomThreadId)
+            if (e.RoomInfo.ThreadId == _currentRoomThreadId)
             {
                 _ticket = e.Ticket;
             }
@@ -240,8 +242,8 @@ namespace NicoSitePlugin
         private async void ChatProvider_InitialCommentsReceived(object sender, InitialChatsReceivedEventArgs e)
         {
             try
-            {                
-                foreach(var chat in e.Chat)
+            {
+                foreach (var chat in e.Chat)
                 {
                     var messageContext = await CreateMessageContextAsync(chat, e.RoomInfo.Name, true);
                     if (messageContext == null) continue;
@@ -278,8 +280,8 @@ namespace NicoSitePlugin
             }
         }
 
-        public CommunityCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger,ICommentProvider commentProvider)
-            :base(options, siteOptions, userStoreManager, dataSource,logger)
+        public CommunityCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
+            : base(options, siteOptions, userStoreManager, dataSource, logger)
         {
         }
         private IUser GetUser(string userId)
@@ -301,7 +303,7 @@ namespace NicoSitePlugin
             var premium = "1";
             var locale = "ja-jp";
             var ticket = _ticket;
-            
+
             var encodedText = System.Web.HttpUtility.HtmlEncode(comment);
             var xml = $"<chat thread=\"{threadId}\" ticket=\"{ticket}\" vpos=\"{vpos}\" postkey=\"{postKey}\" mail=\"{mail}\" user_id=\"{user_id}\" premium=\"{premium}\" locale=\"{locale}\">{encodedText}</chat>\0";
 

@@ -462,9 +462,9 @@ powershell.exe -ExecutionPolicy Unrestricted -File "$(ProjectDir)\updateFileList
 
 ::zip化
 if $(ConfigurationName) == Release (
-  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber).zip' -Force
+  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber)_stable.zip' -Force
 ) else if $(ConfigurationName) == Beta (
-  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_Beta_v@(VersionNumber).zip' -Force
+  powershell compress-archive  -Path  '$(TargetDir)*' -DestinationPath '$(ProjectDir)bin\$(TargetName)_v@(VersionNumber)_beta.zip' -Force
 )
 </PostBuildEvent>
   </PropertyGroup>

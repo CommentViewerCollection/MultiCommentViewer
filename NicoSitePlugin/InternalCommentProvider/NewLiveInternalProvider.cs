@@ -46,7 +46,7 @@ namespace NicoSitePlugin
                 return;
             }
             var url = _watchDataProps.WebSocketUrl;
-            var metaTask= _metaProvider.ReceiveAsync(url, _watchDataProps.BroadcastId);
+            var metaTask = _metaProvider.ReceiveAsync(url, _watchDataProps.BroadcastId);
 
             await _tcs.Task;
             var messageTask = _messageProvider.ReceiveAsync(_messageUrl, _threadId);
@@ -71,6 +71,8 @@ namespace NicoSitePlugin
                 }
                 else
                 {
+                    _metaProvider.Disconnect();
+                    _messageProvider.Disconnect();
                     try
                     {
                         await metaTask;
@@ -113,7 +115,7 @@ namespace NicoSitePlugin
         MessageProvider _messageProvider;
         public bool IsLoggedIn { get; set; }
         public NewLiveInternalProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, ILogger logger, IDataSource server)
-            : base(options,siteOptions,userStoreManager, server, logger)
+            : base(options, siteOptions, userStoreManager, server, logger)
         {
             _server = server;
             _metaProvider = new MetaProvider();
@@ -151,7 +153,7 @@ namespace NicoSitePlugin
                         //currentRoom.MessageServerUri
                         _messageUrl = currentRoom.MessageServerUri;
                         _threadId = currentRoom.ThreadId;
-                        _roomName=currentRoom.RoomName;
+                        _roomName = currentRoom.RoomName;
                         _tcs.SetResult(null);
                     }
                     break;

@@ -16,6 +16,10 @@ namespace NicoSitePlugin.Websocket
             var origin = "https://live2.nicovideo.jp";
             await _wc.ReceiveAsync(url, new List<KeyValuePair<string, string>>(), userAgent, origin);
         }
+        public void Disconnect()
+        {
+            _wc.Disconnect();
+        }
         public MetaProvider()
         {
             _wc = new Websocket();
@@ -52,7 +56,7 @@ namespace NicoSitePlugin.Websocket
                 //_logger.
                 return;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 //_logger.
                 return;

@@ -51,6 +51,7 @@ namespace NicoSitePlugin.Websocket
                         break;
                     default:
                         //{"type":"watch","body":{"currentStream":{"uri":"https://pa1212365f5.dmc.nico/hlslive/ht2_nicolive/nicolive-production-pg14650921976390_e3839d5914a76beceda85885e6733dd52055d5429d597d174ef71ec5207f0423/master.m3u8?ht2_nicolive=2297426.8qhddq_psdgya_1q1h8zfle71tz","name":null,"quality":"abr","qualityTypes":["abr","super_high","high","normal","low","super_low"],"mediaServerType":"dmc","mediaServerAuth":null,"streamingProtocol":"hls"},"command":"currentstream"}}
+                        //{"type":"watch","body":{"command":"watchinginterval","params":["30"]}}
                         throw new ParseException(s);
                 }
             }

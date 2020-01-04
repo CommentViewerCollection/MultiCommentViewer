@@ -97,6 +97,14 @@ namespace BouyomiPlugin
         public bool IsMixerJoin { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMixerLeave { get { return GetValue(); } set { SetValue(value); } }
 
+        //Mildom
+        public bool IsMildomConnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomDisconnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomComment { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomJoin { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomLeave { get { return GetValue(); } set { SetValue(value); } }
+
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -187,6 +195,15 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsMixerCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMixerJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMixerLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            //Mildom
+            Dict.Add(nameof(IsMildomConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
         }
     }
 }

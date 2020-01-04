@@ -110,8 +110,20 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus, options)
         {
             _message = comment;
+            if (comment.IsDisplayNameSame)
+            {
+                _nameItems = comment.NameItems;
+            }
+            else
+            {
+                var nameItems = new List<IMessagePart>();
+                nameItems.Add(Common.MessagePartFactory.CreateMessageText(comment.DisplayName));
+                nameItems.Add(Common.MessagePartFactory.CreateMessageText(" ("));
+                nameItems.AddRange(comment.NameItems);
+                nameItems.Add(Common.MessagePartFactory.CreateMessageText(")"));
+                _nameItems = nameItems;
+            }
 
-            _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();

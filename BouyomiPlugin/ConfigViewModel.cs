@@ -613,6 +613,57 @@ namespace BouyomiPlugin
         }
         #endregion //Mixer
 
+        #region Mildom
+        /// <summary>
+        /// Mildomの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsMildomConnect
+        {
+            get => _options.IsMildomConnect;
+            set => _options.IsMildomConnect = value;
+        }
+        /// <summary>
+        /// Mildomの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsMildomDisconnect
+        {
+            get => _options.IsMildomDisconnect;
+            set => _options.IsMildomDisconnect = value;
+        }
+        /// <summary>
+        /// Mildomのコメントを読み上げるか
+        /// </summary>
+        public bool IsMildomComment
+        {
+            get => _options.IsMildomComment;
+            set => _options.IsMildomComment = value;
+        }
+        /// <summary>
+        /// Mildomのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsMildomCommentNickname
+        {
+            get => _options.IsMildomCommentNickname;
+            set => _options.IsMildomCommentNickname = value;
+        }
+        /// <summary>
+        /// Mildomの入室メッセージを読み上げるか
+        /// </summary>
+        public bool IsMildomJoin
+        {
+            get => _options.IsMildomJoin;
+            set => _options.IsMildomJoin = value;
+        }
+        /// <summary>
+        /// Mildomのアイテムを読み上げるか
+        /// </summary>
+        public bool IsMildomLeave
+        {
+            get => _options.IsMildomLeave;
+            set => _options.IsMildomLeave = value;
+        }
+        #endregion //Mildom
+
         public ICommand ShowFilePickerCommand { get; }
         private void ShowFilePicker()
         {

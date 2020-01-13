@@ -121,38 +121,6 @@ namespace BouyomiPlugin
                 _bouyomiChanProcess.Exited += BouyomiChanProcess_Exited;
             }
         }
-        public void OnCommentReceived(ICommentData data)
-        {
-            if (!_options.IsEnabled || data.IsNgUser || data.IsFirstComment || (data.Is184 && !_options.Want184Read))
-                return;
-            try
-            {
-                //棒読みちゃんが事前に起動されていたらそれを使いたい。
-                //起動していなかったら起動させて、準備ができ次第それ以降のコメントを読んで貰う
-
-                //とりあえず何も確認せずにコメントを送信する。起動していなかったら例外が起きる。
-                if (_options.IsReadHandleName && !string.IsNullOrEmpty(data.Nickname))
-                {
-                    var nick = data.Nickname;
-
-                    if (_options.IsAppendNickTitle)
-                        nick += _options.NickTitle;
-                    TalkText(nick);
-                }
-                if (_options.IsReadComment)
-                    TalkText(data.Comment);
-            }
-            catch (System.Runtime.Remoting.RemotingException)
-            {
-                //多分棒読みちゃんが起動していない。
-                StartBouyomiChan();
-                //起動するまでの間にコメントが投稿されたらここに来てしまうが諦める。
-            }
-            catch (Exception)
-            {
-
-            }
-        }
 
         private void BouyomiChanProcess_Exited(object sender, EventArgs e)
         {

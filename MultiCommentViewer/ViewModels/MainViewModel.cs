@@ -379,8 +379,7 @@ namespace MultiCommentViewer
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.Unknown,
                 Type = type,
             }, _options);

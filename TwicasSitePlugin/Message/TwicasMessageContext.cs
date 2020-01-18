@@ -4,7 +4,7 @@ namespace TwicasSitePlugin
 {
     internal class TwicasMessageContext : IMessageContext
     {
-        public SitePlugin.IMessage Message { get; }
+        public SitePlugin.ISiteMessage Message { get; }
 
         public IMessageMetadata Metadata { get; }
 

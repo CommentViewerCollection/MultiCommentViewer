@@ -3,16 +3,15 @@ using System.Collections.Generic;
 
 namespace NicoSitePlugin
 {
-    internal class NicoDisconnected : MessageBase, INicoDisconnected
+    internal class NicoDisconnected : MessageBase2, INicoDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.NicoLive;
         public NicoMessageType NicoMessageType { get; } = NicoMessageType.Disconnected;
+        public string Text { get; }
+
         public NicoDisconnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
-            };
+            Text = "切断しました";
         }
     }
 }

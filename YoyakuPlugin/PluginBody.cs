@@ -10,6 +10,18 @@ using Plugin;
 using System.ComponentModel.Composition;
 using SitePlugin;
 using Common;
+using System.Runtime.Remoting.Messaging;
+using YouTubeLiveSitePlugin;
+using OpenrecSitePlugin;
+using TwitchSitePlugin;
+using NicoSitePlugin;
+using TwicasSitePlugin;
+using LineLiveSitePlugin;
+using WhowatchSitePlugin;
+using MirrativSitePlugin;
+using PeriscopeSitePlugin;
+using MixerSitePlugin;
+using MildomSitePlugin;
 
 namespace OpenrecYoyakuPlugin
 {
@@ -34,20 +46,15 @@ namespace OpenrecYoyakuPlugin
         }
         public IPluginHost Host { get; set; }
 
-
-        public void OnCommentReceived(ICommentData data)
-        {
-        }
-        public void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata)
+        public void OnMessageReceived(ISiteMessage message, IMessageMetadata messageMetadata)
         {
             if (!_options.IsEnabled || messageMetadata.IsNgUser || messageMetadata.IsInitialComment)
                 return;
 
-            if (message is IMessageComment comment)
+            var (name, text) = PluginCommon.Tools.GetData(message);
+            if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(text))
             {
-                var name = comment.NameItems.ToText();
-                var text = comment.CommentItems.ToText();
-                _model.SetComment(comment.UserId, name, text, messageMetadata.User, messageMetadata.SiteContextGuid);
+                _model.SetComment(messageMetadata.User.UserId, name, text, messageMetadata.User, messageMetadata.SiteContextGuid);
             }
         }
         SettingsViewModel _vm;
@@ -84,7 +91,7 @@ namespace OpenrecYoyakuPlugin
             var s = Host.LoadOptions(path);
             if (s == null) return;
             var lines = s.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            foreach(var line in lines)
+            foreach (var line in lines)
             {
                 var arr = line.Split('\t');
                 if (arr.Length != 5) continue;
@@ -116,7 +123,7 @@ namespace OpenrecYoyakuPlugin
         {
             var users = _model.RegisteredUsers.ToArray();
             var s = "";
-            foreach(var user in users)
+            foreach (var user in users)
             {
                 s += $"{user.Id}\t{user.Name}\t{user.Date}\t{user.HadCalled}\t{user.SitePluginGuid}" + Environment.NewLine;
             }

@@ -68,8 +68,7 @@ namespace TwicasSitePlugin
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.Twicas,
                 Type = type,
             }, _options);
@@ -144,7 +143,7 @@ namespace TwicasSitePlugin
                 _logger.LogException(ex);
                 SendSystemInfo(ex.Message, InfoType.Debug);
             }
-            if(cnum < 0 || _liveId < 0)
+            if (cnum < 0 || _liveId < 0)
             {
                 AfterDisconnected();
                 return;
@@ -174,7 +173,7 @@ namespace TwicasSitePlugin
 
         private void MessageProvider_MessageReceived(object sender, IMessageContext e)
         {
-            if(e.Message is ITwicasComment comment)
+            if (e.Message is ITwicasComment comment)
             {
                 _lastCommentId = long.Parse(comment.Id);
             }
@@ -199,7 +198,7 @@ namespace TwicasSitePlugin
 
         public void Disconnect()
         {
-            if(_messageProvider != null)
+            if (_messageProvider != null)
             {
                 _messageProvider.Disconnect();
             }
@@ -230,7 +229,7 @@ namespace TwicasSitePlugin
         {
             var cc = CreateCookieContainer(browserProfile);
             string name = null;
-            foreach(var cookie in Tools.ExtractCookies(cc))
+            foreach (var cookie in Tools.ExtractCookies(cc))
             {
                 switch (cookie.Name)
                 {

@@ -81,7 +81,7 @@ namespace MultiCommentViewerTests
         public void LineLiveColorTest()
         {
             var messageMock = new Mock<ILineLiveComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
 
             Test1((meta, methods, name, options) =>
             {
@@ -103,7 +103,7 @@ namespace MultiCommentViewerTests
         public void MirrativColorTest()
         {
             var messageMock = new Mock<IMirrativComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
 
             Test1((meta, methods, name, options) =>
             {
@@ -140,7 +140,7 @@ namespace MultiCommentViewerTests
             var metadata = metadataMock.Object;
             var methods = methodsMock.Object;
             var connectionStatus = connectionStatusMock.Object;
-            
+
             var options = optionsMock.Object;
             var cvm = f(metadata, methods, connectionStatus, options);// new MultiCommentViewer.McvMirrativCommentViewModel(message, metadata, methods, connectionName, options);
             Assert.AreEqual(Colors.Red, cvm.Background.Color);

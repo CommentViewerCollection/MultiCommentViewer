@@ -10,7 +10,7 @@
 
 
 
-        IMessage Message { get; }
+        ISiteMessage Message { get; }
         IMessageMetadata Metadata { get; }
         IMessageMethods Methods { get; }
     }

@@ -117,7 +117,7 @@ namespace TwicasSitePlugin
                 },
                 ItemName = itemName,
                 CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message), itemImage },
-                NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(item.t12) },
+                UserName = item.t12,
                 UserId = item.SenderName,
                 ItemId = item.Id,
             };
@@ -242,9 +242,9 @@ namespace TwicasSitePlugin
                 Name = ReplaceHtmlEntities(name),
                 Message = ParseMessage(message),
                 ThumbnailUrl = thumbnailUrl,
-                ThumbnailHeight =50,
-                ThumbnailWidth =50,
-                Date=DateTime.Parse(low.date),//"Sat, 28 Apr 2018 02:21:28 +0900"
+                ThumbnailHeight = 50,
+                ThumbnailWidth = 50,
+                Date = DateTime.Parse(low.date),//"Sat, 28 Apr 2018 02:21:28 +0900"
             };
             return data;
         }
@@ -268,7 +268,7 @@ namespace TwicasSitePlugin
             }
             else
             {
-                throw new SpecChangedException("仕様変更があったかも",html);
+                throw new SpecChangedException("仕様変更があったかも", html);
             }
 
             //名前に"<"とか">"が含まれることがある。
@@ -280,7 +280,7 @@ namespace TwicasSitePlugin
             }
             else
             {
-                throw new SpecChangedException("仕様変更があったかも",html);
+                throw new SpecChangedException("仕様変更があったかも", html);
             }
             var match2 = Regex.Match(html, "<span class=\"comment-text\">(?<message>.+?)</span>");
             if (match2.Success)
@@ -289,7 +289,7 @@ namespace TwicasSitePlugin
             }
             else
             {
-                throw new SpecChangedException("仕様変更があったかも",html);
+                throw new SpecChangedException("仕様変更があったかも", html);
             }
             return (name, thumbnailUrl, message);
         }

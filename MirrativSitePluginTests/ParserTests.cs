@@ -35,14 +35,14 @@ namespace MirrativSitePluginTests
             Assert.IsNotNull(photoGift);
             Assert.IsNull(photoGift.BUrl);
             Assert.AreEqual(300, photoGift.Coins);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("@KURORO966_Blackさん,@akatukihawk3さん,@usausa_otomeさん,@0609_spitzさん,@uru_umiさん,カルルンバ🎨さんとの  #エモモスナップ！ #エモモ #ミラティブ") }, photoGift.CommentItems);
+            Assert.AreEqual("@KURORO966_Blackさん,@akatukihawk3さん,@usausa_otomeさん,@0609_spitzさん,@uru_umiさん,カルルンバ🎨さんとの  #エモモスナップ！ #エモモ #ミラティブ", photoGift.Text);
             Assert.IsNull(photoGift.GiftSmallImageUrl);
             Assert.AreEqual("かわいいエモモスナップ(300)", photoGift.GiftTitle);
             Assert.IsNull(photoGift.Id);
             Assert.AreEqual(MirrativMessageType.Item, photoGift.MirrativMessageType);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("matsu【🎨定期組】🍷🃏💜 ") }, photoGift.NameItems);
+            Assert.AreEqual("@KURORO966_Blackさん,@akatukihawk3さん,@usausa_otomeさん,@0609_spitzさん,@uru_umiさん,カルルンバ🎨さんとの  #エモモスナップ！ #エモモ #ミラティブ", photoGift.Text);
             Assert.IsNull(photoGift.PhotoGiftId);
-            Assert.AreEqual("01:02:03", photoGift.PostTime);
+            Assert.AreEqual(new DateTime(2019, 12, 9, 1, 2, 3), photoGift.PostedAt);
             Assert.AreEqual("@KURORO966_Blackさん,@akatukihawk3さん,@usausa_otomeさん,@0609_spitzさん,@uru_umiさん,カルルンバ🎨さんとの  #エモモスナップ！ #エモモ #ミラティブ", photoGift.ShareText);
             Assert.AreEqual(SiteType.Mirrativ, photoGift.SiteType);
             Assert.AreEqual("4353835", photoGift.UserId);
@@ -56,8 +56,8 @@ namespace MirrativSitePluginTests
             var gift = message as MirrativGift;
             Assert.IsNotNull(gift);
             Assert.AreEqual(8, gift.Count);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("🐾真顔ちゃん'-'🍊🍌🕊🐶🌱🍵が小さな星を8個贈りました") }, gift.CommentItems);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("🐾真顔ちゃん'-'🍊🍌🕊🐶🌱🍵") }, gift.NameItems);
+            Assert.AreEqual("🐾真顔ちゃん'-'🍊🍌🕊🐶🌱🍵が小さな星を8個贈りました", gift.Text);
+            Assert.AreEqual("🐾真顔ちゃん'-'🍊🍌🕊🐶🌱🍵", gift.UserName);
         }
     }
 }

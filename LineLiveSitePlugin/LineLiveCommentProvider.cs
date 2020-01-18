@@ -357,8 +357,7 @@ namespace LineLiveSitePlugin
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.LineLive,
                 Type = type,
             }, _options);
@@ -377,12 +376,12 @@ namespace LineLiveSitePlugin
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 var m = new LineLiveComment(raw)
                 {
-                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment.Message) },
-                    NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(sender.DisplayName) },
-                    Id = null,
-                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(comment.SentAt).ToString("HH:mm:ss"),
-                    UserIcon = new MessageImage { Url = sender.IconUrl },
-                    UserId = sender.Id.ToString(),
+                    Text = comment.Message,
+                    IsNgMessage = comment.IsNgMessage,
+                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.SentAt),
+                    UserIconUrl = sender.IconUrl,
+                    UserId = sender.Id,
+                    DisplayName = sender.DisplayName,
                 };
                 var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
                 {
@@ -399,12 +398,11 @@ namespace LineLiveSitePlugin
                 var str = sender.DisplayName + "さんがハートを送りました！";
                 var m = new LineLiveItem(raw)
                 {
-                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(str) },
-                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(love.SentAt).ToString("HH:mm:ss"),
-                    Id = null,
-                    NameItems = null,
-                    UserIcon = null,
-                    UserId = null,
+                    CommentItems = Common.MessagePartFactory.CreateMessageItems(str),
+                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(love.SentAt),
+                    UserIconUrl = sender.IconUrl,
+                    UserId = sender.Id,
+                    DisplayName = sender.DisplayName,
                 };
                 var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
                 {
@@ -421,12 +419,11 @@ namespace LineLiveSitePlugin
                 var msg = sender.DisplayName + "さんがフォローしました！";
                 var m = new LineLiveItem(raw)
                 {
-                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(msg) },
-                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(follow.FollowedAt).ToString("HH:mm:ss"),
-                    Id = null,
-                    NameItems = null,
-                    UserIcon = null,
-                    UserId = null,
+                    CommentItems = Common.MessagePartFactory.CreateMessageItems(msg),
+                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(follow.FollowedAt),
+                    UserIconUrl = sender.IconUrl,
+                    UserId = sender.Id,
+                    DisplayName = sender.DisplayName,
                 };
                 var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
                 {
@@ -464,11 +461,10 @@ namespace LineLiveSitePlugin
                 var m = new LineLiveItem(raw)
                 {
                     CommentItems = messageItems,
-                    PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(gift.SentAt).ToString("HH:mm:ss"),
-                    Id = null,
-                    NameItems = null,
-                    UserIcon = null,
-                    UserId = null,
+                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(gift.SentAt),
+                    UserIconUrl = sender.IconUrl,
+                    UserId = sender.Id,
+                    DisplayName = sender.DisplayName,
                 };
                 var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
                 {
@@ -489,7 +485,7 @@ namespace LineLiveSitePlugin
             try
             {
                 var data = Tools.Parse(e);
-                if(data.message == null)
+                if (data.message == null)
                 {
                     return;
                 }
@@ -512,7 +508,7 @@ namespace LineLiveSitePlugin
                     MessageReceived?.Invoke(this, messageContext);
                 }
             }
-            catch(ParseException ex)
+            catch (ParseException ex)
             {
                 _logger.LogException(ex);
                 SendSystemInfo("ParseException: " + ex.Raw, InfoType.Debug);

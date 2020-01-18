@@ -96,15 +96,14 @@ namespace OpenrecSitePluginTests
                 if (e.Message is IOpenrecComment comment)
                 {
                     var metadata = e.Metadata;
-                    
-                    Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("そっくりだな") }, comment.CommentItems);
+
+                    Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("そっくりだな") }, comment.MessageItems);
                     Assert.AreEqual("258587691", comment.Id);
                     Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("il") }, comment.NameItems);
                     Assert.AreEqual(OpenrecMessageType.Comment, comment.OpenrecMessageType);
                     Assert.AreEqual("16:13:06", comment.PostTime);
                     //Assert.IsTrue(!string.IsNullOrEmpty(comment.Raw));
                     Assert.AreEqual(SiteType.Openrec, comment.SiteType);
-                    Assert.IsNull(comment.UserIcon);
                     Assert.AreEqual("330854891", comment.UserId);
 
                     Assert.AreEqual(guid, metadata.SiteContextGuid);

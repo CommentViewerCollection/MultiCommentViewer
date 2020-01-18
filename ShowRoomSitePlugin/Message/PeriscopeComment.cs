@@ -1,31 +1,23 @@
 ﻿using SitePlugin;
+using System;
 using System.Collections.Generic;
 
 namespace ShowRoomSitePlugin
 {
-    internal class ShowRoomComment : MessageBase, IShowRoomComment
+    internal class ShowRoomComment : MessageBase2, IShowRoomComment
     {
         public override SiteType SiteType { get; } = SiteType.ShowRoom;
-        public ShowRoomMessageType ShowRoomMessageType { get; } = ShowRoomMessageType.Connected;
-        public long CreatedAt { get; }
-        public string Id { get; }
+        public ShowRoomMessageType ShowRoomMessageType { get; } = ShowRoomMessageType.Comment;
         public string UserId { get; }
-        public string PostTime { get; }
-        public IMessageImage UserIcon { get; set; }
-
+        public DateTime PostedAt { get; }
+        public string UserName { get; }
+        public string Text { get; }
         public ShowRoomComment(T1 t1) : base(t1.Raw)
         {
-            NameItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText(t1.Ac),
-            };
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText(t1.Cm),
-            };
-            CreatedAt = t1.CreatedAt;
+            UserName = t1.Ac;
+            Text = t1.Cm;
+            PostedAt = Common.UnixTimeConverter.FromUnixTime(t1.CreatedAt);
             UserId = t1.U.ToString();
-            Id = "";
         }
     }
 }

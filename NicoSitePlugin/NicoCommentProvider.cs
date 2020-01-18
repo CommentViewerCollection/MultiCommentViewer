@@ -150,9 +150,9 @@ namespace NicoSitePlugin
             {
                 if (e.Message is INicoComment nicoComment)
                 {
-                    var userId = e.Metadata.User.UserId;
-                    var comment = e.Message.CommentItems.ToText();
-                    var postedDate = nicoComment.PostedDate;
+                    var userId = nicoComment.UserId;
+                    var comment = nicoComment.Text;
+                    var postedDate = nicoComment.PostedAt;
                     if (!_blocker.IsUniqueComment(userId, comment, postedDate))
                     {
                         Debug.WriteLine("ニコ生で二重コメントを発見したため無視します");

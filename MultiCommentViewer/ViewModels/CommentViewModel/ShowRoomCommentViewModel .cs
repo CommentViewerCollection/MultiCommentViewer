@@ -111,19 +111,19 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
-            PostTime = comment.PostTime;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(comment.Text);
+            Thumbnail = null;
+            Id = null;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public ShowRoomCommentViewModel(ShowRoomSitePlugin.IShowRoomJoin join, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = join;
 
-            _nameItems = join.NameItems;
-            MessageItems = join.CommentItems;
+            //_nameItems = join.NameItems;
+            //MessageItems = join.CommentItems;
             //Thumbnail = join..UserIcon;
             //Id = join.Id.ToString();
             //PostTime = join.PostTime;
@@ -133,8 +133,8 @@ namespace MultiCommentViewer
         {
             _message = leave;
 
-            _nameItems = leave.NameItems;
-            MessageItems = leave.CommentItems;
+            //_nameItems = leave.NameItems;
+            //MessageItems = leave.CommentItems;
             //Thumbnail = join..UserIcon;
             //Id = join.Id.ToString();
             //PostTime = join.PostTime;
@@ -161,13 +161,13 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public ShowRoomCommentViewModel(ShowRoomSitePlugin.IShowRoomDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

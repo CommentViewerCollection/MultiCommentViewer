@@ -336,7 +336,7 @@ namespace TwitchSitePlugin
             {
                 CommentItems = Tools.GetMessageItems(result),
                 Id = commentData.Id,
-                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Username) },
+                UserName = commentData.Username,
                 PostTime = commentData.SentAt.ToString("HH:mm:ss"),
                 UserId = commentData.UserId,
                 IsDisplayNameSame = commentData.Username == commentData.DisplayName,
@@ -455,8 +455,7 @@ namespace TwitchSitePlugin
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.Twitch,
                 Type = type,
             }, _options);

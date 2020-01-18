@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System;
 
 namespace TestSitePlugin
 {
@@ -10,17 +11,22 @@ namespace TestSitePlugin
         Disconnected,
     }
 
-    public interface ITestMessage : IMessage
+    public interface ITestMessage : ISiteMessage
     {
         TestMessageType TestMessageType { get; }
     }
     public interface ITestConnected : ITestMessage
     {
+        string Text { get; }
     }
     public interface ITestDisconnected : ITestMessage
     {
+        string Text { get; }
     }
-    public interface ITestComment : ITestMessage, IMessageComment
+    public interface ITestComment : ITestMessage
     {
+        string UserName { get; }
+        string Text { get; }
+        DateTime PostedAt { get; }
     }
 }

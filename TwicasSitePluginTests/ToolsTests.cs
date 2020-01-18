@@ -29,7 +29,7 @@ namespace TwicasSitePluginTests
             var c = StreamChecker2.ParseStreamChcker(data);
             var item = c.Items[1];
             var message = Tools.CreateKiitosMessage(item);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("キートス") }, message.NameItems);
+            Assert.AreEqual("キートス", message.UserName);
             Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("[支援: 1000円] 達成: 100% : 💛リスナーさんのコメントで三角コーナー飯作る💛\r\n"),
                 new MessageImage
                 {
@@ -46,6 +46,14 @@ namespace TwicasSitePluginTests
         public void Test()
         {
             Assert.AreEqual("flowitem(\"https://twitcasting.tv/img/anim/anim_tea_10\", 3000, 1, 1, 5)", Tools.DecodeBase64("Zmxvd2l0ZW0oImh0dHBzOi8vdHdpdGNhc3RpbmcudHYvaW1nL2FuaW0vYW5pbV90ZWFfMTAiLCAzMDAwLCAxLCAxLCA1KQ=="));
+        }
+        [Test]
+        public void ParseMessageHyperLinkTest()
+        {
+            var data = "初見。<a href=\"https://www.youtube.com/watch?v=HbFJU_Kt1nM\" target=\"_blank\" rel=\"nofollow\">https:<wbr>/<wbr>/<wbr>www.<wbr>youtube.<wbr>com/<wbr>watch?<wbr>v=<wbr>HbFJU_<wbr>.<wbr>.<wbr></a>";
+            var list = Tools.ParseMessage(data);
+
+
         }
     }
 }

@@ -1,14 +1,17 @@
 ﻿using SitePlugin;
+using System;
 using System.Collections.Generic;
 
 namespace MirrativSitePlugin
 {
-    internal class MirrativPhotoGift : MessageBase, IMirrativItem
+    internal class MirrativPhotoGift : MessageBase2, IMirrativItem
     {
         public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Item;
+        public string Text { get; set; }
+        public string UserName { get; set; }
         public string UserId { get; }
-        public string PostTime { get; }
+        public DateTime PostedAt { get; }
         public string Id { get; }
         public string GiftTitle { get; set; }
         public string PhotoGiftId { get; set; }
@@ -21,18 +24,20 @@ namespace MirrativSitePlugin
         {
             UserId = commentData.UserId;
             Id = commentData.Id;
-            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Comment) };
-            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Username) };
+            Text = commentData.Comment;
+            UserName = commentData.Username;
             //UserIcon = null;
-            PostTime = Tools.UnixTime2DateTime(commentData.CreatedAt).ToString("HH:mm:ss");
+            PostedAt = Tools.UnixTime2DateTime(commentData.CreatedAt);
         }
     }
-    internal class MirrativGift : MessageBase, IMirrativItem
+    internal class MirrativGift : MessageBase2, IMirrativItem
     {
         public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Item;
+        public string Text { get; }
+        public string UserName { get; }
         public string UserId { get; }
-        public string PostTime { get; }
+        public DateTime PostedAt { get; }
         public string Id { get; }
         public string GiftTitle { get; set; }
         public string PhotoGiftId { get; set; }
@@ -46,10 +51,10 @@ namespace MirrativSitePlugin
         {
             UserId = commentData.UserId;
             Id = commentData.Id;
-            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Comment) };
-            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(commentData.Username) };
+            Text = commentData.Comment;
+            UserName = commentData.Username;
             //UserIcon = null;
-            PostTime = Tools.UnixTime2DateTime(commentData.CreatedAt).ToString("HH:mm:ss");
+            PostedAt = Tools.UnixTime2DateTime(commentData.CreatedAt);
         }
     }
 }

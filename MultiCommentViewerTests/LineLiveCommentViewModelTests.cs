@@ -15,7 +15,7 @@ namespace MultiCommentViewerTests
         public void IsVisibleTest()
         {
             var messageMock = new Mock<ILineLiveComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
             var metadataMock = new Mock<IMessageMetadata>();
             var methodsMock = new Mock<IMessageMethods>();
             var connectionStatusMock = new Mock<IConnectionStatus>();
@@ -46,7 +46,7 @@ namespace MultiCommentViewerTests
         public void IsInvisibleTest()
         {
             var messageMock = new Mock<ILineLiveComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
             var metadataMock = new Mock<IMessageMetadata>();
             var methodsMock = new Mock<IMessageMethods>();
             var connectionStatusMock = new Mock<IConnectionStatus>();

@@ -3,17 +3,15 @@ using System.Collections.Generic;
 
 namespace TwicasSitePlugin
 {
-    internal class TwicasConnected : MessageBase, ITwicasConnected
+    internal class TwicasConnected : MessageBase2, ITwicasConnected
     {
         public override SiteType SiteType { get; } = SiteType.Twicas;
         public TwicasMessageType TwicasMessageType { get; } = TwicasMessageType.Connected;
+        public string Text { get; }
 
         public TwicasConnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("接続しました"),
-            };
+            Text = "接続しました";
         }
     }
 }

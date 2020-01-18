@@ -2,13 +2,13 @@
 
 namespace WhowatchSitePlugin
 {
-    internal class WhowatchComment : MessageBase, IWhowatchComment
+    internal class WhowatchComment : MessageBase2, IWhowatchComment
     {
         public override SiteType SiteType { get; } = SiteType.Whowatch;
         public WhowatchMessageType WhowatchMessageType { get; } = WhowatchMessageType.Comment;
-        //public string Comment { get; set; }
+        public string Comment { get; set; }
         public string Id { get; set; }
-        //public string UserName { get; set; }
+        public string UserName { get; set; }
         public string UserPath { get; set; }
         public string UserId { get; set; }
         public string AccountName { get; set; }

@@ -101,7 +101,7 @@ namespace NicoSitePlugin
             var is184 = Tools.Is184UserId(userId);
             return !is184 && userId != "900000000";
         }
-        public static async Task<INicoComment> CreateNicoComment(IChat chat, IUser user, INicoSiteOptions _siteOptions, string roomName,Func<string,Task<IUserInfo>> f, ILogger logger)
+        public static async Task<INicoComment> CreateNicoComment(IChat chat, IUser user, INicoSiteOptions _siteOptions, string roomName, Func<string, Task<IUserInfo>> f, ILogger logger)
         {
             var userId = chat.UserId;
             var is184 = Tools.Is184UserId(userId);
@@ -111,7 +111,7 @@ namespace NicoSitePlugin
             }
 
             string thumbnailUrl = null;
-            List<IMessagePart> nameItems = null;
+            string name = null;
             try
             {
 
@@ -121,12 +121,8 @@ namespace NicoSitePlugin
                     thumbnailUrl = userInfo.ThumbnailUrl;
                     if (_siteOptions.IsAutoGetUsername)
                     {
-                        nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
-                        user.Name = nameItems;
-                    }
-                    else
-                    {
-                        nameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userId) };
+                        name = userInfo.Name;
+                        user.Name = new List<IMessagePart> { MessagePartFactory.CreateMessageText(userInfo.Name) };
                     }
                 }
             }
@@ -146,13 +142,12 @@ namespace NicoSitePlugin
                 id = roomName;
             }
             var comment = chat.Text;
-            return new NicoComment(chat.Raw, _siteOptions)
+            return new NicoComment(chat.Raw)
             {
-                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(comment) },
+                Text = comment,
                 Id = id,
-                NameItems = nameItems,
-                PostTime = chat.Date.ToString("HH:mm:ss"),
-                PostedDate = chat.Date,
+                UserName = name,
+                PostedAt = chat.Date,
                 UserIcon = thumbnailUrl != null ? new MessageImage
                 {
                     Url = thumbnailUrl,
@@ -192,12 +187,10 @@ namespace NicoSitePlugin
             if (d.version == "1")
             {
                 var content = (string)d.message;
-                return new NicoAd(chat.Raw, siteOptions)
+                return new NicoAd(chat.Raw)
                 {
-                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
-                    NameItems = null,
-                    PostTime = chat.Date.ToString("HH:mm:ss"),
-                    PostedDate = chat.Date,
+                    Text = content,
+                    PostedAt = chat.Date,
                     UserId = chat.UserId,
                     RoomName = roomName,
                 };
@@ -213,12 +206,10 @@ namespace NicoSitePlugin
             ///gift takenoko 41600702 "さーら♔" 600 "" "たけのこ" 1
 
             var content = chat.Text;
-            return new NicoItem(chat.Raw, siteOptions)
+            return new NicoItem(chat.Raw)
             {
-                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
-                NameItems = null,
-                PostTime = chat.Date.ToString("HH:mm:ss"),
-                PostedDate = chat.Date,
+                Text = content,
+                PostedAt = chat.Date,
                 UserId = chat.UserId,
                 RoomName = roomName,
             };
@@ -231,12 +222,10 @@ namespace NicoSitePlugin
             {
                 var no = int.Parse(match.Groups["no"].Value);
                 var content = match.Groups["content"].Value;
-                return new NicoInfo(chat.Raw, siteOptions)
+                return new NicoInfo(chat.Raw)
                 {
-                    CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(content) },
-                    NameItems = null,
-                    PostTime = chat.Date.ToString("HH:mm:ss"),
-                    PostedDate = chat.Date,
+                    Text = content,
+                    PostedAt = chat.Date,
                     UserId = chat.UserId,
                     RoomName = roomName,
                     No = no,

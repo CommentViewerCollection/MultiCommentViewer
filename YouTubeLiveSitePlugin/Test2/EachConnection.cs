@@ -415,8 +415,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var message = new InfoMessage
             {
                 Type = error,
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(v) },
-                NameItems = null,
+                Text = v,
                 SiteType = SiteType.YouTubeLive,
             };
             var metadata = new InfoMessageMetadata(message, _options);
@@ -448,11 +447,11 @@ namespace YouTubeLiveSitePlugin.Test2
                 {
                     metaProvider = new MetadataProvider(_server, _logger);
                 }
-                metaProvider.MetadataReceived += (s,e)=>
+                metaProvider.MetadataReceived += (s, e) =>
                 {
                     MetadataUpdated?.Invoke(this, e);
                 };
-                metaProvider.InfoReceived += (s,e)=>
+                metaProvider.InfoReceived += (s, e) =>
                 {
                     SendInfo(e.Comment, e.Type);
                 };
@@ -485,20 +484,37 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         private YouTubeLiveMessageContext CreateMessageContext(CommentData commentData, bool isInitialComment)
         {
-            var message = CreateMessage(commentData);
+            IYouTubeLiveMessage message;
+            IEnumerable<IMessagePart> commentItems;
+            IEnumerable<IMessagePart> nameItems;
+
+            if (commentData.IsPaidMessage)
+            {
+                var superchat = new YouTubeLiveSuperchat(commentData);
+                message = superchat;
+                nameItems = superchat.NameItems;
+                commentItems = superchat.CommentItems;
+            }
+            else
+            {
+                var comment = new YouTubeLiveComment(commentData);
+                message = comment;
+                nameItems = comment.NameItems;
+                commentItems = comment.CommentItems;
+            }
             var metadata = CreateMetadata(message, isInitialComment);
             var methods = new YouTubeLiveMessageMethods();
             if (_siteOptions.IsAutoSetNickname)
             {
                 var user = metadata.User;
-                var messageText = Common.MessagePartsTools.ToText(message.CommentItems);
+                var messageText = Common.MessagePartsTools.ToText(commentItems);
                 var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
                 if (!string.IsNullOrEmpty(nick))
                 {
                     user.Nickname = nick;
                 }
             }
-            metadata.User.Name = message.NameItems;
+            metadata.User.Name = nameItems;
             return new YouTubeLiveMessageContext(message, metadata, methods);
         }
         private IYouTubeLiveMessage CreateMessage(CommentData data)
@@ -554,11 +570,11 @@ namespace YouTubeLiveSitePlugin.Test2
             var metadata = new YouTubeLiveMessageMetadata(message, _options, _siteOptions, user, _cp, isFirstComment)
             {
                 IsInitialComment = isInitialComment,
-                 SiteContextGuid= SiteContextGuid,
+                SiteContextGuid = SiteContextGuid,
             };
             return metadata;
         }
-        public EachConnection(ILogger logger, CookieContainer cc, ICommentOptions options, IYouTubeLibeServer server, 
+        public EachConnection(ILogger logger, CookieContainer cc, ICommentOptions options, IYouTubeLibeServer server,
             YouTubeLiveSiteOptions siteOptions, Dictionary<string, int> userCommentCountDict, SynchronizedCollection<string> receivedCommentIds,
             ICommentProvider cp, IUserStoreManager userStoreManager)
         {

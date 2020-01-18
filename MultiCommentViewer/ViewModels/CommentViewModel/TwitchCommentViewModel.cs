@@ -112,15 +112,15 @@ namespace MultiCommentViewer
             _message = comment;
             if (comment.IsDisplayNameSame)
             {
-                _nameItems = comment.NameItems;
+                _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
             }
             else
             {
-                var nameItems = new List<IMessagePart>();
-                nameItems.Add(Common.MessagePartFactory.CreateMessageText(comment.DisplayName));
-                nameItems.Add(Common.MessagePartFactory.CreateMessageText(" ("));
-                nameItems.AddRange(comment.NameItems);
-                nameItems.Add(Common.MessagePartFactory.CreateMessageText(")"));
+                var nameItems = new List<IMessagePart>
+                {
+                    Common.MessagePartFactory.CreateMessageText(comment.DisplayName),
+                    Common.MessagePartFactory.CreateMessageText(" (" + comment.UserName + ")")
+                };
                 _nameItems = nameItems;
             }
 
@@ -151,13 +151,13 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public TwitchCommentViewModel(TwitchSitePlugin.ITwitchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

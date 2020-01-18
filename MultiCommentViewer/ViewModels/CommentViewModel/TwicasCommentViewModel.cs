@@ -92,7 +92,7 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id?.ToString();
@@ -103,7 +103,7 @@ namespace MultiCommentViewer
         {
             _message = item;
 
-            _nameItems = item.NameItems;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(item.UserName);
             MessageItems = item.CommentItems;
             Thumbnail = item.UserIcon;
             Id = null;
@@ -114,13 +114,13 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public TwicasCommentViewModel(TwicasSitePlugin.ITwicasDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus)
             : this(metadata, methods, connectionStatus)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

@@ -49,7 +49,7 @@ namespace TwicasSitePlugin
             return _userStoreManager.GetUser(SiteType.Twicas, userId);
         }
         private readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
-        private TwicasMessageContext CreateMessageContext(LowObject.Comment lowComment, bool isInitialComment, string raw) 
+        private TwicasMessageContext CreateMessageContext(LowObject.Comment lowComment, bool isInitialComment, string raw)
         {
             var commentData = Tools.Parse(lowComment);
             var userId = commentData.UserId;
@@ -70,7 +70,7 @@ namespace TwicasSitePlugin
             {
                 CommentItems = commentData.Message,
                 Id = commentData.Id.ToString(),
-                NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(commentData.Name) },
+                UserName = commentData.Name,
                 PostTime = commentData.Date.ToString("HH:mm:ss"),
                 UserId = commentData.UserId,
                 UserIcon = new MessageImage
@@ -79,7 +79,7 @@ namespace TwicasSitePlugin
                     Alt = null,
                     Height = commentData.ThumbnailHeight,
                     Width = commentData.ThumbnailWidth,
-                 },
+                },
             };
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, _cp, isFirstComment)
             {
@@ -96,7 +96,7 @@ namespace TwicasSitePlugin
         }
         System.Collections.Concurrent.ConcurrentBag<string> _receivedItemIds;
         FirstCommentDetector _first = new FirstCommentDetector();
-        public async Task ConnectAsync(string broadcasterId, int cnum,long live_id)
+        public async Task ConnectAsync(string broadcasterId, int cnum, long live_id)
         {
             _first.Reset();
             _cts = new CancellationTokenSource();
@@ -111,7 +111,7 @@ namespace TwicasSitePlugin
                 var (initialComments, initialRaw) = await API.GetListAll(_server, broadcasterId, live_id, lastCommentId, 0, 20, _cc);
                 if (initialComments.Length > 0)
                 {
-                    foreach(var lowComment in initialComments)
+                    foreach (var lowComment in initialComments)
                     {
                         //showがfalseのデータが時々ある。
                         //{"id":15465669455,"show":false}
@@ -130,7 +130,7 @@ namespace TwicasSitePlugin
                     lastCommentId = lastComment.id;
                 }
             }
-            catch(HttpRequestException ex)
+            catch (HttpRequestException ex)
             {
                 _logger.LogException(ex);
                 string message;
@@ -158,7 +158,7 @@ namespace TwicasSitePlugin
                 try
                 {
                     var (streamChecker, streamCheckerRaw) = await API.GetUtreamChecker(_server, broadcasterId, lastItemId).ConfigureAwait(false);
-                    if(streamChecker.Items != null && streamChecker.Items.Count > 0)
+                    if (streamChecker.Items != null && streamChecker.Items.Count > 0)
                     {
 #if DEBUG
                         try
@@ -213,7 +213,7 @@ namespace TwicasSitePlugin
                                     ItemName = item.t13,
                                     //CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(item.t13) },
                                     CommentItems = new List<IMessagePart> { image },
-                                    NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(item.t12) },
+                                    UserName = item.t12,
                                     UserId = item.SenderName,
                                     ItemId = item.Id,
                                 };
@@ -233,7 +233,7 @@ namespace TwicasSitePlugin
                             SendInfo(item.SenderName + " " + item.ItemImage, InfoType.Debug);
                             _receivedItemIds.Add(item.Id);
                         }
-                        catch(ParseException ex)
+                        catch (ParseException ex)
                         {
                             _logger.LogException(ex);
                         }
@@ -290,11 +290,11 @@ namespace TwicasSitePlugin
                         //}
                     }
                 }
-                catch(HttpRequestException ex)
+                catch (HttpRequestException ex)
                 {
                     _logger.LogException(ex);
                     string message;
-                    if(ex.InnerException != null)
+                    if (ex.InnerException != null)
                     {
                         message = ex.InnerException.Message;
                     }
@@ -304,7 +304,7 @@ namespace TwicasSitePlugin
                     }
                     SendInfo(message, InfoType.Debug);
                 }
-                catch(ParseException ex)
+                catch (ParseException ex)
                 {
                     _logger.LogException(ex);
                     SendInfo(ex.Message, InfoType.Debug);
@@ -327,7 +327,7 @@ namespace TwicasSitePlugin
                         await Task.Delay(restWait, _cts.Token);
                     }
                 }
-                catch(TaskCanceledException)
+                catch (TaskCanceledException)
                 {
                     break;
                 }
@@ -351,7 +351,7 @@ namespace TwicasSitePlugin
         private readonly ICommentOptions _options;
         private readonly ICommentProvider _cp;
         private readonly ILogger _logger;
-        public MessageProvider(IDataServer server, ITwicasSiteOptions siteOptions, CookieContainer cc,IUserStoreManager userStoreManager,ICommentOptions options,ICommentProvider cp, ILogger logger)
+        public MessageProvider(IDataServer server, ITwicasSiteOptions siteOptions, CookieContainer cc, IUserStoreManager userStoreManager, ICommentOptions options, ICommentProvider cp, ILogger logger)
         {
             _server = server;
             _siteOptions = siteOptions;

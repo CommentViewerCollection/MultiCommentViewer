@@ -13,23 +13,30 @@ namespace TwitchSitePlugin
     }
 
 
-    public interface ITwitchMessage : IMessage
+    public interface ITwitchMessage : ISiteMessage
     {
         TwitchMessageType TwitchMessageType { get; }
     }
     public interface ITwitchConnected : ITwitchMessage
     {
+        string Text { get; }
     }
     public interface ITwitchDisconnected : ITwitchMessage
     {
+        string Text { get; }
     }
-    public interface ITwitchComment : ITwitchMessage, IMessageComment
+    public interface ITwitchComment : ITwitchMessage
     {
+        string Id { get; }
         /// <summary>
         /// NameItemsとDisplayNameが同値か
         /// </summary>
         bool IsDisplayNameSame { get; }
         string DisplayName { get; }
+        string UserName { get; }
+        IEnumerable<IMessagePart> CommentItems { get; }
+        string PostTime { get; }
+        IMessageImage UserIcon { get; }
     }
     //public interface ITwitchItem : ITwitchMessage
     //{

@@ -111,11 +111,16 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id?.ToString();
-            PostTime = comment.PostTime;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.DisplayName);
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(comment.Text);
+            Thumbnail = new Common.MessageImage()
+            {
+                Url = comment.UserIconUrl,
+                Height = 40,
+                Width = 40,
+            };
+            Id = null;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
@@ -123,30 +128,28 @@ namespace MultiCommentViewer
             var comment = item;
             _message = comment;
 
-            _nameItems = comment.NameItems;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.DisplayName);
             MessageItems = comment.CommentItems;
-            Thumbnail = null;
-            //Thumbnail = new Common.MessageImage
-            //{
-            //    Url = comment.UserIconUrl,
-            //    Alt = "",
-            //    Height = 40,//_optionsにcolumnの幅を動的に入れて、ここで反映させたい。propertyChangedはどうやって発生させるか
-            //    Width = 40,
-            //};
+            Thumbnail = new Common.MessageImage()
+            {
+                Url = comment.UserIconUrl,
+                Height = 40,//_optionsにcolumnの幅を動的に入れて、ここで反映させたい。propertyChangedはどうやって発生させるか
+                Width = 40,
+            };
             Id = null;
-            PostTime = comment.PostTime;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public LineLiveCommentViewModel(LineLiveSitePlugin.ILineLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

@@ -109,6 +109,10 @@
       <Project>{242D4286-7214-422F-BE7C-BE784C815E0F}</Project>
       <Name>PeriscopeIF</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PluginCommon\PluginCommon.csproj">
+      <Project>{29482b94-d6b4-4d4d-abdc-028606c22333}</Project>
+      <Name>PluginCommon</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
       <Project>{4DA33B17-792D-44D7-93F6-D0561788676D}</Project>
       <Name>TwicasIF</Name>
@@ -135,6 +139,9 @@
   <ItemGroup>
     <PackageReference Include="MvvmLightLibs">
       <Version>5.4.1.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.ValueTuple">
+      <Version>4.5.0</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

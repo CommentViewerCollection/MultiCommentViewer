@@ -17,5 +17,9 @@ namespace Common
             // unix epochからの経過秒数を求める
             return (long)dateTime.Subtract(baseTime).TotalSeconds;
         }
+        public static DateTime FromUnixTime(long unixTime)
+        {
+            return baseTime.AddSeconds(unixTime);
+        }
     }
 }

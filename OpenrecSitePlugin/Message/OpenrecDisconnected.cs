@@ -3,16 +3,15 @@ using System.Collections.Generic;
 
 namespace OpenrecSitePlugin
 {
-    internal class OpenrecDisconnected : MessageBase, IOpenrecDisconnected
+    internal class OpenrecDisconnected : MessageBase2, IOpenrecDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.Openrec;
         public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Disconnected;
+        public string Text { get; }
+
         public OpenrecDisconnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
-            };
+            Text = "切断しました";
         }
     }
 }

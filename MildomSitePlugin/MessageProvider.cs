@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Codeplex.Data;
@@ -44,6 +45,14 @@ namespace MildomSitePlugin
         }
         public string Raw { get; }
     }
+    internal class EnterRoom : IInternalMessage
+    {
+        public EnterRoom(string raw)
+        {
+            Raw = raw;
+        }
+        public string Raw { get; }
+    }
     internal class OnAddMessage : IInternalMessage
     {
         public string Message { get; set; }
@@ -68,7 +77,7 @@ namespace MildomSitePlugin
             {
                 case "enterRoom":
                     //{"admin": 0, "cmd": "enterRoom", "fobiddenGlobal": 0, "forbidden": 0, "reqId": 1, "rst": 0, "type": 2, "userCount": 239}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = new EnterRoom(raw);
                     break;
                 case "onChat":
                     //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}

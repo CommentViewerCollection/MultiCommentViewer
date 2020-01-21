@@ -121,7 +121,11 @@ namespace MildomSitePlugin
         private void P1_MessageReceived(object sender, IInternalMessage e)
         {
             var message = e;
-            if (message is OnBroadcast)
+            if (message is EnterRoom)
+            {
+                _isBeeingSentInitialComments = true;
+            }
+            else if (_isBeeingSentInitialComments && !(message is OnChatMessage))
             {
                 _isBeeingSentInitialComments = false;
             }
@@ -133,7 +137,8 @@ namespace MildomSitePlugin
         }
         /// <summary>
         /// 初期コメントが送られてきているか。
-        /// 接続直後はサーバから初期コメントが送られてくる。その後OnBroadcastメッセージが来るから、それ以降はリアルタイムのコメント。
+        /// 接続直後にEnterRoomが送られてきて、その次に初期コメント(OnChatMessage)が送られてくる。その後、OnChatMessage以外のメッセージが来たら初期コメントは終了。
+        /// 自分名義のOnAddは確実に来るからこのロジックで問題無いと思う。
         /// </summary>
         bool _isBeeingSentInitialComments;
         private MildomMessageContext CreateMessageContext(IInternalMessage message)

@@ -78,7 +78,7 @@ namespace NicoSitePlugin
             catch { }
             return cc;
         }
-        static List<INicoCommentProviderInternal> GetCommentProviderInternals(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager,IDataSource dataSource,ILogger logger, ICommentProvider cp,Guid SiteContextGuid)
+        static List<INicoCommentProviderInternal> GetCommentProviderInternals(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider cp, Guid SiteContextGuid)
         {
             var list = new List<INicoCommentProviderInternal>
             {
@@ -95,9 +95,9 @@ namespace NicoSitePlugin
         }
         public static bool IsValidInput(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider cp, string input, Guid siteContextGuid)
         {
-            foreach(var cpin in GetCommentProviderInternals(options, siteOptions, userStoreManager, dataSource, logger, cp, siteContextGuid))
+            foreach (var cpin in GetCommentProviderInternals(options, siteOptions, userStoreManager, dataSource, logger, cp, siteContextGuid))
             {
-                if(cpin.IsValidInput(input))
+                if (cpin.IsValidInput(input))
                 {
                     return true;
                 }
@@ -110,7 +110,7 @@ namespace NicoSitePlugin
         {
             _blocker.Reset();
             var cc = GetCookieContainer(browserProfile);
-            
+
             var list = GetCommentProviderInternals(_options, _siteOptions, _userStoreManager, _dataSource, _logger, this, SiteContextGuid);
             var cu = await GetCurrentUserInfo(browserProfile);
             if (cu.IsLoggedIn)
@@ -165,7 +165,7 @@ namespace NicoSitePlugin
             {
                 await _internal.ConnectAsync(input, cc);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new NicoException("", $"input={input},browser={browserProfile.Type}({browserProfile.ProfileName})", ex);
             }
@@ -190,7 +190,7 @@ namespace NicoSitePlugin
 
         public Task PostCommentAsync(string comment, string mail)
         {
-            if(_internal == null)
+            if (_internal == null)
             {
                 Debug.WriteLine("_internal is null");
                 return Task.CompletedTask;
@@ -207,9 +207,9 @@ namespace NicoSitePlugin
             var cc = GetCookieContainer(browserProfile);
             string userId = null;
             var cookies = Tools.ExtractCookies(cc);
-            foreach(var cookie in cookies)
+            foreach (var cookie in cookies)
             {
-                if(cookie.Name == "user_session")
+                if (cookie.Name == "user_session")
                 {
                     var match = Regex.Match(cookie.Value, "^user_session_(\\d+)_");
                     if (match.Success)
@@ -226,11 +226,11 @@ namespace NicoSitePlugin
                 {
                     displayName = await API.GetDisplayNameFromUserId(_dataSource, userId);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogException(ex, $"user_id={userId}");
                 }
-                if(string.IsNullOrEmpty(displayName))
+                if (string.IsNullOrEmpty(displayName))
                 {
                     try
                     {
@@ -253,7 +253,7 @@ namespace NicoSitePlugin
             return info;
         }
         public Guid SiteContextGuid { get; set; }
-        public NicoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions,IDataSource dataSource, ILogger logger, IUserStoreManager userStoreManager)
+        public NicoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IDataSource dataSource, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
             _siteOptions = siteOptions;
@@ -273,24 +273,28 @@ namespace NicoSitePlugin
         {
             _dict.Clear();
         }
+        private static readonly object LockObject = new object();
         public bool IsUniqueComment(string userId, string comment, DateTime postedDate)
         {
-            if (_dict.TryGetValue(userId, out var a))
+            lock (LockObject)
             {
-                if (a.comment == comment && a.postedDate.AddSeconds(5) > postedDate)
+                if (_dict.TryGetValue(userId, out var a))
                 {
-                    return false;
+                    if (a.comment == comment && a.postedDate.AddSeconds(5) > postedDate)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        _dict.AddOrUpdate(userId, id => (comment, postedDate), (k, c) => (comment, postedDate));
+                        return true;
+                    }
                 }
                 else
                 {
                     _dict.AddOrUpdate(userId, id => (comment, postedDate), (k, c) => (comment, postedDate));
                     return true;
                 }
-            }
-            else
-            {
-                _dict.AddOrUpdate(userId, id => (comment, postedDate), (k, c) => (comment, postedDate));
-                return true;
             }
         }
     }

@@ -26,7 +26,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 _cts.Cancel();
             }
         }
-        protected void SendInfo(string message,InfoType type)
+        protected void SendInfo(string message, InfoType type)
         {
             InfoReceived?.Invoke(this, new InfoData { Comment = message, Type = type });
         }
@@ -71,8 +71,15 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
                 else if (action.IsDefined("updateTitleAction"))
                 {
-                    var title = action.updateTitleAction.title.simpleText;
-                    metadata.Title = title;
+                    string title;
+                    if (action.updateTitleAction.title.IsDefined("runs"))
+                    {
+                        title = action.updateTitleAction.title.runs[0].text;
+                    }
+                    else if (action.updateTitleAction.title.IsDefined("simpleText"))
+                    {
+                        title = action.updateTitleAction.title.simpleText;
+                    }
                 }
                 else if (action.IsDefined("updateDescriptionAction"))
                 {

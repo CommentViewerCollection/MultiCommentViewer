@@ -177,7 +177,7 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 SendInfo(e.Comment, e.Type);
             };
-            var chatTask = _chatProvider.ReceiveAsync(vid, initialContinuation, _cc);
+            var chatTask = _chatProvider.ReceiveAsync(initialContinuation);
             tasks.Add(chatTask);
 
             _disconnectReason = DisconnectReason.Finished;

@@ -87,7 +87,6 @@
     <Compile Include="Test2\Metadata.cs" />
     <Compile Include="Test2\MetadataProvider.cs" />
     <Compile Include="Test2\Tools.cs" />
-    <Compile Include="Test2\YouTubeLiveCommentViewModel.cs" />
     <Compile Include="Test2\YouTubeLiveOptionsViewModel.cs" />
     <Compile Include="Test2\YouTubeLiveServer.cs" />
     <Compile Include="Test2\YouTubeLiveSiteContext.cs" />

@@ -84,10 +84,11 @@ namespace YouTubeLiveSitePlugin.Test2
                 return DisconnectReason.YtInitialDataNotFound;
             }
             IContinuation initialContinuation;
+            ChatContinuation chatContinuation;
             List<CommentData> initialCommentData;
             try
             {
-                (initialContinuation, initialCommentData) = Tools.ParseYtInitialData(ytInitialData);
+                (initialContinuation, chatContinuation, initialCommentData) = Tools.ParseYtInitialData(ytInitialData);
             }
             catch (YouTubeLiveServerErrorException ex)
             {
@@ -177,7 +178,8 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 SendInfo(e.Comment, e.Type);
             };
-            var chatTask = _chatProvider.ReceiveAsync(initialContinuation);
+            var continuation = _siteOptions.IsAllChat ? chatContinuation.AllChatContinuation : chatContinuation.JouiChatContinuation;
+            var chatTask = _chatProvider.ReceiveAsync(continuation);
             tasks.Add(chatTask);
 
             _disconnectReason = DisconnectReason.Finished;

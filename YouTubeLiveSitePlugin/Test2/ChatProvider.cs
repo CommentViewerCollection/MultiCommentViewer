@@ -38,21 +38,22 @@ namespace YouTubeLiveSitePlugin.Test2
         /// <param name="initialContinuation"></param>
         /// <returns></returns>
         /// <exception cref="ReloadException"></exception>
-        public async Task ReceiveAsync(IContinuation initialContinuation)
+        public async Task ReceiveAsync(string initialContinuation)
         {
             _cts = new CancellationTokenSource();
 
+            //var continuation = initialContinuation.Continuation;
             var continuation = initialContinuation;
             while (!_cts.IsCancellationRequested)
             {
-                var getLiveChatUrl = $"https://www.youtube.com/live_chat/get_live_chat?continuation={System.Web.HttpUtility.UrlEncode(continuation.Continuation)}&pbj=1";
+                var getLiveChatUrl = $"https://www.youtube.com/live_chat/get_live_chat?continuation={System.Web.HttpUtility.UrlEncode(continuation)}&pbj=1";
                 string getLiveChatJson = null;
                 try
                 {
                     var getLiveChatBytes = await _server.GetBytesAsync(getLiveChatUrl);
                     getLiveChatJson = Encoding.UTF8.GetString(getLiveChatBytes);
                     var (c, a, sessionToken) = Tools.ParseGetLiveChat(getLiveChatJson);
-                    continuation = c;
+                    continuation = c.Continuation;
                     if (a.Count > 0)
                     {
                         if (c is ITimedContinuation timed)

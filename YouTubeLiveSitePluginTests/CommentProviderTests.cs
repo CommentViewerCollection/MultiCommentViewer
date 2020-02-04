@@ -240,7 +240,7 @@ namespace YouTubeLiveSitePluginTests
             var options = optionsMock.Object;
             var serverMock = new Mock<IYouTubeLibeServer>();
             serverMock.Setup(s => s.GetAsync("https://www.youtube.com/live_chat?v=EiLzFNajLas&is_popout=1", It.Is<CookieContainer>(c => true))).Returns(Task.FromResult(Tools.GetSampleData("LiveChat.txt")));
-            serverMock.Setup(s => s.GetBytesAsync("https://www.youtube.com/live_chat/get_live_chat?continuation=0ofMyAPiARqQAUNpTVNJUW9ZVlVOSGFsWTBZbk5ETkROUGJpMVpkV2xNV21ObVREQjNFZ1V2YkdsMlpScERxcm5CdlFFOUNqdG9kSFJ3Y3pvdkwzZDNkeTU1YjNWMGRXSmxMbU52YlM5c2FYWmxYMk5vWVhRX2RqMUJkVVpQVDFWMFNYbFZXU1pwYzE5d2IzQnZkWFE5TVNBQyiR8P7MuYjcAjAAOABAAUogCAAQABgAIAAqBzY1ZTg4M2Y6AEAASgBQ78C90LmI3AJQoIPEzbmI3AJYgdDVjPqH3AJoBIIBBAgEEACIAQA%253D&pbj=1")).ThrowsAsync(new HttpRequestException());
+            serverMock.Setup(s => s.GetBytesAsync("https://www.youtube.com/live_chat/get_live_chat?continuation=0ofMyAPAARqQAUNpTVNJUW9ZVlVOSGFsWTBZbk5ETkROUGJpMVpkV2xNV21ObVREQjNFZ1V2YkdsMlpScERxcm5CdlFFOUNqdG9kSFJ3Y3pvdkwzZDNkeTU1YjNWMGRXSmxMbU52YlM5c2FYWmxYMk5vWVhRX2RqMUJkVVpQVDFWMFNYbFZXU1pwYzE5d2IzQnZkWFE5TVNBQzABSiAIABAAGAAgACoHNjVlODgzZjoAQABKAFDvwL3QuYjcAmgBggEECAEQAA%253D%253D&pbj=1")).ThrowsAsync(new HttpRequestException());
             var server = serverMock.Object;
 
             var siteOptions = new YouTubeLiveSiteOptions();

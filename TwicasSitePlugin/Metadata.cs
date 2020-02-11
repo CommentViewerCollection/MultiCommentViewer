@@ -16,5 +16,6 @@ namespace TwicasSitePlugin
 
         public bool? IsLive { get; set; }
         public long? LiveId { get; set; }
+        public string Others { get; }
     }
 }

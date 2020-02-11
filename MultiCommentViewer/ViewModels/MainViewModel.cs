@@ -934,6 +934,10 @@ namespace MultiCommentViewer
                         metaVm.TotalViewers = e.TotalViewers;
                     if (e.Elapsed != null)
                         metaVm.Elapsed = e.Elapsed;
+                    if (e.Others != null)
+                    {
+                        metaVm.Others = e.Others;
+                    }
                 }
                 catch (KeyNotFoundException ex)
                 {

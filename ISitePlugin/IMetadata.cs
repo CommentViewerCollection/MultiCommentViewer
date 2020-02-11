@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace SitePlugin
 {
     public interface IMetadata
-    {  
+    {
         //タイトル
         string Title { get; }
         //放送経過時間
@@ -22,5 +22,6 @@ namespace SitePlugin
         string TotalViewers { get; }
 
         bool? IsLive { get; }
+        string Others { get; }
     }
 }

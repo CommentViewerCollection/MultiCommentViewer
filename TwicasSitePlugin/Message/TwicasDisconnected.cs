@@ -3,16 +3,15 @@ using System.Collections.Generic;
 
 namespace TwicasSitePlugin
 {
-    internal class TwicasDisconnected : MessageBase, ITwicasDisconnected
+    internal class TwicasDisconnected : MessageBase2, ITwicasDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.Twicas;
         public TwicasMessageType TwicasMessageType { get; } = TwicasMessageType.Disconnected;
+        public string Text { get; }
+
         public TwicasDisconnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
-            };
+            Text = "切断しました";
         }
     }
 }

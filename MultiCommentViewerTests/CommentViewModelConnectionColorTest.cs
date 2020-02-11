@@ -96,7 +96,7 @@ namespace MultiCommentViewerTests
         public void LineLiveColorTest()
         {
             var messageMock = new Mock<ILineLiveComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
 
             Test1((meta, methods, name, options) =>
             {
@@ -118,7 +118,7 @@ namespace MultiCommentViewerTests
         public void MirrativColorTest()
         {
             var messageMock = new Mock<IMirrativComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
 
             Test1((meta, methods, name, options) =>
             {
@@ -233,7 +233,7 @@ namespace MultiCommentViewerTests
         public void LineLiveColorTest()
         {
             var messageMock = new Mock<ILineLiveComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
 
             Test1((meta, methods, name, options) =>
             {
@@ -255,7 +255,7 @@ namespace MultiCommentViewerTests
         public void MirrativColorTest()
         {
             var messageMock = new Mock<IMirrativComment>();
-            messageMock.Setup(m => m.Id).Returns("");
+            //messageMock.Setup(m => m.Id).Returns("");
 
             Test1((meta, methods, name, options) =>
             {

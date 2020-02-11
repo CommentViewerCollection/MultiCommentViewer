@@ -112,9 +112,9 @@ namespace MultiCommentViewer
             _message = comment;
 
             _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
+            MessageItems = comment.MessageItems;
+            Thumbnail = null;
+            Id = comment.Id;
             PostTime = comment.PostTime;
         }
         public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecStamp stamp, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
@@ -122,22 +122,22 @@ namespace MultiCommentViewer
         {
             _message = stamp;
 
-            _nameItems = stamp.NameItems;
-            MessageItems = stamp.CommentItems;
-            Thumbnail = stamp.UserIcon;
-            Id = stamp.Id.ToString();
-            PostTime = stamp.PostTime;
+            //_nameItems = stamp.NameItems;
+            //MessageItems = stamp.CommentItems;
+            //Thumbnail = stamp.UserIcon;
+            //Id = stamp.Id.ToString();
+            //PostTime = stamp.PostTime;
         }
         public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecYell yell, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = yell;
 
-            _nameItems = yell.NameItems;
-            MessageItems = yell.CommentItems;
-            Thumbnail = yell.UserIcon;
-            Id = yell.Id.ToString();
-            PostTime = yell.PostTime;
+            //_nameItems = yell.NameItems;
+            //MessageItems = yell.CommentItems;
+            //Thumbnail = yell.UserIcon;
+            //Id = yell.Id.ToString();
+            //PostTime = yell.PostTime;
         }
         //public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
         //    : this(metadata, methods, connectionStatus)
@@ -161,13 +161,13 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

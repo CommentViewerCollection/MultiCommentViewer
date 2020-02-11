@@ -1,4 +1,6 @@
 ﻿using SitePlugin;
+using System;
+using System.Collections.Generic;
 
 namespace MirrativSitePlugin
 {
@@ -12,24 +14,31 @@ namespace MirrativSitePlugin
         Item,
     }
 
-    public interface IMirrativMessage : IMessage
+    public interface IMirrativMessage : ISiteMessage
     {
         MirrativMessageType MirrativMessageType { get; }
     }
     public interface IMirrativConnected : IMirrativMessage
     {
+        string Text { get; }
     }
     public interface IMirrativDisconnected : IMirrativMessage
     {
+        string Text { get; }
     }
-    public interface IMirrativComment : IMirrativMessage, IMessageComment
+    public interface IMirrativComment : IMirrativMessage
     {
+        string Text { get; }
+        string UserName { get; }
+        string Id { get; }
+        string UserId { get; }
+        DateTime PostedAt { get; }
     }
     public interface IMirrativJoinRoom : IMirrativMessage
     {
-        //string Comment { get; }
+        string Text { get; }
         string Id { get; }
-        //string UserName { get; }
+        string UserName { get; }
         string UserId { get; }
         string PostTime { get; }
         IMessageImage UserIcon { get; set; }
@@ -37,9 +46,11 @@ namespace MirrativSitePlugin
     }
     public interface IMirrativItem : IMirrativMessage
     {
+        string Text { get; }
+        string UserName { get; }
         string Id { get; }
         string UserId { get; }
-        string PostTime { get; }
+        DateTime PostedAt { get; }
         //IMessageImage UserIcon { get; set; }
     }
     //public interface IMirrativPhotoGift : IMirrativItem

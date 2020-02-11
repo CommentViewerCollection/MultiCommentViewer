@@ -27,7 +27,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public void Disconnect()
         {
-            if(_cts != null)
+            if (_cts != null)
             {
                 _cts.Cancel();
             }
@@ -35,28 +35,25 @@ namespace YouTubeLiveSitePlugin.Test2
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="vid"></param>
         /// <param name="initialContinuation"></param>
-        /// <param name="cc"></param>
         /// <returns></returns>
         /// <exception cref="ReloadException"></exception>
-        public async Task ReceiveAsync(string vid,IContinuation initialContinuation, CookieContainer cc)
+        public async Task ReceiveAsync(string initialContinuation)
         {
             _cts = new CancellationTokenSource();
 
+            //var continuation = initialContinuation.Continuation;
             var continuation = initialContinuation;
             while (!_cts.IsCancellationRequested)
             {
-                var getLiveChatUrl = $"https://www.youtube.com/live_chat/get_live_chat?continuation={System.Web.HttpUtility.UrlEncode( continuation.Continuation)}&pbj=1";
-                //var wc = new MyWebClient(cc);
-                var ua="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.2924.87 Safari/537.36";
+                var getLiveChatUrl = $"https://www.youtube.com/live_chat/get_live_chat?continuation={System.Web.HttpUtility.UrlEncode(continuation)}&pbj=1";
                 string getLiveChatJson = null;
                 try
                 {
                     var getLiveChatBytes = await _server.GetBytesAsync(getLiveChatUrl);
                     getLiveChatJson = Encoding.UTF8.GetString(getLiveChatBytes);
                     var (c, a, sessionToken) = Tools.ParseGetLiveChat(getLiveChatJson);
-                    continuation = c;
+                    continuation = c.Continuation;
                     if (a.Count > 0)
                     {
                         if (c is ITimedContinuation timed)
@@ -68,12 +65,12 @@ namespace YouTubeLiveSitePlugin.Test2
                                 await Task.Delay(interval, _cts.Token);
                             }
                         }
-                        else if(c is IInvalidationContinuation invalid)
+                        else if (c is IInvalidationContinuation invalid)
                         {
                             ActionsReceived?.Invoke(this, a);
                             await Task.Delay(1000, _cts.Token);
                         }
-                        else if(c is IReloadContinuation)
+                        else if (c is IReloadContinuation)
                         {
                             throw new ReloadException();
                         }
@@ -86,9 +83,9 @@ namespace YouTubeLiveSitePlugin.Test2
                     {
                         await Task.Delay(1000, _cts.Token);
                     }
-                    
+
                 }
-                catch(WebException ex)
+                catch (WebException ex)
                 {
                     throw new ReloadException(ex);
                 }

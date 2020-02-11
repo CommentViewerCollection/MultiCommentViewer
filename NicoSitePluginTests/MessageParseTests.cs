@@ -53,7 +53,7 @@ namespace NicoSitePluginTests
             var siteOptions = siteOptionsMock.Object;
             var message = Tools.CreateNicoInfo(chat, "roomname", siteOptions);
             Assert.IsNotNull(message);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("1人がコミュニティをフォローしました。") }, message.CommentItems);
+            Assert.AreEqual("1人がコミュニティをフォローしました。", message.Text);
             Assert.AreEqual(2, message.No);
             Assert.AreEqual(NicoMessageType.Info, message.NicoMessageType);
         }
@@ -76,7 +76,7 @@ namespace NicoSitePluginTests
 
             var message = Tools.CreateNicoAd(chat, "roomname", siteOptions);
             Assert.IsNotNull(message);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("みちのくディルドさんが500ptニコニ広告しました「お婆さんが浮いてるぞ！気を付けろ！」") }, message.CommentItems);
+            Assert.AreEqual("みちのくディルドさんが500ptニコニ広告しました「お婆さんが浮いてるぞ！気を付けろ！」", message.Text);
             Assert.AreEqual(NicoMessageType.Ad, message.NicoMessageType);
         }
         [Test]
@@ -96,14 +96,13 @@ namespace NicoSitePluginTests
             var siteOptionsMock = new Mock<INicoSiteOptions>();
             var siteOptions = siteOptionsMock.Object;
 
-            var message = await Tools.CreateNicoComment(chat, user, siteOptions, "roomname", async userid=> await API.GetUserInfo(server, userid),logger) as INicoComment;
+            var message = await Tools.CreateNicoComment(chat, user, siteOptions, "roomname", async userid => await API.GetUserInfo(server, userid), logger) as INicoComment;
             Assert.IsNotNull(message);
             Assert.AreEqual(7071, message.ChatNo);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("返事適当じゃない？") }, message.CommentItems);
+            Assert.AreEqual("返事適当じゃない？", message.Text);
             Assert.AreEqual("roomname:7071", message.Id);
             Assert.IsTrue(message.Is184);
             Assert.AreEqual(SiteType.NicoLive, message.SiteType);
-            Assert.IsNull(message.UserIcon);
             Assert.AreEqual("6nf21kHUbAcbMD6aTNy_yu5WqdM", message.UserId);
 
         }

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace TwitchSitePlugin
 {
-    internal class TwitchComment : MessageBase, ITwitchComment
+    internal class TwitchComment : MessageBase2, ITwitchComment
     {
         public override SiteType SiteType { get; } = SiteType.Twitch;
         public TwitchMessageType TwitchMessageType { get; } = TwitchMessageType.Comment;
@@ -16,6 +16,9 @@ namespace TwitchSitePlugin
         public IMessageImage UserIcon { get; set; }
         public bool IsDisplayNameSame { get; set; }
         public string DisplayName { get; set; }
+        public string UserName { get; set; }
+        public IEnumerable<IMessagePart> CommentItems { get; set; }
+
         public TwitchComment(string raw) : base(raw)
         {
 

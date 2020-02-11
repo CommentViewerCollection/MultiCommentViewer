@@ -152,7 +152,7 @@ namespace YouTubeLiveSitePluginTests
             var options = new Mock<ICommentOptions>();
             var serverMock = new Mock<IYouTubeLibeServer>();
             serverMock.Setup(s => s.GetEnAsync("https://www.youtube.com/channel/UCv1fFr156jc65EMiLbaLImw/live")).Returns(Task.FromResult(Tools.GetSampleData("Channel_live.txt")));
-            serverMock.Setup(s => s.GetAsync("https://www.youtube.com/live_chat?v=klvzbBP7zM8&is_popout=1", It.Is<CookieContainer>(c=>true))).Returns(Task.FromResult(Tools.GetSampleData("LiveChat.txt")));
+            serverMock.Setup(s => s.GetAsync("https://www.youtube.com/live_chat?v=klvzbBP7zM8&is_popout=1", It.Is<CookieContainer>(c => true))).Returns(Task.FromResult(Tools.GetSampleData("LiveChat.txt")));
             var siteOptions = new YouTubeLiveSiteOptions();
             var logger = new Mock<ILogger>();
             var userStore = new Mock<IUserStoreManager>();
@@ -217,7 +217,7 @@ namespace YouTubeLiveSitePluginTests
             cp.MessageReceived += (s, e) =>
             {
                 var message = e.Message as IInfoMessage;
-                if ((message.CommentItems.ToList()[0] as IMessageText).Text == "コメント投稿に失敗しました（コメントが短すぎます。）")
+                if (message.Text == "コメント投稿に失敗しました（コメントが短すぎます。）")
                 {
                     expectedResult = true;
                 }
@@ -240,7 +240,7 @@ namespace YouTubeLiveSitePluginTests
             var options = optionsMock.Object;
             var serverMock = new Mock<IYouTubeLibeServer>();
             serverMock.Setup(s => s.GetAsync("https://www.youtube.com/live_chat?v=EiLzFNajLas&is_popout=1", It.Is<CookieContainer>(c => true))).Returns(Task.FromResult(Tools.GetSampleData("LiveChat.txt")));
-            serverMock.Setup(s => s.GetBytesAsync("https://www.youtube.com/live_chat/get_live_chat?continuation=0ofMyAPiARqQAUNpTVNJUW9ZVlVOSGFsWTBZbk5ETkROUGJpMVpkV2xNV21ObVREQjNFZ1V2YkdsMlpScERxcm5CdlFFOUNqdG9kSFJ3Y3pvdkwzZDNkeTU1YjNWMGRXSmxMbU52YlM5c2FYWmxYMk5vWVhRX2RqMUJkVVpQVDFWMFNYbFZXU1pwYzE5d2IzQnZkWFE5TVNBQyiR8P7MuYjcAjAAOABAAUogCAAQABgAIAAqBzY1ZTg4M2Y6AEAASgBQ78C90LmI3AJQoIPEzbmI3AJYgdDVjPqH3AJoBIIBBAgEEACIAQA%253D&pbj=1")).ThrowsAsync(new HttpRequestException());
+            serverMock.Setup(s => s.GetBytesAsync("https://www.youtube.com/live_chat/get_live_chat?continuation=0ofMyAPAARqQAUNpTVNJUW9ZVlVOSGFsWTBZbk5ETkROUGJpMVpkV2xNV21ObVREQjNFZ1V2YkdsMlpScERxcm5CdlFFOUNqdG9kSFJ3Y3pvdkwzZDNkeTU1YjNWMGRXSmxMbU52YlM5c2FYWmxYMk5vWVhRX2RqMUJkVVpQVDFWMFNYbFZXU1pwYzE5d2IzQnZkWFE5TVNBQzABSiAIABAAGAAgACoHNjVlODgzZjoAQABKAFDvwL3QuYjcAmgBggEECAEQAA%253D%253D&pbj=1")).ThrowsAsync(new HttpRequestException());
             var server = serverMock.Object;
 
             var siteOptions = new YouTubeLiveSiteOptions();
@@ -275,20 +275,20 @@ namespace YouTubeLiveSitePluginTests
             int j = 0;
             cp.MessageReceived += (s, e) =>
             {
-                if(e.Message is YouTubeLiveComment)
+                if (e.Message is YouTubeLiveComment)
                 {
                     i++;
                 }
-                else if(e.Message is IInfoMessage info && info.Type <= InfoType.Error)
+                else if (e.Message is IInfoMessage info && info.Type <= InfoType.Error)
                 {
-                    Debug.WriteLine(info.CommentItems.ToText());
+                    Debug.WriteLine(info.Text);
                     j++;
                 }
-                if(i > 75)
+                if (i > 75)
                 {
                     Assert.Fail();
                 }
-                if(j >= 2)
+                if (j >= 2)
                 {
                     cp.Disconnect();
                 }

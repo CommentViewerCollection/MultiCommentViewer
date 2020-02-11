@@ -34,7 +34,7 @@ namespace CommentGeneratorPluginTests
             public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Comment;
             public string Id { get; set; }
             public string UserId { get; set; }
-            public string PostTime { get; set; }
+            public DateTime PostedAt { get; }
             public IMessageImage UserIcon { get; set; }
             public string Raw { get; set; }
             public SiteType SiteType { get; } = SiteType.YouTubeLive;
@@ -54,7 +54,7 @@ namespace CommentGeneratorPluginTests
             pluginMock.Protected().Setup<string>("CommentXmlPath").Returns(FilePath);
             pluginMock.Protected().Setup<Options>("Options").Returns(optionsMock.Object);
             pluginMock.Protected().Setup<bool>("IsHcgSettingFileExists").Returns(true);
-            pluginMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970,1,1,0,0,0, DateTimeKind.Utc).ToLocalTime());
+            pluginMock.Protected().Setup<DateTime>("GetCurrentDateTime").Returns(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToLocalTime());
 
             var message = new YtComment()
             {

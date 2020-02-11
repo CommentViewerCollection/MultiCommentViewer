@@ -38,44 +38,15 @@ namespace CommentViewer.Plugin
             }
         }
         public IPluginHost Host { get; set; }
-
-
-        public void OnCommentReceived(ICommentData data)
-        {
-            if (!Options.IsEnabled || data.IsNgUser || data.IsFirstComment)
-                return;
-
-            var a = new Data
-            {
-                Comment = data.Comment,
-                Nickname = data.Nickname,
-                SiteName = data.SiteName,
-            };
-            _commentCollection.Add(a);
-        }
-        class CommentData : ICommentData
-        {
-            public string ThumbnailUrl { get; set; }
-            public int ThumbnailWidth { get; set; }
-            public int ThumbnailHeight { get; set; }
-            public string Id { get; set; }
-            public string UserId { get; set; }
-            public string Nickname { get; set; }
-            public string Comment { get; set; }
-            public bool IsNgUser { get; set; }
-            public bool IsFirstComment { get; set; }
-            public string SiteName { get; set; }
-            public bool Is184 { get; set; }
-        }
         class Data
         {
-            public object Comment { get; internal set; }
-            public object SiteName { get; internal set; }
+            public string Comment { get; internal set; }
+            public string SiteName { get; internal set; }
             public string Nickname { get; internal set; }
         }
-        public void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata)
+        public void OnMessageReceived(ISiteMessage message, IMessageMetadata messageMetadata)
         {
-            if (!(message is IMessageComment comment)) return;
+            //if (!(message is IMessageComment comment)) return;
             if (!Options.IsEnabled || messageMetadata.IsNgUser || messageMetadata.IsInitialComment)
                 return;
 
@@ -91,73 +62,43 @@ namespace CommentViewer.Plugin
             //Periscope:periscope
             //Mixer:mixer
 
-            string siteName;
-            if (message is YouTubeLiveSitePlugin.IYouTubeLiveComment)
-            {
-                siteName = "youtubelive";
-            }
-            else if (message is NicoSitePlugin.INicoComment)
-            {
-                siteName = "nicolive";
-            }
-            else if (message is TwitchSitePlugin.ITwitchComment)
-            {
-                siteName = "twitch";
-            }
-            else if (message is TwicasSitePlugin.ITwicasComment)
-            {
-                siteName = "twicas";
-            }
-            else if (message is WhowatchSitePlugin.IWhowatchComment)
-            {
-                siteName = "whowatch";
-            }
-            else if (message is OpenrecSitePlugin.IOpenrecComment)
-            {
-                siteName = "openrec";
-            }
-            else if (message is MirrativSitePlugin.IMirrativComment)
-            {
-                siteName = "mirrativ";
-            }
-            else if (message is LineLiveSitePlugin.ILineLiveComment)
-            {
-                siteName = "linelive";
-            }
-            else if (message is PeriscopeSitePlugin.IPeriscopeComment)
-            {
-                siteName = "periscope";
-            }
-            else if (message is MixerSitePlugin.IMixerComment)
-            {
-                siteName = "mixer";
-            }
-            else if (message is MildomSitePlugin.IMildomComment)
-            {
-                siteName = "mildom";
-            }
-            else
-            {
-                siteName = "";
-            }
 
-            string name;
-            if (messageMetadata.User != null && !string.IsNullOrEmpty(messageMetadata.User.Nickname))
+
+            //string name;
+            //if (HasNickname(messageMetadata.User))
+            //{
+            //    name = messageMetadata.User.Nickname;
+            //}
+            //else
+            //{
+            //    name = comment.NameItems.ToText();
+            //}
+            var siteName = Tools.GetSiteName(message);
+            var (name, comment) = PluginCommon.Tools.GetData(message);
+            if (HasNickname(messageMetadata.User))
             {
                 name = messageMetadata.User.Nickname;
             }
-            else
-            {
-                name = comment.NameItems.ToText();
-            }
+            //var data = new Data
+            //{
+            //    Comment = comment.CommentItems.ToText(),
+            //    Nickname = name,
+            //    SiteName = siteName,
+            //};
             var data = new Data
             {
-                Comment = comment.CommentItems.ToText(),
+                Comment = comment,
                 Nickname = name,
                 SiteName = siteName,
             };
             _commentCollection.Add(data);
         }
+
+        private static bool HasNickname(IUser user)
+        {
+            return user != null && !string.IsNullOrEmpty(user.Nickname);
+        }
+
         public virtual void OnLoaded()
         {
             Options = Options.Load(GetSettingsFilePath());
@@ -367,8 +308,20 @@ namespace CommentViewer.Plugin
         }
         public void Dispose()
         {
-            _writeTimer.Dispose();
-            _deleteTimer.Dispose();
+            Dispose(true);
+        }
+        private bool _disposedValue = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _writeTimer.Dispose();
+                    _deleteTimer.Dispose();
+                }
+                _disposedValue = true;
+            }
         }
 
         public void OnTopmostChanged(bool isTopmost)

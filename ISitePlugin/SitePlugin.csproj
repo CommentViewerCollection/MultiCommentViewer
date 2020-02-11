@@ -59,7 +59,7 @@
     <Compile Include="ICommentViewModel.cs" />
     <Compile Include="ICurrentUserInfo.cs" />
     <Compile Include="IIo.cs" />
-    <Compile Include="IMessage.cs" />
+    <Compile Include="ISiteMessage.cs" />
     <Compile Include="IMessageContext.cs" />
     <Compile Include="IMessageMetadata.cs" />
     <Compile Include="IMessageMethods.cs" />

@@ -86,10 +86,61 @@
       <Project>{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}</Project>
       <Name>SitePlugin</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj">
+      <Project>{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}</Project>
+      <Name>LineLiveIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MildomIF\MildomIF.csproj">
+      <Project>{FD868431-6667-4394-89DF-44764AAFCAE5}</Project>
+      <Name>MildomIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
+      <Project>{D2C2C0AF-3A29-45F7-B653-CF20AACAA051}</Project>
+      <Name>MirrativIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MixerIF\MixerIF.csproj">
+      <Project>{CEF10332-BBD8-49FD-B69B-B830BCAD4E63}</Project>
+      <Name>MixerIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
+      <Project>{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}</Project>
+      <Name>NicoLiveIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
+      <Project>{02A55625-E735-4909-A470-E8405EEE1A32}</Project>
+      <Name>OpenrecIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj">
+      <Project>{242D4286-7214-422F-BE7C-BE784C815E0F}</Project>
+      <Name>PeriscopeIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PluginCommon\PluginCommon.csproj">
+      <Project>{29482b94-d6b4-4d4d-abdc-028606c22333}</Project>
+      <Name>PluginCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
+      <Project>{4DA33B17-792D-44D7-93F6-D0561788676D}</Project>
+      <Name>TwicasIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
+      <Project>{AA70074D-1C40-4CC0-9E1C-7ACDCBDD7D32}</Project>
+      <Name>TwitchIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
+      <Project>{5A83AFC8-E6CE-4DD2-8389-1F43A731388F}</Project>
+      <Name>WhowatchIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj">
+      <Project>{83974E62-4D55-4E67-8F88-BBFF2222E5A1}</Project>
+      <Name>YouTubeLiveIF</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MvvmLightLibs">
       <Version>5.4.1.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.ValueTuple">
+      <Version>4.5.0</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

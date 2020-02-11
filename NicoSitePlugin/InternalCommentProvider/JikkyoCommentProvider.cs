@@ -37,43 +37,43 @@ namespace NicoSitePlugin
             var jkInfo = await API.GetJikkyoInfoAsync(_dataSource, channelId.Value);
             _mainRoomThreadId = jkInfo.ThreadId;
             _roomCommentProvider = new Next20181012.XmlSocketRoomCommentProvider(jkInfo.Name, jkInfo.ThreadId, 1000, CreateStreamSoket(jkInfo.XmlSocketAddr, jkInfo.XmlSocketPort));
-            _roomCommentProvider.CommentReceived +=async (s, e) =>
-            {
-                var chat = e;
-                Debug.WriteLine(chat.Text);
-                try
-                {
-                    var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
-                    if (context != null)
-                    {
-                        RaiseMessageReceived(context);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogException(ex);
-                }
-            };
-            _roomCommentProvider.InitialCommentsReceived +=async (s, e) =>
-            {
-                var chats = e;
-                foreach (var chat in chats)
-                {
-                    Debug.WriteLine(chat.Text);
-                    try
-                    {
-                        var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
-                        if (context != null)
-                        {
-                            RaiseMessageReceived(context);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                }
-            };
+            _roomCommentProvider.CommentReceived += async (s, e) =>
+             {
+                 var chat = e;
+                 Debug.WriteLine(chat.Text);
+                 try
+                 {
+                     var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
+                     if (context != null)
+                     {
+                         RaiseMessageReceived(context);
+                     }
+                 }
+                 catch (Exception ex)
+                 {
+                     _logger.LogException(ex);
+                 }
+             };
+            _roomCommentProvider.InitialCommentsReceived += async (s, e) =>
+             {
+                 var chats = e;
+                 foreach (var chat in chats)
+                 {
+                     Debug.WriteLine(chat.Text);
+                     try
+                     {
+                         var context = await CreateMessageContextAsync(chat, jkInfo.Name, false);
+                         if (context != null)
+                         {
+                             RaiseMessageReceived(context);
+                         }
+                     }
+                     catch (Exception ex)
+                     {
+                         _logger.LogException(ex);
+                     }
+                 }
+             };
             await _roomCommentProvider.ReceiveAsync();
             await Task.CompletedTask;
         }
@@ -90,17 +90,14 @@ namespace NicoSitePlugin
             {
                 id = roomName;
             }
-            var message = new NicoComment(chat.Raw, _siteOptions)
+            var message = new NicoComment(chat.Raw)
             {
                 ChatNo = chat.No,
-                CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(chat.Text) },
+                Text = chat.Text,
                 Id = id,
                 Is184 = Tools.Is184UserId(chat.UserId),
-                NameItems = null,
-                PostTime = chat.Date.ToString("HH:mm:ss"),
-                PostedDate = chat.Date,
+                PostedAt = chat.Date,
                 RoomName = roomName,
-                UserIcon = null,
                 UserId = chat.UserId,
             };
             return message;
@@ -138,7 +135,7 @@ namespace NicoSitePlugin
         }
 
         public JikkyoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
-            :base(options, siteOptions, userStoreManager, dataSource, logger)
+            : base(options, siteOptions, userStoreManager, dataSource, logger)
         {
         }
     }

@@ -109,10 +109,10 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(comment.Comment);
             Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
+            Id = comment.Id;
             PostTime = comment.PostTime;
         }
         public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
@@ -121,8 +121,8 @@ namespace MultiCommentViewer
             var comment = item;
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(comment.Comment);
             Thumbnail = new Common.MessageImage
             {
                 Url = comment.UserIconUrl,
@@ -138,13 +138,13 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public McvWhowatchCommentViewModel(WhowatchSitePlugin.IWhowatchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

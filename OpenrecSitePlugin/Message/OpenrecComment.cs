@@ -1,10 +1,9 @@
 ﻿using SitePlugin;
-using System.Linq;
-using System.Text;
+using System.Collections.Generic;
 
 namespace OpenrecSitePlugin
 {
-    internal class OpenrecComment : MessageBase, IOpenrecComment
+    internal class OpenrecComment : MessageBase2, IOpenrecComment
     {
         public override SiteType SiteType { get; } = SiteType.Openrec;
         public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Comment;
@@ -12,12 +11,14 @@ namespace OpenrecSitePlugin
         public string UserId { get; set; }
         public string PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        public IEnumerable<IMessagePart> MessageItems { get; set; }
         public OpenrecComment(string raw) : base(raw)
         {
 
         }
     }
-    internal class OpenrecStamp : MessageBase, IOpenrecStamp
+    internal class OpenrecStamp : MessageBase2, IOpenrecStamp
     {
         public override SiteType SiteType { get; } = SiteType.Openrec;
         public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Stamp;
@@ -30,7 +31,7 @@ namespace OpenrecSitePlugin
 
         }
     }
-    internal class OpenrecYell : MessageBase, IOpenrecYell
+    internal class OpenrecYell : MessageBase2, IOpenrecYell
     {
         public override SiteType SiteType { get; } = SiteType.Openrec;
         public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Yell;

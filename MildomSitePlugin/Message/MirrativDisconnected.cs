@@ -3,16 +3,15 @@ using System.Collections.Generic;
 
 namespace MildomSitePlugin
 {
-    internal class MildomDisconnected : MessageBase, IMildomDisconnected
+    internal class MildomDisconnected : MessageBase2, IMildomDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.Mixer;
         public MildomMessageType MildomMessageType { get; } = MildomMessageType.Disconnected;
+        public string Text { get; }
+
         public MildomDisconnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("配信が終了しました"),
-            };
+            Text = "切断しました";
         }
     }
 }

@@ -9,22 +9,31 @@ namespace Common
         {
             return MessageText.New(text);
         }
+
+        public static IEnumerable<IMessagePart> CreateMessageItems(string text)
+        {
+            return new List<IMessagePart>
+            {
+                CreateMessageText(text)
+            };
+        }
     }
     public static class MessagePartsTools
     {
         public static string ToText(this IEnumerable<IMessagePart> items)
         {
-            if(items == null)
+            if (items == null)
             {
                 return null;
             }
             var list = new List<string>();
-            foreach(var item in items)
+            foreach (var item in items)
             {
-                if(item is IMessageText text)
+                if (item is IMessageText text)
                 {
                     list.Add(text.Text);
-                }else if(item is IMessageLink link)
+                }
+                else if (item is IMessageLink link)
                 {
                     list.Add(link.Text);
                 }

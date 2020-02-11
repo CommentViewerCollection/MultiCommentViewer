@@ -14,28 +14,38 @@ namespace MildomSitePlugin
         Item,
     }
 
-    public interface IMildomMessage : IMessage
+    public interface IMildomMessage : ISiteMessage
     {
         MildomMessageType MildomMessageType { get; }
     }
     public interface IMildomConnected : IMildomMessage
     {
+        string Text { get; }
     }
     public interface IMildomDisconnected : IMildomMessage
     {
+        string Text { get; }
     }
-    public interface IMildomComment : IMildomMessage, IMessageComment
+    public interface IMildomComment : IMildomMessage
     {
+        string UserName { get; }
+        IEnumerable<IMessagePart> CommentItems { get; }
+        DateTime PostedAt { get; }
+        string UserId { get; }
     }
     public interface IMildomJoinRoom : IMildomMessage
     {
+        IEnumerable<IMessagePart> NameItems { get; }
+        IEnumerable<IMessagePart> CommentItems { get; }
         //string Id { get; }
         string UserId { get; }
-        string PostTime { get; }
-        IMessageImage UserIcon { get; set; }
+        DateTime PostedAt { get; }
+        IMessageImage UserIcon { get; }
     }
     public interface IMildomItem : IMildomMessage
     {
+        IEnumerable<IMessagePart> NameItems { get; }
+        IEnumerable<IMessagePart> CommentItems { get; }
         string Id { get; }
         string UserId { get; }
         string PostTime { get; }

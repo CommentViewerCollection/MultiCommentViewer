@@ -1,4 +1,6 @@
 ﻿using SitePlugin;
+using System;
+using System.Collections.Generic;
 
 namespace LineLiveSitePlugin
 {
@@ -11,21 +13,33 @@ namespace LineLiveSitePlugin
         Item,
     }
 
-    public interface ILineLiveMessage : IMessage
+    public interface ILineLiveMessage : ISiteMessage
     {
         LineLiveMessageType LineLiveMessageType { get; }
     }
     public interface ILineLiveConnected : ILineLiveMessage
     {
+        string Text { get; }
     }
     public interface ILineLiveDisconnected : ILineLiveMessage
     {
+        string Text { get; }
     }
-    public interface ILineLiveComment : ILineLiveMessage, IMessageComment
+    public interface ILineLiveComment : ILineLiveMessage
     {
+        string Text { get; }
+        bool IsNgMessage { get; }
+        DateTime PostedAt { get; }
+        string UserIconUrl { get; }
+        long UserId { get; }
+        string DisplayName { get; }
     }
     public interface ILineLiveItem : ILineLiveMessage
     {
-        string PostTime { get; }
+        IEnumerable<IMessagePart> CommentItems { get; }
+        DateTime PostedAt { get; }
+        long UserId { get; }
+        string UserIconUrl { get; }
+        string DisplayName { get; }
     }
 }

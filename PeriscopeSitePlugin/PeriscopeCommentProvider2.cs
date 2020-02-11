@@ -399,7 +399,7 @@ namespace PeriscopeSitePlugin
                 var userId = message.UserId;
                 var isFirstComment = _first.IsFirstComment(userId);
                 var user = GetUser(userId);
-                user.Name = message.NameItems;
+                user.Name = MessagePartFactory.CreateMessageItems(message.Text);
                 var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
@@ -415,7 +415,7 @@ namespace PeriscopeSitePlugin
                 var userId = message.UserId;
                 var isFirstComment = false;
                 var user = GetUser(userId);
-                user.Name = message.NameItems;
+                user.Name = MessagePartFactory.CreateMessageItems(message.DisplayName);
                 var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));
@@ -431,7 +431,7 @@ namespace PeriscopeSitePlugin
                 var userId = message.UserId;
                 var isFirstComment = false;
                 var user = GetUser(userId);
-                user.Name = message.NameItems;
+                user.Name = MessagePartFactory.CreateMessageItems(message.DisplayName);
                 var metadata = CreateMessageMetadata(message, user, isFirstComment);
                 var methods = new MessageMethods();
                 RaiseMessageReceived(new MessageContext(message, metadata, methods));

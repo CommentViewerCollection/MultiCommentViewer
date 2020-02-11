@@ -3,17 +3,15 @@ using System.Collections.Generic;
 
 namespace MirrativSitePlugin
 {
-    internal class MirrativConnected : MessageBase, IMirrativConnected
+    internal class MirrativConnected : MessageBase2, IMirrativConnected
     {
         public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Connected;
+        public string Text { get; }
 
         public MirrativConnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("配信に接続しました"),
-            };
+            Text = "接続しました";
         }
     }
 }

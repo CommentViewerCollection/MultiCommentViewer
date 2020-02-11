@@ -10,7 +10,7 @@ using ryu_s.BrowserCookie;
 
 namespace NicoSitePlugin
 {
-    abstract class CommentProviderInternalBase: INicoCommentProviderInternal
+    abstract class CommentProviderInternalBase : INicoCommentProviderInternal
     {
         protected readonly ICommentOptions _options;
         protected readonly INicoSiteOptions _siteOptions;
@@ -31,8 +31,7 @@ namespace NicoSitePlugin
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.NicoLive,
                 Type = type,
             }, _options);

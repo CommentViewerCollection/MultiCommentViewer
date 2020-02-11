@@ -17,6 +17,11 @@ namespace YouTubeLiveSitePlugin.Test2
         public string XsrfToken { get; set; }
         public bool IsLoggedIn { get; set; }
     }
+    class ChatContinuation
+    {
+        public string AllChatContinuation { get; set; }
+        public string JouiChatContinuation { get; set; }
+    }
     static class Tools
     {
         /// <summary>
@@ -31,7 +36,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public static LiveChatContext GetLiveChatContext(string liveChatHtml)
         {
             var context = new LiveChatContext();
-                        
+
             var html = liveChatHtml;
 
             //XSRF_TOKEN
@@ -77,11 +82,11 @@ namespace YouTubeLiveSitePlugin.Test2
             };
             var data = (JObject)JsonConvert.DeserializeObject(ytInitialData);
             var temp = data[arr[0]];
-            for(int i = 1;i<arr.Length;i++)
+            for (int i = 1; i < arr.Length; i++)
             {
                 var s = arr[i];
                 temp = temp[s];
-                if(temp == null)
+                if (temp == null)
                 {
                     Debug.WriteLine("次の要素がない:" + s);
                     serviceEndPoint = null;
@@ -161,7 +166,7 @@ namespace YouTubeLiveSitePlugin.Test2
         /// <exception cref="ChatUnavailableException"></exception>
         /// 
         /// <returns></returns>
-        public static (IContinuation continuation, List<CommentData> actions) ParseYtInitialData(string s)
+        public static (IContinuation continuation, ChatContinuation, List<CommentData> actions) ParseYtInitialData(string s)
         {
             var json = DynamicJson.Parse(s);
             if (!json.IsDefined("contents"))
@@ -177,6 +182,11 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 throw new ContinuationNotExistsException();
             }
+            var chatContinuation = new ChatContinuation
+            {
+                AllChatContinuation = (string)json.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[1].continuation.reloadContinuationData.continuation,
+                JouiChatContinuation = (string)json.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[0].continuation.reloadContinuationData.continuation,
+            };
 
             IContinuation continuation;
             var lowContinuations = json.contents.liveChatRenderer.continuations;
@@ -201,11 +211,11 @@ namespace YouTubeLiveSitePlugin.Test2
                 };
                 continuation = timed;
             }
-            
+
             var dataList = new List<CommentData>();
             if (json.contents.liveChatRenderer.IsDefined("actions"))
             {
-                foreach(var action in json.contents.liveChatRenderer.actions)
+                foreach (var action in json.contents.liveChatRenderer.actions)
                 {
                     try
                     {
@@ -226,7 +236,8 @@ namespace YouTubeLiveSitePlugin.Test2
                                 dataList.Add(commentData);
                             }
                         }
-                    }catch(ParseException ex)
+                    }
+                    catch (ParseException ex)
                     {
                         throw new ParseException(s, ex);
                     }
@@ -251,10 +262,10 @@ namespace YouTubeLiveSitePlugin.Test2
             //        }
             //    }
             //}
-            return (continuation, dataList);
+            return (continuation, chatContinuation, dataList);
         }
 
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -292,7 +303,7 @@ namespace YouTubeLiveSitePlugin.Test2
                     };
                     continuation = inv;
                 }
-                else if(continuations[0].IsDefined("timedContinuationData"))
+                else if (continuations[0].IsDefined("timedContinuationData"))
                 {
                     var timed = continuations[0].timedContinuationData;
                     var inv = new TimedContinuation

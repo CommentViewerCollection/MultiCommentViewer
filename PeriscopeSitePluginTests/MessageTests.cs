@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using PeriscopeSitePlugin;
 using SitePlugin;
+using System;
 
 namespace PeriscopeSitePluginTests
 {
@@ -15,13 +16,12 @@ namespace PeriscopeSitePluginTests
             var message = MessageParser.ParseWebsocketMessage(data);
             var kind1type1 = MessageParser.Parse(message) as Kind1Type1;
             var comment = new PeriscopeComment(kind1type1);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("Yeah") }, comment.CommentItems);
+            Assert.AreEqual("Yeah", comment.Text);
             Assert.AreEqual("BDDDFC39-FDE0-42D7-8977-D3945E8EC783", comment.Id);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("PanAm Style") }, comment.NameItems);
+            Assert.AreEqual("PanAm Style", comment.DisplayName);
             Assert.AreEqual(PeriscopeMessageType.Comment, comment.PeriscopeMessageType);
-            Assert.AreEqual("19:56:45", comment.PostTime);
+            Assert.AreEqual(new DateTime(2019, 4, 26, 19, 56, 45, 782), comment.PostedAt);
             Assert.AreEqual(SiteType.Periscope, comment.SiteType);
-            Assert.IsNull(comment.UserIcon);
             Assert.AreEqual("1WgKgapJvplEv", comment.UserId);
         }
         [Test]
@@ -31,13 +31,12 @@ namespace PeriscopeSitePluginTests
             var message = MessageParser.ParseWebsocketMessage(data);
             var kind1type1 = MessageParser.Parse(message) as Kind1Type1;
             var comment = new PeriscopeComment(kind1type1);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("lol") }, comment.CommentItems);
+            Assert.AreEqual("lol", comment.Text);
             Assert.AreEqual("92fc7d61-d96e-4433-9748-56edf7101268", comment.Id);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("MLCGoddessOfWar") }, comment.NameItems);
+            Assert.AreEqual("MLCGoddessOfWar", comment.DisplayName);
             Assert.AreEqual(PeriscopeMessageType.Comment, comment.PeriscopeMessageType);
-            Assert.AreEqual("02:26:50", comment.PostTime);
+            Assert.AreEqual(new DateTime(2019, 5, 14, 2, 26, 50, 80), comment.PostedAt);
             Assert.AreEqual(SiteType.Periscope, comment.SiteType);
-            Assert.IsNull(comment.UserIcon);
             Assert.AreEqual("1eRKxBgxlwEwA", comment.UserId);
         }
     }

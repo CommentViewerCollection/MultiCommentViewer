@@ -164,7 +164,7 @@ namespace MirrativSitePlugin
                 var methods = new MirrativMessageMethods();
                 if (_siteOptions.NeedAutoSubNickname)
                 {
-                    var messageText = message.CommentItems.ToText();
+                    var messageText = comment.Text;
                     var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
                     if (!string.IsNullOrEmpty(nick))
                     {
@@ -198,7 +198,7 @@ namespace MirrativSitePlugin
                 var methods = new MirrativMessageMethods();
                 if (_siteOptions.NeedAutoSubNickname)
                 {
-                    var messageText = message.CommentItems.ToText();
+                    var messageText = item.Text;
                     var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
                     if (!string.IsNullOrEmpty(nick))
                     {

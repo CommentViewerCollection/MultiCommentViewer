@@ -10,5 +10,6 @@ namespace SitePluginCommon
         public string Active { get; set; }
         public string TotalViewers { get; set; }
         public bool? IsLive { get; set; }
+        public string Others { get; }
     }
 }

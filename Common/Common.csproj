@@ -90,6 +90,7 @@
     <Compile Include="FontSelectorViewModel.cs" />
     <Compile Include="InfoCommentViewModel.cs" />
     <Compile Include="IOTest.cs" />
+    <Compile Include="IWebsocket.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="LoggerTest.cs" />
     <Compile Include="MessageImage.cs" />
@@ -101,6 +102,7 @@
     <Compile Include="UserTest.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="ValueConverterGroup.cs" />
+    <Compile Include="Websocket.cs" />
     <Compile Include="Wpf\NumericUpDown.xaml.cs">
       <DependentUpon>NumericUpDown.xaml</DependentUpon>
     </Compile>
@@ -162,6 +164,9 @@
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.112</Version>
+    </PackageReference>
+    <PackageReference Include="WebSocket4Net">
+      <Version>0.15.2</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System;
 
 namespace ShowRoomSitePlugin
 {
@@ -12,18 +13,24 @@ namespace ShowRoomSitePlugin
         Leave,
     }
 
-    public interface IShowRoomMessage : IMessage
+    public interface IShowRoomMessage : ISiteMessage
     {
         ShowRoomMessageType ShowRoomMessageType { get; }
     }
     public interface IShowRoomConnected : IShowRoomMessage
     {
+        string Text { get; }
     }
     public interface IShowRoomDisconnected : IShowRoomMessage
     {
+        string Text { get; }
     }
-    public interface IShowRoomComment : IShowRoomMessage, IMessageComment
+    public interface IShowRoomComment : IShowRoomMessage
     {
+        string UserName { get; }
+        string Text { get; }
+        DateTime PostedAt { get; }
+        string UserId { get; }
     }
     public interface IShowRoomJoin : IShowRoomMessage
     {

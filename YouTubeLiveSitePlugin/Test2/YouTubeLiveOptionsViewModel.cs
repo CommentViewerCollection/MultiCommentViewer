@@ -31,6 +31,11 @@ namespace YouTubeLiveSitePlugin.Test2
             get { return ChangedOptions.IsAutoSetNickname; }
             set { ChangedOptions.IsAutoSetNickname = value; }
         }
+        public bool IsAllChat
+        {
+            get => ChangedOptions.IsAllChat;
+            set => ChangedOptions.IsAllChat = value;
+        }
         private readonly YouTubeLiveSiteOptions _origin;
         private readonly YouTubeLiveSiteOptions changed;
         internal YouTubeLiveSiteOptions OriginOptions { get { return _origin; } }

@@ -3,16 +3,15 @@ using System.Collections.Generic;
 
 namespace LineLiveSitePlugin
 {
-    internal class LineLiveDisconnected : MessageBase, ILineLiveDisconnected
+    internal class LineLiveDisconnected : MessageBase2, ILineLiveDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.LineLive;
         public LineLiveMessageType LineLiveMessageType { get; } = LineLiveMessageType.Disconnected;
+        public string Text { get; }
+
         public LineLiveDisconnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
-            };
+            Text = "切断しました";
         }
     }
 }

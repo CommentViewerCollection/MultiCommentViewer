@@ -11,17 +11,21 @@ namespace YouTubeLiveSitePlugin.Test2
         Color PaidCommentBackColor { get; set; }
         Color PaidCommentForeColor { get; set; }
         bool IsAutoSetNickname { get; set; }
+        bool IsAllChat { get; set; }
     }
     internal class YouTubeLiveSiteOptions : DynamicOptionsBase, IYouTubeLiveSiteOptions
     {
         public Color PaidCommentBackColor { get => GetValue(); set => SetValue(value); }
         public Color PaidCommentForeColor { get => GetValue(); set => SetValue(value); }
         public bool IsAutoSetNickname { get => GetValue(); set => SetValue(value); }
+        public bool IsAllChat { get => GetValue(); set => SetValue(value); }
+
         protected override void Init()
         {
             Dict.Add(nameof(PaidCommentBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(PaidCommentForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(IsAutoSetNickname), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsAllChat), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
         internal YouTubeLiveSiteOptions Clone()
         {

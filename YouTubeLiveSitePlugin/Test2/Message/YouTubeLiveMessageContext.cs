@@ -4,7 +4,7 @@ namespace YouTubeLiveSitePlugin.Test2
 {
     internal class YouTubeLiveMessageContext : IMessageContext
     {
-        public SitePlugin.IMessage Message { get; }
+        public SitePlugin.ISiteMessage Message { get; }
 
         public IMessageMetadata Metadata { get; }
 

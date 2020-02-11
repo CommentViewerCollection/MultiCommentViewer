@@ -16,8 +16,7 @@ namespace MultiCommentViewer
     {
         event EventHandler<IPlugin> PluginAdded;
         void LoadPlugins(IPluginHost host);
-        void SetComments(ICommentViewModel comments);
-        void SetMessage(IMessage message, IMessageMetadata messageMetadata);
+        void SetMessage(ISiteMessage message, IMessageMetadata messageMetadata);
         void OnLoaded();
         void OnClosing();
         void OnTopmostChanged(bool isTopmost);
@@ -62,23 +61,6 @@ namespace MultiCommentViewer
             {
                 plugin.Host = host;
                 PluginAdded?.Invoke(this, plugin);
-            }
-        }
-        public void SetComments(ICommentViewModel comment)
-        {
-            var pluginCommentData = new CommentData
-            {
-                Comment = GetString(comment.MessageItems),
-                IsNgUser = false,
-                Nickname = GetString(comment.NameItems),
-                ThumbnailUrl = comment.Thumbnail?.Url,
-                ThumbnailWidth = comment.Thumbnail?.Width ?? 50,
-                ThumbnailHeight = comment.Thumbnail?.Height ?? 50,
-                Is184=comment.Is184,
-            };
-            foreach (var plugin in _plugins)
-            {
-                plugin.OnCommentReceived(pluginCommentData);
             }
         }
         private string GetString(IEnumerable<IMessagePart> items, string separator = "")
@@ -135,7 +117,7 @@ namespace MultiCommentViewer
             }
         }
 
-        public void SetMessage(IMessage message, IMessageMetadata messageMetadata)
+        public void SetMessage(ISiteMessage message, IMessageMetadata messageMetadata)
         {
             foreach (var plugin in _plugins)
             {

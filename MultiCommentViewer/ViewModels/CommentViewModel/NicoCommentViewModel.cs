@@ -1,4 +1,6 @@
-﻿using Plugin;
+﻿using Common;
+using NicoSitePlugin;
+using Plugin;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
@@ -63,11 +65,14 @@ namespace MultiCommentViewer
             };
             _message.ValueChanged += (s, e) =>
             {
-                switch (e.PropertyName)
+                if (_message is INicoComment nicoComment)
                 {
-                    case nameof(_message.NameItems):
-                        RaisePropertyChanged(nameof(NameItems));
-                        break;
+                    switch (e.PropertyName)
+                    {
+                        case nameof(nicoComment.UserName):
+                            RaisePropertyChanged(nameof(NameItems));
+                            break;
+                    }
                 }
             };
             _metadata.PropertyChanged += (s, e) =>
@@ -119,44 +124,47 @@ namespace MultiCommentViewer
         public NicoCommentViewModel(NicoSitePlugin.INicoComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(comment as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
-            PostTime = comment.PostTime;
+            if (!string.IsNullOrEmpty(comment.UserName))
+            {
+                _nameItems = MessagePartFactory.CreateMessageItems(comment.UserName);
+            }
+            MessageItems = MessagePartFactory.CreateMessageItems(comment.Text);
+            //Thumbnail = comment.UserIcon;
+            Id = comment.Id;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoAd ad, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(ad as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
-            _nameItems = ad.NameItems;
-            MessageItems = ad.CommentItems;
-            PostTime = ad.PostTime;
+            //_nameItems = MessagePartFactory.CreateMessageItems(ad.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(ad.Text);
+            PostTime = ad.PostedAt.ToString("HH:mm:ss");
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(item as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
-            _nameItems = item.NameItems;
-            MessageItems = item.CommentItems;
-            PostTime = item.PostTime;
+            //_nameItems = MessagePartFactory.CreateMessageItems(item.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(item.Text);
+            PostTime = item.PostedAt.ToString("HH:mm:ss");
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoInfo info, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(info as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
-            _nameItems = info.NameItems;
-            MessageItems = info.CommentItems;
-            PostTime = info.PostTime;
+            //_nameItems = MessagePartFactory.CreateMessageItems(info.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(info.Text);
+            PostTime = info.PostedAt.ToString("HH:mm:ss");
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(connected as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(disconnected as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

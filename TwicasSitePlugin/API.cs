@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Text.RegularExpressions;
 using System;
+using System.Runtime.InteropServices;
+using Codeplex.Data;
 
 namespace TwicasSitePlugin
 {
@@ -45,6 +47,24 @@ namespace TwicasSitePlugin
     }
     static class API
     {
+        public static async Task<string> GetWebsocketUrl(IDataServer server, long movie_id)
+        {
+            var url = "https://twitcasting.tv/eventpubsuburl.php";
+            var data = new Dictionary<string, string>
+            {
+                {"movie_id",  movie_id.ToString()}
+            };
+            var res = await server.PostAsync(url, data, null);
+            var d = DynamicJson.Parse(res);
+            if (d.IsDefined("url"))
+            {
+                return d.url;
+            }
+            else
+            {
+                return null;
+            }
+        }
         /// <summary>
         /// コメント一覧を取得する（非公開API）
         /// </summary>
@@ -54,12 +74,12 @@ namespace TwicasSitePlugin
         /// <param name="count"></param>
         public static async Task<(LowObject.Comment[], string raw)> GetListAll(IDataServer dataSource, string broadcasterName, long live_id, long lastCommentId, int from, int count, CookieContainer cc)
         {
-            var url = $"http://twitcasting.tv/{broadcasterName}/userajax.php?c=listall&m={live_id}&k={lastCommentId}&f={from}&n={count}";
+            var url = $"https://twitcasting.tv/{broadcasterName}/userajax.php?c=listall&m={live_id}&k={lastCommentId}&f={from}&n={count}";
             var str = await dataSource.GetAsync(url, cc);
             var obj = Tools.Deserialize<LowObject.Comment[]>(str);
             return (obj, str);
         }
-        public static async Task<(IStreamChecker, string raw)> GetUtreamChecker(IDataServer dataServer, string broadcasterId, string lastItemId)
+        public static async Task<(IStreamChecker, string raw)> GetStreamChecker(IDataServer dataServer, string broadcasterId, string lastItemId)
         {
             if (string.IsNullOrEmpty(lastItemId))
             {
@@ -86,7 +106,7 @@ namespace TwicasSitePlugin
         /// <returns></returns>
         /// <exception cref="System.Net.Http.HttpRequestException"></exception>
         /// <exception cref="InvalidBroadcasterIdException"></exception>
-        public static async Task<(LowObject.LiveContext,string raw)> GetLiveContext(IDataServer dataSource, string broadcaster, CookieContainer cc)
+        public static async Task<(LowObject.LiveContext, string raw)> GetLiveContext(IDataServer dataSource, string broadcaster, CookieContainer cc)
         {
             var url = "http://twitcasting.tv/" + broadcaster;
             var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.146 Safari/537.36";
@@ -176,8 +196,8 @@ namespace TwicasSitePlugin
             return (comments, newCnum, str);
         }
 
-        internal static async Task<(LowObject.Comment[],string raw)> PostCommentAsync(
-            IDataServer dataSource, string broadcasterId,long liveId, long lastCommentId, string comment, CookieContainer cc)
+        internal static async Task<(LowObject.Comment[], string raw)> PostCommentAsync(
+            IDataServer dataSource, string broadcasterId, long liveId, long lastCommentId, string comment, CookieContainer cc)
         {
             var url = $"https://twitcasting.tv/{broadcasterId}/userajax.php?c=post";
             var data = new Dictionary<string, string>

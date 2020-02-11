@@ -149,7 +149,6 @@ namespace YoyakuPluginTests
     public class コマンドテスト
     {
         PluginBody _plugin;
-        IMessageMetadata _messageMetadata;
         SettingsViewModel _vm;
         private IYouTubeLiveComment CreateMessage(string name, string message, string userId)
         {
@@ -205,12 +204,6 @@ namespace YoyakuPluginTests
             var vm = CreateViewModel(model);
             _vm = vm;
 
-            var messageMetadataMock = new Mock<IMessageMetadata>();
-            messageMetadataMock.Setup(m => m.User).Returns(new UserTest("1"));
-            messageMetadataMock.Setup(x => x.SiteContextGuid).Returns(Guid.NewGuid());
-            var messageMetadata = messageMetadataMock.Object;
-            _messageMetadata = messageMetadata;
-
             var plugin = CreatePlugin(vm, model, options);
             _plugin = plugin;
             plugin.Host = host;
@@ -228,7 +221,13 @@ namespace YoyakuPluginTests
             messageMock.Setup(m => m.CommentItems).Returns(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment) });
             messageMock.Setup(m => m.UserId).Returns(userId);
             var message = messageMock.Object;
-            _plugin.OnMessageReceived(message, _messageMetadata);
+
+            var messageMetadataMock = new Mock<IMessageMetadata>();
+            messageMetadataMock.Setup(m => m.User).Returns(new UserTest(userId));
+            messageMetadataMock.Setup(x => x.SiteContextGuid).Returns(Guid.NewGuid());
+            var messageMetadata = messageMetadataMock.Object;
+
+            _plugin.OnMessageReceived(message, messageMetadata);
         }
         [Test]
         public void 登録が可能か()

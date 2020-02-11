@@ -1,5 +1,6 @@
 ﻿using SitePlugin;
 using System;
+using System.Collections.Generic;
 
 namespace NicoSitePlugin
 {
@@ -16,34 +17,43 @@ namespace NicoSitePlugin
         Ignored,
     }
 
-    public interface INicoMessage : IMessage
+    public interface INicoMessage : ISiteMessage
     {
         NicoMessageType NicoMessageType { get; }
     }
     public interface INicoConnected : INicoMessage
     {
+        string Text { get; }
     }
     public interface INicoDisconnected : INicoMessage
     {
+        string Text { get; }
     }
-    public interface INicoComment : INicoMessage, IMessageComment
+    public interface INicoComment : INicoMessage
     {
+        string UserName { get; }
+        string Text { get; }
+        string Id { get; }
         bool Is184 { get; }
         string RoomName { get; }
         int? ChatNo { get; }
-        DateTime PostedDate { get; }
+        DateTime PostedAt { get; }
+        string UserId { get; }
+        void SetUserName(string userName);
     }
     public interface INicoAd : INicoMessage
     {
+        string Text { get; }
+        DateTime PostedAt { get; }
+        string UserId { get; }
         string RoomName { get; }
-        int? ChatNo { get; }
-        string PostTime { get; }
     }
     public interface INicoItem : INicoMessage
     {
+        string UserId { get; }
+        DateTime PostedAt { get; }
+        string Text { get; }
         string RoomName { get; }
-        int? ChatNo { get; }
-        string PostTime { get; }
         string ItemName { get; }
         int ItemCount { get; }
     }
@@ -53,7 +63,10 @@ namespace NicoSitePlugin
     }
     public interface INicoInfo : INicoMessage
     {
+        string Text { get; }
+        DateTime PostedAt { get; }
+        string UserId { get; }
+        string RoomName { get; }
         int No { get; }
-        string PostTime { get; }
     }
 }

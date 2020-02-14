@@ -57,7 +57,7 @@ namespace ryu_s.BrowserCookie
             public string ProfileName { get; }
 
             public BrowserType Type { get; }
-
+            ChromeValueDecryptor _decryptor = new ChromeValueDecryptor();
             public List<Cookie> GetCookieCollection(string domain)
             {
                 var query = "SELECT value, name, host_key, path, expires_utc, encrypted_value FROM cookies WHERE host_key LIKE '%" + domain + "'";
@@ -78,6 +78,7 @@ namespace ryu_s.BrowserCookie
                 Path = path;
                 ProfileName = profileName;
                 Type = type;
+                _decryptor.LocalStatePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\" + "Local State";
             }
             #endregion
 
@@ -144,7 +145,9 @@ namespace ryu_s.BrowserCookie
                         if (string.IsNullOrEmpty(value))//暗号化してるっぽいから復号化してみる。
                         {
                             var encrypted_value = (byte[])row["encrypted_value"];
-                            value = UnProtect(encrypted_value);
+                            //value = UnProtect(encrypted_value);
+                            var (isSuccess, v) = _decryptor.Decrypt(encrypted_value);
+                            value = v;
                         }
                         //ここでURLエンコードをやると、ふわっちでAPIが取得できなかった。ここではやるべきではないのかも。
                         //if (value != null)

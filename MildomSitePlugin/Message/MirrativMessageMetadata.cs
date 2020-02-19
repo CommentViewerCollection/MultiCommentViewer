@@ -157,6 +157,17 @@ namespace MildomSitePlugin
             CommentProvider = cp;
         }
     }
+    internal class GiftMessageMetadata : MessageMetadataBase
+    {
+        public override Color BackColor => _options.BroadcastInfoBackColor;
+        public override Color ForeColor => _options.BroadcastInfoForeColor;
+        public GiftMessageMetadata(MildomGift _, ICommentOptions options, IMildomSiteOptions siteOptions, IUser user, ICommentProvider cp)
+            : base(options, siteOptions)
+        {
+            User = user;
+            CommentProvider = cp;
+        }
+    }
     internal class CommentMessageMetadata : MessageMetadataBase
     {
         public override Color BackColor

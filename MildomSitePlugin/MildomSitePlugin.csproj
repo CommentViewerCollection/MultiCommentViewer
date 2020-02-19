@@ -57,12 +57,13 @@
     <Compile Include="IMessageProvider.cs" />
     <Compile Include="IMildomSiteOptions.cs" />
     <Compile Include="Low\emotions\Class1.cs" />
+    <Compile Include="Low\gift_find\Class1.cs" />
     <Compile Include="Low\UserInfo\Class1.cs" />
     <Compile Include="MessageProvider.cs" />
+    <Compile Include="Message\MildomGift.cs" />
     <Compile Include="Message\MirrativComment.cs" />
     <Compile Include="Message\MirrativConnected.cs" />
     <Compile Include="Message\MirrativDisconnected.cs" />
-    <Compile Include="Message\MirrativItem.cs" />
     <Compile Include="Message\MirrativJoinRoom.cs" />
     <Compile Include="Message\MirrativMessageContext.cs" />
     <Compile Include="Message\MirrativMessageMetadata.cs" />

@@ -897,6 +897,10 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new McvMildomCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
+                else if (mildomMessage is MildomSitePlugin.IMildomGift gift)
+                {
+                    mcvCvm = new McvMildomCommentViewModel(gift, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
             }
             else if (messageContext.Message is TestSitePlugin.ITestMessage testMessage)
             {
@@ -1446,7 +1450,7 @@ namespace MultiCommentViewer
 #endif
             }
         }
-#endregion //Properties
+        #endregion //Properties
 
         public MainViewModel() : base(new DynamicOptionsTest())
         {

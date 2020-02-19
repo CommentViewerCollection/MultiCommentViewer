@@ -53,6 +53,7 @@ namespace MildomSitePlugin
         private readonly IMildomSiteOptions _siteOptions;
         private readonly IUserStoreManager _userStoreManager;
 
+        Dictionary<long, GiftItem> _giftDict;
         public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnect();
@@ -82,8 +83,8 @@ namespace MildomSitePlugin
             }
             var roomId = mayBeRoomId.Value;
             var cc = GetCookieContainer(browserProfile);
-            //var imageDict = await Api.GetImageDictionary(_server);
             _imageDict = await Api.GetImageDictionary(_server, roomId, cc);
+            _giftDict = await Tools.GetGiftDict(_server);
 
             //TODO:websocketUrlをAPI経由で取得する
             //https://im.mildom.com/?room_id=10045175&type=chat&call=get_server&cluster=aws_japan
@@ -134,10 +135,10 @@ namespace MildomSitePlugin
                 RaiseMessageReceived(messageContext);
             }
         }
-        public override void SetMessage(string rawMessage)
+        public override async void SetMessage(string rawMessage)
         {
             var internalMessage = MessageParser.Parse(rawMessage, _imageDict);
-            if(internalMessage == null)
+            if (internalMessage == null)
             {
                 SendSystemInfo($"ParseError: {rawMessage}", InfoType.Error);
                 return;
@@ -179,6 +180,25 @@ namespace MildomSitePlugin
                     }
                 }
                 return new MildomMessageContext(comment, metadata, methods);
+            }
+            else if (message is OnGiftMessage internalGift)
+            {
+                var userId = internalGift.UserId.ToString();
+                //var isFirst = _first.IsFirstComment(userId);
+                var user = GetUser(userId);
+
+                if (!_giftDict.TryGetValue(internalGift.GiftId, out var item))
+                {
+                    item = new GiftItem("(未知のギフト)");
+                }
+                var gift = new MildomGift(internalGift, item);
+                var metadata = new GiftMessageMetadata(gift, _options, _siteOptions, user, this)
+                {
+                    IsInitialComment = _isBeeingSentInitialComments,
+                    SiteContextGuid = SiteContextGuid,
+                };
+                var methods = new MildomMessageMethods();
+                return new MildomMessageContext(gift, metadata, methods);
             }
             //if (message is IMildomComment comment)
             //{

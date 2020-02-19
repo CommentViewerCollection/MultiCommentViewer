@@ -63,6 +63,19 @@ namespace MildomSitePlugin
         public DateTime PostedAt { get; internal set; }
         public string Raw { get; set; }
     }
+    internal class OnGiftMessage : IInternalMessage
+    {
+        public int Count { get; set; }
+        public int GiftCoin { get; set; }
+        public int GiftId { get; set; }
+        public int Level { get; set; }
+        public long RoomId { get; set; }
+        public long UserId { get; set; }
+        public string UserName { get; set; }
+        public string UserImg { get; set; }
+        public DateTime PostedAt { get; internal set; }
+        public string Raw { get; set; }
+    }
     class MessageParser
     {
         public static DateTime GetCurrentDateTime()
@@ -157,6 +170,7 @@ namespace MildomSitePlugin
                         UserId = (long)d.userId,
                         UserName = d.userName,
                         UserImg = d.userImg,
+                        PostedAt = GetCurrentDateTime(),
                         Raw = raw,
                     };
                     break;

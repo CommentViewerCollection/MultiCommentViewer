@@ -108,7 +108,19 @@ namespace MirrativSitePlugin
                                     UserId = json["u"],
                                     Username = json["ac"],
                                 };
-                                var itemCount = int.Parse(json["count"]);
+                                var countRaw = json["count"];
+                                int itemCount;
+                                switch (countRaw)
+                                {
+                                    case string s:
+                                        itemCount = int.Parse((string)s);
+                                        break;
+                                    case double n:
+                                        itemCount = (int)n;
+                                        break;
+                                    default:
+                                        throw new ParseException(data);
+                                }
                                 if (itemCount == 1)
                                 {
                                     message.Comment = json["ac"] + "が" + json["gift_title"] + "を贈りました";

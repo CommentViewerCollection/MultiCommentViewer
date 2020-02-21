@@ -429,5 +429,28 @@ namespace NicoSitePlugin
             }
             return ret;
         }
+        public static IChat ParseChat(string raw)
+        {
+            var obj = Tools.Deserialize<Low.Chat.RootObject>(raw);
+            var lowChat = obj.Chat;
+            var chat = new Chat()
+            {
+                Anonymity = lowChat.Anonymity,
+                DateStr = lowChat.Date.ToString(),
+                Locale = lowChat.Locale,
+                Mail = lowChat.Mail,
+                No = lowChat.No,
+                //Origin=
+                Premium = lowChat.Premium,
+                Raw = raw,
+                Score = lowChat.Score,
+                Text = lowChat.Content,
+                Thread = lowChat.Thread,
+                UserId = lowChat.UserId,
+                VposStr = lowChat.Vpos.ToString(),
+                //Yourpost=
+            };
+            return chat;
+        }
     }
 }

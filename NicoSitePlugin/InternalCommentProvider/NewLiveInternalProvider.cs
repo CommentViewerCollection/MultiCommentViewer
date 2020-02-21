@@ -175,5 +175,9 @@ namespace NicoSitePlugin
             _messageProvider.PostComment(threadId, vpos, ticket, userId, premium, postkey, mail, comment);
             return Task.CompletedTask;
         }
+        public override void SetMessage(string raw)
+        {
+            _messageProvider.SetMessage(raw);
+        }
     }
 }

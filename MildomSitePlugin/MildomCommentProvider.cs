@@ -70,6 +70,7 @@ namespace MildomSitePlugin
             }
         }
         NewAutoReconnector _autoReconnector;
+        Dictionary<int, string> _imageDict;
         private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
             _isBeeingSentInitialComments = true;
@@ -82,12 +83,12 @@ namespace MildomSitePlugin
             var roomId = mayBeRoomId.Value;
             var cc = GetCookieContainer(browserProfile);
             //var imageDict = await Api.GetImageDictionary(_server);
-            var imageDict = await Api.GetImageDictionary(_server, roomId, cc);
+            _imageDict = await Api.GetImageDictionary(_server, roomId, cc);
 
             //TODO:websocketUrlをAPI経由で取得する
             //https://im.mildom.com/?room_id=10045175&type=chat&call=get_server&cluster=aws_japan
             var websocketUrl = "wss://jp-room1.mildom.com/?roomId=" + roomId;
-            var p1 = new MessageProvider(new WebSocket(websocketUrl), _logger, imageDict);
+            var p1 = new MessageProvider(new WebSocket(websocketUrl), _logger);
             p1.MessageReceived += P1_MessageReceived;
             p1.MetadataUpdated += P1_MetadataUpdated;
             //var p2 = new MetadataProvider2(_server, _siteOptions);
@@ -117,23 +118,36 @@ namespace MildomSitePlugin
         {
 
         }
-
-        private void P1_MessageReceived(object sender, IInternalMessage e)
+        public void SetMessage(IInternalMessage internalMessage)
         {
-            var message = e;
-            if (message is EnterRoom)
+            if (internalMessage is EnterRoom)
             {
                 _isBeeingSentInitialComments = true;
             }
-            else if (_isBeeingSentInitialComments && !(message is OnChatMessage))
+            else if (_isBeeingSentInitialComments && !(internalMessage is OnChatMessage))
             {
                 _isBeeingSentInitialComments = false;
             }
-            var messageContext = CreateMessageContext(message);
+            var messageContext = CreateMessageContext(internalMessage);
             if (messageContext != null)
             {
                 RaiseMessageReceived(messageContext);
             }
+        }
+        public override void SetMessage(string rawMessage)
+        {
+            var internalMessage = MessageParser.Parse(rawMessage, _imageDict);
+            if(internalMessage == null)
+            {
+                SendSystemInfo($"ParseError: {rawMessage}", InfoType.Error);
+                return;
+            }
+            SetMessage(internalMessage);
+        }
+        private void P1_MessageReceived(object sender, string e)
+        {
+            var raw = e;
+            SetMessage(raw);
         }
         /// <summary>
         /// 初期コメントが送られてきているか。

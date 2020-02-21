@@ -22,6 +22,7 @@ namespace SitePlugin
         event EventHandler<IMetadata> MetadataUpdated;
         //Task PostCommentAsync(string text);
         Task ConnectAsync(string input, IBrowserProfile browserProfile);
+        void SetMessage(string raw);
         void Disconnect();
         //IEnumerable<ICommentViewModel> GetUserComments(IUser user);
         bool CanConnect { get; }

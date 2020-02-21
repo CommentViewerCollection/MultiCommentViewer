@@ -239,6 +239,18 @@ namespace MixerSitePlugin
         }
 
         NewAutoReconnector _autoReconnector;
+        MessageProvider2 _p1;
+        bool _isInitialized;
+        public async Task InitAsync()
+        {
+            if (_isInitialized) return;
+            _isInitialized = true;
+
+            var p1 = new MessageProvider2(new Websocket("wss://chat.mixer.com/?version=1.0"), _logger);
+            p1.MessageReceived += P1_MessageReceived;
+            p1.MetadataUpdated += P1_MetadataUpdated;
+            _p1 = p1;
+        }
         public async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
             var channelName = Tools.ExtractUserId(input);
@@ -248,23 +260,22 @@ namespace MixerSitePlugin
                 return;
             }
             var cc = GetCookieContainer(browserProfile, "mixer.com");
-            var p1 = new MessageProvider2(new Websocket("wss://chat.mixer.com/?version=1.0"), _logger);
-            p1.MessageReceived += P1_MessageReceived;
-            p1.MetadataUpdated += P1_MetadataUpdated;
+            await InitAsync();
+            
             //var p2 = new MetadataProvider2(_server, _siteOptions);
             //p2.MetadataUpdated += P2_MetadataUpdated;
             //p2.Master = p1;
             try
             {
-                var dummy = new DummyImpl(_server, input, _logger, cc, _siteOptions, p1);
+                var dummy = new DummyImpl(_server, input, _logger, cc, _siteOptions, _p1);
                 var connectionManager = new ConnectionManager(_logger);
                 _autoReconnector = new NewAutoReconnector(connectionManager, dummy, new MessageUntara(), _logger);
                 await _autoReconnector.AutoReconnectAsync();
             }
             finally
             {
-                p1.MessageReceived -= P1_MessageReceived;
-                p1.MetadataUpdated -= P1_MetadataUpdated;
+                //p1.MessageReceived -= P1_MessageReceived;
+                //p1.MetadataUpdated -= P1_MetadataUpdated;
                 //p2.MetadataUpdated -= P2_MetadataUpdated;
             }
         }
@@ -309,6 +320,12 @@ namespace MixerSitePlugin
         {
             throw new NotImplementedException();
         }
+
+        public override void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
+
         public MixerCommentProvider2(IDataServer server, ILogger logger, ICommentOptions options, IMixerSiteOptions siteOptions, IUserStoreManager userStoreManager)
             : base(logger, options)
         {

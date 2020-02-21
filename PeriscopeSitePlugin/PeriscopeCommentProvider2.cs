@@ -486,6 +486,12 @@ namespace PeriscopeSitePlugin
         {
             throw new NotImplementedException();
         }
+
+        public override void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
+
         public PeriscopeCommentProvider2(IDataServer server, ILogger logger, ICommentOptions options, IPeriscopeSiteOptions siteOptions, IUserStoreManager userStoreManager)
             : base(logger, options)
         {

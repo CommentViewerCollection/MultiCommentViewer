@@ -252,6 +252,16 @@ namespace NicoSitePlugin
             }
             return info;
         }
+
+        public void SetMessage(string raw)
+        {
+            if (_internal == null)
+            {
+                return;
+            }
+            _internal.SetMessage(raw);
+        }
+
         public Guid SiteContextGuid { get; set; }
         public NicoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IDataSource dataSource, ILogger logger, IUserStoreManager userStoreManager)
         {

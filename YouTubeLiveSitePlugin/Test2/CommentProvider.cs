@@ -326,6 +326,12 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return currentUserInfo;
         }
+
+        public void SetMessage(string raw)
+        {
+
+        }
+
         public Guid SiteContextGuid { get; set; }
         IYouTubeLibeServer _server;
         public CommentProvider(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)

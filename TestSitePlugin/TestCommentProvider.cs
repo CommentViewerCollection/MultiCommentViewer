@@ -156,6 +156,12 @@ namespace TestSitePlugin
             }, _options);
             MessageReceived?.Invoke(this, context);
         }
+
+        public void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
+
         public Guid SiteContextGuid { get; set; }
         public TestCommentProvider(ICommentOptions options, IUserStore userStore)
         {

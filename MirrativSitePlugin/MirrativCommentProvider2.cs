@@ -57,17 +57,33 @@ namespace MirrativSitePlugin
             }
             return liveId;
         }
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        MessageProvider2 _p1;
+        MetadataProvider2 _p2;
+        bool _isInitialized;
+        public async Task InitAsync()
         {
+            if (_isInitialized) return;
             var p1 = new MessageProvider2(new WebSocket("wss://online.mirrativ.com/"), _logger);
             p1.MessageReceived += P1_MessageReceived;
             p1.MetadataUpdated += P1_MetadataUpdated;
+            _p1 = p1;
             var p2 = new MetadataProvider2(_server, _siteOptions);
             p2.MetadataUpdated += P2_MetadataUpdated;
             p2.Master = p1;
+            _p2 = p2;
+        }
+        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        {
+            await InitAsync();
+            //var p1 = new MessageProvider2(new WebSocket("wss://online.mirrativ.com/"), _logger);
+            //p1.MessageReceived += P1_MessageReceived;
+            //p1.MetadataUpdated += P1_MetadataUpdated;
+            //var p2 = new MetadataProvider2(_server, _siteOptions);
+            //p2.MetadataUpdated += P2_MetadataUpdated;
+            //p2.Master = p1;
             try
             {
-                var dummy = new DummyImpl(_server, input, _logger, _siteOptions, p1, p2);
+                var dummy = new DummyImpl(_server, input, _logger, _siteOptions, _p1, _p2);
                 var connectionManager = new ConnectionManager(_logger);
                 _autoReconnector = new NewAutoReconnector(connectionManager, dummy, new MessageUntara(), _logger);
 
@@ -91,9 +107,9 @@ namespace MirrativSitePlugin
             }
             finally
             {
-                p1.MessageReceived -= P1_MessageReceived;
-                p1.MetadataUpdated -= P1_MetadataUpdated;
-                p2.MetadataUpdated -= P2_MetadataUpdated;
+                //p1.MessageReceived -= P1_MessageReceived;
+                //p1.MetadataUpdated -= P1_MetadataUpdated;
+                //p2.MetadataUpdated -= P2_MetadataUpdated;
             }
         }
 
@@ -276,6 +292,13 @@ namespace MirrativSitePlugin
         {
             throw new NotImplementedException();
         }
+
+        public override async void SetMessage(string raw)
+        {
+            await InitAsync();
+            _p1.SetMessage(raw);
+        }
+
         public MirrativCommentProvider2(IDataServer server, ILogger logger, ICommentOptions options, IMirrativSiteOptions siteOptions, IUserStoreManager userStoreManager)
             : base(logger, options)
         {

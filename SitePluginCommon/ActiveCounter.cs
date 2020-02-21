@@ -50,11 +50,11 @@ namespace SitePluginCommon
             while (true)
             {
                 var list = new List<Item>();
-                for(int i = 0; i < _stack.Count; )
+                for (int i = 0; i < _stack.Count;)
                 {
                     var item = _stack[i];
                     var expired = DateTime.Now.AddMinutes(-MeasureSpanMin);
-                    if(item.Time < expired)
+                    if (item.Time < expired)
                     {
                         lock (_lockObj)
                         {
@@ -77,6 +77,7 @@ namespace SitePluginCommon
                 }
                 catch (TaskCanceledException) { break; }
             }
+            _cts = null;
         }
         private readonly object _lockObj = new object();
         public void Add(T id)
@@ -89,7 +90,6 @@ namespace SitePluginCommon
         public void Stop()
         {
             _cts?.Cancel();
-            _cts = null;
         }
         #endregion
         List<Item> _stack = new List<Item>();

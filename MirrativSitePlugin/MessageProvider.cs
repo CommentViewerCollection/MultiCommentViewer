@@ -8,6 +8,14 @@ using SitePluginCommon.AutoReconnection;
 
 namespace MirrativSitePlugin
 {
+    class UnknownMessage : IMirrativMessage
+    {
+        public MirrativMessageType MirrativMessageType { get; } = MirrativMessageType.Unknown;
+        public string Raw { get; set; }
+        public SiteType SiteType { get; } = SiteType.Mirrativ;
+
+        public event EventHandler<ValueChangedEventArgs> ValueChanged;
+    }
     class MessageParser
     {
         public static Func<DateTime> GetCurrent { get; set; } = () => DateTime.Now;
@@ -62,6 +70,12 @@ namespace MirrativSitePlugin
                             }
                         }
                         break;
+                    //case 4://Followed
+                    //    {
+                    //        Debug.WriteLine(data);
+                    //        mirrativMessage = null;
+                    //    }
+                    //    break;
                     case 7:
                         Debug.WriteLine(data);
                         SendInfo(data, InfoType.Debug);
@@ -73,9 +87,15 @@ namespace MirrativSitePlugin
                             mirrativMessage = message;
                         }
                         break;
-                    case 34:
-                        mirrativMessage = null;
-                        break;
+                    //case 16://Shared
+                    //    {
+                    //        Debug.WriteLine(data);
+                    //        mirrativMessage = null;
+                    //    }
+                    //    break;
+                    //case 34:
+                    //    mirrativMessage = null;
+                    //    break;
                     case 35:
                         {
                             //{"gift_title":"かわいいエモモスナップ(300)","photo_gift_id":"9162721","burl":"","coins":"300","gift_small_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/assets\/img\/gift\/small_64.png?v=5","u":"4353835","nameplate_enabled":"1","t":35,"avatar_user_ids":"4072373,4383477,6221780,4353835,2921078,664329","count":1,"is_photo_gift":1,"ac":"matsu【\ud83c\udfa8定期組】\ud83c\udf77\ud83c\udccf\ud83d\udc9c ","total_gift_coins":"25972","iurl":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/image\/profile_image\/5b4ceb7de739f19491efe17165c7fa2f8c065170ef2b0c1ff039e96c48c6125e_m.jpeg?1552123860","gift_id":"64","pause_duration":"0","orientations":"0","gift_large_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/assets\/img\/gift\/large_64.png?v=5","photo_gift_image_url":"https:\/\/cdn.mirrativ.com\/mirrorman-prod\/image\/photo_gift:1552124210:4353835:26477211\/5b4ceb7de739f19491efe17165c7fa2f8c065170ef2b0c1ff039e96c48c6125e_origin.png?1552124211","share_text":"@KURORO966_Blackさん,@akatukihawk3さん,@usausa_otomeさん,@0609_spitzさん,@uru_umiさん,カルルンバ\ud83c\udfa8さんとの  #エモモスナップ！ #エモモ #ミラティブ"}
@@ -108,7 +128,19 @@ namespace MirrativSitePlugin
                                     UserId = json["u"],
                                     Username = json["ac"],
                                 };
-                                var itemCount = int.Parse(json["count"]);
+                                var countRaw = json["count"];
+                                int itemCount;
+                                switch (countRaw)
+                                {
+                                    case string s:
+                                        itemCount = int.Parse((string)s);
+                                        break;
+                                    case double n:
+                                        itemCount = (int)n;
+                                        break;
+                                    default:
+                                        throw new ParseException(data);
+                                }
                                 if (itemCount == 1)
                                 {
                                     message.Comment = json["ac"] + "が" + json["gift_title"] + "を贈りました";
@@ -125,9 +157,9 @@ namespace MirrativSitePlugin
                             }
                         }
                         break;
-                    case 38:
-                        mirrativMessage = null;
-                        break;
+                    //case 38:
+                    //    mirrativMessage = null;
+                    //    break;
                     default:
                         //{"u":"1895964","ac":"キザシ","burl":"","iurl":"https://cdn.mirrativ.com/mirrorman-prod/image/profile_image/bdbf7a85cf950b9fb058e58f0d476d90674843ef6b4952d95db0010e64e26c35_m.jpeg?1551359805","owner_name":"トオるん@火星人(本物)","target_live_id":"bT6KzStu8H0B5-dYa7la4A","t":9}
                         //{"users":[{"u":"4715932","ac":"プーのクマさん🐱💛","burl":"","iurl":"https://cdn.mirrativ.com/mirrorman-prod/image/profile_image/7f56101d8c1129b9c82ae4d9d7191e64fb55ea9eac3159bfe008791927c8e4b7_m.jpeg?1546437257"},{"u":"5428825","ac":"おとうふ (無職)🐰","burl":"","iurl":"https://cdn.mirrativ.com/mirrorman-prod/image/profile_image/d78aa116f61804ed94f9fd43745141b5a7cac66ff5773be03d6a16d6cc160294_m.jpeg?1546346805"},{"u":"4956040","ac":"飛べない・涼・🐱💛™️😻","burl":"","iurl":"https://cdn.mirrativ.com/mirrorman-prod/image/profile_image/7073ad377f51ddea20ce1d97312e6d2888d2b25d820e33beb5f7e90075935aee_m.jpeg?1545913736"}],"t":38}
@@ -136,7 +168,7 @@ namespace MirrativSitePlugin
                         Debug.WriteLine(data);
                         SendInfo(data, InfoType.Debug);
                         //throw new ParseException(data);
-                        mirrativMessage = null;
+                        mirrativMessage = new UnknownMessage { Raw = data };
                         break;
                 }
             }
@@ -248,6 +280,11 @@ namespace MirrativSitePlugin
         private void OnMessageReceived(string data)
         {
             var message = MessageParser.ParseMessage(data, SendInfo);
+            if (message is UnknownMessage)
+            {
+                _logger.LogException(new ParseException(data));
+                return;
+            }
             if (message != null)
             {
                 if (message is IMirrativDisconnected disconnected)
@@ -347,6 +384,11 @@ namespace MirrativSitePlugin
         private void OnMessageReceived(string data)
         {
             var message = MessageParser.ParseMessage(data, SendInfo);
+            if (message is UnknownMessage)
+            {
+                _logger.LogException(new ParseException(data));
+                return;
+            }
             if (message != null)
             {
                 MessageReceived?.Invoke(this, message);

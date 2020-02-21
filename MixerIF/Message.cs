@@ -1,4 +1,6 @@
 ﻿using SitePlugin;
+using System;
+using System.Collections.Generic;
 
 namespace MixerSitePlugin
 {
@@ -12,18 +14,25 @@ namespace MixerSitePlugin
         Item,
     }
 
-    public interface IMixerMessage : IMessage
+    public interface IMixerMessage : ISiteMessage
     {
         MixerMessageType MixerMessageType { get; }
     }
     public interface IMixerConnected : IMixerMessage
     {
+        string Text { get; }
     }
     public interface IMixerDisconnected : IMixerMessage
     {
+        string Text { get; }
     }
-    public interface IMixerComment : IMixerMessage, IMessageComment
+    public interface IMixerComment : IMixerMessage
     {
+        IEnumerable<IMessagePart> CommentItems { get; }
+        string Id { get; }
+        string UserName { get; }
+        string UserId { get; }
+        DateTime PostedAt { get; }
     }
     public interface IMixerJoinRoom : IMixerMessage
     {

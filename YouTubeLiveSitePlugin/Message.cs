@@ -5,40 +5,36 @@ using System.Collections.Generic;
 
 namespace YouTubeLiveSitePlugin
 {
-    internal class YouTubeLiveConnected : MessageBase, IYouTubeLiveConnected
+    internal class YouTubeLiveConnected : MessageBase2, IYouTubeLiveConnected
     {
         public override SiteType SiteType { get; } = SiteType.YouTubeLive;
         public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Connected;
-
+        public string Text { get; }
         public YouTubeLiveConnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("接続しました"),
-            };
+            Text = "接続しました";
         }
     }
-    internal class YouTubeLiveDisconnected : MessageBase, IYouTubeLiveDisconnected
+    internal class YouTubeLiveDisconnected : MessageBase2, IYouTubeLiveDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.YouTubeLive;
         public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Disconnected;
+        public string Text { get; }
         public YouTubeLiveDisconnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
-            };
+            Text = "切断しました";
         }
     }
-    internal class YouTubeLiveSuperchat : MessageBase, IYouTubeLiveSuperchat
+    internal class YouTubeLiveSuperchat : MessageBase2, IYouTubeLiveSuperchat
     {
         public override SiteType SiteType { get; } = SiteType.YouTubeLive;
         public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Superchat;
         //public string Comment { get; set; }
         public string Id { get; set; }
-        //public string UserName { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        public IEnumerable<IMessagePart> CommentItems { get; set; }
         public string UserId { get; set; }
-        public string PostTime { get; set; }
+        public DateTime PostedAt { get; set; }
         public IMessageImage UserIcon { get; set; }
         public string PurchaseAmount { get; }
         public YouTubeLiveSuperchat(Test2.CommentData commentData) : base(commentData.Raw)
@@ -57,27 +53,29 @@ namespace YouTubeLiveSitePlugin
             NameItems = commentData.NameItems;
             PurchaseAmount = commentData.PurchaseAmount;
             UserIcon = commentData.Thumbnail;
-            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.TimestampUsec / (1000 * 1000)).ToString("HH:mm:ss");
+            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.TimestampUsec / (1000 * 1000));
         }
     }
-    internal class YouTubeLiveComment : MessageBase, IYouTubeLiveComment
+    internal class YouTubeLiveComment : MessageBase2, IYouTubeLiveComment
     {
         public override SiteType SiteType { get; } = SiteType.YouTubeLive;
         public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Comment;
         //public string Comment { get; set; }
         public string Id { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        public IEnumerable<IMessagePart> CommentItems { get; set; }
         //public string UserName { get; set; }
         public string UserId { get; set; }
-        public string PostTime { get; set; }
+        public DateTime PostedAt { get; set; }
         public IMessageImage UserIcon { get; set; }
         public YouTubeLiveComment(Test2.CommentData commentData) : base(commentData.Raw)
         {
             UserId = commentData.UserId;
             Id = commentData.Id;
             CommentItems = commentData.MessageItems;
-            NameItems=commentData.NameItems;
+            NameItems = commentData.NameItems;
             UserIcon = commentData.Thumbnail;
-            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.TimestampUsec / (1000 * 1000)).ToString("HH:mm:ss");
+            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.TimestampUsec / (1000 * 1000));
         }
     }
 }

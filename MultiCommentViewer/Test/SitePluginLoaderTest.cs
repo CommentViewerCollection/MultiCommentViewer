@@ -41,13 +41,6 @@ namespace MultiCommentViewer.Test
             }
             return _dict.Select(kv => (kv.Value.DisplayName, kv.Key));
         }
-        public void Init()
-        {
-            foreach (var siteContext in GetSiteContexts())
-            {
-                siteContext.Init();
-            }
-        }
         public void Save()
         {
             foreach (var siteContext in GetSiteContexts())

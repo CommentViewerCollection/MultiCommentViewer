@@ -3,17 +3,15 @@ using System.Collections.Generic;
 
 namespace WhowatchSitePlugin
 {
-    internal class WhowatchConnected : MessageBase, IWhowatchConnected
+    internal class WhowatchConnected : MessageBase2, IWhowatchConnected
     {
         public override SiteType SiteType { get; } = SiteType.Whowatch;
         public WhowatchMessageType WhowatchMessageType { get; } = WhowatchMessageType.Connected;
+        public string Text { get; }
 
         public WhowatchConnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("接続しました"),
-            };
+            Text = "接続しました";
         }
     }
 }

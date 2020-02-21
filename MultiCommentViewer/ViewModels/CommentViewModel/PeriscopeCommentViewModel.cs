@@ -1,4 +1,5 @@
-﻿using Plugin;
+﻿using Common;
+using Plugin;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
@@ -111,19 +112,19 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
-            PostTime = comment.PostTime;
+            _nameItems = MessagePartFactory.CreateMessageItems(comment.DisplayName);
+            MessageItems = MessagePartFactory.CreateMessageItems(comment.Text);
+            Thumbnail = null;
+            Id = comment.Id;
+            PostTime = comment.PostedAt.HasValue ? comment.PostedAt.Value.ToString("HH:mm:ss") : (string)null;
         }
         public PeriscopeCommentViewModel(PeriscopeSitePlugin.IPeriscopeJoin join, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = join;
 
-            _nameItems = join.NameItems;
-            MessageItems = join.CommentItems;
+            _nameItems = MessagePartFactory.CreateMessageItems(join.DisplayName);
+            MessageItems = MessagePartFactory.CreateMessageItems(join.Text);
             //Thumbnail = join..UserIcon;
             //Id = join.Id.ToString();
             //PostTime = join.PostTime;
@@ -133,8 +134,8 @@ namespace MultiCommentViewer
         {
             _message = leave;
 
-            _nameItems = leave.NameItems;
-            MessageItems = leave.CommentItems;
+            _nameItems = MessagePartFactory.CreateMessageItems(leave.DisplayName);
+            MessageItems = MessagePartFactory.CreateMessageItems(leave.Text);
             //Thumbnail = join..UserIcon;
             //Id = join.Id.ToString();
             //PostTime = join.PostTime;
@@ -161,13 +162,13 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public PeriscopeCommentViewModel(PeriscopeSitePlugin.IPeriscopeDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

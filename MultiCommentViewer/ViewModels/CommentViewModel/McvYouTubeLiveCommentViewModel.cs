@@ -113,7 +113,7 @@ namespace MultiCommentViewer
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();
-            PostTime = comment.PostTime;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
@@ -124,20 +124,20 @@ namespace MultiCommentViewer
             _nameItems = comment.NameItems;
             MessageItems = comment.CommentItems;
             Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
-            PostTime = comment.PostTime;
+            Id = comment.Id;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

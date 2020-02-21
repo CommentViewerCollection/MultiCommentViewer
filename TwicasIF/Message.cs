@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System.Collections.Generic;
 
 namespace TwicasSitePlugin
 {
@@ -11,21 +12,31 @@ namespace TwicasSitePlugin
         Disconnected,
     }
 
-    public interface ITwicasMessage : IMessage
+    public interface ITwicasMessage : ISiteMessage
     {
         TwicasMessageType TwicasMessageType { get; }
     }
     public interface ITwicasConnected : ITwicasMessage
     {
+        string Text { get; }
     }
     public interface ITwicasDisconnected : ITwicasMessage
     {
+        string Text { get; }
     }
-    public interface ITwicasComment : ITwicasMessage, IMessageComment
+    public interface ITwicasComment : ITwicasMessage
     {
+        string UserName { get; }
+        IEnumerable<IMessagePart> CommentItems { get; }
+        string Id { get; }
+        string UserId { get; }
+        string PostTime { get; }
+        IMessageImage UserIcon { get; }
     }
     public interface ITwicasItem : ITwicasMessage
     {
+        string UserName { get; }
+        IEnumerable<IMessagePart> CommentItems { get; }
         string ItemName { get; }
         string ItemId { get; }
         //    int ItemCount { get; }
@@ -38,7 +49,7 @@ namespace TwicasSitePlugin
         IMessageImage UserIcon { get; }
         string UserId { get; }
     }
-    public interface ITwicasKiitos: ITwicasItem
+    public interface ITwicasKiitos : ITwicasItem
     {
     }
 }

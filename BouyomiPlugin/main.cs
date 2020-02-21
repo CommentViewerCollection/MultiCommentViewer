@@ -6,11 +6,13 @@ using NicoSitePlugin;
 using OpenrecSitePlugin;
 using PeriscopeSitePlugin;
 using Plugin;
+using PluginCommon;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.Runtime.Remoting.Messaging;
 using TwicasSitePlugin;
 using TwitchSitePlugin;
 using WhowatchSitePlugin;
@@ -20,21 +22,6 @@ namespace BouyomiPlugin
 {
     static class MessageParts
     {
-        public static string ToText(this IEnumerable<IMessagePart> parts)
-        {
-            string s = "";
-            if (parts != null)
-            {
-                foreach (var part in parts)
-                {
-                    if (part is IMessageText text)
-                    {
-                        s += text;
-                    }
-                }
-            }
-            return s;
-        }
         public static string ToTextWithImageAlt(this IEnumerable<IMessagePart> parts)
         {
             string s = "";
@@ -121,38 +108,6 @@ namespace BouyomiPlugin
                 _bouyomiChanProcess.Exited += BouyomiChanProcess_Exited;
             }
         }
-        public void OnCommentReceived(ICommentData data)
-        {
-            if (!_options.IsEnabled || data.IsNgUser || data.IsFirstComment || (data.Is184 && !_options.Want184Read))
-                return;
-            try
-            {
-                //棒読みちゃんが事前に起動されていたらそれを使いたい。
-                //起動していなかったら起動させて、準備ができ次第それ以降のコメントを読んで貰う
-
-                //とりあえず何も確認せずにコメントを送信する。起動していなかったら例外が起きる。
-                if (_options.IsReadHandleName && !string.IsNullOrEmpty(data.Nickname))
-                {
-                    var nick = data.Nickname;
-
-                    if (_options.IsAppendNickTitle)
-                        nick += _options.NickTitle;
-                    TalkText(nick);
-                }
-                if (_options.IsReadComment)
-                    TalkText(data.Comment);
-            }
-            catch (System.Runtime.Remoting.RemotingException)
-            {
-                //多分棒読みちゃんが起動していない。
-                StartBouyomiChan();
-                //起動するまでの間にコメントが投稿されたらここに来てしまうが諦める。
-            }
-            catch (Exception)
-            {
-
-            }
-        }
 
         private void BouyomiChanProcess_Exited(object sender, EventArgs e)
         {
@@ -163,14 +118,8 @@ namespace BouyomiPlugin
             catch { }
             _bouyomiChanProcess = null;
         }
-
-        public void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata)
+        private static (string name, string comment) GetData(ISiteMessage message, Options options)
         {
-            if (!_options.IsEnabled || messageMetadata.IsNgUser || messageMetadata.IsInitialComment || (messageMetadata.Is184 && !_options.Want184Read))
-                return;
-
-
-
             string name = null;
             string comment = null;
             if (false) { }
@@ -179,27 +128,27 @@ namespace BouyomiPlugin
                 switch (youTubeLiveMessage.YouTubeLiveMessageType)
                 {
                     case YouTubeLiveMessageType.Connected:
-                        if (_options.IsYouTubeLiveConnect)
+                        if (options.IsYouTubeLiveConnect)
                         {
                             name = null;
-                            comment = (youTubeLiveMessage as IYouTubeLiveConnected).CommentItems.ToText();
+                            comment = (youTubeLiveMessage as IYouTubeLiveConnected).Text;
                         }
                         break;
                     case YouTubeLiveMessageType.Disconnected:
-                        if (_options.IsYouTubeLiveDisconnect)
+                        if (options.IsYouTubeLiveDisconnect)
                         {
                             name = null;
-                            comment = (youTubeLiveMessage as IYouTubeLiveDisconnected).CommentItems.ToText();
+                            comment = (youTubeLiveMessage as IYouTubeLiveDisconnected).Text;
                         }
                         break;
                     case YouTubeLiveMessageType.Comment:
-                        if (_options.IsYouTubeLiveComment)
+                        if (options.IsYouTubeLiveComment)
                         {
-                            if (_options.IsYouTubeLiveCommentNickname)
+                            if (options.IsYouTubeLiveCommentNickname)
                             {
                                 name = (youTubeLiveMessage as IYouTubeLiveComment).NameItems.ToText();
                             }
-                            if (_options.IsYouTubeLiveCommentStamp)
+                            if (options.IsYouTubeLiveCommentStamp)
                             {
                                 comment = (youTubeLiveMessage as IYouTubeLiveComment).CommentItems.ToTextWithImageAlt();
                             }
@@ -210,9 +159,9 @@ namespace BouyomiPlugin
                         }
                         break;
                     case YouTubeLiveMessageType.Superchat:
-                        if (_options.IsYouTubeLiveSuperchat)
+                        if (options.IsYouTubeLiveSuperchat)
                         {
-                            if (_options.IsYouTubeLiveSuperchatNickname)
+                            if (options.IsYouTubeLiveSuperchatNickname)
                             {
                                 name = (youTubeLiveMessage as IYouTubeLiveSuperchat).NameItems.ToText();
                             }
@@ -227,27 +176,27 @@ namespace BouyomiPlugin
                 switch (openrecMessage.OpenrecMessageType)
                 {
                     case OpenrecMessageType.Connected:
-                        if (_options.IsOpenrecConnect)
+                        if (options.IsOpenrecConnect)
                         {
                             name = null;
-                            comment = (openrecMessage as IOpenrecConnected).CommentItems.ToText();
+                            comment = (openrecMessage as IOpenrecConnected).Text;
                         }
                         break;
                     case OpenrecMessageType.Disconnected:
-                        if (_options.IsOpenrecDisconnect)
+                        if (options.IsOpenrecDisconnect)
                         {
                             name = null;
-                            comment = (openrecMessage as IOpenrecDisconnected).CommentItems.ToText();
+                            comment = (openrecMessage as IOpenrecDisconnected).Text;
                         }
                         break;
                     case OpenrecMessageType.Comment:
-                        if (_options.IsOpenrecComment)
+                        if (options.IsOpenrecComment)
                         {
-                            if (_options.IsOpenrecCommentNickname)
+                            if (options.IsOpenrecCommentNickname)
                             {
                                 name = (openrecMessage as IOpenrecComment).NameItems.ToText();
                             }
-                            comment = (openrecMessage as IOpenrecComment).CommentItems.ToText();
+                            comment = (openrecMessage as IOpenrecComment).MessageItems.ToText();
                         }
                         break;
                 }
@@ -257,23 +206,23 @@ namespace BouyomiPlugin
                 switch (twitchMessage.TwitchMessageType)
                 {
                     case TwitchMessageType.Connected:
-                        if (_options.IsTwitchConnect)
+                        if (options.IsTwitchConnect)
                         {
                             name = null;
-                            comment = (twitchMessage as ITwitchConnected).CommentItems.ToText();
+                            comment = (twitchMessage as ITwitchConnected).Text;
                         }
                         break;
                     case TwitchMessageType.Disconnected:
-                        if (_options.IsTwitchDisconnect)
+                        if (options.IsTwitchDisconnect)
                         {
                             name = null;
-                            comment = (twitchMessage as ITwitchDisconnected).CommentItems.ToText();
+                            comment = (twitchMessage as ITwitchDisconnected).Text;
                         }
                         break;
                     case TwitchMessageType.Comment:
-                        if (_options.IsTwitchComment)
+                        if (options.IsTwitchComment)
                         {
-                            if (_options.IsTwitchCommentNickname)
+                            if (options.IsTwitchCommentNickname)
                             {
                                 name = (twitchMessage as ITwitchComment).DisplayName;
                             }
@@ -287,44 +236,44 @@ namespace BouyomiPlugin
                 switch (NicoMessage.NicoMessageType)
                 {
                     case NicoMessageType.Connected:
-                        if (_options.IsNicoConnect)
+                        if (options.IsNicoConnect)
                         {
                             name = null;
-                            comment = (NicoMessage as INicoConnected).CommentItems.ToText();
+                            comment = (NicoMessage as INicoConnected).Text;
                         }
                         break;
                     case NicoMessageType.Disconnected:
-                        if (_options.IsNicoDisconnect)
+                        if (options.IsNicoDisconnect)
                         {
                             name = null;
-                            comment = (NicoMessage as INicoDisconnected).CommentItems.ToText();
+                            comment = (NicoMessage as INicoDisconnected).Text;
                         }
                         break;
                     case NicoMessageType.Comment:
-                        if (_options.IsNicoComment)
+                        if (options.IsNicoComment)
                         {
-                            if (_options.IsNicoCommentNickname)
+                            if (options.IsNicoCommentNickname)
                             {
-                                name = (NicoMessage as INicoComment).NameItems.ToText();
+                                name = (NicoMessage as INicoComment).UserName;
                             }
-                            comment = (NicoMessage as INicoComment).CommentItems.ToText();
+                            comment = (NicoMessage as INicoComment).Text;
                         }
                         break;
                     case NicoMessageType.Item:
-                        if (_options.IsNicoItem)
+                        if (options.IsNicoItem)
                         {
-                            if (_options.IsNicoItemNickname)
+                            if (options.IsNicoItemNickname)
                             {
-                                name = (NicoMessage as INicoItem).NameItems.ToText();
+                                //name = (NicoMessage as INicoItem).NameItems.ToText();
                             }
-                            comment = (NicoMessage as INicoItem).CommentItems.ToText();
+                            comment = (NicoMessage as INicoItem).Text;
                         }
                         break;
                     case NicoMessageType.Ad:
-                        if (_options.IsNicoAd)
+                        if (options.IsNicoAd)
                         {
                             name = null;
-                            comment = (NicoMessage as INicoAd).CommentItems.ToText();
+                            comment = (NicoMessage as INicoAd).Text;
                         }
                         break;
                 }
@@ -334,25 +283,25 @@ namespace BouyomiPlugin
                 switch (twicasMessage.TwicasMessageType)
                 {
                     case TwicasMessageType.Connected:
-                        if (_options.IsTwicasConnect)
+                        if (options.IsTwicasConnect)
                         {
                             name = null;
-                            comment = (twicasMessage as ITwicasConnected).CommentItems.ToText();
+                            comment = (twicasMessage as ITwicasConnected).Text;
                         }
                         break;
                     case TwicasMessageType.Disconnected:
-                        if (_options.IsTwicasDisconnect)
+                        if (options.IsTwicasDisconnect)
                         {
                             name = null;
-                            comment = (twicasMessage as ITwicasDisconnected).CommentItems.ToText();
+                            comment = (twicasMessage as ITwicasDisconnected).Text;
                         }
                         break;
                     case TwicasMessageType.Comment:
-                        if (_options.IsTwicasComment)
+                        if (options.IsTwicasComment)
                         {
-                            if (_options.IsTwicasCommentNickname)
+                            if (options.IsTwicasCommentNickname)
                             {
-                                name = (twicasMessage as ITwicasComment).NameItems.ToText();
+                                name = (twicasMessage as ITwicasComment).UserName;
                             }
                             comment = (twicasMessage as ITwicasComment).CommentItems.ToText();
                         }
@@ -364,27 +313,27 @@ namespace BouyomiPlugin
                 switch (lineLiveMessage.LineLiveMessageType)
                 {
                     case LineLiveMessageType.Connected:
-                        if (_options.IsLineLiveConnect)
+                        if (options.IsLineLiveConnect)
                         {
                             name = null;
-                            comment = (lineLiveMessage as ILineLiveConnected).CommentItems.ToText();
+                            comment = (lineLiveMessage as ILineLiveConnected).Text;
                         }
                         break;
                     case LineLiveMessageType.Disconnected:
-                        if (_options.IsLineLiveDisconnect)
+                        if (options.IsLineLiveDisconnect)
                         {
                             name = null;
-                            comment = (lineLiveMessage as ILineLiveDisconnected).CommentItems.ToText();
+                            comment = (lineLiveMessage as ILineLiveDisconnected).Text;
                         }
                         break;
                     case LineLiveMessageType.Comment:
-                        if (_options.IsLineLiveComment)
+                        if (options.IsLineLiveComment)
                         {
-                            if (_options.IsLineLiveCommentNickname)
+                            if (options.IsLineLiveCommentNickname)
                             {
-                                name = (lineLiveMessage as ILineLiveComment).NameItems.ToText();
+                                name = (lineLiveMessage as ILineLiveComment).DisplayName;
                             }
-                            comment = (lineLiveMessage as ILineLiveComment).CommentItems.ToText();
+                            comment = (lineLiveMessage as ILineLiveComment).Text;
                         }
                         break;
                 }
@@ -394,37 +343,37 @@ namespace BouyomiPlugin
                 switch (whowatchMessage.WhowatchMessageType)
                 {
                     case WhowatchMessageType.Connected:
-                        if (_options.IsWhowatchConnect)
+                        if (options.IsWhowatchConnect)
                         {
                             name = null;
-                            comment = (whowatchMessage as IWhowatchConnected).CommentItems.ToText();
+                            comment = (whowatchMessage as IWhowatchConnected).Text;
                         }
                         break;
                     case WhowatchMessageType.Disconnected:
-                        if (_options.IsWhowatchDisconnect)
+                        if (options.IsWhowatchDisconnect)
                         {
                             name = null;
-                            comment = (whowatchMessage as IWhowatchDisconnected).CommentItems.ToText();
+                            comment = (whowatchMessage as IWhowatchDisconnected).Text;
                         }
                         break;
                     case WhowatchMessageType.Comment:
-                        if (_options.IsWhowatchComment)
+                        if (options.IsWhowatchComment)
                         {
-                            if (_options.IsWhowatchCommentNickname)
+                            if (options.IsWhowatchCommentNickname)
                             {
-                                name = (whowatchMessage as IWhowatchComment).NameItems.ToText();
+                                name = (whowatchMessage as IWhowatchComment).UserName;
                             }
-                            comment = (whowatchMessage as IWhowatchComment).CommentItems.ToText();
+                            comment = (whowatchMessage as IWhowatchComment).Comment;
                         }
                         break;
                     case WhowatchMessageType.Item:
-                        if (_options.IsWhowatchItem)
+                        if (options.IsWhowatchItem)
                         {
-                            if (_options.IsWhowatchItemNickname)
+                            if (options.IsWhowatchItemNickname)
                             {
-                                name = (whowatchMessage as IWhowatchItem).NameItems.ToText();
+                                name = (whowatchMessage as IWhowatchItem).UserName;
                             }
-                            comment = (whowatchMessage as IWhowatchItem).CommentItems.ToText();
+                            comment = (whowatchMessage as IWhowatchItem).Comment;
                         }
                         break;
                 }
@@ -434,41 +383,41 @@ namespace BouyomiPlugin
                 switch (mirrativMessage.MirrativMessageType)
                 {
                     case MirrativMessageType.Connected:
-                        if (_options.IsMirrativConnect)
+                        if (options.IsMirrativConnect)
                         {
                             name = null;
-                            comment = (mirrativMessage as IMirrativConnected).CommentItems.ToText();
+                            comment = (mirrativMessage as IMirrativConnected).Text;
                         }
                         break;
                     case MirrativMessageType.Disconnected:
-                        if (_options.IsMirrativDisconnect)
+                        if (options.IsMirrativDisconnect)
                         {
                             name = null;
-                            comment = (mirrativMessage as IMirrativDisconnected).CommentItems.ToText();
+                            comment = (mirrativMessage as IMirrativDisconnected).Text;
                         }
                         break;
                     case MirrativMessageType.Comment:
-                        if (_options.IsMirrativComment)
+                        if (options.IsMirrativComment)
                         {
-                            if (_options.IsMirrativCommentNickname)
+                            if (options.IsMirrativCommentNickname)
                             {
-                                name = (mirrativMessage as IMirrativComment).NameItems.ToText();
+                                name = (mirrativMessage as IMirrativComment).UserName;
                             }
-                            comment = (mirrativMessage as IMirrativComment).CommentItems.ToText();
+                            comment = (mirrativMessage as IMirrativComment).Text;
                         }
                         break;
                     case MirrativMessageType.JoinRoom:
-                        if (_options.IsMirrativJoinRoom)
+                        if (options.IsMirrativJoinRoom)
                         {
                             name = null;
-                            comment = (mirrativMessage as IMirrativJoinRoom).CommentItems.ToText();
+                            comment = (mirrativMessage as IMirrativJoinRoom).Text;
                         }
                         break;
                     case MirrativMessageType.Item:
-                        if (_options.IsMirrativItem)
+                        if (options.IsMirrativItem)
                         {
                             name = null;
-                            comment = (mirrativMessage as IMirrativItem).CommentItems.ToText();
+                            comment = (mirrativMessage as IMirrativItem).Text;
                         }
                         break;
                 }
@@ -478,41 +427,41 @@ namespace BouyomiPlugin
                 switch (PeriscopeMessage.PeriscopeMessageType)
                 {
                     case PeriscopeMessageType.Connected:
-                        if (_options.IsPeriscopeConnect)
+                        if (options.IsPeriscopeConnect)
                         {
                             name = null;
-                            comment = (PeriscopeMessage as IPeriscopeConnected).CommentItems.ToText();
+                            comment = (PeriscopeMessage as IPeriscopeConnected).Text;
                         }
                         break;
                     case PeriscopeMessageType.Disconnected:
-                        if (_options.IsPeriscopeDisconnect)
+                        if (options.IsPeriscopeDisconnect)
                         {
                             name = null;
-                            comment = (PeriscopeMessage as IPeriscopeDisconnected).CommentItems.ToText();
+                            comment = (PeriscopeMessage as IPeriscopeDisconnected).Text;
                         }
                         break;
                     case PeriscopeMessageType.Comment:
-                        if (_options.IsPeriscopeComment)
+                        if (options.IsPeriscopeComment)
                         {
-                            if (_options.IsPeriscopeCommentNickname)
+                            if (options.IsPeriscopeCommentNickname)
                             {
-                                name = (PeriscopeMessage as IPeriscopeComment).NameItems.ToText();
+                                name = (PeriscopeMessage as IPeriscopeComment).DisplayName;
                             }
-                            comment = (PeriscopeMessage as IPeriscopeComment).CommentItems.ToText();
+                            comment = (PeriscopeMessage as IPeriscopeComment).Text;
                         }
                         break;
                     case PeriscopeMessageType.Join:
-                        if (_options.IsPeriscopeJoin)
+                        if (options.IsPeriscopeJoin)
                         {
                             name = null;
-                            comment = (PeriscopeMessage as IPeriscopeJoin).CommentItems.ToText();
+                            comment = (PeriscopeMessage as IPeriscopeJoin).Text;
                         }
                         break;
                     case PeriscopeMessageType.Leave:
-                        if (_options.IsPeriscopeLeave)
+                        if (options.IsPeriscopeLeave)
                         {
                             name = null;
-                            comment = (PeriscopeMessage as IPeriscopeLeave).CommentItems.ToText();
+                            comment = (PeriscopeMessage as IPeriscopeLeave).Text;
                         }
                         break;
                 }
@@ -522,25 +471,25 @@ namespace BouyomiPlugin
                 switch (MixerMessage.MixerMessageType)
                 {
                     case MixerMessageType.Connected:
-                        if (_options.IsMixerConnect)
+                        if (options.IsMixerConnect)
                         {
                             name = null;
-                            comment = (MixerMessage as IMixerConnected).CommentItems.ToText();
+                            comment = (MixerMessage as IMixerConnected).Text;
                         }
                         break;
                     case MixerMessageType.Disconnected:
-                        if (_options.IsMixerDisconnect)
+                        if (options.IsMixerDisconnect)
                         {
                             name = null;
-                            comment = (MixerMessage as IMixerDisconnected).CommentItems.ToText();
+                            comment = (MixerMessage as IMixerDisconnected).Text;
                         }
                         break;
                     case MixerMessageType.Comment:
-                        if (_options.IsMixerComment)
+                        if (options.IsMixerComment)
                         {
-                            if (_options.IsMixerCommentNickname)
+                            if (options.IsMixerCommentNickname)
                             {
-                                name = (MixerMessage as IMixerComment).NameItems.ToText();
+                                name = (MixerMessage as IMixerComment).UserName;
                             }
                             comment = (MixerMessage as IMixerComment).CommentItems.ToText();
                         }
@@ -566,31 +515,31 @@ namespace BouyomiPlugin
                 switch (MildomMessage.MildomMessageType)
                 {
                     case MildomMessageType.Connected:
-                        if (_options.IsMildomConnect)
+                        if (options.IsMildomConnect)
                         {
                             name = null;
-                            comment = (MildomMessage as IMildomConnected).CommentItems.ToText();
+                            comment = (MildomMessage as IMildomConnected).Text;
                         }
                         break;
                     case MildomMessageType.Disconnected:
-                        if (_options.IsMildomDisconnect)
+                        if (options.IsMildomDisconnect)
                         {
                             name = null;
-                            comment = (MildomMessage as IMildomDisconnected).CommentItems.ToText();
+                            comment = (MildomMessage as IMildomDisconnected).Text;
                         }
                         break;
                     case MildomMessageType.Comment:
-                        if (_options.IsMildomComment)
+                        if (options.IsMildomComment)
                         {
-                            if (_options.IsMildomCommentNickname)
+                            if (options.IsMildomCommentNickname)
                             {
-                                name = (MildomMessage as IMildomComment).NameItems.ToText();
+                                name = (MildomMessage as IMildomComment).UserName;
                             }
                             comment = (MildomMessage as IMildomComment).CommentItems.ToText();
                         }
                         break;
                     case MildomMessageType.JoinRoom:
-                        if (_options.IsMildomJoin)
+                        if (options.IsMildomJoin)
                         {
                             name = null;
                             comment = (MildomMessage as IMildomJoinRoom).CommentItems.ToText();
@@ -605,17 +554,15 @@ namespace BouyomiPlugin
                         //    break;
                 }
             }
-            else
-            {
-                if (_options.IsReadHandleName)
-                {
-                    name = message.NameItems.ToText();
-                }
-                if (_options.IsReadComment)
-                {
-                    comment = message.CommentItems.ToText();
-                }
-            }
+            return (name, comment);
+        }
+        public void OnMessageReceived(ISiteMessage message, IMessageMetadata messageMetadata)
+        {
+            if (!_options.IsEnabled || messageMetadata.IsNgUser || messageMetadata.IsInitialComment || (messageMetadata.Is184 && !_options.Want184Read))
+                return;
+
+            var (name, comment) = GetData(message, _options);
+
             //nameがnullでは無い場合かつUser.Nicknameがある場合はNicknameを採用
             if (!string.IsNullOrEmpty(name) && messageMetadata.User != null && !string.IsNullOrEmpty(messageMetadata.User.Nickname))
             {

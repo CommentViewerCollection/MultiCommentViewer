@@ -1,33 +1,36 @@
 ﻿using SitePlugin;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace LineLiveSitePlugin
 {
-    internal class LineLiveComment : MessageBase, ILineLiveComment
+    internal class LineLiveComment : MessageBase2, ILineLiveComment
     {
         public override SiteType SiteType { get; } = SiteType.LineLive;
         public LineLiveMessageType LineLiveMessageType { get; } = LineLiveMessageType.Comment;
-        public string Id { get; set; }
-        public string UserId { get; set; }
-        public string PostTime { get; set; }
-        public IMessageImage UserIcon { get; set; }
+        public string Text { get; set; }
+        public bool IsNgMessage { get; set; }
+        public DateTime PostedAt { get; set; }
+        public string UserIconUrl { get; set; }
+        public long UserId { get; set; }
+        public string DisplayName { get; set; }
         public LineLiveComment(string raw) : base(raw)
         {
-
         }
     }
-    internal class LineLiveItem : MessageBase, ILineLiveItem
+    internal class LineLiveItem : MessageBase2, ILineLiveItem
     {
         public override SiteType SiteType { get; } = SiteType.LineLive;
         public LineLiveMessageType LineLiveMessageType { get; } = LineLiveMessageType.Item;
-        public string Id { get; set; }
-        public string UserId { get; set; }
-        public string PostTime { get; set; }
-        public IMessageImage UserIcon { get; set; }
+        public IEnumerable<IMessagePart> CommentItems { get; set; }
+        public long UserId { get; set; }
+        public DateTime PostedAt { get; set; }
+        public string UserIconUrl { get; set; }
+        public string DisplayName { get; set; }
         public LineLiveItem(string raw) : base(raw)
         {
-
         }
     }
 }

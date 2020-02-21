@@ -113,8 +113,8 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
+            _nameItems = null;
+            MessageItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.Text) };
             //Thumbnail = comment.UserIcon;
             //Id = comment.Id?.ToString();
             //PostTime = comment.PostTime;

@@ -62,7 +62,7 @@ namespace WhowatchSitePlugin
         public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
         {
             var cc = CreateCookieContainer(browserProfile);
-            var me =  await Api.GetMeAsync(_server, cc);
+            var me = await Api.GetMeAsync(_server, cc);
 
             return new CurrentUserInfo
             {
@@ -90,8 +90,7 @@ namespace WhowatchSitePlugin
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.Whowatch,
                 Type = type,
             }, _options);
@@ -290,7 +289,7 @@ namespace WhowatchSitePlugin
             if (message is IWhowatchComment comment)
             {
                 var user = GetUser(comment.UserId);
-                user.Name = comment.NameItems;
+                user.Name = MessagePartFactory.CreateMessageItems(comment.UserName);
                 var isFirstComment = _first.IsFirstComment(user.UserId);
                 metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
                 {
@@ -301,7 +300,7 @@ namespace WhowatchSitePlugin
             else if (message is IWhowatchItem item)
             {
                 var user = GetUser(item.UserId.ToString());
-                user.Name = item.NameItems;
+                user.Name = MessagePartFactory.CreateMessageItems(item.UserName);
                 metadata = new ItemMessageMetadata(item, _options, _siteOptions, user, this)
                 {
                     IsInitialComment = isInitialComment,

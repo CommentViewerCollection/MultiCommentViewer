@@ -7,7 +7,7 @@ using System.Windows.Input;
 
 namespace TwicasSitePlugin
 {
-    class CommentPostPanelViewModel:ViewModelBase
+    class CommentPostPanelViewModel : ViewModelBase
     {
 
         private bool _canPostComment;
@@ -40,7 +40,7 @@ namespace TwicasSitePlugin
             }
         }
         private string _comment;
-        private readonly TwicasCommentProvider _commentProvider;
+        private readonly TwicasCommentProvider2 _commentProvider;
         private readonly ILogger _logger;
 
         public string Comment
@@ -53,7 +53,7 @@ namespace TwicasSitePlugin
                 RaisePropertyChanged();
             }
         }
-        public CommentPostPanelViewModel(TwicasCommentProvider commentProvider, ILogger logger)
+        public CommentPostPanelViewModel(TwicasCommentProvider2 commentProvider, ILogger logger)
         {
             _commentProvider = commentProvider;
             _logger = logger;

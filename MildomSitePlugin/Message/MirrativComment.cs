@@ -1,26 +1,23 @@
 ﻿using SitePlugin;
+using System;
 using System.Collections.Generic;
 
 namespace MildomSitePlugin
 {
-    internal class MildomComment : MessageBase, IMildomComment
+    internal class MildomComment : MessageBase2, IMildomComment
     {
         public override SiteType SiteType { get; } = SiteType.Mixer;
         public MildomMessageType MildomMessageType { get; } = MildomMessageType.Comment;
-        //public string Comment { get; set; }
-        public string Id { get; set; }
-        //public string UserName { get; set; }
+        public IEnumerable<IMessagePart> CommentItems { get; }
+        public string UserName { get; set; }
         public string UserId { get; set; }
-        public string PostTime { get; set; }
-        public IMessageImage UserIcon { get; set; }
+        public DateTime PostedAt { get; set; }
         public MildomComment(OnChatMessage chat, string raw) : base(raw)
         {
             UserId = chat.UserId.ToString();
-            Id = "";
             CommentItems = chat.MessageItems;
-            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(chat.UserName) };
-            UserIcon = null;
-            PostTime = "";// SitePluginCommon.Utils.UnixtimeToDateTime(commentData.CreatedAt).ToString("HH:mm:ss");
+            UserName = chat.UserName;
+            PostedAt = chat.PostedAt;
         }
     }
 }

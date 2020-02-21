@@ -14,7 +14,7 @@ namespace WhowatchSitePlugin
 
         public string Resolve(int play_item_pattern_id)
         {
-            if(_itemNameDict.TryGetValue(play_item_pattern_id, out PlayItem item))
+            if (_itemNameDict.TryGetValue(play_item_pattern_id, out PlayItem item))
             {
                 return item.Name;
             }
@@ -57,7 +57,7 @@ namespace WhowatchSitePlugin
                     type = WhowatchInternalMessageType.Shout;
                     break;
                 default:
-                    type = WhowatchInternalMessageType.Unknown; 
+                    type = WhowatchInternalMessageType.Unknown;
                     break;
             }
             return type;
@@ -98,8 +98,8 @@ namespace WhowatchSitePlugin
                     message = new WhowatchItem(raw)
                     {
                         AccountName = rawMessage.User.AccountName,
-                        NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(rawMessage.User.Name) },
-                        CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(rawMessage.Message) },
+                        UserName = rawMessage.User.Name,
+                        Comment = rawMessage.Message,
                         Id = (long)rawMessage.Id,
                         PostedAt = (long)rawMessage.PostedAt,
                         UserId = (long)rawMessage.User.Id,
@@ -126,8 +126,8 @@ namespace WhowatchSitePlugin
                         message = new WhowatchNgComment(raw)
                         {
                             AccountName = comment.User.AccountName,
-                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.User.Name) },
-                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.Message) },
+                            UserName = comment.User.Name,
+                            Comment = comment.Message,
                             Id = comment.Id.ToString(),
                             PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
                             UserId = comment.User.Id.ToString(),
@@ -147,8 +147,8 @@ namespace WhowatchSitePlugin
                         message = new WhowatchComment(raw)
                         {
                             AccountName = comment.User.AccountName,
-                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.User.Name) },
-                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.Message) },
+                            UserName = comment.User.Name,
+                            Comment = comment.Message,
                             Id = comment.Id.ToString(),
                             PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
                             UserId = comment.User.Id.ToString(),
@@ -182,8 +182,8 @@ namespace WhowatchSitePlugin
                     message = new WhowatchItem(raw)
                     {
                         AccountName = comment.user.account_name,
-                        NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.user.name) },
-                        CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.message) },
+                        UserName = comment.user.name,
+                        Comment = comment.message,
                         Id = (long)comment.id,
                         PostedAt = (long)comment.posted_at,
                         UserId = (long)comment.user.id,
@@ -209,8 +209,8 @@ namespace WhowatchSitePlugin
                         message = new WhowatchNgComment(raw)
                         {
                             AccountName = comment.user.account_name,
-                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.user.name) },
-                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.message) },
+                            UserName = comment.user.name,
+                            Comment = comment.message,
                             Id = comment.id.ToString(),
                             PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
                             UserId = comment.user.id.ToString(),
@@ -230,8 +230,8 @@ namespace WhowatchSitePlugin
                         message = new WhowatchComment(raw)
                         {
                             AccountName = comment.user.account_name,
-                            NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.user.name) },
-                            CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.message) },
+                            UserName = comment.user.name,
+                            Comment = comment.message,
                             Id = comment.id.ToString(),
                             PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
                             UserId = comment.user.id.ToString(),

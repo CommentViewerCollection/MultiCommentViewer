@@ -90,23 +90,23 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id?.ToString();
-            PostTime = comment.PostTime;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(comment.Text);
+            Thumbnail = null;
+            Id = null;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public TestCommentViewModel(TestSitePlugin.ITestConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus)
             : this(metadata, methods, connectionStatus)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public TestCommentViewModel(TestSitePlugin.ITestDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus)
             : this(metadata, methods, connectionStatus)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

@@ -9,17 +9,17 @@ using System.Windows.Media;
 
 namespace SitePluginCommon
 {
-    public interface IInfoMessage : IMessage
+    public interface IInfoMessage : ISiteMessage
     {
         InfoType Type { get; set; }
+        string Text { get; }
     }
     public class InfoMessage : IInfoMessage
     {
         public InfoType Type { get; set; }
         public string Raw { get; }
         public SiteType SiteType { get; set; }
-        public IEnumerable<IMessagePart> NameItems { get; set; }
-        public IEnumerable<IMessagePart> CommentItems { get; set; }
+        public string Text { get; set; }
 
         public event EventHandler<ValueChangedEventArgs> ValueChanged;
     }
@@ -67,7 +67,7 @@ namespace SitePluginCommon
     }
     public class InfoMessageContext : IMessageContext
     {
-        public SitePlugin.IMessage Message { get; }
+        public SitePlugin.ISiteMessage Message { get; }
 
         public IMessageMetadata Metadata { get; }
 

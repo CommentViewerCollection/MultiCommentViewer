@@ -32,13 +32,13 @@ namespace WhowatchSitePluginTests
             var shout = message as IWhowatchItem;
             Assert.IsNotNull(shout);
             Assert.AreEqual("ふ:satorou", shout.AccountName);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("メガホンをプレゼントしました。") }, shout.CommentItems);
+            Assert.AreEqual("メガホンをプレゼントしました。", shout.Comment);
             Assert.AreEqual(568502964, shout.Id);
             Assert.AreEqual(1547574410000, shout.PostedAt);
             Assert.AreEqual(data, shout.Raw);
             Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
             Assert.AreEqual(12764231, shout.UserId);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("🔹SAPPOROイケチャン🔹休止中") }, shout.NameItems);
+            Assert.AreEqual("🔹SAPPOROイケチャン🔹休止中", shout.UserName);
             Assert.AreEqual("w:satorou", shout.UserPath);
             Assert.AreEqual(WhowatchMessageType.Item, shout.WhowatchMessageType);
             Assert.AreEqual(1, shout.ItemCount);
@@ -55,13 +55,13 @@ namespace WhowatchSitePluginTests
             var shout = message as IWhowatchComment;
             Assert.IsNotNull(shout);
             Assert.AreEqual("@kv510k", shout.AccountName);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("てｓｔ") }, shout.CommentItems);
+            Assert.AreEqual("てｓｔ", shout.Comment);
             Assert.AreEqual("714170546", shout.Id);
             Assert.AreEqual("03:52:58", shout.PostTime);
             Assert.AreEqual(data, shout.Raw);
             Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
             Assert.AreEqual("1072838", shout.UserId);
-            Assert.AreEqual(new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText("Ryu") }, shout.NameItems);
+            Assert.AreEqual("Ryu", shout.UserName);
             Assert.AreEqual("t:kv510k", shout.UserPath);
             Assert.AreEqual(WhowatchMessageType.Comment, shout.WhowatchMessageType);
         }

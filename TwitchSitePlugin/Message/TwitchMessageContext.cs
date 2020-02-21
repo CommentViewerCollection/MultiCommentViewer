@@ -4,7 +4,7 @@ namespace TwitchSitePlugin
 {
     internal class TwitchMessageContext : IMessageContext
     {
-        public SitePlugin.IMessage Message { get; }
+        public SitePlugin.ISiteMessage Message { get; }
 
         public IMessageMetadata Metadata { get; }
 

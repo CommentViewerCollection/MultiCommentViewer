@@ -5,6 +5,7 @@ using SitePlugin;
 using System.Net;
 using Common;
 using System.Threading;
+using System.Diagnostics;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -26,13 +27,15 @@ namespace YouTubeLiveSitePlugin.Test2
                 _cts.Cancel();
             }
         }
-        protected void SendInfo(string message,InfoType type)
+        protected void SendInfo(string message, InfoType type)
         {
             InfoReceived?.Invoke(this, new InfoData { Comment = message, Type = type });
         }
         protected Metadata ActionsToMetadata(dynamic actions)
         {
             var metadata = new Metadata();
+            int? like = null;
+            int? dislike = null;
             foreach (var action in actions)
             {
                 if (action.IsDefined("updateViewershipAction"))
@@ -71,14 +74,65 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
                 else if (action.IsDefined("updateTitleAction"))
                 {
-                    var title = action.updateTitleAction.title.simpleText;
+                    string title;
+                    if (action.updateTitleAction.title.IsDefined("runs"))
+                    {
+                        title = action.updateTitleAction.title.runs[0].text;
+                    }
+                    else if (action.updateTitleAction.title.IsDefined("simpleText"))
+                    {
+                        title = action.updateTitleAction.title.simpleText;
+                    }
+                    else
+                    {
+                        title = null;
+                    }
                     metadata.Title = title;
                 }
                 else if (action.IsDefined("updateDescriptionAction"))
                 {
 
                 }
+                else if (action.IsDefined("updateToggleButtonTextAction"))
+                {
+                    //"toggledText"は自分が押した場合の数値
+                    //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"1227"},"toggledText":{"simpleText":"1228"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_LIKE"}}}
+                    //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"42"},"toggledText":{"simpleText":"43"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_DISLIKE"}}}
+                    if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_LIKE")
+                    {
+                        like = int.Parse((string)action.updateToggleButtonTextAction.defaultText.simpleText);
+                    }
+                    else if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_DISLIKE")
+                    {
+                        dislike = int.Parse((string)action.updateToggleButtonTextAction.defaultText.simpleText);
+                    }
+                }
+                else if (action.IsDefined("updateDateTextAction"))
+                {
+                    //{"updateDateTextAction":{"dateText":{"simpleText":"41 分前にライブ配信開始"}}}
+                    var input = (string)action.updateDateTextAction.dateText.simpleText;
+                    var match = System.Text.RegularExpressions.Regex.Match(input, "(\\d+)");
+                    if (match.Success)
+                    {
+                        var min = int.Parse(match.Groups[1].Value);
+                        metadata.Elapsed = $"{min}分";
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine((string)action.ToString());
+                }
             }
+            string others = "";
+            if (like.HasValue)
+            {
+                others += $"高く評価:{like.Value} ";
+            }
+            if (dislike.HasValue)
+            {
+                others += $"低く評価:{dislike.Value} ";
+            }
+            metadata.Others = others;
             return metadata;
         }
         public abstract Task ReceiveAsync(string ytCfg, string vid, CookieContainer cc);

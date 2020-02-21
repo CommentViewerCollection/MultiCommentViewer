@@ -51,7 +51,7 @@ namespace TestSitePlugin
 
         public async Task ConnectAsync(string input, global::ryu_s.BrowserCookie.IBrowserProfile browserProfile)
         {
-            if(_cts != null)
+            if (_cts != null)
             {
                 throw new InvalidOperationException("_cts is not null!");
             }
@@ -60,7 +60,7 @@ namespace TestSitePlugin
             CanDisconnect = true;
             Connected?.Invoke(this, new ConnectedEventArgs
             {
-                IsInputStoringNeeded = false,                 
+                IsInputStoringNeeded = false,
             });
             while (!_cts.IsCancellationRequested)
             {
@@ -102,12 +102,16 @@ namespace TestSitePlugin
         public Task PostCommentAsync(string text)
         {
             var arr = text.Split(',');
-            if(arr.Length == 2)
+            if (arr.Length == 2)
             {
                 var userId = arr[0];
                 var content = arr[1];
                 var user = _userStore.GetUser(userId);
-                var comment = new TestComment(userId, content);
+                var comment = new TestComment
+                {
+                    UserId = userId,
+                    Text = content,
+                };
                 var metadata = new TestMetadata(user)
                 {
                     SiteContextGuid = SiteContextGuid,
@@ -116,13 +120,18 @@ namespace TestSitePlugin
                 var context = new MessageContext(comment, metadata, methods);
                 MessageReceived?.Invoke(this, context);
             }
-            else if(arr.Length == 3)
+            else if (arr.Length == 3)
             {
                 var userId = arr[0];
                 var name = arr[1];
                 var content = arr[2];
                 var user = _userStore.GetUser(userId);
-                var comment = new TestComment(userId, name, content);
+                var comment = new TestComment
+                {
+                    UserId = userId,
+                    UserName = name,
+                    Text = content,
+                };
                 var metadata = new TestMetadata(user)
                 {
                     SiteContextGuid = SiteContextGuid,
@@ -141,9 +150,8 @@ namespace TestSitePlugin
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
-                SiteType = SiteType.Openrec,
+                Text = message,
+                SiteType = SiteType.Unknown,
                 Type = type,
             }, _options);
             MessageReceived?.Invoke(this, context);

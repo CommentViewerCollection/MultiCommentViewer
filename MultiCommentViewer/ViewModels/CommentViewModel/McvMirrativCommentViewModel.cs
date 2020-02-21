@@ -5,6 +5,7 @@ using SitePlugin;
 using System.Windows.Media;
 using System.Windows;
 using Plugin;
+using Common;
 
 namespace MultiCommentViewer
 {
@@ -109,12 +110,11 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
-            //PostTime = UnixTimeStampToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
-            PostTime = comment.PostTime;
+            _nameItems = MessagePartFactory.CreateMessageItems(comment.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(comment.Text);
+            Thumbnail = null;
+            Id = comment.Id;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativJoinRoom item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
@@ -122,8 +122,8 @@ namespace MultiCommentViewer
             var comment = item;
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
+            _nameItems = MessagePartFactory.CreateMessageItems(comment.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(comment.Text);
             Thumbnail = comment.UserIcon;
             Id = null;
             PostTime = comment.PostTime;
@@ -134,23 +134,23 @@ namespace MultiCommentViewer
             var comment = item;
             _message = comment;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
+            _nameItems = MessagePartFactory.CreateMessageItems(comment.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(comment.Text);
             Thumbnail = null;
             Id = item.Id;
-            PostTime = comment.PostTime;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public McvMirrativCommentViewModel(MirrativSitePlugin.IMirrativDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }

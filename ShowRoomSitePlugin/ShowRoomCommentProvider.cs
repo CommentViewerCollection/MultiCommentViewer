@@ -45,7 +45,7 @@ namespace ShowRoomSitePlugin
         }
 
         public async Task<bool> IsLivingAsync()
-        { 
+        {
             var liveInfo = await Api.GetLiveInfo(_server, _broadcastId);
             return IsBroadcastRunning(liveInfo);
         }
@@ -92,9 +92,9 @@ namespace ShowRoomSitePlugin
             {
                 case T1 t1:
                     {
-                        if(_siteOptions.IsIgnore50Counts && int.TryParse(t1.Cm, out int count))
+                        if (_siteOptions.IsIgnore50Counts && int.TryParse(t1.Cm, out int count))
                         {
-                            if(count >= 1 && count <= 50)
+                            if (count >= 1 && count <= 50)
                             {
                                 //1-50の数字のみのコメントは無視する
                                 return;
@@ -104,7 +104,7 @@ namespace ShowRoomSitePlugin
                         var userId = message.UserId;
                         var isFirstComment = _first.IsFirstComment(userId);
                         var user = GetUser(userId);
-                        user.Name = message.NameItems;
+                        user.Name = Common.MessagePartFactory.CreateMessageItems(message.Text);
                         var metadata = CreateMessageMetadata(message, user, isFirstComment);
                         var methods = new MessageMethods();
                         RaiseMessageReceived(new MessageContext(message, metadata, methods));
@@ -187,7 +187,7 @@ namespace ShowRoomSitePlugin
             {
                 await ConnectInternalAsync(input, browserProfile);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogException(ex, "", $"input={input}");
             }

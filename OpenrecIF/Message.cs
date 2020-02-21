@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System.Collections.Generic;
 
 namespace OpenrecSitePlugin
 {
@@ -14,23 +15,30 @@ namespace OpenrecSitePlugin
     }
 
 
-    public interface IOpenrecMessage : IMessage
+    public interface IOpenrecMessage : ISiteMessage
     {
         OpenrecMessageType OpenrecMessageType { get; }
     }
     public interface IOpenrecConnected : IOpenrecMessage
     {
+        string Text { get; }
     }
     public interface IOpenrecDisconnected : IOpenrecMessage
     {
+        string Text { get; }
     }
-    public interface IOpenrecComment : IOpenrecMessage, IMessageComment
+    public interface IOpenrecComment : IOpenrecMessage
+    {
+        IEnumerable<IMessagePart> NameItems { get; }
+        IEnumerable<IMessagePart> MessageItems { get; }
+        string Id { get; }
+        string PostTime { get; }
+        string UserId { get; }
+    }
+    public interface IOpenrecStamp : IOpenrecMessage
     {
     }
-    public interface IOpenrecStamp : IOpenrecMessage, IMessageComment
-    {
-    }
-    public interface IOpenrecYell : IOpenrecMessage, IMessageComment
+    public interface IOpenrecYell : IOpenrecMessage
     {
     }
     //public interface IOpenrecItem : IOpenrecMessage

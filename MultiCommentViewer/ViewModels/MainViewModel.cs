@@ -379,8 +379,7 @@ namespace MultiCommentViewer
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.Unknown,
                 Type = type,
             }, _options);
@@ -935,6 +934,10 @@ namespace MultiCommentViewer
                         metaVm.TotalViewers = e.TotalViewers;
                     if (e.Elapsed != null)
                         metaVm.Elapsed = e.Elapsed;
+                    if (e.Others != null)
+                    {
+                        metaVm.Others = e.Others;
+                    }
                 }
                 catch (KeyNotFoundException ex)
                 {

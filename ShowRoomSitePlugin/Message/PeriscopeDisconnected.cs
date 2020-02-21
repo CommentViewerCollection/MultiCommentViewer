@@ -3,16 +3,15 @@ using System.Collections.Generic;
 
 namespace ShowRoomSitePlugin
 {
-    internal class ShowRoomDisconnected : MessageBase, IShowRoomDisconnected
+    internal class ShowRoomDisconnected : MessageBase2, IShowRoomDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.ShowRoom;
         public ShowRoomMessageType ShowRoomMessageType { get; } = ShowRoomMessageType.Disconnected;
+        public string Text { get; }
+
         public ShowRoomDisconnected(string raw) : base(raw)
         {
-            CommentItems = new List<IMessagePart>
-            {
-                Common.MessagePartFactory.CreateMessageText("切断しました"),
-            };
+            Text = "切断しました";
         }
     }
 }

@@ -326,21 +326,20 @@ namespace OpenrecSitePlugin
             OpenrecMessageContext messageContext = null;
             if (commentData.IsYell)
             {
-
+                //2020/01/18、ここ空欄だけど大丈夫？
             }
             else if (commentData.Stamp != null)
             {
-
+                //2020/01/18、ここ空欄だけど大丈夫？
             }
             else
             {
                 var message = new OpenrecComment("")
                 {
-                    CommentItems = new List<IMessagePart> { commentData.Message },
+                    MessageItems = messageItems,
                     Id = commentData.Id,
                     NameItems = nameItems,
                     PostTime = commentData.PostTime.ToString("HH:mm:ss"),
-                    UserIcon = null,
                     UserId = commentData.UserId,
                 };
                 var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
@@ -360,7 +359,7 @@ namespace OpenrecSitePlugin
             {
                 var blackList = e;
                 //現状BAN状態のユーザ
-                var banned = _userDict.Where(kv=>kv.Value.IsSiteNgUser).Select(kv => kv.Key).ToList();// _userViewModelDict.Where(kv => kv.Value.IsNgUser).Select(kv => kv.Key).ToList();
+                var banned = _userDict.Where(kv => kv.Value.IsSiteNgUser).Select(kv => kv.Key).ToList();// _userViewModelDict.Where(kv => kv.Value.IsNgUser).Select(kv => kv.Key).ToList();
 
                 //ブラックリストに登録されているユーザのBANフラグをONにする
                 foreach (var black in blackList)
@@ -380,7 +379,8 @@ namespace OpenrecSitePlugin
                     var u = _userDict[white];
                     u.IsSiteNgUser = false;
                 }
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
             }
@@ -418,7 +418,7 @@ namespace OpenrecSitePlugin
 
         #region ctors
         System.Timers.Timer _500msTimer = new System.Timers.Timer();
-        public CommentProvider(ICommentOptions options, OpenrecSiteOptions siteOptions,ILogger logger, IUserStoreManager userStoreManager)
+        public CommentProvider(ICommentOptions options, OpenrecSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
             _siteOptions = siteOptions;
@@ -449,8 +449,7 @@ namespace OpenrecSitePlugin
         {
             var context = InfoMessageContext.Create(new InfoMessage
             {
-                CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(message) },
-                NameItems = null,
+                Text = message,
                 SiteType = SiteType.Openrec,
                 Type = type,
             }, _options);
@@ -508,7 +507,7 @@ namespace OpenrecSitePlugin
             }
             return userAgent;
         }
-        
+
         private void WebSocket_Received(object sender, IPacket e)
         {
             try

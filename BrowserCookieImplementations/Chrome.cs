@@ -9,7 +9,7 @@ namespace ryu_s.BrowserCookie
     public class ChromeBetaManager : ChromeManager
     {
         public override BrowserType Type => BrowserType.ChromeBeta;
-        protected override string ChromeSettingsDirPath=> Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome Beta\User Data\";
+        protected override string ChromeSettingsDirPath => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome Beta\User Data\";
     }
     public class ChromeManager : IChromeManager
     {
@@ -141,6 +141,7 @@ namespace ryu_s.BrowserCookie
                     var cc = new CookieContainer();
                     foreach (System.Data.DataRow row in dt.Rows)
                     {
+                        var name = row["name"].ToString();
                         var value = row["value"].ToString();
                         if (string.IsNullOrEmpty(value))//暗号化してるっぽいから復号化してみる。
                         {
@@ -149,10 +150,6 @@ namespace ryu_s.BrowserCookie
                             var (isSuccess, v) = _decryptor.Decrypt(encrypted_value);
                             value = v;
                         }
-                        //ここでURLエンコードをやると、ふわっちでAPIが取得できなかった。ここではやるべきではないのかも。
-                        //if (value != null)
-                        //    value = Uri.EscapeDataString(value);
-                        var name = row["name"].ToString();
                         var host_key = row["host_key"].ToString();
                         var path = row["path"].ToString();
                         var expires_utc = long.Parse(row["expires_utc"].ToString());
@@ -161,6 +158,10 @@ namespace ryu_s.BrowserCookie
                             //TODO:expires_utcの変換はこれで大丈夫だろうか。正しい値を取得できているか確認していない。
                             Expires = Tools.FromUnixTime(expires_utc / 1000000L - 11644473600L),
                         };
+                        if (value == null)
+                        {
+                            continue;
+                        }
                         try
                         {
                             //CookieContainerに追加できないようなサイズの大きいvalueが存在したため、適合していることをチェックする。

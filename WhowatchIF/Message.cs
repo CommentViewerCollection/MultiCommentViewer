@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System.Collections.Generic;
 
 namespace WhowatchSitePlugin
 {
@@ -12,19 +13,27 @@ namespace WhowatchSitePlugin
     }
 
 
-    public interface IWhowatchMessage : IMessage
+    public interface IWhowatchMessage : ISiteMessage
     {
         WhowatchMessageType WhowatchMessageType { get; }
     }
     public interface IWhowatchConnected : IWhowatchMessage
     {
+        string Text { get; }
     }
     public interface IWhowatchDisconnected : IWhowatchMessage
     {
+        string Text { get; }
     }
-    public interface IWhowatchComment : IWhowatchMessage, IMessageComment
+    public interface IWhowatchComment : IWhowatchMessage
     {
+        string UserName { get; }
+        string Comment { get; }
         string UserPath { get; }
+        string UserId { get; }
+        string Id { get; }
+        string PostTime { get; }
+        IMessageImage UserIcon { get; }
         string AccountName { get; }
     }
     public interface IWhowatchNgComment : IWhowatchComment
@@ -35,9 +44,9 @@ namespace WhowatchSitePlugin
     {
         string ItemName { get; }
         int ItemCount { get; }
-        //string Comment { get; }
+        string Comment { get; }
         long Id { get; }
-        //string UserName { get; }
+        string UserName { get; }
         string UserPath { get; }
         long UserId { get; }
         string AccountName { get; }

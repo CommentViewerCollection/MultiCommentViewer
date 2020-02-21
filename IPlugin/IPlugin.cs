@@ -12,8 +12,7 @@ namespace Plugin
     {
         string Name { get; }
         string Description { get; }
-        void OnMessageReceived(IMessage message, IMessageMetadata messageMetadata);
-        void OnCommentReceived(ICommentData commentData);
+        void OnMessageReceived(ISiteMessage message, IMessageMetadata messageMetadata);
         //connectionが追加されたり削除されたりしたら通知される仕組みが欲しい
         //接続、切断情報も。
         void OnLoaded();
@@ -64,7 +63,7 @@ namespace Plugin
         /// <summary>
         /// コメントID
         /// </summary>
-        string Id { get; }        
+        string Id { get; }
         string UserId { get; }
         string Nickname { get; }
         string Comment { get; }

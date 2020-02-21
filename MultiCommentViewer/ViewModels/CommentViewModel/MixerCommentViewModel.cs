@@ -111,11 +111,11 @@ namespace MultiCommentViewer
         {
             _message = comment;
 
-            _nameItems = comment.NameItems;
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
             MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
-            PostTime = comment.PostTime;
+            Thumbnail = null;
+            Id = comment.Id;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         //public MixerCommentViewModel(MixerSitePlugin.IMixerJoin join, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
         //    : this(metadata, methods, connectionStatus, options)
@@ -161,13 +161,13 @@ namespace MultiCommentViewer
             : this(metadata, methods, connectionStatus, options)
         {
             _message = connected;
-            MessageItems = connected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
         }
         public MixerCommentViewModel(MixerSitePlugin.IMixerDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = disconnected;
-            MessageItems = disconnected.CommentItems;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
         }
 
         public IConnectionStatus ConnectionName { get; }
@@ -205,7 +205,7 @@ namespace MultiCommentViewer
                 //}
                 //else
                 //{
-                    return new SolidColorBrush(_metadata.BackColor);
+                return new SolidColorBrush(_metadata.BackColor);
                 //}
             }
         }
@@ -234,7 +234,7 @@ namespace MultiCommentViewer
                 //}
                 //else
                 //{
-                    return new SolidColorBrush(_metadata.ForeColor);
+                return new SolidColorBrush(_metadata.ForeColor);
                 //}
             }
         }

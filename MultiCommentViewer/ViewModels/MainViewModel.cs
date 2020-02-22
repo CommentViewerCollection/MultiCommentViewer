@@ -231,9 +231,17 @@ namespace MultiCommentViewer
 
 
             //SitePluginの読み込み
-            var a = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
+            IEnumerable<(string, Guid)> sitePlugins = null;
             var siteVms = new List<SiteViewModel>();
-            foreach (var (displayName, guid) in a)
+            try
+            {
+                sitePlugins = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            foreach (var (displayName, guid) in sitePlugins ?? new List<(string, Guid)>())
             {
                 try
                 {

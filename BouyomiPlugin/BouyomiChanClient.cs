@@ -3,6 +3,7 @@
 //ご自由にお使いください。
 //System.Runtime.Remotingを参照設定する必要があります
 using System;
+using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Ipc;
 
@@ -58,7 +59,13 @@ namespace FNF.Utility
         {
             if (ClientChannel != null)
             {
-                ChannelServices.UnregisterChannel(ClientChannel);
+                //2020/02/22 例外を投げる場合があったためtry-catchを追加した。
+                //{"Ex":{"Name":"System.Runtime.Remoting.RemotingException","Message":"チャネル 'hogehoge' はリモート処理サービスで登録されテいません。","StackTrace":"   場所 System.Runtime.Remoting.Channels.ChannelServices.UnregisterChannel(IChannel chnl)\r\n   場所 FNF.Utility.BouyomiChanClient.Dispose(Boolean disposing) 場所 K:\\Programming\\workspace\\MultiCommentViewer\\BouyomiPlugin\\BouyomiChanClient.cs:行 62\r\n   場所 FNF.Utility.BouyomiChanClient.Finalize() 場所 K:\\Programming\\workspace\\MultiCommentViewer\\BouyomiPlugin\\BouyomiChanClient.cs:行 42","Timestamp":"2020/02/22 21:49:07","InnerError":null,"Properties":{"Message":"チャネル 'hogehoge' はリモート処理サービスで登録されテいません。","StackTrace":"   場所 System.Runtime.Remoting.Channels.ChannelServices.UnregisterChannel(IChannel chnl)\r\n   場所 FNF.Utility.BouyomiChanClient.Dispose(Boolean disposing) 場所 K:\\Programming\\workspace\\MultiCommentViewer\\BouyomiPlugin\\BouyomiChanClient.cs:行 62\r\n   場所 FNF.Utility.BouyomiChanClient.Finalize() 場所 K:\\Programming\\workspace\\MultiCommentViewer\\BouyomiPlugin\\BouyomiChanClient.cs:行 42","HelpLink":null,"Source":"mscorlib"}},"Title":"UnhandledException","Detail":""},
+                try
+                {
+                    ChannelServices.UnregisterChannel(ClientChannel);
+                }
+                catch (RemotingException) { }
                 ClientChannel = null;
             }
         }

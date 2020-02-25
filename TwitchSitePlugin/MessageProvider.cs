@@ -11,11 +11,11 @@ namespace TwitchSitePlugin
     /// 
     /// </summary>
     /// <remarks>接続毎にインスタンスを作る</remarks>
-    public class MessageProvider:IMessageProvider
+    public class MessageProvider : IMessageProvider
     {
         public event EventHandler Opened;
-        
-        public event EventHandler<Result> Received;
+
+        public event EventHandler<string> Received;
         WebSocket _ws;
         TaskCompletionSource<object> _tcs;
         public Task ReceiveAsync()
@@ -55,11 +55,10 @@ namespace TwitchSitePlugin
 
         private void _ws_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            var arr = e.Message.Split(new [] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries );
+            var arr = e.Message.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var message in arr)
             {
-                var result = Tools.Parse(message);
-                Received?.Invoke(this, result);
+                Received?.Invoke(this, message);
             }
         }
 

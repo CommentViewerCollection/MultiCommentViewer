@@ -82,7 +82,7 @@ namespace NicoSitePlugin.Websocket
             return chat;
         }
         private bool _isInitialComment;
-        private void Wc_Received(object sender, string e)
+        public void SetMessage(string raw)
         {
             //{"ping":{"content":"rs:0"}}
             //{"ping":{"content":"ps:0"}}
@@ -92,8 +92,6 @@ namespace NicoSitePlugin.Websocket
             //{"ping":{"content":"rf:0"}}
             //{"chat":{"thread":1651546717,"no":658,"vpos":527866,"date":1559317149,"date_usec":731458,"mail":"184","user_id":"c1_CPPYyCY1VBN2nBvbUSSfwF3g","anonymity":1,"content":"このきちげぇにチェーンソーで切られるぞ"}}
 
-
-            var raw = e;
             Debug.WriteLine(raw);
             var d = DynamicJson.Parse(raw);
             if (d.IsDefined("chat"))
@@ -104,7 +102,7 @@ namespace NicoSitePlugin.Websocket
             else if (d.IsDefined("ping"))
             {
                 var content = (string)d.ping.content;
-                if(content == "rf:0")
+                if (content == "rf:0")
                 {
                     _isInitialComment = false;
                 }
@@ -118,6 +116,11 @@ namespace NicoSitePlugin.Websocket
             {
                 throw new ParseException(raw);
             }
+        }
+        private void Wc_Received(object sender, string e)
+        {
+            var raw = e;
+            SetMessage(raw);
         }
 
         private void Wc_Opened(object sender, EventArgs e)

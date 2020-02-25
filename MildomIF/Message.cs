@@ -11,7 +11,7 @@ namespace MildomSitePlugin
         JoinRoom,
         Connected,
         Disconnected,
-        Item,
+        Gift,
     }
 
     public interface IMildomMessage : ISiteMessage
@@ -42,33 +42,14 @@ namespace MildomSitePlugin
         DateTime PostedAt { get; }
         IMessageImage UserIcon { get; }
     }
-    public interface IMildomItem : IMildomMessage
+    public interface IMildomGift : IMildomMessage
     {
-        IEnumerable<IMessagePart> NameItems { get; }
-        IEnumerable<IMessagePart> CommentItems { get; }
-        string Id { get; }
-        string UserId { get; }
-        string PostTime { get; }
-        //IMessageImage UserIcon { get; set; }
-    }
-    public interface IMildomPhotoGift : IMildomItem
-    {
-        string GiftTitle { get; }
-        string PhotoGiftId { get; }
-        string BUrl { get; }
+        string GiftName { get; }
+        string GiftId { get; }
+        string GiftUrl { get; }
         int Coins { get; }
-        string GiftSmallImageUrl { get; }
-
-        string ShareText { get; }
-    }
-    public interface IMildomGift : IMildomItem
-    {
-        string GiftTitle { get; }
-        string PhotoGiftId { get; }
-        string BUrl { get; }
-        int Coins { get; }
-        string GiftSmallImageUrl { get; }
-
+        DateTime PostedAt { get; }
         int Count { get; }
+        string UserName { get; }
     }
 }

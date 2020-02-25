@@ -227,13 +227,11 @@ namespace MirrativSitePlugin
             webSocket.Opened += WebSocket_Opened;
             webSocket.Received += WebSocket_Received;
         }
-        private void WebSocket_Received(object sender, string e)
+        public void SetMessage(string raw)
         {
-            var str = e;
-            var arr = str.Split(new[] { "\t" }, StringSplitOptions.None);
+            var arr = raw.Split(new[] { "\t" }, StringSplitOptions.None);
             if (arr.Length == 0)
                 return;
-
             try
             {
                 switch (arr[0])
@@ -241,7 +239,7 @@ namespace MirrativSitePlugin
                     case "MSG":
                         if (arr.Length != 3)
                         {
-                            throw new ParseException(str);
+                            throw new ParseException(raw);
                         }
                         var data = arr[2];
                         OnMessageReceived(data);
@@ -249,7 +247,7 @@ namespace MirrativSitePlugin
                     case "ACK":
                         break;
                     default:
-                        throw new ParseException(str);
+                        throw new ParseException(raw);
                 }
             }
             catch (ParseException ex)
@@ -261,6 +259,11 @@ namespace MirrativSitePlugin
                 //SendInfo(str, InfoType.Debug);
                 _logger.LogException(ex);
             }
+        }
+        private void WebSocket_Received(object sender, string e)
+        {
+            var str = e;
+            SetMessage(str);
         }
 
         private async void WebSocket_Opened(object sender, EventArgs e)

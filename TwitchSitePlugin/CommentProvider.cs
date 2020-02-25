@@ -114,6 +114,10 @@ namespace TwitchSitePlugin
         {
             return new MetadataProvider(_server, _siteOptions, channelName);
         }
+        public async Task Init()
+        {
+            _commentCounter = new CommentCounter();
+        }
         CommentCounter _commentCounter;
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
@@ -147,7 +151,7 @@ namespace TwitchSitePlugin
                     }
                 }
 
-                _commentCounter = new CommentCounter();
+                await Init();
 
                 _provider = CreateMessageProvider();
                 _provider.Opened += Provider_Opened;
@@ -235,11 +239,16 @@ namespace TwitchSitePlugin
         string _oauthToken;
         string _name;
         UserState _userState;
-        private async void Provider_Received(object sender, Result e)
+        private async void Provider_Received(object sender, string e)
         {
-            Debug.WriteLine(e.Raw);
-            var result = e;
+            var raw = e;
+            await ProcessMessage(raw);
+        }
 
+        private async Task ProcessMessage(string raw)
+        {
+            Debug.WriteLine(raw);
+            var result = Tools.Parse(raw);
             try
             {
                 switch (result.Command)
@@ -321,6 +330,7 @@ namespace TwitchSitePlugin
                 _logger.LogException(ex, "", $"raw={result.Raw}");
             }
         }
+
         private void OnMessageReceived(Result result)
         {
             var commentData = ParsePrivMsg(result);
@@ -493,6 +503,20 @@ namespace TwitchSitePlugin
             info.Username = displayName ?? name;
             info.IsLoggedIn = !string.IsNullOrEmpty(name);
             return Task.FromResult<ICurrentUserInfo>(info);
+        }
+        bool _isInitialized;
+        public async void SetMessage(string raw)
+        {
+            if (string.IsNullOrEmpty(raw))
+            {
+                return;
+            }
+            if (!_isInitialized)
+            {
+                _isInitialized = true;
+                await Init();
+            }
+            await ProcessMessage(raw);
         }
     }
     class CommentData : ICommentData

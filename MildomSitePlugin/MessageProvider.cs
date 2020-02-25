@@ -63,6 +63,19 @@ namespace MildomSitePlugin
         public DateTime PostedAt { get; internal set; }
         public string Raw { get; set; }
     }
+    internal class OnGiftMessage : IInternalMessage
+    {
+        public int Count { get; set; }
+        public int GiftCoin { get; set; }
+        public int GiftId { get; set; }
+        public int Level { get; set; }
+        public long RoomId { get; set; }
+        public long UserId { get; set; }
+        public string UserName { get; set; }
+        public string UserImg { get; set; }
+        public DateTime PostedAt { get; internal set; }
+        public string Raw { get; set; }
+    }
     class MessageParser
     {
         public static DateTime GetCurrentDateTime()
@@ -147,7 +160,19 @@ namespace MildomSitePlugin
                     break;
                 case "onGift":
                     //{"area": 2000, "avatarDecortaion": 0, "category": 1, "cmd": "onGift", "comboEffect": 0, "count": 1, "countSum": 1, "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "giftCoin": 106187, "giftId": 1086, "guestOrder": null, "level": 21, "medals": null, "nobleLevel": 0, "reqId": 0, "roomId": 10038336, "toAvatarDecortaion": 0, "toId": 10038336, "toLevel": 25, "toName": "Nephrite【ネフライト】", "toUserImg": "http://pbs.twimg.com/profile_images/1127227613058039809/xhm1svMM.png", "type": 3, "userId": 10073272, "userImg": "https://profile.line-scdn.net/0hARjarbzhHn1XGDHTaddhKmtdEBAgNhg1LypXE3QQExopfVkib3lVGSJMR0RyKlEvY3ZZHScdRh9_", "userName": "Yumiko♥"}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = new OnGiftMessage
+                    {
+                        Count = (int)d.count,
+                        GiftCoin = (int)d.giftCoin,
+                        GiftId = (int)d.giftId,
+                        Level = (int)d.level,
+                        RoomId = (long)d.roomId,
+                        UserId = (long)d.userId,
+                        UserName = d.userName,
+                        UserImg = d.userImg,
+                        PostedAt = GetCurrentDateTime(),
+                        Raw = raw,
+                    };
                     break;
                 case "runCmdNotify":
                     //{"cmd": "runCmdNotify", "runBody": {"host_id": 10038336, "room_id": 10038336, "user_id": 10008249, "user_level": 31, "user_name": "odoritora / Riddle"}, "runCmd": "on_host_followed", "type": 3}
@@ -166,6 +191,9 @@ namespace MildomSitePlugin
                     internalMessage = new OnLiveEnd(raw);
                     break;
                 default:
+                    //d.cmd = "onLiveStart"
+                    //"{\"cmd\": \"onLiveStart\", \"reqId\": 0, \"roomId\": 10093333, \"type\": 3}"
+                    //"{\"area\": 2000, \"cmd\": \"onForbidden\", \"fobiddenGlobal\": 0, \"reqId\": 0, \"roomId\": 10093333, \"rst\": 0, \"time\": 300, \"type\": 3, \"userId\": 10285881, \"userName\": \"かもちゃん\"}"
                     internalMessage = new UnknownMessage();
                     break;
             }
@@ -187,7 +215,8 @@ namespace MildomSitePlugin
         public IMyUserInfo MyInfo { get; set; }
         public string RoomId { get; set; }
 
-        public event EventHandler<IInternalMessage> MessageReceived;
+        //public event EventHandler<IInternalMessage> MessageReceived;
+        public event EventHandler<string> MessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
 
         public void Start()
@@ -199,20 +228,19 @@ namespace MildomSitePlugin
         {
             _webSocket.Disconnect();
         }
-        public MessageProvider(IWebSocket webSocket, ILogger logger, Dictionary<int, string> imageDict)
+        public MessageProvider(IWebSocket webSocket, ILogger logger)
         {
             _webSocket = webSocket;
             _logger = logger;
-            _imgDict = imageDict;
             webSocket.Opened += WebSocket_Opened;
             webSocket.Received += WebSocket_Received;
         }
-        Dictionary<int, string> _imgDict;
         private void WebSocket_Received(object sender, string e)
         {
             var raw = e;
-            var internalMessage = MessageParser.Parse(raw, _imgDict);
-            MessageReceived?.Invoke(this, internalMessage);
+            MessageReceived?.Invoke(this, raw);
+            //var internalMessage = MessageParser.Parse(raw, _imgDict);
+            //MessageReceived?.Invoke(this, internalMessage);
         }
         private string Create()
         {

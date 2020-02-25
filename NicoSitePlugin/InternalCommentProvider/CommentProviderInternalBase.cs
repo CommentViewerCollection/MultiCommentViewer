@@ -137,6 +137,7 @@ namespace NicoSitePlugin
         }
 
         public abstract Task PostCommentAsync(string comment, string mail);
+        public abstract void SetMessage(string raw);
 
         public CommentProviderInternalBase(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger)
         {

@@ -21,6 +21,7 @@ using System.Text.RegularExpressions;
 using CommentViewerCommon;
 using SitePluginCommon;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MultiCommentViewer
 {
@@ -231,9 +232,17 @@ namespace MultiCommentViewer
 
 
             //SitePluginの読み込み
-            var a = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
+            IEnumerable<(string, Guid)> sitePlugins = null;
             var siteVms = new List<SiteViewModel>();
-            foreach (var (displayName, guid) in a)
+            try
+            {
+                sitePlugins = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+            foreach (var (displayName, guid) in sitePlugins ?? new List<(string, Guid)>())
             {
                 try
                 {
@@ -402,6 +411,7 @@ namespace MultiCommentViewer
             {
                 return null;
             }
+            if (_siteVms == null) return null;
             foreach (var siteViewModel in _siteVms)
             {
                 if (siteViewModel.DisplayName == siteName)
@@ -417,6 +427,7 @@ namespace MultiCommentViewer
             {
                 return null;
             }
+            if (_browserVms == null) return null;
             foreach (var browserViewModel in _browserVms)
             {
                 if (browserViewModel.DisplayName == browserName)
@@ -479,9 +490,16 @@ namespace MultiCommentViewer
 
         private void AddNewConnection()
         {
-            var name = GetDefaultName(Connections.Select(c => c.Name));
-            var colorPair = GetRandomColorPair();
-            AddNewConnection(name, "", "", "", false, colorPair.BackColor, colorPair.ForeColor);
+            try
+            {
+                var name = GetDefaultName(Connections.Select(c => c.Name));
+                var colorPair = GetRandomColorPair();
+                AddNewConnection(name, "", "", "", false, colorPair.BackColor, colorPair.ForeColor);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         private ColorPair GetRandomColorPair()
         {
@@ -504,11 +522,50 @@ namespace MultiCommentViewer
 
             var connectionVm = sender as ConnectionViewModel;
             Debug.Assert(connectionVm != null);
-            if (connectionVm == SelectedConnection)
+
+            try
             {
-                MessengerInstance.Send(new SetPostCommentPanel(connectionVm.CommentPostPanel));
+                if (connectionVm == SelectedConnection)
+                {
+                    MessengerInstance.Send(new SetPostCommentPanel(connectionVm.CommentPostPanel));
+                }
+                if (!_rawMessagePostPanelDict.TryGetValue(connectionVm.CommentProvider, out var panel))
+                {
+                    var cp = connectionVm.CommentProvider;
+                    if (IsNicoGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Nico.NicoRawMessagePostPanel();
+                        panel.DataContext = new Views.Nico.NicoRawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
+                    else if (IsMildomGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Mildom.MildomRawMessagePostPanel();
+                        panel.DataContext = new Views.Mildom.MildomRawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
+                    else if (IsTwitchGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Twitch.RawMessagePostPanel();
+                        panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
+                    else if (IsMirrativGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Twitch.RawMessagePostPanel();
+                        panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
+
+                }
+                MessengerInstance.Send(new SetRawMessagePostPanel(panel));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
             }
         }
+        Dictionary<ICommentProvider, UserControl> _rawMessagePostPanelDict = new Dictionary<ICommentProvider, UserControl>();
 
         private void Connection_Renamed(object sender, RenamedEventArgs e)
         {
@@ -528,6 +585,22 @@ namespace MultiCommentViewer
             {
                 SelectedConnection = connection;
             }
+        }
+        private bool IsNicoGuid(Guid guid)
+        {
+            return new Guid("5A477452-FF28-4977-9064-3A4BC7C63252").Equals(guid);
+        }
+        private bool IsMildomGuid(Guid guid)
+        {
+            return new Guid("DBBA654F-0A5D-41CC-8153-5DB2D5869BCF").Equals(guid);
+        }
+        private bool IsTwitchGuid(Guid guid)
+        {
+            return new Guid("22F7824A-EA1B-411E-85CA-6C9E6BE94E39").Equals(guid);
+        }
+        private bool IsMirrativGuid(Guid guid)
+        {
+            return new Guid("6DAFA768-280D-4E70-8494-FD5F31812EF5").Equals(guid);
         }
         //private void SetDict(ConnectionContext context)
         //{
@@ -581,22 +654,28 @@ namespace MultiCommentViewer
                 }
                 return;
             }
-
-            var asm = System.Reflection.Assembly.GetExecutingAssembly();
-            var myVer = asm.GetName().Version;
-            if (myVer < latestVersionInfo.Version)
+            try
             {
-                //新しいバージョンがあった
-                MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger));
-            }
-            else
-            {
-                //自動チェックの時は、アップデートが無ければ何も表示しない
-                if (!isAutoCheck)
+                var asm = System.Reflection.Assembly.GetExecutingAssembly();
+                var myVer = asm.GetName().Version;
+                if (myVer < latestVersionInfo.Version)
                 {
-                    //アップデートはありません
-                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger));
+                    //新しいバージョンがあった
+                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger));
                 }
+                else
+                {
+                    //自動チェックの時は、アップデートが無ければ何も表示しない
+                    if (!isAutoCheck)
+                    {
+                        //アップデートはありません
+                        MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
             }
         }
         #endregion //Methods
@@ -839,6 +918,10 @@ namespace MultiCommentViewer
                 else if (mildomMessage is MildomSitePlugin.IMildomJoinRoom join)
                 {
                     mcvCvm = new McvMildomCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (mildomMessage is MildomSitePlugin.IMildomGift gift)
+                {
+                    mcvCvm = new McvMildomCommentViewModel(gift, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is TestSitePlugin.ITestMessage testMessage)
@@ -1378,6 +1461,17 @@ namespace MultiCommentViewer
         public Brush ScrollBarButtonPressedBorderBrush => new SolidColorBrush(_options.ScrollBarButtonPressedBorderColor);
 
         private readonly Color _myColor = new Color { A = 0xFF, R = 45, G = 45, B = 48 };
+        public double RawMessagePostPanelHeight
+        {
+            get
+            {
+#if DEBUG
+                return 50;
+#else
+                return 0;
+#endif
+            }
+        }
         #endregion //Properties
 
         public MainViewModel() : base(new DynamicOptionsTest())

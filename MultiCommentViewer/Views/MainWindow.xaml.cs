@@ -29,12 +29,32 @@ namespace MultiCommentViewer
             {
                 _addingCommentToTop = message.IsTop;
             });
+            Messenger.Default.Register<SetRawMessagePostPanel>(this, message =>
+            {
+                RawMessagePanelPlaceHolder.Children.Clear();
+
+                var newPanel = message.Panel;
+                if (newPanel == null)
+                {
+                    RawMessagePanelPlaceHolder.IsEnabled = false;
+                }
+                else
+                {
+                    RawMessagePanelPlaceHolder.IsEnabled = true;
+                    newPanel.Margin = new Thickness(0);
+                    newPanel.VerticalAlignment = VerticalAlignment.Stretch;
+                    newPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+                    newPanel.Width = double.NaN;
+                    newPanel.Height = double.NaN;
+                    RawMessagePanelPlaceHolder.Children.Add(newPanel);
+                }
+            });
             Messenger.Default.Register<SetPostCommentPanel>(this, message =>
             {
                 PostCommentPanelPlaceHolder.Children.Clear();
-                
+
                 var newPanel = message.Panel;
-                if(newPanel == null)
+                if (newPanel == null)
                 {
                     PostCommentPanelPlaceHolder.IsEnabled = false;
                 }
@@ -77,7 +97,8 @@ namespace MultiCommentViewer
                         DataContext = uvm
                     };
                     userView.Show();
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     Debug.WriteLine(ex.Message);
                 }

@@ -128,17 +128,27 @@ namespace MultiCommentViewer
             Id = null;
             PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
-        public McvMildomCommentViewModel(MildomSitePlugin.IMildomItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+        public McvMildomCommentViewModel(MildomSitePlugin.IMildomGift gift, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
-            var comment = item;
-            _message = comment;
-
-            _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
-            Thumbnail = null;
-            Id = null;
-            PostTime = comment.PostTime;
+            _message = gift;
+            MessageItems = new List<IMessagePart>
+            {
+                new MessageImage
+                {
+                     Alt=gift.GiftName,
+                      Url=gift.GiftUrl,
+                       Width=40,
+                        Height=40,
+                },
+                MessagePartFactory.CreateMessageText($"を贈りました × {gift.Count}"),
+            };
+            _nameItems = MessagePartFactory.CreateMessageItems(gift.UserName);
+            //MessageItems = comment.CommentItems;
+            //Thumbnail = null;
+            //Id = null;
+            PostTime = gift.PostedAt.ToString("HH:mm:ss");
+            Info = gift.GiftName;
         }
         public McvMildomCommentViewModel(MildomSitePlugin.IMildomConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)

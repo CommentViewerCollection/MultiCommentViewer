@@ -150,32 +150,11 @@ namespace NicoSitePlugin
             }
             foreach (var chatStr in list)
             {
-                if (chatStr.StartsWith("<chat "))
-                {
-                    var chat = new Chat(chatStr);
-                    CommentReceived?.Invoke(this, chat);
-                }
-                else if (chatStr.StartsWith("<chat_result "))
-                {
-                    Debug.WriteLine(chatStr);
-                    //<chat_result thread="1622396675" status="0" no="4"/>
-                    //status=0で成功、失敗の場合4を確認済み
-                    //status=1は連投規制？
-                }
-                else
-                {
-                    //<leave_thread thread="1622163911" reason="2"/>
-#if DEBUG
-                    using (var sw = new System.IO.StreamWriter("nico_unknownData.txt", true))
-                    {
-                        sw.WriteLine(chatStr);
-                    }
-#endif
-                }
+                CommentReceived?.Invoke(this, chatStr);
             }
         }
         public event EventHandler<string> TicketReceived;
-        public event EventHandler<IChat> CommentReceived;
+        public event EventHandler<string> CommentReceived;
         public event EventHandler<List<IChat>> InitialCommentsReceived;
     }
 }

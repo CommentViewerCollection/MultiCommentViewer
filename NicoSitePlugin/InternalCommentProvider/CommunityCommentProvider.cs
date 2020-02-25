@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Text.RegularExpressions;
 using SitePluginCommon;
+using System.Diagnostics;
 
 namespace NicoSitePlugin
 {
@@ -255,14 +256,41 @@ namespace NicoSitePlugin
                 _logger.LogException(ex);
                 SendSystemInfo(ex.Message, InfoType.Debug);
             }
-
         }
-
-        private async void ChatProvider_CommentReceived(object sender, ChatReceivedEventArgs e)
+        private void ChatProvider_CommentReceived(object sender, ChatReceivedEventArgs e)
         {
+            SetMessage(e.ChatStr, e.RoomInfo.Name);
+        }
+        private async void SetMessage(string raw, string roomName)
+        {
+            //2020/02/17、"<chat "はXmlSocketの場合。Websocketのメッセージには未対応
+            var chatStr = raw;
+            IChat chat = null;
+            if (chatStr.StartsWith("<chat "))
+            {
+                chat = new Chat(chatStr);
+            }
+            else if (chatStr.StartsWith("<chat_result "))
+            {
+                Debug.WriteLine(chatStr);
+                //<chat_result thread="1622396675" status="0" no="4"/>
+                //status=0で成功、失敗の場合4を確認済み
+                //status=1は連投規制？
+            }
+            else
+            {
+                //<leave_thread thread="1622163911" reason="2"/>
+#if DEBUG
+                using (var sw = new System.IO.StreamWriter("nico_unknownData.txt", true))
+                {
+                    sw.WriteLine(chatStr);
+                }
+#endif
+            }
+            if (chat == null) return;
             try
             {
-                var messageContext = await CreateMessageContextAsync(e.Chat, e.RoomInfo.Name, false);
+                var messageContext = await CreateMessageContextAsync(chat, roomName, false);
                 if (messageContext == null) return;
                 RaiseMessageReceived(messageContext);
                 if (messageContext.Message is INicoComment comment)
@@ -278,6 +306,11 @@ namespace NicoSitePlugin
                 _logger.LogException(ex);
                 SendSystemInfo(ex.Message, InfoType.Debug);
             }
+        }
+        public override void SetMessage(string raw)
+        {
+            var testRoomName = "test";
+            SetMessage(raw, testRoomName);
         }
 
         public CommunityCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)

@@ -411,6 +411,7 @@ namespace MultiCommentViewer
             {
                 return null;
             }
+            if (_siteVms == null) return null;
             foreach (var siteViewModel in _siteVms)
             {
                 if (siteViewModel.DisplayName == siteName)
@@ -426,6 +427,7 @@ namespace MultiCommentViewer
             {
                 return null;
             }
+            if (_browserVms == null) return null;
             foreach (var browserViewModel in _browserVms)
             {
                 if (browserViewModel.DisplayName == browserName)
@@ -488,9 +490,16 @@ namespace MultiCommentViewer
 
         private void AddNewConnection()
         {
-            var name = GetDefaultName(Connections.Select(c => c.Name));
-            var colorPair = GetRandomColorPair();
-            AddNewConnection(name, "", "", "", false, colorPair.BackColor, colorPair.ForeColor);
+            try
+            {
+                var name = GetDefaultName(Connections.Select(c => c.Name));
+                var colorPair = GetRandomColorPair();
+                AddNewConnection(name, "", "", "", false, colorPair.BackColor, colorPair.ForeColor);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         private ColorPair GetRandomColorPair()
         {
@@ -513,41 +522,48 @@ namespace MultiCommentViewer
 
             var connectionVm = sender as ConnectionViewModel;
             Debug.Assert(connectionVm != null);
-            if (connectionVm == SelectedConnection)
-            {
-                MessengerInstance.Send(new SetPostCommentPanel(connectionVm.CommentPostPanel));
-            }
-            if (!_rawMessagePostPanelDict.TryGetValue(connectionVm.CommentProvider, out var panel))
-            {
-                var cp = connectionVm.CommentProvider;
-                if (IsNicoGuid(cp.SiteContextGuid))
-                {
-                    panel = new Views.Nico.NicoRawMessagePostPanel();
-                    panel.DataContext = new Views.Nico.NicoRawMessagePostPanelViewModel(cp);
-                    _rawMessagePostPanelDict.Add(cp, panel);
-                }
-                else if (IsMildomGuid(cp.SiteContextGuid))
-                {
-                    panel = new Views.Mildom.MildomRawMessagePostPanel();
-                    panel.DataContext = new Views.Mildom.MildomRawMessagePostPanelViewModel(cp);
-                    _rawMessagePostPanelDict.Add(cp, panel);
-                }
-                else if (IsTwitchGuid(cp.SiteContextGuid))
-                {
-                    panel = new Views.Twitch.RawMessagePostPanel();
-                    panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
-                    _rawMessagePostPanelDict.Add(cp, panel);
-                }
-                else if (IsMirrativGuid(cp.SiteContextGuid))
-                {
-                    panel = new Views.Twitch.RawMessagePostPanel();
-                    panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
-                    _rawMessagePostPanelDict.Add(cp, panel);
-                }
 
-            }
-            MessengerInstance.Send(new SetRawMessagePostPanel(panel));
+            try
+            {
+                if (connectionVm == SelectedConnection)
+                {
+                    MessengerInstance.Send(new SetPostCommentPanel(connectionVm.CommentPostPanel));
+                }
+                if (!_rawMessagePostPanelDict.TryGetValue(connectionVm.CommentProvider, out var panel))
+                {
+                    var cp = connectionVm.CommentProvider;
+                    if (IsNicoGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Nico.NicoRawMessagePostPanel();
+                        panel.DataContext = new Views.Nico.NicoRawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
+                    else if (IsMildomGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Mildom.MildomRawMessagePostPanel();
+                        panel.DataContext = new Views.Mildom.MildomRawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
+                    else if (IsTwitchGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Twitch.RawMessagePostPanel();
+                        panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
+                    else if (IsMirrativGuid(cp.SiteContextGuid))
+                    {
+                        panel = new Views.Twitch.RawMessagePostPanel();
+                        panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
+                        _rawMessagePostPanelDict.Add(cp, panel);
+                    }
 
+                }
+                MessengerInstance.Send(new SetRawMessagePostPanel(panel));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         Dictionary<ICommentProvider, UserControl> _rawMessagePostPanelDict = new Dictionary<ICommentProvider, UserControl>();
 
@@ -638,22 +654,28 @@ namespace MultiCommentViewer
                 }
                 return;
             }
-
-            var asm = System.Reflection.Assembly.GetExecutingAssembly();
-            var myVer = asm.GetName().Version;
-            if (myVer < latestVersionInfo.Version)
+            try
             {
-                //新しいバージョンがあった
-                MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger));
-            }
-            else
-            {
-                //自動チェックの時は、アップデートが無ければ何も表示しない
-                if (!isAutoCheck)
+                var asm = System.Reflection.Assembly.GetExecutingAssembly();
+                var myVer = asm.GetName().Version;
+                if (myVer < latestVersionInfo.Version)
                 {
-                    //アップデートはありません
-                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger));
+                    //新しいバージョンがあった
+                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger));
                 }
+                else
+                {
+                    //自動チェックの時は、アップデートが無ければ何も表示しない
+                    if (!isAutoCheck)
+                    {
+                        //アップデートはありません
+                        MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
             }
         }
         #endregion //Methods

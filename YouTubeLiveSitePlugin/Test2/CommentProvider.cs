@@ -122,7 +122,10 @@ namespace YouTubeLiveSitePlugin.Test2
                     cc.Add(cookie);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
             return cc;
         }
         EachConnection _connection;

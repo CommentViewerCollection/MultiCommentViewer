@@ -4,6 +4,12 @@ using System.Text;
 
 namespace ryu_s.BrowserCookie
 {
+    public class ChromeException : Exception
+    {
+        public ChromeException(string message) : base(message)
+        {
+        }
+    }
     class ChromeValueDecryptor
     {
         public string LocalStatePath { get; set; }
@@ -27,8 +33,16 @@ namespace ryu_s.BrowserCookie
                 var sh = NativeMethods.Decrypt(gh, data.Length, LocalStatePath);
                 var s = sh.AsString();
                 var isSuccess = s[0] != '0';
-                var decryptedValue = s.Substring(1);
-                return (isSuccess, decryptedValue);
+                if (isSuccess)
+                {
+                    var decryptedValue = s.Substring(1);
+                    return (isSuccess, decryptedValue);
+                }
+                else
+                {
+                    var errorStr = s.Substring(1);
+                    throw new ChromeException(errorStr);
+                }
             }
             else
             {

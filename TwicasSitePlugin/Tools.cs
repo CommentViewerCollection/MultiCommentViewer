@@ -336,13 +336,22 @@ namespace TwicasSitePlugin
             //    Date = DateTime.Parse(low.date),//"Sat, 28 Apr 2018 02:21:28 +0900"
             //};
             //return data;
+            DateTime createdAt;
+            try
+            {
+                createdAt = DateTime.Parse(low.date);
+            }
+            catch(Exception ex)
+            {
+                throw new ParseException(low.date);
+            }
             return new InternalComment
             {
                 Message = message,
                 ScreenName = name,
                 UserName = low.screen,
                 UserId = low.uid,
-                CreatedAt = DateTime.Parse(low.date),
+                CreatedAt = createdAt,
                 Id = low.id,
                 ProfileImageUrl = thumbnailUrl,
             };

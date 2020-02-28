@@ -558,6 +558,11 @@ namespace OpenrecSitePlugin
                 Username = me.DisplayName,
             };
         }
+
+        public void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
     }
     class CurrentUserInfo : ICurrentUserInfo
     {

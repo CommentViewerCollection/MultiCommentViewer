@@ -98,6 +98,9 @@ namespace SitePluginCommon
             CanConnect = true;
             CanDisconnect = false;
         }
+
+        public abstract void SetMessage(string raw);
+
         public CommentProviderBase(ILogger logger, ICommentOptions options)
         {
             _logger = logger;

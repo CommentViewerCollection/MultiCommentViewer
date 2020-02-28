@@ -447,5 +447,10 @@ namespace WhowatchSitePlugin
                 });
             }
         }
+
+        public void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

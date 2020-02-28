@@ -132,6 +132,34 @@
     <Compile Include="ViewModels\SiteViewModel.cs" />
     <Compile Include="Test\OptionsLoaderTest.cs" />
     <Compile Include="Test\SitePluginLoaderTest.cs" />
+    <Compile Include="Views\Mildom\MildomCommentPostPanel.xaml.cs">
+      <DependentUpon>MildomCommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Mildom\MildomRawMessagePostPanel.xaml.cs">
+      <DependentUpon>MildomRawMessagePostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Mildom\MildomRawMessagePostPanelViewModel.cs" />
+    <Compile Include="Views\Mirrativ\MirrativCommentPostPanel.xaml.cs">
+      <DependentUpon>MirrativCommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Mirrativ\MirrativRawMessagePostPanel.xaml.cs">
+      <DependentUpon>MirrativRawMessagePostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Mirrativ\MirrativRawMessagePostPanelViewModel.cs" />
+    <Compile Include="Views\Nico\NicoCommentPostPanel.xaml.cs">
+      <DependentUpon>NicoCommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Nico\NicoRawMessagePostPanel.xaml.cs">
+      <DependentUpon>NicoRawMessagePostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Nico\NicoRawMessagePostPanelViewModel.cs" />
+    <Compile Include="Views\Twitch\TwitchCommentPostPanel.xaml.cs">
+      <DependentUpon>TwitchCommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Twitch\TwitchRawMessagePostPanel.xaml.cs">
+      <DependentUpon>TwitchRawMessagePostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Twitch\TwitchRawMessagePostPanelViewModel.cs" />
     <Compile Include="Views\UserListView.xaml.cs">
       <DependentUpon>UserListView.xaml</DependentUpon>
     </Compile>
@@ -142,6 +170,13 @@
     <Compile Include="ViewModels\UserStoreTest.cs" />
     <Compile Include="ViewModels\UserViewModel.cs" />
     <Compile Include="ViewModels\ViewModelLocator.cs" />
+    <Compile Include="Views\YouTubeLive\TwitchCommentPostPanel.xaml.cs">
+      <DependentUpon>TwitchCommentPostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\YouTubeLive\TwitchRawMessagePostPanel.xaml.cs">
+      <DependentUpon>TwitchRawMessagePostPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\YouTubeLive\TwitchRawMessagePostPanelViewModel.cs" />
     <Page Include="AppNoStartupUri.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -166,9 +201,41 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\Mildom\MildomCommentPostPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Mildom\MildomRawMessagePostPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Mirrativ\MirrativCommentPostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Mirrativ\MirrativRawMessagePostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Nico\NicoCommentPostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Nico\NicoRawMessagePostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\OptionsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Twitch\TwitchCommentPostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Twitch\TwitchRawMessagePostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\UserListView.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -177,6 +244,14 @@
     <Page Include="Views\UserView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\YouTubeLive\TwitchCommentPostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\YouTubeLive\TwitchRawMessagePostPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>

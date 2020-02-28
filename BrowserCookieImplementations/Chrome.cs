@@ -148,7 +148,7 @@ namespace ryu_s.BrowserCookie
                             var encrypted_value = (byte[])row["encrypted_value"];
                             //value = UnProtect(encrypted_value);
                             var (isSuccess, v) = _decryptor.Decrypt(encrypted_value);
-                            value = v;
+                            value = isSuccess ? v : null;
                         }
                         var host_key = row["host_key"].ToString();
                         var path = row["path"].ToString();

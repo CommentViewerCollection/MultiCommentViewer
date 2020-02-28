@@ -270,5 +270,10 @@ namespace TwicasSitePlugin
         {
 
         }
+
+        public override void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

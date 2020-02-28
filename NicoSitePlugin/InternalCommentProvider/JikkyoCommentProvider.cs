@@ -133,7 +133,9 @@ namespace NicoSitePlugin
         {
             throw new NotImplementedException();
         }
-
+        public override void SetMessage(string raw)
+        {
+        }
         public JikkyoCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IUserStoreManager userStoreManager, IDataSource dataSource, ILogger logger, ICommentProvider commentProvider)
             : base(options, siteOptions, userStoreManager, dataSource, logger)
         {

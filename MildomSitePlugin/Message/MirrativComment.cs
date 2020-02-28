@@ -6,7 +6,7 @@ namespace MildomSitePlugin
 {
     internal class MildomComment : MessageBase2, IMildomComment
     {
-        public override SiteType SiteType { get; } = SiteType.Mixer;
+        public override SiteType SiteType { get; } = SiteType.Mirrativ;
         public MildomMessageType MildomMessageType { get; } = MildomMessageType.Comment;
         public IEnumerable<IMessagePart> CommentItems { get; }
         public string UserName { get; set; }

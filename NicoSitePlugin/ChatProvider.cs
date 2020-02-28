@@ -9,7 +9,7 @@ namespace NicoSitePlugin
 {
     class ChatReceivedEventArgs : EventArgs
     {
-        public IChat Chat { get; set; }
+        public string ChatStr { get; set; }
         public IXmlWsRoomInfo RoomInfo { get; set; }
     }
     class InitialChatsReceivedEventArgs : EventArgs
@@ -35,7 +35,7 @@ namespace NicoSitePlugin
         }
         protected virtual IStreamSocket CreateStreamSocket(string addr, int port)
         {
-            return new StreamSocket(addr,port, 8192, new SplitBuffer("\0"));
+            return new StreamSocket(addr, port, 8192, new SplitBuffer("\0"));
         }
         public async Task ReceiveAsync()
         {
@@ -108,12 +108,12 @@ namespace NicoSitePlugin
             InitialCommentsReceived?.Invoke(this, new InitialChatsReceivedEventArgs { Chat = e, RoomInfo = roomInfo });
         }
 
-        private void Room_CommentReceived(object sender, IChat e)
+        private void Room_CommentReceived(object sender, string e)
         {
             var chat = e;
             var roomProvider = sender as RoomCommentProvider;
             var roomInfo = roomProvider.RoomInfo;
-            CommentReceived?.Invoke(this, new ChatReceivedEventArgs { Chat = chat, RoomInfo = roomInfo });
+            CommentReceived?.Invoke(this, new ChatReceivedEventArgs { ChatStr = chat, RoomInfo = roomInfo });
         }
         public void Disconnect()
         {

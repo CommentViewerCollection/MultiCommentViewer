@@ -226,6 +226,11 @@ namespace ShowRoomSitePlugin
             return await Task.FromResult(userInfo);
         }
 
+        public override void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
+
         private readonly IDataServer _server;
         private readonly ILogger _logger;
         private readonly ICommentOptions _options;

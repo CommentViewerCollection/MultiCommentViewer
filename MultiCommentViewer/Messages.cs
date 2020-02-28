@@ -10,7 +10,7 @@ namespace MultiCommentViewer
     {
         public bool IsTop { get; set; }
     }
-    class ShowOptionsViewMessage: GalaSoft.MvvmLight.Messaging.MessageBase
+    class ShowOptionsViewMessage : GalaSoft.MvvmLight.Messaging.MessageBase
     {
         public IEnumerable<IOptionsTabPage> Tabs { get; }
         public ShowOptionsViewMessage(IEnumerable<IOptionsTabPage> tabs)
@@ -43,6 +43,14 @@ namespace MultiCommentViewer
     {
         public UserControl Panel { get; }
         public SetPostCommentPanel(UserControl panel)
+        {
+            Panel = panel;
+        }
+    }
+    class SetRawMessagePostPanel : GalaSoft.MvvmLight.Messaging.MessageBase
+    {
+        public UserControl Panel { get; }
+        public SetRawMessagePostPanel(UserControl panel)
         {
             Panel = panel;
         }

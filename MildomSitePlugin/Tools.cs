@@ -2,8 +2,11 @@
 using SitePlugin;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Xceed.Wpf.Toolkit.Core.Converters;
 
 namespace MildomSitePlugin
 {
@@ -89,6 +92,39 @@ namespace MildomSitePlugin
             {
                 return null;
             }
+        }
+        public static async Task<Dictionary<long, GiftItem>> GetGiftDict(IDataServer server)
+        {
+            var url = "https://cloudac.mildom.com/nonolive/gappserv/gift/find";
+            var headers = new Dictionary<string, string> { };
+            var res = await server.GetAsync(url, headers);
+            var obj = Tools.Deserialize<Low.gift_find.RootObject>(res);
+            var dict = new Dictionary<long, GiftItem>();
+            foreach (var item in obj.Body.Models)
+            {
+                dict.Add(item.GiftId, new GiftItem(item));
+            }
+            foreach (var item in obj.Body.Pack)
+            {
+                dict.Add(item.GiftId, new GiftItem(item));
+            }
+            return dict;
+        }
+    }
+    class GiftItem
+    {
+        public string Name { get; }
+        public string Url { get; }
+        public long Id { get; }
+        public GiftItem(string name)
+        {
+            Name = name;
+        }
+        public GiftItem(Low.gift_find.GiftItem low)
+        {
+            Name = low.Name;
+            Url = low.Pic;
+            Id = low.GiftId;
         }
     }
 }

@@ -51,14 +51,14 @@ namespace TwitchSitePluginTests
             //{
             //    return CommentData;
             //}
-            public C(IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStoreManager userStoreManager) 
+            public C(IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStoreManager userStoreManager)
                 : base(server, logger, options, siteOptions, userStoreManager)
             {
             }
         }
         class MessageProvider : IMessageProvider
         {
-            public event EventHandler<Result> Received;
+            public event EventHandler<string> Received;
             public event EventHandler Opened;
             TaskCompletionSource<object> _tcs = new TaskCompletionSource<object>();
             public void Disconnect()
@@ -75,9 +75,9 @@ namespace TwitchSitePluginTests
             {
                 throw new NotImplementedException();
             }
-            public void SetResult(Result result)
+            public void SetResult(string raw)
             {
-                Received?.Invoke(this, result);
+                Received?.Invoke(this, raw);
             }
         }
         class MetadataProvider : IMetadataProvider
@@ -100,7 +100,7 @@ namespace TwitchSitePluginTests
             //ログイン済み、未ログインそれぞれの場合にそれぞれの接続コマンドが送信されるか
             //サーバから送られてくるコマンドに対する反応は適切か。PINGの時はPONGが返されるか、PRIVMSGだったらCommentReceivedが発生するか
             var data = TestHelper.GetSampleData("Streams.txt");
-            var result = Tools.Parse("@badges=subscriber/12,partner/1;color=#FF0000;display-name=harutomaru;emotes=189031:20-31,60-71/588715:33-58/635709:73-82;id=9029a587-81b0-4705-8607-38cba9b762d6;mod=0;room-id=39587048;subscriber=1;tmi-sent-ts=1518062412116;turbo=0;user-id=72777405;user-type= :harutomaru!harutomaru@harutomaru.tmi.twitch.tv PRIVMSG #mimicchi :@bwscar221 おざまぁぁぁす！ mimicchiHage haruto1Harutomarubakayarou mimicchiHage bwscarDead");
+            var raw = "@badges=subscriber/12,partner/1;color=#FF0000;display-name=harutomaru;emotes=189031:20-31,60-71/588715:33-58/635709:73-82;id=9029a587-81b0-4705-8607-38cba9b762d6;mod=0;room-id=39587048;subscriber=1;tmi-sent-ts=1518062412116;turbo=0;user-id=72777405;user-type= :harutomaru!harutomaru@harutomaru.tmi.twitch.tv PRIVMSG #mimicchi :@bwscar221 おざまぁぁぁす！ mimicchiHage haruto1Harutomarubakayarou mimicchiHage bwscarDead";
             var userid = "72777405";
             var serverMock = new Mock<IDataServer>();
             serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(Task.FromResult(data));
@@ -130,7 +130,7 @@ namespace TwitchSitePluginTests
                 commentProvider.Disconnect();
             };
             var t = commentProvider.ConnectAsync("", browserProfileMock.Object);
-            messageProvider.SetResult(result);
+            messageProvider.SetResult(raw);
             await t;
             var comment = actual.Message as ITwitchComment;
             Assert.AreEqual(TwitchMessageType.Comment, comment.TwitchMessageType);
@@ -141,7 +141,7 @@ namespace TwitchSitePluginTests
         public async Task 自動コテハン登録が機能するか()
         {
             var data = TestHelper.GetSampleData("Streams.txt");
-            var result = Tools.Parse("@badges=subscriber/12,partner/1;color=#FF0000;display-name=harutomaru;id=9029a587-81b0-4705-8607-38cba9b762d6;mod=0;room-id=39587048;subscriber=1;tmi-sent-ts=1518062412116;turbo=0;user-id=72777405;user-type= :harutomaru!harutomaru@harutomaru.tmi.twitch.tv PRIVMSG #mimicchi :あいう @コテハン えお");
+            var raw = "@badges=subscriber/12,partner/1;color=#FF0000;display-name=harutomaru;id=9029a587-81b0-4705-8607-38cba9b762d6;mod=0;room-id=39587048;subscriber=1;tmi-sent-ts=1518062412116;turbo=0;user-id=72777405;user-type= :harutomaru!harutomaru@harutomaru.tmi.twitch.tv PRIVMSG #mimicchi :あいう @コテハン えお";
             var userid = "72777405";
             var serverMock = new Mock<IDataServer>();
             serverMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(Task.FromResult(data));
@@ -171,7 +171,7 @@ namespace TwitchSitePluginTests
                 commentProvider.Disconnect();
             };
             var t = commentProvider.ConnectAsync("", browserProfileMock.Object);
-            messageProvider.SetResult(result);
+            messageProvider.SetResult(raw);
             await t;
             Assert.AreEqual("コテハン", user.Nickname);
             return;

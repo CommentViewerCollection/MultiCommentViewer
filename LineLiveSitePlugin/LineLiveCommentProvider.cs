@@ -567,6 +567,12 @@ namespace LineLiveSitePlugin
             };
             return info;
         }
+
+        public void SetMessage(string raw)
+        {
+            throw new NotImplementedException();
+        }
+
         public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;

@@ -16,5 +16,6 @@ namespace NicoSitePlugin
         event EventHandler<ConnectedEventArgs> Connected;
         bool IsValidInput(string input);
         Task PostCommentAsync(string comment, string mail);
+        void SetMessage(string raw);
     }
 }

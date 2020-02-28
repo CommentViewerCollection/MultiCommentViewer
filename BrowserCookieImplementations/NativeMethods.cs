@@ -7,18 +7,18 @@ using System.Runtime.InteropServices;
 namespace ryu_s.BrowserCookie
 {
     class NativeMethods
-    { 
+    {
         /// <summary>
-             /// 
-             /// </summary>
-             /// <param name="pDataIn"></param>
-             /// <param name="ppszDataDescr"></param>
-             /// <param name="pOptionalEntropy"></param>
-             /// <param name="pvReserved"></param>
-             /// <param name="pPromptStruct"></param>
-             /// <param name="dwFlags"></param>
-             /// <param name="pDataOut"></param>
-             /// <returns></returns>
+        /// 
+        /// </summary>
+        /// <param name="pDataIn"></param>
+        /// <param name="ppszDataDescr"></param>
+        /// <param name="pOptionalEntropy"></param>
+        /// <param name="pvReserved"></param>
+        /// <param name="pPromptStruct"></param>
+        /// <param name="dwFlags"></param>
+        /// <param name="pDataOut"></param>
+        /// <returns></returns>
         [DllImport("Crypt32.dll", CharSet = CharSet.Unicode)]
         private static extern bool CryptUnprotectData(ref DATA_BLOB pDataIn, string ppszDataDescr,
             ref DATA_BLOB pOptionalEntropy, IntPtr pvReserved, IntPtr pPromptStruct, uint dwFlags, out DATA_BLOB pDataOut);
@@ -45,6 +45,32 @@ namespace ryu_s.BrowserCookie
                     pbData = IntPtr.Zero;
                 }
             }
+        }
+        public static byte[] CryptUnprotectData(byte[] data)
+        {
+            byte[] value = null;
+            DATA_BLOB pDataIn = default;
+            DATA_BLOB pDataOut = default;
+            try
+            {
+                pDataIn = new DATA_BLOB { pbData = Marshal.AllocHGlobal(data.Length), cbData = data.Length };
+                DATA_BLOB pOptionalEntropy = default(DATA_BLOB);
+                Marshal.Copy(data, 0, pDataIn.pbData, data.Length);
+
+                if (CryptUnprotectData(ref pDataIn, null, ref pOptionalEntropy, IntPtr.Zero, IntPtr.Zero, 0, out pDataOut))
+                {
+                    var numArray = new byte[pDataOut.cbData];
+                    Marshal.Copy(pDataOut.pbData, numArray, 0, pDataOut.cbData);
+                    value = numArray;
+                }
+            }
+            finally
+            {
+                ((IDisposable)pDataIn).Dispose();
+                ((IDisposable)pDataOut).Dispose();
+            }
+
+            return value;
         }
         /// <summary>
         /// 

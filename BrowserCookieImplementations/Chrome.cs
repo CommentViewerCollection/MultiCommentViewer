@@ -57,7 +57,7 @@ namespace ryu_s.BrowserCookie
             public string ProfileName { get; }
 
             public BrowserType Type { get; }
-            ChromeValueDecryptor _decryptor = new ChromeValueDecryptor();
+            ChromeAesGcm _decryptor = new ChromeAesGcm();
             public List<Cookie> GetCookieCollection(string domain)
             {
                 var query = "SELECT value, name, host_key, path, expires_utc, encrypted_value FROM cookies WHERE host_key LIKE '%" + domain + "'";
@@ -146,9 +146,14 @@ namespace ryu_s.BrowserCookie
                         if (string.IsNullOrEmpty(value))//暗号化してるっぽいから復号化してみる。
                         {
                             var encrypted_value = (byte[])row["encrypted_value"];
-                            //value = UnProtect(encrypted_value);
-                            var (isSuccess, v) = _decryptor.Decrypt(encrypted_value);
-                            value = isSuccess ? v : null;
+                            if (IsDPAPIed(encrypted_value))
+                            {
+                                value = UnProtect(encrypted_value);
+                            }
+                            else
+                            {
+                                value = _decryptor.Decrypt(encrypted_value);
+                            }
                         }
                         var host_key = row["host_key"].ToString();
                         var path = row["path"].ToString();
@@ -174,6 +179,12 @@ namespace ryu_s.BrowserCookie
                 }
                 return list;
             }
+
+            private static bool IsDPAPIed(byte[] data)
+            {
+                return data != null && data.Length > 4 && data[0] == 1 && data[1] == 0 && data[2] == 0 && data[3] == 0;
+            }
+
             /// <summary>
             /// 復号化する。
             /// </summary>

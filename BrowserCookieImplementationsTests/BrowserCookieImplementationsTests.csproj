@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChromeAesGcmTests.cs" />
     <Compile Include="FirefoxProfileTests.cs" />
     <Compile Include="Tools.cs" />
     <Content Include="SampleData\profiles.ini.txt">

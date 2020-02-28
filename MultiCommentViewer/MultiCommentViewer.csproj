@@ -511,9 +511,6 @@ if $(ConfigurationName) == Release (
 ::ReadMe.txtをコピー
 xcopy /y "$(ProjectDir)ReadMe.txt" "$(ProjectDir)$(OutDir)"
 
-::encrypted_value_decryptor.dllをコピー
-xcopy /y "$(ProjectDir)encrypted_value_decryptor.dll" "$(ProjectDir)$(OutDir)"
-
 :: settingsディレクトリを作成
 if not exist settings mkdir settings
 :: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある

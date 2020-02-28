@@ -54,7 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Chrome.cs" />
-    <Compile Include="ChromeValueDecryptor.cs" />
+    <Compile Include="ChromeAesGcm.cs" />
     <Compile Include="Firefox.cs" />
     <Compile Include="IE.cs" />
     <Compile Include="IE\NativeMethods.cs" />
@@ -68,6 +68,9 @@
     <Compile Include="Unknown.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BouncyCastle">
+      <Version>1.8.5</Version>
+    </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.112</Version>
     </PackageReference>

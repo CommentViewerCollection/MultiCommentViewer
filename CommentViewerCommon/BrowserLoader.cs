@@ -20,7 +20,7 @@ namespace CommentViewerCommon
                 new ChromeManager(),
                 new ChromeBetaManager(),
                 new FirefoxManager(),
-                new IEManager(),
+                new EdgeManager(),
                 new OperaManager(),
                 new OperaGxManager(),
             };

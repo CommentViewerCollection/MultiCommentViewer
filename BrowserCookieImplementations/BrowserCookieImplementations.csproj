@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Chrome.cs" />
     <Compile Include="ChromeAesGcm.cs" />
+    <Compile Include="EdgeManager.cs" />
     <Compile Include="Firefox.cs" />
     <Compile Include="IE.cs" />
     <Compile Include="IE\NativeMethods.cs" />

@@ -35,6 +35,7 @@ namespace TwicasSitePlugin
                 }
                 _p1.Cc = _cc;
                 _p1.BroadcasterId = _broadcasterId;
+                _p1.LiveId = _currentLiveId ?? liveId;
                 _p1.Master = _p2;
                 //var p = new WebsocketMessageProvider(new Common.Websocket());
                 //p.MessageReceived += (sender, e) => { Debug.WriteLine(e.Raw); };
@@ -71,24 +72,30 @@ namespace TwicasSitePlugin
             _p2 = p2;
             p2.LiveIdReceived += P2_LiveIdReceived;
         }
-        long? _beforeLiveId;
+        long? _currentLiveId;
         bool _newLiveStarted;
         private void P2_LiveIdReceived(object sender, long? e)
         {
             var newLiveId = e;
-            if (!_beforeLiveId.HasValue)
+            if (!_currentLiveId.HasValue)
             {
-                _beforeLiveId = newLiveId;
+                _currentLiveId = newLiveId;
             }
-            else if (_beforeLiveId.Value == newLiveId)
+            else if (!newLiveId.HasValue)
             {
-                //do nothing
+                //配信と配信の間はnewLiveIdがnullになる。
+                //この時は前回の配信IDでコメントが取れる。
+            }
+            else if (_currentLiveId.Value == newLiveId)
+            {
+                //配信中。特にやること無し。
             }
             else
             {
                 //新しい放送が始まった。websocketのURLが変更になるから再接続する。
-                _beforeLiveId = newLiveId;
+                _currentLiveId = newLiveId;
                 _newLiveStarted = true;
+                System.Diagnostics.Debug.WriteLine($"newLiveId={newLiveId}");
                 _connectionManager.Disconnect();
             }
         }

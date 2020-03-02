@@ -117,7 +117,7 @@ namespace MultiCommentViewer
             MessageItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(comment.Text) };
             //Thumbnail = comment.UserIcon;
             //Id = comment.Id?.ToString();
-            //PostTime = comment.PostTime;
+            PostTime = comment.CreatedAt.ToString("HH:mm:ss");
         }
 
         public IConnectionStatus ConnectionName { get; }

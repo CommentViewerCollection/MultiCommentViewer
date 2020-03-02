@@ -291,7 +291,20 @@ namespace TwicasSitePlugin
         {
             return Regex.IsMatch(input, "twitcasting\\.tv/([a-zA-Z0-9:_]+)");
         }
-
+        internal static InternalComment Parse(Low.ListAll.Comment low)
+        {
+            return new InternalComment
+            {
+                CreatedAt = Common.UnixTimeConverter.FromUnixTime(low.CreatedAt.Value / 1000).ToLocalTime(),
+                Grade = low.Author.Grade,
+                Id = low.Id,
+                ProfileImageUrl = low.Author.ProfileImage,
+                Message = low.Message,
+                ScreenName = low.Author.ScreenName,
+                UserId = low.Author.Id,
+                UserName = low.Author.Name,
+            };
+        }
         internal static InternalComment Parse(Comment low)
         {
             var (name, preThumbnailUrl, message) = SplitHtml(low.html);
@@ -341,7 +354,7 @@ namespace TwicasSitePlugin
             {
                 createdAt = DateTime.Parse(low.date);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ParseException(low.date);
             }

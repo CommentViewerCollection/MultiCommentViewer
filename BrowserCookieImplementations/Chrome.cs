@@ -26,7 +26,7 @@ namespace ryu_s.BrowserCookie
             var defaultDbFilePath = ChromeSettingsDirPath + _defaultProfileName + "\\" + _dbFilename;
             if (System.IO.File.Exists(defaultDbFilePath))
             {
-                list.Add(new ChromeProfile(Type, defaultDbFilePath, _defaultProfileName));
+                list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, _defaultProfileName));
             }
             var dirs = System.IO.Directory.GetDirectories(ChromeSettingsDirPath);
             foreach (var dir in dirs)
@@ -36,7 +36,7 @@ namespace ryu_s.BrowserCookie
                 if (dirName.StartsWith("Profile", StringComparison.CurrentCultureIgnoreCase) && System.IO.File.Exists(testPath))
                 {
                     var profileName = dirName;
-                    list.Add(new ChromeProfile(Type, ChromeSettingsDirPath + profileName + "\\" + _dbFilename, profileName));
+                    list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, profileName));
                 }
             }
             return list;
@@ -73,12 +73,12 @@ namespace ryu_s.BrowserCookie
             #endregion
 
             #region Constructors
-            public ChromeProfile(BrowserType type, string path, string profileName)
+            public ChromeProfile(BrowserType type, string userDataDirPath, string profileName)
             {
-                Path = path;
+                Path = userDataDirPath + "" + profileName + "\\Cookies";
                 ProfileName = profileName;
                 Type = type;
-                _decryptor.LocalStatePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Google\Chrome\User Data\" + "Local State";
+                _decryptor.LocalStatePath = userDataDirPath + "Local State";
             }
             #endregion
 

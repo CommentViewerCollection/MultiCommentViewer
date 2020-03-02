@@ -47,11 +47,10 @@ namespace TwicasSitePlugin
         public event EventHandler<IInternalMessage> MessageReceived;
         public System.Net.CookieContainer Cc { get; set; }
         public string BroadcasterId { get; set; }
+        public long LiveId { get; set; }
         private async Task ConnectAsync()
         {
-            var (context, contextRaw) = await API.GetLiveContext(_server, BroadcasterId, Cc);
-            var liveId = context.MovieId;
-            var wsUrl = await API.GetWebsocketUrl(_server, liveId);
+            var wsUrl = await API.GetWebsocketUrl(_server, LiveId);
             await _websocket.ReceiveAsync(wsUrl);
         }
         public WebsocketMessageProvider(IWebsocket websocket, IDataServer server)

@@ -53,10 +53,7 @@ namespace TwicasSitePlugin
             {
                 foreach (var lowComment in initialComments)
                 {
-                    //showがfalseのデータが時々ある。
-                    //{"id":15465669455,"show":false}
-                    //よく分からないけど、有用な情報は無さそうだからスルー
-                    if (!lowComment.show) continue;
+                    if (lowComment.Type == "filtered_comment") continue;
                     var internalComment = Tools.Parse(lowComment);
                     var context = CreateMessageContext(internalComment, true);
                     list.Add(context);
@@ -67,7 +64,7 @@ namespace TwicasSitePlugin
                 //    InitialCommentsReceived?.Invoke(this, initialDataList);
                 //}
                 var lastComment = initialComments[initialComments.Length - 1];
-                _lastCommentId = lastComment.id;
+                _lastCommentId = lastComment.Id;
             }
             return list;
         }

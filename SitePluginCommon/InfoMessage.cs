@@ -13,6 +13,7 @@ namespace SitePluginCommon
     {
         InfoType Type { get; set; }
         string Text { get; }
+        DateTime CreatedAt { get; }
     }
     public class InfoMessage : IInfoMessage
     {
@@ -20,6 +21,7 @@ namespace SitePluginCommon
         public string Raw { get; }
         public SiteType SiteType { get; set; }
         public string Text { get; set; }
+        public DateTime CreatedAt { get; } = DateTime.Now;
 
         public event EventHandler<ValueChangedEventArgs> ValueChanged;
     }

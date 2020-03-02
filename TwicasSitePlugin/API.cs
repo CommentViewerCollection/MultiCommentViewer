@@ -72,12 +72,13 @@ namespace TwicasSitePlugin
         /// <param name="lastCommentId"></param>
         /// <param name="f"></param>
         /// <param name="count"></param>
-        public static async Task<(LowObject.Comment[], string raw)> GetListAll(IDataServer dataSource, string broadcasterName, long live_id, long lastCommentId, int from, int count, CookieContainer cc)
+        public static async Task<(Low.ListAll.Comment[], string raw)> GetListAll(IDataServer dataSource, string broadcasterName, long live_id, long lastCommentId, int from, int count, CookieContainer cc)
         {
             var url = $"https://twitcasting.tv/{broadcasterName}/userajax.php?c=listall&m={live_id}&k={lastCommentId}&f={from}&n={count}";
             var str = await dataSource.GetAsync(url, cc);
-            var obj = Tools.Deserialize<LowObject.Comment[]>(str);
-            return (obj, str);
+            var obj = Tools.Deserialize<Low.ListAll.RootObject>(str);
+
+            return (obj.Comments, str);
         }
         public static async Task<(IStreamChecker, string raw)> GetStreamChecker(IDataServer dataServer, string broadcasterId, string lastItemId)
         {

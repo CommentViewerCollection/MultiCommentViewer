@@ -62,10 +62,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiTests.cs" />
     <Compile Include="InternalItemTest.cs" />
     <Compile Include="MessageMetadataTests.cs" />
     <Compile Include="MessageParserTests.cs" />
+    <Content Include="SampleData\ListAll.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="StreamCheckerParseTests.cs" />
+    <Compile Include="TestHelper.cs" />
     <Compile Include="ToolsTests.cs" />
     <Compile Include="TwicasCommentViewModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

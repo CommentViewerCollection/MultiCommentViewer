@@ -240,8 +240,10 @@ namespace YouTubeLiveSitePlugin.Test2
                         SendInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Error);
                         goto reload;
                     case DisconnectReason.ByUser:
+                        SendInfo("ユーザーが切断ボタンを押したため切断しました", InfoType.Debug);
+                        break;
                     case DisconnectReason.Finished:
-                        //TODO:SendInfo()
+                        SendInfo("配信が終了しました", InfoType.Notice);
                         break;
                     case DisconnectReason.ChatUnavailable:
                         SendInfo("この配信ではチャットが無効になっているようです", InfoType.Error);
@@ -252,6 +254,9 @@ namespace YouTubeLiveSitePlugin.Test2
                     case DisconnectReason.ServerError:
                         SendInfo("サーバでエラーが発生したため接続できませんでした", InfoType.Error);
                         break;
+                    case DisconnectReason.Unknown:
+                        SendInfo("原因不明のエラーが発生したため切断されましたが、自動的に再接続します", InfoType.Error);
+                        goto reload;
                 }
             }
             catch (Exception ex)

@@ -49,7 +49,7 @@ namespace LineLiveSitePlugin.Low.LiveInfo
         public bool IsOaFollowRequired { get; set; }
 
         [JsonProperty("isChannelBlocked")]
-        public bool IsChannelBlocked { get; set; }
+        public bool? IsChannelBlocked { get; set; }
 
         [JsonProperty("lsaPath")]
         public string LsaPath { get; set; }

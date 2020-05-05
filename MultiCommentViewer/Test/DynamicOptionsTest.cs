@@ -15,6 +15,50 @@ namespace MultiCommentViewer.Test
     {
         public string PluginDir => "plugins";
 
+        #region ConnectionsView
+        public int ConnectionsViewConnectionNameDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewConnectionNameWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewConnectionName { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewSelectionDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewSelectionWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewSelection { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewInputDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewInputWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewInput { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewSiteDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewSiteWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewSite { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewBrowserDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewBrowserWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewBrowser { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewConnectionDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewConnectionWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewConnection { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewDisconnectionDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewDisconnectionWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewDisconnection { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewSaveDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewSaveWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewSave { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewLoggedinUsernameDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewLoggedinUsernameWidth { get => GetValue(); set => SetValue(value); }
+        public bool IsShowConnectionsViewLoggedinUsername { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewConnectionBackgroundDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewConnectionBackgroundWidth { get => GetValue(); set => SetValue(value); }
+
+        public int ConnectionsViewConnectionForegroundDisplayIndex { get => GetValue(); set => SetValue(value); }
+        public double ConnectionsViewConnectionForegroundWidth { get => GetValue(); set => SetValue(value); }
+        #endregion
+
         public FontFamily FontFamily { get => GetValue(); set => SetValue(value); }
         public FontStyle FontStyle { get => GetValue(); set => SetValue(value); }
         public FontWeight FontWeight { get => GetValue(); set => SetValue(value); }
@@ -183,6 +227,51 @@ namespace MultiCommentViewer.Test
 
         protected override void Init()
         {
+            #region ConnectionsView
+            Dict.Add(nameof(ConnectionsViewSelectionDisplayIndex), new Item { DefaultValue = 0, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewSelectionWidth), new Item { DefaultValue = 48, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewSelection), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewSiteDisplayIndex), new Item { DefaultValue = 1, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewSiteWidth), new Item { DefaultValue = 127, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewSite), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewConnectionNameDisplayIndex), new Item { DefaultValue = 2, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewConnectionNameWidth), new Item { DefaultValue = 57, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewConnectionName), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewInputDisplayIndex), new Item { DefaultValue = 3, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewInputWidth), new Item { DefaultValue = 222, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewInput), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewBrowserDisplayIndex), new Item { DefaultValue = 4, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewBrowserWidth), new Item { DefaultValue = 128, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewBrowser), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewConnectionDisplayIndex), new Item { DefaultValue = 5, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewConnectionWidth), new Item { DefaultValue = 49, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewConnection), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewDisconnectionDisplayIndex), new Item { DefaultValue = 6, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewDisconnectionWidth), new Item { DefaultValue = 50, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewDisconnection), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewSaveDisplayIndex), new Item { DefaultValue = 7, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewSaveWidth), new Item { DefaultValue = 37, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewSave), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewLoggedinUsernameDisplayIndex), new Item { DefaultValue = 8, Predicate = f => f >= 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewLoggedinUsernameWidth), new Item { DefaultValue = 86, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(IsShowConnectionsViewLoggedinUsername), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewConnectionBackgroundDisplayIndex), new Item { DefaultValue = 9, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewConnectionBackgroundWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+
+            Dict.Add(nameof(ConnectionsViewConnectionForegroundDisplayIndex), new Item { DefaultValue = 10, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
+            Dict.Add(nameof(ConnectionsViewConnectionForegroundWidth), new Item { DefaultValue = 100, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            #endregion
+
+
             Dict.Add(nameof(FontFamily), new Item { DefaultValue = new FontFamily("メイリオ"), Predicate = f => true, Serializer = f => FontFamilyToString(f), Deserializer = s => FontFamilyFromString(s) });
             Dict.Add(nameof(FontStyle), new Item { DefaultValue = FontStyles.Normal, Predicate = f => true, Serializer = f => FontStyleToString(f), Deserializer = s => FontStyleFromString(s) });
             Dict.Add(nameof(FontWeight), new Item { DefaultValue = FontWeights.Normal, Predicate = f => true, Serializer = f => FontWeightToString(f), Deserializer = s => FontWeightFromString(s) });
@@ -362,9 +451,9 @@ namespace MultiCommentViewer.Test
         public void Set(ICommentOptions options)
         {
             var props = typeof(ICommentOptions).GetProperties();
-            foreach(var prop in props)
+            foreach (var prop in props)
             {
-                if(prop.CanRead && prop.CanWrite)
+                if (prop.CanRead && prop.CanWrite)
                 {
                     var item = Dict[prop.Name];
                     var newVal = prop.GetValue(options);
@@ -376,7 +465,7 @@ namespace MultiCommentViewer.Test
                 }
             }
         }
-#region Converters
+        #region Converters
         private FontFamily FontFamilyFromString(string str)
         {
             return new FontFamily(str);
@@ -426,6 +515,6 @@ namespace MultiCommentViewer.Test
             var argb = color.ToString();
             return argb;
         }
-#endregion
+        #endregion
     }
 }

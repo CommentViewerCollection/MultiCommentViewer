@@ -161,6 +161,37 @@ namespace MultiCommentViewer
 
         InfoType ShowingInfoLevel { get; set; }
 
+        int ConnectionsViewSelectionDisplayIndex { get; set; }
+        double ConnectionsViewSelectionWidth { get; set; }
+        bool IsShowConnectionsViewSelection { get; set; }
+        int ConnectionsViewSiteDisplayIndex { get; set; }
+        double ConnectionsViewSiteWidth { get; set; }
+        bool IsShowConnectionsViewSite { get; set; }
+        int ConnectionsViewConnectionNameDisplayIndex { get; set; }
+        double ConnectionsViewConnectionNameWidth { get; set; }
+        bool IsShowConnectionsViewConnectionName { get; set; }
+        int ConnectionsViewInputDisplayIndex { get; set; }
+        double ConnectionsViewInputWidth { get; set; }
+        bool IsShowConnectionsViewInput { get; set; }
+        int ConnectionsViewBrowserDisplayIndex { get; set; }
+        double ConnectionsViewBrowserWidth { get; set; }
+        bool IsShowConnectionsViewBrowser { get; set; }
+        int ConnectionsViewConnectionDisplayIndex { get; set; }
+        double ConnectionsViewConnectionWidth { get; set; }
+        bool IsShowConnectionsViewConnection { get; set; }
+        int ConnectionsViewDisconnectionDisplayIndex { get; set; }
+        double ConnectionsViewDisconnectionWidth { get; set; }
+        bool IsShowConnectionsViewDisconnection { get; set; }
+        int ConnectionsViewSaveDisplayIndex { get; set; }
+        double ConnectionsViewSaveWidth { get; set; }
+        bool IsShowConnectionsViewSave { get; set; }
+        int ConnectionsViewLoggedinUsernameDisplayIndex { get; set; }
+        double ConnectionsViewLoggedinUsernameWidth { get; set; }
+        bool IsShowConnectionsViewLoggedinUsername { get; set; }
+        int ConnectionsViewConnectionBackgroundDisplayIndex { get; set; }
+        double ConnectionsViewConnectionBackgroundWidth { get; set; }
+        int ConnectionsViewConnectionForegroundDisplayIndex { get; set; }
+        double ConnectionsViewConnectionForegroundWidth { get; set; }
     }
     /// <summary>
     /// 

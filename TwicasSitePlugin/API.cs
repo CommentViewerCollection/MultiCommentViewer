@@ -197,7 +197,7 @@ namespace TwicasSitePlugin
             return (comments, newCnum, str);
         }
 
-        internal static async Task<(LowObject.Comment[], string raw)> PostCommentAsync(
+        internal static async Task<(Low.ResponseToPost.RootObject, string raw)> PostCommentAsync(
             IDataServer dataSource, string broadcasterId, long liveId, long lastCommentId, string comment, CookieContainer cc)
         {
             var url = $"https://twitcasting.tv/{broadcasterId}/userajax.php?c=post";
@@ -211,7 +211,7 @@ namespace TwicasSitePlugin
             };
 
             var str = await dataSource.PostAsync(url, data, cc);
-            var obj = Tools.Deserialize<LowObject.Comment[]>(str);
+            var obj = Tools.Deserialize<Low.ResponseToPost.RootObject>(str);
             return (obj, str);
         }
     }

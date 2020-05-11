@@ -250,7 +250,11 @@ namespace TwicasSitePlugin
 
         public override async Task PostCommentAsync(string text)
         {
-            var (comments, raw) = await API.PostCommentAsync(_server, _broadcasterId, _liveId.Value, _lastCommentId, text, _cc);
+            var (res, raw) = await API.PostCommentAsync(_server, _broadcasterId, _liveId.Value, _lastCommentId, text, _cc);
+            if (res.Error != null)
+            {
+                //error
+            }
         }
         public TwicasCommentProvider2(IDataServer server, ILogger logger, ICommentOptions options, TwicasSiteOptions siteOptions, IUserStoreManager userStoreManager)
             : base(logger, options)

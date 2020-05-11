@@ -70,6 +70,7 @@
     <Compile Include="LowObjects.cs" />
     <Compile Include="Low\Comment\Class1.cs" />
     <Compile Include="Low\ListAll\Class1.cs" />
+    <Compile Include="Low\ResponseToPost\Class1.cs" />
     <Compile Include="MessageProvider.cs" />
     <Compile Include="Message\ItemType.cs" />
     <Compile Include="Message\MessageMetadata.cs" />

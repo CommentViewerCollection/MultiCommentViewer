@@ -306,6 +306,16 @@ namespace BouyomiPlugin
                             comment = (twicasMessage as ITwicasComment).CommentItems.ToText();
                         }
                         break;
+                    case TwicasMessageType.Item:
+                        if (options.IsTwicasItem)
+                        {
+                            if (options.IsTwicasItemNickname)
+                            {
+                                name = (twicasMessage as ITwicasItem).UserName;
+                            }
+                            comment = (twicasMessage as ITwicasItem).CommentItems.ToTextWithImageAlt();
+                        }
+                        break;
                 }
             }
             else if (message is ILineLiveMessage lineLiveMessage)
@@ -592,6 +602,10 @@ namespace BouyomiPlugin
                         dataToRead += " ";
                     }
                     dataToRead += comment;
+                }
+                if (string.IsNullOrEmpty(dataToRead))
+                {
+                    return;
                 }
                 TalkText(dataToRead);
             }

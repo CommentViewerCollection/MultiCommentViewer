@@ -28,7 +28,7 @@ namespace TwicasSitePlugin.LowObject
         {
             var r = new StreamChecker2();
             var arr = s.Split('\t');
-            if (arr.Length != 20) throw new ArgumentException("");
+            if (arr.Length != 21) throw new ArgumentException("");
 
             var f = int.Parse(arr[1]);
 

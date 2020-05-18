@@ -32,7 +32,7 @@ namespace TwicasSitePlugin.LowObject
 
             var f = int.Parse(arr[1]);
 
-            if(long.TryParse(arr[0], out long n))
+            if (long.TryParse(arr[0], out long n))
             {
                 r.LiveId = n;
             }
@@ -42,7 +42,7 @@ namespace TwicasSitePlugin.LowObject
             }
             r.IsWatchable = f == (int)StreamType.Watchable;
             r.IsNeverShowState = (int.Parse(arr[19]) & 1) > 0;
-            r.IsPrivate= (int.Parse(arr[19]) & 2) > 0;
+            r.IsPrivate = (int.Parse(arr[19]) & 2) > 0;
             r.Telop = f == (int)StreamType.Private ? "" : UrlDecode(arr[7]);
             r.CurrentViewers = int.Parse(arr[3]);
             r.TotalViewers = int.Parse(arr[5]);
@@ -93,7 +93,7 @@ namespace TwicasSitePlugin.LowObject
             {
                 Raw = e,
                 Id = n,
-                SenderName = o,
+                SenderScreenName = o,
                 SenderImage = a,
                 ItemImage = r,
                 Message = i,
@@ -104,7 +104,7 @@ namespace TwicasSitePlugin.LowObject
                 t9 = t[9],
                 t10 = t[10],
                 t11 = t[11],
-                t12 = Tools.DecodeBase64(t[12]),
+                SenderName = Tools.DecodeBase64(t[12]),
                 t13 = Tools.DecodeBase64(t[13]),
                 t14 = t[14],
                 t15 = t[15],
@@ -112,11 +112,11 @@ namespace TwicasSitePlugin.LowObject
             };
         }
 
-        enum StreamType:int
+        enum StreamType : int
         {
-            Watchable=0,
-            Private=5,
-            Offline=7,
+            Watchable = 0,
+            Private = 5,
+            Offline = 7,
         }
     }
 }

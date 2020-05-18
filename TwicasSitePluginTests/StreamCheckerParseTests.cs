@@ -39,10 +39,10 @@ namespace TwicasSitePluginTests
             Assert.AreEqual("https://twitcasting.tv/img/item_funding_stamp.png", item.ItemImage);
             Assert.AreEqual("達成: 100% : 💛リスナーさんのコメントで三角コーナー飯作る💛", item.Message);
             Assert.AreEqual("https://twitcasting.tv/img/item_funding_user.png", item.SenderImage);
-            Assert.AreEqual("kiitos_cas", item.SenderName);
+            Assert.AreEqual("kiitos_cas", item.SenderScreenName);
 
-            var screenName = item.t12;
-            var username = item.SenderName;
+            var screenName = item.SenderName;
+            var username = item.SenderScreenName;
             var message = $"[{item.t13}] {item.Message}";
         }
         [Test]
@@ -56,10 +56,10 @@ namespace TwicasSitePluginTests
             Assert.AreEqual("https://s01.twitcasting.tv/img/item_coin.png", item.ItemImage);
             Assert.AreEqual("オモロイ人だね", item.Message);
             Assert.AreEqual("https://imagegw02.twitcasting.tv/image3/img-twitcasting.s3-us-west-1.amazonaws.com/9a/1f/5be434d22723a_64.jpg", item.SenderImage);
-            Assert.AreEqual("c:haru5576", item.SenderName);
+            Assert.AreEqual("c:haru5576", item.SenderScreenName);
             Assert.AreEqual("コンティニューコイン", item.t13);
-            var screenName = item.t12;
-            var username = item.SenderName;
+            var screenName = item.SenderName;
+            var username = item.SenderScreenName;
             var message = item.Message;
         }
         [Test]
@@ -73,10 +73,10 @@ namespace TwicasSitePluginTests
             Assert.AreEqual("https://s01.twitcasting.tv/img/item_frame_child.png", item.ItemImage);
             Assert.IsTrue(string.IsNullOrEmpty(item.Message));
             Assert.AreEqual("https://imagegw02.twitcasting.tv/image3s/pbs.twimg.com/profile_images/1082451300220989440/46bLVM4F_normal.jpg", item.SenderImage);
-            Assert.AreEqual("12_Dahlia_09", item.SenderName);
+            Assert.AreEqual("12_Dahlia_09", item.SenderScreenName);
             Assert.AreEqual("ペッパー・デコフレーム", item.t13);
-            var screenName = item.t12;
-            var username = item.SenderName;
+            var screenName = item.SenderName;
+            var username = item.SenderScreenName;
             var message = item.Message;
         }
         private Item Parse(string data)

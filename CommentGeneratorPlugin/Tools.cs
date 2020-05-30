@@ -62,6 +62,9 @@ namespace CommentViewer.Plugin
                 case MildomSitePlugin.IMildomMessage _:
                     siteName = "mildom";
                     break;
+                case ShowRoomSitePlugin.IShowRoomMessage _:
+                    siteName = "showroom";
+                    break;
                 default:
                     siteName = "unknown";
                     break;

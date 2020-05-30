@@ -125,6 +125,11 @@ namespace PluginCommon
                 comment = psComment.Text;
                 name = psComment.DisplayName;
             }
+            else if (message is ShowRoomSitePlugin.IShowRoomComment srComment)
+            {
+                comment = srComment.Text;
+                name = srComment.UserName;
+            }
             //}
             //else if (message is MixerSitePlugin.IMixerMessage mixerMessage)
             //{

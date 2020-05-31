@@ -29,8 +29,8 @@ namespace TwicasSitePlugin
                 Name = "キートス";
                 Id = item.Id;
                 UserId = item.t10;
-                UserName = item.SenderName;
-                ScreenName = item.t12;
+                UserName = item.SenderScreenName;
+                ScreenName = item.SenderName;
                 Message = $"[{item.t13}] {item.Message}{Environment.NewLine}";
                 ImageUrl = item.ItemImage;
                 UserImageUrl = item.SenderImage;
@@ -40,8 +40,8 @@ namespace TwicasSitePlugin
                 Name = item.t13;
                 Id = item.Id;
                 UserId = item.t10;
-                UserName = item.SenderName;
-                ScreenName = item.t12;
+                UserName = item.SenderScreenName;
+                ScreenName = item.SenderName;
                 Message = item.Message;
                 ImageUrl = item.ItemImage;
                 UserImageUrl = item.SenderImage;

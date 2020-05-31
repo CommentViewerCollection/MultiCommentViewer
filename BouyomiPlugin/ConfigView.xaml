@@ -237,6 +237,7 @@
                                     <RowDefinition />
                                     <RowDefinition />
                                     <RowDefinition />
+                                    <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <CheckBox Grid.Row="0" IsChecked="{Binding IsTwicasConnect}" Content="接続" />
                                 <CheckBox Grid.Row="1" IsChecked="{Binding IsTwicasDisconnect}" Content="切断" />
@@ -253,6 +254,20 @@
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckTwicasComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwicasComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwicasComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwicasCommentNickname}" Content="コテハン" />
+                                </Grid>
+                                <Grid Grid.Row="3">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckTwicasItem" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwicasItem}" Content="アイテム" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwicasItem}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwicasItemNickname}" Content="コテハン" />
                                 </Grid>
                             </Grid>
                         </Border>

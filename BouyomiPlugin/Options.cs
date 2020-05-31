@@ -58,6 +58,8 @@ namespace BouyomiPlugin
         public bool IsTwicasDisconnect { get { return GetValue(); } set { SetValue(value); } }
         public bool IsTwicasComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsTwicasCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsTwicasItem { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsTwicasItemNickname { get { return GetValue(); } set { SetValue(value); } }
 
         //LINELIVE
         public bool IsLineLiveConnect { get { return GetValue(); } set { SetValue(value); } }
@@ -157,6 +159,8 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsTwicasDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTwicasComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTwicasCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsTwicasItem), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsTwicasItemNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             //LINELIVE
             Dict.Add(nameof(IsLineLiveConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

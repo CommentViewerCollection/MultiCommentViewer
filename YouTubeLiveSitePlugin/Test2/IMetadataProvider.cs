@@ -34,8 +34,8 @@ namespace YouTubeLiveSitePlugin.Test2
         protected Metadata ActionsToMetadata(dynamic actions)
         {
             var metadata = new Metadata();
-            int? like = null;
-            int? dislike = null;
+            string like = null;
+            string dislike = null;
             foreach (var action in actions)
             {
                 if (action.IsDefined("updateViewershipAction"))
@@ -100,11 +100,11 @@ namespace YouTubeLiveSitePlugin.Test2
                     //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"42"},"toggledText":{"simpleText":"43"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_DISLIKE"}}}
                     if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_LIKE")
                     {
-                        like = int.Parse((string)action.updateToggleButtonTextAction.defaultText.simpleText);
+                        like = (string)action.updateToggleButtonTextAction.defaultText.simpleText;
                     }
                     else if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_DISLIKE")
                     {
-                        dislike = int.Parse((string)action.updateToggleButtonTextAction.defaultText.simpleText);
+                        dislike = (string)action.updateToggleButtonTextAction.defaultText.simpleText;
                     }
                 }
                 else if (action.IsDefined("updateDateTextAction"))
@@ -124,13 +124,13 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
             }
             string others = "";
-            if (like.HasValue)
+            if (!string.IsNullOrEmpty(like))
             {
-                others += $"高く評価:{like.Value} ";
+                others += $"高く評価:{like} ";
             }
-            if (dislike.HasValue)
+            if (!string.IsNullOrEmpty(dislike))
             {
-                others += $"低く評価:{dislike.Value} ";
+                others += $"低く評価:{dislike} ";
             }
             metadata.Others = others;
             return metadata;

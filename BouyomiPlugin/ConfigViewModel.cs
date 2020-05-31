@@ -340,22 +340,22 @@ namespace BouyomiPlugin
             get => _options.IsTwicasCommentNickname;
             set => _options.IsTwicasCommentNickname = value;
         }
-        ///// <summary>
-        ///// Twicasのアイテムを読み上げるか
-        ///// </summary>
-        //public bool IsTwicasItem
-        //{
-        //    get => _options.IsTwicasItem;
-        //    set => _options.IsTwicasItem = value;
-        //}
-        ///// <summary>
-        ///// Twicasのアイテムのコテハンを読み上げるか
-        ///// </summary>
-        //public bool IsTwicasItemNickname
-        //{
-        //    get => _options.IsTwicasItemNickname;
-        //    set => _options.IsTwicasItemNickname = value;
-        //}
+        /// <summary>
+        /// Twicasのアイテムを読み上げるか
+        /// </summary>
+        public bool IsTwicasItem
+        {
+            get => _options.IsTwicasItem;
+            set => _options.IsTwicasItem = value;
+        }
+        /// <summary>
+        /// Twicasのアイテムのコテハンを読み上げるか
+        /// </summary>
+        public bool IsTwicasItemNickname
+        {
+            get => _options.IsTwicasItemNickname;
+            set => _options.IsTwicasItemNickname = value;
+        }
         #endregion //Twicas
 
         #region LINELIVE

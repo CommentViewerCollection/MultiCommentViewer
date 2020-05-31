@@ -14,7 +14,7 @@ namespace TwicasSitePluginTests
         [Test]
         public void Test()
         {
-            var data = "507331047	0	17289	20000	4	82139	2008	%E6%9C%89%E5%90%8D%E3%82%AD%E3%83%A3%E3%82%B9%E6%AD%8C%E3%81%84%E6%89%8B%E9%9B%86%E5%9B%A3%E3%81%AE%E8%A3%8F		#korekore19	1	212229	0	0			%20212229%09https%3A%2F%2Fs01.twitcasting.tv%2Fimg%2Fitem_tea_10.png%09%09https%3A%2F%2Fimagegw02.twitcasting.tv%2Fimage3s%2Fpbs.twimg.com%2Fprofile_images%2F1051833323176124417%2FVM_TEFEt_normal.jpg%09R29tZXpfMTExNw%3D%3D%09tea.baku%09like%0930%09Zmxvd2l0ZW0oImh0dHBzOi8vdHdpdGNhc3RpbmcudHYvaW1nL2FuaW0vYW5pbV90ZWFfMTAiLCAzMDAwLCAxLCAyLCA1KQ%3D%3D%091%09gomez_1117%091049689726981046272%0944K044Oq44G9QM6y4pmh%0944GK6Iy254iGMTA%3D%091%09%0A		0	0";
+            var data = "507331047	0	17289	20000	4	82139	2008	%E6%9C%89%E5%90%8D%E3%82%AD%E3%83%A3%E3%82%B9%E6%AD%8C%E3%81%84%E6%89%8B%E9%9B%86%E5%9B%A3%E3%81%AE%E8%A3%8F		#korekore19	1	212229	0	0			%20212229%09https%3A%2F%2Fs01.twitcasting.tv%2Fimg%2Fitem_tea_10.png%09%09https%3A%2F%2Fimagegw02.twitcasting.tv%2Fimage3s%2Fpbs.twimg.com%2Fprofile_images%2F1051833323176124417%2FVM_TEFEt_normal.jpg%09R29tZXpfMTExNw%3D%3D%09tea.baku%09like%0930%09Zmxvd2l0ZW0oImh0dHBzOi8vdHdpdGNhc3RpbmcudHYvaW1nL2FuaW0vYW5pbV90ZWFfMTAiLCAzMDAwLCAxLCAyLCA1KQ%3D%3D%091%09gomez_1117%091049689726981046272%0944K044Oq44G9QM6y4pmh%0944GK6Iy254iGMTA%3D%091%09%0A		0	0\t0";
             var sc = TwicasSitePlugin.LowObject.StreamChecker2.ParseStreamChcker(data);
             Assert.AreEqual("有名キャス歌い手集団の裏", sc.Telop);
             return;
@@ -22,7 +22,7 @@ namespace TwicasSitePluginTests
         [Test]
         public void Test2()
         {
-            var data = "507653177	0	94	419	4	625	101	%E5%83%95%E3%82%88%E3%82%8A%E3%82%A4%E3%82%B1%E3%83%9C%E3%81%AA%E4%BA%BA%E5%87%B8%E5%BE%85%E3%81%A1			0	688	0	0			%20688%09https%3A%2F%2Ftwitcasting.tv%2Fimg%2Fitem_funding_stamp.png%096YGU5oiQOiA1MCUgOiDjgYTjgaTjgoLjg6rjgrnjg4rjg7zjgZXjgpPjgYLjgorjgYzjgajjgYbjgaDjg6%2Fjg7MoICrCtOiJuO%2B9gCnvvIHvvIE%3D%09https%3A%2F%2Ftwitcasting.tv%2Fimg%2Fitem_funding_user.png%09a2lpdG9zX2Nhcw%3D%3D%09event.base%09stamp%090%09c3RhbXBpdGVtKCJodHRwczovL3R3aXRjYXN0aW5nLnR2L2ltZy9zdGFtcC9zdGFtcF9mdW5kaW5nXzUwLnBuZyIsMSwzMDAwKQ%3D%3D%091%09kiitos_cas%09965900769839915008%0944Kt44O844OI44K5%095pSv5o%2B0OiA1MDDlhoY%3D%093%09https%3A%2F%2Ftwitcasting.tv%2Fimg%2Fstamp%2Fstamp_funding_50.png%0A		0	0";
+            var data = "507653177	0	94	419	4	625	101	%E5%83%95%E3%82%88%E3%82%8A%E3%82%A4%E3%82%B1%E3%83%9C%E3%81%AA%E4%BA%BA%E5%87%B8%E5%BE%85%E3%81%A1			0	688	0	0			%20688%09https%3A%2F%2Ftwitcasting.tv%2Fimg%2Fitem_funding_stamp.png%096YGU5oiQOiA1MCUgOiDjgYTjgaTjgoLjg6rjgrnjg4rjg7zjgZXjgpPjgYLjgorjgYzjgajjgYbjgaDjg6%2Fjg7MoICrCtOiJuO%2B9gCnvvIHvvIE%3D%09https%3A%2F%2Ftwitcasting.tv%2Fimg%2Fitem_funding_user.png%09a2lpdG9zX2Nhcw%3D%3D%09event.base%09stamp%090%09c3RhbXBpdGVtKCJodHRwczovL3R3aXRjYXN0aW5nLnR2L2ltZy9zdGFtcC9zdGFtcF9mdW5kaW5nXzUwLnBuZyIsMSwzMDAwKQ%3D%3D%091%09kiitos_cas%09965900769839915008%0944Kt44O844OI44K5%095pSv5o%2B0OiA1MDDlhoY%3D%093%09https%3A%2F%2Ftwitcasting.tv%2Fimg%2Fstamp%2Fstamp_funding_50.png%0A		0	0\t0";
             var sc = TwicasSitePlugin.LowObject.StreamChecker2.ParseStreamChcker(data);
             Assert.AreEqual("僕よりイケボな人凸待ち", sc.Telop);
             return;
@@ -39,10 +39,10 @@ namespace TwicasSitePluginTests
             Assert.AreEqual("https://twitcasting.tv/img/item_funding_stamp.png", item.ItemImage);
             Assert.AreEqual("達成: 100% : 💛リスナーさんのコメントで三角コーナー飯作る💛", item.Message);
             Assert.AreEqual("https://twitcasting.tv/img/item_funding_user.png", item.SenderImage);
-            Assert.AreEqual("kiitos_cas", item.SenderName);
+            Assert.AreEqual("kiitos_cas", item.SenderScreenName);
 
-            var screenName = item.t12;
-            var username = item.SenderName;
+            var screenName = item.SenderName;
+            var username = item.SenderScreenName;
             var message = $"[{item.t13}] {item.Message}";
         }
         [Test]
@@ -56,10 +56,10 @@ namespace TwicasSitePluginTests
             Assert.AreEqual("https://s01.twitcasting.tv/img/item_coin.png", item.ItemImage);
             Assert.AreEqual("オモロイ人だね", item.Message);
             Assert.AreEqual("https://imagegw02.twitcasting.tv/image3/img-twitcasting.s3-us-west-1.amazonaws.com/9a/1f/5be434d22723a_64.jpg", item.SenderImage);
-            Assert.AreEqual("c:haru5576", item.SenderName);
+            Assert.AreEqual("c:haru5576", item.SenderScreenName);
             Assert.AreEqual("コンティニューコイン", item.t13);
-            var screenName = item.t12;
-            var username = item.SenderName;
+            var screenName = item.SenderName;
+            var username = item.SenderScreenName;
             var message = item.Message;
         }
         [Test]
@@ -73,10 +73,10 @@ namespace TwicasSitePluginTests
             Assert.AreEqual("https://s01.twitcasting.tv/img/item_frame_child.png", item.ItemImage);
             Assert.IsTrue(string.IsNullOrEmpty(item.Message));
             Assert.AreEqual("https://imagegw02.twitcasting.tv/image3s/pbs.twimg.com/profile_images/1082451300220989440/46bLVM4F_normal.jpg", item.SenderImage);
-            Assert.AreEqual("12_Dahlia_09", item.SenderName);
+            Assert.AreEqual("12_Dahlia_09", item.SenderScreenName);
             Assert.AreEqual("ペッパー・デコフレーム", item.t13);
-            var screenName = item.t12;
-            var username = item.SenderName;
+            var screenName = item.SenderName;
+            var username = item.SenderScreenName;
             var message = item.Message;
         }
         private Item Parse(string data)

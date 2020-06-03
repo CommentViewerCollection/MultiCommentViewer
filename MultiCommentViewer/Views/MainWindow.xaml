@@ -283,7 +283,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <ComboBox Margin="5,0" ItemsSource="{Binding Browsers}" SelectedValue="{Binding SelectedBrowser}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}" />
+                                <ComboBox Margin="5,0" ItemsSource="{Binding Browsers}" SelectedValue="{Binding SelectedBrowser, UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

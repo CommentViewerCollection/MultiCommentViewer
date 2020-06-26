@@ -11,7 +11,7 @@ namespace NicoSitePlugin
         public override SiteType SiteType { get; } = SiteType.NicoLive;
         public NicoMessageType NicoMessageType { get; } = NicoMessageType.Comment;
         public string Id { get; set; }
-        public IMessageImage UserIcon { get; set; }
+        public string ThumbnailUrl { get; set; }
         public int? ChatNo { get; set; }
         public string UserId { get; set; }
         public DateTime PostedAt { get; set; }

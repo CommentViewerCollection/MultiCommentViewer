@@ -129,7 +129,15 @@ namespace MultiCommentViewer
                 _nameItems = MessagePartFactory.CreateMessageItems(comment.UserName);
             }
             MessageItems = MessagePartFactory.CreateMessageItems(comment.Text);
-            //Thumbnail = comment.UserIcon;
+            if (IsValudThumbnailUrl(comment.ThumbnailUrl))
+            {
+                Thumbnail = new MessageImage
+                {
+                    Url = comment.ThumbnailUrl,
+                    Height = 40,
+                    Width = 40,
+                };
+            }
             Id = comment.Id;
             PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
@@ -292,6 +300,10 @@ namespace MultiCommentViewer
         {
             var dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             return dt.AddSeconds(unixTimeStamp).ToLocalTime();
+        }
+        private static bool IsValudThumbnailUrl(string thumbnailUrl)
+        {
+            return !string.IsNullOrEmpty(thumbnailUrl);
         }
     }
 }

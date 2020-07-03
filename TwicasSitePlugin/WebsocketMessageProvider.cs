@@ -27,7 +27,7 @@ namespace TwicasSitePlugin
         public string UserName { get; set; }
         public string ScreenName { get; set; }
         public string ProfileImageUrl { get; set; }
-        public long Grade { get; set; }
+        public long? Grade { get; set; }
     }
     class UnknownMessage : IInternalMessage
     {

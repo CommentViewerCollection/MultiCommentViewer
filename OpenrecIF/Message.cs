@@ -37,9 +37,21 @@ namespace OpenrecSitePlugin
     }
     public interface IOpenrecStamp : IOpenrecMessage
     {
+        IMessageImage Stamp { get; }
+        string Message { get; }
+        IEnumerable<IMessagePart> NameItems { get; set; }
+        IMessageImage UserIcon { get; }
+        string PostTime { get; }
+        string Id { get; }
     }
     public interface IOpenrecYell : IOpenrecMessage
     {
+        string YellPoints { get; }
+        string Message { get; }
+        IEnumerable<IMessagePart> NameItems { get; }
+        IMessageImage UserIcon { get; }
+        string PostTime { get; }
+        string Id { get; }
     }
     //public interface IOpenrecItem : IOpenrecMessage
     //{

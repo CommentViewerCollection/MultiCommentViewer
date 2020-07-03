@@ -27,7 +27,7 @@ namespace OpenrecSitePlugin
         public override string UserId { get; }
         public bool IsStamp { get; }
         public bool IsYell { get; }
-        public OpenrecCommentViewModel(IOpenrecCommentData commentData, ICommentOptions options, IOpenrecSiteOptions siteOptions,ICommentProvider commentProvider, bool isFirstComment,IUser user)
+        public OpenrecCommentViewModel(IOpenrecCommentData commentData, ICommentOptions options, IOpenrecSiteOptions siteOptions, ICommentProvider commentProvider, bool isFirstComment, IUser user)
             : base(options, user, commentProvider, isFirstComment)
         {
             MessageType = MessageType.Comment;
@@ -46,7 +46,7 @@ namespace OpenrecSitePlugin
             }
             if (siteOptions.IsAutoSetNickname)
             {
-                var nick = ExtractNickname(commentData.Message.Text);
+                var nick = ExtractNickname(commentData.Message);
                 if (!string.IsNullOrEmpty(nick))
                 {
                     user.Nickname = nick;
@@ -67,8 +67,8 @@ namespace OpenrecSitePlugin
                     MessageType = MessageType.BroadcastInfo;
                     messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
                 }
-                messageItems.Add(commentData.Message);
-                if(commentData.Stamp != null)
+                messageItems.Add(MessagePartFactory.CreateMessageText(commentData.Message));
+                if (commentData.Stamp != null)
                 {
                     MessageType = MessageType.BroadcastInfo;
                     messageItems.Add(commentData.Stamp);
@@ -96,7 +96,7 @@ namespace OpenrecSitePlugin
                 }
                 if (IsYell)
                 {
-                    if(_siteOptions.IsPlayYellMusic && !string.IsNullOrEmpty(_siteOptions.YellMusicFilePath))
+                    if (_siteOptions.IsPlayYellMusic && !string.IsNullOrEmpty(_siteOptions.YellMusicFilePath))
                     {
                         PlaySound(_siteOptions.YellMusicFilePath);
                     }

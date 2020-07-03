@@ -10,7 +10,7 @@ namespace OpenrecSitePlugin
         bool IsYell { get; }
         string YellPoints { get; }
         string Id { get; }
-        IMessageText Message { get; }
+        string Message { get; }
         string UserId { get; }
         string UserType { get; }
         string UserKey { get; }

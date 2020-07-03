@@ -26,6 +26,9 @@ namespace OpenrecSitePlugin
         public string UserId { get; set; }
         public string PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        public IMessageImage Stamp { get; set; }
+        public string Message { get; set; }
         public OpenrecStamp(string raw) : base(raw)
         {
 
@@ -39,6 +42,9 @@ namespace OpenrecSitePlugin
         public string UserId { get; set; }
         public string PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        public string YellPoints { get; set; }
+        public string Message { get; set; }
         public OpenrecYell(string raw) : base(raw)
         {
 

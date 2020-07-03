@@ -122,22 +122,30 @@ namespace MultiCommentViewer
         {
             _message = stamp;
 
-            //_nameItems = stamp.NameItems;
-            //MessageItems = stamp.CommentItems;
-            //Thumbnail = stamp.UserIcon;
-            //Id = stamp.Id.ToString();
-            //PostTime = stamp.PostTime;
+            _nameItems = stamp.NameItems;
+            MessageItems = new List<IMessagePart> { stamp.Stamp };
+            Thumbnail = stamp.UserIcon;
+            Id = stamp.Id.ToString();
+            PostTime = stamp.PostTime;
         }
         public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecYell yell, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
             _message = yell;
+            //messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
 
-            //_nameItems = yell.NameItems;
-            //MessageItems = yell.CommentItems;
-            //Thumbnail = yell.UserIcon;
-            //Id = yell.Id.ToString();
-            //PostTime = yell.PostTime;
+            var messageItems = new List<IMessagePart>();
+            messageItems.Add(Common.MessagePartFactory.CreateMessageText("エールポイント：" + yell.YellPoints));
+            if (yell.Message != null)
+            {
+                messageItems.Add(Common.MessagePartFactory.CreateMessageText(Environment.NewLine));
+                messageItems.Add(Common.MessagePartFactory.CreateMessageText(yell.Message));
+            }
+            _nameItems = yell.NameItems;
+            MessageItems = messageItems;
+            Thumbnail = yell.UserIcon;
+            Id = yell.Id.ToString();
+            PostTime = yell.PostTime;
         }
         //public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
         //    : this(metadata, methods, connectionStatus)

@@ -8,7 +8,7 @@ namespace OpenrecSitePlugin
     {
         public bool IsYell => !string.IsNullOrEmpty(YellPoints);
         public string YellPoints { get; set; }
-        public IMessageText Message { get; set; }
+        public string Message { get; set; }
         public string Id { get; set; }
         public string UserId { get; set; }
         public DateTime PostTime { get; set; }

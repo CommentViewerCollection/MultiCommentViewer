@@ -115,7 +115,7 @@ namespace MultiCommentViewer
             MessageItems = comment.MessageItems;
             Thumbnail = null;
             Id = comment.Id;
-            PostTime = comment.PostTime;
+            PostTime = comment.PostTime.ToString("HH:mm:ss");
         }
         public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecStamp stamp, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
@@ -126,7 +126,7 @@ namespace MultiCommentViewer
             MessageItems = new List<IMessagePart> { stamp.Stamp };
             Thumbnail = stamp.UserIcon;
             Id = stamp.Id.ToString();
-            PostTime = stamp.PostTime;
+            PostTime = stamp.PostTime.ToString("HH:mm:ss");
         }
         public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecYell yell, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
@@ -145,7 +145,7 @@ namespace MultiCommentViewer
             MessageItems = messageItems;
             Thumbnail = yell.UserIcon;
             Id = yell.Id.ToString();
-            PostTime = yell.PostTime;
+            PostTime = yell.PostTime.ToString("HH:mm:ss");
         }
         //public OpenrecCommentViewModel(OpenrecSitePlugin.IOpenrecItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
         //    : this(metadata, methods, connectionStatus)

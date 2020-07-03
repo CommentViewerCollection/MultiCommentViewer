@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System;
 using System.Collections.Generic;
 
 namespace OpenrecSitePlugin
@@ -9,7 +10,7 @@ namespace OpenrecSitePlugin
         public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Comment;
         public string Id { get; set; }
         public string UserId { get; set; }
-        public string PostTime { get; set; }
+        public DateTime PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IEnumerable<IMessagePart> MessageItems { get; set; }
@@ -24,7 +25,7 @@ namespace OpenrecSitePlugin
         public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Stamp;
         public string Id { get; set; }
         public string UserId { get; set; }
-        public string PostTime { get; set; }
+        public DateTime PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IMessageImage Stamp { get; set; }
@@ -40,7 +41,7 @@ namespace OpenrecSitePlugin
         public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Yell;
         public string Id { get; set; }
         public string UserId { get; set; }
-        public string PostTime { get; set; }
+        public DateTime PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public string YellPoints { get; set; }

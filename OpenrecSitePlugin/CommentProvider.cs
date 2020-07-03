@@ -325,7 +325,7 @@ namespace OpenrecSitePlugin
                     YellPoints = commentData.YellPoints,
                     Id = commentData.Id,
                     NameItems = nameItems,
-                    PostTime = commentData.PostTime.ToString("HH:mm:ss"),
+                    PostTime = commentData.PostTime,
                     UserId = commentData.UserId,
                     Message = commentData.Message,
                 };
@@ -337,7 +337,7 @@ namespace OpenrecSitePlugin
                     Stamp = commentData.Stamp,
                     Id = commentData.Id,
                     NameItems = nameItems,
-                    PostTime = commentData.PostTime.ToString("HH:mm:ss"),
+                    PostTime = commentData.PostTime,
                     UserId = commentData.UserId,
                 };
             }
@@ -348,7 +348,7 @@ namespace OpenrecSitePlugin
                     MessageItems = messageItems,
                     Id = commentData.Id,
                     NameItems = nameItems,
-                    PostTime = commentData.PostTime.ToString("HH:mm:ss"),
+                    PostTime = commentData.PostTime,
                     UserId = commentData.UserId,
                 };
 

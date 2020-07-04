@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System;
 using System.Collections.Generic;
 
 namespace OpenrecSitePlugin
@@ -32,14 +33,26 @@ namespace OpenrecSitePlugin
         IEnumerable<IMessagePart> NameItems { get; }
         IEnumerable<IMessagePart> MessageItems { get; }
         string Id { get; }
-        string PostTime { get; }
+        DateTime PostTime { get; }
         string UserId { get; }
     }
     public interface IOpenrecStamp : IOpenrecMessage
     {
+        IMessageImage Stamp { get; }
+        string Message { get; }
+        IEnumerable<IMessagePart> NameItems { get; set; }
+        IMessageImage UserIcon { get; }
+        DateTime PostTime { get; }
+        string Id { get; }
     }
     public interface IOpenrecYell : IOpenrecMessage
     {
+        string YellPoints { get; }
+        string Message { get; }
+        IEnumerable<IMessagePart> NameItems { get; }
+        IMessageImage UserIcon { get; }
+        DateTime PostTime { get; }
+        string Id { get; }
     }
     //public interface IOpenrecItem : IOpenrecMessage
     //{

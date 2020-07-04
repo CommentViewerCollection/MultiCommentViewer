@@ -38,7 +38,7 @@ namespace OpenrecSitePluginTests
             var commentMock = new Mock<IOpenrecCommentData>();
             commentMock.Setup(s => s.Stamp).Returns(new Mock<IMessageImage>().Object);
             commentMock.Setup(s => s.NameIcons).Returns(new List<IMessagePart>());
-            commentMock.Setup(s => s.Message).Returns(MessagePartFactory.CreateMessageText(""));
+            commentMock.Setup(s => s.Message).Returns("");
             var optionsMock = new Mock<ICommentOptions>();
             var siteOptionsMock = new Mock<IOpenrecSiteOptions>();
             siteOptionsMock.Setup(s => s.IsAutoSetNickname).Returns(true);
@@ -55,7 +55,7 @@ namespace OpenrecSitePluginTests
             var commentMock = new Mock<IOpenrecCommentData>();
             commentMock.Setup(s => s.Stamp).Returns(new Mock<IMessageImage>().Object);
             commentMock.Setup(s => s.NameIcons).Returns(new List<IMessagePart>());
-            commentMock.Setup(s => s.Message).Returns(MessagePartFactory.CreateMessageText(""));
+            commentMock.Setup(s => s.Message).Returns("");
             var optionsMock = new Mock<ICommentOptions>();
 
             var siteOptionsMock = new Mock<IOpenrecSiteOptions>();
@@ -97,7 +97,7 @@ namespace OpenrecSitePluginTests
             commentMock.Setup(s => s.Stamp).Returns(new Mock<IMessageImage>().Object);
             commentMock.Setup(s => s.NameIcons).Returns(new List<IMessagePart>());
             commentMock.Setup(s => s.Name).Returns(username);
-            commentMock.Setup(s => s.Message).Returns(MessagePartFactory.CreateMessageText(message));
+            commentMock.Setup(s => s.Message).Returns(message);
             var optionsMock = new Mock<ICommentOptions>();
 
             var siteOptionsMock = new Mock<IOpenrecSiteOptions>();

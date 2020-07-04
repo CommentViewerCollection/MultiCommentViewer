@@ -49,6 +49,6 @@ namespace TwicasSitePlugin.Low.ListAll
         public string ProfileImage { get; set; }
 
         [JsonProperty("grade")]
-        public long Grade { get; set; }
+        public long? Grade { get; set; }
     }
 }

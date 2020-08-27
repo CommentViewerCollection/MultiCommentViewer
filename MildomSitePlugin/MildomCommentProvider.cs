@@ -137,7 +137,15 @@ namespace MildomSitePlugin
         }
         public override async void SetMessage(string rawMessage)
         {
-            var internalMessage = MessageParser.Parse(rawMessage, _imageDict);
+            IInternalMessage internalMessage = null;
+            try
+            {
+                internalMessage = MessageParser.Parse(rawMessage, _imageDict);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex, "", $"raw={rawMessage}");
+            }
             if (internalMessage == null)
             {
                 SendSystemInfo($"ParseError: {rawMessage}", InfoType.Error);

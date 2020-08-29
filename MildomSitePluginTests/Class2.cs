@@ -27,5 +27,20 @@ namespace MildomSitePluginTests
             Assert.AreEqual("xyz", (l[2] as IMessageImage).Url);
             Assert.AreEqual(Common.MessagePartFactory.CreateMessageText("い"), l[3]);
         }
+        [Test]
+        public void userIdが無いonChat()
+        {
+            var data = "{\"area\": 2000, \"cmd\": \"onChat\", \"msg\": \"よくやった\", \"msgId\": \"1598498460835_0_8192\", \"reqId\": 0, \"roomId\": 10007428, \"time\": \"1598498460835\", \"toId\": 10007428, \"toName\": \"*\", \"type\": 3, \"userName\": \"guest737168\"}";
+            var chat = MessageParser.Parse(data, new Dictionary<int, string>()) as OnChatMessage;
+            Assert.IsNull(chat.UserId);
+            Assert.IsNull(chat.UserImg);
+        }
+        [Test]
+        public void 匿名ユーザーのonAdd()
+        {
+            var data = "{\"area\": 1000, \"avatarDecortaion\": 0, \"cmd\": \"onAdd\", \"enterroomEffect\": 0, \"isFirstTopup\": null, \"level\": 1, \"loveCountSum\": 0, \"medals\": null, \"nobleLevel\": 0, \"reqId\": 0, \"roomId\": 10592943, \"rst\": 0, \"type\": 3, \"userCount\": 369, \"userId\": 0, \"userImg\": null, \"userName\": \"guest101168\"}";
+            var onAdd = MessageParser.Parse(data, new Dictionary<int, string>()) as OnAddMessage;
+            Assert.AreEqual("guest101168", onAdd.UserId);
+        }
     }
 }

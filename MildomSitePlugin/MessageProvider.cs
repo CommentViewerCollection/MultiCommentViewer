@@ -27,7 +27,7 @@ namespace MildomSitePlugin
     class OnChatMessage : IInternalMessage
     {
         public IEnumerable<IMessagePart> MessageItems { get; set; }
-        public long UserId { get; internal set; }
+        public string UserId { get; internal set; }
         public string UserName { get; internal set; }
         public string UserImg { get; internal set; }
         public DateTime PostedAt { get; internal set; }
@@ -57,7 +57,7 @@ namespace MildomSitePlugin
     {
         public string Message { get; set; }
         public int Level { get; set; }
-        public long UserId { get; set; }
+        public string UserId { get; set; }
         public string UserImg { get; set; }
         public string UserName { get; set; }
         public DateTime PostedAt { get; internal set; }
@@ -93,62 +93,101 @@ namespace MildomSitePlugin
                     internalMessage = new EnterRoom(raw);
                     break;
                 case "onChat":
-                    //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
-                    var messageItems = new List<IMessagePart>();
-                    var arr = Regex.Split(d.msg, "\\[/(\\d+)\\]");
-                    for (int i = 0; i < arr.Length; i++)
                     {
-                        if (i % 2 == 0)
+                        //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
+                        var messageItems = new List<IMessagePart>();
+                        var arr = Regex.Split(d.msg, "\\[/(\\d+)\\]");
+                        for (int i = 0; i < arr.Length; i++)
                         {
-                            if (string.IsNullOrEmpty(arr[i]))
+                            if (i % 2 == 0)
                             {
-                                continue;
-                            }
-                            messageItems.Add(Common.MessagePartFactory.CreateMessageText(arr[i]));
-                        }
-                        else
-                        {
-                            if (int.TryParse(arr[i], out int n))
-                            {
-                                if (imageDict.TryGetValue(n, out var emotUrl))
+                                if (string.IsNullOrEmpty(arr[i]))
                                 {
-                                    messageItems.Add(new Common.MessageImage
+                                    continue;
+                                }
+                                messageItems.Add(Common.MessagePartFactory.CreateMessageText(arr[i]));
+                            }
+                            else
+                            {
+                                if (int.TryParse(arr[i], out int n))
+                                {
+                                    if (imageDict.TryGetValue(n, out var emotUrl))
                                     {
-                                        Alt = "",
-                                        Height = 40,
-                                        Width = 40,
-                                        Url = emotUrl,
-                                        X = null,
-                                        Y = null,
-                                    });
+                                        messageItems.Add(new Common.MessageImage
+                                        {
+                                            Alt = "",
+                                            Height = 40,
+                                            Width = 40,
+                                            Url = emotUrl,
+                                            X = null,
+                                            Y = null,
+                                        });
+                                    }
                                 }
                             }
                         }
+                        //2020/08/27 userIdの無いコメントを確認。ゲストユーザでもコメント投稿できるのだろうか？定型文だけ？
+                        //{"area": 2000, "cmd": "onChat", "msg": "よくやった", "msgId": "1598498460835_0_8192", "reqId": 0, "roomId": 10007428, "time": "1598498460835", "toId": 10007428, "toName": "*", "type": 3, "userName": "guest737168"}
+                        //2020/08/29 onAddでは匿名ユーザーのユーザーIDは0になっている。統一したい。
+                        string userId;
+                        if (d.IsDefined("userId"))
+                        {
+                            userId = ((long)d.userId).ToString();
+                        }
+                        else
+                        {
+                            //匿名ユーザー。userNameが"guest737168"のような形式だからこれを流用してみる。
+                            userId = d.userName;
+                        }
+                        //userIdが無い場合はuserImgも無さそう。
+                        string userImg;
+                        if (d.IsDefined("userImg"))
+                        {
+                            userImg = d.userImg;
+                        }
+                        else
+                        {
+                            userImg = null;
+                        }
+                        internalMessage = new OnChatMessage
+                        {
+                            MessageItems = messageItems,
+                            UserId = userId,
+                            UserName = d.userName,
+                            UserImg = userImg,
+                            PostedAt = GetCurrentDateTime(),
+                            Raw = raw,
+                        };
                     }
-                    internalMessage = new OnChatMessage
-                    {
-                        MessageItems = messageItems,
-                        UserId = (long)d.userId,
-                        UserName = d.userName,
-                        UserImg = d.userImg,
-                        PostedAt = GetCurrentDateTime(),
-                        Raw = raw,
-                    };
                     break;
                 case "onAdd":
-                    //{"area": 1000, "avatarDecortaion": 0, "cmd": "onAdd", "enterroomEffect": 0, "level": 18, "loveCountSum": 0, "medals": null, "nobleLevel": 0, "reqId": 0, "roomId": 10038336, "rst": 0, "type": 3, "userCount": 239, "userId": 10088217, "userImg": "https://lh3.googleusercontent.com/a-/AAuE7mC4Jiq49Foq6-k-TmPrkeim6cc1Rq197AC7SSM7=s120", "userName": "ぼつすけ"}
-                    var username = d.userName;
-                    var message = $"{username}さんが入室しました";
-                    internalMessage = new OnAddMessage
                     {
-                        Message = message,
-                        Level = (int)d.level,
-                        UserId = (long)d.userId,
-                        UserName = username,
-                        UserImg = d.userImg,
-                        PostedAt = GetCurrentDateTime(),
-                        Raw = raw,
-                    };
+                        //{"area": 1000, "avatarDecortaion": 0, "cmd": "onAdd", "enterroomEffect": 0, "level": 18, "loveCountSum": 0, "medals": null, "nobleLevel": 0, "reqId": 0, "roomId": 10038336, "rst": 0, "type": 3, "userCount": 239, "userId": 10088217, "userImg": "https://lh3.googleusercontent.com/a-/AAuE7mC4Jiq49Foq6-k-TmPrkeim6cc1Rq197AC7SSM7=s120", "userName": "ぼつすけ"}
+                        var username = d.userName;
+                        var message = $"{username}さんが入室しました";
+
+                        //匿名ユーザーの場合、d.userIdが全員0になっている。その場合でもd.userNameは一意っぽいからそっちをUserIdとして使用する。
+                        var preUserId = (long)d.userId;
+                        string userId;
+                        if (preUserId == 0)
+                        {
+                            userId = username;
+                        }
+                        else
+                        {
+                            userId = preUserId.ToString();
+                        }
+                        internalMessage = new OnAddMessage
+                        {
+                            Message = message,
+                            Level = (int)d.level,
+                            UserId = userId,
+                            UserName = username,
+                            UserImg = d.userImg,
+                            PostedAt = GetCurrentDateTime(),
+                            Raw = raw,
+                        };
+                    }
                     break;
                 case "onBroadcast":
                     //{"area": 2000, "clickColor": "#F8AC07", "clickLink": "https://event.mildom.com/activity/view?series_id=11&week=2", "clickText": "こちらをクリック！", "cmd": "onBroadcast", "msg": "配信ランキングに挑戦！${click.text}", "msgColor": "#3C8BF9", "reqId": 0, "roomId": 10038336, "rst": 0, "type": 3, "userName": "guest809480"}
@@ -190,10 +229,18 @@ namespace MildomSitePlugin
                     //{"cmd": "onLiveEnd", "roomId": 10038336, "type": 3}
                     internalMessage = new OnLiveEnd(raw);
                     break;
+                case "onActivity":
+                    //"{\"activity_id\": \"Valorant_8/5-8/31\", \"category\": \"defaultV2\", \"cmd\": \"onActivity\", \"content\": {\"endTime\": \"2020-08-31 23:00:00\", \"link\": \"https://event.mildom.com/activity/view?series_id=343&week=1&check_id=72d8d737028de098695a9823c34a69cc\", \"numberDesc\": \"rank\", \"pic\": \"https://up.mildom.com/jp/mildom/nnimgs/36e91c8a38ca5155ee5d9d251cce3e6f?p=0\", \"pointDesc\": \"point\", \"top_pic\": \"\"}, \"effect\": {\"effectId\": 0, \"endTime\": 0, \"rate\": 0, \"startTime\": 0, \"status\": 0}, \"enable\": 1, \"rst\": 0, \"type\": 3, \"weight\": 10}"
+                    internalMessage = new UnknownMessage();
+                    break;
+                case "onForbidden":
+                    //"{\"area\": 2000, \"cmd\": \"onForbidden\", \"fobiddenGlobal\": 0, \"reqId\": 0, \"roomId\": 10093333, \"rst\": 0, \"time\": 300, \"type\": 3, \"userId\": 10285881, \"userName\": \"かもちゃん\"}"
+                    internalMessage = new UnknownMessage();
+                    break;
                 default:
                     //d.cmd = "onLiveStart"
                     //"{\"cmd\": \"onLiveStart\", \"reqId\": 0, \"roomId\": 10093333, \"type\": 3}"
-                    //"{\"area\": 2000, \"cmd\": \"onForbidden\", \"fobiddenGlobal\": 0, \"reqId\": 0, \"roomId\": 10093333, \"rst\": 0, \"time\": 300, \"type\": 3, \"userId\": 10285881, \"userName\": \"かもちゃん\"}"
+                    //"{\"cmd\": \"onRecallMsg\", \"msgId\": \"1598498266966_10423897_3353\", \"reqId\": 5, \"roomId\": 10050854, \"rst\": 0, \"type\": 3, \"userId\": 10423897}"
                     internalMessage = new UnknownMessage();
                     break;
             }

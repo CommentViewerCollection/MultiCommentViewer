@@ -311,45 +311,55 @@ namespace OpenrecSitePlugin
             user.Name = nameItems;
 
             var messageItems = new List<IMessagePart>();
-            if (commentData.IsYell)
+            if (commentData.Message != null)
             {
-                //MessageType = MessageType.BroadcastInfo;
-                messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
-            }
-            messageItems.Add(commentData.Message);
-            if (commentData.Stamp != null)
-            {
-                //MessageType = MessageType.BroadcastInfo;
-                messageItems.Add(commentData.Stamp);
+                messageItems.Add(MessagePartFactory.CreateMessageText(commentData.Message));
             }
 
             OpenrecMessageContext messageContext = null;
+            IOpenrecMessage message;
             if (commentData.IsYell)
             {
-                //2020/01/18、ここ空欄だけど大丈夫？
+                message = new OpenrecYell("")
+                {
+                    YellPoints = commentData.YellPoints,
+                    Id = commentData.Id,
+                    NameItems = nameItems,
+                    PostTime = commentData.PostTime,
+                    UserId = commentData.UserId,
+                    Message = commentData.Message,
+                };
             }
             else if (commentData.Stamp != null)
             {
-                //2020/01/18、ここ空欄だけど大丈夫？
+                message = new OpenrecStamp("")
+                {
+                    Stamp = commentData.Stamp,
+                    Id = commentData.Id,
+                    NameItems = nameItems,
+                    PostTime = commentData.PostTime,
+                    UserId = commentData.UserId,
+                };
             }
             else
             {
-                var message = new OpenrecComment("")
+                message = new OpenrecComment("")
                 {
                     MessageItems = messageItems,
                     Id = commentData.Id,
                     NameItems = nameItems,
-                    PostTime = commentData.PostTime.ToString("HH:mm:ss"),
+                    PostTime = commentData.PostTime,
                     UserId = commentData.UserId,
                 };
-                var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-                {
-                    IsInitialComment = isInitialComment,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new OpenrecMessageMethods();
-                messageContext = new OpenrecMessageContext(message, metadata, methods);
+
             }
+            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
+            {
+                IsInitialComment = isInitialComment,
+                SiteContextGuid = SiteContextGuid,
+            };
+            var methods = new OpenrecMessageMethods();
+            messageContext = new OpenrecMessageContext(message, metadata, methods);
             return messageContext;
         }
 

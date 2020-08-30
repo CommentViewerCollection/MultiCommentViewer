@@ -148,13 +148,7 @@ namespace NicoSitePlugin
                 Id = id,
                 UserName = name,
                 PostedAt = chat.Date,
-                UserIcon = thumbnailUrl != null ? new MessageImage
-                {
-                    Url = thumbnailUrl,
-                    Alt = null,
-                    Height = 40,
-                    Width = 40,
-                } : null,
+                ThumbnailUrl = thumbnailUrl,
                 UserId = userId,
                 ChatNo = chat.No,
                 RoomName = roomName,

@@ -39,6 +39,7 @@ namespace NicoSitePlugin
         int? ChatNo { get; }
         DateTime PostedAt { get; }
         string UserId { get; }
+        string ThumbnailUrl { get; set; }
         void SetUserName(string userName);
     }
     public interface INicoAd : INicoMessage

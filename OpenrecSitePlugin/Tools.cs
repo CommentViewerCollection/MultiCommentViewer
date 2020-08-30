@@ -79,7 +79,7 @@ namespace OpenrecSitePlugin
             try
             {
                 var movies = await API.GetChannelMovies(dataSource, id);
-                if(movies.Length == 0)
+                if (movies.Length == 0)
                 {
                     return id;//恐らくLiveId
                 }
@@ -204,7 +204,7 @@ namespace OpenrecSitePlugin
             string Id { get; }
             string UserIconUrl { get; }
         }
-        internal class Comment:IComment
+        internal class Comment : IComment
         {
             public string UserIconUrl { get; set; }
             public bool IsOfficial { get; set; }
@@ -239,7 +239,7 @@ namespace OpenrecSitePlugin
                 //恐らく設定直後で反映されていないんだろう。
                 UserId = obj.User.OpenrecUserId.ToString(),
                 YellPoints = obj.Yell?.Points,
-                 UserIconUrl=obj.User.IconImageUrl,
+                UserIconUrl = obj.User.IconImageUrl,
             };
             return comment;
         }
@@ -325,7 +325,7 @@ namespace OpenrecSitePlugin
                 nameIcons.Add(premiumIcon);
             }
 
-            var text = MessagePartFactory.CreateMessageText(Tools.DecodeHtmlEntity(obj.Message));
+            var text = Tools.DecodeHtmlEntity(obj.Message);
 
             IMessageImage stamp = null;
             if (!string.IsNullOrEmpty(obj.StampUrl))
@@ -354,7 +354,7 @@ namespace OpenrecSitePlugin
                 UserId = obj.UserId,
                 PostTime = postTime,
                 Elapsed = postTime - startAt,
-                UserIconUrl =obj.UserIconUrl,
+                UserIconUrl = obj.UserIconUrl,
             };
         }
         public static string Yeast()

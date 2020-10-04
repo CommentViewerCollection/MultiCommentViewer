@@ -924,6 +924,15 @@ namespace MultiCommentViewer
                     mcvCvm = new McvMildomCommentViewModel(gift, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
+            else if (messageContext.Message is BigoSitePlugin.IBigoMessage bigoMessage)
+            {
+                switch (bigoMessage)
+                {
+                    case BigoSitePlugin.IBigoComment bigoComment:
+                        mcvCvm = new McvBigoCommentViewModel(bigoComment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                        break;
+                }
+            }
             else if (messageContext.Message is TestSitePlugin.ITestMessage testMessage)
             {
                 if (testMessage is TestSitePlugin.ITestComment comment)
@@ -1348,11 +1357,16 @@ namespace MultiCommentViewer
         }
         private string GetUrlFromSelectedComment()
         {
-            if (SelectedComment == null)
+            var selectedComment = SelectedComment;
+            if (selectedComment == null)
             {
                 return null;
             }
-            var message = SelectedComment.MessageItems.ToText();
+            var message = selectedComment.MessageItems.ToText();
+            if (message == null)
+            {
+                return null;
+            }
             var match = Regex.Match(message, "(https?://([\\w-]+.)+[\\w-]+(?:/[\\w- ./?%&=]))?");
             if (match.Success)
             {

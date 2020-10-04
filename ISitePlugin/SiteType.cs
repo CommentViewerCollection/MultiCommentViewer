@@ -23,5 +23,6 @@
         ShowRoom,
         Mixer,
         Mildom,
+        Bigo,
     }
 }

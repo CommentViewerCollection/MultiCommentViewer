@@ -1091,7 +1091,7 @@ namespace NicoSitePlugin.Low.WatchDataProps
         public Icons Icons { get; set; }
 
         [JsonProperty("level")]
-        public long Level { get; set; }
+        public long? Level { get; set; }
     }
 
     public partial class Icons

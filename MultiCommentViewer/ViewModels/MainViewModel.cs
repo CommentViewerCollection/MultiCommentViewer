@@ -126,6 +126,7 @@ namespace MultiCommentViewer
         public ICommand ClearAllCommentsCommand { get; }
         public ICommand CommentCopyCommand { get; }
         public ICommand OpenUrlCommand { get; }
+
         #endregion //Commands
 
         #region Fields
@@ -143,7 +144,6 @@ namespace MultiCommentViewer
         IEnumerable<SiteViewModel> _siteVms;
         IEnumerable<BrowserViewModel> _browserVms;
 
-        private readonly Dispatcher _dispatcher;
         Dictionary<ConnectionViewModel, MetadataViewModel> _metaDict = new Dictionary<ConnectionViewModel, MetadataViewModel>();
         ConnectionSerializerLoader _connectionSerializerLoader = new ConnectionSerializerLoader("settings\\connections.txt");
         #endregion //Fields
@@ -1666,7 +1666,6 @@ namespace MultiCommentViewer
         {
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
             {
-                _dispatcher = Dispatcher.CurrentDispatcher;
                 _siteVms = new List<SiteViewModel> { };// new SiteViewModel("DesignSite", Guid.NewGuid()) };
                 _browserVms = new List<BrowserViewModel>();// { new BrowserViewModel()}
                 AddNewConnection("test", "YouTubeLive", "https://google.com", "Chrome", false, Colors.Blue, Colors.Red);
@@ -1682,8 +1681,6 @@ namespace MultiCommentViewer
             : base(options)
         {
             _io = io;
-            _dispatcher = Dispatcher.CurrentDispatcher;
-
             _logger = logger;
             _sitePluginLoader = sitePluginLoader;
             _browserLoader = browserLoader;
@@ -1706,6 +1703,7 @@ namespace MultiCommentViewer
             LoadedCommand = new RelayCommand(Loaded);
             CommentCopyCommand = new RelayCommand(CopyComment);
             OpenUrlCommand = new RelayCommand(OpenUrl);
+
             _options.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)

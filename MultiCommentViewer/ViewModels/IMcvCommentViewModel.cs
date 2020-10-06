@@ -21,12 +21,13 @@ namespace MultiCommentViewer
         string Id { get; }
         string Info { get; }
         bool IsVisible { get; }
-        IEnumerable<IMessagePart> MessageItems { get; }
+        IEnumerable<IMessagePart> MessageItems { get; set; }
         IEnumerable<IMessagePart> NameItems { get; }
         string PostTime { get; }
         IMessageImage Thumbnail { get; }
         string UserId { get; }
         TextWrapping UserNameWrapping { get; }
+        bool IsTranslated { get; set; }
 
         Task AfterCommentAdded();
     }

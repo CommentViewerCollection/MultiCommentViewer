@@ -17,6 +17,7 @@ using System.Net;
 using System.Windows.Media;
 using System.ComponentModel;
 using System.Windows.Data;
+using Common;
 
 namespace MultiCommentViewer
 {
@@ -25,6 +26,7 @@ namespace MultiCommentViewer
     /// </summary>
     public abstract class CommentDataGridViewModelBase : ViewModelBase
     {
+        public ICommand TranslateCommand { get; }
         public ICollectionView Comments
         {
             get
@@ -181,16 +183,43 @@ namespace MultiCommentViewer
         public IMcvCommentViewModel SelectedComment { get; set; }
         protected readonly IOptions _options;
         private ICollectionView _comments;
-
+        protected readonly Dispatcher _dispatcher;
         public CommentDataGridViewModelBase(IOptions options)
         {
             _options = options;
             Comments = CollectionViewSource.GetDefaultView(new ObservableCollection<ICommentViewModel>());
+            _dispatcher = Dispatcher.CurrentDispatcher;
+            TranslateCommand = new RelayCommand(Translate);
         }
         public CommentDataGridViewModelBase(IOptions options, ICollectionView comments)
         {
             _options = options;
             Comments = comments;
+            _dispatcher = Dispatcher.CurrentDispatcher;
+            TranslateCommand = new RelayCommand(Translate);
+        }
+        TexTra.TexTraTranslator translator = new TexTra.TexTraTranslator();
+        private async void Translate()
+        {
+            var selectedComment = SelectedComment;
+            if (selectedComment.IsTranslated)
+            {
+                return;
+            }
+            var text = selectedComment.MessageItems.ToText();
+            var a = await translator.Traslate(text, "rysestock", "1f9ea34966481b37424e659bcdfac50c05f770d82", "62f016b234031ca2cef2f904b9edcb6d");
+            if (!a.IsError)
+            {
+                await _dispatcher.InvokeAsync(() =>
+                {
+                    var list = new List<IMessagePart>(selectedComment.MessageItems)
+                    {
+                        Common.MessagePartFactory.CreateMessageText(Environment.NewLine + "(訳)" + a.Translated)
+                    };
+                    selectedComment.MessageItems = list;
+                });
+                selectedComment.IsTranslated = true;
+            }
         }
     }
 }

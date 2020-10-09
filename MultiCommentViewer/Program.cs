@@ -191,7 +191,7 @@ namespace MultiCommentViewer
             {
                 client.DefaultRequestHeaders.Add("User-Agent", $"{title} {version}");
                 formData.Add(fileStreamContent, "error", title + "_" + version + "_" + "error.txt");
-                var t = client.PostAsync("http://int-main.net/upload", formData);
+                var t = client.PostAsync("https://int-main.net/upload", formData);
                 var response = t.Result;
                 if (!response.IsSuccessStatusCode)
                 {

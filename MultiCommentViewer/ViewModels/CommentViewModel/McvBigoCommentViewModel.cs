@@ -1,18 +1,27 @@
-﻿using Plugin;
+﻿using BigoSitePlugin;
+using Plugin;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
-
 namespace MultiCommentViewer
 {
-    public class TwitchCommentViewModel : IMcvCommentViewModel
+    public class McvBigoCommentViewModel : McvBigoCommentViewModelBase
     {
-        private readonly TwitchSitePlugin.ITwitchMessage _message;
+        public McvBigoCommentViewModel(IBigoComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : base(metadata, methods, connectionStatus, options)
+        {
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(comment.Message);
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.Name);
+            //Id = comment.Id;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
+        }
+    }
+    public class McvBigoCommentViewModelBase : IMcvCommentViewModel
+    {
+        private readonly YouTubeLiveSitePlugin.IYouTubeLiveMessage _message;
         private readonly IMessageMetadata _metadata;
         private readonly IMessageMethods _methods;
         private readonly IOptions _options;
@@ -28,7 +37,7 @@ namespace MultiCommentViewer
                 _nickItems = null;
             }
         }
-        private TwitchCommentViewModel(IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+        public McvBigoCommentViewModelBase(IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
         {
             _metadata = metadata;
             _methods = methods;
@@ -106,64 +115,11 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public TwitchCommentViewModel(TwitchSitePlugin.ITwitchComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
-        {
-            _message = comment;
-            if (comment.IsDisplayNameSame)
-            {
-                _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserName);
-            }
-            else
-            {
-                var nameItems = new List<IMessagePart>
-                {
-                    Common.MessagePartFactory.CreateMessageText(comment.DisplayName),
-                    Common.MessagePartFactory.CreateMessageText(" (" + comment.UserName + ")")
-                };
-                _nameItems = nameItems;
-            }
-
-            MessageItems = comment.CommentItems;
-            Thumbnail = comment.UserIcon;
-            Id = comment.Id.ToString();
-            PostTime = comment.PostTime;
-        }
-        //public TwitchCommentViewModel(TwitchSitePlugin.ITwitchItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
-        //    : this(metadata, methods, connectionStatus)
-        //{
-        //    var comment = item;
-        //    _message = comment;
-
-        //    _nameItems = comment.NameItems;
-        //    MessageItems = comment.CommentItems;
-        //    Thumbnail = new Common.MessageImage
-        //    {
-        //        Url = comment.UserIconUrl,
-        //        Alt = "",
-        //        Height = 40,//_optionsにcolumnの幅を動的に入れて、ここで反映させたい。propertyChangedはどうやって発生させるか
-        //        Width = 40,
-        //    };
-        //    Id = comment.Id.ToString();
-        //    PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
-        //}
-        public TwitchCommentViewModel(TwitchSitePlugin.ITwitchConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
-        {
-            _message = connected;
-            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
-        }
-        public TwitchCommentViewModel(TwitchSitePlugin.ITwitchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
-        {
-            _message = disconnected;
-            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
-        }
 
         public IConnectionStatus ConnectionName { get; }
 
         private IEnumerable<IMessagePart> _nickItems { get; set; }
-        private IEnumerable<IMessagePart> _nameItems { get; set; }
+        protected IEnumerable<IMessagePart> _nameItems { get; set; }
         public IEnumerable<IMessagePart> NameItems
         {
             get
@@ -179,18 +135,7 @@ namespace MultiCommentViewer
             }
         }
 
-        public IEnumerable<IMessagePart> MessageItems
-        {
-            get
-            {
-                return _messageItems;
-            }
-            set
-            {
-                _messageItems = value;
-                RaisePropertyChanged();
-            }
-        }
+        public IEnumerable<IMessagePart> MessageItems { get; protected set; }
 
         public SolidColorBrush Background
         {
@@ -198,7 +143,7 @@ namespace MultiCommentViewer
             {
                 if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
                 {
-                    return new SolidColorBrush(_options.TwitchBackColor);
+                    return new SolidColorBrush(_options.YouTubeLiveBackColor);
                 }
                 else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
                 {
@@ -227,7 +172,7 @@ namespace MultiCommentViewer
             {
                 if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Site)
                 {
-                    return new SolidColorBrush(_options.TwitchForeColor);
+                    return new SolidColorBrush(_options.YouTubeLiveForeColor);
                 }
                 else if (_options.IsEnabledSiteConnectionColor && _options.SiteConnectionColorType == SiteConnectionColorType.Connection)
                 {
@@ -240,13 +185,13 @@ namespace MultiCommentViewer
             }
         }
 
-        public string Id { get; private set; }
+        public string Id { get; protected set; }
 
-        public string Info { get; private set; }
+        public string Info { get; protected set; }
 
         public bool IsVisible => _metadata.IsVisible;
 
-        public string PostTime { get; private set; }
+        public string PostTime { get; protected set; }
 
         public IMessageImage Thumbnail { get; private set; }
 
@@ -267,6 +212,7 @@ namespace MultiCommentViewer
             }
         }
 
+        IEnumerable<IMessagePart> IMcvCommentViewModel.MessageItems { get; set; }
         public bool IsTranslated { get; set; }
 
         public Task AfterCommentAdded()
@@ -276,8 +222,6 @@ namespace MultiCommentViewer
         #region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
-        private IEnumerable<IMessagePart> _messageItems;
-
         /// <summary>
         /// 
         /// </summary>
@@ -296,10 +240,11 @@ namespace MultiCommentViewer
         }
         #endregion
 
-        private static DateTime UnixtimeToDateTime(long unixTimeStamp)
+        private static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
         {
             var dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             return dt.AddSeconds(unixTimeStamp).ToLocalTime();
         }
     }
 }
+

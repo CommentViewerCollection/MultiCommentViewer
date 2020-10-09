@@ -127,6 +127,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginCommon", "PluginCommo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginCommonTests", "PluginCommonTests\PluginCommonTests.csproj", "{2787460A-2EF2-412D-8989-A1223D2FCEE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigoIF", "BigoIF\BigoIF.csproj", "{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigoSitePlugin", "BigoSitePlugin\BigoSitePlugin.csproj", "{A1A18F87-CC82-480D-9902-99E5BA1A5551}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Beta|Any CPU = Beta|Any CPU
@@ -482,6 +486,18 @@ Global
 		{2787460A-2EF2-412D-8989-A1223D2FCEE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2787460A-2EF2-412D-8989-A1223D2FCEE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2787460A-2EF2-412D-8989-A1223D2FCEE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}.Beta|Any CPU.ActiveCfg = Beta|Any CPU
+		{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}.Beta|Any CPU.Build.0 = Beta|Any CPU
+		{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Beta|Any CPU.ActiveCfg = Beta|Any CPU
+		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Beta|Any CPU.Build.0 = Beta|Any CPU
+		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

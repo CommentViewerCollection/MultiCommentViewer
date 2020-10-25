@@ -157,6 +157,7 @@ namespace YouTubeLiveSitePluginTests
             var logger = new Mock<ILogger>();
             var userStore = new Mock<IUserStoreManager>();
             var broweserProfileMock = new Mock<IBrowserProfile>();
+            broweserProfileMock.Setup(x => x.GetCookieCollection(It.IsAny<string>())).Returns(new List<Cookie>());
 
             var b = false;
             var cp = new CommentProvider(options.Object, serverMock.Object, siteOptions, logger.Object, userStore.Object);

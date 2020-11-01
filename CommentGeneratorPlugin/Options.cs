@@ -25,7 +25,7 @@ namespace CommentViewer.Plugin
             }
         }
         [DataMember]
-        private string _hcgSettingFilePath = 
+        private string _hcgSettingFilePath =
             System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"hcg\setting.xml");
         /// <summary>
         /// HTML5コメジェネの設定ファイルの場所
@@ -36,6 +36,20 @@ namespace CommentViewer.Plugin
             set
             {
                 _hcgSettingFilePath = value;
+                RaisePropertyChanged();
+            }
+        }
+        [DataMember]
+        private bool _isMirrativeJoin=false;
+        public bool IsMirrativeJoin
+        {
+            get
+            {
+                return _isMirrativeJoin;
+            }
+            set
+            {
+                _isMirrativeJoin = value;
                 RaisePropertyChanged();
             }
         }
@@ -77,6 +91,7 @@ namespace CommentViewer.Plugin
         #region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
+
         /// <summary>
         /// 
         /// </summary>

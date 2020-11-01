@@ -63,7 +63,10 @@ namespace CommentViewer.Plugin
             //Mixer:mixer
 
 
-
+            if(message is MirrativSitePlugin.IMirrativJoinRoom && !Options.IsMirrativeJoin)
+            {
+                return;
+            }
             //string name;
             //if (HasNickname(messageMetadata.User))
             //{

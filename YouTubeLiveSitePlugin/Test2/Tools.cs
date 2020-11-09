@@ -132,14 +132,19 @@ namespace YouTubeLiveSitePlugin.Test2
             var ytInitialData = match.Groups[1].Value;
             return ytInitialData;
         }
-        public static string ExtractYtInitialDataFromChannelHtml(string channelHtml)
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="channelHtml"></param>
+        /// <returns>成功したらYtInitialData,失敗したらnull</returns>
+        private static string ExtractYtInitialDataFromChannelHtmlInternal1(string channelHtml)
         {
-            //2019/07/11 仕様変更があったようで、下記のような形式になっていた
             //window["ytInitialData"] = JSON.parse("{\"responseContext\":{\"se
             var match = Regex.Match(channelHtml, "window\\[\"ytInitialData\"\\]\\s*=\\s*(.+?})(?:\"\\))?;", RegexOptions.Singleline);
             if (!match.Success)
             {
-                throw new ParseException(channelHtml);
+                return null;
             }
             var preYtInitialData = match.Groups[1].Value;
             string ytInitialData;
@@ -157,6 +162,28 @@ namespace YouTubeLiveSitePlugin.Test2
                 ytInitialData = preYtInitialData;
             }
             return ytInitialData;
+        }
+        private static string ExtractYtInitialDataFromChannelHtmlInternal2(string channelHtml)
+        {
+            //2020/11/09 ttps://www.youtube.com/channel/CHANNEL_ID?view_as=subscriber のHTMLの仕様が通常のものと違った
+            //<script nonce=\"orPyHr12z1j4Y/4tOnK12A\">var ytInitialData = {\"responseContext\":
+            var match = Regex.Match(channelHtml, "<script nonce=\"[^\"]+\">var ytInitialData\\s*=\\s*(.+?});</script>", RegexOptions.Singleline);
+            if (!match.Success)
+            {
+                return null;
+            }
+            var ytInitialData = match.Groups[1].Value;
+            return ytInitialData;
+        }
+        public static string ExtractYtInitialDataFromChannelHtml(string channelHtml)
+        {
+            var ytInitialData = ExtractYtInitialDataFromChannelHtmlInternal1(channelHtml);
+            if (!string.IsNullOrEmpty(ytInitialData)) return ytInitialData;
+
+            ytInitialData = ExtractYtInitialDataFromChannelHtmlInternal2(channelHtml);
+            if (!string.IsNullOrEmpty(ytInitialData)) return ytInitialData;
+
+            throw new ParseException(channelHtml);
         }
         /// <summary>
         /// 

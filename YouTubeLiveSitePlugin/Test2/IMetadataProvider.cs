@@ -38,10 +38,10 @@ namespace YouTubeLiveSitePlugin.Test2
             string dislike = null;
             foreach (var action in actions)
             {
-                if (action.IsDefined("updateViewershipAction"))
+                if (action.ContainsKey("updateViewershipAction"))
                 {
                     dynamic re;
-                    if (action.updateViewershipAction.IsDefined("viewCount"))//2018/06/22 仕様変更だろうか。こっちに移行したっぽい
+                    if (action.updateViewershipAction.ContainsKey("viewCount"))//2018/06/22 仕様変更だろうか。こっちに移行したっぽい
                     {
                         re = action.updateViewershipAction.viewCount.videoViewCountRenderer;
                     }
@@ -49,19 +49,19 @@ namespace YouTubeLiveSitePlugin.Test2
                     {
                         re = action.updateViewershipAction.viewership.videoViewCountRenderer;
                     }
-                    if (re.IsDefined("isLive"))
+                    if (re.ContainsKey("isLive"))
                     {
                         var isLive = re.isLive;
                         metadata.IsLive = isLive;
                     }
-                    if (re.IsDefined("viewCount"))//viewCountが存在しない場合があった
+                    if (re.ContainsKey("viewCount"))//viewCountが存在しない場合があった
                     {
-                        if (re.viewCount.IsDefined("runs"))
+                        if (re.viewCount.ContainsKey("runs"))
                         {
                             var lowViewCount = (string)re.viewCount.runs[0].text;
                             metadata.CurrentViewers = new string(lowViewCount.Where(char.IsDigit).ToArray());
                         }
-                        else if (re.viewCount.IsDefined("simpleText"))
+                        else if (re.viewCount.ContainsKey("simpleText"))
                         {
                             var lowViewCount = (string)re.viewCount.simpleText;
                             metadata.CurrentViewers = new string(lowViewCount.Where(char.IsDigit).ToArray());
@@ -72,14 +72,14 @@ namespace YouTubeLiveSitePlugin.Test2
                         metadata.CurrentViewers = "0";
                     }
                 }
-                else if (action.IsDefined("updateTitleAction"))
+                else if (action.ContainsKey("updateTitleAction"))
                 {
                     string title;
-                    if (action.updateTitleAction.title.IsDefined("runs"))
+                    if (action.updateTitleAction.title.ContainsKey("runs"))
                     {
                         title = action.updateTitleAction.title.runs[0].text;
                     }
-                    else if (action.updateTitleAction.title.IsDefined("simpleText"))
+                    else if (action.updateTitleAction.title.ContainsKey("simpleText"))
                     {
                         title = action.updateTitleAction.title.simpleText;
                     }
@@ -89,11 +89,11 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                     metadata.Title = title;
                 }
-                else if (action.IsDefined("updateDescriptionAction"))
+                else if (action.ContainsKey("updateDescriptionAction"))
                 {
 
                 }
-                else if (action.IsDefined("updateToggleButtonTextAction"))
+                else if (action.ContainsKey("updateToggleButtonTextAction"))
                 {
                     //"toggledText"は自分が押した場合の数値
                     //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"1227"},"toggledText":{"simpleText":"1228"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_LIKE"}}}
@@ -107,7 +107,7 @@ namespace YouTubeLiveSitePlugin.Test2
                         dislike = (string)action.updateToggleButtonTextAction.defaultText.simpleText;
                     }
                 }
-                else if (action.IsDefined("updateDateTextAction"))
+                else if (action.ContainsKey("updateDateTextAction"))
                 {
                     //{"updateDateTextAction":{"dateText":{"simpleText":"41 分前にライブ配信開始"}}}
                     var input = (string)action.updateDateTextAction.dateText.simpleText;

@@ -5,11 +5,11 @@ using System.Net;
 using SitePlugin;
 using Common;
 using System.Linq;
-using Codeplex.Data;
 using SitePluginCommon;
 using ryu_s.BrowserCookie;
 using System.Net.Http;
 using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -334,21 +334,25 @@ namespace YouTubeLiveSitePlugin.Test2
                     var url = "https://www.youtube.com/service_ajax?name=sendLiveChatMessageEndpoint";
                     var res = await _server.PostAsync(url, data, _cc);
                     Debug.WriteLine(res);
-                    var json = DynamicJson.Parse(res);
+                    dynamic json = JsonConvert.DeserializeObject(res);
                     //if (json.IsDefined("errors"))
                     //{
                     //    var k = string.Join("&", data.Select(kv => kv.Key + "=" + kv.Value));
                     //    throw new PostingCommentFailedException("コメント投稿に失敗しました（" + json.errors[0] + "）",$"data={k}, res={res}");
                     //}
-                    if (json.IsDefined("code") && json.code == "SUCCESS")
+                    if (json.ContainsKey("code") && json.code == "SUCCESS")
                     {
-                        if (json.IsDefined("data") && json.data.IsDefined("errorMessage"))
+                        if (json.ContainsKey("data") && json.data.ContainsKey("errorMessage"))
                         {
                             var k = string.Join("&", data.Select(kv => kv.Key + "=" + kv.Value));
                             string errorText;
-                            if (json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.IsDefined("simpleText"))
+                            if (json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.ContainsKey("simpleText"))
                             {
-                                errorText = json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.simpleText;
+                                errorText = (string)json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.simpleText;
+                            }
+                            else if (json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.ContainsKey("runs"))
+                            {
+                                errorText = (string)json.data.errorMessage.liveChatTextActionsErrorMessageRenderer.errorText.runs[0].text;
                             }
                             else
                             {
@@ -356,7 +360,7 @@ namespace YouTubeLiveSitePlugin.Test2
                             }
                             throw new PostingCommentFailedException("コメント投稿に失敗しました（" + errorText + "）", $"data={k}, res={res}");
                         }
-                        else if (json.IsDefined("data") && json.data.IsDefined("actions"))
+                        else if (json.ContainsKey("data") && json.data.ContainsKey("actions"))
                         {
                             //多分成功
                             _commentPostCount++;
@@ -470,7 +474,7 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 try
                 {
-                    var json = DynamicJson.Parse(serviceEndPoint);
+                    dynamic json = JsonConvert.DeserializeObject(serviceEndPoint);
                     PostCommentContext = new PostCommentContext
                     {
                         ClientIdPrefix = json.sendLiveChatMessageEndpoint.clientIdPrefix,

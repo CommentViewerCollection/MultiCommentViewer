@@ -54,6 +54,11 @@ namespace CommentViewer.Plugin
                 this.HcgSettingFilePath = fileDialog.FileName;
             }
         }
+        public bool IsMirrativJoin
+        {
+            get => _options.IsMirrativeJoin;
+            set => _options.IsMirrativeJoin = value;
+        }
         public ConfigViewModel()
         {
             if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
@@ -61,6 +66,7 @@ namespace CommentViewer.Plugin
                 _options = new Plugin.Options();
                 IsEnabled = true;
                 HcgSettingFilePath = "HTML5コメジェネ設定ファイルパス";
+                IsMirrativJoin = true;
             }
             else
             {
@@ -80,6 +86,9 @@ namespace CommentViewer.Plugin
                         break;
                     case nameof(_options.HcgSettingFilePath):
                         RaisePropertyChanged(nameof(HcgSettingFilePath));
+                        break;
+                    case nameof(_options.IsMirrativeJoin):
+                        RaisePropertyChanged(nameof(IsMirrativJoin));
                         break;
                 }
             };

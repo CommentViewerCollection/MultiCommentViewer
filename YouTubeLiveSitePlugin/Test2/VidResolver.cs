@@ -3,7 +3,6 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System;
 using System.Collections.Generic;
-using Codeplex.Data;
 using Newtonsoft.Json;
 using System.Diagnostics;
 
@@ -69,12 +68,12 @@ namespace YouTubeLiveSitePlugin.Test2
             if (string.IsNullOrEmpty(input)) return false;
             return _regexCustomChannel.IsMatch(input);
         }
-        
+
         public bool IsValidInput(string input)
         {
             return IsWatch(input) || IsUser(input) || IsChannel(input) || IsCustomChannel(input);
         }
-        
+
         internal bool TryVid(string input, out string vid)
         {
             if (string.IsNullOrEmpty(input))
@@ -121,7 +120,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         internal async Task<(string channelId, string reason)> TryGetChannelIdFromCustomChannel(IYouTubeLibeServer server, string input)
         {
-            var match1 =_regexCustomChannel.Match(input);
+            var match1 = _regexCustomChannel.Match(input);
             if (match1.Success)
             {
                 var userId = match1.Groups[1].Value;
@@ -216,12 +215,12 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
             }
             var vids = new List<string>();
-            var d = DynamicJson.Parse(ytInitialData);
+            dynamic d = JsonConvert.DeserializeObject(ytInitialData);
             //2019/07/19この方法だと直近の生放送を取得する。今現在生放送中とは限らない。数年間生放送していなければ数年前のものを取得することになる。
             //生放送中かどうかの判定ができればこれでも良いと思う。
-            if(d.IsDefined("currentVideoEndpoint") && d.currentVideoEndpoint.IsDefined("watchEndpoint")&& d.currentVideoEndpoint.watchEndpoint.IsDefined("videoId"))
+            if (d.ContainsKey("currentVideoEndpoint") && d.currentVideoEndpoint.ContainsKey("watchEndpoint") && d.currentVideoEndpoint.watchEndpoint.ContainsKey("videoId"))
             {
-                var vid=(string)d.currentVideoEndpoint.watchEndpoint.videoId;
+                var vid = (string)d.currentVideoEndpoint.watchEndpoint.videoId;
                 vids.Add(vid);
             }
             return vids;
@@ -244,7 +243,7 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
             }
-            catch(ParseException)
+            catch (ParseException)
             {
                 if (!html.Contains("ytInitialData"))
                 {
@@ -264,19 +263,19 @@ namespace YouTubeLiveSitePlugin.Test2
                 var json = JsonConvert.DeserializeObject<Low.ChannelYtInitialData.RootObject>(ytInitialData);
                 var tabs = json.contents.twoColumnBrowseResultsRenderer.tabs;
                 Low.ChannelYtInitialData.Tab videosTab = null;
-                foreach(var tab in tabs)
+                foreach (var tab in tabs)
                 {
                     if (tab.tabRenderer == null)
                     {
                         continue;
                     }
-                    if(tab.tabRenderer.title == "Videos")
+                    if (tab.tabRenderer.title == "Videos")
                     {
                         videosTab = tab;
                         break;
                     }
                 }
-                if(videosTab == null)
+                if (videosTab == null)
                 {
                     return list;
                 }
@@ -308,12 +307,12 @@ namespace YouTubeLiveSitePlugin.Test2
         private bool IsLive(List<Low.ChannelYtInitialData.Badge> badges)
         {
             if (badges == null) return false;
-            foreach(var badge in badges)
+            foreach (var badge in badges)
             {
                 var renderer = badge.metadataBadgeRenderer;
                 if (renderer == null) continue;
                 //labelには他にも"CC"等がある。ちゃんと値を見ないとダメ。
-                if(renderer.label == "LIVE NOW" || renderer.style == "BADGE_STYLE_TYPE_LIVE_NOW")
+                if (renderer.label == "LIVE NOW" || renderer.style == "BADGE_STYLE_TYPE_LIVE_NOW")
                 {
                     return true;
                 }

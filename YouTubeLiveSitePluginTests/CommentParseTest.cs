@@ -1,4 +1,4 @@
-﻿using Codeplex.Data;
+﻿using Newtonsoft.Json;
 using NUnit.Framework;
 using SitePlugin;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ namespace YouTubeLiveSitePluginTests
         public void ParseLiveChatTextMessageRendererTest()
         {
             var data = Tools.GetSampleData("AddChatItemAction_authorBadge.txt");
-            var d = DynamicJson.Parse(data);
+            dynamic d = JsonConvert.DeserializeObject(data);
             CommentData commentData = YouTubeLiveSitePlugin.Test2.Parser.ParseLiveChatTextMessageRenderer(d.addChatItemAction.item.liveChatTextMessageRenderer.ToString());
             Assert.AreEqual("UC0jl5mtntIH8O0ajZ0_V-tw", commentData.UserId);
             Assert.IsFalse(commentData.IsPaidMessage);
@@ -33,7 +33,7 @@ namespace YouTubeLiveSitePluginTests
         public void ParseLiveChatTextMessageRenderer_ModeratorTest()
         {
             var data = Tools.GetSampleData("AddChatItemAction_authorBadge_moderator.txt");
-            var d = DynamicJson.Parse(data);
+            dynamic d = JsonConvert.DeserializeObject(data);
             CommentData commentData = YouTubeLiveSitePlugin.Test2.Parser.ParseLiveChatTextMessageRenderer(d.addChatItemAction.item.liveChatTextMessageRenderer.ToString());
             Assert.AreEqual("UCTBOZy7Q97gvK_TeaqkFQjQ", commentData.UserId);
             Assert.IsFalse(commentData.IsPaidMessage);
@@ -52,7 +52,7 @@ namespace YouTubeLiveSitePluginTests
         public void ParseLiveChatPaidMessageRenderer()
         {
             var data = Tools.GetSampleData("AddChatAction_liveChatPaidMessageRenderer.txt");
-            var d = DynamicJson.Parse(data);
+            dynamic d = JsonConvert.DeserializeObject(data);
             CommentData commentData = YouTubeLiveSitePlugin.Test2.Parser.ParseLiveChatPaidMessageRenderer(d.addChatItemAction.item.liveChatPaidMessageRenderer.ToString());
             Assert.AreEqual("UCWzefMLeuAhrCyhqYsFLl5Q", commentData.UserId);
             Assert.IsTrue(commentData.IsPaidMessage);

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
-using Codeplex.Data;
 using System.Web;
 using System.Text.RegularExpressions;
 using Common;
@@ -12,6 +11,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Net.Http;
 using SitePluginCommon;
+using Newtonsoft.Json;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -34,9 +34,10 @@ namespace YouTubeLiveSitePlugin.Test2
             string innerTubeKey;
             try
             {
-                var ytCfgJson = DynamicJson.Parse(ytCfg);
+                dynamic ytCfgJson = JsonConvert.DeserializeObject(ytCfg);
                 innerTubeKey = ytCfgJson.INNERTUBE_API_KEY;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new FatalException("", ex);
             }
@@ -45,7 +46,7 @@ namespace YouTubeLiveSitePlugin.Test2
             //var payloadBytes = Encoding.UTF8.GetBytes(payload);
 
             //var wc = new MyWebClient(cc);
-            
+
             while (!_cts.IsCancellationRequested)
             {
                 int timeoutMs = 0;
@@ -57,8 +58,8 @@ namespace YouTubeLiveSitePlugin.Test2
                 {
                     var res = await GetMetadata(cc, url, payload);
 
-                    var json = DynamicJson.Parse(res);
-                    if (json.continuation.IsDefined("invalidationContinuationData"))
+                    dynamic json = JsonConvert.DeserializeObject(res);
+                    if (json.continuation.ContainsKey("invalidationContinuationData"))
                     {
                         throw new ParseException(res);
                     }
@@ -112,7 +113,7 @@ namespace YouTubeLiveSitePlugin.Test2
             return await _server.PostAsync(new HttpOptions { Url = url, Cc = cc }, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
-        public MetaDataYoutubeiProvider(IYouTubeLibeServer server, ILogger logger):base(logger)
+        public MetaDataYoutubeiProvider(IYouTubeLibeServer server, ILogger logger) : base(logger)
         {
             _server = server;
         }
@@ -130,7 +131,7 @@ namespace YouTubeLiveSitePlugin.Test2
             string token;
             try
             {
-                var ytCfgJson = DynamicJson.Parse(ytCfg);
+                dynamic ytCfgJson = JsonConvert.DeserializeObject(ytCfg);
                 token = ytCfgJson.XSRF_TOKEN;
             }
             catch (Exception ex)
@@ -141,7 +142,7 @@ namespace YouTubeLiveSitePlugin.Test2
             //このAPIを呼び出すとき、Cookieに"YSC"と"VISITOR_INFO1_LIVE"が必須。
             //2つとも配信ページか $"https://www.youtube.com/live_chat?v={vid}&is_popout=1"にアクセスした時にCookieをセットしなければもらえる。
             //コメビュではtokenとかを取得するために"/live_chat"に必ずアクセスする必要があるため、未ログイン時にはそれで取得した値を使えば良い。
-            var url = "https://www.youtube.com/service_ajax?name=updatedMetadataEndpoint";            
+            var url = "https://www.youtube.com/service_ajax?name=updatedMetadataEndpoint";
             //この値接続毎に固定っぽい。continuationも変わらない気がする。
             var sej = "{\"clickTrackingParams\":\"CIQBEMyrARgAIhMIrdnBx6fm2wIVQ5VYCh14dQoMKPgd\",\"commandMetadata\":{\"webCommandMetadata\":{\"url\":\"/service_ajax\",\"sendPost\":true}},\"updatedMetadataEndpoint\":{\"videoId\":\"" + vid + "\"}}";
             var data = new Dictionary<string, string>
@@ -159,10 +160,10 @@ namespace YouTubeLiveSitePlugin.Test2
                 try
                 {
                     var res = await GetMetadata(cc, url, encodedContinuation + encodedData);
-                    var d = DynamicJson.Parse(res);
+                    dynamic d = JsonConvert.DeserializeObject(res);
                     string continuation;
 
-                    if (!d.IsDefined("code") || d.code != "SUCCESS")
+                    if (!d.ContainsKey("code") || d.code != "SUCCESS")
                     {
                         if (res == "{\"errors\":[\"Invalid Request\"]}")
                         {
@@ -173,7 +174,7 @@ namespace YouTubeLiveSitePlugin.Test2
                         //{"code":"ERROR","error":"この機能は現在利用できません。しばらくしてからもう一度お試しください。"}
                         throw new ParseException($"res={res},ytCfg={ytCfg},encoded={v}");
                     }
-                    if (d.data.continuation.IsDefined("invalidationContinuationData"))
+                    if (d.data.continuation.ContainsKey("invalidationContinuationData"))
                     {
                         throw new ParseException(res);
                     }
@@ -257,7 +258,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }, new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded"));
         }
 
-        public MetadataProvider(IYouTubeLibeServer server, ILogger logger):base(logger)
+        public MetadataProvider(IYouTubeLibeServer server, ILogger logger) : base(logger)
         {
             _server = server;
         }

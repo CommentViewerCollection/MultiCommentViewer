@@ -12,7 +12,7 @@ namespace NicoSitePlugin.Websocket
         public async Task ReceiveAsync(string url, string broadcastId)
         {
             _broadcastId = broadcastId;
-            var userAgent = "";
+            var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
             var origin = "https://live2.nicovideo.jp";
             await _wc.ReceiveAsync(url, new List<KeyValuePair<string, string>>(), userAgent, origin);
         }
@@ -29,22 +29,11 @@ namespace NicoSitePlugin.Websocket
         }
         private IMessageParser CreateMessageParser()
         {
-            return new MessageParser();
+            return new MessageParser2();
         }
         IMessageParser _messageParser;
         private void Wc_Received(object sender, string e)
         {
-            //{"type":"watch","body":{"command":"statistics","params":["10","0","0","0"]}}
-            //{"type":"watch","body":{"command":"servertime","params":["1559238662759"]}}
-            //{"type":"watch","body":{"command":"permit","params":["11638528803398"]}}
-            //{"type":"watch","body":{"currentStream":{"uri":"https://pa03503c0e0.dmc.nico/hlslive/ht2_nicolive/nicolive-production-pg11638528803398_f8b21634cfbd88ba8cb0d160255872f680386cb5cb850fabca8b791423079e13/master.m3u8?ht2_nicolive=2297426.sh06gy_psbw92_do4o0yyhuyix","name":null,"quality":"abr","qualityTypes":["abr","high","normal","low","super_low"],"mediaServerType":"dmc","mediaServerAuth":null,"streamingProtocol":"hls"},"command":"currentstream"}}
-            //{"type":"watch","body":{"room":{"messageServerUri":"wss://msg.live2.nicovideo.jp/u10199/websocket","messageServerType":"niwavided","roomName":"co3860652","threadId":"1651504725","forks":[0],"importedForks":[]},"command":"currentroom"}}
-            //{"type":"watch","body":{"command":"statistics","params":["10","0","0","0"]}}
-            //{"type":"watch","body":{"command":"watchinginterval","params":["30"]}}
-            //{"type":"watch","body":{"update":{"begintime":1559237439000,"endtime":1559248239000},"command":"schedule"}}
-            //{"type":"ping","body":{}}
-            //{"type":"watch","body":{"command":"statistics","params":["10","0","0","0"]}}
-            //{"type":"ping","body":{}}
             var raw = e;
             IInternalMessage internalMessage;
             try
@@ -63,7 +52,7 @@ namespace NicoSitePlugin.Websocket
             }
             switch (internalMessage)
             {
-                case IPing _:
+                case PingInternalMessage _:
                     {
                         SendPong();
                     }
@@ -76,14 +65,16 @@ namespace NicoSitePlugin.Websocket
 
         private void SendPong()
         {
-            _wc.Send("{\"type\":\"pong\",\"body\":{}}");
+            _wc.Send("{\"type\":\"pong\"}");
+        }
+        public void SendKeepSeat()
+        {
+            _wc.Send("{\"type\":\"keepSeat\"}");
         }
 
         private async void Wc_Opened(object sender, EventArgs e)
         {
-            var broadcastId = _broadcastId;
-            await _wc.SendAsync("{\"type\":\"watch\",\"body\":{\"command\":\"playerversion\",\"params\":[\"leo\"]}}").ConfigureAwait(false);
-            await _wc.SendAsync($"{{\"type\":\"watch\",\"body\":{{\"command\":\"getpermit\",\"requirement\":{{\"broadcastId\":\"{broadcastId}\",\"route\":\"\",\"stream\":{{\"protocol\":\"hls\",\"requireNewStream\":true,\"priorStreamQuality\":\"abr\",\"isLowLatency\":false,\"isChasePlay\":false}},\"room\":{{\"isCommentable\":true,\"protocol\":\"webSocket\"}}}}}}}}");
+            await _wc.SendAsync($"{{\"type\":\"startWatching\",\"data\":{{\"stream\":{{\"quality\":\"abr\",\"protocol\":\"hls\",\"latency\":\"low\",\"chasePlay\":false}},\"room\":{{\"protocol\":\"webSocket\",\"commentable\":true}},\"reconnect\":false}}}}");
         }
     }
 }

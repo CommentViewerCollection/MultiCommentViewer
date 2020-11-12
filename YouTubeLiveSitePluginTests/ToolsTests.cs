@@ -39,5 +39,33 @@ namespace YouTubeLiveSitePluginTests
             Assert.AreEqual(0, c.TimeoutMs);
             Assert.AreEqual("QUFFLUhqbGJxbGEzNWE1TGg0U2FYUzcyZXIyeF9hZTUxd3xBQ3Jtc0tuTEgtbGpITWdSQWlvUVZaZmJTU1IxQUMwQmw2djVUbXVLM19YMDFqeVpad0xxa1RPdjZOQ3A1MEtabk5xLWhUUExPdzMtVC16Z1ZHWE9ybjlZZ1hKeVo0R3ZCbzhGT2cta3pmLUtTeTQ0dlBPOHNCT01GSG1uZUpaUk5pa00tamhMeGdJclFmX1VtQU50UmgzdjhCUndMc0NjRnc=", t);
         }
+        [Test]
+        public void ExtractYtPlayerConfigTest()
+        {
+            var data = Tools.GetSampleData("LivePage_ytplayerconfig.txt");
+            var ytPlayerConfig = YouTubeLiveSitePlugin.Test2.Tools.ExtractYtPlayerConfig(data);
+            Assert.IsTrue(!string.IsNullOrEmpty(ytPlayerConfig));
+        }
+        [Test]
+        public void ExtractLiveBroadcastDetailsTest()
+        {
+            var data = Tools.GetSampleData("ytPlayerConfig.txt");
+            var liveBroadcastDetails = YouTubeLiveSitePlugin.Test2.Tools.ExtractLiveBroadcastDetails(data);
+            Assert.IsTrue(!string.IsNullOrEmpty(liveBroadcastDetails));
+        }
+        [Test]
+        public void Test1()
+        {
+            var data = Tools.GetSampleData("LivePage_ytInitialPlayerResponse.txt");
+            var liveBroadcastDetails = YouTubeLiveSitePlugin.Test2.Tools.ExtractLiveBroadcastDetailsFromLivePage(data);
+            Assert.IsTrue(!string.IsNullOrEmpty(liveBroadcastDetails));
+        }
+        [Test]
+        public void Test2()
+        {
+            var data = Tools.GetSampleData("LivePage_ytplayerconfig.txt");
+            var liveBroadcastDetails = YouTubeLiveSitePlugin.Test2.Tools.ExtractLiveBroadcastDetailsFromLivePage(data);
+            Assert.IsTrue(!string.IsNullOrEmpty(liveBroadcastDetails));
+        }
     }
 }

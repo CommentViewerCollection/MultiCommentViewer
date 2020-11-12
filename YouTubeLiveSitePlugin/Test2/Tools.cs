@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Diagnostics;
 using System.Text;
+using Xceed.Wpf.Toolkit;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -291,6 +292,61 @@ namespace YouTubeLiveSitePlugin.Test2
             return (continuation, chatContinuation, dataList);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ytPlayerConfig">ExtractYtPlayerConfig(string)の戻り値</param>
+        /// <returns>{"isLiveNow":true,"startTimestamp":"2020-11-12T12:16:53+00:00"}</returns>
+        public static string ExtractLiveBroadcastDetails(string ytPlayerConfig)
+        {
+            if (string.IsNullOrEmpty(ytPlayerConfig)) return null;
+            var match = Regex.Match(ytPlayerConfig, "\\\\\"liveBroadcastDetails\\\\\":({.+?})");
+            if (!match.Success) return null;
+            return match.Groups[1].Value.Replace("\\\"", "\"");
+        }
+
+        public static string ExtractYtPlayerConfig(string html)
+        {
+            var match = Regex.Match(html, "ytplayer\\.config\\s*=\\s*({.+?\"}});");
+            if (!match.Success) return null;
+            return match.Groups[1].Value;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="html"></param>
+        /// <returns>{"isLiveNow":true,"startTimestamp":"2020-11-12T14:02:34+00:00"}</returns>
+        public static string ExtractLiveBroadcastDetailsFromLivePage(string html)
+        {
+            //"liveBroadcastDetails":{"isLiveNow":true,"startTimestamp":"2020-11-12T14:02:34+00:00"}
+            //liveBroadcastDetailsはページによってytPlayerConfigに入っている場合とytInitialPlayerResponseの場合を確認。
+            //あんまり検証していないから詳細は不明。
+            //ytplayerconfigの場合、liveBroadcastDetailsを要素に持つJSON自体が文字列としてJSONの値に格納されている関係で\"liveBroadcastDetails\"のようにエスケープされている。            
+
+            //ちなみにHTMLのmetaタグでも配信開始日時が格納されていた。
+            ////<meta itemprop="startDate" content="2020-11-12T14:02:34+00:00">
+
+            var match = Regex.Match(html, "(?:\\\\)?\"liveBroadcastDetails(?:\\\\)?\":({.+?})");
+            if (!match.Success) return null;
+            return match.Groups[1].Value.Replace("\\\"", "\"");
+        }
+        public static string ToElapsedString(TimeSpan timeSpan)
+        {
+            var days = timeSpan.Days;
+            var hours = timeSpan.Hours;
+            var mins = timeSpan.Minutes;
+            var secs = timeSpan.Seconds;
+            string ret;
+            if (days <= 0)
+            {
+                ret = $"{hours:00}:{mins:00}:{secs:00}";
+            }
+            else
+            {
+                ret = $"{days}日{hours:00}:{mins:00}:{secs:00}";
+            }
+            return ret;
+        }
 
         /// <summary>
         /// 

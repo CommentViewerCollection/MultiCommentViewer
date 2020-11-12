@@ -105,6 +105,7 @@ namespace YouTubeLiveSitePlugin.Test2
             CanConnect = true;
             CanDisconnect = false;
             _connection = null;
+            _elapsedTimer.Enabled = false;
             SendInfo("切断しました", InfoType.Notice);
         }
 
@@ -128,6 +129,8 @@ namespace YouTubeLiveSitePlugin.Test2
             return cc;
         }
         EachConnection _connection;
+        DateTime? _startedAt;
+        System.Timers.Timer _elapsedTimer = new System.Timers.Timer();
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             if (string.IsNullOrEmpty(input))
@@ -200,7 +203,28 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 isInputStoringNeeded = true;
             }
-
+            var html = await _server.GetAsync($"https://www.youtube.com/watch?v={vid}");
+            var liveBroadcastDetails = Tools.ExtractLiveBroadcastDetailsFromLivePage(html);
+            if (liveBroadcastDetails != null)
+            {
+                dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject(liveBroadcastDetails);
+                if (d.ContainsKey("startTimestamp"))
+                {
+                    var startedStr = (string)d.startTimestamp;
+                    _startedAt = DateTime.Parse(startedStr);
+                    _elapsedTimer.Interval = 500;
+                    _elapsedTimer.Elapsed += (s, e) =>
+                    {
+                        if (!_startedAt.HasValue) return;
+                        var elapsed = DateTime.Now - _startedAt.Value;
+                        MetadataUpdated?.Invoke(this, new Metadata
+                        {
+                            Elapsed = Tools.ToElapsedString(elapsed),
+                        });
+                    };
+                    _elapsedTimer.Enabled = true;
+                }
+            }
             _cc = CreateCookieContainer(browserProfile);
             var userCommentCountDict = CreateUserCommentCountDict();
             _connection = CreateConnection(_logger, _cc, _options, _server, _siteOptions, userCommentCountDict, _receivedCommentIds, this, _userStoreManager, SiteContextGuid);

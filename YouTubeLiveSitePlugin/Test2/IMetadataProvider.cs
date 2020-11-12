@@ -109,14 +109,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
                 else if (action.ContainsKey("updateDateTextAction"))
                 {
-                    //{"updateDateTextAction":{"dateText":{"simpleText":"41 分前にライブ配信開始"}}}
-                    var input = (string)action.updateDateTextAction.dateText.simpleText;
-                    var match = System.Text.RegularExpressions.Regex.Match(input, "(\\d+)");
-                    if (match.Success)
-                    {
-                        var min = int.Parse(match.Groups[1].Value);
-                        metadata.Elapsed = $"{min}分";
-                    }
+                    //別の方法で経過時間を取得するから無視。
                 }
                 else
                 {

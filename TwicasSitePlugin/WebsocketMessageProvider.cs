@@ -50,7 +50,7 @@ namespace TwicasSitePlugin
         public long LiveId { get; set; }
         private async Task ConnectAsync()
         {
-            var wsUrl = await API.GetWebsocketUrl(_server, LiveId);
+            var wsUrl = await API.GetWebsocketUrl(_server, LiveId, Cc);
             await _websocket.ReceiveAsync(wsUrl);
         }
         public WebsocketMessageProvider(IWebsocket websocket, IDataServer server)

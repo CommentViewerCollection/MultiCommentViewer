@@ -10,59 +10,66 @@ namespace NicoSitePlugin.Websocket
     {
         IInternalMessage Parse(string s);
     }
-    public class MessageParser : IMessageParser
+    public class MessageParser2 : IMessageParser
     {
-        //{"type":"watch","body":{"command":"disconnect","params":["4840229962359","NO_PERMISSION"]}}
         public IInternalMessage Parse(string s)
         {
             IInternalMessage message = null;
-            var d = DynamicJson.Parse(s);
-            if (!d.IsDefined("type"))
+            dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject(s);
+            switch ((string)d.type)
             {
-                throw new ParseException(s);
-            }
-            var type = d.type;
-            if (type == "watch")
-            {
-                if (!d.IsDefined("body"))
+                case "room":
+                    message = new RoomInternalMessage
+                    {
+                        IsFirst = (bool)d.data.isFirst,
+                        MessageServerUrl = (string)d.data.messageServer.uri,
+                        MessageServerType = (string)d.data.messageServer.type,
+                        RoomName = (string)d.data.name,
+                        ThreadId = (string)d.data.threadId,
+                        WaybackKey = (string)d.data.waybackkey,
+                        Raw = s,
+                    };
+                    break;
+                case "ping":
+                    message = new PingInternalMessage
+                    {
+                        Raw = s,
+                    };
+                    break;
+                case "seat":
+                    message = new SeatInternalMessage
+                    {
+                        KeepIntervalSec = (int)d.data.keepIntervalSec,
+                        Raw = s,
+                    };
+                    break;
+                case "statistics":
+                    message = new StatisticsInternalMessage
+                    {
+                        AdPoint = (int)d.data.adPoints,
+                        Comments = (int)d.data.comments,
+                        GiftPoints = (int)d.data.giftPoints,
+                        Viewers = (int)d.data.viewers,
+                        Raw = s,
+                    };
+                    break;
+                case "schedule":
+                    message = new ScheduleInternalMessage
+                    {
+                        Begin = (string)d.data.begin,
+                        End = (string)d.data.end,
+                        Raw = s,
+                    };
+                    break;
+                case "disconnect":
+                    message = new DisconnectInternalMessage
+                    {
+                        Reason = (string)d.data.reason,
+                        Raw = s,
+                    };
+                    break;
+                default:
                     throw new ParseException(s);
-                var body = d.body;
-                if (!body.IsDefined("command"))
-                    throw new ParseException(s);
-                var command = body.command;
-                switch (command)
-                {
-                    case "servertime":
-                        message = new Servertime { Time = body.@params[0] };
-                        break;
-                    case "permit":
-                        message = new Permit { Value = body.@params[0] };
-                        break;
-                    case "schedule":
-                        var update = body.update;
-                        message = new Schedule { BeginTime = (long)update.begintime, EndTime = (long)update.endtime };
-                        break;
-                    case "statistics":
-                        message = new Statistics { ViewerCount = body.@params[0], CommentCount = body.@params[1] };
-                        break;
-                    case "currentroom":
-                        var room = body.room;
-                        message = new CurrentRoom { MessageServerUri = room.messageServerUri, MessageServerType = room.messageServerType, RoomName = room.roomName, ThreadId = room.threadId };
-                        break;
-                    default:
-                        //{"type":"watch","body":{"currentStream":{"uri":"https://pa1212365f5.dmc.nico/hlslive/ht2_nicolive/nicolive-production-pg14650921976390_e3839d5914a76beceda85885e6733dd52055d5429d597d174ef71ec5207f0423/master.m3u8?ht2_nicolive=2297426.8qhddq_psdgya_1q1h8zfle71tz","name":null,"quality":"abr","qualityTypes":["abr","super_high","high","normal","low","super_low"],"mediaServerType":"dmc","mediaServerAuth":null,"streamingProtocol":"hls"},"command":"currentstream"}}
-                        //{"type":"watch","body":{"command":"watchinginterval","params":["30"]}}
-                        //{"type":"watch","body":{"command":"disconnect","params":["18401151943248","END_PROGRAM"]}}
-                        throw new ParseException(s);
-                }
-            }
-            else if (type == "ping")
-            {
-                message = new Ping();
-            }
-            else
-            {
-                throw new ParseException(s);
             }
             return message;
         }
@@ -71,104 +78,42 @@ namespace NicoSitePlugin.Websocket
     {
         string Raw { get; }
     }
-    public interface IServertime : IInternalMessage
+    class RoomInternalMessage : IInternalMessage
     {
-        string Time { get; }
-    }
-    public interface ICurrentRoom : IInternalMessage
-    {
-        string MessageServerUri { get; }
-        string MessageServerType { get; }
-        string RoomName { get; }
-        string ThreadId { get; }
-    }
-    public class CurrentRoom : ICurrentRoom
-    {
-        public string MessageServerUri { get; set; }
+        public bool IsFirst { get; set; }
+        public string MessageServerUrl { get; set; }
         public string MessageServerType { get; set; }
         public string RoomName { get; set; }
         public string ThreadId { get; set; }
-        public string Raw
-        {
-            get
-            {
-                return "{\"type\":\"watch\",\"body\":{\"room\":{\"messageServerUri\":\"" + MessageServerUri + "\",\"messageServerType\":\"" + MessageServerType + "\",\"roomName\":\"" + RoomName + "\",\"threadId\":\"" + ThreadId + "\",\"forks\":[0],\"importedForks\":[]},\"command\":\"currentroom\"}}";
-            }
-        }
+        public string WaybackKey { get; set; }
+        public string Raw { get; set; }
     }
-    public interface IPermit : IInternalMessage
+    public class PingInternalMessage : IInternalMessage
     {
-        string Value { get; }
+        public string Raw { get; set; }
     }
-    public interface IPing : IInternalMessage
+    class SeatInternalMessage : IInternalMessage
     {
+        public int KeepIntervalSec { get; set; }
+        public string Raw { get; set; }
     }
-    public interface IStatistics : IInternalMessage
+    class StatisticsInternalMessage : IInternalMessage
     {
-        string ViewerCount { get; }
-        string CommentCount { get; }
+        public int AdPoint { get; set; }
+        public int Comments { get; set; }
+        public int GiftPoints { get; set; }
+        public int Viewers { get; set; }
+        public string Raw { get; set; }
     }
-    public class Statistics : IStatistics
+    class DisconnectInternalMessage : IInternalMessage
     {
-        public string ViewerCount { get; set; }
-        public string CommentCount { get; set; }
-        public string Unknown1 { get; set; } = "0";
-        public string Unknown2 { get; set; } = "0";
-        public string Raw
-        {
-            get
-            {
-                return "{\"type\":\"watch\",\"body\":{\"command\":\"statistics\",\"params\":[\"" + ViewerCount + "\",\"" + CommentCount + "\",\"" + Unknown1 + "\",\"" + Unknown2 + "\"]}}";
-            }
-        }
+        public string Reason { get; set; }
+        public string Raw { get; set; }
     }
-    public class Servertime : IServertime
+    class ScheduleInternalMessage : IInternalMessage
     {
-        public string Time { get; set; }
-        public string Raw
-        {
-            get
-            {
-                return "{\"type\":\"watch\",\"body\":{\"command\":\"servertime\",\"params\":[\"" + Time + "\"]}}";
-            }
-        }
-    }
-    public class Permit : IPermit
-    {
-        public string Value { get; set; }
-        public string Raw
-        {
-            get
-            {
-                return "{\"type\":\"watch\",\"body\":{\"command\":\"permit\",\"params\":[\"" + Value + "\"]}}";
-            }
-        }
-    }
-    public class Ping : IPing
-    {
-        public string Raw
-        {
-            get
-            {
-                return "{\"type\":\"ping\",\"body\":{}}";
-            }
-        }
-    }
-    public interface ISchedule : IInternalMessage
-    {
-        long BeginTime { get; }
-        long EndTime { get; }
-    }
-    public class Schedule : ISchedule
-    {
-        public long BeginTime { get; set; }
-        public long EndTime { get; set; }
-        public string Raw
-        {
-            get
-            {
-                return "{\"type\":\"watch\",\"body\":{\"update\":{\"begintime\":" + BeginTime + ",\"endtime\":" + EndTime + "},\"command\":\"schedule\"}}";
-            }
-        }
+        public string Begin { get; set; }
+        public string End { get; set; }
+        public string Raw { get; set; }
     }
 }

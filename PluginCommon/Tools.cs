@@ -109,6 +109,11 @@ namespace PluginCommon
                 comment = mrComment.Text;
                 name = mrComment.UserName;
             }
+            else if (message is MirrativSitePlugin.IMirrativJoinRoom mrJoin)
+            {
+                comment = mrJoin.Text;
+                name = mrJoin.UserName;
+            }
             //}
             //else if (message is LineLiveSitePlugin.ILineLiveMessage lineLiveMessage)
             //{

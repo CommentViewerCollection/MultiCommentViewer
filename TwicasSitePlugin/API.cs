@@ -47,14 +47,14 @@ namespace TwicasSitePlugin
     }
     static class API
     {
-        public static async Task<string> GetWebsocketUrl(IDataServer server, long movie_id)
+        public static async Task<string> GetWebsocketUrl(IDataServer server, long movie_id, CookieContainer cc)
         {
             var url = "https://twitcasting.tv/eventpubsuburl.php";
             var data = new Dictionary<string, string>
             {
                 {"movie_id",  movie_id.ToString()}
             };
-            var res = await server.PostAsync(url, data, null);
+            var res = await server.PostAsync(url, data, cc);
             var d = DynamicJson.Parse(res);
             if (d.IsDefined("url"))
             {

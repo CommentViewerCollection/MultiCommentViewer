@@ -97,7 +97,9 @@
       <DependentUpon>AppNoStartupUri.xaml</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="TexTraTranslate.cs" />
     <Compile Include="ViewModels\CommentViewModel\InfoCommentViewModel.cs" />
+    <Compile Include="ViewModels\CommentViewModel\McvBigoCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\McvMildomCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\MixerCommentViewModel.cs" />
     <Compile Include="ViewModels\CommentViewModel\ShowRoomCommentViewModel .cs" />
@@ -287,6 +289,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BigoIF\BigoIF.csproj">
+      <Project>{6e6aed10-d8e4-4c61-a26a-cb063ebdbe2a}</Project>
+      <Name>BigoIF</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BigoSitePlugin\BigoSitePlugin.csproj">
+      <Project>{a1a18f87-cc82-480d-9902-99e5ba1a5551}</Project>
+      <Name>BigoSitePlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\BouyomiPlugin\BouyomiPlugin.csproj">
       <Project>{13a909dd-3791-4539-9c04-f72d9e755dcf}</Project>
       <Name>BouyomiPlugin</Name>

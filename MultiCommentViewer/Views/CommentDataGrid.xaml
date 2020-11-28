@@ -63,6 +63,7 @@
                 <ContextMenu x:Key="commentContext" DataContext="{Binding DataContext, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
                     <MenuItem Header="コメントをコピー" Command="{Binding CommentCopyCommand}" />
                     <MenuItem Header="URLを開く" IsEnabled="{Binding ContainsUrl}" Command="{Binding OpenUrlCommand}" />
+                    <MenuItem Header="日本語に翻訳する" Command="{Binding TranslateCommand}" />
                     <Separator />
                     <MenuItem x:Name="UserInfoMenuItem" Header="ユーザ情報" Command="{Binding ShowUserInfoCommand}" />
                 </ContextMenu>

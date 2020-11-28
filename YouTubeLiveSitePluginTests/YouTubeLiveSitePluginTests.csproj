@@ -73,6 +73,15 @@
     <Compile Include="ToolsTests.cs" />
     <Compile Include="VidResolverTests.cs" />
     <Compile Include="YouTubeLiveServerTests.cs" />
+    <Content Include="SampleData\LivePage_ytInitialPlayerResponse.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\LivePage_ytplayerconfig.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\ytPlayerConfig.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">

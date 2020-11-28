@@ -60,7 +60,6 @@
     <Compile Include="ChannelYtInitialData.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Message.cs" />
-    <Compile Include="Test2\DynamicJson.cs" />
     <Compile Include="Test2\CommentPostPanel.xaml.cs">
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>

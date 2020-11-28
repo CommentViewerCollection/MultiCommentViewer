@@ -194,7 +194,18 @@ namespace MultiCommentViewer
             }
         }
 
-        public IEnumerable<IMessagePart> MessageItems { get; private set; }
+        public IEnumerable<IMessagePart> MessageItems
+        {
+            get
+            {
+                return _messageItems;
+            }
+            set
+            {
+                _messageItems = value;
+                RaisePropertyChanged();
+            }
+        }
 
         public SolidColorBrush Background
         {
@@ -271,6 +282,8 @@ namespace MultiCommentViewer
             }
         }
 
+        public bool IsTranslated { get; set; }
+
         public Task AfterCommentAdded()
         {
             return Task.CompletedTask;
@@ -278,6 +291,8 @@ namespace MultiCommentViewer
         #region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
+        private IEnumerable<IMessagePart> _messageItems;
+
         /// <summary>
         /// 
         /// </summary>

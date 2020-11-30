@@ -194,34 +194,14 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         internal async Task<List<string>> GetVidsFromChannelId2(IYouTubeLibeServer server, string channelId)
         {
-            var url = $"https://www.youtube.com/channel/{channelId}/live";
+            var url = $"https://www.youtube.com/channel/{channelId}/videos?view=2&live_view=501";
             var html = await server.GetEnAsync(url);
-            string ytInitialData;
-            try
-            {
-                ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
-            }
-            catch (ParseException)
-            {
-                if (!html.Contains("ytInitialData"))
-                {
-                    //条件がわからないけど結構よくある。
-                    throw new YtInitialDataNotFoundException(url: url, html: html);
-                }
-                else
-                {
-                    //空白が無くなったりだとかそういう系だろうか
-                    throw new SpecChangedException(html);
-                }
-            }
+            var matches = Regex.Matches(html, "\"url\":\"/watch\\?v=([^\"]+)\"");
             var vids = new List<string>();
-            dynamic d = JsonConvert.DeserializeObject(ytInitialData);
-            //2019/07/19この方法だと直近の生放送を取得する。今現在生放送中とは限らない。数年間生放送していなければ数年前のものを取得することになる。
-            //生放送中かどうかの判定ができればこれでも良いと思う。
-            if (d.ContainsKey("currentVideoEndpoint") && d.currentVideoEndpoint.ContainsKey("watchEndpoint") && d.currentVideoEndpoint.watchEndpoint.ContainsKey("videoId"))
+            foreach (Match match in matches)
             {
-                var vid = (string)d.currentVideoEndpoint.watchEndpoint.videoId;
-                vids.Add(vid);
+                if (match == null) continue;
+                vids.Add(match.Groups[1].Value);
             }
             return vids;
         }

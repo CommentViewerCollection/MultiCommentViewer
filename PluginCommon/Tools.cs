@@ -152,6 +152,11 @@ namespace PluginCommon
                 name = mildomComment.UserName;
             }
             //}
+            else if (message is BigoSitePlugin.IBigoComment bgComment)
+            {
+                comment = bgComment.Message;
+                name = bgComment.Name;
+            }
             return (name, comment);
         }
     }

@@ -131,6 +131,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigoIF", "BigoIF\BigoIF.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigoSitePlugin", "BigoSitePlugin\BigoSitePlugin.csproj", "{A1A18F87-CC82-480D-9902-99E5BA1A5551}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigoSitePluginTests", "BigoSitePluginTests\BigoSitePluginTests.csproj", "{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Beta|Any CPU = Beta|Any CPU
@@ -498,6 +500,12 @@ Global
 		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1A18F87-CC82-480D-9902-99E5BA1A5551}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Beta|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Beta|Any CPU.Build.0 = Debug|Any CPU
+		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

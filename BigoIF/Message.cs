@@ -8,7 +8,7 @@ namespace BigoSitePlugin
     {
         Unknown,
         Comment,
-        Superchat,
+        Gift,
         Connected,
         Disconnected,
     }
@@ -33,5 +33,12 @@ namespace BigoSitePlugin
         DateTime PostedAt { get; }
         //string Id { get; }
         //string UserId { get; }
+    }
+    public interface IBigoGift : IBigoMessage
+    {
+        string Username { get; }
+        string GiftName { get; }
+        int GiftCount { get; }
+        string GiftImgUrl { get; }
     }
 }

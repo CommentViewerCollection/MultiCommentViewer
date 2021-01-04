@@ -664,6 +664,107 @@ namespace BouyomiPlugin
         }
         #endregion //Mildom
 
+        #region ShowRoom
+        /// <summary>
+        /// ShowRoomの接続メッセージを読み上げるか
+        /// </summary>
+        //public bool IsShowRoomConnect
+        //{
+        //    get => _options.IsShowRoomConnect;
+        //    set => _options.IsShowRoomConnect = value;
+        //}
+        /// <summary>
+        /// ShowRoomの切断メッセージを読み上げるか
+        /// </summary>
+        //public bool IsShowRoomDisconnect
+        //{
+        //    get => _options.IsShowRoomDisconnect;
+        //    set => _options.IsShowRoomDisconnect = value;
+        //}
+        /// <summary>
+        /// ShowRoomのコメントを読み上げるか
+        /// </summary>
+        public bool IsShowRoomComment
+        {
+            get => _options.IsShowRoomComment;
+            set => _options.IsShowRoomComment = value;
+        }
+        /// <summary>
+        /// ShowRoomのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsShowRoomCommentNickname
+        {
+            get => _options.IsShowRoomCommentNickname;
+            set => _options.IsShowRoomCommentNickname = value;
+        }
+        /// <summary>
+        /// ShowRoomの入室メッセージを読み上げるか
+        /// </summary>
+        //public bool IsShowRoomJoin
+        //{
+        //    get => _options.IsShowRoomJoin;
+        //    set => _options.IsShowRoomJoin = value;
+        //}
+        /// <summary>
+        /// ShowRoomのアイテムを読み上げるか
+        /// </summary>
+        //public bool IsShowRoomLeave
+        //{
+        //    get => _options.IsShowRoomLeave;
+        //    set => _options.IsShowRoomLeave = value;
+        //}
+        #endregion //ShowRoom
+
+        #region BigoLive
+        /// <summary>
+        /// BigoLiveの接続メッセージを読み上げるか
+        /// </summary>
+        //public bool IsBigoLiveConnect
+        //{
+        //    get => _options.IsBigoLiveConnect;
+        //    set => _options.IsBigoLiveConnect = value;
+        //}
+        /// <summary>
+        /// BigoLiveの切断メッセージを読み上げるか
+        /// </summary>
+        //public bool IsBigoLiveDisconnect
+        //{
+        //    get => _options.IsBigoLiveDisconnect;
+        //    set => _options.IsBigoLiveDisconnect = value;
+        //}
+        /// <summary>
+        /// BigoLiveのコメントを読み上げるか
+        /// </summary>
+        public bool IsBigoLiveComment
+        {
+            get => _options.IsBigoLiveComment;
+            set => _options.IsBigoLiveComment = value;
+        }
+        /// <summary>
+        /// BigoLiveのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsBigoLiveCommentNickname
+        {
+            get => _options.IsBigoLiveCommentNickname;
+            set => _options.IsBigoLiveCommentNickname = value;
+        }
+        /// <summary>
+        /// BigoLiveの入室メッセージを読み上げるか
+        /// </summary>
+        //public bool IsBigoLiveJoin
+        //{
+        //    get => _options.IsBigoLiveJoin;
+        //    set => _options.IsBigoLiveJoin = value;
+        //}
+        /// <summary>
+        /// BigoLiveのアイテムを読み上げるか
+        /// </summary>
+        //public bool IsBigoLiveLeave
+        //{
+        //    get => _options.IsBigoLiveLeave;
+        //    set => _options.IsBigoLiveLeave = value;
+        //}
+        #endregion //BigoLive
         public ICommand ShowFilePickerCommand { get; }
         private void ShowFilePicker()
         {

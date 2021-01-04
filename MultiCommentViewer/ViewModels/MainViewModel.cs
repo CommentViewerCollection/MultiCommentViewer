@@ -931,6 +931,9 @@ namespace MultiCommentViewer
                     case BigoSitePlugin.IBigoComment bigoComment:
                         mcvCvm = new McvBigoCommentViewModel(bigoComment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                         break;
+                    case BigoSitePlugin.IBigoGift bigoGift:
+                        mcvCvm = new McvBigoGiftViewModel(bigoGift, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                        break;
                 }
             }
             else if (messageContext.Message is TestSitePlugin.ITestMessage testMessage)

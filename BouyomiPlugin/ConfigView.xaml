@@ -76,6 +76,8 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition />
                         </Grid.RowDefinitions>
                         <Border Grid.Row="0" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
@@ -478,9 +480,75 @@
                         </Border>
 
                         <Border Grid.Row="11" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
-                            <TextBlock Text="その他" Margin="5" />
+                            <TextBlock Text="ShowRoom" Margin="5" />
                         </Border>
                         <Border Grid.Row="11" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <!--<CheckBox Grid.Row="0" IsChecked="{Binding IsShowRoomConnect}" Content="接続" />-->
+                                <!--<CheckBox Grid.Row="1" IsChecked="{Binding IsShowRoomDisconnect}" Content="切断" />-->
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckShowRoomComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsShowRoomComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckShowRoomComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsShowRoomCommentNickname}" Content="コテハン" />
+                                </Grid>
+                                <!--<CheckBox Grid.Row="3" IsChecked="{Binding IsShowRoomJoin}" Content="入室" />-->
+                                <!--<CheckBox Grid.Row="4" IsChecked="{Binding IsShowRoomLeave}" Content="退室" />-->
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="12" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <TextBlock Text="BigoLive" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="12" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <!--<CheckBox Grid.Row="0" IsChecked="{Binding IsBigoLiveConnect}" Content="接続" />-->
+                                <!--<CheckBox Grid.Row="1" IsChecked="{Binding IsBigoLiveDisconnect}" Content="切断" />-->
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckBigoLiveComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsBigoLiveComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckBigoLiveComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsBigoLiveCommentNickname}" Content="コテハン" />
+                                </Grid>
+                                <!--<CheckBox Grid.Row="3" IsChecked="{Binding IsBigoLiveJoin}" Content="入室" />-->
+                                <!--<CheckBox Grid.Row="4" IsChecked="{Binding IsBigoLiveLeave}" Content="退室" />-->
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="13" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
+                            <TextBlock Text="その他" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="13" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
                             <Grid Margin="5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />

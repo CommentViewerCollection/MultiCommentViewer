@@ -65,6 +65,9 @@ namespace CommentViewer.Plugin
                 case ShowRoomSitePlugin.IShowRoomMessage _:
                     siteName = "showroom";
                     break;
+                case BigoSitePlugin.IBigoMessage _:
+                    siteName = "bigo";
+                    break;
                 default:
                     siteName = "unknown";
                     break;

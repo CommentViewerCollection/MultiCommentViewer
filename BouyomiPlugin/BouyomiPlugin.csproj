@@ -69,6 +69,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BigoIF\BigoIF.csproj">
+      <Project>{6e6aed10-d8e4-4c61-a26a-cb063ebdbe2a}</Project>
+      <Name>BigoIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{66d18de1-4d66-41a5-b0e2-47df9975495a}</Project>
       <Name>Common</Name>
@@ -112,6 +116,10 @@
     <ProjectReference Include="..\PluginCommon\PluginCommon.csproj">
       <Project>{29482b94-d6b4-4d4d-abdc-028606c22333}</Project>
       <Name>PluginCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj">
+      <Project>{9d866a6c-39d6-470a-a25d-f704a2a28a23}</Project>
+      <Name>ShowRoomIF</Name>
     </ProjectReference>
     <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
       <Project>{4DA33B17-792D-44D7-93F6-D0561788676D}</Project>

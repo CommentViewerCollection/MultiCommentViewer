@@ -1,4 +1,5 @@
-﻿using LineLiveSitePlugin;
+﻿using BigoSitePlugin;
+using LineLiveSitePlugin;
 using MildomSitePlugin;
 using MirrativSitePlugin;
 using MixerSitePlugin;
@@ -7,6 +8,7 @@ using OpenrecSitePlugin;
 using PeriscopeSitePlugin;
 using Plugin;
 using PluginCommon;
+using ShowRoomSitePlugin;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
@@ -563,6 +565,46 @@ namespace BouyomiPlugin
                         //    }
                         //    break;
                 }
+            }
+            else if (message is IShowRoomMessage showroomMessage)
+            {
+                switch (showroomMessage.ShowRoomMessageType)
+                {
+                    case ShowRoomMessageType.Comment:
+                        if (options.IsShowRoomComment)
+                        {
+                            if (options.IsShowRoomCommentNickname)
+                            {
+                                name = (showroomMessage as IShowRoomComment).UserName;
+                            }
+                            comment = (showroomMessage as IShowRoomComment).Text;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (message is IBigoMessage bigoMessage)
+            {
+                switch (bigoMessage.BigoMessageType)
+                {
+                    case BigoMessageType.Comment:
+                        if (options.IsBigoLiveComment)
+                        {
+                            if (options.IsBigoLiveCommentNickname)
+                            {
+                                name = (bigoMessage as IBigoComment).Name;
+                            }
+                            comment = (bigoMessage as IBigoComment).Message;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+
             }
             return (name, comment);
         }

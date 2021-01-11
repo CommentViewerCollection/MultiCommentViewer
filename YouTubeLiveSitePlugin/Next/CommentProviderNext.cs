@@ -345,25 +345,49 @@ namespace YouTubeLiveSitePlugin.Next
         {
             SetLoggedInState(e);
         }
-
+        private readonly SynchronizedCollection<string> _receivedCommentIds = new SynchronizedCollection<string>();
+        private bool IsDuplicate(string id)
+        {
+            if (_receivedCommentIds.Contains(id))
+            {
+                return true;
+            }
+            else
+            {
+                _receivedCommentIds.Add(id);
+                return false;
+            }
+        }
         private void ChatProvider_MessageReceived(object sender, IInternalMessage e)
         {
             switch (e)
             {
                 case InternalSuperChat superChat:
                     {
+                        if (IsDuplicate(superChat.Id))
+                        {
+                            return;
+                        }
                         var context = CreateMessageContext2(superChat, false);
                         RaiseMessageReceived(context);
                     }
                     break;
                 case InternalComment comment:
                     {
+                        if (IsDuplicate(comment.Id))
+                        {
+                            return;
+                        }
                         var context = CreateMessageContext2(comment, false);
                         RaiseMessageReceived(context);
                     }
                     break;
                 case InternalMembership membership:
                     {
+                        if (IsDuplicate(membership.Id))
+                        {
+                            return;
+                        }
                         var context = CreateMessageContext2(membership, false);
                         RaiseMessageReceived(context);
                     }
@@ -547,6 +571,7 @@ namespace YouTubeLiveSitePlugin.Next
         protected override void BeforeConnect()
         {
             _userCommentCountDict.Clear();
+            _receivedCommentIds.Clear();
             base.BeforeConnect();
         }
         protected override void AfterDisconnected()

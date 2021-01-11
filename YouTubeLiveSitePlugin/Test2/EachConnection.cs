@@ -10,6 +10,7 @@ using ryu_s.BrowserCookie;
 using System.Net.Http;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using YouTubeLiveSitePlugin.Next;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -432,16 +433,17 @@ namespace YouTubeLiveSitePlugin.Test2
         protected virtual Task CreateMetadataReceivingTask(ref IMetadataProvider metaProvider, BrowserType browserType, string vid, string liveChatHtml)
         {
             Task metaTask = null;
-            string ytCfg = null;
+            YtCfg ytCfg = null;
             try
             {
-                ytCfg = Tools.ExtractYtcfg(liveChatHtml);
+                var ytCfgStr = Tools.ExtractYtcfg(liveChatHtml);
+                ytCfg = new YtCfg(ytCfgStr);
             }
             catch (ParseException ex)
             {
                 _logger.LogException(ex, "live_chatからのytcfgの抜き出しに失敗", liveChatHtml);
             }
-            if (!string.IsNullOrEmpty(ytCfg))
+            if (ytCfg != null)
             {
                 //"service_ajax?name=updatedMetadataEndpoint"はIEには対応していないらしく、400が返って来てしまう。
                 //そこで、IEの場合のみ旧版の"youtubei"を使うようにした。

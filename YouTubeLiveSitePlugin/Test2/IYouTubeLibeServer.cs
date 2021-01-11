@@ -14,5 +14,6 @@ namespace YouTubeLiveSitePlugin.Test2
         Task<string> PostAsync(string url, Dictionary<string, string> data, CookieContainer cc);
         Task<string> PostAsync(HttpOptions options, HttpContent content);
         Task<byte[]> GetBytesAsync(string url);
+        Task<HttpResponseMessage> PostJsonNoThrowAsync(string url, Dictionary<string, string> headers, string payload, CookieContainer cc);
     }
 }

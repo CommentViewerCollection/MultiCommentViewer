@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using System.Threading;
+using System.Security.Cryptography;
+using Newtonsoft.Json;
 
 namespace YouTubeLiveSitePlugin.Next
 {
@@ -88,20 +90,7 @@ namespace YouTubeLiveSitePlugin.Next
     {
         public event EventHandler<IInternalMessage> MessageReceived;
         public event EventHandler<bool> LoggedInStateChanged;
-        private static async Task<string> GetLiveChat(string vid, CookieContainer cc)
-        {
-            var url = $"https://www.youtube.com/live_chat?is_popout=1&v={vid}";
-            var handler = new HttpClientHandler
-            {
-                UseCookies = true,
-                CookieContainer = cc,
-            };
-            var client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36");
-            var res = await client.GetAsync(url);
-            return await res.Content.ReadAsStringAsync();
-        }
-        public async Task ReceiveAsync(string vid, CookieContainer cc)
+        public async Task ReceiveAsync(string vid, YtInitialData ytInitialData, YtCfg ytCfg, CookieContainer cc)
         {
             if (_cts != null)
             {
@@ -109,16 +98,7 @@ namespace YouTubeLiveSitePlugin.Next
                 return;
             }
             _cts = new CancellationTokenSource();
-            var liveChatHtml = await GetLiveChat(vid, cc);
-            var ytCfgStr = Tools.ExtractYtCfg(liveChatHtml);
-            var ytCfg = new YtCfg(ytCfgStr);
-            var ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
-            LoggedInStateChanged?.Invoke(this, ytInitialData.IsLoggedIn);
-            var initialActions = ytInitialData.GetActions();
-            foreach (var action in initialActions)
-            {
-                ProcessAction(action);
-            }
+
             var dataToPost = new DataToPost(ytCfg);
             string initialContinuation;
             if (_siteOptions.IsAllChat)
@@ -249,6 +229,19 @@ namespace YouTubeLiveSitePlugin.Next
                 }
             }
         }
+        private static async Task<string> GetLiveChat(string vid, CookieContainer cc)
+        {
+            var url = $"https://www.youtube.com/live_chat?is_popout=1&v={vid}";
+            var handler = new HttpClientHandler
+            {
+                UseCookies = true,
+                CookieContainer = cc,
+            };
+            var client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36");
+            var res = await client.GetAsync(url);
+            return await res.Content.ReadAsStringAsync();
+        }
         private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
             var resolver = new VidResolver();
@@ -272,7 +265,7 @@ namespace YouTubeLiveSitePlugin.Next
                 default:
                     throw new NotImplementedException();
             }
-            var cc = CreateCookieContainer(browserProfile);
+            _cc = CreateCookieContainer(browserProfile);
             await InitElapsedTimer(vid);
             _chatProvider = new ChatProvider2(_siteOptions);
             _chatProvider.MessageReceived += ChatProvider_MessageReceived;
@@ -283,10 +276,21 @@ namespace YouTubeLiveSitePlugin.Next
             metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
 
         reload:
-            var chatTask = _chatProvider.ReceiveAsync(vid, cc);
-            var html = await _server.GetAsync($"https://www.youtube.com/live_chat?is_popout=1&v={vid}");
-            var ytCfg = Tools.ExtractYtCfg(html);
-            var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, cc);
+            var liveChatHtml = await GetLiveChat(vid, _cc);
+            var ytCfgStr = Tools.ExtractYtCfg(liveChatHtml);
+            var ytCfg = new YtCfg(ytCfgStr);
+            var ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
+            //LoggedInStateChanged?.Invoke(this, ytInitialData.IsLoggedIn);
+            SetLoggedInState(ytInitialData.IsLoggedIn);
+            _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);
+            var initialActions = ytInitialData.GetActions();
+            foreach (var action in initialActions)
+            {
+                OnMessageReceived(action);
+            }
+
+            var chatTask = _chatProvider.ReceiveAsync(vid, ytInitialData, ytCfg, _cc);
+            var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, _cc);
 
             var t = await Task.WhenAny(chatTask, metaTask);
             if (t == chatTask)
@@ -345,30 +349,58 @@ namespace YouTubeLiveSitePlugin.Next
         {
             SetLoggedInState(e);
         }
-
-        private void ChatProvider_MessageReceived(object sender, IInternalMessage e)
+        private readonly SynchronizedCollection<string> _receivedCommentIds = new SynchronizedCollection<string>();
+        private bool IsDuplicate(string id)
+        {
+            if (_receivedCommentIds.Contains(id))
+            {
+                return true;
+            }
+            else
+            {
+                _receivedCommentIds.Add(id);
+                return false;
+            }
+        }
+        private void OnMessageReceived(IInternalMessage e)
         {
             switch (e)
             {
                 case InternalSuperChat superChat:
                     {
+                        if (IsDuplicate(superChat.Id))
+                        {
+                            return;
+                        }
                         var context = CreateMessageContext2(superChat, false);
                         RaiseMessageReceived(context);
                     }
                     break;
                 case InternalComment comment:
                     {
+                        if (IsDuplicate(comment.Id))
+                        {
+                            return;
+                        }
                         var context = CreateMessageContext2(comment, false);
                         RaiseMessageReceived(context);
                     }
                     break;
                 case InternalMembership membership:
                     {
+                        if (IsDuplicate(membership.Id))
+                        {
+                            return;
+                        }
                         var context = CreateMessageContext2(membership, false);
                         RaiseMessageReceived(context);
                     }
                     break;
             }
+        }
+        private void ChatProvider_MessageReceived(object sender, IInternalMessage e)
+        {
+            OnMessageReceived(e);
         }
         private YouTubeLiveMessageContext CreateMessageContext2(InternalMembership comment, bool isInitialComment)
         {
@@ -547,6 +579,7 @@ namespace YouTubeLiveSitePlugin.Next
         protected override void BeforeConnect()
         {
             _userCommentCountDict.Clear();
+            _receivedCommentIds.Clear();
             base.BeforeConnect();
         }
         protected override void AfterDisconnected()
@@ -580,12 +613,6 @@ namespace YouTubeLiveSitePlugin.Next
         {
             return _userStoreManager.GetUser(SiteType.YouTubeLive, userId);
         }
-
-        public override Task PostCommentAsync(string text)
-        {
-            throw new NotImplementedException();
-        }
-
         public override void SetMessage(string raw)
         {
             throw new NotImplementedException();
@@ -607,10 +634,25 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return cc;
         }
-
-        Task<bool> IYouTubeCommentProvider.PostCommentAsync(string comment)
+        public override Task PostCommentAsync(string text)
         {
             throw new NotImplementedException();
+        }
+        private DataCreator _postCommentCoodinator;
+        async Task<bool> IYouTubeCommentProvider.PostCommentAsync(string comment)
+        {
+            if (!_isLoggedIn) return false;
+            var k = _postCommentCoodinator.Create(comment);
+            var innerTubeApiKey = _postCommentCoodinator.InnerTubeApiKey;
+            var url = "https://www.youtube.com/youtubei/v1/live_chat/send_message?key=" + innerTubeApiKey;
+            var headers = new Dictionary<string, string>
+            {
+                {"Authorization",$"SAPISIDHASH {k.Hash}" },
+                {"Origin", "https://www.youtube.com" }
+            };
+            var res = await _server.PostJsonNoThrowAsync(url, headers, k.Payload, _cc);
+            var ret = await res.Content.ReadAsStringAsync();
+            return true;
         }
 
         public CommentProviderNext(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
@@ -641,5 +683,125 @@ namespace YouTubeLiveSitePlugin.Next
         }
         bool _isLoggedIn;
         bool IYouTubeCommentProvider.IsLoggedIn => _isLoggedIn;
+    }
+    class DataCreator
+    {
+        private readonly string _ytInitialData;
+        private readonly CookieContainer _cc;
+
+        private string GetDelegatedSessionId()
+        {
+            return _ytInitialDataT.GetDelegatedSessionId();
+        }
+        public string GetClientIdPrefix()
+        {
+            return _ytInitialDataT.GetClientIdPrefix();
+        }
+        private int _commentCounter = 0;
+        public void AddCommentCounter()
+        {
+            _commentCounter++;
+        }
+        public void ResetCommentCounter()
+        {
+            _commentCounter = 0;
+        }
+        private string GetClientVersion()
+        {
+            return "2.20201202.06.01";
+        }
+        public PostCommentContext2 Create(string message)
+        {
+            var context = "{\"context\":{\"client\":{\"clientName\":\"WEB\",\"clientVersion\":\"" + GetClientVersion() + "\"}}}";
+            dynamic d = JsonConvert.DeserializeObject(context);
+            d.context.user = JsonConvert.DeserializeObject("{\"onBehalfOfUser\":\"" + GetDelegatedSessionId() + "\"}");
+            d.@params = GetParams();
+            d.clientMessageId = GetClientIdPrefix() + _commentCounter;
+            d.richMessage = JsonConvert.DeserializeObject("{\"textSegments\":[{\"text\":\"" + message + "\"}]}");
+            var payload = (string)JsonConvert.SerializeObject(d, Formatting.None);
+            var hash = CreateHash();
+            //var url = GetUrl();
+            return new PostCommentContext2(payload, hash);
+        }
+        public bool IsLoggedIn()
+        {
+            return _ytInitialDataT.IsLoggedIn;
+        }
+        public string GetParams()
+        {
+            dynamic d = JsonConvert.DeserializeObject(_ytInitialData);
+            if (d == null)
+            {
+                throw new SpecChangedException(_ytInitialData);
+            }
+            string @params;
+            try
+            {
+                @params = (string)d.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.sendLiveChatMessageEndpoint.@params;
+            }
+            catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ex)
+            {
+                throw new SpecChangedException(_ytInitialData, ex);
+            }
+            return @params;
+        }
+        public string GetSapiSid()
+        {
+            var cookies = Tools.ExtractCookies(_cc);
+            var c = cookies.Find(cookie => cookie.Name == "SAPISID");
+            return c?.Value;
+        }
+        public virtual long GetCurrentUnixTime()
+        {
+            return Common.UnixTimeConverter.ToUnixTime(DateTime.Now);
+        }
+        private string ComputeSHA1(string s)
+        {
+            var bytes = Encoding.UTF8.GetBytes(s);
+            byte[] hashValue;
+            using (var crypto = new SHA1CryptoServiceProvider())
+            {
+                hashValue = crypto.ComputeHash(bytes);
+            }
+            var sb = new StringBuilder();
+            foreach (var b in hashValue)
+            {
+                sb.AppendFormat("{0:X2}", b);
+            }
+            return sb.ToString();
+        }
+        public string CreateHash()
+        {
+            var unixTime = GetCurrentUnixTime();
+            var sapiSid = GetSapiSid();
+            var origin = "https://www.youtube.com";
+            if (sapiSid == null)
+            {
+                throw new SpecChangedException("");
+            }
+            var s = $"{unixTime} {sapiSid} {origin}";
+            var hash = ComputeSHA1(s).ToLower();
+            return $"{unixTime}_{hash}";
+        }
+        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey, CookieContainer cc)
+        {
+            InnerTubeApiKey = innerTubeApiLey;
+            _cc = cc;
+            _ytInitialData = ytInitialData.Raw;
+            _ytInitialDataT = ytInitialData;
+        }
+        private readonly YtInitialData _ytInitialDataT;
+
+        public string InnerTubeApiKey { get; }
+    }
+    class PostCommentContext2
+    {
+        public PostCommentContext2(string payload, string hash)
+        {
+            Payload = payload;
+            Hash = hash;
+        }
+        public string Payload { get; }
+        public string Hash { get; }
     }
 }

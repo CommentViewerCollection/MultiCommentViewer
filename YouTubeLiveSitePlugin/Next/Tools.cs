@@ -119,6 +119,32 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return list;
         }
+        public string GetDelegatedSessionId()
+        {
+            string s;
+            try
+            {
+                s = (string)_d.responseContext.webResponseContextExtensionData.ytConfigData.delegatedSessionId;
+            }
+            catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ex)
+            {
+                throw new SpecChangedException(Raw, ex);
+            }
+            return s;
+        }
+        public string GetClientIdPrefix()
+        {
+            string @params;
+            try
+            {
+                @params = (string)_d.contents.liveChatRenderer.actionPanel.liveChatMessageInputRenderer.sendButton.buttonRenderer.serviceEndpoint.sendLiveChatMessageEndpoint.clientIdPrefix;
+            }
+            catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ex)
+            {
+                throw new SpecChangedException(Raw, ex);
+            }
+            return @params;
+        }
         public YtInitialData(string json)
         {
             Raw = json;
@@ -137,6 +163,11 @@ namespace YouTubeLiveSitePlugin.Next
         {
             Raw = json;
             _d = JsonConvert.DeserializeObject(json);
+        }
+
+        internal string GetXsrfToken()
+        {
+            throw new NotImplementedException();
         }
     }
     class DataToPost

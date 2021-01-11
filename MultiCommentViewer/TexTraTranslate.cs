@@ -54,7 +54,37 @@ namespace MultiCommentViewer.TexTra
                 res = await client.PostAsync(url, content);
             }
             var s = await res.Content.ReadAsStringAsync();
-            return Parse(s);
+            Response parsed;
+            try
+            {
+                parsed = Parse(s);
+            }
+            catch(JsonReaderException ex)
+            {
+                string m;
+                if (s.Contains("メンテナンス中"))
+                {
+                    m = "（翻訳サービスがメンテナンス中のようです）";
+                }
+                else
+                {
+                    m = ex.Message;
+                }
+                parsed = new Response
+                {
+                    IsError = true,
+                    ErrorMessage = m,
+                };
+            }
+            catch(Exception ex)
+            {
+                parsed = new Response
+                {
+                    IsError = true,
+                    ErrorMessage = ex.Message,
+                };
+            }
+            return parsed;
         }
         public Response Parse(string res)
         {

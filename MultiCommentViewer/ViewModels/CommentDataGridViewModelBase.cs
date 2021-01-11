@@ -207,18 +207,47 @@ namespace MultiCommentViewer
                 return;
             }
             var text = selectedComment.MessageItems.ToText();
-            var a = await translator.Traslate(text, "rysestock", "1f9ea34966481b37424e659bcdfac50c05f770d82", "62f016b234031ca2cef2f904b9edcb6d");
-            if (!a.IsError)
+            try
             {
-                await _dispatcher.InvokeAsync(() =>
+                var a = await translator.Traslate(text, "rysestock", "1f9ea34966481b37424e659bcdfac50c05f770d82", "62f016b234031ca2cef2f904b9edcb6d");
+                if (!a.IsError)
                 {
-                    var list = new List<IMessagePart>(selectedComment.MessageItems)
+                    await _dispatcher.InvokeAsync(() =>
                     {
+                        var list = new List<IMessagePart>(selectedComment.MessageItems)
+                        {
                         Common.MessagePartFactory.CreateMessageText(Environment.NewLine + "(訳)" + a.Translated)
-                    };
-                    selectedComment.MessageItems = list;
-                });
-                selectedComment.IsTranslated = true;
+                        };
+                        selectedComment.MessageItems = list;
+                    });
+                    selectedComment.IsTranslated = true;
+                }
+                else
+                {
+                    await _dispatcher.InvokeAsync(() =>
+                    {
+                        var list = new List<IMessagePart>(selectedComment.MessageItems)
+                        {
+                        Common.MessagePartFactory.CreateMessageText(Environment.NewLine + a.ErrorMessage)
+                        };
+                        selectedComment.MessageItems = list;
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    await _dispatcher.InvokeAsync(() =>
+                    {
+                        var list = new List<IMessagePart>(selectedComment.MessageItems)
+                            {
+                        Common.MessagePartFactory.CreateMessageText(Environment.NewLine + ex.Message)
+                            };
+                        selectedComment.MessageItems = list;
+                    });
+                }
+                catch { }
             }
         }
     }

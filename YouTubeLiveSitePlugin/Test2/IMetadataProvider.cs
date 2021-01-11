@@ -6,6 +6,7 @@ using System.Net;
 using Common;
 using System.Threading;
 using System.Diagnostics;
+using YouTubeLiveSitePlugin.Next;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -128,7 +129,7 @@ namespace YouTubeLiveSitePlugin.Test2
             metadata.Others = others;
             return metadata;
         }
-        public abstract Task ReceiveAsync(string ytCfg, string vid, CookieContainer cc);
+        public abstract Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc);
         public IMetadataProvider(ILogger logger)
         {
             _logger = logger;

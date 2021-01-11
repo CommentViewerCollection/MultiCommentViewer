@@ -25,7 +25,11 @@ namespace YouTubeLiveSitePlugin.Test2
         public override ICommentProvider CreateCommentProvider()
         {
             //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-            return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStoreManager)
+            //return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStoreManager)
+            //{
+            //    SiteContextGuid = Guid,
+            //};
+            return new Next.CommentProviderNext(_options, _server, _siteOptions, _logger, _userStoreManager)
             {
                 SiteContextGuid = Guid,
             };
@@ -68,7 +72,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            var youtubeCommentProvider = commentProvider as CommentProvider;
+            var youtubeCommentProvider = commentProvider as Next.CommentProviderNext;
             Debug.Assert(youtubeCommentProvider != null);
             if (youtubeCommentProvider == null)
                 return null;

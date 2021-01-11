@@ -737,6 +737,10 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new McvYouTubeLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
+                else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveMembership member)
+                {
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(member, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveConnected connected)
                 {
                     mcvCvm = new McvYouTubeLiveCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
@@ -930,6 +934,9 @@ namespace MultiCommentViewer
                 {
                     case BigoSitePlugin.IBigoComment bigoComment:
                         mcvCvm = new McvBigoCommentViewModel(bigoComment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                        break;
+                    case BigoSitePlugin.IBigoGift bigoGift:
+                        mcvCvm = new McvBigoGiftViewModel(bigoGift, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                         break;
                 }
             }

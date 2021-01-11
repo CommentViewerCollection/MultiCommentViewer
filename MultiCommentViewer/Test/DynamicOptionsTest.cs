@@ -288,8 +288,8 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(ForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(MainViewHeight), new Item { DefaultValue = 550, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MainViewWidth), new Item { DefaultValue = 750, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(MainViewLeft), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
-            Dict.Add(nameof(MainViewTop), new Item { DefaultValue = 0, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewLeft), new Item { DefaultValue = 0, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
+            Dict.Add(nameof(MainViewTop), new Item { DefaultValue = 0, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(ConnectionViewHeight), new Item { DefaultValue = 150, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(MetadataViewHeight), new Item { DefaultValue = 100, Predicate = n => n >= 0, Serializer = n => n.ToString(), Deserializer = s => double.Parse(s) });
             Dict.Add(nameof(IsShowVerticalGridLine), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

@@ -43,9 +43,9 @@ namespace SitePluginCommon
                         client.DefaultRequestHeaders.AcceptLanguage.Add(la);
                     }
                 }
-                if(options.Headers != null)
+                if (options.Headers != null)
                 {
-                    foreach(var kv in options.Headers)
+                    foreach (var kv in options.Headers)
                     {
                         client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
                     }
@@ -66,6 +66,12 @@ namespace SitePluginCommon
         /// <returns></returns>
         protected async Task<HttpResponseMessage> PostInternalAsync(HttpOptions options, HttpContent content)
         {
+            var result = await PostInternalNoThrowAsync(options, content);
+            result.EnsureSuccessStatusCode();
+            return result;
+        }
+        protected async Task<HttpResponseMessage> PostInternalNoThrowAsync(HttpOptions options, HttpContent content)
+        {
             if (string.IsNullOrEmpty(options.Url))
             {
                 throw new ArgumentNullException(nameof(options));
@@ -77,6 +83,7 @@ namespace SitePluginCommon
                 handler.UseCookies = true;
                 handler.CookieContainer = options.Cc;
             }
+            HttpResponseMessage res;
             using (var client = new HttpClient(handler))
             {
                 if (!string.IsNullOrEmpty(options.UserAgent))
@@ -94,13 +101,20 @@ namespace SitePluginCommon
                 {
                     foreach (var kv in options.Headers)
                     {
-                        client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
+                        if (kv.Key.ToLower() == "authorization")
+                        {
+                            var arr = kv.Value.Split(' ');
+                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(arr[0], arr[1]);
+                        }
+                        else
+                        {
+                            client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
+                        }
                     }
                 }
-                var result = await client.PostAsync(options.Url, content);
-                result.EnsureSuccessStatusCode();
-                return result;
+                res = await client.PostAsync(options.Url, content);
             }
+            return res;
         }
     }
 }

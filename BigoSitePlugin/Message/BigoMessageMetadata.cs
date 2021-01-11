@@ -141,7 +141,10 @@ namespace BigoSitePlugin
             IsFirstComment = isFirstComment;
 
             options.PropertyChanged += Options_PropertyChanged;
-            user.PropertyChanged += User_PropertyChanged;
+            if (user != null)
+            {
+                user.PropertyChanged += User_PropertyChanged;
+            }
         }
 
         private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

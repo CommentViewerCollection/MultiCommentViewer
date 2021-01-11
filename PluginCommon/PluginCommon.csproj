@@ -50,6 +50,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BigoIF\BigoIF.csproj">
+      <Project>{6e6aed10-d8e4-4c61-a26a-cb063ebdbe2a}</Project>
+      <Name>BigoIF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
       <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
       <Name>SitePlugin</Name>

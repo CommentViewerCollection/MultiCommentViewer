@@ -57,6 +57,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Api.cs" />
     <Compile Include="IBigoSiteContext.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="DynamicJson.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="CommentPostPanelViewModel.cs" />
     <Compile Include="IMetadataProvider.cs" />
     <Compile Include="IBigoServer.cs" />
+    <Compile Include="MessageParser.cs" />
     <Compile Include="Message\BigoMessageContext.cs" />
     <Compile Include="Message\BigoMessageMetadata.cs" />
     <Compile Include="Message\BigoMessageMethods.cs" />

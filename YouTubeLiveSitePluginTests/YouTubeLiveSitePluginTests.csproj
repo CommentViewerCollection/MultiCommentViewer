@@ -58,9 +58,16 @@
     <Compile Include="CommentParseTest.cs" />
     <Compile Include="CommentProviderTests.cs" />
     <Compile Include="MessageMetadataTests.cs" />
+    <Compile Include="Parser2Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReloadManagerTests.cs" />
     <Content Include="SampleData\Channel_live.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\Channel_LiveNow_selected.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\Channel_LiveNow_selected_2lives.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="SampleData\Channel_live_off_air.txt">
@@ -73,10 +80,16 @@
     <Compile Include="ToolsTests.cs" />
     <Compile Include="VidResolverTests.cs" />
     <Compile Include="YouTubeLiveServerTests.cs" />
+    <Content Include="SampleData\GetLiveChat_20210108.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="SampleData\LivePage_ytInitialPlayerResponse.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="SampleData\LivePage_ytplayerconfig.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SampleData\YtInitialData.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="SampleData\ytPlayerConfig.txt">

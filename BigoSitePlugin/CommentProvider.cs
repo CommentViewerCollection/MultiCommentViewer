@@ -6,7 +6,6 @@ using SitePlugin;
 using ryu_s.BrowserCookie;
 using Common;
 using System.Diagnostics;
-using System.Text;
 using System.Text.RegularExpressions;
 using Codeplex.Data;
 using System.Web;
@@ -17,198 +16,51 @@ using System.Net.Http;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Controls;
 
 namespace BigoSitePlugin
 {
     interface IInternalMessage
     {
-        int Num { get; }
-        string Raw { get; }
     }
-    class UnknownMessage : IInternalMessage
+    class NormalText : IInternalMessage
     {
-        public int Num => -1;
-        public string Raw { get; set; }
-    }
-    class Num0 : IInternalMessage
-    {
-        public int Num => 0;
-        public string Raw { get; set; }
-    }
-    class Num1 : IInternalMessage
-    {
-        public int Num => 1;
         public string Name { get; set; }
         public string Message { get; set; }
+
+    }
+    class NormalGiftText : IInternalMessage
+    {
+        public string A { get; set; }
+        public string B { get; set; }
+        public string C { get; set; }
         public string K { get; set; }
-        public long Date { get; set; }
-        public string Raw { get; set; }
+        public string M { get; set; }
+        public string N { get; set; }
+        public string T { get; set; }
+        public string U { get; set; }
     }
-    class Num5 : IInternalMessage
+    class LightMyHeartText : IInternalMessage
     {
-        public int Num => 5;
-        public int CurrentViewers { get; set; }
-        public string Raw { get; set; }
+        public string Username { get; set; }
+        public string UserId { get; set; }
+        public long Timestamp { get; set; }
+        public string ItemId { get; set; }
     }
-    class Num8 : IInternalMessage
+    class Login : IInternalMessage
     {
-        public int Num => 8;
-        public string Raw { get; set; }
-    }
-    class Num9 : IInternalMessage
-    {
-        public int Num => 9;
-        public string Raw { get; set; }
-    }
-    class Num10 : IInternalMessage
-    {
-        public int Num => 10;
-        public string Raw { get; set; }
-    }
-    class Num13 : IInternalMessage
-    {
-        public int Num => 13;
-        public string Raw { get; set; }
-    }
-    class MessageParser
-    {
-        protected virtual long GetDate()
-        {
-            return 0;
-        }
-        public IInternalMessage Parse(string raw)
-        {
-            var d = DynamicJson.Parse(raw);
-            if (!d.IsDefined("c"))
-            {
-                return new UnknownMessage
-                {
-                    Raw = raw,
-                };
-            }
 
-            var num = (int)d.c;
-            IInternalMessage ret;
-            switch (num)
-            {
-                case 0://end
-                    {
-                        //{\"c\":0,\"data\":{\"totalTime\":3231}}
-                        var data = d.data;
-                        ret = new Num0
-                        {
-                            Raw = raw,
-                        };
-                    }
-                    break;
-                case 1:
-                    {
-                        var data = d.data;
-                        string k;
-                        if (data.IsDefined("k"))
-                        {
-                            k = data.k;
-                        }
-                        else
-                        {
-                            k = null;
-                        }
-                        long date;
-                        if (data.IsDefined("d"))
-                        {
-                            var preDate = data.d;
-                            if (preDate is string s)
-                            {
-                                date = long.Parse(s);
-                            }
-                            else
-                            {
-                                date = (long)data.d;
-                            }
-                        }
-                        else
-                        {
-                            date = GetDate();
-                        }
-                        var message = data.m;
-                        var name = data.n;
+    }
+    class EnterRoomSuccess : IInternalMessage
+    {
 
-                        ret = new Num1
-                        {
-                            K = k,
-                            Message = message,
-                            Name = name,
-                            Date = date,
-                            Raw = raw,
-                        };
-                    }
-                    break;
-                case 5:
-                    {
-                        var data = d.data;
-                        ret = new Num5
-                        {
-                            CurrentViewers = int.Parse(data.m),
-                            Raw = raw,
-                        };
-                    }
-                    break;
-                case 8:
-                    {
-                        //{"c":8,"data":{"a":"0","b":"0","c":"1","k":"","m":"2463","n":"Ezanee🎸ギターのやつ🦋","t":"","u":""},"grade":22}
-                        //このメッセージの直後にc:13が来る。c:13の方が情報量が多いからこのメッセージは無視してもいいかも。
-                        ret = new Num8
-                        {
-                            Raw = raw,
-                        };
-                    }
-                    break;
-                case 9:
-                    {
-                        //{"c":9,"data":{"b":0,"n":"渚","nu":0,"a":0},"grade":1}
-                        //コメント欄には"sent ♡"と表示される
-                        ret = new Num9
-                        {
-                            Raw = raw,
-                        };
-                    }
-                    break;
-                case 10:
-                    {
-                        //{"c":10,"data":{"b":0,"nu":0,"a":0,"m":"つー"},"grade":2}
-                        //コメント欄には"became a Fan.Won't miss hte next LIVE"と表示される
-                        ret = new Num10
-                        {
-                            Raw = raw,
-                        };
-                    }
-                    break;
-                case 13:
-                    {
-                        //{"c":13,"push":0,"id":2463,"from":446903006,"cnt":1,"ticket":543581,"times":22,"n":"Ezanee🎸ギターのやつ🦋","url":"http://esx.bigo.sg/live/3s1/22DVBt.jpg"}
-                        //{"c":13,"push":0,"id":2463,"from":446903006,"cnt":1,"ticket":543582,"times":23,"n":"Ezanee🎸ギターのやつ🦋","url":"http://esx.bigo.sg/live/3s1/22DVBt.jpg"}
-                        ret = new Num13
-                        {
-                            Raw = raw,
-                        };
-                    }
-                    break;
-                default:
-                    ret = new UnknownMessage
-                    {
-                        Raw = raw,
-                    };
-                    break;
-            }
-            return ret;
-        }
     }
     class MessageProvider
     {
+        public event EventHandler Opened;
         public event EventHandler<IInternalMessage> Received;
         private readonly IWebsocket _websocket;
         private readonly MessageParser _parser;
-
         public Task ReceiveAsync(string url)
         {
             return _websocket.ReceiveAsync(url);
@@ -226,29 +78,81 @@ namespace BigoSitePlugin
             websocket.Opened += Websocket_Opened;
         }
 
-        private async void Websocket_Opened(object sender, EventArgs e)
+        private void Websocket_Opened(object sender, EventArgs e)
         {
-            try
-            {
-                await _websocket.SendAsync("websocket");
-            }
-            catch (Exception ex)
-            {
+            Opened?.Invoke(this, e);
 
-            }
         }
-
         private void Websocket_Received(object sender, string e)
         {
             var raw = e;
             Debug.WriteLine($"Bigo received:{raw}");
-            var d = DynamicJson.Parse(raw);
-            foreach (var dc in d)
+            IInternalMessage internalMessage;
+            try
             {
-                var each = dc.ToString();
-                var message = _parser.Parse(each);
-                Received?.Invoke(this, message);
+                internalMessage = _parser.Parse(raw);
             }
+            catch (Exception ex)
+            {
+                return;
+            }
+            Received?.Invoke(this, internalMessage);
+
+            //var d = DynamicJson.Parse(raw);
+            //foreach (var dc in d)
+            //{
+            //    var each = dc.ToString();
+            //    var message = _parser.Parse(each);
+            //    Received?.Invoke(this, message);
+            //}
+        }
+
+        public Task SendAsync(string b)
+        {
+            return _websocket.SendAsync(b);
+        }
+    }
+    class WebSocketLink
+    {
+        public string UidToken { get; set; }
+        public string DeviceId { get; set; }
+        public string UserId { get; set; }
+    }
+    class InternalStudioInfo
+    {
+        public string RoomId { get; set; }
+        public string SiteId { get; set; }
+        public string GameTitle { get; set; }
+        public string RoomTopic { get; set; }
+        public string Nickname { get; set; }
+    }
+    static class Tools
+    {
+        /// <summary>
+        /// "2001|23"を与えると512279が返ってくる謎のやつ
+        /// </summary>
+        /// <param name="value">"2001|23"</param>
+        /// <returns></returns>
+        public static string GetMessagePrefix(string value)
+        {
+            var arr = value.Split('|');
+            if (arr.Length != 2)
+            {
+                throw new NotImplementedException();
+            }
+            var n = int.Parse(arr[0]);
+            var m = int.Parse(arr[1]);
+            return ((n << 8) + m).ToString();
+        }
+        public static long GetCurrentUnixTimeMillseconds()
+        {
+            return GetCurrentUnixTimeMillseconds(DateTime.Now);
+        }
+        public static long GetCurrentUnixTimeMillseconds(DateTime now)
+        {
+            var utcNow = DateTime.SpecifyKind(now, DateTimeKind.Utc);
+            DateTimeOffset offset = utcNow;
+            return offset.ToUnixTimeMilliseconds();
         }
     }
     class CommentProvider : ICommentProvider
@@ -342,11 +246,24 @@ namespace BigoSitePlugin
         MessageProvider messageProvider;
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
+            BeforeConnect();
+            try
+            {
+                await ConnectInternalAsync(input, browserProfile);
+            }
+            finally
+            {
+                AfterConnect();
+            }
+        }
+        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        {
             if (string.IsNullOrEmpty(input))
             {
+                SendInfo("URLを入力してください", InfoType.Error);
                 return;
             }
-            BeforeConnect();
+
             MetadataUpdated?.Invoke(this, new Metadata
             {
                 Active = "-",
@@ -358,7 +275,10 @@ namespace BigoSitePlugin
 
             _cc = CreateCookieContainer(browserProfile);
             var bigoId = GetBigoId(input);
-            var livePageHtml = await _server.GetAsync("http://www.bigo.tv/" + bigoId, _cc);
+            _webSocketLink = await Api.GetWebSocketLink(_server, _cc);
+            _internalStudioInfo = await Api.GetInternalStudioInfo(bigoId, _server, _cc);
+            var gifts = await Api.GetOnlineGift(DateTime.Now, _server, _cc);
+            _giftDict = gifts.ToDictionary(kv => kv.Typeid);
             var title = await GetTitleAsync(bigoId, _cc);
             if (!string.IsNullOrEmpty(title))
             {
@@ -367,18 +287,19 @@ namespace BigoSitePlugin
                     Title = title,
                 });
             }
-            var wsInfo = GetWebsocketInfo(livePageHtml);
+            var websocketUrl = "wss://wss.bigolive.tv/bigo/web";
             messageProvider = new MessageProvider(new Websocket
             {
                 EnableAutoSendPing = true,
                 AutoSendPingInterval = 1000,
                 NoDelay = true,
             }, new MessageParser());
+            messageProvider.Opened += MessageProvider_Opened;
             messageProvider.Received += MessageProvider_Received;
             try
             {
             reload:
-                await messageProvider.ReceiveAsync(wsInfo.websocketUrl);
+                await messageProvider.ReceiveAsync(websocketUrl);
                 if (!_disconnectedExpected)
                 {
                     Debug.WriteLine("BIGO reload!");
@@ -391,9 +312,26 @@ namespace BigoSitePlugin
             }
             finally
             {
+                messageProvider.Opened -= MessageProvider_Opened;
                 messageProvider.Received -= MessageProvider_Received;
                 messageProvider = null;
-                AfterConnect();
+
+            }
+        }
+        WebSocketLink _webSocketLink;
+        InternalStudioInfo _internalStudioInfo;
+        Dictionary<string, Gift> _giftDict;
+        private async void MessageProvider_Opened(object sender, EventArgs e)
+        {
+            try
+            {
+                var prefix = Tools.GetMessagePrefix("2001|23");
+                var s = $"{prefix}{{\"uid\":\"{_webSocketLink.UserId}\",\"cookie\":\"{_webSocketLink.UidToken}\",\"secret\":\"0\",\"userName\":\"0\",\"deviceId\":\"{_webSocketLink.DeviceId}\",\"userFlag\":\"0\",\"status\":\"0\",\"password\":\"0\",\"sdkVersion\":\"0\",\"displayType\":\"0\",\"pbVersion\":\"0\",\"lang\":\"cn\",\"loginLevel\":\"0\",\"clientVersionCode\":\"0\",\"clientType\":\"8\",\"clientOsVer\":\"0\",\"netConf\":{{\"clientIp\":\"0\",\"proxySwitch\":\"0\",\"proxyTimestamp\":\"0\",\"mcc\":\"0\",\"mnc\":\"0\",\"countryCode\":\"CN\"}}}}";
+                await messageProvider.SendAsync(s);
+            }
+            catch (Exception ex)
+            {
+
             }
         }
 
@@ -424,35 +362,85 @@ namespace BigoSitePlugin
         /// 意図的な切断であるか。falseの場合は自動的に再接続する。
         /// </summary>
         bool _disconnectedExpected;
-        private void MessageProvider_Received(object sender, IInternalMessage e)
+        private async void MessageProvider_Received(object sender, IInternalMessage e)
         {
-            switch (e)
+            var internalMessage = e;
+            switch (internalMessage)
             {
-                case Num0 num0:
-                    _disconnectedExpected = true;
-                    break;
-                case Num1 num1:
+                case Login _:
                     {
-                        var siteMessage = new BigoComment(num1);
-                        var user = GetUser(num1.Name);
-                        var isFirstComment = false;
-                        var metadata = new BigoMessageMetadata(siteMessage, _options, _siteOptions, user, this, isFirstComment);
-                        MessageReceived?.Invoke(this, new BigoMessageContext(siteMessage, metadata, new BigoMessageMethods()));
+                        //以下のようなメッセージを送信する
+                        //1304{"seqId":"1609173325654","roomId":"6825840935873906928","reserver":"0","clientVersion":"0","clientType":"3","version":"0","deviceid":"e6cb67b748c649069bdc88b701154f10","secretKey":"0","other":[]}
+                        var time = Tools.GetCurrentUnixTimeMillseconds();
+                        var roomId = _internalStudioInfo.RoomId;
+                        var a = Tools.GetMessagePrefix("5|24");
+                        var b = $"{a}{{\"seqId\":\"{time}\",\"roomId\":\"{roomId}\",\"reserver\":\"0\",\"clientVersion\":\"0\",\"clientType\":\"3\",\"version\":\"0\",\"deviceid\":\"{_webSocketLink.DeviceId}\",\"secretKey\":\"0\",\"other\":[]}}";
+                        await messageProvider.SendAsync(b);
                     }
                     break;
-                case Num5 num5:
+                case EnterRoomSuccess _:
                     {
-                        MetadataUpdated?.Invoke(this, new Metadata
+                        //以下のようなメッセージを送信する
+                        //10776{"uid":"423865522","seqId":"1609173325748","roomid":"6825840935873906928","contribution":"0","enterTimestamp":"0","number":"0","ident":"0","userGrade":"0","version":"0","lastUserBeanGrade":"0","lastUserId":"0","others":[]}
+                        var time = Tools.GetCurrentUnixTimeMillseconds();
+                        var roomId = _internalStudioInfo.RoomId;
+                        var uid = _webSocketLink.UserId;
+                        var a = Tools.GetMessagePrefix("42|24");
+                        var b = $"{a}{{\"uid\":\"{uid}\",\"seqId\":\"{time}\",\"roomid\":\"{roomId}\",\"contribution\":\"0\",\"enterTimestamp\":\"0\",\"number\":\"0\",\"ident\":\"0\",\"userGrade\":\"0\",\"version\":\"0\",\"lastUserBeanGrade\":\"0\",\"lastUserId\":\"0\",\"others\":[]}}";
+                        await messageProvider.SendAsync(b);
+                    }
+                    break;
+                case NormalText normalText:
+                    {
+                        var m = new BigoComment
                         {
-                            CurrentViewers = num5.CurrentViewers.ToString(),
-                        });
+                            Id = "",
+                            Message = normalText.Message,
+                            Name = normalText.Name,
+                            PostedAt = DateTime.Now,
+                            UserId = null,
+                        };
+                        var metadata = new BigoMessageMetadata(m, _options, _siteOptions, null, this, false);
+                        var context = new BigoMessageContext(m, metadata, new BigoMessageMethods());
+                        MessageReceived?.Invoke(this, context);
                     }
                     break;
-                case UnknownMessage unknown:
+                case LightMyHeartText heartText:
                     {
+                        if (!_giftDict.TryGetValue(heartText.ItemId, out var heart))
+                        {
+                            break;
+                        }
+                        var m = new BigoGift
+                        {
+                            Username = heartText.Username,
+                            GiftName = heart.Name,
+                            GiftCount = 1,
+                            GiftImgUrl = heart.ImgUrl,
+                        };
+                        var metadata = new BigoMessageMetadata(m, _options, _siteOptions, null, this, false);
+                        var context = new BigoMessageContext(m, metadata, new BigoMessageMethods());
+                        MessageReceived?.Invoke(this, context);
                     }
                     break;
-                default:
+                case NormalGiftText giftText:
+                    {
+                        if (!_giftDict.TryGetValue(giftText.M, out var gift))
+                        {
+                            break;
+                        }
+                        Debug.WriteLine($"item={gift.Name} × {giftText.C} by {giftText.N}");
+                        var m = new BigoGift
+                        {
+                            Username = giftText.N,
+                            GiftName = gift.Name,
+                            GiftCount = int.Parse(giftText.C),
+                            GiftImgUrl = gift.ImgUrl,
+                        };
+                        var metadata = new BigoMessageMetadata(m, _options, _siteOptions, null, this, false);
+                        var context = new BigoMessageContext(m, metadata, new BigoMessageMethods());
+                        MessageReceived?.Invoke(this, context);
+                    }
                     break;
             }
         }

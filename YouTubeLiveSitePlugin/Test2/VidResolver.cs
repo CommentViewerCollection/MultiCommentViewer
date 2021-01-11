@@ -8,6 +8,148 @@ using System.Diagnostics;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
+    class LiveStatus
+    {
+        public string Title { get; set; }
+        public string Vid { get; set; }
+        public string State { get; set; }
+    }
+    static class ChannelLiveResearcher
+    {
+        enum ListType
+        {
+            AllVideos,
+            Uploads,
+            LiveNow,
+            UpcomingLiveStreams,
+            PastLiveStreams,
+            Unknown,
+        }
+        private static dynamic GetVideosTab(dynamic ytInitialData)
+        {
+            var tabs = ytInitialData.contents.twoColumnBrowseResultsRenderer.tabs;
+            foreach (var tab in tabs)
+            {
+                string title;
+                if (tab.ContainsKey("tabRenderer"))
+                {
+                    title = (string)tab.tabRenderer.title;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+                if (title == "Videos")
+                {
+                    return tab;
+                }
+            }
+            throw new Exception();
+        }
+        private static ListType GetType(string ytInitialData)
+        {
+            dynamic d = JsonConvert.DeserializeObject(ytInitialData);
+            var videoTab = GetVideosTab(d);
+            var arr = videoTab.tabRenderer.content.sectionListRenderer.subMenu.channelSubMenuRenderer.contentTypeSubMenuItems;
+            foreach (var item in arr)
+            {
+                var title = (string)item.title;
+                var selected = (bool)item.selected;
+                if (selected)
+                {
+                    var type = GetTypeByName(title);
+                    return type;
+                }
+            }
+            return ListType.Unknown;
+        }
+        private static ListType GetTypeByName(string listTypeName)
+        {
+            ListType type;
+            switch (listTypeName)
+            {
+                case "All videos":
+                    type = ListType.AllVideos;
+                    break;
+                case "Uploads":
+                    type = ListType.Uploads;
+                    break;
+                case "Live now":
+                    type = ListType.LiveNow;
+                    break;
+                case "Upcoming live streams":
+                    type = ListType.UpcomingLiveStreams;
+                    break;
+                case "Past live streams":
+                    type = ListType.PastLiveStreams;
+                    break;
+                default:
+                    type = ListType.Unknown;
+                    break;
+            }
+            return type;
+        }
+        private static string GetChannelLiveListUrl(string channelId, ListType type)
+        {
+            string url;
+            switch (type)
+            {
+                case ListType.LiveNow:
+                    url = $"https://www.youtube.com/channel/{channelId}/videos?view=2&live_view=501";
+                    break;
+                case ListType.UpcomingLiveStreams:
+                    url = $"https://www.youtube.com/channel/{channelId}/videos?view=2&live_view=502";
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            return url;
+        }
+        private static async Task<(string ytInitialData, ListType)> GetYtinitialData(IYouTubeLibeServer server, string url)
+        {
+            var html = await server.GetEnAsync(url);
+            var ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
+            var type = GetType(ytInitialData);
+            return (ytInitialData, type);
+        }
+        private static List<string> GetVidsFromYtInitialData(string ytInitialData)
+        {
+            dynamic d = JsonConvert.DeserializeObject(ytInitialData);
+            var videoTab = GetVideosTab(d);
+            var items = videoTab.tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].gridRenderer.items;
+            var list = new List<string>();
+            foreach (var item in items)
+            {
+                var title = (string)item.gridVideoRenderer.title.runs[0].text;
+                var videoId = (string)item.gridVideoRenderer.videoId;
+                list.Add(videoId);
+            }
+            return list;
+        }
+        public static async Task<List<string>> GetVidsAsync(IYouTubeLibeServer server, string channelId)
+        {
+            //まずは配信中という前提でデータを取得する
+            {
+                var url = GetChannelLiveListUrl(channelId, ListType.LiveNow);
+                var (ytInitialData, type) = await GetYtinitialData(server, url);
+                if (type == ListType.LiveNow)
+                {
+                    return GetVidsFromYtInitialData(ytInitialData);
+                }
+            }
+            //配信の予約が入っているのかもしれない
+            {
+                var url = GetChannelLiveListUrl(channelId, ListType.UpcomingLiveStreams);
+                var (ytInitialData, type) = await GetYtinitialData(server, url);
+                if (type == ListType.UpcomingLiveStreams)
+                {
+                    return GetVidsFromYtInitialData(ytInitialData);
+                }
+            }
+            //これ以外にチャットを取得できる場面は無いから諦める
+            return new List<string>();
+        }
+    }
     interface IVidResult
     {
 
@@ -178,7 +320,7 @@ namespace YouTubeLiveSitePlugin.Test2
             if (string.IsNullOrEmpty(channelId))
                 throw new ArgumentNullException(nameof(channelId));
 
-            var vids = await GetVidsFromChannelId2(server, channelId);
+            var vids = await GetVidsFromChannelId3(server, channelId);
             if (vids.Count == 1)
             {
                 return new VidResult { Vid = vids[0] };
@@ -192,36 +334,21 @@ namespace YouTubeLiveSitePlugin.Test2
                 return new MultiVidsResult { Vids = vids };
             }
         }
+        internal Task<List<string>> GetVidsFromChannelId3(IYouTubeLibeServer server, string channelId)
+        {
+            return ChannelLiveResearcher.GetVidsAsync(server, channelId);
+        }
         internal async Task<List<string>> GetVidsFromChannelId2(IYouTubeLibeServer server, string channelId)
         {
-            var url = $"https://www.youtube.com/channel/{channelId}/live";
+            //2021/01/10 生放送履歴が無い場合は投稿された動画の一覧になってしまうっぽい。
+            var url = $"https://www.youtube.com/channel/{channelId}/videos?view=2&live_view=501";
             var html = await server.GetEnAsync(url);
-            string ytInitialData;
-            try
-            {
-                ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
-            }
-            catch (ParseException)
-            {
-                if (!html.Contains("ytInitialData"))
-                {
-                    //条件がわからないけど結構よくある。
-                    throw new YtInitialDataNotFoundException(url: url, html: html);
-                }
-                else
-                {
-                    //空白が無くなったりだとかそういう系だろうか
-                    throw new SpecChangedException(html);
-                }
-            }
+            var matches = Regex.Matches(html, "\"url\":\"/watch\\?v=([^\"]+)\"");
             var vids = new List<string>();
-            dynamic d = JsonConvert.DeserializeObject(ytInitialData);
-            //2019/07/19この方法だと直近の生放送を取得する。今現在生放送中とは限らない。数年間生放送していなければ数年前のものを取得することになる。
-            //生放送中かどうかの判定ができればこれでも良いと思う。
-            if (d.ContainsKey("currentVideoEndpoint") && d.currentVideoEndpoint.ContainsKey("watchEndpoint") && d.currentVideoEndpoint.watchEndpoint.ContainsKey("videoId"))
+            foreach (Match match in matches)
             {
-                var vid = (string)d.currentVideoEndpoint.watchEndpoint.videoId;
-                vids.Add(vid);
+                if (match == null) continue;
+                vids.Add(match.Groups[1].Value);
             }
             return vids;
         }

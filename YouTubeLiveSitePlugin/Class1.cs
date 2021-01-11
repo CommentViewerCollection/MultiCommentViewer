@@ -8,7 +8,9 @@ namespace YouTubeLiveSitePlugin
 {
     public interface IYouTubeCommentProvider : ICommentProvider
     {
-
+        event EventHandler LoggedInStateChanged;
+        bool IsLoggedIn { get; }
+        Task<bool> PostCommentAsync(string comment);
     }
     public interface IYouTubeCommentViewModel : ICommentViewModel
     {

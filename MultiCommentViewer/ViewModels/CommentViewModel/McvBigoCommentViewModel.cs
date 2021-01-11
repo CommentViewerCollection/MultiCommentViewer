@@ -19,6 +19,27 @@ namespace MultiCommentViewer
             PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
     }
+    public class McvBigoGiftViewModel : McvBigoCommentViewModelBase
+    {
+        public McvBigoGiftViewModel(IBigoGift comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : base(metadata, methods, connectionStatus, options)
+        {
+            MessageItems = new List<IMessagePart>
+            {
+                new Common.MessageImage
+                {
+                     Alt = comment.GiftName,
+                      Height=40,
+                       Width=40,
+                        Url = comment.GiftImgUrl
+                },
+                Common.MessagePartFactory.CreateMessageText($"×{comment.GiftCount}")
+            };
+            _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.Username);
+            //Id = comment.Id;
+            //PostTime = comment.PostedAt.ToString("HH:mm:ss");
+        }
+    }
     public class McvBigoCommentViewModelBase : IMcvCommentViewModel
     {
         private readonly YouTubeLiveSitePlugin.IYouTubeLiveMessage _message;

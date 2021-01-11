@@ -15,7 +15,7 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             var ret = await GetInternalAsync(options);
             return await ret.Content.ReadAsStringAsync();
-            
+
         }
         public Task<string> GetAsync(string url, CookieContainer cc)
         {
@@ -95,6 +95,18 @@ namespace YouTubeLiveSitePlugin.Test2
             };
             var message = await GetInternalAsync(options);
             return await message.Content.ReadAsByteArrayAsync();
+        }
+
+        public Task<HttpResponseMessage> PostJsonNoThrowAsync(string url, Dictionary<string, string> headers, string payload, CookieContainer cc)
+        {
+            var options = new HttpOptions
+            {
+                Url = url,
+                Cc = cc,
+                Headers = headers,
+            };
+            var content = new StringContent(payload, Encoding.UTF8, "application/json");
+            return PostInternalNoThrowAsync(options, content);
         }
     }
 }

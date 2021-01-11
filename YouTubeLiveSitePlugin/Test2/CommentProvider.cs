@@ -19,7 +19,7 @@ using System.Windows.Media;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    class CommentProvider : ICommentProvider
+    class CommentProvider :IYouTubeCommentProvider
     {
         private bool _canConnect;
         public bool CanConnect

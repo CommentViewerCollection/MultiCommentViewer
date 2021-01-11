@@ -60,10 +60,12 @@
     <Compile Include="ChannelYtInitialData.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Message.cs" />
+    <Compile Include="Next\Tools.cs" />
     <Compile Include="Test2\CommentPostPanel.xaml.cs">
       <DependentUpon>CommentPostPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Test2\CommentPostPanelViewModel.cs" />
+    <Compile Include="Next\CommentProviderNext.cs" />
     <Compile Include="Test2\EachConnection.cs" />
     <Compile Include="Test2\IMetadataProvider.cs" />
     <Compile Include="Test2\IYouTubeLibeServer.cs" />

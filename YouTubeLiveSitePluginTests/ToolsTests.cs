@@ -1,15 +1,50 @@
 ﻿using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace YouTubeLiveSitePluginTests
 {
     [TestFixture]
+    class YtInitialDataTests
+    {
+        [Test]
+        public void Test()
+        {
+            var data = Tools.GetSampleData("YtInitialData.txt");
+            var ytInitialData = new YouTubeLiveSitePlugin.Next.YtInitialData(data);
+        }
+    }
+    [TestFixture]
+    class GetLiveChatTests
+    {
+        [Test]
+        public void Test()
+        {
+            var data = Tools.GetSampleData("GetLiveChat_20210108.txt");
+            var ytInitialData = new YouTubeLiveSitePlugin.Next.GetLiveChat(data);
+            var actions = ytInitialData.GetActions();
+            Assert.AreEqual("0ofMyAOHAhqyAUNqZ0tEUW9MVUc1bFZrVTVTblU1UXpBcUp3b1lWVU53TFRWME9WTnlUMUYzV0UxVk4ybEphbEZtUVZKbkVndFFibVZXUlRsS2RUbERNQnBEcXJuQnZRRTlDanRvZEhSd2N6b3ZMM2QzZHk1NWIzVjBkV0psTG1OdmJTOXNhWFpsWDJOb1lYUV9hWE5mY0c5d2IzVjBQVEVtZGoxUWJtVldSVGxLZFRsRE1DQUNLQUUlM0Qoi5LG78WM7gIwADgAQAFKGwgAEAAYACAAOgBAAEoAUJ3y_e_FjO4CWAN4AFDk9evvxYzuAljLp9bSnozuAmgBggECCAGIAQCgAamJg_DFjO4C", ytInitialData.GetContinuation().Continuation);
+        }
+    }
+    [TestFixture]
     class ToolsTests
     {
+        [Test]
+        public void Test()
+        {
+            var data = Tools.GetSampleData("YtInitialData.txt");
+            var ytInitialData = YouTubeLiveSitePlugin.Next.Tools.ExtractYtInitialData(data);
+        }
+        [Test]
+        public void ExtractYtCfgTest()
+        {
+            var data = Tools.GetSampleData("LiveChat.txt");
+            var json = YouTubeLiveSitePlugin.Next.Tools.ExtractYtCfg(data);
+            var ytCfg = new YouTubeLiveSitePlugin.Next.YtCfg(json);
+            Assert.AreEqual("103208314919748213421", ytCfg.DelegatedSessionId);
+            Assert.AreEqual("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", ytCfg.InnerTubeApiKey);
+            Assert.AreEqual("CgtDYkdkSzNGYjhHdyiD-eD_BQ%3D%3D", ytCfg.VisitorData);
+            Assert.AreEqual("{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"visitorData\":\"CgtDYkdkSzNGYjhHdyiD-eD_BQ%3D%3D\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36,gzip(gfe)\",\"clientName\":\"WEB\",\"clientVersion\":\"2.20210107.02.01\",\"osName\":\"Windows\",\"osVersion\":\"10.0\",\"browserName\":\"Chrome\",\"browserVersion\":\"87.0.4280.88\"},\"request\":{\"sessionId\":\"6915343762157300936\"}}", ytCfg.InnerTubeContext);
+
+        }
         [Test]
         public void ExtractYtInitialFromSubscribedChannelHtmlTest()
         {

@@ -168,6 +168,17 @@ namespace YouTubeLiveSitePlugin.Test2
         public string ProtoCreationTimestampMs { get; set; }
         public string ObjectId { get; set; }
     }
+    public class UnknownContinuation : IContinuation
+    {
+        public string Continuation { get; } = "";
+        public int TimeoutMs { get; } = 0;
+        public UnknownContinuation(string raw)
+        {
+            Raw = raw;
+        }
+
+        public string Raw { get; }
+    }
     class Photo
     {
         public int Width { get; set; }

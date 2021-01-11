@@ -10,6 +10,8 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         Color PaidCommentBackColor { get; set; }
         Color PaidCommentForeColor { get; set; }
+        Color MembershipBackColor { get; set; }
+        Color MembershipForeColor { get; set; }
         bool IsAutoSetNickname { get; set; }
         bool IsAllChat { get; set; }
     }
@@ -17,6 +19,8 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         public Color PaidCommentBackColor { get => GetValue(); set => SetValue(value); }
         public Color PaidCommentForeColor { get => GetValue(); set => SetValue(value); }
+        public Color MembershipBackColor { get => GetValue(); set => SetValue(value); }
+        public Color MembershipForeColor { get => GetValue(); set => SetValue(value); }
         public bool IsAutoSetNickname { get => GetValue(); set => SetValue(value); }
         public bool IsAllChat { get => GetValue(); set => SetValue(value); }
 
@@ -24,6 +28,8 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             Dict.Add(nameof(PaidCommentBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(PaidCommentForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MembershipBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MembershipForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(IsAutoSetNickname), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsAllChat), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }

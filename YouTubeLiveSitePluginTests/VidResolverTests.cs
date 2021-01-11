@@ -11,6 +11,29 @@ using YouTubeLiveSitePlugin.Test2;
 namespace YouTubeLiveSitePluginTests
 {
     [TestFixture]
+    class ChannelLiveResearcherTests
+    {
+        [Test]
+        public async Task GetVidsAsyncLiveNowTest()
+        {
+            var data = Tools.GetSampleData("Channel_LiveNow_selected.txt");
+            var serverMock = new Mock<IYouTubeLibeServer>();
+            serverMock.Setup(s => s.GetEnAsync(It.IsAny<string>())).Returns(Task.FromResult(data));
+            var a = await ChannelLiveResearcher.GetVidsAsync(serverMock.Object, "channelid");
+            Assert.AreEqual("GnW76d1A3YQ", a[0]);
+        }
+        [Test]
+        public async Task GetVidsAsyncLiveNow2LivesTest()
+        {
+            var data = Tools.GetSampleData("Channel_LiveNow_selected_2lives.txt");
+            var serverMock = new Mock<IYouTubeLibeServer>();
+            serverMock.Setup(s => s.GetEnAsync(It.IsAny<string>())).Returns(Task.FromResult(data));
+            var a = await ChannelLiveResearcher.GetVidsAsync(serverMock.Object, "channelid");
+            Assert.AreEqual("f0CxUscMX20", a[0]);
+            Assert.AreEqual("EHkMjfMw7oU", a[1]);
+        }
+    }
+    [TestFixture]
     class VidResolverTests
     {
         [Test]

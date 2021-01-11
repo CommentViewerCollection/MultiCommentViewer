@@ -26,6 +26,16 @@ namespace YouTubeLiveSitePlugin.Test2
             get { return ChangedOptions.PaidCommentForeColor; }
             set { ChangedOptions.PaidCommentForeColor = value; }
         }
+        public Color MembershipBackColor
+        {
+            get { return ChangedOptions.MembershipBackColor; }
+            set { ChangedOptions.MembershipBackColor = value; }
+        }
+        public Color MembershipForeColor
+        {
+            get { return ChangedOptions.MembershipForeColor; }
+            set { ChangedOptions.MembershipForeColor = value; }
+        }
         public bool IsAutoSetNickname
         {
             get { return ChangedOptions.IsAutoSetNickname; }

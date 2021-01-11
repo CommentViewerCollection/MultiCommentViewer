@@ -5,6 +5,8 @@ using SitePlugin;
 using System.Windows.Media;
 using System.Windows;
 using Plugin;
+using Common;
+using System.Linq;
 
 namespace MultiCommentViewer
 {
@@ -122,9 +124,29 @@ namespace MultiCommentViewer
             _message = comment;
 
             _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
+            //MessageItems = comment.CommentItems;
+
+            var list = new List<IMessagePart>();
+            var s = item.PurchaseAmount;
+            if (item.CommentItems.Count() > 0)
+                s += Environment.NewLine;
+            list.Add(MessagePartFactory.CreateMessageText(s));
+            list.AddRange(item.CommentItems);
+            MessageItems = list;
+
             Thumbnail = comment.UserIcon;
             Id = comment.Id;
+            PostTime = comment.PostedAt.ToString("HH:mm:ss");
+        }
+        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveMembership comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
+        {
+            _message = comment;
+
+            _nameItems = comment.NameItems;
+            MessageItems = comment.CommentItems;
+            Thumbnail = comment.UserIcon;
+            Id = comment.Id.ToString();
             PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)

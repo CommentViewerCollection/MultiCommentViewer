@@ -25,6 +25,33 @@ namespace YouTubeLiveSitePlugin
             Text = "切断しました";
         }
     }
+    internal class YouTubeLiveMembership : MessageBase2, IYouTubeLiveMembership
+    {
+        public override SiteType SiteType { get; } = SiteType.YouTubeLive;
+        public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.Membership;
+        //public string Comment { get; set; }
+        public string Id { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        public IEnumerable<IMessagePart> CommentItems { get; set; }
+        //public string UserName { get; set; }
+        public string UserId { get; set; }
+        public DateTime PostedAt { get; set; }
+        public IMessageImage UserIcon { get; set; }
+        public YouTubeLiveMembership(Next.InternalMembership comment) : base("")
+        {
+            UserId = comment.UserId;
+            Id = comment.Id;
+            CommentItems = comment.MessageItems;
+            NameItems = comment.NameItems;
+            UserIcon = new Common.MessageImage
+            {
+                Height = comment.ThumbnailHeight,
+                Width = comment.ThumbnailWidth,
+                Url = comment.ThumbnailUrl,
+            };
+            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.TimestampUsec / (1000 * 1000));
+        }
+    }
     internal class YouTubeLiveSuperchat : MessageBase2, IYouTubeLiveSuperchat
     {
         public override SiteType SiteType { get; } = SiteType.YouTubeLive;
@@ -55,6 +82,21 @@ namespace YouTubeLiveSitePlugin
             UserIcon = commentData.Thumbnail;
             PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.TimestampUsec / (1000 * 1000));
         }
+        public YouTubeLiveSuperchat(Next.InternalSuperChat comment) : base("")
+        {
+            UserId = comment.UserId;
+            Id = comment.Id;
+            CommentItems = comment.MessageItems;
+            NameItems = comment.NameItems;
+            UserIcon = new Common.MessageImage
+            {
+                Height = comment.ThumbnailHeight,
+                Width = comment.ThumbnailWidth,
+                Url = comment.ThumbnailUrl,
+            };
+            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.TimestampUsec / (1000 * 1000));
+            PurchaseAmount = comment.PurchaseAmount;
+        }
     }
     internal class YouTubeLiveComment : MessageBase2, IYouTubeLiveComment
     {
@@ -76,6 +118,20 @@ namespace YouTubeLiveSitePlugin
             NameItems = commentData.NameItems;
             UserIcon = commentData.Thumbnail;
             PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.TimestampUsec / (1000 * 1000));
+        }
+        public YouTubeLiveComment(Next.InternalComment comment) : base("")
+        {
+            UserId = comment.UserId;
+            Id = comment.Id;
+            CommentItems = comment.MessageItems;
+            NameItems = comment.NameItems;
+            UserIcon = new Common.MessageImage
+            {
+                Height = comment.ThumbnailHeight,
+                Width = comment.ThumbnailWidth,
+                Url = comment.ThumbnailUrl,
+            };
+            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.TimestampUsec / (1000 * 1000));
         }
     }
 }

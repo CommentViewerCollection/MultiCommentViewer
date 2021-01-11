@@ -11,12 +11,12 @@
         <w:NotConverter x:Key="notConverter" />
     </UserControl.Resources>
     <Grid Background="#FFE5E5E5">
-        <xctk:ColorPicker  SelectedColor="{Binding PaidCommentBackColor}" Margin="127,32,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
-        <xctk:ColorPicker  SelectedColor="{Binding PaidCommentForeColor}" Margin="127,63,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
-        <Label x:Name="label10_Copy" Content="投げ銭の背景色" HorizontalAlignment="Left" Margin="30,28,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
-        <Label x:Name="label11_Copy" Content="投げ銭の文字色" HorizontalAlignment="Left" Margin="30,59,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
-        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="10,100,0,0" VerticalAlignment="Top"/>
-        <GroupBox x:Name="groupBox" Header="チャットの種類" HorizontalAlignment="Left" Height="75" Margin="45,155,0,0" VerticalAlignment="Top" Width="195">
+        <xctk:ColorPicker  SelectedColor="{Binding PaidCommentBackColor}" Margin="160,32,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <xctk:ColorPicker  SelectedColor="{Binding PaidCommentForeColor}" Margin="160,63,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <Label x:Name="label10_Copy" Content="スーパーチャットの背景色" HorizontalAlignment="Left" Margin="30,28,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="label11_Copy" Content="スーパーチャットの文字色" HorizontalAlignment="Left" Margin="30,59,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="10,160,0,0" VerticalAlignment="Top"/>
+        <GroupBox x:Name="groupBox" Header="チャットの種類" HorizontalAlignment="Left" Height="75" Margin="50,200,0,0" VerticalAlignment="Top" Width="195">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="43*"/>
@@ -26,5 +26,9 @@
                 <RadioButton x:Name="radioAllChat" GroupName="ChatType" Content="すべてのチャット" IsChecked="{Binding IsAllChat}" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top"/>
             </Grid>
         </GroupBox>
+        <xctk:ColorPicker  SelectedColor="{Binding MembershipBackColor}" Margin="160,93,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <xctk:ColorPicker  SelectedColor="{Binding MembershipForeColor}" Margin="160,124,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <Label x:Name="label10_Copy1" Content="メンバー登録の背景色" HorizontalAlignment="Left" Margin="30,89,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="label11_Copy1" Content="メンバー登録の文字色" HorizontalAlignment="Left" Margin="30,120,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
     </Grid>
 </UserControl>

@@ -43,7 +43,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
         private string _comment;
-        private readonly CommentProvider _commentProvider;
+        private readonly IYouTubeCommentProvider _commentProvider;
         private readonly ILogger _logger;
 
         public string Comment
@@ -57,6 +57,24 @@ namespace YouTubeLiveSitePlugin.Test2
             }
         }
         public CommentPostPanelViewModel(CommentProvider commentProvider, ILogger logger)
+        {
+            _commentProvider = commentProvider;
+            _logger = logger;
+            _commentProvider.LoggedInStateChanged += (s, e) =>
+            {
+                CanPostComment = _commentProvider.IsLoggedIn;
+                if (!CanPostComment)
+                {
+                    Comment = "未ログインのためコメントできません";
+                }
+                else
+                {
+                    Comment = "";
+                }
+            };
+            PostCommentCommand = new RelayCommand(PostComment);
+        }
+        public CommentPostPanelViewModel(Next.CommentProviderNext commentProvider, ILogger logger)
         {
             _commentProvider = commentProvider;
             _logger = logger;

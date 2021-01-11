@@ -20,13 +20,17 @@ namespace YouTubeLiveSitePlugin.Test2
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (_message is IYouTubeLiveSuperchat item)//初コメよりもスパチャの色を優先したい
+                {
+                    return _siteOptions.PaidCommentBackColor;
+                }
+                else if (_message is IYouTubeLiveMembership)//初コメよりもスパチャの色を優先したい
+                {
+                    return _siteOptions.MembershipBackColor;
+                }
                 else if (IsFirstComment)
                 {
                     return _options.FirstCommentBackColor;
-                }
-                else if (_message is IYouTubeLiveSuperchat item)
-                {
-                    return _siteOptions.PaidCommentBackColor;
                 }
                 else
                 {
@@ -44,13 +48,17 @@ namespace YouTubeLiveSitePlugin.Test2
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
                 }
+                else if (_message is IYouTubeLiveSuperchat)//初コメよりもスパチャの色を優先したい
+                {
+                    return _siteOptions.PaidCommentForeColor;
+                }
+                else if (_message is IYouTubeLiveMembership)//初コメよりもスパチャの色を優先したい
+                {
+                    return _siteOptions.MembershipForeColor;
+                }
                 else if (IsFirstComment)
                 {
                     return _options.FirstCommentForeColor;
-                }
-                else if (_message is IYouTubeLiveSuperchat item)
-                {
-                    return _siteOptions.PaidCommentForeColor;
                 }
                 else
                 {
@@ -139,7 +147,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
-        public YouTubeLiveMessageMetadata(IYouTubeLiveMessage message, ICommentOptions options, IYouTubeLiveSiteOptions siteOptions,IUser user,ICommentProvider cp, bool isFirstComment)
+        public YouTubeLiveMessageMetadata(IYouTubeLiveMessage message, ICommentOptions options, IYouTubeLiveSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
             _options = options;

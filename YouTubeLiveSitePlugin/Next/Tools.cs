@@ -670,7 +670,7 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return d.ToString(Formatting.None);
         }
-        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, string hash, CookieContainer cc)
+        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, CookieContainer cc, ILoginState loginInfo)
         {
             //dataの構造
             //context
@@ -689,7 +689,12 @@ namespace YouTubeLiveSitePlugin.Next
             };
             var client = new HttpClient(handler);
             var c = new StringContent(data.ToString(), Encoding.UTF8, "application/json");
-            client.DefaultRequestHeaders.Add("Authorization", $"SAPISIDHASH {hash}");
+            if (loginInfo is LoggedIn loggedIn)
+            {
+                var hash = new HashGenerator(cc).CreateHash();
+                client.DefaultRequestHeaders.Add("Authorization", $"SAPISIDHASH {hash}");
+            }
+
             client.DefaultRequestHeaders.Add("Origin", "https://www.youtube.com");
             var k = await client.PostAsync(url, c);
             var s = await k.Content.ReadAsStringAsync();
@@ -734,6 +739,18 @@ namespace YouTubeLiveSitePlugin.Next
             }
 
             return cookies;
+        }
+
+        internal static ILoginState CreateLoginInfo(bool isLoggedin)
+        {
+            if (isLoggedin)
+            {
+                return new LoggedIn();
+            }
+            else
+            {
+                return new NotLoggedin();
+            }
         }
     }
 }

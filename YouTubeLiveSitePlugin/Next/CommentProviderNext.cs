@@ -86,11 +86,20 @@ namespace YouTubeLiveSitePlugin.Next
     //        _ytInitialData = ytInitialData;
     //    }
     //}
+    /// <summary>
+    /// ログイン状態で処理を分ける場面で活躍するやつ
+    /// </summary>
+    /// ログイン状態といえばCookieだからCookieContainerを持たせようか考えたけど、ログインの有無とは関係無いからやめた。
+    /// 特殊化したbool
+    /// データを持たせないのならenumでも良いかも
+    interface ILoginState { }
+    class LoggedIn : ILoginState { }
+    class NotLoggedin : ILoginState { }
     class ChatProvider2
     {
         public event EventHandler<IInternalMessage> MessageReceived;
         public event EventHandler<bool> LoggedInStateChanged;
-        public async Task ReceiveAsync(string vid, YtInitialData ytInitialData, YtCfg ytCfg, CookieContainer cc)
+        public async Task ReceiveAsync(string vid, YtInitialData ytInitialData, YtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
         {
             if (_cts != null)
             {
@@ -113,11 +122,10 @@ namespace YouTubeLiveSitePlugin.Next
 
             while (!_cts.IsCancellationRequested)
             {
-                var hash = new HashGenerator(cc).CreateHash();
                 GetLiveChat s;
                 try
                 {
-                    s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, hash, cc);
+                    s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, cc, loginInfo);
                 }
                 catch (HttpRequestException ex)
                 {
@@ -276,11 +284,12 @@ namespace YouTubeLiveSitePlugin.Next
             metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
 
         reload:
+
             var liveChatHtml = await GetLiveChat(vid, _cc);
             var ytCfgStr = Tools.ExtractYtCfg(liveChatHtml);
             var ytCfg = new YtCfg(ytCfgStr);
             var ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
-            //LoggedInStateChanged?.Invoke(this, ytInitialData.IsLoggedIn);
+            var loginInfo = Tools.CreateLoginInfo(ytInitialData.IsLoggedIn);
             SetLoggedInState(ytInitialData.IsLoggedIn);
             _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);
             var initialActions = ytInitialData.GetActions();
@@ -289,7 +298,7 @@ namespace YouTubeLiveSitePlugin.Next
                 OnMessageReceived(action);
             }
 
-            var chatTask = _chatProvider.ReceiveAsync(vid, ytInitialData, ytCfg, _cc);
+            var chatTask = _chatProvider.ReceiveAsync(vid, ytInitialData, ytCfg, _cc, loginInfo);
             var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, _cc);
 
             var t = await Task.WhenAny(chatTask, metaTask);

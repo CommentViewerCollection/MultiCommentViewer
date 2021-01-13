@@ -99,6 +99,11 @@ namespace YouTubeLiveSitePlugin.Next
     {
         public event EventHandler<IInternalMessage> MessageReceived;
         public event EventHandler<bool> LoggedInStateChanged;
+        public event EventHandler<InfoData> InfoReceived;
+        private void SendSystemInfo(string message, InfoType type)
+        {
+            InfoReceived?.Invoke(this, new InfoData { Comment = message, Type = type });
+        }
         public async Task ReceiveAsync(string vid, YtInitialData ytInitialData, YtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
         {
             if (_cts != null)
@@ -145,8 +150,8 @@ namespace YouTubeLiveSitePlugin.Next
                 }
                 catch (ChatUnavailableException)
                 {
-                    //SendSystemInfo()
-                    throw new NotImplementedException();
+                    SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Notice);
+                    return;
                 }
                 catch (ContinuationNotExistsException)
                 {
@@ -278,6 +283,7 @@ namespace YouTubeLiveSitePlugin.Next
             _chatProvider = new ChatProvider2(_siteOptions);
             _chatProvider.MessageReceived += ChatProvider_MessageReceived;
             _chatProvider.LoggedInStateChanged += _chatProvider_LoggedInStateChanged;
+            _chatProvider.InfoReceived += ChatProvider_InfoReceived;
 
             var metaProvider = new MetaDataYoutubeiProvider(_server, _logger);
             metaProvider.InfoReceived += MetaProvider_InfoReceived;
@@ -340,8 +346,15 @@ namespace YouTubeLiveSitePlugin.Next
 
 
             _chatProvider.MessageReceived -= ChatProvider_MessageReceived;
+            _chatProvider.LoggedInStateChanged -= _chatProvider_LoggedInStateChanged;
+            _chatProvider.InfoReceived -= ChatProvider_InfoReceived;
             metaProvider.InfoReceived -= MetaProvider_InfoReceived;
             metaProvider.MetadataReceived -= MetaProvider_MetadataReceived;
+        }
+
+        private void ChatProvider_InfoReceived(object sender, InfoData e)
+        {
+            SendSystemInfo(e.Comment, e.Type);
         }
 
         private void MetaProvider_MetadataReceived(object sender, IMetadata e)

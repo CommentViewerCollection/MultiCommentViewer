@@ -529,36 +529,6 @@ namespace MultiCommentViewer
                 {
                     MessengerInstance.Send(new SetPostCommentPanel(connectionVm.CommentPostPanel));
                 }
-                if (!_rawMessagePostPanelDict.TryGetValue(connectionVm.CommentProvider, out var panel))
-                {
-                    var cp = connectionVm.CommentProvider;
-                    if (IsNicoGuid(cp.SiteContextGuid))
-                    {
-                        panel = new Views.Nico.NicoRawMessagePostPanel();
-                        panel.DataContext = new Views.Nico.NicoRawMessagePostPanelViewModel(cp);
-                        _rawMessagePostPanelDict.Add(cp, panel);
-                    }
-                    else if (IsMildomGuid(cp.SiteContextGuid))
-                    {
-                        panel = new Views.Mildom.MildomRawMessagePostPanel();
-                        panel.DataContext = new Views.Mildom.MildomRawMessagePostPanelViewModel(cp);
-                        _rawMessagePostPanelDict.Add(cp, panel);
-                    }
-                    else if (IsTwitchGuid(cp.SiteContextGuid))
-                    {
-                        panel = new Views.Twitch.RawMessagePostPanel();
-                        panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
-                        _rawMessagePostPanelDict.Add(cp, panel);
-                    }
-                    else if (IsMirrativGuid(cp.SiteContextGuid))
-                    {
-                        panel = new Views.Twitch.RawMessagePostPanel();
-                        panel.DataContext = new Views.Twitch.RawMessagePostPanelViewModel(cp);
-                        _rawMessagePostPanelDict.Add(cp, panel);
-                    }
-
-                }
-                MessengerInstance.Send(new SetRawMessagePostPanel(panel));
             }
             catch (Exception ex)
             {

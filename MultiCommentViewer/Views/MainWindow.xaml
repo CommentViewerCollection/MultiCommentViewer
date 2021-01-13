@@ -46,7 +46,6 @@
             <RowDefinition Height="{Binding MetadataViewHeight, Mode=TwoWay, Converter={StaticResource gridLengthConverter}}"/>
             <RowDefinition Height="5"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="{Binding RawMessagePostPanelHeight, Mode=OneWay, Converter={StaticResource gridLengthConverter}}" />
             <RowDefinition Height="80" />
         </Grid.RowDefinitions>
         <Menu HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="0"
@@ -271,7 +270,11 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBox Margin="5,0" Text="{Binding Input, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Margin="5,0" Text="{Binding Input, UpdateSourceTrigger=PropertyChanged}">
+                                    <TextBox.ToolTip>
+                                        <TextBlock Text="{Binding Input}" />
+                                    </TextBox.ToolTip>
+                                </TextBox>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -401,7 +404,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding ConnectionName}" />
+                                <TextBlock Text="{Binding ConnectionName}" Margin="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -413,7 +416,11 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Title}" />
+                                <TextBlock Text="{Binding Title}" Margin="5,0">
+                                    <TextBlock.ToolTip>
+                                        <TextBlock Text="{Binding Title}" />
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -425,7 +432,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Elapsed}" />
+                                <TextBlock Text="{Binding Elapsed}" Margin="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -437,7 +444,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding CurrentViewers}" />
+                                <TextBlock Text="{Binding CurrentViewers}" Margin="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -449,7 +456,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding TotalViewers}" />
+                                <TextBlock Text="{Binding TotalViewers}" Margin="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -461,7 +468,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Active}" />
+                                <TextBlock Text="{Binding Active}" Margin="5,0" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -483,9 +490,6 @@
         <GridSplitter Grid.Row="4" Height="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" ResizeDirection="Rows"  />
         <local:CommentDataGrid IsShowUserInfoMenuItem="True" ForceShowInvisibleComments="False" Margin="5" Grid.Row="5" />
         <Grid Grid.Row="6">
-            <Grid x:Name="RawMessagePanelPlaceHolder" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
-        </Grid>
-        <Grid Grid.Row="7">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition />

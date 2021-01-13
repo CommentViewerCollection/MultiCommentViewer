@@ -301,7 +301,7 @@ namespace YouTubeLiveSitePlugin.Next
             var initialActions = ytInitialData.GetActions();
             foreach (var action in initialActions)
             {
-                OnMessageReceived(action);
+                OnMessageReceived(action, true);
             }
 
             var chatTask = _chatProvider.ReceiveAsync(vid, ytInitialData, ytCfg, _cc, loginInfo);
@@ -364,7 +364,7 @@ namespace YouTubeLiveSitePlugin.Next
 
         private void MetaProvider_InfoReceived(object sender, InfoData e)
         {
-            throw new NotImplementedException();
+            SendSystemInfo(e.Comment, e.Type);
         }
 
         private void _chatProvider_LoggedInStateChanged(object sender, bool e)
@@ -384,7 +384,7 @@ namespace YouTubeLiveSitePlugin.Next
                 return false;
             }
         }
-        private void OnMessageReceived(IInternalMessage e)
+        private void OnMessageReceived(IInternalMessage e, bool isInitialComment)
         {
             switch (e)
             {
@@ -394,7 +394,7 @@ namespace YouTubeLiveSitePlugin.Next
                         {
                             return;
                         }
-                        var context = CreateMessageContext2(superChat, false);
+                        var context = CreateMessageContext2(superChat, isInitialComment);
                         RaiseMessageReceived(context);
                     }
                     break;
@@ -404,7 +404,7 @@ namespace YouTubeLiveSitePlugin.Next
                         {
                             return;
                         }
-                        var context = CreateMessageContext2(comment, false);
+                        var context = CreateMessageContext2(comment, isInitialComment);
                         RaiseMessageReceived(context);
                     }
                     break;
@@ -414,7 +414,7 @@ namespace YouTubeLiveSitePlugin.Next
                         {
                             return;
                         }
-                        var context = CreateMessageContext2(membership, false);
+                        var context = CreateMessageContext2(membership, isInitialComment);
                         RaiseMessageReceived(context);
                     }
                     break;

@@ -78,7 +78,15 @@ namespace YouTubeLiveSitePlugin.Test2
                     string title;
                     if (action.updateTitleAction.title.ContainsKey("runs"))
                     {
-                        title = action.updateTitleAction.title.runs[0].text;
+                        title = "";
+                        var runs = action.updateTitleAction.title.runs;
+                        foreach (var run in runs)
+                        {
+                            if (run.ContainsKey("text"))
+                            {
+                                title += (string)run.text;
+                            }
+                        }
                     }
                     else if (action.updateTitleAction.title.ContainsKey("simpleText"))
                     {

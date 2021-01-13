@@ -422,7 +422,7 @@ namespace YouTubeLiveSitePlugin.Next
         }
         private void ChatProvider_MessageReceived(object sender, IInternalMessage e)
         {
-            OnMessageReceived(e);
+            OnMessageReceived(e, false);
         }
         private YouTubeLiveMessageContext CreateMessageContext2(InternalMembership comment, bool isInitialComment)
         {

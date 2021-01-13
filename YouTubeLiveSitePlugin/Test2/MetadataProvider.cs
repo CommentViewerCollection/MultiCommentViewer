@@ -30,8 +30,22 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
+            if(_cts != null)
+            {
+                throw new InvalidOperationException("receiving");
+            }
             _cts = new CancellationTokenSource();
-
+            try
+            {
+                await ReceiveInternalAsync(ytCfg, vid, cc);
+            }
+            finally
+            {
+                _cts = null;
+            }
+        }
+        public async Task ReceiveInternalAsync(YtCfg ytCfg, string vid, CookieContainer cc)
+        {
             var innerTubeKey = ytCfg.InnerTubeApiKey;
             var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + innerTubeKey;
             var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"1.20180224\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";

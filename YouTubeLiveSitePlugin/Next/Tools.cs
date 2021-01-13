@@ -670,6 +670,15 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return d.ToString(Formatting.None);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="innerTubeApiKey"></param>
+        /// <param name="cc"></param>
+        /// <param name="loginInfo"></param>
+        /// <returns></returns>
+        /// <exception cref="HttpRequestException">多分500番台のエラーだけ</exception>
         public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, CookieContainer cc, ILoginState loginInfo)
         {
             //dataの構造

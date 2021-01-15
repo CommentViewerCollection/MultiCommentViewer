@@ -148,7 +148,7 @@ namespace LineLiveSitePlugin.Low.LiveInfo
         public long PremiumLoveCount { get; set; }
 
         [JsonProperty("chatCount")]
-        public long ChatCount { get; set; }
+        public long? ChatCount { get; set; }
 
         [JsonProperty("thumbnailURLs")]
         public ThumbnailUrLs ThumbnailUrLs { get; set; }

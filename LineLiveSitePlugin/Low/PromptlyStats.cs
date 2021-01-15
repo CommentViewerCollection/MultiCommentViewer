@@ -27,7 +27,7 @@ namespace LineLiveSitePlugin.Low.PromptyStats
         public long ViewerCount { get; set; }
 
         [JsonProperty("chatCount")]
-        public long ChatCount { get; set; }
+        public long? ChatCount { get; set; }
 
         [JsonProperty("liveStatus")]
         public string LiveStatus { get; set; }

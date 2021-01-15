@@ -50,6 +50,7 @@ namespace SitePluginCommon
                         client.DefaultRequestHeaders.Add(kv.Key, kv.Value);
                     }
                 }
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 var ret = await client.GetAsync(options.Url);
                 if (throwWhenNotSuccess)
                 {
@@ -112,6 +113,7 @@ namespace SitePluginCommon
                         }
                     }
                 }
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 res = await client.PostAsync(options.Url, content);
             }
             return res;

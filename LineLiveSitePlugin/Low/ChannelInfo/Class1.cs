@@ -160,7 +160,7 @@ namespace LineLiveSitePlugin.Low.ChannelInfo
         public long MaxOwnedLimitedLoveCount { get; set; }
 
         [JsonProperty("chatCount")]
-        public long ChatCount { get; set; }
+        public long? ChatCount { get; set; }
 
         [JsonProperty("thumbnailURLs")]
         public ThumbnailUrLs ThumbnailUrLs { get; set; }
@@ -331,7 +331,7 @@ namespace LineLiveSitePlugin.Low.ChannelInfo
         public long MaxOwnedLimitedLoveCount { get; set; }
 
         [JsonProperty("chatCount")]
-        public long ChatCount { get; set; }
+        public long? ChatCount { get; set; }
 
         [JsonProperty("thumbnailURLs")]
         public ThumbnailUrLs ThumbnailUrLs { get; set; }

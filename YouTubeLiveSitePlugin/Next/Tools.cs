@@ -670,6 +670,17 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return d.ToString(Formatting.None);
         }
+        class GetGetLiveChatException : Exception
+        {
+            public GetGetLiveChatException(Exception innerException)
+                : base("", innerException)
+            {
+            }
+
+            public string Url { get; internal set; }
+            public string DataToPost { get; internal set; }
+            public bool IsLoggedIn { get; internal set; }
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -705,7 +716,20 @@ namespace YouTubeLiveSitePlugin.Next
             }
 
             client.DefaultRequestHeaders.Add("Origin", "https://www.youtube.com");
-            var k = await client.PostAsync(url, c);
+            HttpResponseMessage k;
+            try
+            {
+                k = await client.PostAsync(url, c);
+            }
+            catch (Exception ex)
+            {
+                throw new GetGetLiveChatException(ex)
+                {
+                    Url = url,
+                    DataToPost = data.ToString(),
+                    IsLoggedIn = loginInfo is LoggedIn,
+                };
+            }
             var s = await k.Content.ReadAsStringAsync();
             var getLiveChat = new GetLiveChat(s);
             return getLiveChat;

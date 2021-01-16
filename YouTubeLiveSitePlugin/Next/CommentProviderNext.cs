@@ -137,11 +137,11 @@ namespace YouTubeLiveSitePlugin.Next
             string initialContinuation;
             if (_siteOptions.IsAllChat)
             {
-                initialContinuation = ytInitialData.ChatContinuation.AllChatContinuation;
+                initialContinuation = ytInitialData.ChatContinuation().AllChatContinuation;
             }
             else
             {
-                initialContinuation = ytInitialData.ChatContinuation.JouiChatContinuation;
+                initialContinuation = ytInitialData.ChatContinuation().JouiChatContinuation;
             }
             dataToPost.SetContinuation(initialContinuation);
 
@@ -288,6 +288,11 @@ namespace YouTubeLiveSitePlugin.Next
             var ytCfgStr = Tools.ExtractYtCfg(liveChatHtml);
             var ytCfg = new YtCfg(ytCfgStr);
             var ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
+            if (!ytInitialData.CanChat)
+            {
+                SendSystemInfo("このライブストリームではチャットは無効です。", InfoType.Notice);
+                return;
+            }
             var loginInfo = Tools.CreateLoginInfo(ytInitialData.IsLoggedIn);
             SetLoggedInState(ytInitialData.IsLoggedIn);
             _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);

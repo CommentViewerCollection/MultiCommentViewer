@@ -30,7 +30,7 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
-            if(_cts != null)
+            if (_cts != null)
             {
                 throw new InvalidOperationException("receiving");
             }
@@ -65,6 +65,10 @@ namespace YouTubeLiveSitePlugin.Test2
                     var res = await GetMetadata(cc, url, payload);
 
                     dynamic json = JsonConvert.DeserializeObject(res);
+                    if (!json.ContainsKey("continuation"))
+                    {
+                        throw new ParseException(res);
+                    }
                     if (json.continuation.ContainsKey("invalidationContinuationData"))
                     {
                         throw new ParseException(res);
@@ -134,7 +138,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
             _cts = new CancellationTokenSource();
-            var token = ytCfg.GetXsrfToken();
+            var token = ytCfg.XsrfToken;
             //このAPIを呼び出すとき、Cookieに"YSC"と"VISITOR_INFO1_LIVE"が必須。
             //2つとも配信ページか $"https://www.youtube.com/live_chat?v={vid}&is_popout=1"にアクセスした時にCookieをセットしなければもらえる。
             //コメビュではtokenとかを取得するために"/live_chat"に必ずアクセスする必要があるため、未ログイン時にはそれで取得した値を使えば良い。

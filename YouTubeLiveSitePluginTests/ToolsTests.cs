@@ -43,7 +43,17 @@ namespace YouTubeLiveSitePluginTests
             Assert.AreEqual("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", ytCfg.InnerTubeApiKey);
             Assert.AreEqual("CgtDYkdkSzNGYjhHdyiD-eD_BQ%3D%3D", ytCfg.VisitorData);
             Assert.AreEqual("{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"visitorData\":\"CgtDYkdkSzNGYjhHdyiD-eD_BQ%3D%3D\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36,gzip(gfe)\",\"clientName\":\"WEB\",\"clientVersion\":\"2.20210107.02.01\",\"osName\":\"Windows\",\"osVersion\":\"10.0\",\"browserName\":\"Chrome\",\"browserVersion\":\"87.0.4280.88\"},\"request\":{\"sessionId\":\"6915343762157300936\"}}", ytCfg.InnerTubeContext);
-
+        }
+        [Test]
+        public void ExtractYtCfg_2Test()
+        {
+            var data = Tools.GetSampleData("LiveChat_2.txt");
+            var json = YouTubeLiveSitePlugin.Next.Tools.ExtractYtCfg(data);
+            var ytCfg = new YouTubeLiveSitePlugin.Next.YtCfg(json);
+            Assert.IsNull(ytCfg.DelegatedSessionId);
+            Assert.AreEqual("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", ytCfg.InnerTubeApiKey);
+            Assert.AreEqual("CgtLLWZ4T1hPR2dlWSjuz4CABg%3D%3D", ytCfg.VisitorData);
+            Assert.IsTrue(ytCfg.InnerTubeContext.StartsWith("{\"client\":{"));
         }
         [Test]
         public void ExtractYtInitialFromSubscribedChannelHtmlTest()

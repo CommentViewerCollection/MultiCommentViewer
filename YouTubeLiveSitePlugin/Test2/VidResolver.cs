@@ -176,6 +176,7 @@ namespace YouTubeLiveSitePlugin.Test2
         const string ChannelIdPattern = VID_PATTERN;
         private readonly Regex _regexUser = new Regex("youtube\\.com/user/(" + USERID_PATTERN + ")");
         private readonly Regex _regexCustomChannel = new Regex("/c/(" + ChannelIdPattern + ")");
+        private readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/video/(" + VID_PATTERN + ")");
         enum InputType
         {
             Unknown,
@@ -210,10 +211,15 @@ namespace YouTubeLiveSitePlugin.Test2
             if (string.IsNullOrEmpty(input)) return false;
             return _regexCustomChannel.IsMatch(input);
         }
+        public bool IsStudio(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return false;
+            return _regexStudio.IsMatch(input);
+        }
 
         public bool IsValidInput(string input)
         {
-            return IsWatch(input) || IsUser(input) || IsChannel(input) || IsCustomChannel(input);
+            return IsWatch(input) || IsUser(input) || IsChannel(input) || IsCustomChannel(input) || IsStudio(input);
         }
 
         internal bool TryVid(string input, out string vid)
@@ -281,6 +287,15 @@ namespace YouTubeLiveSitePlugin.Test2
             var match = _regexChannel.Match(input);
             return match.Groups[1].Value;
         }
+        internal string ExtractVidFromStudioUrl(string input)
+        {
+            var match = _regexStudio.Match(input);
+            if (!match.Success)
+            {
+                return null;
+            }
+            return match.Groups[1].Value;
+        }
         string ExtractUserId(string input)
         {
             var match = _regexUser.Match(input);
@@ -312,6 +327,15 @@ namespace YouTubeLiveSitePlugin.Test2
             {
                 var channelId = ExtractChannelId(input);
                 return await GetResultFromChannelId(server, channelId);
+            }
+            else if (IsStudio(input))
+            {
+                var studioVid = ExtractVidFromStudioUrl(input);
+                if (studioVid != null)
+                {
+                    return new VidResult { Vid = studioVid };
+                }
+
             }
             throw new ParseException(input);
         }

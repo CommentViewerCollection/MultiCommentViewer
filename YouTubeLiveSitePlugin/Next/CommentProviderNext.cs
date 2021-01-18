@@ -337,6 +337,12 @@ namespace YouTubeLiveSitePlugin.Next
                     catch (ReloadException)
                     {
                     }
+                    catch (SpecChangedException ex)
+                    {
+                        SendSystemInfo("YouTubeの仕様変更に未対応のためコメント取得を継続できません", InfoType.Error);
+                        _logger.LogException(ex);
+                        _isDisconnectedExpected = true;
+                    }
                     catch (Exception ex)
                     {
                         SendSystemInfo(ex.Message, InfoType.Error);

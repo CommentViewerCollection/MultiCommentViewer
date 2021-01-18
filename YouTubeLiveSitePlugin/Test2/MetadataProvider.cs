@@ -48,7 +48,7 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             var innerTubeKey = ytCfg.InnerTubeApiKey;
             var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + innerTubeKey;
-            var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"1.20180224\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";
+            var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"2.20210114.08.00\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";
             //var payloadBytes = Encoding.UTF8.GetBytes(payload);
 
             //var wc = new MyWebClient(cc);

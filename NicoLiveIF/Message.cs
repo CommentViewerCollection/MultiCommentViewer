@@ -35,6 +35,7 @@ namespace NicoSitePlugin
         string Text { get; }
         string Id { get; }
         bool Is184 { get; }
+        [Obsolete]
         string RoomName { get; }
         int? ChatNo { get; }
         DateTime PostedAt { get; }

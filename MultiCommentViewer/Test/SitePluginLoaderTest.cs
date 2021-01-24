@@ -21,7 +21,7 @@ namespace MultiCommentViewer.Test
                 new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, new YouTubeLiveSitePlugin.Test2.YouTubeLiveServer(), logger, userStoreManager),
                 new OpenrecSitePlugin.OpenrecSiteContext(options, logger, userStoreManager),
                 new TwitchSitePlugin.TwitchSiteContext(options,new TwitchSitePlugin.TwitchServer(), logger, userStoreManager),
-                new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), (addr,port,size,buffer)=> new NicoSitePlugin.StreamSocket(addr,port,size,buffer), logger, userStoreManager),
+                new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), logger, userStoreManager),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger, userStoreManager),
                 new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger, userStoreManager),
                 new WhowatchSitePlugin.WhowatchSiteContext(options, logger, userStoreManager),

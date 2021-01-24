@@ -139,7 +139,7 @@ namespace MultiCommentViewer
                 };
             }
             Id = comment.Id;
-            PostTime = comment.PostedAt.ToString("HH:mm:ss");
+            PostTime = comment.PostedAt.ToLocalTime().ToString("HH:mm:ss");
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoAd ad, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(ad as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)

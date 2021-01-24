@@ -771,6 +771,7 @@ namespace YouTubeLiveSitePlugin.Next
         }
         /// <summary>
         /// CookieContainerから全てのCookieを取り出す
+        /// https://stackoverflow.com/questions/13675154/how-to-get-cookies-info-inside-of-a-cookiecontainer-all-of-them-not-for-a-spe/36665793
         /// </summary>
         /// <param name="container"></param>
         /// <returns></returns>
@@ -794,15 +795,22 @@ namespace YouTubeLiveSitePlugin.Next
                 if (domain.StartsWith("."))
                     domain = domain.Substring(1);
 
-                var address = string.Format("http://{0}/", domain);
+                var httpAddress = string.Format("http://{0}/", domain);
+                var httpsAddress = string.Format("https://{0}/", domain);
 
-                if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out Uri uri) == false)
-                    continue;
-
-                foreach (Cookie cookie in container.GetCookies(uri))
+                if (Uri.TryCreate(httpAddress, UriKind.RelativeOrAbsolute, out var httpUri))
                 {
-                    if (cookie == null) continue;
-                    cookies.Add(cookie);
+                    foreach (Cookie cookie in container.GetCookies(httpUri))
+                    {
+                        cookies.Add(cookie);
+                    }
+                }
+                if (Uri.TryCreate(httpsAddress, UriKind.RelativeOrAbsolute, out var httpsUri))
+                {
+                    foreach (Cookie cookie in container.GetCookies(httpsUri))
+                    {
+                        cookies.Add(cookie);
+                    }
                 }
             }
 

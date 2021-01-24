@@ -25,7 +25,7 @@ namespace SitePluginCommon
 
         private bool _canDisconnect;
         private readonly ILogger _logger;
-        private readonly ICommentOptions _options;
+        protected ICommentOptions _options { get; }
 
         public bool CanDisconnect
         {

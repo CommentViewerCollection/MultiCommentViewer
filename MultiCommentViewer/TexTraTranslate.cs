@@ -28,7 +28,7 @@ namespace MultiCommentViewer.TexTra
         private static readonly Random NonceRandom = new Random();
         public async Task<Response> Traslate(string text, string name, string key, string secret)
         {
-            var url = "https://mt-auto-minhon-mlt.ucri.jgn-x.jp/api/mt/generalN_en_ja/";
+            var url = "https://mt-auto-minhon-mlt.ucri.jgn-x.jp/api/mt/generalNT_en_ja/";
             var data = new Dictionary<string, string>
             {
                 {"text", text },

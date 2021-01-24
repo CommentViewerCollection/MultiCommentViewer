@@ -148,6 +148,7 @@ namespace MultiCommentViewer
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();
             PostTime = comment.PostedAt.ToString("HH:mm:ss");
+            Info = "メンバー登録";
         }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)

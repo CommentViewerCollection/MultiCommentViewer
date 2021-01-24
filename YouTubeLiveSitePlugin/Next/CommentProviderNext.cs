@@ -86,65 +86,71 @@ namespace YouTubeLiveSitePlugin.Next
     //        _ytInitialData = ytInitialData;
     //    }
     //}
+    /// <summary>
+    /// ログイン状態で処理を分ける場面で活躍するやつ
+    /// </summary>
+    /// ログイン状態といえばCookieだからCookieContainerを持たせようか考えたけど、ログインの有無とは関係無いからやめた。
+    /// 特殊化したbool
+    /// データを持たせないのならenumでも良いかも
+    interface ILoginState { }
+    class LoggedIn : ILoginState { }
+    class NotLoggedin : ILoginState { }
     class ChatProvider2
     {
         public event EventHandler<IInternalMessage> MessageReceived;
         public event EventHandler<bool> LoggedInStateChanged;
-        public async Task ReceiveAsync(string vid, YtInitialData ytInitialData, YtCfg ytCfg, CookieContainer cc)
+        public event EventHandler<InfoData> InfoReceived;
+        private void SendSystemInfo(string message, InfoType type)
+        {
+            InfoReceived?.Invoke(this, new InfoData { Comment = message, Type = type });
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="vid"></param>
+        /// <param name="ytInitialData"></param>
+        /// <param name="ytCfg"></param>
+        /// <param name="cc"></param>
+        /// <param name="loginInfo"></param>
+        /// <returns></returns>
+        /// <exception cref="ReloadException"></exception>
+        /// <exception cref="SpecChangedException"></exception>
+        public async Task ReceiveAsync(string vid, YtInitialData ytInitialData, YtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
         {
             if (_cts != null)
             {
-                Debug.WriteLine("receiving");
-                return;
+                throw new InvalidOperationException("receiving");
             }
             _cts = new CancellationTokenSource();
-
+            try
+            {
+                await ReceiveInternalAsync(ytInitialData, ytCfg, cc, loginInfo);
+            }
+            finally
+            {
+                _cts = null;
+            }
+        }
+        public async Task ReceiveInternalAsync(YtInitialData ytInitialData, YtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
+        {
             var dataToPost = new DataToPost(ytCfg);
             string initialContinuation;
             if (_siteOptions.IsAllChat)
             {
-                initialContinuation = ytInitialData.ChatContinuation.AllChatContinuation;
+                initialContinuation = ytInitialData.ChatContinuation().AllChatContinuation;
             }
             else
             {
-                initialContinuation = ytInitialData.ChatContinuation.JouiChatContinuation;
+                initialContinuation = ytInitialData.ChatContinuation().JouiChatContinuation;
             }
             dataToPost.SetContinuation(initialContinuation);
 
             while (!_cts.IsCancellationRequested)
             {
-                var hash = new HashGenerator(cc).CreateHash();
-                GetLiveChat s;
-                try
-                {
-                    s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, hash, cc);
-                }
-                catch (HttpRequestException ex)
-                {
-                    await Task.Delay(1000);
-                    throw new ReloadException(ex);
-                }
-                catch (Exception ex)
-                {
-                    await Task.Delay(1000);
-                    throw new ReloadException(ex);
-                }
+                //例外はここではcatchしない。
+                var s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, cc, loginInfo);
                 var actions = s.GetActions();
-                IContinuation continuation;
-                try
-                {
-                    continuation = s.GetContinuation();
-                }
-                catch (ChatUnavailableException)
-                {
-                    //SendSystemInfo()
-                    throw new NotImplementedException();
-                }
-                catch (ContinuationNotExistsException)
-                {
-                    //SendSystemInfo()
-                    throw new NotImplementedException();
-                }
+                var continuation = s.GetContinuation();
                 if (continuation is ReloadContinuation reload)
                 {
                     throw new ReloadException();
@@ -270,69 +276,114 @@ namespace YouTubeLiveSitePlugin.Next
             _chatProvider = new ChatProvider2(_siteOptions);
             _chatProvider.MessageReceived += ChatProvider_MessageReceived;
             _chatProvider.LoggedInStateChanged += _chatProvider_LoggedInStateChanged;
+            _chatProvider.InfoReceived += ChatProvider_InfoReceived;
 
             var metaProvider = new MetaDataYoutubeiProvider(_server, _logger);
             metaProvider.InfoReceived += MetaProvider_InfoReceived;
             metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
 
         reload:
+
             var liveChatHtml = await GetLiveChat(vid, _cc);
             var ytCfgStr = Tools.ExtractYtCfg(liveChatHtml);
             var ytCfg = new YtCfg(ytCfgStr);
             var ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
-            //LoggedInStateChanged?.Invoke(this, ytInitialData.IsLoggedIn);
+            if (!ytInitialData.CanChat)
+            {
+                SendSystemInfo("このライブストリームではチャットは無効です。", InfoType.Notice);
+                return;
+            }
+            var loginInfo = Tools.CreateLoginInfo(ytInitialData.IsLoggedIn);
             SetLoggedInState(ytInitialData.IsLoggedIn);
             _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);
             var initialActions = ytInitialData.GetActions();
             foreach (var action in initialActions)
             {
-                OnMessageReceived(action);
+                OnMessageReceived(action, true);
             }
 
-            var chatTask = _chatProvider.ReceiveAsync(vid, ytInitialData, ytCfg, _cc);
+            var chatTask = _chatProvider.ReceiveAsync(vid, ytInitialData, ytCfg, _cc, loginInfo);
             var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, _cc);
 
-            var t = await Task.WhenAny(chatTask, metaTask);
-            if (t == chatTask)
+            var tasks = new List<Task>
             {
-                try
+                chatTask,
+                metaTask
+            };
+            while (tasks.Count > 0)
+            {
+                var t = await Task.WhenAny(tasks);
+                if (t == chatTask)
                 {
                     metaProvider.Disconnect();
-                    await metaTask;
-                }
-                catch (Exception ex)
-                {
+                    try
+                    {
+                        await metaTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaTask);
+                    try
+                    {
+                        await chatTask;
+                    }
+                    catch (ChatUnavailableException)
+                    {
+                        _isDisconnectedExpected = true;
+                        SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Notice);
+                    }
+                    catch (ReloadException)
+                    {
+                    }
+                    catch (SpecChangedException ex)
+                    {
+                        SendSystemInfo("YouTubeの仕様変更に未対応のためコメント取得を継続できません", InfoType.Error);
+                        _logger.LogException(ex);
+                        _isDisconnectedExpected = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        SendSystemInfo(ex.Message, InfoType.Error);
+                        //意図しない切断
+                        //ただし、サーバーからReloadメッセージが来た場合と違って、単純にリロードすれば済む問題ではない。
+                        _logger.LogException(ex);
+                        await Task.Delay(1000);
+                    }
+                    tasks.Remove(chatTask);
 
+                    if (_isDisconnectedExpected == false)
+                    {
+                        //何らかの原因で意図しない切断が発生した。
+                        SendSystemInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Notice);
+                        goto reload;
+                    }
                 }
-                try
+                else
                 {
-                    await chatTask;
-                }
-                catch (ReloadException ex)
-                {
-                    goto reload;
-                }
-                catch (Exception ex)
-                {
-
+                    try
+                    {
+                        await metaTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaTask);
                 }
             }
-            else
-            {
-                try
-                {
-                    await metaTask;
-                }
-                catch (Exception ex)
-                {
-
-                }
-            }
-
 
             _chatProvider.MessageReceived -= ChatProvider_MessageReceived;
+            _chatProvider.LoggedInStateChanged -= _chatProvider_LoggedInStateChanged;
+            _chatProvider.InfoReceived -= ChatProvider_InfoReceived;
             metaProvider.InfoReceived -= MetaProvider_InfoReceived;
             metaProvider.MetadataReceived -= MetaProvider_MetadataReceived;
+        }
+
+        private void ChatProvider_InfoReceived(object sender, InfoData e)
+        {
+            SendSystemInfo(e.Comment, e.Type);
         }
 
         private void MetaProvider_MetadataReceived(object sender, IMetadata e)
@@ -342,7 +393,7 @@ namespace YouTubeLiveSitePlugin.Next
 
         private void MetaProvider_InfoReceived(object sender, InfoData e)
         {
-            throw new NotImplementedException();
+            SendSystemInfo(e.Comment, e.Type);
         }
 
         private void _chatProvider_LoggedInStateChanged(object sender, bool e)
@@ -362,7 +413,7 @@ namespace YouTubeLiveSitePlugin.Next
                 return false;
             }
         }
-        private void OnMessageReceived(IInternalMessage e)
+        private void OnMessageReceived(IInternalMessage e, bool isInitialComment)
         {
             switch (e)
             {
@@ -372,7 +423,7 @@ namespace YouTubeLiveSitePlugin.Next
                         {
                             return;
                         }
-                        var context = CreateMessageContext2(superChat, false);
+                        var context = CreateMessageContext2(superChat, isInitialComment);
                         RaiseMessageReceived(context);
                     }
                     break;
@@ -382,7 +433,7 @@ namespace YouTubeLiveSitePlugin.Next
                         {
                             return;
                         }
-                        var context = CreateMessageContext2(comment, false);
+                        var context = CreateMessageContext2(comment, isInitialComment);
                         RaiseMessageReceived(context);
                     }
                     break;
@@ -392,7 +443,7 @@ namespace YouTubeLiveSitePlugin.Next
                         {
                             return;
                         }
-                        var context = CreateMessageContext2(membership, false);
+                        var context = CreateMessageContext2(membership, isInitialComment);
                         RaiseMessageReceived(context);
                     }
                     break;
@@ -400,7 +451,7 @@ namespace YouTubeLiveSitePlugin.Next
         }
         private void ChatProvider_MessageReceived(object sender, IInternalMessage e)
         {
-            OnMessageReceived(e);
+            OnMessageReceived(e, false);
         }
         private YouTubeLiveMessageContext CreateMessageContext2(InternalMembership comment, bool isInitialComment)
         {
@@ -571,15 +622,17 @@ namespace YouTubeLiveSitePlugin.Next
                 AfterDisconnected();
             }
         }
-
+        bool _isDisconnectedExpected;
         public override void Disconnect()
         {
             _chatProvider?.Disconnect();
+            _isDisconnectedExpected = true;
         }
         protected override void BeforeConnect()
         {
             _userCommentCountDict.Clear();
             _receivedCommentIds.Clear();
+            _isDisconnectedExpected = false;
             base.BeforeConnect();
         }
         protected override void AfterDisconnected()

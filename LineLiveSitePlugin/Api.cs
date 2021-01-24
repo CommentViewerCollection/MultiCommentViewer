@@ -21,7 +21,7 @@ namespace LineLiveSitePlugin
         object PinnedMessage { get; }
         int Status { get; }
     }
-    internal class PromptyStats: IPromptyStats
+    internal class PromptyStats : IPromptyStats
     {
         public long LoveCount { get; set; }
         public long FreeLoveCount { get; set; }
@@ -44,7 +44,7 @@ namespace LineLiveSitePlugin
             OwnedLimitedLoveCount = low.OwnedLimitedLoveCount;
             SentLimitedLoveCount = low.SentLimitedLoveCount;
             ViewerCount = low.ViewerCount;
-            ChatCount = low.ChatCount;
+            ChatCount = low.ChatCount.HasValue ? low.ChatCount.Value : 0;
             LiveStatus = low.LiveStatus;
             ApiStatusCode = low.ApistatusCode;
             PinnedMessage = low.PinnedMessage;
@@ -134,9 +134,9 @@ namespace LineLiveSitePlugin
         {
             //Cookie: _ga=GA1.2.1887758210.1492703493; _trmccid=8791bd77daaaeab8; _ldbrbid=tr_dc24b04cfc4630fac6c9301351e483618c2d164d9e7449be37fb5890502714b5; ldsuid=y2iOYFvTNEm4X4S1GYs6Ag==; _trmcuser={"id":""}; _ga=GA1.3.1887758210.1492703493; linelive=c7cc59e8f126353cb23192827520afe5f25e8a893efb791d06d70b69a6f70e15; _trmcdisabled2=-1; _trmcsession={"id":"3f8174e641d2b20b","path":"/","query":"","params":{},"time":1541067304256}; _gid=GA1.3.1706626909.1541067304; __try__=1541067317211; _gat=1
             string accessToken = null;
-            foreach(var cookie in cookies)
+            foreach (var cookie in cookies)
             {
-                if(cookie.Name == "linelive")
+                if (cookie.Name == "linelive")
                 {
                     accessToken = cookie.Value;
                 }

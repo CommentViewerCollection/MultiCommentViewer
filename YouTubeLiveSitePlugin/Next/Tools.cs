@@ -69,26 +69,24 @@ namespace YouTubeLiveSitePlugin.Next
         private readonly dynamic _d;
         public string Raw { get; }
         private ChatContinuation _chatContinuation;
-        public ChatContinuation ChatContinuation
+        public ChatContinuation ChatContinuation()
         {
-            get
+            if (_chatContinuation != null)
             {
-                if (_chatContinuation != null)
-                {
-                    return _chatContinuation;
-                }
-                //if(_d.contents.liveChatRenderer == null)
-                //{
-                //チャット無効。配信が終わったかチャットが無効に設定されている。
-                //}
-                var chatContinuation = new ChatContinuation
-                {
-                    AllChatContinuation = (string)_d.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[1].continuation.reloadContinuationData.continuation,
-                    JouiChatContinuation = (string)_d.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[0].continuation.reloadContinuationData.continuation,
-                };
-                _chatContinuation = chatContinuation;
-                return chatContinuation;
+                return _chatContinuation;
             }
+            if (_d.contents.liveChatRenderer == null)
+            {
+                //チャット無効。配信が終わったかチャットが無効に設定されている。
+
+            }
+            var chatContinuation = new ChatContinuation
+            {
+                AllChatContinuation = (string)_d.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[1].continuation.reloadContinuationData.continuation,
+                JouiChatContinuation = (string)_d.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[0].continuation.reloadContinuationData.continuation,
+            };
+            _chatContinuation = chatContinuation;
+            return chatContinuation;
         }
         public bool IsLoggedIn
         {
@@ -145,6 +143,26 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return @params;
         }
+        /// <summary>
+        /// チャットが利用可能か
+        /// </summary>
+        public bool CanChat
+        {
+            //チャットが無効に設定されている場合、"このライブストリームではチャットは無効です。"と表示されるからこれを利用する
+            get
+            {
+                if (!_d.contents.ContainsKey("messageRenderer"))
+                {
+                    return true;
+                }
+                var message = (string)_d.contents.messageRenderer.text.runs[0].text;
+                if (message.Contains("チャットは無効"))
+                {
+                    return false;
+                }
+                return true;
+            }
+        }
         public YtInitialData(string json)
         {
             Raw = json;
@@ -155,19 +173,25 @@ namespace YouTubeLiveSitePlugin.Next
     {
         private readonly dynamic _d;
         public string Raw { get; }
-        public string DelegatedSessionId => (string)_d.DELEGATED_SESSION_ID;
+        public string DelegatedSessionId
+        {
+            get
+            {
+                if (_d.ContainsKey("DELEGATED_SESSION_ID"))
+                {
+                    return (string)_d.DELEGATED_SESSION_ID;
+                }
+                return null;
+            }
+        }
         public string InnerTubeApiKey => (string)_d.INNERTUBE_API_KEY;
         public string VisitorData => (string)_d.VISITOR_DATA;
         public string InnerTubeContext => (string)_d.INNERTUBE_CONTEXT.ToString(Formatting.None);
+        public string XsrfToken => (string)_d.XSRF_TOKEN;
         public YtCfg(string json)
         {
             Raw = json;
             _d = JsonConvert.DeserializeObject(json);
-        }
-
-        internal string GetXsrfToken()
-        {
-            throw new NotImplementedException();
         }
     }
     class DataToPost
@@ -182,15 +206,26 @@ namespace YouTubeLiveSitePlugin.Next
             dynamic d = JsonConvert.DeserializeObject("{\"context\":{}}", new JsonSerializerSettings { Formatting = Formatting.None });
             dynamic context = JsonConvert.DeserializeObject(ytCfg.InnerTubeContext, new JsonSerializerSettings { Formatting = Formatting.None });
             d.context = context;
-            if (ytCfg.DelegatedSessionId != null)//未ログインの場合は設定されない
+            //2021/01/16
+            //userが最初から設定されている場合があった
+            //ただ、その要素は
+            //user
+            //+gaiaId
+            //+userId
+            //+lockedSafetyMode
+            //onBehalfOfUserは含まれていなかった。上記の要素だけで十分なのかは不明。
+            if (!d.ContainsKey("user"))
             {
-                dynamic user = JsonConvert.DeserializeObject("{\"onBehalfOfUser\":" + "\"" + ytCfg.DelegatedSessionId + "\"" + "}", new JsonSerializerSettings { Formatting = Formatting.None });
-                d.context.user = user;
-            }
-            else
-            {
-                dynamic user = JsonConvert.DeserializeObject("{}", new JsonSerializerSettings { Formatting = Formatting.None });
-                d.context.user = user;
+                if (ytCfg.DelegatedSessionId != null)//未ログインの場合は設定されない
+                {
+                    dynamic user = JsonConvert.DeserializeObject("{\"onBehalfOfUser\":" + "\"" + ytCfg.DelegatedSessionId + "\"" + "}", new JsonSerializerSettings { Formatting = Formatting.None });
+                    d.context.user = user;
+                }
+                else
+                {
+                    dynamic user = JsonConvert.DeserializeObject("{}", new JsonSerializerSettings { Formatting = Formatting.None });
+                    d.context.user = user;
+                }
             }
             _d = d;
         }
@@ -652,7 +687,7 @@ namespace YouTubeLiveSitePlugin.Next
         }
         public static string ExtractYtCfg(string liveChatHtml)
         {
-            var match = Regex.Match(liveChatHtml, "ytcfg\\.set\\(({.+?})\\);\r?\n", RegexOptions.Singleline);
+            var match = Regex.Match(liveChatHtml, "ytcfg\\.set\\(({.+?})\\);", RegexOptions.Singleline);
             if (!match.Success)
             {
                 throw new ParseException(liveChatHtml);
@@ -670,7 +705,27 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return d.ToString(Formatting.None);
         }
-        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, string hash, CookieContainer cc)
+        class GetGetLiveChatException : Exception
+        {
+            public GetGetLiveChatException(Exception innerException)
+                : base("", innerException)
+            {
+            }
+
+            public string Url { get; internal set; }
+            public string DataToPost { get; internal set; }
+            public bool IsLoggedIn { get; internal set; }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="innerTubeApiKey"></param>
+        /// <param name="cc"></param>
+        /// <param name="loginInfo"></param>
+        /// <returns></returns>
+        /// <exception cref="HttpRequestException">多分500番台のエラーだけ</exception>
+        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, CookieContainer cc, ILoginState loginInfo)
         {
             //dataの構造
             //context
@@ -689,15 +744,34 @@ namespace YouTubeLiveSitePlugin.Next
             };
             var client = new HttpClient(handler);
             var c = new StringContent(data.ToString(), Encoding.UTF8, "application/json");
-            client.DefaultRequestHeaders.Add("Authorization", $"SAPISIDHASH {hash}");
+            if (loginInfo is LoggedIn loggedIn)
+            {
+                var hash = new HashGenerator(cc).CreateHash();
+                client.DefaultRequestHeaders.Add("Authorization", $"SAPISIDHASH {hash}");
+            }
+
             client.DefaultRequestHeaders.Add("Origin", "https://www.youtube.com");
-            var k = await client.PostAsync(url, c);
+            HttpResponseMessage k;
+            try
+            {
+                k = await client.PostAsync(url, c);
+            }
+            catch (Exception ex)
+            {
+                throw new GetGetLiveChatException(ex)
+                {
+                    Url = url,
+                    DataToPost = data.ToString(),
+                    IsLoggedIn = loginInfo is LoggedIn,
+                };
+            }
             var s = await k.Content.ReadAsStringAsync();
             var getLiveChat = new GetLiveChat(s);
             return getLiveChat;
         }
         /// <summary>
         /// CookieContainerから全てのCookieを取り出す
+        /// https://stackoverflow.com/questions/13675154/how-to-get-cookies-info-inside-of-a-cookiecontainer-all-of-them-not-for-a-spe/36665793
         /// </summary>
         /// <param name="container"></param>
         /// <returns></returns>
@@ -721,19 +795,38 @@ namespace YouTubeLiveSitePlugin.Next
                 if (domain.StartsWith("."))
                     domain = domain.Substring(1);
 
-                var address = string.Format("http://{0}/", domain);
+                var httpAddress = string.Format("http://{0}/", domain);
+                var httpsAddress = string.Format("https://{0}/", domain);
 
-                if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out Uri uri) == false)
-                    continue;
-
-                foreach (Cookie cookie in container.GetCookies(uri))
+                if (Uri.TryCreate(httpAddress, UriKind.RelativeOrAbsolute, out var httpUri))
                 {
-                    if (cookie == null) continue;
-                    cookies.Add(cookie);
+                    foreach (Cookie cookie in container.GetCookies(httpUri))
+                    {
+                        cookies.Add(cookie);
+                    }
+                }
+                if (Uri.TryCreate(httpsAddress, UriKind.RelativeOrAbsolute, out var httpsUri))
+                {
+                    foreach (Cookie cookie in container.GetCookies(httpsUri))
+                    {
+                        cookies.Add(cookie);
+                    }
                 }
             }
 
             return cookies;
+        }
+
+        internal static ILoginState CreateLoginInfo(bool isLoggedin)
+        {
+            if (isLoggedin)
+            {
+                return new LoggedIn();
+            }
+            else
+            {
+                return new NotLoggedin();
+            }
         }
     }
 }

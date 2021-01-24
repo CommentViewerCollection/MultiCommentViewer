@@ -133,6 +133,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigoSitePlugin", "BigoSiteP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigoSitePluginTests", "BigoSitePluginTests\BigoSitePluginTests.csproj", "{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NicoSitePlugin2", "NicoSitePlugin2\NicoSitePlugin2.csproj", "{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Beta|Any CPU = Beta|Any CPU
@@ -506,6 +508,12 @@ Global
 		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Beta|Any CPU.ActiveCfg = Debug|Any CPU
+		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Beta|Any CPU.Build.0 = Debug|Any CPU
+		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

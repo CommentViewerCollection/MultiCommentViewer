@@ -15,6 +15,7 @@ namespace Common
         public string SubProtocol { get; set; } = "";
         public string UserAgent { get; set; } = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36";
         public bool IsConnected { get; private set; }
+        public string Origin { get; set; }
         public event EventHandler Opened;
 
         public event EventHandler<string> Received;
@@ -27,7 +28,7 @@ namespace Common
             IsConnected = true;
             _tcs = new TaskCompletionSource<object>();
             var cookies = new List<KeyValuePair<string, string>>();
-            _ws = new WebSocket(url, SubProtocol, cookies, null, UserAgent)
+            _ws = new WebSocket(url, SubProtocol, cookies, null, UserAgent, Origin)
             {
                 EnableAutoSendPing = EnableAutoSendPing,
                 AutoSendPingInterval = AutoSendPingInterval,
@@ -68,6 +69,10 @@ namespace Common
         public async Task SendAsync(string s)
         {
             await Task.Yield();
+            _ws.Send(s);
+        }
+        public void Send(string s)
+        {
             _ws.Send(s);
         }
 

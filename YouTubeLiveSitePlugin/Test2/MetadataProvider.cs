@@ -30,11 +30,25 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
+            if (_cts != null)
+            {
+                throw new InvalidOperationException("receiving");
+            }
             _cts = new CancellationTokenSource();
-
+            try
+            {
+                await ReceiveInternalAsync(ytCfg, vid, cc);
+            }
+            finally
+            {
+                _cts = null;
+            }
+        }
+        public async Task ReceiveInternalAsync(YtCfg ytCfg, string vid, CookieContainer cc)
+        {
             var innerTubeKey = ytCfg.InnerTubeApiKey;
             var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + innerTubeKey;
-            var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"1.20180224\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";
+            var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"2.20210114.08.00\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";
             //var payloadBytes = Encoding.UTF8.GetBytes(payload);
 
             //var wc = new MyWebClient(cc);
@@ -51,6 +65,10 @@ namespace YouTubeLiveSitePlugin.Test2
                     var res = await GetMetadata(cc, url, payload);
 
                     dynamic json = JsonConvert.DeserializeObject(res);
+                    if (!json.ContainsKey("continuation"))
+                    {
+                        throw new ParseException(res);
+                    }
                     if (json.continuation.ContainsKey("invalidationContinuationData"))
                     {
                         throw new ParseException(res);
@@ -120,7 +138,7 @@ namespace YouTubeLiveSitePlugin.Test2
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
             _cts = new CancellationTokenSource();
-            var token = ytCfg.GetXsrfToken();
+            var token = ytCfg.XsrfToken;
             //このAPIを呼び出すとき、Cookieに"YSC"と"VISITOR_INFO1_LIVE"が必須。
             //2つとも配信ページか $"https://www.youtube.com/live_chat?v={vid}&is_popout=1"にアクセスした時にCookieをセットしなければもらえる。
             //コメビュではtokenとかを取得するために"/live_chat"に必ずアクセスする必要があるため、未ログイン時にはそれで取得した値を使えば良い。

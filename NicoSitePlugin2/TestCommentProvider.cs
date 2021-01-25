@@ -128,10 +128,6 @@ namespace NicoSitePlugin
                     }
                     _tasks.Clear();//本当はchatのTaskだけ取り除きたいけど、変数に取ってなくて無理だから全部消しちゃう
                 }
-                if (_tasks.Count <= 1)//_mainLooptcsはあっても良い。
-                {
-                    break;
-                }
             }
             _metaProvider.Received -= MetaProvider_Received;
             _chatProvider.Received -= ChatProvider_Received;

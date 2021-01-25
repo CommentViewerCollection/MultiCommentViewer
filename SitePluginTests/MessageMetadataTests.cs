@@ -46,16 +46,6 @@ namespace SitePluginTests
                 return new MirrativSitePlugin.CommentMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
             }
         }
-        class NicoMetadataFactory : MetadataFactory
-        {
-            public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
-            {
-                var messageMock = new Mock<INicoComment>();
-                var siteOptionsMock = new Mock<INicoSiteOptions>();
-                var userMock = new Mock<IUser>();
-                return new NicoSitePlugin.CommentMessageMetadata(messageMock.Object, options, siteOptionsMock.Object, user, null, false);
-            }
-        }
         class OpenrecMetadataFactory : MetadataFactory
         {
             public override IMessageMetadata CreateMetadata(ICommentOptions options, IUser user)
@@ -111,7 +101,6 @@ namespace SitePluginTests
         {
             new LineLiveMetadataFactory(),
             new MirrativMetadataFactory(),
-            new NicoMetadataFactory(),
             new OpenrecMetadataFactory(),
             new TwicasMetadataFactory(),
             new TwitchMetadataFactory(),
@@ -202,23 +191,6 @@ namespace SitePluginTests
                 return new MirrativSitePlugin.CommentMessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
             }
         }
-        class NicoMetadataFactory : MetadataFactory
-        {
-            public NicoMetadataFactory()
-            {
-                OptionsMock = new Mock<ICommentOptions>();
-                OptionsMock.Setup(s => s.IsUserNameWrapping).Returns(false);
-            }
-
-            public override Mock<ICommentOptions> OptionsMock { get; }
-            public override IMessageMetadata CreateMetadata()
-            {
-                var messageMock = new Mock<INicoComment>();
-                var siteOptionsMock = new Mock<INicoSiteOptions>();
-                var userMock = new Mock<IUser>();
-                return new NicoSitePlugin.CommentMessageMetadata(messageMock.Object, OptionsMock.Object, siteOptionsMock.Object, userMock.Object, null, false);
-            }
-        }
         //class TwicasMetadataFactory : MetadataFactory
         //{
         //    public TwicasMetadataFactory()
@@ -298,7 +270,6 @@ namespace SitePluginTests
 
                 new LineLiveMetadataFactory(),
                 new MirrativMetadataFactory(),
-                new NicoMetadataFactory(),
                 new OpenrecMetadataFactory(),
                 //new TwicasMetadataFactory(),
                 new TwitchMetadataFactory(),

@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net;
+using System.Collections.Concurrent;
 
 namespace NicoSitePlugin
 {
@@ -124,7 +125,7 @@ namespace NicoSitePlugin
                     }
                     catch (Exception ex)
                     {
-
+                        _logger.LogException(ex);
                     }
                     _tasks.Clear();//本当はchatのTaskだけ取り除きたいけど、変数に取ってなくて無理だから全部消しちゃう
                 }
@@ -137,7 +138,7 @@ namespace NicoSitePlugin
         /// 初期コメント取得中か
         /// </summary>
         private bool _isInitialCommentsReceiving;
-
+        protected readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
         private void ProcessChatMessage(Chat.IChatMessage message)
         {
             switch (message)
@@ -158,18 +159,17 @@ namespace NicoSitePlugin
                             UserId = chat.UserId,
                             UserName = "",
                         };
-                        bool isFirstComment = false;
-                        //if (_userCommentCountDict.ContainsKey(userId))
-                        //{
-                        //    _userCommentCountDict[userId]++;
-                        //    isFirstComment = false;
-                        //}
-                        //else
-                        //{
-                        //    _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
-                        //    isFirstComment = true;
-                        //}
-                        //message = comment;
+                        bool isFirstComment;
+                        if (_userCommentCountDict.ContainsKey(userId))
+                        {
+                            _userCommentCountDict[userId]++;
+                            isFirstComment = false;
+                        }
+                        else
+                        {
+                            _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
+                            isFirstComment = true;
+                        }
                         var metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
                         {
                             IsInitialComment = _isInitialCommentsReceiving,

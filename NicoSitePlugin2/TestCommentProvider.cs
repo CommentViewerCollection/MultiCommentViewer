@@ -274,6 +274,7 @@ namespace NicoSitePlugin
 
         public override void Disconnect()
         {
+            _metaProvider?.Disconnect();
             _chatProvider?.Disconnect();
         }
 

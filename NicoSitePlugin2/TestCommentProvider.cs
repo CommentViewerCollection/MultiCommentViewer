@@ -8,21 +8,18 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace NicoSitePlugin
 {
-    class TestCommentProvider : CommentProviderBase, INicoCommentProvider
+    class TestCommentProvider : CommentProviderBase, INicoCommentProvider, IDisposable
     {
         private readonly ILogger _logger;
         private readonly IUserStoreManager _userStoreManager;
         private readonly INicoSiteOptions _siteOptions;
         private readonly IDataSource _server;
-        private string GetVid(string input)
-        {
-            var match = Regex.Match(input, "(lv\\d+)");
-            if (!match.Success) return null;
-            return match.Groups[1].Value;
-        }
+        private readonly Metadata.MetaProvider _metaProvider;
+        CancellationTokenSource _disconnectCts;
         private DataProps ExtractDataProps(string livePagehtml)
         {
             var match = Regex.Match(livePagehtml, "<script [^>]+ data-props=\"([^>]+)\"></script>");
@@ -35,35 +32,95 @@ namespace NicoSitePlugin
         public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnect();
+            var nicoInput = Tools.ParseInput(input);
+            if (nicoInput is InvalidInput invalidInput)
+            {
+                SendSystemInfo("未対応の形式のURLが入力されました", InfoType.Error);
+                AfterDisconnected();
+                return;
+            }
+            _isFirstConnection = true;
+        reload:
+            _isDisconnectedExpected = false;
+            _disconnectCts = new CancellationTokenSource();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternalAsync(nicoInput, browserProfile);
             }
-            finally
+            catch (Exception ex)
             {
-                AfterDisconnected();
+                _logger.LogException(ex);
             }
-        }
-        protected override void AfterDisconnected()
-        {
-            _chatProvider = null;
             _dataProps = null;
-            base.AfterDisconnected();
+            if (!_isDisconnectedExpected)
+            {
+                _isFirstConnection = false;
+                goto reload;
+            }
+            AfterDisconnected();
         }
-        Metadata.MetaProvider _metaProvider;
         private CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
         {
             return GetCookieContainer(browserProfile, "nicovideo.jp");
         }
-        public async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task<string> GetChannelLiveId(ChannelUrl channelUrl)
+        {
+        check:
+            var currentLiveId = await Api.GetCurrentChannelLiveId(_server, channelUrl.ChannelScreenName);
+            if (currentLiveId != null)
+            {
+                return currentLiveId;
+            }
+            else
+            {
+                RaiseMetadataUpdated(new TestMetadata
+                {
+                    Title = "（次の配信が始まるまで待機中...）",
+                });
+                await Task.Delay(30 * 1000, _disconnectCts.Token);
+                goto check;
+            }
+        }
+        private async Task<string> GetCommunityLiveId(CommunityUrl communityUrl, CookieContainer cc)
+        {
+        check:
+            var currentLiveId = await Api.GetCurrentCommunityLiveId(_server, communityUrl.CommunityId, cc);
+            if (currentLiveId != null)
+            {
+                return currentLiveId;
+            }
+            else
+            {
+                RaiseMetadataUpdated(new TestMetadata
+                {
+                    Title = "（次の配信が始まるまで待機中...）",
+                });
+                await Task.Delay(30 * 1000, _disconnectCts.Token);
+                goto check;
+            }
+        }
+        public async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
             var cc = GetCookieContainer(browserProfile);
-            var vid = GetVid(input);
+            string vid;
+            if (input is LivePageUrl livePageUrl)
+            {
+                vid = livePageUrl.LiveId;
+            }
+            else if (input is ChannelUrl channelUrl)
+            {
+                vid = await GetChannelLiveId(channelUrl);
+            }
+            else if (input is CommunityUrl communityUrl)
+            {
+                vid = await GetCommunityLiveId(communityUrl, cc);
+            }
+            else
+            {
+                throw new InvalidOperationException("bug");
+            }
             var url = "https://live2.nicovideo.jp/watch/" + vid;
-            _metaProvider = new Metadata.MetaProvider();
-            _metaProvider.Received += MetaProvider_Received;
-            _chatProvider = new Chat.ChatProvider();
-            _chatProvider.Received += ChatProvider_Received;
+
 
             var liveHtml = await _server.GetAsync(url, cc);
             _dataProps = ExtractDataProps(liveHtml);
@@ -130,8 +187,6 @@ namespace NicoSitePlugin
                     _tasks.Clear();//本当はchatのTaskだけ取り除きたいけど、変数に取ってなくて無理だから全部消しちゃう
                 }
             }
-            _metaProvider.Received -= MetaProvider_Received;
-            _chatProvider.Received -= ChatProvider_Received;
             return;
         }
         /// <summary>
@@ -139,12 +194,26 @@ namespace NicoSitePlugin
         /// </summary>
         private bool _isInitialCommentsReceiving;
         protected readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
+        /// <summary>
+        /// 意図的な切断か
+        /// </summary>
+        private bool _isDisconnectedExpected;
+        /// <summary>
+        /// 一番最初の接続か。再接続時はfalse。
+        /// 再接続時は初期コメントが不要だから主にその判別に使うフラグ
+        /// </summary>
+        private bool _isFirstConnection;
         private void ProcessChatMessage(Chat.IChatMessage message)
         {
             switch (message)
             {
                 case Chat.ChatMessage chat:
                     {
+                        if (_isFirstConnection == false && _isInitialCommentsReceiving == true)
+                        {
+                            //再接続時は初期コメントを無視する
+                            return;
+                        }
                         var userId = chat.UserId;
                         var user = GetUser(userId);
 
@@ -213,9 +282,11 @@ namespace NicoSitePlugin
         readonly List<Task> _tasks = new List<Task>();
         readonly List<Task> _toAdd = new List<Task>();
         TaskCompletionSource<object> _mainLooptcs;
-        Chat.ChatProvider _chatProvider;
+        private readonly Chat.ChatProvider _chatProvider;
         Metadata.Room _room;
         DataProps _dataProps;
+        private bool _disposedValue;
+
         private void MetaProvider_Received(object sender, Metadata.IMetaMessage e)
         {
             var message = e;
@@ -270,6 +341,8 @@ namespace NicoSitePlugin
 
         public override void Disconnect()
         {
+            _isDisconnectedExpected = true;
+            _disconnectCts.Cancel();
             _metaProvider?.Disconnect();
             _chatProvider?.Disconnect();
         }
@@ -309,6 +382,41 @@ namespace NicoSitePlugin
             _userStoreManager = userStoreManager;
             _siteOptions = siteOptions;
             _server = server;
+            _metaProvider = new Metadata.MetaProvider();
+            _metaProvider.Received += MetaProvider_Received;
+            _chatProvider = new Chat.ChatProvider();
+            _chatProvider.Received += ChatProvider_Received;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                    _metaProvider.Received -= MetaProvider_Received;
+                    _chatProvider.Received -= ChatProvider_Received;
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                _disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~TestCommentProvider()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

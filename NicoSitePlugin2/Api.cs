@@ -9,7 +9,7 @@ namespace NicoSitePlugin
         public static async Task<MyInfo> GetMyInfo(IDataSource server, CookieContainer cc)
         {
             var url = "https://com.nicovideo.jp/community/co1034396";
-            var html = await server.GetAsync(url,cc);
+            var html = await server.GetAsync(url, cc);
             var match = Regex.Match(html, "user:\\s*({[^}]+?})");
             if (!match.Success)
             {
@@ -46,6 +46,39 @@ namespace NicoSitePlugin
 
             return myInfo;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dataSource"></param>
+        /// <param name="channelId">channelId/screenName</param>
+        /// <returns></returns>
+        internal static async Task<string> GetCurrentChannelLiveId(IDataSource dataSource, string channelId)
+        {
+            var url = "http://ch.nicovideo.jp/" + channelId;
+            var res = await dataSource.GetAsync(url);
+            var match = Regex.Match(res, "(data-live_status=\"onair\".+?</span>)", RegexOptions.Singleline);
+            if (!match.Success) return null;
+            var nowLiveSection = match.Groups[1].Value;
+            var liveId = Tools.ExtractLiveId(nowLiveSection);
+            return liveId;
+        }
+        /// <summary>
+        /// 指定されたコミュニティの現在の配信のIDを取得する
+        /// </summary>
+        /// <param name="dataSource"></param>
+        /// <param name="communityId">co\d+</param>
+        /// <returns>配信中であればその配信のID、そうでなければnull</returns>
+        internal static async Task<string> GetCurrentCommunityLiveId(IDataSource dataSource, string communityId, CookieContainer cc)
+        {
+            //TODO:自動認証じゃないコミュニティの場合、Cookieが無いと入れない
+            var url = "https://com.nicovideo.jp/community/" + communityId;
+            //コミュニティフォロワーではありません。 （いわゆるclosed community）の場合403が返ってくる
+            var res = await dataSource.GetAsync(url, cc);
+            var match = Regex.Match(res, "(<section class=\"now_live.+?</section>)", RegexOptions.Singleline);
+            if (!match.Success) return null;
+            var nowLiveSection = match.Groups[1].Value;
+            var liveId = Tools.ExtractLiveId(nowLiveSection);
+            return liveId;
+        }
     }
 }

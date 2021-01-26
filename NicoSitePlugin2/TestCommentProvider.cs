@@ -48,6 +48,12 @@ namespace NicoSitePlugin
             {
                 await ConnectInternalAsync(nicoInput, browserProfile);
             }
+            catch(ApiGetCommunityLivesException ex)
+            {
+                _isDisconnectedExpected = true;
+                SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
+                _logger.LogException(ex);
+            }
             catch (Exception ex)
             {
                 _logger.LogException(ex);

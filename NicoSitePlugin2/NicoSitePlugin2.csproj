@@ -60,6 +60,7 @@
     <Compile Include="Chat\UnknownMessage.cs" />
     <Compile Include="DataProps.cs" />
     <Compile Include="IInput.cs" />
+    <Compile Include="Low\CommunityLives.cs" />
     <Compile Include="Message\NicoAd.cs" />
     <Compile Include="Message\NicoComment.cs" />
     <Compile Include="Message\NicoConnected.cs" />

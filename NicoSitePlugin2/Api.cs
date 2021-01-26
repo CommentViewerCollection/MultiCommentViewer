@@ -1,11 +1,50 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Net;
+using Org.BouncyCastle.Utilities.IO;
+using Newtonsoft.Json;
+using System;
+using System.Linq;
 
 namespace NicoSitePlugin
 {
+    class ApiGetCommunityLivesException : Exception
+    {
+        public ApiGetCommunityLivesException()
+        {
+
+        }
+    }
     static class Api
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="server"></param>
+        /// <param name="cc"></param>
+        /// <param name="communityId">co\d+</param>
+        /// <param name="limit"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public static async Task<NicoSitePlugin2.Low.CommunityLives.Live[]> GetCommunityLives(IDataSource server, CookieContainer cc, string communityId, int limit, int offset)
+        {
+            var url = $"https://com.nicovideo.jp/api/v1/communities/{communityId.Substring(2)}/lives.json?limit={limit}&offset={offset}";
+            var res = await server.GetAsync(url, cc);
+            dynamic d = JsonConvert.DeserializeObject(res);
+            //{"meta":{"status":404,"error-code":"RESOURCE_NOT_FOUND","error-message":"対象のコミュニティが存在しません。"}}
+            //{"meta":{"status":404,"error-code":"RESOURCE_NOT_FOUND","error-message":"リソース communities の値の形式が不正です"}}
+            var status = (int)d.meta.status;
+            if (status == 200)
+            {
+                var obj = JsonConvert.DeserializeObject<NicoSitePlugin2.Low.CommunityLives.RootObject>(res);
+                return obj.Data.Lives;
+
+            }
+            else
+            {
+                throw new ApiGetCommunityLivesException();
+            }
+        }
         public static async Task<MyInfo> GetMyInfo(IDataSource server, CookieContainer cc)
         {
             var url = "https://com.nicovideo.jp/community/co1034396";
@@ -70,15 +109,16 @@ namespace NicoSitePlugin
         /// <returns>配信中であればその配信のID、そうでなければnull</returns>
         internal static async Task<string> GetCurrentCommunityLiveId(IDataSource dataSource, string communityId, CookieContainer cc)
         {
-            //TODO:自動認証じゃないコミュニティの場合、Cookieが無いと入れない
-            var url = "https://com.nicovideo.jp/community/" + communityId;
-            //コミュニティフォロワーではありません。 （いわゆるclosed community）の場合403が返ってくる
-            var res = await dataSource.GetAsync(url, cc);
-            var match = Regex.Match(res, "(<section class=\"now_live.+?</section>)", RegexOptions.Singleline);
-            if (!match.Success) return null;
-            var nowLiveSection = match.Groups[1].Value;
-            var liveId = Tools.ExtractLiveId(nowLiveSection);
-            return liveId;
+            var lives = await GetCommunityLives(dataSource, cc, communityId, 1, 0);
+            if (lives.Length > 0 && lives[0].Status == "ON_AIR")
+            {
+                return lives[0].Id;
+            }
+            else
+            {
+                return null;
+            }
+
         }
     }
 }

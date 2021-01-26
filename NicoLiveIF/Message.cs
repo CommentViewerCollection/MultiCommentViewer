@@ -12,6 +12,8 @@ namespace NicoSitePlugin
         Disconnected,
         Ad,
         Item,
+        Spi,
+        Emotion,
         Kick,
         Info,
         Ignored,
@@ -50,14 +52,31 @@ namespace NicoSitePlugin
         string UserId { get; }
         string RoomName { get; }
     }
-    public interface INicoItem : INicoMessage
+    public interface INicoGift : INicoMessage
     {
         string UserId { get; }
         DateTime PostedAt { get; }
         string Text { get; }
+        [Obsolete]
         string RoomName { get; }
         string ItemName { get; }
         int ItemCount { get; }
+    }
+    public interface INicoSpi : INicoMessage
+    {
+        string Text { get; }
+        DateTime PostedAt { get; }
+        string UserId { get; }
+    }
+    public interface INicoEmotion : INicoMessage
+    {
+        string Content { get; }
+        DateTime PostedAt { get; }
+        int ChatNo { get; }
+        int Vpos { get; }
+        string UserId { get; }
+        int Premium { get; }
+        int Anonymity { get; }
     }
     public interface INicoKickCommand : INicoMessage
     {

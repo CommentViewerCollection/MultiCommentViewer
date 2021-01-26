@@ -246,7 +246,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <ComboBox BorderBrush="Transparent" Margin="5,0" ItemsSource="{Binding Sites}" SelectedValue="{Binding SelectedSite}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}" />
+                                <ComboBox BorderBrush="Transparent" Margin="5,0" ItemsSource="{Binding Sites}" SelectedValue="{Binding SelectedSite, UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="DisplayName" IsEnabled="{Binding CanConnect}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

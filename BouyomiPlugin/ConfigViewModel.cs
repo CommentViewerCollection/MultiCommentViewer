@@ -305,6 +305,22 @@ namespace BouyomiPlugin
             get => _options.IsNicoAd;
             set => _options.IsNicoAd = value;
         }
+        /// <summary>
+        /// ニコ生のリクエストを読み上げるか
+        /// </summary>
+        public bool IsNicoSpi
+        {
+            get => _options.IsNicoSpi;
+            set => _options.IsNicoSpi = value;
+        }
+        /// <summary>
+        /// ニコ生のエモーションを読み上げるか
+        /// </summary>
+        public bool IsNicoEmotion
+        {
+            get => _options.IsNicoEmotion;
+            set => _options.IsNicoEmotion = value;
+        }
         #endregion //ニコ生
 
         #region Twicas

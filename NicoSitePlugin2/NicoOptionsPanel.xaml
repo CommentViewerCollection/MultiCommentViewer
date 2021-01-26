@@ -15,15 +15,23 @@
         <CheckBox Content="184IDをユーザ名として表示する" IsChecked="{Binding IsShow184Id}" HorizontalAlignment="Left" Margin="30,165,0,0" VerticalAlignment="Top"/>
         <CheckBox Content="ユーザ名を自動的に取得する" IsChecked="{Binding IsAutoGetUsername}" HorizontalAlignment="Left" Margin="30,185,0,0" VerticalAlignment="Top"/>
 
-        <Label Content="広告背景色" HorizontalAlignment="Left" Margin="36,218,0,0" VerticalAlignment="Top" />
+        <Label Content="広告背景色" HorizontalAlignment="Left" Margin="20,218,0,0" VerticalAlignment="Top" />
         <xctk:ColorPicker SelectedColor="{Binding AdBackColor}" Margin="123,222,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label Content="広告文字色" HorizontalAlignment="Left" Margin="212,222,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding AdForeColor}" Margin="299,222,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        
-        <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="36,245,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding AdForeColor}" Margin="315,222,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+
+        <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="20,245,0,0" VerticalAlignment="Top" />
         <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="123,249,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label Content="アイテム文字色" HorizontalAlignment="Left" Margin="212,249,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="299,249,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="315,249,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="リクエスト背景色" HorizontalAlignment="Left" Margin="20,272,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding SpiBackColor}" Margin="123,276,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="リクエスト文字色" HorizontalAlignment="Left" Margin="212,276,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding SpiForeColor}" Margin="315,276,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="エモーション背景色" HorizontalAlignment="Left" Margin="20,299,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="123,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="エモーション文字色" HorizontalAlignment="Left" Margin="212,303,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="315,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
 
     </Grid>

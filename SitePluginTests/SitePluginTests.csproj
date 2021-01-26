@@ -86,10 +86,6 @@
       <Project>{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}</Project>
       <Name>NicoLiveIF</Name>
     </ProjectReference>
-    <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj">
-      <Project>{2eba5f3c-e50e-4885-9990-b03553e9330d}</Project>
-      <Name>NicoSitePlugin</Name>
-    </ProjectReference>
     <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
       <Project>{02A55625-E735-4909-A470-E8405EEE1A32}</Project>
       <Name>OpenrecIF</Name>

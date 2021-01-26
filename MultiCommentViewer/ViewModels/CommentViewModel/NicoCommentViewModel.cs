@@ -147,13 +147,31 @@ namespace MultiCommentViewer
             //_nameItems = MessagePartFactory.CreateMessageItems(ad.UserName);
             MessageItems = MessagePartFactory.CreateMessageItems(ad.Text);
             PostTime = ad.PostedAt.ToString("HH:mm:ss");
+            Info = "広告";
         }
-        public NicoCommentViewModel(NicoSitePlugin.INicoItem item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+        public NicoCommentViewModel(NicoSitePlugin.INicoGift item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(item as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
             //_nameItems = MessagePartFactory.CreateMessageItems(item.UserName);
             MessageItems = MessagePartFactory.CreateMessageItems(item.Text);
             PostTime = item.PostedAt.ToString("HH:mm:ss");
+            Info = "ギフト";
+        }
+        public NicoCommentViewModel(NicoSitePlugin.INicoSpi item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+   : this(item as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
+        {
+            //_nameItems = MessagePartFactory.CreateMessageItems(item.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(item.Text);
+            PostTime = item.PostedAt.ToString("HH:mm:ss");
+            Info = "リクエスト";
+        }
+        public NicoCommentViewModel(NicoSitePlugin.INicoEmotion item, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(item as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
+        {
+            //_nameItems = MessagePartFactory.CreateMessageItems(item.UserName);
+            MessageItems = MessagePartFactory.CreateMessageItems(item.Content);
+            PostTime = item.PostedAt.ToString("HH:mm:ss");
+            Info = "エモーション";
         }
         public NicoCommentViewModel(NicoSitePlugin.INicoInfo info, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(info as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)

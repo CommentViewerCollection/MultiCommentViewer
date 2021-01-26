@@ -11,7 +11,7 @@ namespace NicoSitePlugin
     {
 
     }
-    internal abstract class MessageMetadataBase:INicoMessageMetadata
+    internal abstract class MessageMetadataBase : INicoMessageMetadata
     {
         //protected readonly IMirrativMessage _message;
         protected readonly ICommentOptions _options;
@@ -232,7 +232,7 @@ namespace NicoSitePlugin
         public override bool IsFirstComment => _isFirstComment;
         public override bool IsVisible => base.IsVisible;
         public CommentMessageMetadata(INicoComment comment, ICommentOptions options, INicoSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
-            :base(options,siteOptions)
+            : base(options, siteOptions)
         {
             Debug.Assert(user != null);
             User = user;
@@ -297,15 +297,44 @@ namespace NicoSitePlugin
     }
     internal class ItemMessageMetadata : MessageMetadataBase
     {
-        private readonly INicoItem _item;
+        private readonly INicoGift _item;
 
         public override Color BackColor => _siteOptions.ItemBackColor;
         public override Color ForeColor => _siteOptions.ItemForeColor;
 
-        public ItemMessageMetadata(INicoItem item, ICommentOptions options, INicoSiteOptions siteOptions)
+        public ItemMessageMetadata(INicoGift item, ICommentOptions options, INicoSiteOptions siteOptions)
             : base(options, siteOptions)
         {
             _item = item;
+        }
+    }
+    internal class SpiMessageMetadata : MessageMetadataBase
+    {
+        private readonly INicoSpi _item;
+
+        public override Color BackColor => _siteOptions.SpiBackColor;
+        public override Color ForeColor => _siteOptions.SpiForeColor;
+
+        public SpiMessageMetadata(INicoSpi item, ICommentOptions options, INicoSiteOptions siteOptions)
+            : base(options, siteOptions)
+        {
+            _item = item;
+        }
+    }
+    internal class EmotionMessageMetadata : MessageMetadataBase
+    {
+        private readonly INicoEmotion _item;
+
+        public override Color BackColor => _siteOptions.EmotionBackColor;
+        public override Color ForeColor => _siteOptions.EmotionForeColor;
+
+        public EmotionMessageMetadata(INicoEmotion item, ICommentOptions options, INicoSiteOptions siteOptions, IUser user, ICommentProvider cp)
+            : base(options, siteOptions)
+        {
+            _item = item;
+            User = user;
+            CommentProvider = cp;
+
         }
     }
     internal class DisconnectedMessageMetadata : MessageMetadataBase

@@ -7,21 +7,20 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net;
+using System.Collections.Concurrent;
+using System.Threading;
+using Newtonsoft.Json;
 
 namespace NicoSitePlugin
 {
-    class TestCommentProvider : CommentProviderBase, INicoCommentProvider
+    class TestCommentProvider : CommentProviderBase, INicoCommentProvider, IDisposable
     {
         private readonly ILogger _logger;
         private readonly IUserStoreManager _userStoreManager;
         private readonly INicoSiteOptions _siteOptions;
         private readonly IDataSource _server;
-        private string GetVid(string input)
-        {
-            var match = Regex.Match(input, "(lv\\d+)");
-            if (!match.Success) return null;
-            return match.Groups[1].Value;
-        }
+        private readonly Metadata.MetaProvider _metaProvider;
+        CancellationTokenSource _disconnectCts;
         private DataProps ExtractDataProps(string livePagehtml)
         {
             var match = Regex.Match(livePagehtml, "<script [^>]+ data-props=\"([^>]+)\"></script>");
@@ -34,35 +33,101 @@ namespace NicoSitePlugin
         public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
             BeforeConnect();
+            var nicoInput = Tools.ParseInput(input);
+            if (nicoInput is InvalidInput invalidInput)
+            {
+                SendSystemInfo("未対応の形式のURLが入力されました", InfoType.Error);
+                AfterDisconnected();
+                return;
+            }
+            _isFirstConnection = true;
+        reload:
+            _isDisconnectedExpected = false;
+            _disconnectCts = new CancellationTokenSource();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternalAsync(nicoInput, browserProfile);
             }
-            finally
+            catch(ApiGetCommunityLivesException ex)
             {
-                AfterDisconnected();
+                _isDisconnectedExpected = true;
+                SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
+                _logger.LogException(ex);
             }
-        }
-        protected override void AfterDisconnected()
-        {
-            _chatProvider = null;
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
             _dataProps = null;
-            base.AfterDisconnected();
+            if (!_isDisconnectedExpected)
+            {
+                _isFirstConnection = false;
+                goto reload;
+            }
+            AfterDisconnected();
         }
-        Metadata.MetaProvider _metaProvider;
         private CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
         {
             return GetCookieContainer(browserProfile, "nicovideo.jp");
         }
-        public async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task<string> GetChannelLiveId(ChannelUrl channelUrl)
+        {
+        check:
+            var currentLiveId = await Api.GetCurrentChannelLiveId(_server, channelUrl.ChannelScreenName);
+            if (currentLiveId != null)
+            {
+                return currentLiveId;
+            }
+            else
+            {
+                RaiseMetadataUpdated(new TestMetadata
+                {
+                    Title = "（次の配信が始まるまで待機中...）",
+                });
+                await Task.Delay(30 * 1000, _disconnectCts.Token);
+                goto check;
+            }
+        }
+        private async Task<string> GetCommunityLiveId(CommunityUrl communityUrl, CookieContainer cc)
+        {
+        check:
+            var currentLiveId = await Api.GetCurrentCommunityLiveId(_server, communityUrl.CommunityId, cc);
+            if (currentLiveId != null)
+            {
+                return currentLiveId;
+            }
+            else
+            {
+                RaiseMetadataUpdated(new TestMetadata
+                {
+                    Title = "（次の配信が始まるまで待機中...）",
+                });
+                await Task.Delay(30 * 1000, _disconnectCts.Token);
+                goto check;
+            }
+        }
+        public async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
             var cc = GetCookieContainer(browserProfile);
-            var vid = GetVid(input);
+            string vid;
+            if (input is LivePageUrl livePageUrl)
+            {
+                vid = livePageUrl.LiveId;
+            }
+            else if (input is ChannelUrl channelUrl)
+            {
+                vid = await GetChannelLiveId(channelUrl);
+            }
+            else if (input is CommunityUrl communityUrl)
+            {
+                vid = await GetCommunityLiveId(communityUrl, cc);
+            }
+            else
+            {
+                throw new InvalidOperationException("bug");
+            }
             var url = "https://live2.nicovideo.jp/watch/" + vid;
-            _metaProvider = new Metadata.MetaProvider();
-            _metaProvider.Received += MetaProvider_Received;
-            _chatProvider = new Chat.ChatProvider();
-            _chatProvider.Received += ChatProvider_Received;
+
 
             var liveHtml = await _server.GetAsync(url, cc);
             _dataProps = ExtractDataProps(liveHtml);
@@ -109,6 +174,7 @@ namespace NicoSitePlugin
                 }
                 else//roomTask
                 {
+                    _metaProvider?.Disconnect();
                     try
                     {
                         await metaTask;
@@ -124,61 +190,185 @@ namespace NicoSitePlugin
                     }
                     catch (Exception ex)
                     {
-
+                        _logger.LogException(ex);
                     }
                     _tasks.Clear();//本当はchatのTaskだけ取り除きたいけど、変数に取ってなくて無理だから全部消しちゃう
                 }
-                if (_tasks.Count <= 1)//_mainLooptcsはあっても良い。
-                {
-                    break;
-                }
             }
-            _metaProvider.Received -= MetaProvider_Received;
-            _chatProvider.Received -= ChatProvider_Received;
             return;
         }
         /// <summary>
         /// 初期コメント取得中か
         /// </summary>
         private bool _isInitialCommentsReceiving;
-
+        protected readonly ConcurrentDictionary<string, int> _userCommentCountDict = new ConcurrentDictionary<string, int>();
+        /// <summary>
+        /// 意図的な切断か
+        /// </summary>
+        private bool _isDisconnectedExpected;
+        /// <summary>
+        /// 一番最初の接続か。再接続時はfalse。
+        /// 再接続時は初期コメントが不要だから主にその判別に使うフラグ
+        /// </summary>
+        private bool _isFirstConnection;
+        private static bool IsAd(Chat.ChatMessage chat)
+        {
+            return chat.Content.StartsWith("/nicoad ");
+        }
+        private static bool IsGift(Chat.ChatMessage chat)
+        {
+            return chat.Content.StartsWith("/gift ");
+        }
+        private static bool IsSpi(Chat.ChatMessage chat)
+        {
+            return chat.Content.StartsWith("/spi ");
+        }
+        private static bool IsEmotion(Chat.ChatMessage chat)
+        {
+            return chat.Content.StartsWith("/emotion ");
+        }
+        private static bool IsDisconnect(Chat.ChatMessage chat)
+        {
+            return chat.Content == "/disconnect";
+        }
         private void ProcessChatMessage(Chat.IChatMessage message)
         {
             switch (message)
             {
                 case Chat.ChatMessage chat:
                     {
+                        if (_isFirstConnection == false && _isInitialCommentsReceiving == true)
+                        {
+                            //再接続時は初期コメントを無視する
+                            return;
+                        }
                         var userId = chat.UserId;
                         var user = GetUser(userId);
-
+                        bool isFirstComment;
+                        if (_userCommentCountDict.ContainsKey(userId))
+                        {
+                            _userCommentCountDict[userId]++;
+                            isFirstComment = false;
+                        }
+                        else
+                        {
+                            _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
+                            isFirstComment = true;
+                        }
                         //var comment = await Tools.CreateNicoComment(chat, user, _siteOptions, roomName, async userid => await API.GetUserInfo(_dataSource, userid), _logger);
-                        var comment = new NicoComment("")
+                        INicoMessage comment;
+                        INicoMessageMetadata metadata;
+                        if (IsAd(chat))
                         {
-                            ChatNo = chat.No,
-                            Id = chat.No.ToString(),
-                            Is184 = chat.Anonymity == 1,
-                            PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
-                            Text = chat.Content,
-                            UserId = chat.UserId,
-                            UserName = "",
-                        };
-                        bool isFirstComment = false;
-                        //if (_userCommentCountDict.ContainsKey(userId))
-                        //{
-                        //    _userCommentCountDict[userId]++;
-                        //    isFirstComment = false;
-                        //}
-                        //else
-                        //{
-                        //    _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
-                        //    isFirstComment = true;
-                        //}
-                        //message = comment;
-                        var metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
+                            ///nicoad {"totalAdPoint":215500,"message":"シュガーさんが1700ptニコニ広告しました","version":"1"}
+                            var adJson = chat.Content.Replace("/nicoad", "");
+                            dynamic d = JsonConvert.DeserializeObject(adJson);
+                            if ((string)d.version != "1")
+                            {
+                                //未対応
+                                return;
+                            }
+                            var content = (string)d.message;
+                            var ad = new NicoAd(chat.Raw)
+                            {
+                                PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
+                                UserId = userId,
+                                Text = content,
+                            };
+                            comment = ad;
+                            metadata = new AdMessageMetadata(ad, _options, _siteOptions)
+                            {
+                                IsInitialComment = _isInitialCommentsReceiving,
+                                SiteContextGuid = SiteContextGuid,
+                            };
+                        }
+                        else if (IsGift(chat))
                         {
-                            IsInitialComment = _isInitialCommentsReceiving,
-                            SiteContextGuid = SiteContextGuid,
-                        };
+                            var match = Regex.Match(chat.Content, "/gift (\\S+) (\\d+) \"(\\S+)\" (\\d+) \"(\\S+)\" \"(\\S+)\" (\\d+)");
+                            if (!match.Success)
+                            {
+                                return;
+                            }
+                            var giftId = match.Groups[1].Value;
+                            var userIdp = match.Groups[2].Value;//ギフトを投げた人。userId == "900000000"
+                            var username = match.Groups[3].Value;
+                            var point = match.Groups[4].Value;
+                            var what = match.Groups[5].Value;
+                            var itemName = match.Groups[6].Value;
+                            var itemCount = match.Groups[7].Value;//アイテムの個数？ギフト貢献n位？
+                            var text = $"{username}さんがギフト「{itemName}（{point}pt）」を贈りました";
+                            var gift = new NicoGift(chat.Raw)
+                            {
+                                Text = text,
+                                PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
+                                UserId = userIdp,
+                                NameItems = Common.MessagePartFactory.CreateMessageItems(username),
+                            };
+                            comment = gift;
+                            metadata = new ItemMessageMetadata(gift, _options, _siteOptions)
+                            {
+                                IsInitialComment = _isInitialCommentsReceiving,
+                                SiteContextGuid = SiteContextGuid,
+                            };
+                        }
+                        else if (IsSpi(chat))
+                        {
+                            var spi = new NicoSpi(chat.Raw)
+                            {
+                                Text = chat.Content,
+                                PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
+                                UserId = chat.UserId,
+                            };
+                            comment = spi;
+                            metadata = new SpiMessageMetadata(spi, _options, _siteOptions)
+                            {
+                                IsInitialComment = _isInitialCommentsReceiving,
+                                SiteContextGuid = SiteContextGuid,
+                            };
+                        }
+                        else if (IsEmotion(chat))
+                        {
+                            var content = chat.Content.Substring("/emotion ".Length);
+                            var abc = new NicoEmotion("")
+                            {
+                                ChatNo = chat.No,
+                                Anonymity = chat.Anonymity,
+                                PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
+                                Content = content,
+                                UserId = chat.UserId,
+                            };
+                            comment = abc;
+                            metadata = new EmotionMessageMetadata(abc, _options, _siteOptions, user, this)
+                            {
+                                IsInitialComment = _isInitialCommentsReceiving,
+                                SiteContextGuid = SiteContextGuid,
+                            };
+                        }
+                        else
+                        {
+                            if (IsDisconnect(chat))//NicoCommentではなく専用のクラスを作っても良いかも。
+                            {
+                                _chatProvider?.Disconnect();
+                            }
+                            var abc = new NicoComment("")
+                            {
+                                ChatNo = chat.No,
+                                Id = chat.No.ToString(),
+                                Is184 = chat.Anonymity == 1,
+                                PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
+                                Text = chat.Content,
+                                UserId = chat.UserId,
+                                UserName = "",
+                            };
+                            comment = abc;
+                            metadata = new CommentMessageMetadata(abc, _options, _siteOptions, user, this, isFirstComment)
+                            {
+                                IsInitialComment = _isInitialCommentsReceiving,
+                                SiteContextGuid = SiteContextGuid,
+                            };
+                        }
+
+
                         var context = new NicoMessageContext(comment, metadata, new NicoMessageMethods());
                         RaiseMessageReceived(context);
                     }
@@ -217,9 +407,11 @@ namespace NicoSitePlugin
         readonly List<Task> _tasks = new List<Task>();
         readonly List<Task> _toAdd = new List<Task>();
         TaskCompletionSource<object> _mainLooptcs;
-        Chat.ChatProvider _chatProvider;
+        private readonly Chat.ChatProvider _chatProvider;
         Metadata.Room _room;
         DataProps _dataProps;
+        private bool _disposedValue;
+
         private void MetaProvider_Received(object sender, Metadata.IMetaMessage e)
         {
             var message = e;
@@ -274,6 +466,9 @@ namespace NicoSitePlugin
 
         public override void Disconnect()
         {
+            _isDisconnectedExpected = true;
+            _disconnectCts.Cancel();
+            _metaProvider?.Disconnect();
             _chatProvider?.Disconnect();
         }
 
@@ -312,6 +507,41 @@ namespace NicoSitePlugin
             _userStoreManager = userStoreManager;
             _siteOptions = siteOptions;
             _server = server;
+            _metaProvider = new Metadata.MetaProvider();
+            _metaProvider.Received += MetaProvider_Received;
+            _chatProvider = new Chat.ChatProvider(_logger);
+            _chatProvider.Received += ChatProvider_Received;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                    _metaProvider.Received -= MetaProvider_Received;
+                    _chatProvider.Received -= ChatProvider_Received;
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                _disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~TestCommentProvider()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

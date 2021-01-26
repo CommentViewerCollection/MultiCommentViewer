@@ -52,6 +52,8 @@ namespace BouyomiPlugin
         public bool IsNicoItem { get { return GetValue(); } set { SetValue(value); } }
         public bool IsNicoItemNickname { get { return GetValue(); } set { SetValue(value); } }
         public bool IsNicoAd { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoSpi { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsNicoEmotion { get { return GetValue(); } set { SetValue(value); } }
 
         //Twicas
         public bool IsTwicasConnect { get { return GetValue(); } set { SetValue(value); } }
@@ -160,6 +162,8 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsNicoItem), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsNicoItemNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsNicoAd), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoSpi), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsNicoEmotion), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             //Twicas
             Dict.Add(nameof(IsTwicasConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

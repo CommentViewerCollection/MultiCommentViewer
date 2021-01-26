@@ -20,7 +20,7 @@ namespace MultiCommentViewerTests
         [Test]
         public void ItemTest()
         {
-            var itemMock = new Mock<INicoItem>();
+            var itemMock = new Mock<INicoGift>();
             var item = itemMock.Object;
             var metadataMock = new Mock<IMessageMetadata>();
             var metadata = metadataMock.Object;

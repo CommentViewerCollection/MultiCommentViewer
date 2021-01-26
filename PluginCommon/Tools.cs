@@ -49,9 +49,24 @@ namespace PluginCommon
                 comment = nicoComment.Text;
                 name = nicoComment.UserName;
             }
-            else if (message is NicoSitePlugin.INicoItem nicoItem)
+            else if (message is NicoSitePlugin.INicoGift nicoItem)
             {
                 comment = nicoItem.Text;
+                //name = nicoItem.;
+            }
+            else if (message is NicoSitePlugin.INicoAd nicoAd)
+            {
+                comment = nicoAd.Text;
+                //name = nicoItem.;
+            }
+            else if (message is NicoSitePlugin.INicoSpi nicoSpi)
+            {
+                comment = nicoSpi.Text;
+                //name = nicoItem.;
+            }
+            else if (message is NicoSitePlugin.INicoEmotion nicoEmotion)
+            {
+                comment = nicoEmotion.Content;
                 //name = nicoItem.;
             }
             //}

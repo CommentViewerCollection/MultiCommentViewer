@@ -22,6 +22,10 @@ namespace NicoSitePlugin
         public Color ItemForeColor { get => GetValue(); set => SetValue(value); }
         public Color AdBackColor { get => GetValue(); set => SetValue(value); }
         public Color AdForeColor { get => GetValue(); set => SetValue(value); }
+        public Color SpiBackColor { get => GetValue(); set => SetValue(value); }
+        public Color SpiForeColor { get => GetValue(); set => SetValue(value); }
+        public Color EmotionBackColor { get => GetValue(); set => SetValue(value); }
+        public Color EmotionForeColor { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(OfficialRoomsRetrieveCount), new Item { DefaultValue = 3, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
@@ -40,6 +44,10 @@ namespace NicoSitePlugin
             Dict.Add(nameof(AdForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ItemBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ItemForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SpiBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SpiForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(EmotionBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(EmotionForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
         }
         internal NicoSiteOptions Clone()
         {

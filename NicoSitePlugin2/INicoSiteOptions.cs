@@ -19,6 +19,10 @@ namespace NicoSitePlugin
         Color AdForeColor { get; set; }
         Color ItemBackColor { get; set; }
         Color ItemForeColor { get; set; }
+        Color SpiBackColor { get; set; }
+        Color SpiForeColor { get; set; }
+        Color EmotionBackColor { get; set; }
+        Color EmotionForeColor { get; set; }
 
         /// <summary>
         /// 184コメントを表示するか

@@ -195,6 +195,8 @@
                                     <RowDefinition />
                                     <RowDefinition />
                                     <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <CheckBox Grid.Row="0" IsChecked="{Binding IsNicoConnect}" Content="接続" />
                                 <CheckBox Grid.Row="1" IsChecked="{Binding IsNicoDisconnect}" Content="切断" />
@@ -227,6 +229,8 @@
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckNicoItem}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsNicoItemNickname}" Content="コテハン" />
                                 </Grid>
                                 <CheckBox Grid.Row="4" IsChecked="{Binding IsNicoAd}" Content="広告" />
+                                <CheckBox Grid.Row="5" IsChecked="{Binding IsNicoSpi}" Content="リクエスト" />
+                                <CheckBox Grid.Row="6" IsChecked="{Binding IsNicoEmotion}" Content="エモーション" />
                             </Grid>
                         </Border>
 

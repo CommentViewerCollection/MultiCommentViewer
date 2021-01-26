@@ -50,7 +50,7 @@ namespace PluginCommonTests
                 Assert.AreEqual(commentExpected, commentActual);
             }
             {
-                var m = new Mock<NicoSitePlugin.INicoItem>();
+                var m = new Mock<NicoSitePlugin.INicoGift>();
 
                 m.Setup(x => x.Text).Returns(commentExpected);
                 var obj = m.Object;

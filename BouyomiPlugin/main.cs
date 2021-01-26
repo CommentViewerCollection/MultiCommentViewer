@@ -268,7 +268,7 @@ namespace BouyomiPlugin
                             {
                                 //name = (NicoMessage as INicoItem).NameItems.ToText();
                             }
-                            comment = (NicoMessage as INicoItem).Text;
+                            comment = (NicoMessage as INicoGift).Text;
                         }
                         break;
                     case NicoMessageType.Ad:
@@ -276,6 +276,13 @@ namespace BouyomiPlugin
                         {
                             name = null;
                             comment = (NicoMessage as INicoAd).Text;
+                        }
+                        break;
+                    case NicoMessageType.Spi:
+                        if (options.IsNicoSpi)
+                        {
+                            name = null;
+                            comment = (NicoMessage as INicoSpi).Text;
                         }
                         break;
                 }

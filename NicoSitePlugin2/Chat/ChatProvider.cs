@@ -9,6 +9,8 @@ namespace NicoSitePlugin.Chat
     {
         IChatOptions _chatOptions;
         Websocket _ws;
+        private readonly ILogger _logger;
+
         public event EventHandler<IChatMessage> Received;
         public async Task ReceiveAsync(IChatOptions chatOptions)
         {
@@ -38,11 +40,12 @@ namespace NicoSitePlugin.Chat
             {
                 _ws.Received -= Ws_Received;
                 _ws.Opened -= Ws_Opened;
+                _ws = null;
             }
         }
         public void SendPing()
         {
-            _ws.Send("");
+            _ws?.Send("");
         }
 
         private void Ws_Opened(object sender, EventArgs e)
@@ -70,13 +73,24 @@ namespace NicoSitePlugin.Chat
         {
             var raw = e;
             Debug.WriteLine(raw);
-            var message = ChatParser.Parse(raw);
-            Received?.Invoke(this, message);
+            try
+            {
+                var message = ChatParser.Parse(raw);
+                Received?.Invoke(this, message);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
 
         internal void Disconnect()
         {
             _ws?.Disconnect();
+        }
+        public ChatProvider(ILogger logger)
+        {
+            _logger = logger;
         }
     }
 }

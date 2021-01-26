@@ -167,6 +167,7 @@ namespace NicoSitePlugin
                 }
                 else//roomTask
                 {
+                    _metaProvider?.Disconnect();
                     try
                     {
                         await metaTask;
@@ -384,7 +385,7 @@ namespace NicoSitePlugin
             _server = server;
             _metaProvider = new Metadata.MetaProvider();
             _metaProvider.Received += MetaProvider_Received;
-            _chatProvider = new Chat.ChatProvider();
+            _chatProvider = new Chat.ChatProvider(_logger);
             _chatProvider.Received += ChatProvider_Received;
         }
 

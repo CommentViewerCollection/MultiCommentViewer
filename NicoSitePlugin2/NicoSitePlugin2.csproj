@@ -59,6 +59,8 @@
     <Compile Include="Chat\Thread.cs" />
     <Compile Include="Chat\UnknownMessage.cs" />
     <Compile Include="DataProps.cs" />
+    <Compile Include="IInput.cs" />
+    <Compile Include="Low\CommunityLives.cs" />
     <Compile Include="Message\NicoAd.cs" />
     <Compile Include="Message\NicoComment.cs" />
     <Compile Include="Message\NicoConnected.cs" />
@@ -101,6 +103,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpecChangedException.cs" />
     <Compile Include="TestCommentProvider.cs" />
+    <Compile Include="Tools.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">

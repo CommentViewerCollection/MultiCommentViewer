@@ -794,9 +794,17 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new NicoCommentViewModel(ad, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
-                else if (nicoMessage is NicoSitePlugin.INicoItem item)
+                else if (nicoMessage is NicoSitePlugin.INicoGift item)
                 {
                     mcvCvm = new NicoCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (nicoMessage is NicoSitePlugin.INicoSpi spi)
+                {
+                    mcvCvm = new NicoCommentViewModel(spi, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (nicoMessage is NicoSitePlugin.INicoEmotion emotion)
+                {
+                    mcvCvm = new NicoCommentViewModel(emotion, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
                 else if (nicoMessage is NicoSitePlugin.INicoInfo info)
                 {

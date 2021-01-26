@@ -60,7 +60,7 @@ namespace NicoSitePlugin
 
         public override bool IsValidInput(string input)
         {
-            return Regex.IsMatch(input, "lv\\d+");
+            return Tools.IsLivePageUrl(input) || Tools.IsChannelUrl(input) || Tools.IsCommunityUrl(input);
         }
 
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)

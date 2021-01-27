@@ -48,7 +48,7 @@ namespace NicoSitePlugin
             {
                 await ConnectInternalAsync(nicoInput, browserProfile);
             }
-            catch(ApiGetCommunityLivesException ex)
+            catch (ApiGetCommunityLivesException ex)
             {
                 _isDisconnectedExpected = true;
                 SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
@@ -138,6 +138,10 @@ namespace NicoSitePlugin
             if (_dataProps.Status == "ENDED")
             {
                 SendSystemInfo("この番組は終了しました", InfoType.Notice);
+                if (input is LivePageUrl)//チャンネルやコミュニティのURLを入力した場合は次の配信が始まるまで待機する
+                {
+                    _isDisconnectedExpected = true;
+                }
                 return;
             }
             RaiseMetadataUpdated(new TestMetadata
@@ -477,7 +481,7 @@ namespace NicoSitePlugin
                         }
                         break;
                     case Metadata.Ping ping:
-                        _metaProvider.Send(new Metadata.Pong());
+                        _metaProvider?.Send(new Metadata.Pong());
                         break;
                     case Metadata.Statistics stat:
                         RaiseMetadataUpdated(new TestMetadata
@@ -486,6 +490,10 @@ namespace NicoSitePlugin
                             Others = $"コメント数:{stat.Comments} 広告ポイント:{stat.AdPoints} ギフトポイント:{stat.GiftPoints}",
                         });
                         break;
+                    case Metadata.Disconnect disconnect:
+                        SendSystemInfo($"メタデータサーバーとの接続が切断されました{Environment.NewLine}原因:{disconnect.Reason}", InfoType.Notice);
+                        //Disconnect();
+                        break;
                 }
             }
             catch (Exception ex)
@@ -493,7 +501,9 @@ namespace NicoSitePlugin
 
             }
         }
-
+        /// <summary>
+        /// 意図的な切断
+        /// </summary>
         public override void Disconnect()
         {
             _isDisconnectedExpected = true;

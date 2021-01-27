@@ -227,6 +227,10 @@ namespace NicoSitePlugin
         {
             return chat.Content.StartsWith("/emotion ");
         }
+        private static bool IsInfo(Chat.ChatMessage chat)
+        {
+            return chat.Content.StartsWith("/info ");
+        }
         private static bool IsDisconnect(Chat.ChatMessage chat)
         {
             return chat.Content == "/disconnect";
@@ -343,6 +347,32 @@ namespace NicoSitePlugin
                                 IsInitialComment = _isInitialCommentsReceiving,
                                 SiteContextGuid = SiteContextGuid,
                             };
+                        }
+                        else if (IsInfo(chat))
+                        {
+                            var match = Regex.Match(chat.Content, "^/info (?<no>\\d+) (?<content>.+)$", RegexOptions.Singleline);
+                            if (!match.Success)
+                            {
+                                throw new ParseException(chat.Raw);
+                            }
+                            else
+                            {
+                                var no = int.Parse(match.Groups["no"].Value);
+                                var content = match.Groups["content"].Value;
+                                var info = new NicoInfo(chat.Raw)
+                                {
+                                    Text = content,
+                                    PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
+                                    UserId = chat.UserId,
+                                    No = no,
+                                };
+                                comment = info;
+                                metadata = new InfoMessageMetadata(info, _options, _siteOptions)
+                                {
+                                    IsInitialComment = _isInitialCommentsReceiving,
+                                    SiteContextGuid = SiteContextGuid,
+                                };
+                            }
                         }
                         else
                         {

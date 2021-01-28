@@ -166,6 +166,14 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         public string Vid { get; set; }
     }
+    class InvalidInput : IVidResult
+    {
+        public string Raw { get; }
+        public InvalidInput(string input)
+        {
+            Raw = input;
+        }
+    }
     internal class VidResolver
     {
         static readonly Regex _regexVid = new Regex("^" + VID_PATTERN + "$");
@@ -337,7 +345,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 }
 
             }
-            throw new ParseException(input);
+            return new InvalidInput(input);
         }
         internal async Task<IVidResult> GetResultFromChannelId(IYouTubeLibeServer server, string channelId)
         {

@@ -268,6 +268,10 @@ namespace YouTubeLiveSitePlugin.Next
                 case NoVidResult no:
                     SendSystemInfo("このチャンネルでは生放送をしていないようです", InfoType.Error);
                     return;
+                case InvalidInput invalidInput:
+                    SendSystemInfo("入力されたURLは未対応の形式です", InfoType.Error);
+                    _logger.LogException(new ParseException(input));
+                    return;
                 default:
                     throw new NotImplementedException();
             }

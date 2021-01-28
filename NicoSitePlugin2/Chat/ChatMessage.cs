@@ -5,7 +5,7 @@ namespace NicoSitePlugin.Chat
     class ChatMessage : IChatMessage
     {
         public string Thread { get; }
-        public int No { get; }
+        public int? No { get; }
         public long Vpos { get; }
         public long Date { get; }
         public long DateUsec { get; }

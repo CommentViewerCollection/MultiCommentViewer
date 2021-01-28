@@ -55,7 +55,7 @@ namespace NicoSitePlugin
 
         public string Content { get; set; }
         public DateTime PostedAt { get; set; }
-        public int ChatNo { get; set; }
+        public int? ChatNo { get; set; }
         public int Vpos { get; set; }
         public string UserId { get; set; }
         public int Premium { get; set; }

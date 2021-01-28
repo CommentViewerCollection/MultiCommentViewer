@@ -72,7 +72,7 @@ namespace NicoSitePlugin
     {
         string Content { get; }
         DateTime PostedAt { get; }
-        int ChatNo { get; }
+        int? ChatNo { get; }
         int Vpos { get; }
         string UserId { get; }
         int Premium { get; }

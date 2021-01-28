@@ -64,6 +64,10 @@ namespace NicoSitePlugin
                 _isFirstConnection = false;
                 goto reload;
             }
+            var m = new NicoDisconnected("");
+            var s = new DisconnectedMessageMetadata(m, _options, _siteOptions);
+            var c = new NicoMessageContext(m, s, new NicoMessageMethods());
+            RaiseMessageReceived(c);
             AfterDisconnected();
         }
         private CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
@@ -161,6 +165,7 @@ namespace NicoSitePlugin
                 {
                     _tasks.Remove(_mainLooptcs.Task);
                     _tasks.AddRange(_toAdd);
+                    _toAdd.Clear();
                     _mainLooptcs = new TaskCompletionSource<object>();
                     _tasks.Add(_mainLooptcs.Task);
                 }

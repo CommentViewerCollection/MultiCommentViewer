@@ -15,11 +15,12 @@ namespace NicoSitePlugin.Chat
         public async Task ReceiveAsync(IChatOptions chatOptions)
         {
             _chatOptions = chatOptions;
-            if (_ws != null)
+            var ws = _ws;
+            if (ws != null)
             {
                 throw new InvalidOperationException("_ws is not null");
             }
-            _ws = new Websocket
+            ws = new Websocket
             {
                 //AutoSendPingInterval = 1000,
                 //EnableAutoSendPing = true,
@@ -29,17 +30,20 @@ namespace NicoSitePlugin.Chat
                 UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 
             };
-            _ws.Received += Ws_Received;
-            _ws.Opened += Ws_Opened;
+            _ws = ws;
+            ws.Received += Ws_Received;
+            ws.Opened += Ws_Opened;
             var url = "wss://msgd.live2.nicovideo.jp/websocket";
             try
             {
-                await _ws.ReceiveAsync(url);
+                Debug.WriteLine("ChatProvider::ReceiveAsync() ws.ReceiveAsync() start");
+                await ws.ReceiveAsync(url);
+                Debug.WriteLine("ChatProvider::ReceiveAsync() ws.ReceiveAsync() finished");
             }
             finally
             {
-                _ws.Received -= Ws_Received;
-                _ws.Opened -= Ws_Opened;
+                ws.Received -= Ws_Received;
+                ws.Opened -= Ws_Opened;
                 _ws = null;
             }
         }
@@ -50,32 +54,39 @@ namespace NicoSitePlugin.Chat
 
         private void Ws_Opened(object sender, EventArgs e)
         {
-            string s;
-            if (_chatOptions is ChatLoggedInOptions loggedIn)
+            try
             {
-                //[{"ping":{"content":"rs:0"}},{"ping":{"content":"ps:0"}},{"thread":{"thread":"M.rxo0XVWAqQOVwWJTPM_jsQ","version":"20061206","user_id":"123456","res_from":-150,"with_global":1,"scores":1,"nicoru":0,"threadkey":"T.h9hFdvpLaGczFTGN5NmMwnbE8EgC0t6uTD_ILf4XQJtNyBWc1ZtizVT7"}},{"ping":{"content":"pf:0"}},{"ping":{"content":"rf:0"}}]
-                s = $"[{{\"ping\":{{\"content\":\"rs:0\"}}}}," +
-                    $"{{\"ping\":{{\"content\":\"ps:0\"}}}}," +
-                    $"{{\"thread\":{{\"thread\":\"{loggedIn.Thread}\",\"version\":\"20061206\",\"user_id\":\"{loggedIn.UserId}\",\"res_from\":-150,\"with_global\":1,\"scores\":1,\"nicoru\":0,\"threadkey\":\"{loggedIn.ThreadKey}\"}}}}," +
-                    $"{{\"ping\":{{\"content\":\"pf:0\"}}}}," +
-                    $"{{\"ping\":{{\"content\":\"rf:0\"}}}}]";
+                string s;
+                if (_chatOptions is ChatLoggedInOptions loggedIn)
+                {
+                    //[{"ping":{"content":"rs:0"}},{"ping":{"content":"ps:0"}},{"thread":{"thread":"M.rxo0XVWAqQOVwWJTPM_jsQ","version":"20061206","user_id":"123456","res_from":-150,"with_global":1,"scores":1,"nicoru":0,"threadkey":"T.h9hFdvpLaGczFTGN5NmMwnbE8EgC0t6uTD_ILf4XQJtNyBWc1ZtizVT7"}},{"ping":{"content":"pf:0"}},{"ping":{"content":"rf:0"}}]
+                    s = $"[{{\"ping\":{{\"content\":\"rs:0\"}}}}," +
+                        $"{{\"ping\":{{\"content\":\"ps:0\"}}}}," +
+                        $"{{\"thread\":{{\"thread\":\"{loggedIn.Thread}\",\"version\":\"20061206\",\"user_id\":\"{loggedIn.UserId}\",\"res_from\":-150,\"with_global\":1,\"scores\":1,\"nicoru\":0,\"threadkey\":\"{loggedIn.ThreadKey}\"}}}}," +
+                        $"{{\"ping\":{{\"content\":\"pf:0\"}}}}," +
+                        $"{{\"ping\":{{\"content\":\"rf:0\"}}}}]";
+                }
+                else if (_chatOptions is ChatGuestOptions guest)
+                {
+                    //[{"ping":{"content":"rs:0"}},{"ping":{"content":"ps:0"}},{"thread":{"thread":"M.hgDCZpdGsAz-lJ6g9mR4pQ","version":"20061206","user_id":"guest","res_from":-150,"with_global":1,"scores":1,"nicoru":0}},{"ping":{"content":"pf:0"}},{"ping":{"content":"rf:0"}}]
+                    s = $"[{{\"ping\":{{\"content\":\"rs:0\"}}}}," +
+                        $"{{\"ping\":{{\"content\":\"ps:0\"}}}}," +
+                        $"{{\"thread\":{{\"thread\":\"{guest.Thread}\",\"version\":\"20061206\",\"user_id\":\"{guest.UserId}\",\"res_from\":-150,\"with_global\":1,\"scores\":1,\"nicoru\":0}}}}," +
+                        $"{{\"ping\":{{\"content\":\"pf:0\"}}}}," +
+                        $"{{\"ping\":{{\"content\":\"rf:0\"}}}}]";
+                }
+                else
+                {
+                    //ここに来たら実装し忘れ。
+                    //_logger
+                    s = $"";
+                }
+                _ws?.Send(s);
             }
-            else if (_chatOptions is ChatGuestOptions guest)
+            catch (Exception ex)
             {
-                //[{"ping":{"content":"rs:0"}},{"ping":{"content":"ps:0"}},{"thread":{"thread":"M.hgDCZpdGsAz-lJ6g9mR4pQ","version":"20061206","user_id":"guest","res_from":-150,"with_global":1,"scores":1,"nicoru":0}},{"ping":{"content":"pf:0"}},{"ping":{"content":"rf:0"}}]
-                s = $"[{{\"ping\":{{\"content\":\"rs:0\"}}}}," +
-                    $"{{\"ping\":{{\"content\":\"ps:0\"}}}}," +
-                    $"{{\"thread\":{{\"thread\":\"{guest.Thread}\",\"version\":\"20061206\",\"user_id\":\"{guest.UserId}\",\"res_from\":-150,\"with_global\":1,\"scores\":1,\"nicoru\":0}}}}," +
-                    $"{{\"ping\":{{\"content\":\"pf:0\"}}}}," +
-                    $"{{\"ping\":{{\"content\":\"rf:0\"}}}}]";
+                _logger.LogException(ex);
             }
-            else
-            {
-                //ここに来たら実装し忘れ。
-                //_logger
-                s = $"";
-            }
-            _ws?.Send(s);
         }
 
         private void Ws_Received(object sender, string e)

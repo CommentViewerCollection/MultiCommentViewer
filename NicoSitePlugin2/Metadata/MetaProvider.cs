@@ -43,7 +43,7 @@ namespace NicoSitePlugin.Metadata
         }
         public void Send(IMetaMessage message)
         {
-            _ws?.Send(message.Raw);
+            Send(message.Raw);
         }
         public void Send(string message)
         {

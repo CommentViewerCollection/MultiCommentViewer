@@ -26,38 +26,52 @@ namespace Common
         {
             if (IsConnected) return Task.CompletedTask;
             IsConnected = true;
-            _tcs = new TaskCompletionSource<object>();
+            var tcs = new TaskCompletionSource<object>();
+            _tcs = tcs;
             var cookies = new List<KeyValuePair<string, string>>();
-            _ws = new WebSocket(url, SubProtocol, cookies, null, UserAgent, Origin)
+            var ws= new WebSocket(url, SubProtocol, cookies, null, UserAgent, Origin)
             {
                 EnableAutoSendPing = EnableAutoSendPing,
                 AutoSendPingInterval = AutoSendPingInterval,
                 ReceiveBufferSize = ReceiveBufferSize,
                 NoDelay = NoDelay,
             };
-            _ws.MessageReceived += Ws_MessageReceived;
-            _ws.DataReceived += Ws_DataReceived;
-            _ws.Opened += Ws_Opened;
-            _ws.Error += Ws_Error;
-            _ws.Closed += Ws_Closed;
-            _ws.Open();
-            return _tcs.Task;
+            _ws = ws;
+            ws.MessageReceived += Ws_MessageReceived;
+            ws.DataReceived += Ws_DataReceived;
+            ws.Opened += Ws_Opened;
+            ws.Error += Ws_Error;
+            ws.Closed += Ws_Closed;
+            ws.Open();
+            return tcs.Task;
         }
 
         private void Ws_DataReceived(object sender, DataReceivedEventArgs e)
         {
             DataReceived?.Invoke(this, e.Data);
         }
-
+        private void AfterDisconnected()
+        {
+            var ws = _ws;//このメソッドの処理中に_ws=nullされると困るからローカルにコピーする
+            if (ws == null) return;
+            ws.MessageReceived -= Ws_MessageReceived;
+            ws.DataReceived -= Ws_DataReceived;
+            ws.Opened -= Ws_Opened;
+            ws.Error -= Ws_Error;
+            ws.Closed -= Ws_Closed;
+            _ws = null;
+        }
         private void Ws_Closed(object sender, EventArgs e)
         {
             IsConnected = false;
+            AfterDisconnected();
             _tcs.TrySetResult(null);
         }
 
         private void Ws_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
             IsConnected = false;
+            AfterDisconnected();
             _tcs.TrySetException(e.Exception);
         }
 
@@ -84,7 +98,6 @@ namespace Common
         public void Disconnect()
         {
             _ws?.Close();
-            _ws = null;
         }
     }
 }

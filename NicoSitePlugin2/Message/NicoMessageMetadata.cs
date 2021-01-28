@@ -342,7 +342,7 @@ namespace NicoSitePlugin
         public override Color BackColor => _options.InfoBackColor;
         public override Color ForeColor => _options.InfoForeColor;
 
-        public DisconnectedMessageMetadata(INicoConnected comment, ICommentOptions options, INicoSiteOptions siteOptions)
+        public DisconnectedMessageMetadata(INicoDisconnected comment, ICommentOptions options, INicoSiteOptions siteOptions)
             : base(options, siteOptions)
         {
         }

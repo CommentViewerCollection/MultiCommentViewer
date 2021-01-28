@@ -48,7 +48,7 @@ namespace NicoSitePlugin
             {
                 await ConnectInternalAsync(nicoInput, browserProfile);
             }
-            catch(ApiGetCommunityLivesException ex)
+            catch (ApiGetCommunityLivesException ex)
             {
                 _isDisconnectedExpected = true;
                 SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
@@ -64,6 +64,10 @@ namespace NicoSitePlugin
                 _isFirstConnection = false;
                 goto reload;
             }
+            var m = new NicoDisconnected("");
+            var s = new DisconnectedMessageMetadata(m, _options, _siteOptions);
+            var c = new NicoMessageContext(m, s, new NicoMessageMethods());
+            RaiseMessageReceived(c);
             AfterDisconnected();
         }
         private CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
@@ -138,6 +142,10 @@ namespace NicoSitePlugin
             if (_dataProps.Status == "ENDED")
             {
                 SendSystemInfo("この番組は終了しました", InfoType.Notice);
+                if (input is LivePageUrl)//チャンネルやコミュニティのURLを入力した場合は次の配信が始まるまで待機する
+                {
+                    _isDisconnectedExpected = true;
+                }
                 return;
             }
             RaiseMetadataUpdated(new TestMetadata
@@ -157,6 +165,7 @@ namespace NicoSitePlugin
                 {
                     _tasks.Remove(_mainLooptcs.Task);
                     _tasks.AddRange(_toAdd);
+                    _toAdd.Clear();
                     _mainLooptcs = new TaskCompletionSource<object>();
                     _tasks.Add(_mainLooptcs.Task);
                 }
@@ -226,6 +235,10 @@ namespace NicoSitePlugin
         private static bool IsEmotion(Chat.ChatMessage chat)
         {
             return chat.Content.StartsWith("/emotion ");
+        }
+        private static bool IsInfo(Chat.ChatMessage chat)
+        {
+            return chat.Content.StartsWith("/info ");
         }
         private static bool IsDisconnect(Chat.ChatMessage chat)
         {
@@ -344,6 +357,32 @@ namespace NicoSitePlugin
                                 SiteContextGuid = SiteContextGuid,
                             };
                         }
+                        else if (IsInfo(chat))
+                        {
+                            var match = Regex.Match(chat.Content, "^/info (?<no>\\d+) (?<content>.+)$", RegexOptions.Singleline);
+                            if (!match.Success)
+                            {
+                                throw new ParseException(chat.Raw);
+                            }
+                            else
+                            {
+                                var no = int.Parse(match.Groups["no"].Value);
+                                var content = match.Groups["content"].Value;
+                                var info = new NicoInfo(chat.Raw)
+                                {
+                                    Text = content,
+                                    PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
+                                    UserId = chat.UserId,
+                                    No = no,
+                                };
+                                comment = info;
+                                metadata = new InfoMessageMetadata(info, _options, _siteOptions)
+                                {
+                                    IsInitialComment = _isInitialCommentsReceiving,
+                                    SiteContextGuid = SiteContextGuid,
+                                };
+                            }
+                        }
                         else
                         {
                             if (IsDisconnect(chat))//NicoCommentではなく専用のクラスを作っても良いかも。
@@ -447,7 +486,7 @@ namespace NicoSitePlugin
                         }
                         break;
                     case Metadata.Ping ping:
-                        _metaProvider.Send(new Metadata.Pong());
+                        _metaProvider?.Send(new Metadata.Pong());
                         break;
                     case Metadata.Statistics stat:
                         RaiseMetadataUpdated(new TestMetadata
@@ -456,6 +495,10 @@ namespace NicoSitePlugin
                             Others = $"コメント数:{stat.Comments} 広告ポイント:{stat.AdPoints} ギフトポイント:{stat.GiftPoints}",
                         });
                         break;
+                    case Metadata.Disconnect disconnect:
+                        SendSystemInfo($"メタデータサーバーとの接続が切断されました{Environment.NewLine}原因:{disconnect.Reason}", InfoType.Notice);
+                        //Disconnect();
+                        break;
                 }
             }
             catch (Exception ex)
@@ -463,7 +506,9 @@ namespace NicoSitePlugin
 
             }
         }
-
+        /// <summary>
+        /// 意図的な切断
+        /// </summary>
         public override void Disconnect()
         {
             _isDisconnectedExpected = true;

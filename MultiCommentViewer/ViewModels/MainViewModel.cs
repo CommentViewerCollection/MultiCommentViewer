@@ -884,13 +884,6 @@ namespace MultiCommentViewer
                     mcvCvm = new ShowRoomCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
-            else if (messageContext.Message is MixerSitePlugin.IMixerMessage mixerMessage)
-            {
-                if (mixerMessage is MixerSitePlugin.IMixerComment comment)
-                {
-                    mcvCvm = new MixerCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-            }
             else if (messageContext.Message is MildomSitePlugin.IMildomMessage mildomMessage)
             {
                 if (mildomMessage is MildomSitePlugin.IMildomComment comment)

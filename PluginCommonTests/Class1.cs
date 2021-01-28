@@ -159,17 +159,6 @@ namespace PluginCommonTests
                 Assert.AreEqual(commentExpected, commentActual);
             }
             {
-                var m = new Mock<MixerSitePlugin.IMixerComment>();
-
-                m.Setup(x => x.UserName).Returns(nameExpected);
-                m.Setup(x => x.CommentItems).Returns(Common.MessagePartFactory.CreateMessageItems(commentExpected));
-                var obj = m.Object;
-
-                var (nameActual, commentActual) = Tools.GetData(obj);
-                Assert.AreEqual(nameExpected, nameActual);
-                Assert.AreEqual(commentExpected, commentActual);
-            }
-            {
                 var m = new Mock<MildomSitePlugin.IMildomComment>();
                 m.Setup(x => x.UserName).Returns(nameExpected);
                 m.Setup(x => x.CommentItems).Returns(Common.MessagePartFactory.CreateMessageItems(commentExpected));

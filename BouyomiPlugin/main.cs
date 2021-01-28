@@ -2,7 +2,6 @@
 using LineLiveSitePlugin;
 using MildomSitePlugin;
 using MirrativSitePlugin;
-using MixerSitePlugin;
 using NicoSitePlugin;
 using OpenrecSitePlugin;
 using PeriscopeSitePlugin;
@@ -483,50 +482,6 @@ namespace BouyomiPlugin
                             comment = (PeriscopeMessage as IPeriscopeLeave).Text;
                         }
                         break;
-                }
-            }
-            else if (message is IMixerMessage MixerMessage)
-            {
-                switch (MixerMessage.MixerMessageType)
-                {
-                    case MixerMessageType.Connected:
-                        if (options.IsMixerConnect)
-                        {
-                            name = null;
-                            comment = (MixerMessage as IMixerConnected).Text;
-                        }
-                        break;
-                    case MixerMessageType.Disconnected:
-                        if (options.IsMixerDisconnect)
-                        {
-                            name = null;
-                            comment = (MixerMessage as IMixerDisconnected).Text;
-                        }
-                        break;
-                    case MixerMessageType.Comment:
-                        if (options.IsMixerComment)
-                        {
-                            if (options.IsMixerCommentNickname)
-                            {
-                                name = (MixerMessage as IMixerComment).UserName;
-                            }
-                            comment = (MixerMessage as IMixerComment).CommentItems.ToText();
-                        }
-                        break;
-                        //case MixerMessageType.Join:
-                        //    if (_options.IsMixerJoin)
-                        //    {
-                        //        name = null;
-                        //        comment = (MixerMessage as IMixerJoin).CommentItems.ToText();
-                        //    }
-                        //    break;
-                        //case MixerMessageType.Leave:
-                        //    if (_options.IsMixerLeave)
-                        //    {
-                        //        name = null;
-                        //        comment = (MixerMessage as IMixerLeave).CommentItems.ToText();
-                        //    }
-                        //    break;
                 }
             }
             else if (message is IMildomMessage MildomMessage)

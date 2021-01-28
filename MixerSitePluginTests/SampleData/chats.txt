@@ -1,1 +1,0 @@
-﻿{"roles":["User"],"authkey":"XJ3EbJfx2lioJU0v","permissions":["chat","connect","poll_vote","whisper"],"endpoints":["wss://chat.mixer.com:443"],"isLoadShed":false}

@@ -151,14 +151,6 @@ namespace PluginCommon
                 name = srComment.UserName;
             }
             //}
-            //else if (message is MixerSitePlugin.IMixerMessage mixerMessage)
-            //{
-            else if (message is MixerSitePlugin.IMixerComment mixerComment)
-            {
-                comment = mixerComment.CommentItems.ToText();
-                name = mixerComment.UserName;
-            }
-            //}
             //else if (message is MildomSitePlugin.IMildomMessage mildomMessage)
             //{
             else if (message is MildomSitePlugin.IMildomComment mildomComment)

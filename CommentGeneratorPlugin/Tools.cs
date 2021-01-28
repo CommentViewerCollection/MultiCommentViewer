@@ -56,9 +56,6 @@ namespace CommentViewer.Plugin
                 case PeriscopeSitePlugin.IPeriscopeMessage _:
                     siteName = "periscope";
                     break;
-                case MixerSitePlugin.IMixerMessage _:
-                    siteName = "mixer";
-                    break;
                 case MildomSitePlugin.IMildomMessage _:
                     siteName = "mildom";
                     break;

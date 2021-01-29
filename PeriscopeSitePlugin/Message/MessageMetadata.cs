@@ -16,7 +16,7 @@ namespace PeriscopeSitePlugin
         {
             get
             {
-                if(User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
                 {
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
@@ -132,6 +132,8 @@ namespace PeriscopeSitePlugin
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions { get; }
+
         public MessageMetadata(IPeriscopeMessage message, ICommentOptions options, IPeriscopeSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             Debug.Assert(user != null);

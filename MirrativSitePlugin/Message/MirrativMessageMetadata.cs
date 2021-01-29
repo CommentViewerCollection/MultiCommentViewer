@@ -49,6 +49,8 @@ namespace MirrativSitePlugin
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions { get; }
+
         protected MessageMetadataBase(ICommentOptions options, IMirrativSiteOptions siteOptions)
         {
             _options = options;

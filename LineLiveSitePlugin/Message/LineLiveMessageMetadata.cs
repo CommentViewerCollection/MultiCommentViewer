@@ -15,7 +15,7 @@ namespace LineLiveSitePlugin
         {
             get
             {
-                if(User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
                 {
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
@@ -139,6 +139,8 @@ namespace LineLiveSitePlugin
         }
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
+
+        public ISiteOptions SiteOptions { get; }
 
         public MessageMetadata(ILineLiveMessage message, ICommentOptions options, ILineLiveSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {

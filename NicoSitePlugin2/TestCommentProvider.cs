@@ -52,11 +52,11 @@ namespace NicoSitePlugin
             {
                 _isDisconnectedExpected = true;
                 SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
             }
             catch (Exception ex)
             {
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
             }
             _dataProps = null;
             if (!_isDisconnectedExpected)
@@ -110,9 +110,11 @@ namespace NicoSitePlugin
                 goto check;
             }
         }
+        CookieContainer _cc;
         public async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
             var cc = GetCookieContainer(browserProfile);
+            _cc = cc;
             string vid;
             if (input is LivePageUrl livePageUrl)
             {
@@ -244,7 +246,20 @@ namespace NicoSitePlugin
         {
             return chat.Content == "/disconnect";
         }
-        private void ProcessChatMessage(Chat.IChatMessage message)
+        /// <summary>
+        /// 生IDか
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        private bool IsRawUserId(string userId)
+        {
+            return !string.IsNullOrEmpty(userId) && Regex.IsMatch(userId, "^\\d+$");
+        }
+        private Task<string> GetUserName(string userId)
+        {
+            throw new NotImplementedException();
+        }
+        private async Task ProcessChatMessageAsync(Chat.IChatMessage message)
         {
             switch (message)
             {
@@ -389,6 +404,17 @@ namespace NicoSitePlugin
                             {
                                 _chatProvider?.Disconnect();
                             }
+                            string username;
+                            if (IsRawUserId(chat.UserId) && _siteOptions.IsAutoGetUsername)
+                            {
+                                var userInfo = await Api.GetUserInfo(_server, _cc, chat.UserId);
+                                username = userInfo.Nickname;
+                                user.Name = Common.MessagePartFactory.CreateMessageItems(username);
+                            }
+                            else
+                            {
+                                username = null;
+                            }
                             var abc = new NicoComment("")
                             {
                                 ChatNo = chat.No,
@@ -397,7 +423,7 @@ namespace NicoSitePlugin
                                 PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
                                 Text = chat.Content,
                                 UserId = chat.UserId,
-                                UserName = "",
+                                UserName = username,
                             };
                             comment = abc;
                             metadata = new CommentMessageMetadata(abc, _options, _siteOptions, user, this, isFirstComment)
@@ -429,12 +455,12 @@ namespace NicoSitePlugin
                     break;
             }
         }
-        private void ChatProvider_Received(object sender, Chat.IChatMessage e)
+        private async void ChatProvider_Received(object sender, Chat.IChatMessage e)
         {
             var message = e;
             try
             {
-                ProcessChatMessage(message);
+                await ProcessChatMessageAsync(message);
             }
             catch (Exception ex)
             {

@@ -52,6 +52,8 @@ namespace SitePluginCommon
         }
         public bool IsNameWrapping => false;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions { get; }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public InfoMessageMetadata(IInfoMessage infoMessage, ICommentOptions options)

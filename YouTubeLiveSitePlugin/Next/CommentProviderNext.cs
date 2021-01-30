@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace YouTubeLiveSitePlugin.Next
 {
@@ -148,7 +149,7 @@ namespace YouTubeLiveSitePlugin.Next
             while (!_cts.IsCancellationRequested)
             {
                 //例外はここではcatchしない。
-                var s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, cc, loginInfo);
+                var s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, cc, loginInfo, _logger);
                 var actions = s.GetActions();
                 var continuation = s.GetContinuation();
                 if (continuation is ReloadContinuation reload)
@@ -198,12 +199,14 @@ namespace YouTubeLiveSitePlugin.Next
         {
             _cts?.Cancel();
         }
-        public ChatProvider2(IYouTubeLiveSiteOptions siteOptions)
+        public ChatProvider2(IYouTubeLiveSiteOptions siteOptions, ILogger logger)
         {
             _siteOptions = siteOptions;
+            _logger = logger;
         }
         private CancellationTokenSource _cts;
         private readonly IYouTubeLiveSiteOptions _siteOptions;
+        private readonly ILogger _logger;
     }
     class CommentProviderNext : CommentProviderBase, IYouTubeCommentProvider
     {
@@ -268,12 +271,16 @@ namespace YouTubeLiveSitePlugin.Next
                 case NoVidResult no:
                     SendSystemInfo("このチャンネルでは生放送をしていないようです", InfoType.Error);
                     return;
+                case InvalidInput invalidInput:
+                    SendSystemInfo("入力されたURLは未対応の形式です", InfoType.Error);
+                    _logger.LogException(new ParseException(input));
+                    return;
                 default:
                     throw new NotImplementedException();
             }
             _cc = CreateCookieContainer(browserProfile);
             await InitElapsedTimer(vid);
-            _chatProvider = new ChatProvider2(_siteOptions);
+            _chatProvider = new ChatProvider2(_siteOptions, _logger);
             _chatProvider.MessageReceived += ChatProvider_MessageReceived;
             _chatProvider.LoggedInStateChanged += _chatProvider_LoggedInStateChanged;
             _chatProvider.InfoReceived += ChatProvider_InfoReceived;
@@ -294,6 +301,19 @@ namespace YouTubeLiveSitePlugin.Next
                 return;
             }
             var loginInfo = Tools.CreateLoginInfo(ytInitialData.IsLoggedIn);
+            if (loginInfo is LoggedIn)
+            {
+                var cookies = Tools.ExtractCookies(_cc);
+                if (!cookies.Select(c => c.Name).Contains("SAPISID"))
+                {
+                    //SAPISIDが無い。ログイン済み判定なのにSAPISIDが無い場合が散見されるが原因不明。強制的に未ログインにする。
+                    var cver = ytInitialData.Cver;
+                    var keys = string.Join(",", cookies.Select(c => c.Name));
+                    _logger.LogException(new Exception(), "", $"cver={cver},keys={keys}");
+                    _cc = new CookieContainer();
+                    goto reload;
+                }
+            }
             SetLoggedInState(ytInitialData.IsLoggedIn);
             _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);
             var initialActions = ytInitialData.GetActions();

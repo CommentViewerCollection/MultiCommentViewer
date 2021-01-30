@@ -24,6 +24,8 @@ namespace TestSitePlugin
         public bool IsVisible { get; } = true;
         public bool IsNameWrapping { get; } = false;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions { get; }
+
         public event PropertyChangedEventHandler PropertyChanged;
         public TestMetadata(IUser user)
         {

@@ -42,6 +42,8 @@ namespace WhowatchSitePlugin
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions { get; }
+
         /// <summary>
         /// 
         /// </summary>

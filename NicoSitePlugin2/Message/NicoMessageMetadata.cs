@@ -33,7 +33,7 @@ namespace NicoSitePlugin
         public bool IsSiteNgUser => false;//TODO:IUserにIsSiteNgUserを追加する
         public virtual bool IsFirstComment => false;
         public string SiteName { get; }
-        public bool Is184 { get; }
+        public bool Is184 { get; set; }
         public IUser User { get; protected set; }
         public ICommentProvider CommentProvider { get; protected set; }
         public virtual bool IsVisible
@@ -49,6 +49,8 @@ namespace NicoSitePlugin
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions => _siteOptions;
+
         protected MessageMetadataBase(ICommentOptions options, INicoSiteOptions siteOptions)
         {
             _options = options;
@@ -239,7 +241,7 @@ namespace NicoSitePlugin
             CommentProvider = cp;
             _comment = comment;
             _isFirstComment = isFirstComment;
-
+            Is184 = comment.Is184;
             user.PropertyChanged += User_PropertyChanged;
         }
         private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

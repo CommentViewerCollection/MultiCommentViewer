@@ -52,7 +52,9 @@ namespace YouTubeLiveSitePlugin.Next
             var origin = "https://www.youtube.com";
             if (sapiSid == null)
             {
-                throw new SpecChangedException("");
+                var cookies = Tools.ExtractCookies(_cc);
+                var keys = string.Join(",", cookies.Select(c => c.Name));
+                throw new SpecChangedException($"cookies.Count={cookies.Count},keys={keys}");
             }
             var s = $"{unixTime} {sapiSid} {origin}";
             var hash = ComputeSHA1(s).ToLower();
@@ -68,6 +70,21 @@ namespace YouTubeLiveSitePlugin.Next
     {
         private readonly dynamic _d;
         public string Raw { get; }
+        public string Cver
+        {
+            get
+            {
+                var @params = _d.responseContext.serviceTrackingParams[0].@params;
+                foreach (var p in @params)
+                {
+                    if ((string)p.key == "cver")
+                    {
+                        return (string)p.value;
+                    }
+                }
+                return null;
+            }
+        }
         private ChatContinuation _chatContinuation;
         public ChatContinuation ChatContinuation()
         {
@@ -725,7 +742,7 @@ namespace YouTubeLiveSitePlugin.Next
         /// <param name="loginInfo"></param>
         /// <returns></returns>
         /// <exception cref="HttpRequestException">多分500番台のエラーだけ</exception>
-        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, CookieContainer cc, ILoginState loginInfo)
+        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, CookieContainer cc, ILoginState loginInfo, ILogger logger)
         {
             //dataの構造
             //context

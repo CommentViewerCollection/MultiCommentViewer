@@ -100,7 +100,7 @@ namespace NicoSitePlugin.Chat
             }
             catch (Exception ex)
             {
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"raw={raw}");
             }
         }
 

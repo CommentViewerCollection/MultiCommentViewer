@@ -19,7 +19,10 @@ namespace NicoSitePlugin.Chat
         {
             dynamic d = JsonConvert.DeserializeObject(json);
             Thread = (string)d.chat.thread;
-            No = (int)d.chat.no;
+            if (d.chat.ContainsKey("no"))
+            {
+                No = (int)d.chat.no;
+            }
             Vpos = (long)d.chat.vpos;
             Date = (long)d.chat.date;
             DateUsec = (long)d.chat.date_usec;

@@ -42,6 +42,7 @@ namespace NicoSitePlugin.Metadata
                     //{"type":"schedule","data":{"begin":"2021-01-24T11:18:31+09:00","end":"2021-01-24T12:18:31+09:00"}}
                     //{"type":"statistics","data":{"viewers":4941,"comments":9762,"adPoints":28800,"giftPoints":13100}}
                     //{"type":"error","data":{"code":"INVALID_MESSAGE"}}
+                    //{"type":"tagUpdated","data":{"tags":{"items":[{"text":"旅部41","locked":true},{"text":"力也","locked":true,"nicopediaArticleUrl":"https://dic.nicovideo.jp/l/%E5%8A%9B%E4%B9%9F"},{"text":"ハニー大木","locked":true,"nicopediaArticleUrl":"https://dic.nicovideo.jp/l/%E3%83%8F%E3%83%8B%E3%83%BC%E5%A4%A7%E6%9C%A8"},{"text":"旅部","locked":true},{"text":"ワンピーススクラッチくじ","locked":true},{"text":"森義之","locked":false}],"ownerLocked":false}}}
                     ret = new UnknownMessage(raw);
                     break;
             }

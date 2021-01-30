@@ -79,8 +79,10 @@
     <Compile Include="Metadata\MetaParser.cs" />
     <Compile Include="Metadata\Ping.cs" />
     <Compile Include="Metadata\Pong.cs" />
+    <Compile Include="Metadata\PostComment.cs" />
     <Compile Include="Metadata\Room.cs" />
     <Compile Include="Metadata\Seat.cs" />
+    <Compile Include="Metadata\ServerTime.cs" />
     <Compile Include="Metadata\Statistics.cs" />
     <Compile Include="Metadata\UnknownMessage.cs" />
     <Compile Include="MyInfo.cs" />

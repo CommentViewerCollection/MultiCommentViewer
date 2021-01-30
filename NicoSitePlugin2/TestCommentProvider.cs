@@ -10,6 +10,7 @@ using System.Net;
 using System.Collections.Concurrent;
 using System.Threading;
 using Newtonsoft.Json;
+using NicoSitePlugin.Metadata;
 
 namespace NicoSitePlugin
 {
@@ -150,6 +151,8 @@ namespace NicoSitePlugin
                 }
                 return;
             }
+            _vposBaseTime = Common.UnixTimeConverter.FromUnixTime(_dataProps.VposBaseTime);
+            _localTime = DateTime.Now;
             RaiseMetadataUpdated(new TestMetadata
             {
                 Title = _dataProps.Title,
@@ -525,6 +528,8 @@ namespace NicoSitePlugin
                         SendSystemInfo($"メタデータサーバーとの接続が切断されました{Environment.NewLine}原因:{disconnect.Reason}", InfoType.Notice);
                         //Disconnect();
                         break;
+                    case Metadata.ServerTime serverTime:
+                        break;
                 }
             }
             catch (Exception ex)
@@ -532,6 +537,8 @@ namespace NicoSitePlugin
 
             }
         }
+        DateTime? _vposBaseTime;
+        DateTime? _localTime;
         /// <summary>
         /// 意図的な切断
         /// </summary>
@@ -568,9 +575,14 @@ namespace NicoSitePlugin
         {
         }
 
-        Task INicoCommentProvider.PostCommentAsync(string comment, string mail)
+        Task INicoCommentProvider.PostCommentAsync(string comment, bool is184, string color, string size, string position)
         {
-            throw new System.NotImplementedException();
+            var elapsed = DateTime.Now.AddHours(-9) - _vposBaseTime.Value;
+            var ms = elapsed.TotalMilliseconds;
+            var vpos = (long)Math.Round(ms / 10);
+            var postComment = new PostComment(comment, vpos, is184, color, size, position);
+            _metaProvider.Send(postComment);
+            return Task.CompletedTask;
         }
         public TestCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IDataSource server, ILogger logger, IUserStoreManager userStoreManager) : base(logger, options)
         {
@@ -578,7 +590,7 @@ namespace NicoSitePlugin
             _userStoreManager = userStoreManager;
             _siteOptions = siteOptions;
             _server = server;
-            _metaProvider = new Metadata.MetaProvider();
+            _metaProvider = new Metadata.MetaProvider(_logger);
             _metaProvider.Received += MetaProvider_Received;
             _chatProvider = new Chat.ChatProvider(_logger);
             _chatProvider.Received += ChatProvider_Received;

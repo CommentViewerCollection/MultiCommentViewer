@@ -20,12 +20,6 @@ namespace YouTubeLiveSitePlugin.Next
 {
     class HashGenerator
     {
-        public string GetSapiSid()
-        {
-            var cookies = Tools.ExtractCookies(_cc);
-            var c = cookies.Find(cookie => cookie.Name == "SAPISID");
-            return c?.Value;
-        }
         protected virtual long GetCurrentUnixTime()
         {
             return Common.UnixTimeConverter.ToUnixTime(DateTime.Now);
@@ -48,7 +42,7 @@ namespace YouTubeLiveSitePlugin.Next
         public string CreateHash()
         {
             var unixTime = GetCurrentUnixTime();
-            var sapiSid = GetSapiSid();
+            var sapiSid = Tools.GetSapiSid(_cc);
             var origin = "https://www.youtube.com";
             if (sapiSid == null)
             {
@@ -692,6 +686,20 @@ namespace YouTubeLiveSitePlugin.Next
     }
     static class Tools
     {
+        public static string GetSapiSid(CookieContainer cc)
+        {
+            var cookies = Tools.ExtractCookies(cc);
+            var keys = new[] { "SAPISID", "APISID", "__Secure-3PAPISID", "SID" };
+            foreach (var key in keys)
+            {
+                var cookie = cookies.Find(c => c.Name == key);
+                if (cookie != null)
+                {
+                    return cookie.Value;
+                }
+            }
+            return null;
+        }
         public static YtInitialData ExtractYtInitialData(string liveChatHtml)
         {
             var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+?});");

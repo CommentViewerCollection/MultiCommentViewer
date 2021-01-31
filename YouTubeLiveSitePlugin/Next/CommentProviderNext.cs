@@ -301,12 +301,15 @@ namespace YouTubeLiveSitePlugin.Next
                 return;
             }
             var loginInfo = Tools.CreateLoginInfo(ytInitialData.IsLoggedIn);
+            //ログイン済みユーザの正常にコメントが取得できるようになったら以下のコードは不要
+            //---ここから---
             if (loginInfo is LoggedIn)
             {
-                var cookies = Tools.ExtractCookies(_cc);
-                if (!cookies.Select(c => c.Name).Contains("SAPISID"))
+                var k = Tools.GetSapiSid(_cc);
+                if (k == null)
                 {
-                    //SAPISIDが無い。ログイン済み判定なのにSAPISIDが無い場合が散見されるが原因不明。強制的に未ログインにする。
+                    //SIDが無い。ログイン済み判定なのにSIDが無い場合が散見されるが原因不明。強制的に未ログインにする。
+                    var cookies = Tools.ExtractCookies(_cc);
                     var cver = ytInitialData.Cver;
                     var keys = string.Join(",", cookies.Select(c => c.Name));
                     _logger.LogException(new Exception(), "", $"cver={cver},keys={keys}");
@@ -314,6 +317,7 @@ namespace YouTubeLiveSitePlugin.Next
                     goto reload;
                 }
             }
+            //---ここまで---
             SetLoggedInState(ytInitialData.IsLoggedIn);
             _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);
             var initialActions = ytInitialData.GetActions();

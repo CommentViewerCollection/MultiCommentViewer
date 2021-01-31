@@ -17,7 +17,7 @@ namespace LineLiveSitePlugin
             _cts = new CancellationTokenSource();
             while (!_cts.IsCancellationRequested)
             {
-                var promptyStats = await Api.GetPromptyStats(_server, channelId, liveId);
+                var promptyStats = await Api.GetPromptyStatsV4(_server, channelId, liveId);
                 Received?.Invoke(this, promptyStats);
                 try
                 {

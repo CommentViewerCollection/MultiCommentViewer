@@ -68,6 +68,13 @@ namespace LineLiveSitePlugin
             var low = Tools.Deserialize<Low.PromptyStats.RootObject>(res);
             return new PromptyStats(low);
         }
+        public static async Task<IPromptyStats> GetPromptyStatsV4(IDataServer server, string channelId, string liveId)
+        {
+            var url = $"https://live-burst-api.line-apps.com/burst/web/v4.0/channel/1569360/broadcast/15861513/promptly_stats";
+            var res = await server.GetAsync(url);
+            var low = Tools.Deserialize<Low.PromptyStats.RootObject>(res);
+            return new PromptyStats(low);
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -115,6 +122,20 @@ namespace LineLiveSitePlugin
             var liveInfoLow = Tools.Deserialize<LineLiveSitePlugin.Low.LiveInfo.RootObject>(s);
             var liveInfo = Tools.Parse(liveInfoLow);
             return (liveInfo, s);
+        }
+        public static async Task<(ILiveInfo, string raw)> GetLiveInfoV4(IDataServer server, string channelId, string liveId)//, CookieContainer cc)
+        {
+            var url = $"https://live-api.line-apps.com/web/v4.0/channel/{channelId}/broadcast/{liveId}";
+            var res = await server.GetAsync(url);//, cc);
+
+            dynamic d = Tools.Deserialize(res);
+            var liveInfo = new LiveInfo
+            {
+                ChatUrl = (string)d.chat.url,
+                LiveStatus = (string)d.item.liveStatus,
+                Title = (string)d.item.title,
+            };
+            return (liveInfo, res);
         }
         public static async Task<(LineLiveSitePlugin.Low.ChannelInfo.RootObject, string raw)> GetChannelInfo(IDataServer server, string channelId)
         {

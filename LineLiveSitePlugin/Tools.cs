@@ -19,7 +19,7 @@ namespace LineLiveSitePlugin.ParseMessage
         string DisplayName { get; }
         string IconUrl { get; }
     }
-    class User:IUser
+    class User : IUser
     {
         public long Id { get; }
         public string DisplayName { get; }
@@ -56,7 +56,7 @@ namespace LineLiveSitePlugin.ParseMessage
         List<(IMessage, IUser, string)> Messages { get; }
     }
 
-    internal interface IGiftMessage: IMessage
+    internal interface IGiftMessage : IMessage
     {
         string ItemId { get; }
         string Url { get; set; }
@@ -80,7 +80,7 @@ namespace LineLiveSitePlugin
             var nochange = new List<T>();
             var added = new List<T>();
             var removed = new List<T>();
-            if(old == null && @new  == null) return (nochange, added, removed);
+            if (old == null && @new == null) return (nochange, added, removed);
             if (old == null && @new != null) return (nochange, @new, removed);
             if (old != null && @new == null) return (nochange, added, old);
 
@@ -166,7 +166,7 @@ namespace LineLiveSitePlugin
         internal static CookieContainer CreateCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();
-            foreach(var cookie in cookies)
+            foreach (var cookie in cookies)
             {
                 try
                 {
@@ -190,6 +190,19 @@ namespace LineLiveSitePlugin
             try
             {
                 low = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException(json, ex);
+            }
+            return low;
+        }
+        public static dynamic Deserialize(string json)
+        {
+            dynamic low;
+            try
+            {
+                low = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
             }
             catch (Exception ex)
             {
@@ -234,7 +247,7 @@ namespace LineLiveSitePlugin
                         var k = Newtonsoft.Json.JsonConvert.DeserializeObject<Low.Bulk.RootObject>(s);
                         var data = k.Data;
                         var list = new List<(ParseMessage.IMessage, ParseMessage.IUser, string raw)>();
-                        foreach(var message in data.Payloads)
+                        foreach (var message in data.Payloads)
                         {
                             try
                             {
@@ -244,7 +257,7 @@ namespace LineLiveSitePlugin
                                 {
                                     continue;
                                 }
-                                list.Add((a,b,msg));
+                                list.Add((a, b, msg));
                             }
                             catch (Exception ex)
                             {
@@ -297,7 +310,7 @@ namespace LineLiveSitePlugin
                     //{"type":"screenCapture","data":{"user":{"id":255268,"hashedId":"JjydSbhv6B","displayName":"miho♡","iconUrl":"https://scdn.line-apps.com/obs/0hdyXthD1eO1ZlDRb7kRtEAV1QPSEcIzgeHSkgc1xfYmZIbi9QCzlwYxNeZzFJOnsGWj98OUhaYmVPP38JXg/f64x64","hashedIconId":"0hdyXthD1eO1ZlDRb7kRtEAV1QPSEcIzgeHSkgc1xfYmZIbi9QCzlwYxNeZzFJOnsGWj98OUhaYmVPP38JXg","isGuest":false,"isBlocked":false},"roomId":"HgZBttxyiWwrPwnJBkSrEzSLUXRyEGFQ","capturedAt":1540571090}}
                     //{"type":"gift","data":{"message":"","type":"LOVE","itemId":"gire017","quantity":4,"displayName":"live.gift.regular.4.lolipop.pink","sender":{"id":4648097,"hashedId":"L73yEnK2rc","displayName":"のぶ(のふくろ)","iconUrl":"https://scdn.line-apps.com/obs/0hOD2s-hohEGsPCj3fFbNvPDdXFhx2JBMjdy4LTjYJTgkgblFoNmVcDC4JS1MrP1I9Y2lcWn8LT1IlbQM7Ng/f64x64","hashedIconId":"0hOD2s-hohEGsPCj3fFbNvPDdXFhx2JBMjdy4LTjYJTgkgblFoNmVcDC4JS1MrP1I9Y2lcWn8LT1IlbQM7Ng","isGuest":false,"isBlocked":false},"isNGGift":false,"sentAt":1540571480,"key":"9670807.46480970000000000000","blockedByCms":false}}
                     //{"type":"gift","data":{"message":"","type":"LOVE","itemId":"gire005","quantity":10,"displayName":"live.gift.regular.10.luckycat.pink","sender":{"id":7676942,"hashedId":"pkR3HxsStU","displayName":"❤みく(呼び捨て)＆U_key64🔑❤","iconUrl":"https://scdn.line-apps.com/obs/0hzJ_o7EaTJWViFgh5zT5aMlpLIxIbOCYtGjI-QFsXflxJdWU1WnRtC0URKVBOcmA6DnBuUBVDewFIIGMwWw/f64x64","hashedIconId":"0hzJ_o7EaTJWViFgh5zT5aMlpLIxIbOCYtGjI-QFsXflxJdWU1WnRtC0URKVBOcmA6DnBuUBVDewFIIGMwWw","isGuest":false,"isBlocked":false},"isNGGift":false,"sentAt":1542729632,"key":"5306470.76769420000000000000","blockedByCms":false}}
-
+                    //{"type":"entranceAnnouncement","data":{"userId":6637658,"displayName":"🐚👾☕あをと☁🥂"}}
                     throw new ParseException(s);
             }
             return (ret, user);

@@ -791,7 +791,7 @@ namespace YouTubeLiveSitePlugin.Next
             d.clientMessageId = GetClientIdPrefix() + _commentCounter;
             d.richMessage = JsonConvert.DeserializeObject("{\"textSegments\":[{\"text\":\"" + message + "\"}]}");
             var payload = (string)JsonConvert.SerializeObject(d, Formatting.None);
-            var hash = CreateHash();
+            var hash = SapiSidHashGenerator.CreateHash(_cc, DateTime.Now);
             //var url = GetUrl();
             return new PostCommentContext2(payload, hash);
         }
@@ -816,44 +816,6 @@ namespace YouTubeLiveSitePlugin.Next
                 throw new SpecChangedException(_ytInitialData, ex);
             }
             return @params;
-        }
-        public string GetSapiSid()
-        {
-            var cookies = Tools.ExtractCookies(_cc);
-            var c = cookies.Find(cookie => cookie.Name == "SAPISID");
-            return c?.Value;
-        }
-        public virtual long GetCurrentUnixTime()
-        {
-            return Common.UnixTimeConverter.ToUnixTime(DateTime.Now);
-        }
-        private string ComputeSHA1(string s)
-        {
-            var bytes = Encoding.UTF8.GetBytes(s);
-            byte[] hashValue;
-            using (var crypto = new SHA1CryptoServiceProvider())
-            {
-                hashValue = crypto.ComputeHash(bytes);
-            }
-            var sb = new StringBuilder();
-            foreach (var b in hashValue)
-            {
-                sb.AppendFormat("{0:X2}", b);
-            }
-            return sb.ToString();
-        }
-        public string CreateHash()
-        {
-            var unixTime = GetCurrentUnixTime();
-            var sapiSid = GetSapiSid();
-            var origin = "https://www.youtube.com";
-            if (sapiSid == null)
-            {
-                throw new SpecChangedException("");
-            }
-            var s = $"{unixTime} {sapiSid} {origin}";
-            var hash = ComputeSHA1(s).ToLower();
-            return $"{unixTime}_{hash}";
         }
         public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey,string delegatedSessionId, CookieContainer cc)
         {

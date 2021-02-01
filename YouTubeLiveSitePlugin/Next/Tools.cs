@@ -128,19 +128,6 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return list;
         }
-        public string GetDelegatedSessionId()
-        {
-            string s;
-            try
-            {
-                s = (string)_d.responseContext.webResponseContextExtensionData.ytConfigData.delegatedSessionId;
-            }
-            catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ex)
-            {
-                throw new SpecChangedException(Raw, ex);
-            }
-            return s;
-        }
         public string GetClientIdPrefix()
         {
             string @params;

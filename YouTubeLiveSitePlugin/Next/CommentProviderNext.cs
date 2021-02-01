@@ -319,7 +319,7 @@ namespace YouTubeLiveSitePlugin.Next
             }
             //---ここまで---
             SetLoggedInState(ytInitialData.IsLoggedIn);
-            _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);
+            _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, ytCfg.DelegatedSessionId, _cc);
             var initialActions = ytInitialData.GetActions();
             foreach (var action in initialActions)
             {
@@ -765,11 +765,6 @@ namespace YouTubeLiveSitePlugin.Next
     {
         private readonly string _ytInitialData;
         private readonly CookieContainer _cc;
-
-        private string GetDelegatedSessionId()
-        {
-            return _ytInitialDataT.GetDelegatedSessionId();
-        }
         public string GetClientIdPrefix()
         {
             return _ytInitialDataT.GetClientIdPrefix();
@@ -791,7 +786,7 @@ namespace YouTubeLiveSitePlugin.Next
         {
             var context = "{\"context\":{\"client\":{\"clientName\":\"WEB\",\"clientVersion\":\"" + GetClientVersion() + "\"}}}";
             dynamic d = JsonConvert.DeserializeObject(context);
-            d.context.user = JsonConvert.DeserializeObject("{\"onBehalfOfUser\":\"" + GetDelegatedSessionId() + "\"}");
+            d.context.user = JsonConvert.DeserializeObject("{\"onBehalfOfUser\":\"" + _delegatedSessionId + "\"}");
             d.@params = GetParams();
             d.clientMessageId = GetClientIdPrefix() + _commentCounter;
             d.richMessage = JsonConvert.DeserializeObject("{\"textSegments\":[{\"text\":\"" + message + "\"}]}");
@@ -860,9 +855,10 @@ namespace YouTubeLiveSitePlugin.Next
             var hash = ComputeSHA1(s).ToLower();
             return $"{unixTime}_{hash}";
         }
-        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey, CookieContainer cc)
+        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey,string delegatedSessionId, CookieContainer cc)
         {
             InnerTubeApiKey = innerTubeApiLey;
+            _delegatedSessionId = delegatedSessionId;
             _cc = cc;
             _ytInitialData = ytInitialData.Raw;
             _ytInitialDataT = ytInitialData;
@@ -870,6 +866,7 @@ namespace YouTubeLiveSitePlugin.Next
         private readonly YtInitialData _ytInitialDataT;
 
         public string InnerTubeApiKey { get; }
+        private readonly string _delegatedSessionId;
     }
     class PostCommentContext2
     {

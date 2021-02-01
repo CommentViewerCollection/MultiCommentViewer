@@ -680,12 +680,20 @@ namespace YouTubeLiveSitePlugin.Next
         }
         public static YtInitialData ExtractYtInitialData(string liveChatHtml)
         {
+            if (string.IsNullOrEmpty(liveChatHtml))
+            {
+                throw new ArgumentNullException(nameof(liveChatHtml));
+            }
             var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+?});");
             if (!match.Success)
             {
                 throw new Exception("");
             }
             var raw = match.Groups[1].Value;
+            if (string.IsNullOrEmpty(raw))
+            {
+                throw new SpecChangedException(liveChatHtml);
+            }
             return new YtInitialData(raw);
         }
         public static string ExtractYtCfg(string liveChatHtml)

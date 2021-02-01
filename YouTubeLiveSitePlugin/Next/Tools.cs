@@ -18,13 +18,9 @@ using YouTubeLiveSitePlugin.Test2;
 
 namespace YouTubeLiveSitePlugin.Next
 {
-    class HashGenerator
+    static class SapiSidHashGenerator
     {
-        protected virtual long GetCurrentUnixTime()
-        {
-            return Common.UnixTimeConverter.ToUnixTime(DateTime.Now);
-        }
-        private string ComputeSHA1(string s)
+        private static string ComputeSHA1(string s)
         {
             var bytes = Encoding.UTF8.GetBytes(s);
             byte[] hashValue;
@@ -39,14 +35,14 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return sb.ToString();
         }
-        public string CreateHash()
+        public static string CreateHash(CookieContainer cc, DateTime currentDate)
         {
-            var unixTime = GetCurrentUnixTime();
-            var sapiSid = Tools.GetSapiSid(_cc);
+            var unixTime = Common.UnixTimeConverter.ToUnixTime(currentDate);
+            var sapiSid = Tools.GetSapiSid(cc);
             var origin = "https://www.youtube.com";
             if (sapiSid == null)
             {
-                var cookies = Tools.ExtractCookies(_cc);
+                var cookies = Tools.ExtractCookies(cc);
                 var keys = string.Join(",", cookies.Select(c => c.Name));
                 throw new SpecChangedException($"cookies.Count={cookies.Count},keys={keys}");
             }
@@ -54,11 +50,6 @@ namespace YouTubeLiveSitePlugin.Next
             var hash = ComputeSHA1(s).ToLower();
             return $"{unixTime}_{hash}";
         }
-        public HashGenerator(CookieContainer cc)
-        {
-            _cc = cc;
-        }
-        private readonly CookieContainer _cc;
     }
     class YtInitialData
     {
@@ -127,19 +118,6 @@ namespace YouTubeLiveSitePlugin.Next
                 list.Add(message);
             }
             return list;
-        }
-        public string GetDelegatedSessionId()
-        {
-            string s;
-            try
-            {
-                s = (string)_d.responseContext.webResponseContextExtensionData.ytConfigData.delegatedSessionId;
-            }
-            catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ex)
-            {
-                throw new SpecChangedException(Raw, ex);
-            }
-            return s;
         }
         public string GetClientIdPrefix()
         {
@@ -702,12 +680,20 @@ namespace YouTubeLiveSitePlugin.Next
         }
         public static YtInitialData ExtractYtInitialData(string liveChatHtml)
         {
+            if (string.IsNullOrEmpty(liveChatHtml))
+            {
+                throw new ArgumentNullException(nameof(liveChatHtml));
+            }
             var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+?});");
             if (!match.Success)
             {
                 throw new Exception("");
             }
             var raw = match.Groups[1].Value;
+            if (string.IsNullOrEmpty(raw))
+            {
+                throw new SpecChangedException(liveChatHtml);
+            }
             return new YtInitialData(raw);
         }
         public static string ExtractYtCfg(string liveChatHtml)
@@ -771,7 +757,7 @@ namespace YouTubeLiveSitePlugin.Next
             var c = new StringContent(data.ToString(), Encoding.UTF8, "application/json");
             if (loginInfo is LoggedIn loggedIn)
             {
-                var hash = new HashGenerator(cc).CreateHash();
+                var hash = SapiSidHashGenerator.CreateHash(cc, DateTime.Now);
                 client.DefaultRequestHeaders.Add("Authorization", $"SAPISIDHASH {hash}");
             }
 

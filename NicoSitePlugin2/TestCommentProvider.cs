@@ -10,6 +10,7 @@ using System.Net;
 using System.Collections.Concurrent;
 using System.Threading;
 using Newtonsoft.Json;
+using NicoSitePlugin.Metadata;
 
 namespace NicoSitePlugin
 {
@@ -52,11 +53,11 @@ namespace NicoSitePlugin
             {
                 _isDisconnectedExpected = true;
                 SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
             }
             catch (Exception ex)
             {
-                _logger.LogException(ex);
+                _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
             }
             _dataProps = null;
             if (!_isDisconnectedExpected)
@@ -110,9 +111,11 @@ namespace NicoSitePlugin
                 goto check;
             }
         }
+        CookieContainer _cc;
         public async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
             var cc = GetCookieContainer(browserProfile);
+            _cc = cc;
             string vid;
             if (input is LivePageUrl livePageUrl)
             {
@@ -148,6 +151,8 @@ namespace NicoSitePlugin
                 }
                 return;
             }
+            _vposBaseTime = Common.UnixTimeConverter.FromUnixTime(_dataProps.VposBaseTime);
+            _localTime = DateTime.Now;
             RaiseMetadataUpdated(new TestMetadata
             {
                 Title = _dataProps.Title,
@@ -244,7 +249,20 @@ namespace NicoSitePlugin
         {
             return chat.Content == "/disconnect";
         }
-        private void ProcessChatMessage(Chat.IChatMessage message)
+        /// <summary>
+        /// 生IDか
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        private bool IsRawUserId(string userId)
+        {
+            return !string.IsNullOrEmpty(userId) && Regex.IsMatch(userId, "^\\d+$");
+        }
+        private Task<string> GetUserName(string userId)
+        {
+            throw new NotImplementedException();
+        }
+        private async Task ProcessChatMessageAsync(Chat.IChatMessage message)
         {
             switch (message)
             {
@@ -389,6 +407,17 @@ namespace NicoSitePlugin
                             {
                                 _chatProvider?.Disconnect();
                             }
+                            string username;
+                            if (IsRawUserId(chat.UserId) && _siteOptions.IsAutoGetUsername)
+                            {
+                                var userInfo = await Api.GetUserInfo(_server, _cc, chat.UserId);
+                                username = userInfo.Nickname;
+                                user.Name = Common.MessagePartFactory.CreateMessageItems(username);
+                            }
+                            else
+                            {
+                                username = null;
+                            }
                             var abc = new NicoComment("")
                             {
                                 ChatNo = chat.No,
@@ -397,7 +426,7 @@ namespace NicoSitePlugin
                                 PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
                                 Text = chat.Content,
                                 UserId = chat.UserId,
-                                UserName = "",
+                                UserName = username,
                             };
                             comment = abc;
                             metadata = new CommentMessageMetadata(abc, _options, _siteOptions, user, this, isFirstComment)
@@ -429,12 +458,12 @@ namespace NicoSitePlugin
                     break;
             }
         }
-        private void ChatProvider_Received(object sender, Chat.IChatMessage e)
+        private async void ChatProvider_Received(object sender, Chat.IChatMessage e)
         {
             var message = e;
             try
             {
-                ProcessChatMessage(message);
+                await ProcessChatMessageAsync(message);
             }
             catch (Exception ex)
             {
@@ -499,6 +528,8 @@ namespace NicoSitePlugin
                         SendSystemInfo($"メタデータサーバーとの接続が切断されました{Environment.NewLine}原因:{disconnect.Reason}", InfoType.Notice);
                         //Disconnect();
                         break;
+                    case Metadata.ServerTime serverTime:
+                        break;
                 }
             }
             catch (Exception ex)
@@ -506,6 +537,8 @@ namespace NicoSitePlugin
 
             }
         }
+        DateTime? _vposBaseTime;
+        DateTime? _localTime;
         /// <summary>
         /// 意図的な切断
         /// </summary>
@@ -542,9 +575,14 @@ namespace NicoSitePlugin
         {
         }
 
-        Task INicoCommentProvider.PostCommentAsync(string comment, string mail)
+        Task INicoCommentProvider.PostCommentAsync(string comment, bool is184, string color, string size, string position)
         {
-            throw new System.NotImplementedException();
+            var elapsed = DateTime.Now.AddHours(-9) - _vposBaseTime.Value;
+            var ms = elapsed.TotalMilliseconds;
+            var vpos = (long)Math.Round(ms / 10);
+            var postComment = new PostComment(comment, vpos, is184, color, size, position);
+            _metaProvider.Send(postComment);
+            return Task.CompletedTask;
         }
         public TestCommentProvider(ICommentOptions options, INicoSiteOptions siteOptions, IDataSource server, ILogger logger, IUserStoreManager userStoreManager) : base(logger, options)
         {
@@ -552,7 +590,7 @@ namespace NicoSitePlugin
             _userStoreManager = userStoreManager;
             _siteOptions = siteOptions;
             _server = server;
-            _metaProvider = new Metadata.MetaProvider();
+            _metaProvider = new Metadata.MetaProvider(_logger);
             _metaProvider.Received += MetaProvider_Received;
             _chatProvider = new Chat.ChatProvider(_logger);
             _chatProvider.Received += ChatProvider_Received;

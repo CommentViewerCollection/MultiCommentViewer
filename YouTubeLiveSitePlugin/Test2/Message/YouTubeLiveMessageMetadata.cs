@@ -147,6 +147,8 @@ namespace YouTubeLiveSitePlugin.Test2
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions { get; }
+
         public YouTubeLiveMessageMetadata(IYouTubeLiveMessage message, ICommentOptions options, IYouTubeLiveSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;

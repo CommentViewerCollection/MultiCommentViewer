@@ -9,6 +9,8 @@ namespace NicoSitePlugin.Metadata
     {
         public event EventHandler<IMetaMessage> Received;
         Websocket _ws;
+        private readonly ILogger _logger;
+
         public async Task ReceiveAsync(string websocketUrl)
         {
             if (_ws != null)
@@ -53,12 +55,23 @@ namespace NicoSitePlugin.Metadata
         {
             var raw = e;
             Debug.WriteLine(raw);
-            var message = MetaParser.Parse(raw);
-            Received?.Invoke(this, message);
+            try
+            {
+                var message = MetaParser.Parse(raw);
+                Received?.Invoke(this, message);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogException(ex);
+            }
         }
         public void Disconnect()
         {
             _ws?.Disconnect();
+        }
+        public MetaProvider(ILogger logger)
+        {
+            _logger = logger;
         }
     }
 }

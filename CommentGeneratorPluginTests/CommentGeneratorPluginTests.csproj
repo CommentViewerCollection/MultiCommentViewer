@@ -79,10 +79,6 @@
       <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
       <Name>MirrativIF</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MixerIF\MixerIF.csproj">
-      <Project>{cef10332-bbd8-49fd-b69b-b830bcad4e63}</Project>
-      <Name>MixerIF</Name>
-    </ProjectReference>
     <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
       <Project>{daf5e126-c37f-4181-aae5-89e8fc89aae4}</Project>
       <Name>NicoLiveIF</Name>

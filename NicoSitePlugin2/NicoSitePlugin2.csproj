@@ -61,13 +61,13 @@
     <Compile Include="DataProps.cs" />
     <Compile Include="IInput.cs" />
     <Compile Include="Low\CommunityLives.cs" />
+    <Compile Include="Low\UserInfo.cs" />
     <Compile Include="Message\NicoAd.cs" />
     <Compile Include="Message\NicoComment.cs" />
     <Compile Include="Message\NicoConnected.cs" />
     <Compile Include="Message\NicoDisconnected.cs" />
     <Compile Include="Message\NicoInfo.cs" />
     <Compile Include="Message\NicoKickCommand.cs" />
-    <Compile Include="Message\NicoMessageBase.cs" />
     <Compile Include="Message\NicoMessageContext.cs" />
     <Compile Include="Message\NicoMessageMetadata.cs" />
     <Compile Include="Message\NicoMessageMethods.cs" />
@@ -79,8 +79,10 @@
     <Compile Include="Metadata\MetaParser.cs" />
     <Compile Include="Metadata\Ping.cs" />
     <Compile Include="Metadata\Pong.cs" />
+    <Compile Include="Metadata\PostComment.cs" />
     <Compile Include="Metadata\Room.cs" />
     <Compile Include="Metadata\Seat.cs" />
+    <Compile Include="Metadata\ServerTime.cs" />
     <Compile Include="Metadata\Statistics.cs" />
     <Compile Include="Metadata\UnknownMessage.cs" />
     <Compile Include="MyInfo.cs" />

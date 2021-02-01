@@ -18,19 +18,9 @@ using YouTubeLiveSitePlugin.Test2;
 
 namespace YouTubeLiveSitePlugin.Next
 {
-    class HashGenerator
+    static class SapiSidHashGenerator
     {
-        public string GetSapiSid()
-        {
-            var cookies = Tools.ExtractCookies(_cc);
-            var c = cookies.Find(cookie => cookie.Name == "SAPISID");
-            return c?.Value;
-        }
-        protected virtual long GetCurrentUnixTime()
-        {
-            return Common.UnixTimeConverter.ToUnixTime(DateTime.Now);
-        }
-        private string ComputeSHA1(string s)
+        private static string ComputeSHA1(string s)
         {
             var bytes = Encoding.UTF8.GetBytes(s);
             byte[] hashValue;
@@ -45,29 +35,41 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return sb.ToString();
         }
-        public string CreateHash()
+        public static string CreateHash(CookieContainer cc, DateTime currentDate)
         {
-            var unixTime = GetCurrentUnixTime();
-            var sapiSid = GetSapiSid();
+            var unixTime = Common.UnixTimeConverter.ToUnixTime(currentDate);
+            var sapiSid = Tools.GetSapiSid(cc);
             var origin = "https://www.youtube.com";
             if (sapiSid == null)
             {
-                throw new SpecChangedException("");
+                var cookies = Tools.ExtractCookies(cc);
+                var keys = string.Join(",", cookies.Select(c => c.Name));
+                throw new SpecChangedException($"cookies.Count={cookies.Count},keys={keys}");
             }
             var s = $"{unixTime} {sapiSid} {origin}";
             var hash = ComputeSHA1(s).ToLower();
             return $"{unixTime}_{hash}";
         }
-        public HashGenerator(CookieContainer cc)
-        {
-            _cc = cc;
-        }
-        private readonly CookieContainer _cc;
     }
     class YtInitialData
     {
         private readonly dynamic _d;
         public string Raw { get; }
+        public string Cver
+        {
+            get
+            {
+                var @params = _d.responseContext.serviceTrackingParams[0].@params;
+                foreach (var p in @params)
+                {
+                    if ((string)p.key == "cver")
+                    {
+                        return (string)p.value;
+                    }
+                }
+                return null;
+            }
+        }
         private ChatContinuation _chatContinuation;
         public ChatContinuation ChatContinuation()
         {
@@ -116,19 +118,6 @@ namespace YouTubeLiveSitePlugin.Next
                 list.Add(message);
             }
             return list;
-        }
-        public string GetDelegatedSessionId()
-        {
-            string s;
-            try
-            {
-                s = (string)_d.responseContext.webResponseContextExtensionData.ytConfigData.delegatedSessionId;
-            }
-            catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException ex)
-            {
-                throw new SpecChangedException(Raw, ex);
-            }
-            return s;
         }
         public string GetClientIdPrefix()
         {
@@ -675,14 +664,36 @@ namespace YouTubeLiveSitePlugin.Next
     }
     static class Tools
     {
+        public static string GetSapiSid(CookieContainer cc)
+        {
+            var cookies = Tools.ExtractCookies(cc);
+            var keys = new[] { "SAPISID", "APISID", "__Secure-3PAPISID", "SID" };
+            foreach (var key in keys)
+            {
+                var cookie = cookies.Find(c => c.Name == key);
+                if (cookie != null)
+                {
+                    return cookie.Value;
+                }
+            }
+            return null;
+        }
         public static YtInitialData ExtractYtInitialData(string liveChatHtml)
         {
+            if (string.IsNullOrEmpty(liveChatHtml))
+            {
+                throw new ArgumentNullException(nameof(liveChatHtml));
+            }
             var match = Regex.Match(liveChatHtml, "window\\[\"ytInitialData\"\\] = ({.+?});");
             if (!match.Success)
             {
                 throw new Exception("");
             }
             var raw = match.Groups[1].Value;
+            if (string.IsNullOrEmpty(raw))
+            {
+                throw new SpecChangedException(liveChatHtml);
+            }
             return new YtInitialData(raw);
         }
         public static string ExtractYtCfg(string liveChatHtml)
@@ -725,7 +736,7 @@ namespace YouTubeLiveSitePlugin.Next
         /// <param name="loginInfo"></param>
         /// <returns></returns>
         /// <exception cref="HttpRequestException">多分500番台のエラーだけ</exception>
-        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, CookieContainer cc, ILoginState loginInfo)
+        public static async Task<GetLiveChat> GetGetLiveChat(DataToPost data, string innerTubeApiKey, CookieContainer cc, ILoginState loginInfo, ILogger logger)
         {
             //dataの構造
             //context
@@ -746,7 +757,7 @@ namespace YouTubeLiveSitePlugin.Next
             var c = new StringContent(data.ToString(), Encoding.UTF8, "application/json");
             if (loginInfo is LoggedIn loggedIn)
             {
-                var hash = new HashGenerator(cc).CreateHash();
+                var hash = SapiSidHashGenerator.CreateHash(cc, DateTime.Now);
                 client.DefaultRequestHeaders.Add("Authorization", $"SAPISIDHASH {hash}");
             }
 

@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace YouTubeLiveSitePlugin.Next
 {
@@ -148,7 +149,7 @@ namespace YouTubeLiveSitePlugin.Next
             while (!_cts.IsCancellationRequested)
             {
                 //例外はここではcatchしない。
-                var s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, cc, loginInfo);
+                var s = await Tools.GetGetLiveChat(dataToPost, ytCfg.InnerTubeApiKey, cc, loginInfo, _logger);
                 var actions = s.GetActions();
                 var continuation = s.GetContinuation();
                 if (continuation is ReloadContinuation reload)
@@ -198,12 +199,14 @@ namespace YouTubeLiveSitePlugin.Next
         {
             _cts?.Cancel();
         }
-        public ChatProvider2(IYouTubeLiveSiteOptions siteOptions)
+        public ChatProvider2(IYouTubeLiveSiteOptions siteOptions, ILogger logger)
         {
             _siteOptions = siteOptions;
+            _logger = logger;
         }
         private CancellationTokenSource _cts;
         private readonly IYouTubeLiveSiteOptions _siteOptions;
+        private readonly ILogger _logger;
     }
     class CommentProviderNext : CommentProviderBase, IYouTubeCommentProvider
     {
@@ -268,12 +271,16 @@ namespace YouTubeLiveSitePlugin.Next
                 case NoVidResult no:
                     SendSystemInfo("このチャンネルでは生放送をしていないようです", InfoType.Error);
                     return;
+                case InvalidInput invalidInput:
+                    SendSystemInfo("入力されたURLは未対応の形式です", InfoType.Error);
+                    _logger.LogException(new ParseException(input));
+                    return;
                 default:
                     throw new NotImplementedException();
             }
             _cc = CreateCookieContainer(browserProfile);
             await InitElapsedTimer(vid);
-            _chatProvider = new ChatProvider2(_siteOptions);
+            _chatProvider = new ChatProvider2(_siteOptions, _logger);
             _chatProvider.MessageReceived += ChatProvider_MessageReceived;
             _chatProvider.LoggedInStateChanged += _chatProvider_LoggedInStateChanged;
             _chatProvider.InfoReceived += ChatProvider_InfoReceived;
@@ -294,8 +301,25 @@ namespace YouTubeLiveSitePlugin.Next
                 return;
             }
             var loginInfo = Tools.CreateLoginInfo(ytInitialData.IsLoggedIn);
+            //ログイン済みユーザの正常にコメントが取得できるようになったら以下のコードは不要
+            //---ここから---
+            if (loginInfo is LoggedIn)
+            {
+                var k = Tools.GetSapiSid(_cc);
+                if (k == null)
+                {
+                    //SIDが無い。ログイン済み判定なのにSIDが無い場合が散見されるが原因不明。強制的に未ログインにする。
+                    var cookies = Tools.ExtractCookies(_cc);
+                    var cver = ytInitialData.Cver;
+                    var keys = string.Join(",", cookies.Select(c => c.Name));
+                    _logger.LogException(new Exception(), "", $"cver={cver},keys={keys}");
+                    _cc = new CookieContainer();
+                    goto reload;
+                }
+            }
+            //---ここまで---
             SetLoggedInState(ytInitialData.IsLoggedIn);
-            _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, _cc);
+            _postCommentCoodinator = new DataCreator(ytInitialData, ytCfg.InnerTubeApiKey, ytCfg.DelegatedSessionId, _cc);
             var initialActions = ytInitialData.GetActions();
             foreach (var action in initialActions)
             {
@@ -741,11 +765,6 @@ namespace YouTubeLiveSitePlugin.Next
     {
         private readonly string _ytInitialData;
         private readonly CookieContainer _cc;
-
-        private string GetDelegatedSessionId()
-        {
-            return _ytInitialDataT.GetDelegatedSessionId();
-        }
         public string GetClientIdPrefix()
         {
             return _ytInitialDataT.GetClientIdPrefix();
@@ -767,12 +786,12 @@ namespace YouTubeLiveSitePlugin.Next
         {
             var context = "{\"context\":{\"client\":{\"clientName\":\"WEB\",\"clientVersion\":\"" + GetClientVersion() + "\"}}}";
             dynamic d = JsonConvert.DeserializeObject(context);
-            d.context.user = JsonConvert.DeserializeObject("{\"onBehalfOfUser\":\"" + GetDelegatedSessionId() + "\"}");
+            d.context.user = JsonConvert.DeserializeObject("{\"onBehalfOfUser\":\"" + _delegatedSessionId + "\"}");
             d.@params = GetParams();
             d.clientMessageId = GetClientIdPrefix() + _commentCounter;
             d.richMessage = JsonConvert.DeserializeObject("{\"textSegments\":[{\"text\":\"" + message + "\"}]}");
             var payload = (string)JsonConvert.SerializeObject(d, Formatting.None);
-            var hash = CreateHash();
+            var hash = SapiSidHashGenerator.CreateHash(_cc, DateTime.Now);
             //var url = GetUrl();
             return new PostCommentContext2(payload, hash);
         }
@@ -798,47 +817,10 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return @params;
         }
-        public string GetSapiSid()
-        {
-            var cookies = Tools.ExtractCookies(_cc);
-            var c = cookies.Find(cookie => cookie.Name == "SAPISID");
-            return c?.Value;
-        }
-        public virtual long GetCurrentUnixTime()
-        {
-            return Common.UnixTimeConverter.ToUnixTime(DateTime.Now);
-        }
-        private string ComputeSHA1(string s)
-        {
-            var bytes = Encoding.UTF8.GetBytes(s);
-            byte[] hashValue;
-            using (var crypto = new SHA1CryptoServiceProvider())
-            {
-                hashValue = crypto.ComputeHash(bytes);
-            }
-            var sb = new StringBuilder();
-            foreach (var b in hashValue)
-            {
-                sb.AppendFormat("{0:X2}", b);
-            }
-            return sb.ToString();
-        }
-        public string CreateHash()
-        {
-            var unixTime = GetCurrentUnixTime();
-            var sapiSid = GetSapiSid();
-            var origin = "https://www.youtube.com";
-            if (sapiSid == null)
-            {
-                throw new SpecChangedException("");
-            }
-            var s = $"{unixTime} {sapiSid} {origin}";
-            var hash = ComputeSHA1(s).ToLower();
-            return $"{unixTime}_{hash}";
-        }
-        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey, CookieContainer cc)
+        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey,string delegatedSessionId, CookieContainer cc)
         {
             InnerTubeApiKey = innerTubeApiLey;
+            _delegatedSessionId = delegatedSessionId;
             _cc = cc;
             _ytInitialData = ytInitialData.Raw;
             _ytInitialDataT = ytInitialData;
@@ -846,6 +828,7 @@ namespace YouTubeLiveSitePlugin.Next
         private readonly YtInitialData _ytInitialDataT;
 
         public string InnerTubeApiKey { get; }
+        private readonly string _delegatedSessionId;
     }
     class PostCommentContext2
     {

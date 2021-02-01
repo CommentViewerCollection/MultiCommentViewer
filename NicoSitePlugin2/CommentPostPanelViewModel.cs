@@ -44,9 +44,9 @@ namespace NicoSitePlugin
             var is184 = Is184;
             var comment = Comment;
             var s184 = is184 ? "184" : "";
-            var size = SelectedCommentSize == CommentSize.Medium ? "" : SelectedCommentSize.ToString();
-            var pos = SelectedCommentPosition == CommentPosition.Naka ? "" : SelectedCommentPosition.ToString();
-            var color = SelectedCommentColor == CommentColor.White ? "" : SelectedCommentColor.ToString();
+            var size = SelectedCommentSize == CommentSize.Medium ? (string)null : SelectedCommentSize.ToString();
+            var pos = SelectedCommentPosition == CommentPosition.Naka ? (string)null : SelectedCommentPosition.ToString();
+            var color = SelectedCommentColor == CommentColor.White ? (string)null : SelectedCommentColor.ToString();
             var list = new List<string>
             {
                 s184,
@@ -58,7 +58,7 @@ namespace NicoSitePlugin
             Comment = "";
             try
             {
-                await _nicoCommentProvider.PostCommentAsync(comment, mail);
+                await _nicoCommentProvider.PostCommentAsync(comment, is184, color, size, pos);
             }
             catch (Exception ex)
             {

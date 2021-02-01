@@ -15,8 +15,27 @@ namespace NicoSitePlugin
 
         }
     }
+    class UserInfo
+    {
+        public string Nickname { get; set; }
+        public string UserIconUrl { get; set; }
+
+    }
     static class Api
     {
+        public static async Task<UserInfo> GetUserInfo(IDataSource server, CookieContainer cc, string userId)
+        {
+            var url = $"https://public.api.nicovideo.jp/v1/users.json?userIds={userId}";
+            var res = await server.GetAsync(url, cc);
+            var obj = JsonConvert.DeserializeObject<NicoSitePlugin2.Low.UserInfo.RootObject>(res);
+            var data = obj.Data[0];
+            var userInfo = new UserInfo
+            {
+                Nickname = data.Nickname,
+                UserIconUrl = data.Icons.Urls.The150X150,
+            };
+            return userInfo;
+        }
         /// <summary>
         /// 
         /// </summary>

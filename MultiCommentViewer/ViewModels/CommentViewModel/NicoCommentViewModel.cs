@@ -124,10 +124,23 @@ namespace MultiCommentViewer
         public NicoCommentViewModel(NicoSitePlugin.INicoComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(comment as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {
-            if (!string.IsNullOrEmpty(comment.UserName))
+            //if (!string.IsNullOrEmpty(comment.UserName))
+            //{
+            //    _nameItems = MessagePartFactory.CreateMessageItems(comment.UserName);
+            //}
+            var siteOptions = (INicoSiteOptions)metadata.SiteOptions;
+            siteOptions.PropertyChanged += (s, e) =>
             {
-                _nameItems = MessagePartFactory.CreateMessageItems(comment.UserName);
-            }
+                switch (e.PropertyName)
+                {
+                    case nameof(siteOptions.IsAutoSetNickname):
+                        {
+                            SetNameItems(comment, metadata, siteOptions);
+                        }
+                        break;
+                }
+            };
+            SetNameItems(comment, metadata, siteOptions);
             MessageItems = MessagePartFactory.CreateMessageItems(comment.Text);
             if (IsValudThumbnailUrl(comment.ThumbnailUrl))
             {
@@ -141,6 +154,37 @@ namespace MultiCommentViewer
             Id = comment.Id;
             PostTime = comment.PostedAt.ToLocalTime().ToString("HH:mm:ss");
         }
+
+        private void SetNameItems(INicoComment comment, IMessageMetadata metadata, INicoSiteOptions siteOptions)
+        {
+            if (!comment.Is184)
+            {
+                if (siteOptions.IsAutoGetUsername)
+                {
+                    _nameItems = metadata.User.Name;
+                    RaisePropertyChanged(nameof(NameItems));
+                }
+                else
+                {
+                    _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserId);
+                    RaisePropertyChanged(nameof(NameItems));
+                }
+            }
+            else
+            {
+                if (siteOptions.IsShow184Id)
+                {
+                    _nameItems = Common.MessagePartFactory.CreateMessageItems(comment.UserId);
+                    RaisePropertyChanged(nameof(NameItems));
+                }
+                else
+                {
+                    _nameItems = null;
+                    RaisePropertyChanged(nameof(NameItems));
+                }
+            }
+        }
+
         public NicoCommentViewModel(NicoSitePlugin.INicoAd ad, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(ad as NicoSitePlugin.INicoMessage, metadata, methods, connectionStatus, options)
         {

@@ -1,6 +1,0 @@
-﻿namespace MixerSitePlugin
-{
-    interface ILiveInfo
-    {
-    }
-}

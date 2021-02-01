@@ -141,7 +141,7 @@ namespace LineLiveSitePlugin
         }
         protected virtual Task<(ILiveInfo, string raw)> GetLiveInfo(string channelId, string liveId)
         {
-            return Api.GetLiveInfo(_server, channelId, liveId);
+            return Api.GetLiveInfoV4(_server, channelId, liveId);
         }
         FirstCommentDetector _first = new FirstCommentDetector();
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)

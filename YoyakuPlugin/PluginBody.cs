@@ -1,27 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
-using System.Xml;
 using System.Diagnostics;
 using System.Windows.Threading;
 using Plugin;
 using System.ComponentModel.Composition;
 using SitePlugin;
-using Common;
-using System.Runtime.Remoting.Messaging;
-using YouTubeLiveSitePlugin;
-using OpenrecSitePlugin;
-using TwitchSitePlugin;
-using NicoSitePlugin;
-using TwicasSitePlugin;
-using LineLiveSitePlugin;
-using WhowatchSitePlugin;
-using MirrativSitePlugin;
-using PeriscopeSitePlugin;
-using MixerSitePlugin;
-using MildomSitePlugin;
 
 namespace OpenrecYoyakuPlugin
 {

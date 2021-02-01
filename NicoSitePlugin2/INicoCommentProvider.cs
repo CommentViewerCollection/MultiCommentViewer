@@ -6,6 +6,6 @@ namespace NicoSitePlugin
 {
     interface INicoCommentProvider : ICommentProvider
     {
-        Task PostCommentAsync(string comment, string mail);
+        Task PostCommentAsync(string comment, bool is184, string color, string size, string position);
     }
 }

@@ -5,10 +5,11 @@ using System.Windows.Media;
 
 namespace SitePlugin
 {
+    public interface ISiteOptions { }
     /// <summary>
     /// 
     /// </summary>
-    public interface IMessageMetadata:INotifyPropertyChanged
+    public interface IMessageMetadata : INotifyPropertyChanged
     {
         Color BackColor { get; }
         Color ForeColor { get; }
@@ -26,5 +27,6 @@ namespace SitePlugin
         bool IsVisible { get; }
         bool IsNameWrapping { get; }
         Guid SiteContextGuid { get; }
+        ISiteOptions SiteOptions { get; }
     }
 }

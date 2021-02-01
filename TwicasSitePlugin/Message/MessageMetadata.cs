@@ -148,6 +148,8 @@ namespace TwicasSitePlugin
         public bool IsInitialComment { get; set; }
         public bool IsNameWrapping => _options.IsUserNameWrapping;
         public Guid SiteContextGuid { get; set; }
+        public ISiteOptions SiteOptions { get; }
+
         public MessageMetadata(ITwicasMessage message, ICommentOptions options, ITwicasSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
@@ -208,7 +210,7 @@ namespace TwicasSitePlugin
                     }
                     break;
                 case nameof(_siteOptions.IsShowItem):
-                    if(_message is ITwicasItem)
+                    if (_message is ITwicasItem)
                     {
                         RaisePropertyChanged(nameof(IsVisible));
                     }

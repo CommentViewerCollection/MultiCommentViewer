@@ -29,9 +29,9 @@
         <Label Content="リクエスト文字色" HorizontalAlignment="Left" Margin="212,276,0,0" VerticalAlignment="Top" />
         <xctk:ColorPicker SelectedColor="{Binding SpiForeColor}" Margin="315,276,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label Content="エモーション背景色" HorizontalAlignment="Left" Margin="20,299,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="123,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <xctk:ColorPicker SelectedColor="{Binding EmotionBackColor}" Margin="123,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
         <Label Content="エモーション文字色" HorizontalAlignment="Left" Margin="212,303,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="315,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <xctk:ColorPicker SelectedColor="{Binding EmotionForeColor}" Margin="315,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
 
     </Grid>

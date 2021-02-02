@@ -51,6 +51,26 @@ namespace NicoSitePlugin
             get => ChangedOptions.ItemForeColor;
             set => ChangedOptions.ItemForeColor = value;
         }
+        public Color SpiBackColor
+        {
+            get => ChangedOptions.SpiBackColor;
+            set => ChangedOptions.SpiBackColor = value;
+        }
+        public Color SpiForeColor
+        {
+            get => ChangedOptions.SpiForeColor;
+            set => ChangedOptions.SpiForeColor = value;
+        }
+        public Color EmotionBackColor
+        {
+            get => ChangedOptions.EmotionBackColor;
+            set => ChangedOptions.EmotionBackColor = value;
+        }
+        public Color EmotionForeColor
+        {
+            get => ChangedOptions.EmotionForeColor;
+            set => ChangedOptions.EmotionForeColor = value;
+        }
         private readonly NicoSiteOptions _origin;
         private readonly NicoSiteOptions _changed;
         internal NicoSiteOptions OriginOptions { get { return _origin; } }

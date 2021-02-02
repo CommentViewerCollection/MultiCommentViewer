@@ -61,6 +61,11 @@ namespace NicoSitePlugin
             get => ChangedOptions.SpiForeColor;
             set => ChangedOptions.SpiForeColor = value;
         }
+        public bool IsShowEmotion
+        {
+            get => ChangedOptions.IsShowEmotion;
+            set => ChangedOptions.IsShowEmotion = value;
+        }
         public Color EmotionBackColor
         {
             get => ChangedOptions.EmotionBackColor;

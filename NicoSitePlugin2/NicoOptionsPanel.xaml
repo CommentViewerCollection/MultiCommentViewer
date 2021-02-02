@@ -10,28 +10,43 @@
     <Grid>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="169,30,0,0" TextWrapping="Wrap" Text="{Binding OfficialRoomsRetrieveCount}" VerticalAlignment="Top" Width="51"/>
         <Label Content="公式放送で取得する部屋数" HorizontalAlignment="Left" Margin="17,27,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.132,-0.192"/>
-        <CheckBox Content="184コメントを表示する" IsChecked="{Binding IsShow184}" HorizontalAlignment="Left" Margin="30,135,0,0" VerticalAlignment="Top"/>
-        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="30,105,0,0" VerticalAlignment="Top"/>
-        <CheckBox Content="184IDをユーザ名として表示する" IsChecked="{Binding IsShow184Id}" HorizontalAlignment="Left" Margin="30,165,0,0" VerticalAlignment="Top"/>
-        <CheckBox Content="ユーザ名を自動的に取得する" IsChecked="{Binding IsAutoGetUsername}" HorizontalAlignment="Left" Margin="30,185,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="184コメントを表示する" IsChecked="{Binding IsShow184}" HorizontalAlignment="Left" Margin="30,98,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="30,68,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="184IDをユーザ名として表示する" IsChecked="{Binding IsShow184Id}" HorizontalAlignment="Left" Margin="30,128,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="ユーザ名を自動的に取得する" IsChecked="{Binding IsAutoGetUsername}" HorizontalAlignment="Left" Margin="30,148,0,0" VerticalAlignment="Top"/>
 
-        <Label Content="広告背景色" HorizontalAlignment="Left" Margin="20,218,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding AdBackColor}" Margin="123,222,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="広告文字色" HorizontalAlignment="Left" Margin="212,222,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding AdForeColor}" Margin="315,222,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="広告背景色" HorizontalAlignment="Left" Margin="20,181,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding AdBackColor}" Margin="123,185,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="広告文字色" HorizontalAlignment="Left" Margin="212,185,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding AdForeColor}" Margin="315,185,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
 
-        <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="20,245,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="123,249,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="アイテム文字色" HorizontalAlignment="Left" Margin="212,249,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="315,249,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="リクエスト背景色" HorizontalAlignment="Left" Margin="20,272,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding SpiBackColor}" Margin="123,276,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="リクエスト文字色" HorizontalAlignment="Left" Margin="212,276,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding SpiForeColor}" Margin="315,276,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="エモーション背景色" HorizontalAlignment="Left" Margin="20,299,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding EmotionBackColor}" Margin="123,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
-        <Label Content="エモーション文字色" HorizontalAlignment="Left" Margin="212,303,0,0" VerticalAlignment="Top" />
-        <xctk:ColorPicker SelectedColor="{Binding EmotionForeColor}" Margin="315,303,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="20,208,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="123,212,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="アイテム文字色" HorizontalAlignment="Left" Margin="212,212,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="315,212,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="リクエスト背景色" HorizontalAlignment="Left" Margin="20,235,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding SpiBackColor}" Margin="123,239,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <Label Content="リクエスト文字色" HorizontalAlignment="Left" Margin="212,239,0,0" VerticalAlignment="Top" />
+        <xctk:ColorPicker SelectedColor="{Binding SpiForeColor}" Margin="315,239,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+        <GroupBox Margin="10,265,0,40">
+            <GroupBox.Header>
+                <CheckBox x:Name="checkBoxIsShowEmotion" Content="エモーションを表示" IsChecked="{Binding IsShowEmotion}" HorizontalAlignment="Left"  VerticalAlignment="Top"/>
+            </GroupBox.Header>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Label Content="エモーション背景色" Grid.Column="0" IsEnabled="{Binding ElementName=checkBoxIsShowEmotion, Path=IsChecked}" VerticalAlignment="Center" />
+                <xctk:ColorPicker Grid.Column="1" SelectedColor="{Binding EmotionBackColor}" IsEnabled="{Binding ElementName=checkBoxIsShowEmotion, Path=IsChecked}" VerticalAlignment="Center" Width="75" Height="20" />
+                <Label Content="エモーション文字色" Grid.Column="2" HorizontalAlignment="Left" IsEnabled="{Binding ElementName=checkBoxIsShowEmotion, Path=IsChecked}" VerticalAlignment="Center" />
+                <xctk:ColorPicker Grid.Column="3" SelectedColor="{Binding EmotionForeColor}" IsEnabled="{Binding ElementName=checkBoxIsShowEmotion, Path=IsChecked}" VerticalAlignment="Center" Width="75" Height="20" />
+
+            </Grid>
+        </GroupBox>
+
 
 
     </Grid>

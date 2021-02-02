@@ -20,6 +20,12 @@ namespace NicoSitePlugin.Chat
             {
                 throw new InvalidOperationException("_ws is not null");
             }
+            var heartbeatTimer = new System.Timers.Timer
+            {
+                Interval = 1000,
+                AutoReset = true,
+            };
+            heartbeatTimer.Elapsed += HeartbeatTimer_Elapsed;
             ws = new Websocket
             {
                 //AutoSendPingInterval = 1000,
@@ -32,7 +38,11 @@ namespace NicoSitePlugin.Chat
             };
             _ws = ws;
             ws.Received += Ws_Received;
-            ws.Opened += Ws_Opened;
+            ws.Opened += (s, e) =>
+            {
+                OnWebsocketOpened();
+                heartbeatTimer.Enabled = true;
+            };
             var url = "wss://msgd.live2.nicovideo.jp/websocket";
             try
             {
@@ -42,17 +52,31 @@ namespace NicoSitePlugin.Chat
             }
             finally
             {
+                heartbeatTimer.Elapsed -= HeartbeatTimer_Elapsed;
+                heartbeatTimer.Enabled = false;
                 ws.Received -= Ws_Received;
                 ws.Opened -= Ws_Opened;
                 _ws = null;
             }
         }
+
+        private void HeartbeatTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                _ws?.Send("");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+        }
+
         public void SendPing()
         {
             _ws?.Send("");
         }
-
-        private void Ws_Opened(object sender, EventArgs e)
+        private void OnWebsocketOpened()
         {
             try
             {
@@ -87,6 +111,10 @@ namespace NicoSitePlugin.Chat
             {
                 _logger.LogException(ex);
             }
+        }
+        private void Ws_Opened(object sender, EventArgs e)
+        {
+
         }
 
         private void Ws_Received(object sender, string e)

@@ -22,6 +22,7 @@ using CommentViewerCommon;
 using SitePluginCommon;
 using System.Windows;
 using System.Windows.Controls;
+using NicoSitePlugin;
 
 namespace MultiCommentViewer
 {
@@ -802,9 +803,12 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new NicoCommentViewModel(spi, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
-                else if (nicoMessage is NicoSitePlugin.INicoEmotion emotion)
+                else if (nicoMessage is NicoSitePlugin.INicoEmotion emotion && messageContext.Metadata.SiteOptions is INicoSiteOptions nicoSiteOptions)
                 {
-                    mcvCvm = new NicoCommentViewModel(emotion, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                    if (nicoSiteOptions.IsShowEmotion)
+                    {
+                        mcvCvm = new NicoCommentViewModel(emotion, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                    }
                 }
                 else if (nicoMessage is NicoSitePlugin.INicoInfo info)
                 {

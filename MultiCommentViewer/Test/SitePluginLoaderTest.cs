@@ -14,14 +14,14 @@ namespace MultiCommentViewer.Test
     public class SitePluginLoaderTest : ISitePluginLoader
     {
         Dictionary<Guid, ISiteContext> _dict = new Dictionary<Guid, ISiteContext>();
-        public IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
+        public IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager, string userAgent)
         {
             var list = new List<ISiteContext>
             {
                 new YouTubeLiveSitePlugin.Test2.YouTubeLiveSiteContext(options, new YouTubeLiveSitePlugin.Test2.YouTubeLiveServer(), logger, userStoreManager),
                 new OpenrecSitePlugin.OpenrecSiteContext(options, logger, userStoreManager),
                 new TwitchSitePlugin.TwitchSiteContext(options,new TwitchSitePlugin.TwitchServer(), logger, userStoreManager),
-                new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(), logger, userStoreManager),
+                new NicoSitePlugin.NicoSiteContext(options,new NicoSitePlugin.DataSource(userAgent), logger, userStoreManager),
                 new TwicasSitePlugin.TwicasSiteContext(options,logger, userStoreManager),
                 new LineLiveSitePlugin.LineLiveSiteContext(options,new LineLiveSitePlugin.LineLiveServer(), logger, userStoreManager),
                 new WhowatchSitePlugin.WhowatchSiteContext(options, logger, userStoreManager),

@@ -12,7 +12,7 @@ namespace MultiCommentViewer
 {
     public interface ISitePluginLoader
     {
-        IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager);
+        IEnumerable<(string displayName, Guid guid)> LoadSitePlugins(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager, string userAgent);
         /// <summary>
         /// 終了処理
         /// 終了処理的な名前にしたい

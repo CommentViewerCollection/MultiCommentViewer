@@ -28,6 +28,10 @@ namespace NicoSitePlugin
             var url = $"https://public.api.nicovideo.jp/v1/users.json?userIds={userId}";
             var res = await server.GetAsync(url, cc);
             var obj = JsonConvert.DeserializeObject<NicoSitePlugin2.Low.UserInfo.RootObject>(res);
+            if(obj.Data.Length == 0)
+            {
+                throw new ArgumentException("指定されたuserIdは存在しない:" + userId);
+            }
             var data = obj.Data[0];
             var userInfo = new UserInfo
             {

@@ -24,6 +24,7 @@ namespace NicoSitePlugin
         public Color AdForeColor { get => GetValue(); set => SetValue(value); }
         public Color SpiBackColor { get => GetValue(); set => SetValue(value); }
         public Color SpiForeColor { get => GetValue(); set => SetValue(value); }
+        public bool IsShowEmotion { get => GetValue(); set => SetValue(value); }
         public Color EmotionBackColor { get => GetValue(); set => SetValue(value); }
         public Color EmotionForeColor { get => GetValue(); set => SetValue(value); }
         protected override void Init()
@@ -46,6 +47,7 @@ namespace NicoSitePlugin
             Dict.Add(nameof(ItemForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SpiBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SpiForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(IsShowEmotion), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(EmotionBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(EmotionForeColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
         }

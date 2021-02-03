@@ -110,6 +110,7 @@ namespace NicoSitePlugin
         Color ItemForeColor { get; set; }
         Color SpiBackColor { get; set; }
         Color SpiForeColor { get; set; }
+        bool IsShowEmotion { get; }
         Color EmotionBackColor { get; set; }
         Color EmotionForeColor { get; set; }
 

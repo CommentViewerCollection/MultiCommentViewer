@@ -262,6 +262,7 @@ namespace NicoSitePlugin
         {
             throw new NotImplementedException();
         }
+        private const string SystemUserId = "900000000";
         private async Task ProcessChatMessageAsync(Chat.IChatMessage message)
         {
             switch (message)
@@ -408,7 +409,7 @@ namespace NicoSitePlugin
                                 _chatProvider?.Disconnect();
                             }
                             string username;
-                            if (IsRawUserId(chat.UserId) && _siteOptions.IsAutoGetUsername)
+                            if (IsRawUserId(chat.UserId) && chat.UserId!= SystemUserId && _siteOptions.IsAutoGetUsername)
                             {
                                 var userInfo = await Api.GetUserInfo(_server, _cc, chat.UserId);
                                 username = userInfo.Nickname;

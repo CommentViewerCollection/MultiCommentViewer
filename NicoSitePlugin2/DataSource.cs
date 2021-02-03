@@ -6,13 +6,15 @@ namespace NicoSitePlugin
 {
     public class DataSource : ServerBase, IDataSource
     {
+        private readonly string _userAgent;
+
         public async Task<string> GetAsync(string url, CookieContainer cc)
         {
             var result = await GetInternalAsync(new HttpOptions
             {
                 Url = url,
                 Cc = cc,
-                UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+                UserAgent = _userAgent,
             }, false);
             var str = await result.Content.ReadAsStringAsync();
             return str;
@@ -21,6 +23,10 @@ namespace NicoSitePlugin
         public Task<string> GetAsync(string url)
         {
             return GetAsync(url, null);
+        }
+        public DataSource(string userAgent)
+        {
+            _userAgent = userAgent;
         }
     }
 }

@@ -237,7 +237,7 @@ namespace MultiCommentViewer
             var siteVms = new List<SiteViewModel>();
             try
             {
-                sitePlugins = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager);
+                sitePlugins = _sitePluginLoader.LoadSitePlugins(_options, _logger, _userStoreManager, GetUserAgent());
             }
             catch (Exception ex)
             {
@@ -1055,14 +1055,28 @@ namespace MultiCommentViewer
                 RaisePropertyChanged();
             }
         }
+        private string GetVersionNumber()
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var ver = asm.GetName().Version;
+            var s = $"{ver.Major}.{ver.Minor}.{ver.Build}";
+            return s;
+        }
+        private string GetAppName()
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var title = asm.GetName().Name;
+            return title;
+        }
+        private string GetUserAgent()
+        {
+            return $"{GetAppName()}/{GetVersionNumber()} contact-> twitter.com/kv510k";
+        }
         public string Title
         {
             get
             {
-                var asm = System.Reflection.Assembly.GetExecutingAssembly();
-                var ver = asm.GetName().Version;
-                var title = asm.GetName().Name;
-                var s = $"{title} v{ver.Major}.{ver.Minor}.{ver.Build}";
+                var s = $"{GetAppName()} v{GetVersionNumber()}";
 #if BETA
                 s += " (ベータ版)";
 #elif DEBUG

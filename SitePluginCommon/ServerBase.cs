@@ -34,7 +34,7 @@ namespace SitePluginCommon
             {
                 if (!string.IsNullOrEmpty(options.UserAgent))
                 {
-                    client.DefaultRequestHeaders.Add("User-Agent", options.UserAgent);
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", options.UserAgent);
                 }
                 if (options.AcceptLanguages != null)
                 {

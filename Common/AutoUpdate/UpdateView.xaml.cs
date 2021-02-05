@@ -23,6 +23,7 @@ namespace Common.AutoUpdate
         public Version CurrentVersion { get; set; }
         public LatestVersionInfo LatestVersionInfo { get; set; }
         public ILogger Logger { get; set; }
+        public string UserAgent { get; set; }
         public UpdateView()
         {
             InitializeComponent();
@@ -33,12 +34,12 @@ namespace Common.AutoUpdate
             if (_isShown)
                 return;
             _isShown = true;
-            
+
             if (IsUpdateExists)
             {
                 myFrame.Visibility = Visibility.Visible;
                 notUpdateFrame.Visibility = Visibility.Collapsed;
-                myFrame.NavigationService.Navigate(new UpdateExistsPage(myFrame.NavigationService, CurrentVersion, LatestVersionInfo, Logger));
+                myFrame.NavigationService.Navigate(new UpdateExistsPage(myFrame.NavigationService, CurrentVersion, LatestVersionInfo, Logger, UserAgent));
             }
             else
             {
@@ -46,7 +47,7 @@ namespace Common.AutoUpdate
                 notUpdateFrame.Visibility = Visibility.Visible;
                 notUpdateFrame.NavigationService.Navigate(new UpdateNotExistsPage());
             }
-            
+
             base.OnContentRendered(e);
         }
     }

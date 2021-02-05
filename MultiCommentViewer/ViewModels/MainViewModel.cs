@@ -632,7 +632,7 @@ namespace MultiCommentViewer
                 if (myVer < latestVersionInfo.Version)
                 {
                     //新しいバージョンがあった
-                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger));
+                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger, GetUserAgent()));
                 }
                 else
                 {
@@ -640,7 +640,7 @@ namespace MultiCommentViewer
                     if (!isAutoCheck)
                     {
                         //アップデートはありません
-                        MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger));
+                        MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger, GetUserAgent()));
                     }
                 }
             }

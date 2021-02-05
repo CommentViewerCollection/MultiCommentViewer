@@ -29,7 +29,7 @@ namespace Common
             var tcs = new TaskCompletionSource<object>();
             _tcs = tcs;
             var cookies = new List<KeyValuePair<string, string>>();
-            var ws= new WebSocket(url, SubProtocol, cookies, null, UserAgent, Origin)
+            var ws = new WebSocket(url, SubProtocol, cookies, null, UserAgent, Origin)
             {
                 EnableAutoSendPing = EnableAutoSendPing,
                 AutoSendPingInterval = AutoSendPingInterval,
@@ -83,11 +83,11 @@ namespace Common
         public async Task SendAsync(string s)
         {
             await Task.Yield();
-            _ws.Send(s);
+            Send(s);
         }
         public void Send(string s)
         {
-            _ws.Send(s);
+            _ws?.Send(s);
         }
 
         private void Ws_MessageReceived(object sender, MessageReceivedEventArgs e)

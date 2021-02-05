@@ -15,12 +15,15 @@ namespace Common.AutoUpdate
     {
         private readonly LatestVersionInfo _latest;
         private readonly ILogger _logger;
-        public DownloadPage(NavigationService service, Version currentVersion, LatestVersionInfo latestVersionInfo, ILogger logger)
+        private readonly string _userAgent;
+
+        public DownloadPage(NavigationService service, Version currentVersion, LatestVersionInfo latestVersionInfo, ILogger logger, string userAgent)
         {
             InitializeComponent();
             Loaded += DownloadPage_Loaded;
             _latest = latestVersionInfo;
             _logger = logger;
+            _userAgent = userAgent;
         }
 
         private async void DownloadPage_Loaded(object sender, RoutedEventArgs e)
@@ -31,6 +34,7 @@ namespace Common.AutoUpdate
             var zipFilePath = System.IO.Path.Combine(baseDir, zipFilename);
             System.IO.File.Delete(zipFilePath);
             var wc = new WebClient();
+            wc.Headers.Add("User-Agent", _userAgent);
             wc.DownloadProgressChanged += Wc_DownloadProgressChanged;
             var url = _latest.Url;
             //TODO:ここでWebExceptionが発生した場合の対応
@@ -40,7 +44,7 @@ namespace Common.AutoUpdate
             try
             {
                 var list = new List<string>();
-                using(var sr = new System.IO.StreamReader(System.IO.Path.Combine(baseDir, "list.txt")))
+                using (var sr = new System.IO.StreamReader(System.IO.Path.Combine(baseDir, "list.txt")))
                 {
                     while (!sr.EndOfStream)
                     {
@@ -65,7 +69,7 @@ namespace Common.AutoUpdate
                     {
                         _logger.LogException(ex, "", $"src={srcPath}, dst={dstPath}");
                     }
-                }                
+                }
             }
             catch (System.IO.FileNotFoundException ex)
             {
@@ -79,7 +83,7 @@ namespace Common.AutoUpdate
             {
                 using (var archive = ZipFile.OpenRead(zipFilePath))
                 {
-                    foreach(var entry in archive.Entries)
+                    foreach (var entry in archive.Entries)
                     {
                         var entryPath = System.IO.Path.Combine(baseDir, entry.FullName);
                         var entryDir = System.IO.Path.GetDirectoryName(entryPath);
@@ -103,7 +107,7 @@ namespace Common.AutoUpdate
             try
             {
                 var pid = Process.GetCurrentProcess().Id;
-                System.Diagnostics.Process.Start(exeFile, "/updated " + pid);                
+                System.Diagnostics.Process.Start(exeFile, "/updated " + pid);
             }
             catch (Exception ex)
             {

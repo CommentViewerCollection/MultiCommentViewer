@@ -9,12 +9,15 @@ namespace Common.AutoUpdate
         public LatestVersionInfo LatestVersionInfo { get; }
         public bool IsUpdateExists { get; private set; }
         public ILogger Logger { get; }
-        public ShowUpdateDialogMessage(bool isUpdateExists, Version currentVersion, AutoUpdate.LatestVersionInfo latestInfo, ILogger logger)
+        public string UserAgent { get; }
+
+        public ShowUpdateDialogMessage(bool isUpdateExists, Version currentVersion, AutoUpdate.LatestVersionInfo latestInfo, ILogger logger, string userAgent)
         {
             this.IsUpdateExists = isUpdateExists;
             CurrentVersion = currentVersion;
             LatestVersionInfo = latestInfo;
             Logger = logger;
+            UserAgent = userAgent;
         }
     }
 }

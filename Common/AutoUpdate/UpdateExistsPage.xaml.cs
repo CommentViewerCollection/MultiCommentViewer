@@ -22,14 +22,17 @@ namespace Common.AutoUpdate
     {
         public Version CurrentVersion { get; }
         public LatestVersionInfo LatestVersionInfo { get; }
+        public string UserAgent { get; }
+
         private readonly NavigationService _service;
         private readonly ILogger _logger;
-        public UpdateExistsPage(NavigationService service, Version currentVersion, LatestVersionInfo latestVersionInfo, ILogger logger)
+        public UpdateExistsPage(NavigationService service, Version currentVersion, LatestVersionInfo latestVersionInfo, ILogger logger, string userAgent)
         {
             _service = service;
             CurrentVersion = currentVersion;
             LatestVersionInfo = latestVersionInfo;
             _logger = logger;
+            UserAgent = userAgent;
             InitializeComponent();
             CurrentVersionText.Text = CurrentVersion.ToString();
             LatestVersionText.Text = LatestVersionInfo.Version.ToString();
@@ -42,8 +45,8 @@ namespace Common.AutoUpdate
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
-        {            
-            _service.Navigate(new DownloadPage(_service, CurrentVersion, LatestVersionInfo, _logger));
+        {
+            _service.Navigate(new DownloadPage(_service, CurrentVersion, LatestVersionInfo, _logger, UserAgent));
         }
     }
 }

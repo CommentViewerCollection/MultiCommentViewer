@@ -409,7 +409,7 @@ namespace NicoSitePlugin
                                 _chatProvider?.Disconnect();
                             }
                             string username;
-                            if (IsRawUserId(chat.UserId) && chat.UserId!= SystemUserId && _siteOptions.IsAutoGetUsername)
+                            if (IsRawUserId(chat.UserId) && chat.UserId != SystemUserId && _siteOptions.IsAutoGetUsername)
                             {
                                 var userInfo = await Api.GetUserInfo(_server, _cc, chat.UserId);
                                 username = userInfo.Nickname;
@@ -418,6 +418,14 @@ namespace NicoSitePlugin
                             else
                             {
                                 username = null;
+                            }
+                            if (_siteOptions.IsAutoSetNickname)
+                            {
+                                var nick = SitePluginCommon.Utils.ExtractNickname(chat.Content);
+                                if (!string.IsNullOrEmpty(nick))
+                                {
+                                    user.Nickname = nick;
+                                }
                             }
                             var abc = new NicoComment("")
                             {

@@ -116,6 +116,7 @@ namespace MultiCommentViewer
                     updateView.CurrentVersion = message.CurrentVersion;
                     updateView.LatestVersionInfo = message.LatestVersionInfo;
                     updateView.Logger = message.Logger;
+                    updateView.UserAgent = message.UserAgent;
                     updateView.Owner = this;
                     updateView.ShowDialog();
                 }

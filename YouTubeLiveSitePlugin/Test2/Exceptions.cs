@@ -69,7 +69,12 @@ namespace YouTubeLiveSitePlugin.Test2
     [Serializable]
     public class ContinuationNotExistsException : Exception
     {
+        public string Raw { get; }
         public ContinuationNotExistsException() { }
+        public ContinuationNotExistsException(string raw)
+        {
+            Raw = raw;
+        }
     }
 
     [Serializable]

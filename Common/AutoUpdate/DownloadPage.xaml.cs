@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
+using System.Windows.Threading;
+
 namespace Common.AutoUpdate
 {
     /// <summary>
@@ -16,7 +19,7 @@ namespace Common.AutoUpdate
         private readonly LatestVersionInfo _latest;
         private readonly ILogger _logger;
         private readonly string _userAgent;
-
+        Dispatcher _dispatcher;
         public DownloadPage(NavigationService service, Version currentVersion, LatestVersionInfo latestVersionInfo, ILogger logger, string userAgent)
         {
             InitializeComponent();
@@ -24,6 +27,7 @@ namespace Common.AutoUpdate
             _latest = latestVersionInfo;
             _logger = logger;
             _userAgent = userAgent;
+            _dispatcher = Dispatcher.CurrentDispatcher;
         }
 
         private async void DownloadPage_Loaded(object sender, RoutedEventArgs e)
@@ -33,12 +37,38 @@ namespace Common.AutoUpdate
             var zipFilename = "latest.zip";
             var zipFilePath = System.IO.Path.Combine(baseDir, zipFilename);
             System.IO.File.Delete(zipFilePath);
-            var wc = new WebClient();
-            wc.Headers.Add("User-Agent", _userAgent);
-            wc.DownloadProgressChanged += Wc_DownloadProgressChanged;
             var url = _latest.Url;
+            try
+            {
+                using (var client = new HttpClientDownloadWithProgress(url, zipFilePath))
+                {
+                    client.ProgressChanged += (totalFileSize, totalBytesDownloaded, progressPercentage) =>
+                    {
+                        _dispatcher.Invoke(() =>
+                        {
+                            if (progressPercentage.HasValue)
+                            {
+                                progressBar.Value = progressPercentage.Value;
+                            }
+                            txtTotalBytesDownloaded.Text = totalBytesDownloaded.ToString();
+                            txtFileSize.Text = totalFileSize.ToString();
+                        });
+                        Console.WriteLine($"{progressPercentage}% ({totalBytesDownloaded}/{totalFileSize})");
+                    };
+
+                    await client.StartDownload();
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogException(ex, "", $"baseDir={baseDir}, zipFilePath={zipFilePath}");
+            }
+            //var wc = new WebClient();
+            //wc.Headers.Add("User-Agent", _userAgent);
+            //wc.DownloadProgressChanged += Wc_DownloadProgressChanged;
+
             //TODO:ここでWebExceptionが発生した場合の対応
-            await wc.DownloadFileTaskAsync(url, zipFilePath);
+            //await wc.DownloadFileTaskAsync(url, zipFilePath);
 
             //list.txtに記載されているファイル全てに.oldを付加            
             try

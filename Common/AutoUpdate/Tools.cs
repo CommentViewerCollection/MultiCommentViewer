@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +7,7 @@ using System.Windows.Media.Imaging;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
+
 namespace Common.AutoUpdate
 {
     public static class Tools
@@ -18,20 +18,20 @@ namespace Common.AutoUpdate
             public string Version { get; set; }
             public string Url { get; set; }
         }
-        public static async Task<LatestVersionInfo> GetLatestVersionInfo(string name)
+        public static async Task<LatestVersionInfo> GetLatestVersionInfo(string name, string userAgent)
         {
             name = name.ToLower();
             //APIが確定するまでアダプタを置いている。ここから本当のAPIを取得する。
             var permUrl = @"https://ryu-s.github.io/" + name + "_latest";
 
-            var wc = new WebClient();
-            var api = await wc.DownloadStringTaskAsync(permUrl);
-
-            var jsonStr = await wc.DownloadStringTaskAsync(api);
-            var json = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(jsonStr);
-
-            var asm = System.Reflection.Assembly.GetExecutingAssembly();
-            var ver = asm.GetName().Version;
+            VersionInfo json;
+            using (var client = new System.Net.Http.HttpClient())
+            {
+                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
+                var api = await client.GetStringAsync(permUrl);
+                var jsonStr = await client.GetStringAsync(api);
+                json = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(jsonStr);
+            }
             return new LatestVersionInfo(json.Version, json.Url);
         }
     }

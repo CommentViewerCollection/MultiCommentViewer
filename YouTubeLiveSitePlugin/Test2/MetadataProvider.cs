@@ -67,7 +67,8 @@ namespace YouTubeLiveSitePlugin.Test2
                     dynamic json = JsonConvert.DeserializeObject(res);
                     if (!json.ContainsKey("continuation"))
                     {
-                        throw new ParseException(res);
+                        SendInfo($"updated_metadataにcontinuationが無い", InfoType.Debug);
+                        throw new ContinuationNotExistsException(res);
                     }
                     if (json.continuation.ContainsKey("invalidationContinuationData"))
                     {
@@ -99,6 +100,11 @@ namespace YouTubeLiveSitePlugin.Test2
                 catch (ParseException ex)
                 {
                     _logger.LogException(ex);
+                }
+                catch(ContinuationNotExistsException ex)
+                {
+                    _logger.LogException(ex);
+                    break;
                 }
                 catch (Exception ex)
                 {

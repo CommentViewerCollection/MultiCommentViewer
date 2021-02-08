@@ -231,7 +231,7 @@ namespace YouTubeLiveSitePlugin.Next
                         var elapsed = DateTime.Now - _startedAt.Value;
                         RaiseMetadataUpdated(new Test2.Metadata
                         {
-                            Elapsed = Test2.Tools.ToElapsedString(elapsed),
+                            Elapsed = Tools.ToElapsedString(elapsed),
                         });
                     };
                     _elapsedTimer.Enabled = true;
@@ -353,9 +353,10 @@ namespace YouTubeLiveSitePlugin.Next
                     {
                         await chatTask;
                     }
-                    catch (ChatUnavailableException)
+                    catch (ChatUnavailableException ex)
                     {
                         _isDisconnectedExpected = true;
+                        _logger.LogException(ex);
                         SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Notice);
                     }
                     catch (ReloadException)
@@ -817,7 +818,7 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return @params;
         }
-        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey,string delegatedSessionId, CookieContainer cc)
+        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey, string delegatedSessionId, CookieContainer cc)
         {
             InnerTubeApiKey = innerTubeApiLey;
             _delegatedSessionId = delegatedSessionId;

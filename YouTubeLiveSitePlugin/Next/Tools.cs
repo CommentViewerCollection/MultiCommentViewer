@@ -583,7 +583,7 @@ namespace YouTubeLiveSitePlugin.Next
             }
             if (!_d.ContainsKey("continuationContents"))
             {
-                throw new ChatUnavailableException();
+                throw new ChatUnavailableException(Raw);
             }
             if (!_d.continuationContents.liveChatContinuation.ContainsKey("continuations"))
             {

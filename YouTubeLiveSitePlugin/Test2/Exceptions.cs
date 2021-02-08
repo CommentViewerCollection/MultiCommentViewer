@@ -80,7 +80,12 @@ namespace YouTubeLiveSitePlugin.Test2
     [Serializable]
     public class ChatUnavailableException : Exception
     {
+        public string Raw { get; }
         public ChatUnavailableException() { }
+        public ChatUnavailableException(string raw)
+        {
+            Raw = raw;
+        }
     }
     [Serializable]
     public class YouTubeLiveServerErrorException : Exception

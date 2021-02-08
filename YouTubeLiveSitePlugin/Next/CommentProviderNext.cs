@@ -353,9 +353,10 @@ namespace YouTubeLiveSitePlugin.Next
                     {
                         await chatTask;
                     }
-                    catch (ChatUnavailableException)
+                    catch (ChatUnavailableException ex)
                     {
                         _isDisconnectedExpected = true;
+                        _logger.LogException(ex);
                         SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Notice);
                     }
                     catch (ReloadException)

@@ -297,8 +297,7 @@ namespace NicoSitePlugin
                             dynamic d = JsonConvert.DeserializeObject(adJson);
                             if ((string)d.version != "1")
                             {
-                                //未対応
-                                return;
+                                throw new ParseException(chat.Raw);
                             }
                             var content = (string)d.message;
                             var ad = new NicoAd(chat.Raw)
@@ -319,7 +318,7 @@ namespace NicoSitePlugin
                             var match = Regex.Match(chat.Content, "/gift (\\S+) (\\d+|NULL) \"(\\S+)\" (\\d+) \"(\\S*)\" \"(\\S+)\"(?: (\\d+))?");
                             if (!match.Success)
                             {
-                                return;
+                                throw new ParseException(chat.Raw);
                             }
                             var giftId = match.Groups[1].Value;
                             var userIdp = match.Groups[2].Value;//ギフトを投げた人。userId == "900000000"

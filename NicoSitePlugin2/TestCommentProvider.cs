@@ -316,7 +316,7 @@ namespace NicoSitePlugin
                         }
                         else if (IsGift(chat))
                         {
-                            var match = Regex.Match(chat.Content, "/gift (\\S+) (\\d+) \"(\\S+)\" (\\d+) \"(\\S+)\" \"(\\S+)\" (\\d+)");
+                            var match = Regex.Match(chat.Content, "/gift (\\S+) (\\d+|NULL) \"(\\S+)\" (\\d+) \"(\\S*)\" \"(\\S+)\"(?: (\\d+))?");
                             if (!match.Success)
                             {
                                 return;
@@ -333,7 +333,7 @@ namespace NicoSitePlugin
                             {
                                 Text = text,
                                 PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
-                                UserId = userIdp,
+                                UserId = userIdp == "NULL" ? "" : userIdp,
                                 NameItems = Common.MessagePartFactory.CreateMessageItems(username),
                             };
                             comment = gift;

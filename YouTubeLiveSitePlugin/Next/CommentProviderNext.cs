@@ -231,7 +231,7 @@ namespace YouTubeLiveSitePlugin.Next
                         var elapsed = DateTime.Now - _startedAt.Value;
                         RaiseMetadataUpdated(new Test2.Metadata
                         {
-                            Elapsed = Test2.Tools.ToElapsedString(elapsed),
+                            Elapsed = Tools.ToElapsedString(elapsed),
                         });
                     };
                     _elapsedTimer.Enabled = true;
@@ -817,7 +817,7 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return @params;
         }
-        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey,string delegatedSessionId, CookieContainer cc)
+        public DataCreator(YtInitialData ytInitialData, string innerTubeApiLey, string delegatedSessionId, CookieContainer cc)
         {
             InnerTubeApiKey = innerTubeApiLey;
             _delegatedSessionId = delegatedSessionId;

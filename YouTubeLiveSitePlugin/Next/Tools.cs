@@ -664,6 +664,24 @@ namespace YouTubeLiveSitePlugin.Next
     }
     static class Tools
     {
+        public static string ToElapsedString(TimeSpan timeSpan)
+        {
+            var prefix = timeSpan.Ticks < 0 ? "-" : "";
+            var days = Math.Abs(timeSpan.Days);
+            var hours = Math.Abs(timeSpan.Hours);
+            var mins = Math.Abs(timeSpan.Minutes);
+            var secs = Math.Abs(timeSpan.Seconds);
+            string ret;
+            if (days <= 0)
+            {
+                ret = $"{hours:00}:{mins:00}:{secs:00}";
+            }
+            else
+            {
+                ret = $"{days}日{hours:00}:{mins:00}:{secs:00}";
+            }
+            return prefix + ret;
+        }
         public static string GetSapiSid(CookieContainer cc)
         {
             var cookies = Tools.ExtractCookies(cc);

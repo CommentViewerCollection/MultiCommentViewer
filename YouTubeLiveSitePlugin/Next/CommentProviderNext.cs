@@ -242,12 +242,26 @@ namespace YouTubeLiveSitePlugin.Next
                     throw new SpecChangedException(unknown.Raw);
                 }
                 dataToPost.SetContinuation(continuation.Continuation);
-                var count = actions.Count;
                 var timeoutMs = Math.Max(continuation.TimeoutMs, 1000);
-                var waitTime = count > 0 ? timeoutMs / count : 1000;
-                foreach (var action in actions)
+                if (actions.Count > 0)
                 {
-                    ProcessAction(action);
+                    var waitTime = timeoutMs / actions.Count;
+                    foreach (var action in actions)
+                    {
+                        ProcessAction(action);
+                        try
+                        {
+                            await Task.Delay(waitTime, _cts.Token);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    var waitTime = timeoutMs;
                     try
                     {
                         await Task.Delay(waitTime, _cts.Token);

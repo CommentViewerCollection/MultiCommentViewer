@@ -55,6 +55,12 @@ namespace NicoSitePlugin
                 SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
                 _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
             }
+            catch (SpecChangedException ex)
+            {
+                _isDisconnectedExpected = true;
+                SendSystemInfo("サイトの仕様変更があったためコメント取得を継続できません", InfoType.Error);
+                _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
+            }
             catch (Exception ex)
             {
                 _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
@@ -140,7 +146,7 @@ namespace NicoSitePlugin
             _dataProps = ExtractDataProps(liveHtml);
             if (_dataProps == null)
             {
-                throw new SpecChangedException("data-propsが無い");
+                throw new SpecChangedException("data-propsが無い", liveHtml);
             }
             if (_dataProps.Status == "ENDED")
             {

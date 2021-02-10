@@ -664,6 +664,35 @@ namespace YouTubeLiveSitePlugin.Next
     }
     static class Tools
     {
+        public static Input.IInput ParseInput(string input)
+        {
+            if (string.IsNullOrEmpty(input)) throw new ArgumentNullException(nameof(input));
+            if (VidResolver.IsChannel(input))
+            {
+                return new Input.ChannelUrl(input);
+            }
+            else if (VidResolver.IsCustomChannel(input))
+            {
+                return new Input.StudioUrl(input);
+            }
+            else if (VidResolver.IsStudio(input))
+            {
+                return new Input.StudioUrl(input);
+            }
+            else if (VidResolver.IsUser(input))
+            {
+                return new Input.UserUrl(input);
+            }
+            else if (VidResolver.IsVid(input))
+            {
+                return new Input.Vid(input);
+            }
+            else if (VidResolver.IsWatch(input))
+            {
+                return new Input.WatchUrl(input);
+            }
+            return new Input.InvalidInput(input);
+        }
         public static string ToElapsedString(TimeSpan timeSpan)
         {
             var prefix = timeSpan.Ticks < 0 ? "-" : "";

@@ -1,152 +1,74 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{13A909DD-3791-4539-9C04-F72D9E755DCF}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BouyomiPlugin</RootNamespace>
-    <AssemblyName>BouyomiPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+    <TargetFramework>net462</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
-    <OutputPath>bin\Beta\</OutputPath>
     <DefineConstants>TRACE;BETA</DefineConstants>
+    <WarningLevel>4</WarningLevel>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Alpha|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;ALPHA</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BigoIF\BigoIF.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\IPlugin\Plugin.csproj" />
+    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj" />
+    <ProjectReference Include="..\MildomIF\MildomIF.csproj" />
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
+    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj" />
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
+    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />
+    <ProjectReference Include="..\PluginCommon\PluginCommon.csproj" />
+    <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj" />
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
+    <ProjectReference Include="..\TestSiteIF\TestSiteIF.csproj" />
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />
+    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj" />
+    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="System" />
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Remoting" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Windows" />
+    <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="BouyomiChanClient.cs" />
-    <Compile Include="main.cs" />
-    <Compile Include="ConfigView.xaml.cs">
-      <DependentUpon>ConfigView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="ConfigViewModel.cs" />
-    <Compile Include="Options.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BigoIF\BigoIF.csproj">
-      <Project>{6e6aed10-d8e4-4c61-a26a-cb063ebdbe2a}</Project>
-      <Name>BigoIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{66d18de1-4d66-41a5-b0e2-47df9975495a}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\IPlugin\Plugin.csproj">
-      <Project>{735cfeee-5b77-4d36-977b-4cd94a6f3cdb}</Project>
-      <Name>Plugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
-      <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
-      <Name>SitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj">
-      <Project>{C45009CE-C7BA-4A23-AE39-1F8CC5339B2F}</Project>
-      <Name>LineLiveIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MildomIF\MildomIF.csproj">
-      <Project>{FD868431-6667-4394-89DF-44764AAFCAE5}</Project>
-      <Name>MildomIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
-      <Project>{d2c2c0af-3a29-45f7-b653-cf20aacaa051}</Project>
-      <Name>MirrativIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj">
-      <Project>{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}</Project>
-      <Name>NicoLiveIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj">
-      <Project>{02A55625-E735-4909-A470-E8405EEE1A32}</Project>
-      <Name>OpenrecIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj">
-      <Project>{242D4286-7214-422F-BE7C-BE784C815E0F}</Project>
-      <Name>PeriscopeIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\PluginCommon\PluginCommon.csproj">
-      <Project>{29482b94-d6b4-4d4d-abdc-028606c22333}</Project>
-      <Name>PluginCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj">
-      <Project>{9d866a6c-39d6-470a-a25d-f704a2a28a23}</Project>
-      <Name>ShowRoomIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj">
-      <Project>{4DA33B17-792D-44D7-93F6-D0561788676D}</Project>
-      <Name>TwicasIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj">
-      <Project>{AA70074D-1C40-4CC0-9E1C-7ACDCBDD7D32}</Project>
-      <Name>TwitchIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj">
-      <Project>{5a83afc8-e6ce-4dd2-8389-1f43a731388f}</Project>
-      <Name>WhowatchIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj">
-      <Project>{83974e62-4d55-4e67-8f88-bbff2222e5a1}</Project>
-      <Name>YouTubeLiveIF</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="ConfigView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="MvvmLightLibs">
-      <Version>5.4.1.1</Version>
-    </PackageReference>
-    <PackageReference Include="System.ValueTuple">
-      <Version>4.5.0</Version>
-    </PackageReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

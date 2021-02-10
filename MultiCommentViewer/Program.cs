@@ -62,6 +62,12 @@ namespace MultiCommentViewer
         public async Task StartAsync()
         {
             var io = new Test.IOTest();
+            //settingsディレクトリの有無を確認し、無ければ作成する
+            const string SettingsDirName = "settings";
+            if (!Directory.Exists(SettingsDirName))
+            {
+                Directory.CreateDirectory(SettingsDirName);
+            }
             //OptionsはMainViewModelのContentRendered()で読み込みたい。しかし、その前にConnectionNameWidth等が参照されるため現状ではコンストラクタ以前に読み込む必要がある。
             //実行される順番は
             //ctor->ConnectionNameWidth->Activated->Loaded->ContentRendered

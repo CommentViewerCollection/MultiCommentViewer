@@ -602,6 +602,8 @@ namespace MultiCommentViewer
             {
 #if BETA
                 return Name + "_Beta";
+#elif Alpha
+                return Name + "_Alpha";
 #else
                 return Name;
 #endif
@@ -1079,6 +1081,8 @@ namespace MultiCommentViewer
                 var s = $"{GetAppName()} v{GetVersionNumber()}";
 #if BETA
                 s += " (ベータ版)";
+#elif ALPHA
+                s += " (アルファ版)";
 #elif DEBUG
                 s += " (DEBUG)";
 #endif

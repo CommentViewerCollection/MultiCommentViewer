@@ -786,13 +786,13 @@ namespace BouyomiPlugin
         {
             try
             {
-                var fileDialog = new System.Windows.Forms.OpenFileDialog
+                var fileDialog = new Microsoft.Win32.OpenFileDialog
                 {
                     Title = "棒読みちゃんの実行ファイル（BouyomiChan.exe）を選択してください",
                     Filter = "棒読みちゃん | BouyomiChan.exe"
                 };
                 var result = fileDialog.ShowDialog();
-                if (result == System.Windows.Forms.DialogResult.OK)
+                if (result == true)
                 {
                     this.ExeLocation = fileDialog.FileName;
                 }

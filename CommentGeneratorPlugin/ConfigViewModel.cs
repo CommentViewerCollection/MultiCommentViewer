@@ -43,13 +43,13 @@ namespace CommentViewer.Plugin
         public ICommand ShowFilePickerCommand { get; }
         private void ShowFilePicker()
         {
-            var fileDialog = new System.Windows.Forms.OpenFileDialog
+            var fileDialog = new Microsoft.Win32.OpenFileDialog
             {
                 Title = "HTML5コメジェネの設定ファイルを選択してください",
                 Filter = "設定ファイル | setting.xml"
             };
             var result = fileDialog.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
+            if (result == true)
             {
                 this.HcgSettingFilePath = fileDialog.FileName;
             }

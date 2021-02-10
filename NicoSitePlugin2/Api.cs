@@ -1,10 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Net;
-using Org.BouncyCastle.Utilities.IO;
 using Newtonsoft.Json;
 using System;
-using System.Linq;
 
 namespace NicoSitePlugin
 {
@@ -28,7 +26,7 @@ namespace NicoSitePlugin
             var url = $"https://public.api.nicovideo.jp/v1/users.json?userIds={userId}";
             var res = await server.GetAsync(url, cc);
             var obj = JsonConvert.DeserializeObject<NicoSitePlugin2.Low.UserInfo.RootObject>(res);
-            if(obj.Data.Length == 0)
+            if (obj.Data.Length == 0)
             {
                 throw new ArgumentException("指定されたuserIdは存在しない:" + userId);
             }

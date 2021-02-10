@@ -7,7 +7,7 @@ using System.Windows.Input;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    class CommentPostPanelViewModel:ViewModelBase
+    class CommentPostPanelViewModel : ViewModelBase
     {
 
         private bool _canPostComment;
@@ -55,24 +55,6 @@ namespace YouTubeLiveSitePlugin.Test2
                 _comment = value;
                 RaisePropertyChanged();
             }
-        }
-        public CommentPostPanelViewModel(CommentProvider commentProvider, ILogger logger)
-        {
-            _commentProvider = commentProvider;
-            _logger = logger;
-            _commentProvider.LoggedInStateChanged += (s, e) =>
-            {
-                CanPostComment = _commentProvider.IsLoggedIn;
-                if (!CanPostComment)
-                {
-                    Comment = "未ログインのためコメントできません";
-                }
-                else
-                {
-                    Comment = "";
-                }
-            };
-            PostCommentCommand = new RelayCommand(PostComment);
         }
         public CommentPostPanelViewModel(Next.CommentProviderNext commentProvider, ILogger logger)
         {

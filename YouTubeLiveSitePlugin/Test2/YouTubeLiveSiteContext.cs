@@ -67,8 +67,7 @@ namespace YouTubeLiveSitePlugin.Test2
 
         public override bool IsValidInput(string input)
         {
-            var resolver = new VidResolver();
-            return resolver.IsValidInput(input);
+            return VidResolver.IsValidInput(input);
         }
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {

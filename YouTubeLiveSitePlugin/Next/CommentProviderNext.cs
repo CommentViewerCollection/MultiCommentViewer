@@ -16,7 +16,88 @@ using System.Threading;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
 using System.Linq;
+using YouTubeLiveSitePlugin.Input;
 
+namespace YouTubeLiveSitePlugin.Input
+{
+    interface IInput
+    {
+    }
+    class Vid : IInput
+    {
+        public Vid(string vid)
+        {
+            Raw = vid;
+        }
+        public string Raw { get; }
+        public override string ToString()
+        {
+            return Raw;
+        }
+    }
+    class WatchUrl : IInput
+    {
+        public string Raw { get; }
+        public string Vid { get; }
+        public WatchUrl(string watchUrl)
+        {
+            Raw = watchUrl;
+            if (!VidResolver.TryWatch(watchUrl, out var vid))
+            {
+                throw new ArgumentException(nameof(vid));
+            }
+            Vid = vid;
+        }
+    }
+    class ChannelUrl : IInput
+    {
+        public string Raw { get; }
+        public string ChannelId { get; }
+        public ChannelUrl(string channelUrl)
+        {
+            Raw = channelUrl;
+            ChannelId = VidResolver.ExtractChannelId(channelUrl);
+        }
+    }
+    class UserUrl : IInput
+    {
+        public string Raw { get; }
+        public string UserId { get; }
+        public UserUrl(string userUrl)
+        {
+            Raw = userUrl;
+            UserId = VidResolver.ExtractUserId(userUrl);
+        }
+    }
+    class StudioUrl : IInput
+    {
+        public string Raw { get; }
+        public string Vid { get; }
+        public StudioUrl(string studioUrl)
+        {
+            Raw = studioUrl;
+            Vid = VidResolver.ExtractVidFromStudioUrl(studioUrl);
+        }
+    }
+    class CustomChannelUrl : IInput
+    {
+        public string Raw { get; }
+        public string CustomChannelId { get; }
+        public CustomChannelUrl(string customChannelUrl)
+        {
+            Raw = customChannelUrl;
+            CustomChannelId = VidResolver.ExtractCustomChannelId(customChannelUrl);
+        }
+    }
+    class InvalidInput : IInput
+    {
+        public string Raw { get; }
+        public InvalidInput(string input)
+        {
+            Raw = input;
+        }
+    }
+}
 namespace YouTubeLiveSitePlugin.Next
 {
     interface IInternalMessage { }
@@ -161,12 +242,26 @@ namespace YouTubeLiveSitePlugin.Next
                     throw new SpecChangedException(unknown.Raw);
                 }
                 dataToPost.SetContinuation(continuation.Continuation);
-                var count = actions.Count;
                 var timeoutMs = Math.Max(continuation.TimeoutMs, 1000);
-                var waitTime = count > 0 ? timeoutMs / count : 1000;
-                foreach (var action in actions)
+                if (actions.Count > 0)
                 {
-                    ProcessAction(action);
+                    var waitTime = timeoutMs / actions.Count;
+                    foreach (var action in actions)
+                    {
+                        ProcessAction(action);
+                        try
+                        {
+                            await Task.Delay(waitTime, _cts.Token);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    var waitTime = timeoutMs;
                     try
                     {
                         await Task.Delay(waitTime, _cts.Token);
@@ -251,7 +346,7 @@ namespace YouTubeLiveSitePlugin.Next
             var res = await client.GetAsync(url);
             return await res.Content.ReadAsStringAsync();
         }
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
             var resolver = new VidResolver();
             var vidResult = await resolver.GetVid(_server, input);
@@ -270,10 +365,6 @@ namespace YouTubeLiveSitePlugin.Next
                     return;
                 case NoVidResult no:
                     SendSystemInfo("このチャンネルでは生放送をしていないようです", InfoType.Error);
-                    return;
-                case InvalidInput invalidInput:
-                    SendSystemInfo("入力されたURLは未対応の形式です", InfoType.Error);
-                    _logger.LogException(new ParseException(input));
                     return;
                 default:
                     throw new NotImplementedException();
@@ -640,13 +731,26 @@ namespace YouTubeLiveSitePlugin.Next
             BeforeConnect();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                var p = Tools.ParseInput(input);
+                switch (p)
+                {
+                    case InvalidInput _:
+                        {
+                            SendSystemInfo("入力されたURLは未対応の形式です", InfoType.Error);
+                            _logger.LogException(new ParseException(input));
+                            return;
+                        }
+                }
+                await ConnectInternalAsync(p, browserProfile);
             }
             finally
             {
                 AfterDisconnected();
             }
         }
+        /// <summary>
+        /// 意図的な切断か
+        /// </summary>
         bool _isDisconnectedExpected;
         public override void Disconnect()
         {

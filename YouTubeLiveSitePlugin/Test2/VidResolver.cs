@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using YouTubeLiveSitePlugin.Input;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -166,14 +167,6 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         public string Vid { get; set; }
     }
-    class InvalidInput : IVidResult
-    {
-        public string Raw { get; }
-        public InvalidInput(string input)
-        {
-            Raw = input;
-        }
-    }
     internal class VidResolver
     {
         static readonly Regex _regexVid = new Regex("^" + VID_PATTERN + "$");
@@ -182,9 +175,9 @@ namespace YouTubeLiveSitePlugin.Test2
         const string VID_PATTERN = "[^?#:/&]+";
         const string USERID_PATTERN = VID_PATTERN;
         const string ChannelIdPattern = VID_PATTERN;
-        private readonly Regex _regexUser = new Regex("youtube\\.com/user/(" + USERID_PATTERN + ")");
-        private readonly Regex _regexCustomChannel = new Regex("/c/(" + ChannelIdPattern + ")");
-        private readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/video/(" + VID_PATTERN + ")");
+        private static readonly Regex _regexUser = new Regex("youtube\\.com/user/(" + USERID_PATTERN + ")");
+        private static readonly Regex _regexCustomChannel = new Regex("/c/(" + ChannelIdPattern + ")");
+        private static readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/video/(" + VID_PATTERN + ")");
         enum InputType
         {
             Unknown,
@@ -194,38 +187,38 @@ namespace YouTubeLiveSitePlugin.Test2
             Channel,
             CustomChannel,
         }
-        internal bool IsVid(string input)
+        internal static bool IsVid(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
             return _regexVid.IsMatch(input);
         }
-        internal bool IsWatch(string input)
+        internal static bool IsWatch(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
             return _regexWatch.IsMatch(input);
         }
-        public bool IsUser(string input)
+        public static bool IsUser(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
             return _regexUser.IsMatch(input);
         }
-        public bool IsChannel(string input)
+        public static bool IsChannel(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
             return _regexChannel.IsMatch(input);
         }
-        public bool IsCustomChannel(string input)
+        public static bool IsCustomChannel(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
             return _regexCustomChannel.IsMatch(input);
         }
-        public bool IsStudio(string input)
+        public static bool IsStudio(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
             return _regexStudio.IsMatch(input);
         }
 
-        public bool IsValidInput(string input)
+        public static bool IsValidInput(string input)
         {
             return IsWatch(input) || IsUser(input) || IsChannel(input) || IsCustomChannel(input) || IsStudio(input);
         }
@@ -258,7 +251,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             throw new ParseException(html);
         }
-        internal bool TryWatch(string input, out string vid)
+        internal static bool TryWatch(string input, out string vid)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -290,12 +283,17 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return (null, "");
         }
-        internal string ExtractChannelId(string input)
+        internal static string ExtractChannelId(string input)
         {
             var match = _regexChannel.Match(input);
             return match.Groups[1].Value;
         }
-        internal string ExtractVidFromStudioUrl(string input)
+        public static string ExtractCustomChannelId(string input)
+        {
+            var match = _regexCustomChannel.Match(input);
+            return match.Groups[1].Value;
+        }
+        internal static string ExtractVidFromStudioUrl(string input)
         {
             var match = _regexStudio.Match(input);
             if (!match.Success)
@@ -304,48 +302,42 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return match.Groups[1].Value;
         }
-        string ExtractUserId(string input)
+        public static string ExtractUserId(string input)
         {
             var match = _regexUser.Match(input);
             return match.Groups[1].Value;
         }
-        public async Task<IVidResult> GetVid(IYouTubeLibeServer server, string input)
+        public async Task<IVidResult> GetVid(IYouTubeLibeServer server, Input.IInput input)
         {
-            if (string.IsNullOrEmpty(input)) throw new ArgumentNullException(nameof(input));
-            if (TryVid(input, out string vid))
+            if (input is Input.Vid vid)
             {
-                return new VidResult { Vid = vid };
+                return new VidResult { Vid = vid.Raw };
             }
-            else if (TryWatch(input, out vid))
+            else if (input is WatchUrl watchUrl)
             {
-                return new VidResult { Vid = vid };
+                return new VidResult { Vid = watchUrl.Vid };
             }
-            else if (IsUser(input))
+            else if (input is Input.ChannelUrl channelUrl)
             {
-                var userId = ExtractUserId(input);
+                var channelId = channelUrl.ChannelId;
+                return await GetResultFromChannelId(server, channelId);
+            }
+            else if (input is Input.UserUrl userUrl)
+            {
+                var userId = userUrl.UserId;
                 var channelId = await GetChannelIdFromUserId(server, userId);
                 return await GetResultFromChannelId(server, channelId);
             }
-            else if (IsCustomChannel(input))
+            else if (input is Input.CustomChannelUrl customChannelUrl)
             {
-                var (channelId, reason) = await TryGetChannelIdFromCustomChannel(server, input);
+                var (channelId, _) = await TryGetChannelIdFromCustomChannel(server, customChannelUrl.Raw);
                 return await GetResultFromChannelId(server, channelId);
             }
-            else if (IsChannel(input))
+            else if (input is Input.StudioUrl studioUrl)
             {
-                var channelId = ExtractChannelId(input);
-                return await GetResultFromChannelId(server, channelId);
+                return new VidResult { Vid = studioUrl.Vid };
             }
-            else if (IsStudio(input))
-            {
-                var studioVid = ExtractVidFromStudioUrl(input);
-                if (studioVid != null)
-                {
-                    return new VidResult { Vid = studioVid };
-                }
-
-            }
-            return new InvalidInput(input);
+            return new NoVidResult();
         }
         internal async Task<IVidResult> GetResultFromChannelId(IYouTubeLibeServer server, string channelId)
         {

@@ -10,7 +10,18 @@
       Title="DownloadPage">
 
     <Grid>
-        <ProgressBar x:Name="progressBar" Minimum="0" Maximum="100" Margin="25,190,25,65" />
-        <TextBlock HorizontalAlignment="Left" Margin="40,95,0,0" TextWrapping="Wrap" Text="新しいバージョンをダウンロードしています。" VerticalAlignment="Top"/>
+
+        <ProgressBar x:Name="progressBar" Minimum="0" Maximum="100" Margin="25,195,25,0" Background="Yellow" VerticalAlignment="Top" Height="10" />
+        <TextBlock HorizontalAlignment="Left" Margin="40,44,0,0" TextWrapping="Wrap" Text="新しいバージョンをダウンロードしています。" VerticalAlignment="Top"/>
+        <Grid Margin="53,120,71,0" Height="70" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" x:Name="txtTotalBytesDownloaded" HorizontalAlignment="Right" Text="" VerticalAlignment="Top" Height="50" />
+            <TextBlock Grid.Column="1" HorizontalAlignment="Left" TextWrapping="Wrap" Text="/" VerticalAlignment="Top" />
+            <TextBlock Grid.Column="2" x:Name="txtFileSize" HorizontalAlignment="Left"  TextWrapping="NoWrap" Text="" VerticalAlignment="Top"/>
+        </Grid>
     </Grid>
 </Page>

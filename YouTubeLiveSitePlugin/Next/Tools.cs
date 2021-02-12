@@ -583,7 +583,7 @@ namespace YouTubeLiveSitePlugin.Next
             }
             if (!_d.ContainsKey("continuationContents"))
             {
-                throw new ChatUnavailableException();
+                throw new ChatUnavailableException(Raw);
             }
             if (!_d.continuationContents.liveChatContinuation.ContainsKey("continuations"))
             {
@@ -664,6 +664,53 @@ namespace YouTubeLiveSitePlugin.Next
     }
     static class Tools
     {
+        public static Input.IInput ParseInput(string input)
+        {
+            if (string.IsNullOrEmpty(input)) throw new ArgumentNullException(nameof(input));
+            if (VidResolver.IsChannel(input))
+            {
+                return new Input.ChannelUrl(input);
+            }
+            else if (VidResolver.IsCustomChannel(input))
+            {
+                return new Input.StudioUrl(input);
+            }
+            else if (VidResolver.IsStudio(input))
+            {
+                return new Input.StudioUrl(input);
+            }
+            else if (VidResolver.IsUser(input))
+            {
+                return new Input.UserUrl(input);
+            }
+            else if (VidResolver.IsVid(input))
+            {
+                return new Input.Vid(input);
+            }
+            else if (VidResolver.IsWatch(input))
+            {
+                return new Input.WatchUrl(input);
+            }
+            return new Input.InvalidInput(input);
+        }
+        public static string ToElapsedString(TimeSpan timeSpan)
+        {
+            var prefix = timeSpan.Ticks < 0 ? "-" : "";
+            var days = Math.Abs(timeSpan.Days);
+            var hours = Math.Abs(timeSpan.Hours);
+            var mins = Math.Abs(timeSpan.Minutes);
+            var secs = Math.Abs(timeSpan.Seconds);
+            string ret;
+            if (days <= 0)
+            {
+                ret = $"{hours:00}:{mins:00}:{secs:00}";
+            }
+            else
+            {
+                ret = $"{days}日{hours:00}:{mins:00}:{secs:00}";
+            }
+            return prefix + ret;
+        }
         public static string GetSapiSid(CookieContainer cc)
         {
             var cookies = Tools.ExtractCookies(cc);

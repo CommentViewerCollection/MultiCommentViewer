@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using YouTubeLiveSitePlugin.Input;
 using YouTubeLiveSitePlugin.Test2;
 namespace YouTubeLiveSitePluginTests
 {
@@ -41,7 +42,7 @@ namespace YouTubeLiveSitePluginTests
         {
             var s = new VidResolver();
             var serverMock = new Mock<IYouTubeLibeServer>();
-            var result1 = await s.GetVid(serverMock.Object, "https://youtu.be/bexmlC2nD0U");
+            var result1 = await s.GetVid(serverMock.Object, new WatchUrl("https://youtu.be/bexmlC2nD0U"));
             Assert.IsTrue(result1 is IVidResult);
             Assert.AreEqual("bexmlC2nD0U", ((VidResult)result1).Vid);
         }
@@ -50,11 +51,11 @@ namespace YouTubeLiveSitePluginTests
         {
             var s = new VidResolver();
             var serverMock = new Mock<IYouTubeLibeServer>();
-            var result1 = await s.GetVid(serverMock.Object, "https://www.youtube.com/watch?v=Rs-WxTGgVus");
+            var result1 = await s.GetVid(serverMock.Object, new WatchUrl("https://www.youtube.com/watch?v=Rs-WxTGgVus"));
             Assert.IsTrue(result1 is IVidResult);
             Assert.AreEqual("Rs-WxTGgVus", ((VidResult)result1).Vid);
 
-            var result2 = await s.GetVid(serverMock.Object, "https://www.youtube.com/watch?v=Rs-WxTGgVus&feature=test");
+            var result2 = await s.GetVid(serverMock.Object, new WatchUrl("https://www.youtube.com/watch?v=Rs-WxTGgVus&feature=test"));
             Assert.IsTrue(result2 is IVidResult);
             Assert.AreEqual("Rs-WxTGgVus", ((VidResult)result2).Vid);
         }
@@ -65,7 +66,7 @@ namespace YouTubeLiveSitePluginTests
             var s = new VidResolver();
             var serverMock = new Mock<IYouTubeLibeServer>();
             serverMock.Setup(k => k.GetEnAsync(It.IsAny<string>())).Returns(Task.FromResult(sample));
-            var result1 = await s.GetVid(serverMock.Object, "https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg") as VidResult;
+            var result1 = await s.GetVid(serverMock.Object, new ChannelUrl("https://www.youtube.com/channel/UCkDuaqQxw3k7Aa816kngUYg")) as VidResult;
             Assert.IsTrue(result1 is VidResult);
             Assert.AreEqual("klvzbBP7zM8", ((VidResult)result1).Vid);
         }

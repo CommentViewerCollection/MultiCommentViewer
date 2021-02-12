@@ -63,6 +63,7 @@
     <Compile Include="AutoUpdate\DownloadPage.xaml.cs">
       <DependentUpon>DownloadPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AutoUpdate\HttpClientDownloadWithProgress.cs" />
     <Compile Include="AutoUpdate\LatestVersionInfo.cs" />
     <Compile Include="AutoUpdate\Message.cs" />
     <Compile Include="AutoUpdate\Tools.cs" />

@@ -614,7 +614,7 @@ namespace MultiCommentViewer
             string name = AppDirName;
             try
             {
-                latestVersionInfo = await Common.AutoUpdate.Tools.GetLatestVersionInfo(name);
+                latestVersionInfo = await Common.AutoUpdate.Tools.GetLatestVersionInfo(name, GetUserAgent());
             }
             catch (Exception ex)
             {

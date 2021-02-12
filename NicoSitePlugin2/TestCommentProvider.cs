@@ -55,6 +55,12 @@ namespace NicoSitePlugin
                 SendSystemInfo("コミュニティの配信状況の取得に失敗しました", InfoType.Error);
                 _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
             }
+            catch (SpecChangedException ex)
+            {
+                _isDisconnectedExpected = true;
+                SendSystemInfo("サイトの仕様変更があったためコメント取得を継続できません", InfoType.Error);
+                _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
+            }
             catch (Exception ex)
             {
                 _logger.LogException(ex, "", $"input:{input}, browser:{browserProfile.Type}");
@@ -140,7 +146,7 @@ namespace NicoSitePlugin
             _dataProps = ExtractDataProps(liveHtml);
             if (_dataProps == null)
             {
-                throw new SpecChangedException("data-propsが無い");
+                throw new SpecChangedException("data-propsが無い", liveHtml);
             }
             if (_dataProps.Status == "ENDED")
             {
@@ -297,8 +303,7 @@ namespace NicoSitePlugin
                             dynamic d = JsonConvert.DeserializeObject(adJson);
                             if ((string)d.version != "1")
                             {
-                                //未対応
-                                return;
+                                throw new ParseException(chat.Raw);
                             }
                             var content = (string)d.message;
                             var ad = new NicoAd(chat.Raw)
@@ -316,10 +321,10 @@ namespace NicoSitePlugin
                         }
                         else if (IsGift(chat))
                         {
-                            var match = Regex.Match(chat.Content, "/gift (\\S+) (\\d+) \"(\\S+)\" (\\d+) \"(\\S+)\" \"(\\S+)\" (\\d+)");
+                            var match = Regex.Match(chat.Content, "/gift (\\S+) (\\d+|NULL) \"(\\S+)\" (\\d+) \"(\\S*)\" \"(\\S+)\"(?: (\\d+))?");
                             if (!match.Success)
                             {
-                                return;
+                                throw new ParseException(chat.Raw);
                             }
                             var giftId = match.Groups[1].Value;
                             var userIdp = match.Groups[2].Value;//ギフトを投げた人。userId == "900000000"
@@ -333,7 +338,7 @@ namespace NicoSitePlugin
                             {
                                 Text = text,
                                 PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
-                                UserId = userIdp,
+                                UserId = userIdp == "NULL" ? "" : userIdp,
                                 NameItems = Common.MessagePartFactory.CreateMessageItems(username),
                             };
                             comment = gift;

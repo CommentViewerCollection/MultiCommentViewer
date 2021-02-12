@@ -9,5 +9,10 @@ namespace NicoSitePlugin
         {
             Raw = raw;
         }
+        public SpecChangedException(string message, string raw)
+            : base(message)
+        {
+            Raw = raw;
+        }
     }
 }

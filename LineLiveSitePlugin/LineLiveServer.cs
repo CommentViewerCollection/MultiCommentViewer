@@ -41,11 +41,13 @@ namespace LineLiveSitePlugin
         }
         public async Task<string> GetAsync(string url)
         {
-            using (var client = new HttpClient())
+            var result = await GetInternalAsync(new HttpOptions
             {
-                var result = await client.GetStringAsync(url);
-                return result;
-            }
+                Url = url,
+                UserAgent= "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+            });
+            var str = await result.Content.ReadAsStringAsync();
+            return str;
         }
         public async Task<string> PostAsync(string url, Dictionary<string, string> data, CookieContainer cc)
         {

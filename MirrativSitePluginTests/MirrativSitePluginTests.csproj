@@ -1,111 +1,52 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3F84B446-A643-4959-8D2A-3D24A5C8B677}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MirrativSitePluginTests</RootNamespace>
-    <AssemblyName>MirrativSitePluginTests</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
     <OutputPath>bin\Beta\</OutputPath>
     <DefineConstants>TRACE;BETA</DefineConstants>
+    <WarningLevel>4</WarningLevel>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Alpha|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;ALPHA</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
+    <PackageReference Include="Moq" Version="4.13.1" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
+    <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj" />
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <Reference Include="PresentationCore" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ApiTests.cs" />
-    <Compile Include="AutoReconnectionTests.cs" />
-    <Compile Include="CommentProviderTests.cs" />
-    <Compile Include="MessageMetadataTests.cs" />
-    <Compile Include="ParserTests.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Content Include="SampleData\Class1.txt" />
-    <Compile Include="Tools.cs" />
-    <Compile Include="ToolsTests.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="SampleData\Home_loggedin.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="SampleData\Home_not_loggedin.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="SampleData\LiveInfo.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj">
-      <Project>{CDBBBF25-AD0C-4EAF-B673-EB0BB198585A}</Project>
-      <Name>BrowserCookieInterfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{66D18DE1-4D66-41A5-B0E2-47DF9975495A}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj">
-      <Project>{c13bfdf0-3b93-475f-900e-e7bad97ace3d}</Project>
-      <Name>SitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj">
-      <Project>{D2C2C0AF-3A29-45F7-B653-CF20AACAA051}</Project>
-      <Name>MirrativIF</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj">
-      <Project>{c6f57847-d6c3-4f64-b0a4-c778d7cea333}</Project>
-      <Name>MirrativSitePlugin</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj">
-      <Project>{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}</Project>
-      <Name>SitePluginCommon</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Moq">
-      <Version>4.13.1</Version>
-    </PackageReference>
-    <PackageReference Include="NUnit">
-      <Version>3.12.0</Version>
-    </PackageReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

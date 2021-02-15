@@ -659,8 +659,23 @@ namespace YouTubeLiveSitePlugin.Next
         {
             Raw = json;
             _d = JsonConvert.DeserializeObject(json);
+            if (_d.ContainsKey("error"))
+            {
+                var message = (string)_d.error.message;
+                throw new GetLiveChatException(message, json);
+            }
         }
         private readonly dynamic _d;
+    }
+
+    [Serializable]
+    public class GetLiveChatException : Exception
+    {
+        public string Raw { get; }
+        public GetLiveChatException(string message, string raw) : base(message)
+        {
+            Raw = raw;
+        }
     }
     static class Tools
     {

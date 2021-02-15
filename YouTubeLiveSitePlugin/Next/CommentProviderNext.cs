@@ -22,6 +22,7 @@ namespace YouTubeLiveSitePlugin.Input
 {
     interface IInput
     {
+        string Raw { get; }
     }
     class Vid : IInput
     {
@@ -443,6 +444,21 @@ namespace YouTubeLiveSitePlugin.Next
                     try
                     {
                         await chatTask;
+                    }
+                    catch (GetLiveChatException ex)
+                    {
+                        _isDisconnectedExpected = true;
+                        string html;
+                        try
+                        {
+                            html = await GetLiveChat(vid, _cc);
+                        }
+                        catch
+                        {
+                            html = "";
+                        }
+                        _logger.LogException(ex, "", $"input={input.Raw},html={html}");
+                        SendSystemInfo($"エラーが発生したため、これ以上コメントを取得できません{Environment.NewLine}{ex.Message}", InfoType.Notice);
                     }
                     catch (ChatUnavailableException ex)
                     {

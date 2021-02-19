@@ -1,4 +1,5 @@
 ﻿using SitePlugin;
+using System;
 using System.Collections.Generic;
 
 namespace PluginCommon
@@ -38,7 +39,13 @@ namespace PluginCommon
             }
             else if (message is YouTubeLiveSitePlugin.IYouTubeLiveSuperchat superchat)
             {
-                comment = superchat.CommentItems.ToText();
+                var s = superchat.PurchaseAmount;
+                var text = superchat.CommentItems.ToText();
+                if (!string.IsNullOrEmpty(text))
+                {
+                    s += Environment.NewLine + text;
+                }
+                comment = s;
                 name = superchat.NameItems.ToText();
             }
             //}

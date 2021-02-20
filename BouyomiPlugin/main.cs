@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.Runtime.Remoting.Contexts;
 using System.Runtime.Remoting.Messaging;
 using TwicasSitePlugin;
 using TwitchSitePlugin;
@@ -162,12 +163,15 @@ namespace BouyomiPlugin
                     case YouTubeLiveMessageType.Superchat:
                         if (options.IsYouTubeLiveSuperchat)
                         {
+                            var superChat = youTubeLiveMessage as IYouTubeLiveSuperchat;
                             if (options.IsYouTubeLiveSuperchatNickname)
                             {
-                                name = (youTubeLiveMessage as IYouTubeLiveSuperchat).NameItems.ToText();
+                                name = superChat.NameItems.ToText();
                             }
                             //TODO:superchat中のスタンプも読ませるべきでは？
-                            comment = (youTubeLiveMessage as IYouTubeLiveSuperchat).CommentItems.ToText();
+                            var text = superChat.CommentItems.ToText();
+                            var amount = superChat.PurchaseAmount;
+                            comment = amount + Environment.NewLine + text;
                         }
                         break;
                 }

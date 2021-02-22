@@ -28,11 +28,11 @@ namespace OpenrecSitePlugin
         protected virtual string OpenFileDialog(string defaultPath, string title, string filter)
         {
             string ret = null;
-            var fileDialog = new System.Windows.Forms.OpenFileDialog();
+            var fileDialog = new Microsoft.Win32.OpenFileDialog();
             fileDialog.Title = title;
             fileDialog.Filter = filter;
             var result = fileDialog.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
+            if (result == true)
             {
                 ret = fileDialog.FileName;
             }

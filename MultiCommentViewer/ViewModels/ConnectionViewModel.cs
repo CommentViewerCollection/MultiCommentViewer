@@ -6,13 +6,8 @@ using System.Windows.Input;
 using SitePlugin;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using Common;
 using Plugin;
-
-using System.Reactive.Linq;
-using System.Reactive.Disposables;
-using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Windows.Media;
 
@@ -321,7 +316,7 @@ namespace MultiCommentViewer
 
         public ConnectionContext GetCurrent()
         {
-            if(SelectedSite == null)
+            if (SelectedSite == null)
             {
                 return null;
             }

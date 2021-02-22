@@ -23,6 +23,12 @@ namespace YouTubeLiveSitePluginTests
             var actions = ytInitialData.GetActions();
             Assert.AreEqual("0ofMyAOHAhqyAUNqZ0tEUW9MVUc1bFZrVTVTblU1UXpBcUp3b1lWVU53TFRWME9WTnlUMUYzV0UxVk4ybEphbEZtUVZKbkVndFFibVZXUlRsS2RUbERNQnBEcXJuQnZRRTlDanRvZEhSd2N6b3ZMM2QzZHk1NWIzVjBkV0psTG1OdmJTOXNhWFpsWDJOb1lYUV9hWE5mY0c5d2IzVjBQVEVtZGoxUWJtVldSVGxLZFRsRE1DQUNLQUUlM0Qoi5LG78WM7gIwADgAQAFKGwgAEAAYACAAOgBAAEoAUJ3y_e_FjO4CWAN4AFDk9evvxYzuAljLp9bSnozuAmgBggECCAGIAQCgAamJg_DFjO4C", ytInitialData.GetContinuation().Continuation);
         }
+        [Test]
+        public void Test1()
+        {
+            var data = "{\"error\": {\"code\": 403,\"message\": \"The caller does not have permission\",\"errors\": [{\"message\": \"The caller does not have permission\",\"domain\": \"global\",\"reason\": \"forbidden\"}],\"status\": \"PERMISSION_DENIED\"}}";
+            Assert.Throws<YouTubeLiveSitePlugin.Next.GetLiveChatException>(() => new YouTubeLiveSitePlugin.Next.GetLiveChat(data));
+        }
     }
     [TestFixture]
     class ToolsTests

@@ -832,9 +832,9 @@ namespace YouTubeLiveSitePlugin.Next
             }
             return cc;
         }
-        public override Task PostCommentAsync(string text)
+        public override async Task PostCommentAsync(string text)
         {
-            throw new NotImplementedException();
+            var b = await ((IYouTubeCommentProvider)this).PostCommentAsync(text);
         }
         private DataCreator _postCommentCoodinator;
         async Task<bool> IYouTubeCommentProvider.PostCommentAsync(string comment)

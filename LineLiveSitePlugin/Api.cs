@@ -70,7 +70,7 @@ namespace LineLiveSitePlugin
         }
         public static async Task<IPromptyStats> GetPromptyStatsV4(IDataServer server, string channelId, string liveId)
         {
-            var url = $"https://live-burst-api.line-apps.com/burst/web/v4.0/channel/1569360/broadcast/15861513/promptly_stats";
+            var url = $"https://live-burst-api.line-apps.com/burst/web/v4.0/channel/{channelId}/broadcast/{liveId}/promptly_stats";
             var res = await server.GetAsync(url);
             var low = Tools.Deserialize<Low.PromptyStats.RootObject>(res);
             return new PromptyStats(low);

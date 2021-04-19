@@ -59,5 +59,20 @@ namespace MirrativSitePluginTests
             Assert.AreEqual("🐾真顔ちゃん'-'🍊🍌🕊🐶🌱🍵が小さな星を8個贈りました", gift.Text);
             Assert.AreEqual("🐾真顔ちゃん'-'🍊🍌🕊🐶🌱🍵", gift.UserName);
         }
+        /// <summary>
+        /// 小さなハート
+        /// </summary>
+        [Test]
+        public void SmallHeartTest()
+        {
+            var data = "{\"avatar_body_image_url\":\"\",\"gift_title\":\"小さなハート\",\"speech\":\"さぶさぶはらぐちが小さなハートを贈りました\",\"should_play_animation\":1,\"gift_type\":\"0\",\"burl\":\"https://cdn.mirrativ.com/assets/img/continuous_streamer/ic_badge_master_holiday_L.ja.png?v1\",\"coins\":\"1\",\"gift_small_image_url\":\"https://cdn.mirrativ.com/mirrorman-prod/assets/gift/item/2/small.png?v=207\",\"u\":\"110555163\",\"nameplate_enabled\":\"1\",\"is_moderator\":0,\"t\":35,\"count\":\"1\",\"collab_streamer_ac\":\"\",\"ac\":\"さぶさぶはらぐち\",\"total_gift_coins\":\"121\",\"iurl\":\"https://cdn.mirrativ.com/mirrorman-prod/image/profile_image/0d12278c7ce066c7d084f1958ecb60222c07217f15e378bf27916d4c84f410aa_m.jpeg?1618843177\",\"live_sent_gift_id\":\"360927124\",\"gift_id\":\"2\",\"pause_duration\":\"0\",\"slot_id\":0,\"gift_large_image_url\":\"https://cdn.mirrativ.com/mirrorman-prod/assets/gift/item/2/large.png?v=207\"}";
+            MessageParser.GetCurrent = () => new DateTime(2019, 12, 9, 1, 0, 0);
+            var message = MessageParser.ParseMessage(data, (msg, type) => { });
+            var gift = message as MirrativGift;
+            Assert.IsNotNull(gift);
+            Assert.AreEqual(1, gift.Count);
+            Assert.AreEqual("さぶさぶはらぐちが小さなハートを1個贈りました", gift.Text);
+            Assert.AreEqual("さぶさぶはらぐち", gift.UserName);
+        }
     }
 }

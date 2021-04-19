@@ -141,14 +141,7 @@ namespace MirrativSitePlugin
                                     default:
                                         throw new ParseException(data);
                                 }
-                                if (itemCount == 1)
-                                {
-                                    message.Comment = json["ac"] + "が" + json["gift_title"] + "を贈りました";
-                                }
-                                else
-                                {
-                                    message.Comment = json["ac"] + "が" + json["gift_title"] + $"を{itemCount}個贈りました";
-                                }
+                                message.Comment = json["ac"] + "が" + json["gift_title"] + $"を{itemCount}個贈りました";
                                 var item = new MirrativGift(message, data)
                                 {
                                     Count = itemCount,

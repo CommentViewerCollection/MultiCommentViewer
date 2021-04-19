@@ -129,18 +129,12 @@ namespace MirrativSitePlugin
                                     Username = json["ac"],
                                 };
                                 var countRaw = json["count"];
-                                int itemCount;
-                                switch (countRaw)
+                                var itemCount = countRaw switch
                                 {
-                                    case string s:
-                                        itemCount = int.Parse((string)s);
-                                        break;
-                                    case double n:
-                                        itemCount = (int)n;
-                                        break;
-                                    default:
-                                        throw new ParseException(data);
-                                }
+                                    string s => int.Parse(s),
+                                    double n => (int)n,
+                                    _ => throw new ParseException(data),
+                                };
                                 message.Comment = json["ac"] + "が" + json["gift_title"] + $"を{itemCount}個贈りました";
                                 var item = new MirrativGift(message, data)
                                 {

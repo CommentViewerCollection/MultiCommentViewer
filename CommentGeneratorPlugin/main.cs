@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,6 +40,7 @@ namespace CommentViewer.Plugin
         public IPluginHost Host { get; set; }
         class Data
         {
+            public string IconUrl { get; internal set; }
             public string Comment { get; internal set; }
             public string SiteName { get; internal set; }
             public string Nickname { get; internal set; }
@@ -82,6 +83,10 @@ namespace CommentViewer.Plugin
             {
                 name = messageMetadata.User.Nickname;
             }
+
+            // 2021/06/12 HTML5コメジェネ上でアイコンを表示できるパラメータを追加
+            var iconUrl = EmbedIconUrl(message);
+
             //var data = new Data
             //{
             //    Comment = comment.CommentItems.ToText(),
@@ -90,6 +95,7 @@ namespace CommentViewer.Plugin
             //};
             var data = new Data
             {
+                IconUrl = iconUrl,
                 Comment = comment,
                 Nickname = name,
                 SiteName = siteName,
@@ -235,6 +241,7 @@ namespace CommentViewer.Plugin
                 foreach (var data in arr)
                 {
                     var item = new XElement("comment", data.Comment);
+                    item.SetAttributeValue("icon_url", data.IconUrl);
                     item.SetAttributeValue("no", "0");
                     item.SetAttributeValue("time", ToUnixTime(GetCurrentDateTime()));
                     item.SetAttributeValue("owner", 0);
@@ -333,6 +340,91 @@ namespace CommentViewer.Plugin
             {
                 _settingsView.Topmost = isTopmost;
             }
+        }
+
+        private string EmbedIconUrl(ISiteMessage message)
+        {
+            string str = "";
+
+            if (message is YouTubeLiveSitePlugin.IYouTubeLiveMessage youtubeMessage)
+            {
+                if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveComment simpleComment)
+                {
+                    str = simpleComment.UserIcon.Url;
+                }
+            }
+            else if (message is TwitchSitePlugin.ITwitchMessage twitchMessage)
+            {
+                if (twitchMessage is TwitchSitePlugin.ITwitchComment simpleComment)
+                {
+                    str = simpleComment.UserIcon.Url;
+                }
+            }
+            else if (message is OpenrecSitePlugin.IOpenrecMessage openrecMessage)
+            {
+                if (openrecMessage is OpenrecSitePlugin.IOpenrecComment simpleComment)
+                {
+                    str = "https://dqd0jw5gvbchn.cloudfront.net/tv/v9.18.0/static/images/favicons/favicon.ico";
+                }
+            }
+            else if (message is NicoSitePlugin.INicoMessage nicoMessage)
+            {
+                if (nicoMessage is NicoSitePlugin.INicoComment simpleComment)
+                {
+                    str = simpleComment.ThumbnailUrl;
+                }
+            }
+            else if (message is TwicasSitePlugin.ITwicasMessage twicasMessage)
+            {
+                if (twicasMessage is TwicasSitePlugin.ITwicasComment simpleComment)
+                {
+                    str = simpleComment.UserIcon.Url;
+                }
+            }
+            else if (message is MildomSitePlugin.IMildomMessage mildomMessage)
+            {
+                if (mildomMessage is MildomSitePlugin.IMildomComment simpleComment)
+                {
+                    str = "https://wia.mildom.com/assets/static/default_avatar.png";
+                }
+            }
+            else if (message is WhowatchSitePlugin.IWhowatchMessage whowatchMessage)
+            {
+                if (whowatchMessage is WhowatchSitePlugin.IWhowatchComment simpleComment)
+                {
+                    str = simpleComment.UserIcon.Url;
+                }
+            }
+            else if (message is MirrativSitePlugin.IMirrativMessage mirrativMessage)
+            {
+                if (mirrativMessage is MirrativSitePlugin.IMirrativComment simpleComment)
+                {
+                    str = "https://www.mirrativ.co.jp/images/favicon.ico";
+                }
+            }
+            else if (message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
+            {
+                if (lineliveMessage is LineLiveSitePlugin.ILineLiveComment simpleComment)
+                {
+                    str = simpleComment.UserIconUrl;
+                }
+            }
+            else if (message is ShowRoomSitePlugin.IShowRoomMessage showRoomMessage)
+            {
+                if (showRoomMessage is ShowRoomSitePlugin.IShowRoomComment simpleComment)
+                {
+                    str = "https://www.showroom-live.com/assets/img/v3/apple-touch-icon.png";
+                }
+            }
+            else if (message is BigoSitePlugin.IBigoMessage bigoMessage)
+            {
+                if (bigoMessage is BigoSitePlugin.IBigoComment simpleComment)
+                {
+                    str = "https://www.bigo.tv/favicon.ico";
+                }
+            }
+
+            return str;
         }
     }
 }

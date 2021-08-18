@@ -250,8 +250,8 @@ namespace YouTubeLiveSitePlugin.Next
                         var emoji = r.emoji;
                         var thumbnail = emoji.image.thumbnails[0];
                         var emojiUrl = thumbnail.url;
-                        var emojiWidth = (int)thumbnail.width;
-                        var emojiHeight = (int)thumbnail.height;
+                        var emojiWidth = (int)(thumbnail.width ?? 24);
+                        var emojiHeight = (int)(thumbnail.height ?? 24);
                         var emojiAlt = emoji.image.accessibility.accessibilityData.label;
                         messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
                     }
@@ -293,8 +293,8 @@ namespace YouTubeLiveSitePlugin.Next
                         var emoji = r.emoji;
                         var thumbnail = emoji.image.thumbnails[0];
                         var emojiUrl = thumbnail.url;
-                        var emojiWidth = (int)thumbnail.width;
-                        var emojiHeight = (int)thumbnail.height;
+                        var emojiWidth = (int)(thumbnail.width ?? 24);
+                        var emojiHeight = (int)(thumbnail.height ?? 24);
                         var emojiAlt = emoji.image.accessibility.accessibilityData.label;
                         messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
                     }

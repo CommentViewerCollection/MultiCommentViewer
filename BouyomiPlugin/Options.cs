@@ -31,6 +31,8 @@ namespace BouyomiPlugin
         public bool IsYouTubeLiveCommentStamp { get { return GetValue(); } set { SetValue(value); } }
         public bool IsYouTubeLiveSuperchat { get { return GetValue(); } set { SetValue(value); } }
         public bool IsYouTubeLiveSuperchatNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsYouTubeLiveMembership { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsYouTubeLiveMembershipNickname { get { return GetValue(); } set { SetValue(value); } }
 
         //OPENREC
         public bool IsOpenrecConnect { get { return GetValue(); } set { SetValue(value); } }
@@ -116,6 +118,8 @@ namespace BouyomiPlugin
         //BigoLive
         public bool IsBigoLiveComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsBigoLiveCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+
+
         protected override void Init()
         {
             Dict.Add(nameof(IsEnabled), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
@@ -141,6 +145,8 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsYouTubeLiveCommentStamp), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsYouTubeLiveSuperchat), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsYouTubeLiveSuperchatNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsYouTubeLiveMembership), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsYouTubeLiveMembershipNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             //OPENREC
             Dict.Add(nameof(IsOpenrecConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

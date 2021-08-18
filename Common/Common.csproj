@@ -4,6 +4,10 @@
     <TargetFramework>net462</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
+    <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
+    <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
+    <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
+    <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -39,7 +43,7 @@
   <ItemGroup>
     <PackageReference Include="MvvmLightLibs" Version="5.4.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.113.7" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.114.3" PrivateAssets="none" />
     <PackageReference Include="WebSocket4Net" Version="0.15.2" />
   </ItemGroup>
   <ItemGroup>

@@ -90,6 +90,7 @@
                                     <RowDefinition />
                                     <RowDefinition />
                                     <RowDefinition />
+                                    <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <CheckBox Grid.Row="0" IsChecked="{Binding IsYouTubeLiveConnect}" Content="接続" />
                                 <CheckBox Grid.Row="1" IsChecked="{Binding IsYouTubeLiveDisconnect}" Content="切断" />
@@ -122,6 +123,20 @@
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckYouTubeLiveSuperchat" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveSuperchat}" Content="super chat" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveSuperchat}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveSuperchatNickname}" Content="コテハン" />
+                                </Grid>
+                                <Grid Grid.Row="4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckYouTubeLiveMembership" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveMembership}" Content="メンバー登録" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveMembership}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveMembershipNickname}" Content="コテハン" />
                                 </Grid>
                             </Grid>
                         </Border>

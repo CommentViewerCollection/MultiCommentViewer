@@ -174,6 +174,17 @@ namespace BouyomiPlugin
                             comment = amount + Environment.NewLine + text;
                         }
                         break;
+                    case YouTubeLiveMessageType.Membership:
+                        if (options.IsYouTubeLiveMembership)
+                        {
+                            var membership = youTubeLiveMessage as IYouTubeLiveMembership;
+                            if (options.IsYouTubeLiveMembershipNickname)
+                            {
+                                name = membership.NameItems.ToText();
+                            }
+                            comment = membership.CommentItems.ToText();
+                        }
+                        break;
                 }
             }
             else if (message is IOpenrecMessage openrecMessage)

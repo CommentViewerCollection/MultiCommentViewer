@@ -144,6 +144,22 @@ namespace BouyomiPlugin
             get => _options.IsYouTubeLiveSuperchatNickname;
             set => _options.IsYouTubeLiveSuperchatNickname = value;
         }
+        /// <summary>
+        /// YouTubeLiveのメンバー登録を読み上げるか
+        /// </summary>
+        public bool IsYouTubeLiveMembership
+        {
+            get => _options.IsYouTubeLiveMembership;
+            set => _options.IsYouTubeLiveMembership = value;
+        }
+        /// <summary>
+        /// YouTubeLiveのメンバー登録のコテハンを読み上げるか
+        /// </summary>
+        public bool IsYouTubeLiveMembershipNickname
+        {
+            get => _options.IsYouTubeLiveMembershipNickname;
+            set => _options.IsYouTubeLiveMembershipNickname = value;
+        }
         #endregion //YouTubeLive
 
         #region OPENREC

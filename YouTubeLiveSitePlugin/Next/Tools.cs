@@ -238,27 +238,34 @@ namespace YouTubeLiveSitePlugin.Next
             var messageItems = new List<IMessagePart>();
             if (ren.ContainsKey("runs"))
             {
-                foreach (var r in ren.runs)
+                try
                 {
-                    if (r.ContainsKey("text"))
+                    foreach (var r in ren.runs)
                     {
-                        var text = (string)r.text;
-                        messageItems.Add(MessagePartFactory.CreateMessageText(text));
+                        if (r.ContainsKey("text"))
+                        {
+                            var text = (string)r.text;
+                            messageItems.Add(MessagePartFactory.CreateMessageText(text));
+                        }
+                        else if (r.ContainsKey("emoji"))
+                        {
+                            var emoji = r.emoji;
+                            var thumbnail = emoji.image.thumbnails[0];
+                            var emojiUrl = thumbnail.url;
+                            var emojiWidth = (int)(((int?)thumbnail.width) ?? 24);
+                            var emojiHeight = (int)(((int?)thumbnail.height) ?? 24);
+                            var emojiAlt = emoji.image.accessibility.accessibilityData.label;
+                            messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
+                        }
+                        else
+                        {
+                            throw new ParseException();
+                        }
                     }
-                    else if (r.ContainsKey("emoji"))
-                    {
-                        var emoji = r.emoji;
-                        var thumbnail = emoji.image.thumbnails[0];
-                        var emojiUrl = thumbnail.url;
-                        var emojiWidth = (int)((int?)thumbnail.width ?? 24);
-                        var emojiHeight = (int)((int?)thumbnail.height ?? 24);
-                        var emojiAlt = emoji.image.accessibility.accessibilityData.label;
-                        messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
-                    }
-                    else
-                    {
-                        throw new ParseException();
-                    }
+                }catch(Exception ex)
+                {
+                    var raw = (string)ren.runs.ToString().replace(Environment.NewLine, "");
+                    throw new ParseException(raw, ex);
                 }
             }
             else if (ren.ContainsKey("simpleText"))
@@ -281,27 +288,35 @@ namespace YouTubeLiveSitePlugin.Next
             }
             if (ren.message.ContainsKey("runs"))
             {
-                foreach (var r in ren.message.runs)
+                try
                 {
-                    if (r.ContainsKey("text"))
+                    foreach (var r in ren.message.runs)
                     {
-                        var text = (string)r.text;
-                        messageItems.Add(MessagePartFactory.CreateMessageText(text));
+                        if (r.ContainsKey("text"))
+                        {
+                            var text = (string)r.text;
+                            messageItems.Add(MessagePartFactory.CreateMessageText(text));
+                        }
+                        else if (r.ContainsKey("emoji"))
+                        {
+                            var emoji = r.emoji;
+                            var thumbnail = emoji.image.thumbnails[0];
+                            var emojiUrl = thumbnail.url;
+                            var emojiWidth = (int)(((int?)thumbnail.width) ?? 24);
+                            var emojiHeight = (int)(((int?)thumbnail.height) ?? 24);
+                            var emojiAlt = emoji.image.accessibility.accessibilityData.label;
+                            messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
+                        }
+                        else
+                        {
+                            throw new ParseException();
+                        }
                     }
-                    else if (r.ContainsKey("emoji"))
-                    {
-                        var emoji = r.emoji;
-                        var thumbnail = emoji.image.thumbnails[0];
-                        var emojiUrl = thumbnail.url;
-                        var emojiWidth = (int)((int?)thumbnail.width ?? 24);
-                        var emojiHeight = (int)((int?)thumbnail.height ?? 24);
-                        var emojiAlt = emoji.image.accessibility.accessibilityData.label;
-                        messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
-                    }
-                    else
-                    {
-                        throw new ParseException();
-                    }
+                }
+                catch(Exception ex)
+                {
+                    var raw = (string)ren.message.runs.ToString().replace(Environment.NewLine, "");
+                    throw new ParseException(raw, ex);
                 }
             }
             else if (ren.message.ContainsKey("simpleText"))

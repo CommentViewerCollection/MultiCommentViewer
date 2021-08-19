@@ -252,8 +252,8 @@ namespace YouTubeLiveSitePlugin.Next
                             var emoji = r.emoji;
                             var thumbnail = emoji.image.thumbnails[0];
                             var emojiUrl = thumbnail.url;
-                            var emojiWidth = (int)(((int?)thumbnail.width) ?? 24);
-                            var emojiHeight = (int)(((int?)thumbnail.height) ?? 24);
+                            var emojiWidth = thumbnail.ContainsKey("width") ? (int)thumbnail.width : 24;
+                            var emojiHeight = thumbnail.ContainsKey("height") ? (int)thumbnail.height : 24;
                             var emojiAlt = emoji.image.accessibility.accessibilityData.label;
                             messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
                         }
@@ -264,7 +264,7 @@ namespace YouTubeLiveSitePlugin.Next
                     }
                 }catch(Exception ex)
                 {
-                    var raw = (string)ren.runs.ToString().replace(Environment.NewLine, "");
+                    var raw = ((string)ren.runs.ToString()).Replace(Environment.NewLine, "");
                     throw new ParseException(raw, ex);
                 }
             }
@@ -315,7 +315,7 @@ namespace YouTubeLiveSitePlugin.Next
                 }
                 catch(Exception ex)
                 {
-                    var raw = (string)ren.message.runs.ToString().replace(Environment.NewLine, "");
+                    var raw = ((string)ren.runs.ToString()).Replace(Environment.NewLine, "");
                     throw new ParseException(raw, ex);
                 }
             }

@@ -54,6 +54,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="SQLitePCLRaw.bundle_winsqlite3" Version="2.0.4" />
     <PackageReference Include="System.ComponentModel.Composition" Version="5.0.0" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.114.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BigoIF\BigoIF.csproj" />

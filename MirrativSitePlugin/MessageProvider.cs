@@ -129,26 +129,13 @@ namespace MirrativSitePlugin
                                     Username = json["ac"],
                                 };
                                 var countRaw = json["count"];
-                                int itemCount;
-                                switch (countRaw)
+                                var itemCount = countRaw switch
                                 {
-                                    case string s:
-                                        itemCount = int.Parse((string)s);
-                                        break;
-                                    case double n:
-                                        itemCount = (int)n;
-                                        break;
-                                    default:
-                                        throw new ParseException(data);
-                                }
-                                if (itemCount == 1)
-                                {
-                                    message.Comment = json["ac"] + "が" + json["gift_title"] + "を贈りました";
-                                }
-                                else
-                                {
-                                    message.Comment = json["ac"] + "が" + json["gift_title"] + $"を{itemCount}個贈りました";
-                                }
+                                    string s => int.Parse(s),
+                                    double n => (int)n,
+                                    _ => throw new ParseException(data),
+                                };
+                                message.Comment = json["ac"] + "が" + json["gift_title"] + $"を{itemCount}個贈りました";
                                 var item = new MirrativGift(message, data)
                                 {
                                     Count = itemCount,
@@ -306,116 +293,6 @@ namespace MirrativSitePlugin
         }
         private void SendInfo(string data, InfoType debug)
         {
-        }
-    }
-    public class MessageProvider
-    {
-        private readonly IWebSocket _webSocket;
-        private readonly ILogger _logger;
-        private readonly string _broadcastKey;
-
-        public event EventHandler<IMirrativMessage> MessageReceived;
-        public event EventHandler<IMetadata> MetadataUpdated;
-
-        public Task ReceiveAsync()
-        {
-            return _webSocket.ReceiveAsync();
-        }
-        public void Disconnect()
-        {
-            _webSocket.Disconnect();
-        }
-        public MessageProvider(IWebSocket webSocket, ILogger logger, string broadcastKey)
-        {
-            _webSocket = webSocket;
-            _logger = logger;
-            _broadcastKey = broadcastKey;
-            webSocket.Opened += WebSocket_Opened;
-            webSocket.Received += WebSocket_Received;
-        }
-
-        private void WebSocket_Received(object sender, string e)
-        {
-            var str = e;
-            var arr = str.Split(new[] { "\t" }, StringSplitOptions.None);
-            if (arr.Length == 0)
-                return;
-
-            try
-            {
-                switch (arr[0])
-                {
-                    case "MSG":
-                        if (arr.Length != 3)
-                        {
-                            throw new ParseException(str);
-                        }
-                        var data = arr[2];
-                        OnMessageReceived(data);
-                        break;
-                    case "ACK":
-                        break;
-                    default:
-                        throw new ParseException(str);
-                }
-            }
-            catch (ParseException ex)
-            {
-                _logger.LogException(ex);
-            }
-            catch (Exception ex)
-            {
-                //SendInfo(str, InfoType.Debug);
-                _logger.LogException(ex);
-            }
-        }
-
-        private async void WebSocket_Opened(object sender, EventArgs e)
-        {
-            try
-            {
-                await _webSocket.SendAsync("PING");
-                await _webSocket.SendAsync("SUB" + '\t' + _broadcastKey);
-                MessageReceived?.Invoke(this, new MirrativConnected(""));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                //SendSystemInfo(ex.Message, InfoType.Error);
-            }
-        }
-        private void OnMessageReceived(string data)
-        {
-            var message = MessageParser.ParseMessage(data, SendInfo);
-            if (message is UnknownMessage)
-            {
-                _logger.LogException(new ParseException(data));
-                return;
-            }
-            if (message != null)
-            {
-                MessageReceived?.Invoke(this, message);
-            }
-            if (message is IMirrativJoinRoom join)
-            {
-                MetadataUpdated?.Invoke(this, new Metadata
-                {
-                    CurrentViewers = join.OnlineViewerNum.ToString(),
-                });
-            }
-        }
-
-        private void SendInfo(string data, InfoType debug)
-        {
-        }
-
-        private static void SetLinkedLiveOwnerName(Message message, dynamic json)
-        {
-            if (json.IsDefined("linked_live_owner_name"))
-            {
-                var linkedLiveOwnerName = json["linked_live_owner_name"];
-                message.Comment += $"（{linkedLiveOwnerName}さんの配信からのリンク経由）";
-            }
         }
     }
     /// <summary>

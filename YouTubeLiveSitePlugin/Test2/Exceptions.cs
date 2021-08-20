@@ -63,7 +63,10 @@ namespace YouTubeLiveSitePlugin.Test2
         {
             Raw = raw;
         }
-        public ParseException(string raw, Exception inner) : base("", inner) { }
+        public ParseException(string raw, Exception inner) : base("", inner)
+        {
+            Raw = raw;
+        }
     }
 
     [Serializable]

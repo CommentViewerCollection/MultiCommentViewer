@@ -299,13 +299,22 @@ namespace YouTubeLiveSitePlugin.Next
                         }
                         else if (r.ContainsKey("emoji"))
                         {
+                            //SVGは現状表示させられないから、urlの末尾が.svgの場合はTextとして扱い、emojiIdを表示する
                             var emoji = r.emoji;
                             var thumbnail = emoji.image.thumbnails[0];
-                            var emojiUrl = thumbnail.url;
-                            var emojiWidth = (int)(((int?)thumbnail.width) ?? 24);
-                            var emojiHeight = (int)(((int?)thumbnail.height) ?? 24);
-                            var emojiAlt = emoji.image.accessibility.accessibilityData.label;
-                            messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
+                            var emojiUrl = (string)thumbnail.url;
+                            if (emojiUrl.EndsWith(".svg"))
+                            {
+                                var text = (string)emoji.emojiId;
+                                messageItems.Add(MessagePartFactory.CreateMessageText(text));
+                            }
+                            else
+                            {
+                                var emojiWidth = thumbnail.ContainsKey("width") ? (int)thumbnail.width : 24;
+                                var emojiHeight = thumbnail.ContainsKey("height") ? (int)thumbnail.height : 24;
+                                var emojiAlt = emoji.image.accessibility.accessibilityData.label;
+                                messageItems.Add(new MessageImage { Url = emojiUrl, Alt = emojiAlt, Height = emojiHeight, Width = emojiWidth });
+                            }
                         }
                         else
                         {
@@ -315,7 +324,7 @@ namespace YouTubeLiveSitePlugin.Next
                 }
                 catch(Exception ex)
                 {
-                    var raw = ((string)ren.runs.ToString()).Replace(Environment.NewLine, "");
+                    var raw = ((string)ren.message.runs.ToString()).Replace(Environment.NewLine, "");
                     throw new ParseException(raw, ex);
                 }
             }

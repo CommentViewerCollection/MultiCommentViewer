@@ -22,8 +22,8 @@
                     <ColumnDefinition Width="43*"/>
                     <ColumnDefinition Width="18*"/>
                 </Grid.ColumnDefinitions>
-                <RadioButton x:Name="radioJouiChat" GroupName="ChatType" Content="上位チャット" IsChecked="{Binding IsAllChat, Converter={StaticResource notConverter}}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-                <RadioButton x:Name="radioAllChat" GroupName="ChatType" Content="すべてのチャット" IsChecked="{Binding IsAllChat}" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top"/>
+                <RadioButton x:Name="radioJouiChat" GroupName="ChatType" Content="上位チャット" IsChecked="{Binding ElementName=radioAllChat, Path=IsChecked, Converter={StaticResource notConverter}, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                <RadioButton x:Name="radioAllChat" GroupName="ChatType" Content="すべてのチャット" IsChecked="{Binding IsAllChat, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top"/>
             </Grid>
         </GroupBox>
         <xctk:ColorPicker  SelectedColor="{Binding MembershipBackColor}" Margin="160,93,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />

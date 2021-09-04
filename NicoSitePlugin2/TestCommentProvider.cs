@@ -135,6 +135,10 @@ namespace NicoSitePlugin
             {
                 vid = await GetCommunityLiveId(communityUrl, cc);
             }
+            else if(input is LiveId liveId)
+            {
+                vid = liveId.Raw;
+            }
             else
             {
                 throw new InvalidOperationException("bug");

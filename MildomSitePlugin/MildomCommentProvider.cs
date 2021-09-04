@@ -89,7 +89,7 @@ namespace MildomSitePlugin
             //TODO:websocketUrlをAPI経由で取得する
             //https://im.mildom.com/?room_id=10045175&type=chat&call=get_server&cluster=aws_japan
             var websocketUrl = "wss://jp-room1.mildom.com/?roomId=" + roomId;
-            var p1 = new MessageProvider(new WebSocket(websocketUrl), _logger);
+            var p1 = new MessageProvider(new SytemNetWebSockets(websocketUrl), _logger);
             p1.MessageReceived += P1_MessageReceived;
             p1.MetadataUpdated += P1_MetadataUpdated;
             //var p2 = new MetadataProvider2(_server, _siteOptions);

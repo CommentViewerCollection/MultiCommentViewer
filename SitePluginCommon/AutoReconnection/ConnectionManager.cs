@@ -85,6 +85,7 @@ namespace SitePluginCommon.AutoReconnection
                 provider.Stop();
                 await provider.Work;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 _logger.LogException(ex);

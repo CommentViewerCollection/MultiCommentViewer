@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Collections.Generic;
 using SitePluginCommon;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     interface IDataSource
     {

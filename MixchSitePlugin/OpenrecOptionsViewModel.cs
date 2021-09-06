@@ -3,9 +3,9 @@ using System;
 using System.ComponentModel;
 using System.Windows.Input;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    public class OpenrecOptionsViewModel : INotifyPropertyChanged
+    public class MixchOptionsViewModel : INotifyPropertyChanged
     {
         public ICommand ShowOpenStampMusicSelectorCommand { get; }
         public ICommand ShowOpenYellMusicSelectorCommand { get; }
@@ -84,12 +84,12 @@ namespace OpenrecSitePlugin
             get { return ChangedOptions.IsAutoSetNickname; }
             set { ChangedOptions.IsAutoSetNickname = value; }
         }
-        private readonly OpenrecSiteOptions _origin;
-        private readonly OpenrecSiteOptions _changed;
-        internal OpenrecSiteOptions OriginOptions { get { return _origin; } }
-        internal OpenrecSiteOptions ChangedOptions { get { return _changed; } }
+        private readonly MixchSiteOptions _origin;
+        private readonly MixchSiteOptions _changed;
+        internal MixchSiteOptions OriginOptions { get { return _origin; } }
+        internal MixchSiteOptions ChangedOptions { get { return _changed; } }
 
-        internal OpenrecOptionsViewModel(OpenrecSiteOptions siteOptions)
+        internal MixchOptionsViewModel(MixchSiteOptions siteOptions)
         {
             _origin = siteOptions;
             _changed = siteOptions.Clone();
@@ -101,7 +101,7 @@ namespace OpenrecSitePlugin
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
         {
@@ -109,7 +109,7 @@ namespace OpenrecSitePlugin
             remove { _propertyChanged -= value; }
         }
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="propertyName"></param>
         protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")

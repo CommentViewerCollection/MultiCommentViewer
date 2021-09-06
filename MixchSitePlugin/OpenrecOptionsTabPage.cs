@@ -1,9 +1,9 @@
 ﻿using SitePlugin;
 using System.Windows.Controls;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    public class OpenrecOptionsTabPage : IOptionsTabPage
+    public class MixchOptionsTabPage : IOptionsTabPage
     {
         public string HeaderText { get; }
 
@@ -18,8 +18,8 @@ namespace OpenrecSitePlugin
         public void Cancel()
         {
         }
-        private readonly OpenrecOptionsPanel _panel;
-        public OpenrecOptionsTabPage(string displayName, OpenrecOptionsPanel panel)
+        private readonly MixchOptionsPanel _panel;
+        public MixchOptionsTabPage(string displayName, MixchOptionsPanel panel)
         {
             HeaderText = displayName;
             _panel = panel;

@@ -1,6 +1,6 @@
 ﻿using SitePlugin;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     public class Metadata : IMetadata
     {

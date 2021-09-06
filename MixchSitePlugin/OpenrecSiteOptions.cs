@@ -5,9 +5,9 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    public interface IOpenrecSiteOptions: INotifyPropertyChanged
+    public interface IMixchSiteOptions: INotifyPropertyChanged
     {
         int StampSize { get; }
         bool IsPlayStampMusic { get; }
@@ -16,7 +16,7 @@ namespace OpenrecSitePlugin
         string YellMusicFilePath { get; }
         bool IsAutoSetNickname { get; }
     }
-    internal class OpenrecSiteOptions : DynamicOptionsBase, IOpenrecSiteOptions
+    internal class MixchSiteOptions : DynamicOptionsBase, IMixchSiteOptions
     {
         public int StampSize { get => GetValue(); set => SetValue(value); }
         public bool IsPlayStampMusic { get => GetValue(); set => SetValue(value); }
@@ -33,11 +33,11 @@ namespace OpenrecSitePlugin
             Dict.Add(nameof(YellMusicFilePath), new Item { DefaultValue = "", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
             Dict.Add(nameof(IsAutoSetNickname), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
         }
-        internal OpenrecSiteOptions Clone()
+        internal MixchSiteOptions Clone()
         {
-            return (OpenrecSiteOptions)this.MemberwiseClone();
+            return (MixchSiteOptions)this.MemberwiseClone();
         }
-        internal void Set(OpenrecSiteOptions changedOptions)
+        internal void Set(MixchSiteOptions changedOptions)
         {
             foreach (var src in changedOptions.Dict)
             {

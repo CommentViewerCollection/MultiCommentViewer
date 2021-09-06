@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 using SitePluginCommon;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     [Serializable]
     public class InvalidInputException : Exception
@@ -83,7 +83,7 @@ namespace OpenrecSitePlugin
             List<Cookie> cookies = null;
             try
             {
-                cookies = browserProfile.GetCookieCollection("openrec.tv");
+                cookies = browserProfile.GetCookieCollection("mixch.tv");
             }
             catch { }
             return cookies ?? new List<Cookie>();
@@ -93,7 +93,7 @@ namespace OpenrecSitePlugin
             var cc = new CookieContainer();
             try
             {
-                var cookies = browserProfile.GetCookieCollection("openrec.tv");
+                var cookies = browserProfile.GetCookieCollection("mixch.tv");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -163,13 +163,13 @@ namespace OpenrecSitePlugin
             {
                 _logger.LogException(ex, "", "raw=" + raw);
             }
-            foreach (var user in _userStoreManager.GetAllUsers(SiteType.Openrec))
+            foreach (var user in _userStoreManager.GetAllUsers(SiteType.Mixch))
             {
                 if (!(user is IUser2 user2)) continue;
                 _userDict.AddOrUpdate(user2.UserId, user2, (id, u) => u);
             }
         Reconnect:
-            _ws = CreateOpenrecWebsocket();
+            _ws = CreateMixchWebsocket();
             _ws.Received += WebSocket_Received;
 
             var userAgent = GetUserAgent(browserProfile.Type);
@@ -256,9 +256,9 @@ namespace OpenrecSitePlugin
             return new BlackListProvider(_dataSource, _logger);
         }
 
-        protected virtual IOpenrecWebsocket CreateOpenrecWebsocket()
+        protected virtual IMixchWebsocket CreateMixchWebsocket()
         {
-            return new OpenrecWebsocket(_logger);
+            return new MixchWebsocket(_logger);
         }
 
         protected virtual async Task<(Low.Chats.RootObject[], string raw)> GetChats(MovieInfo movieContext2)
@@ -285,7 +285,7 @@ namespace OpenrecSitePlugin
             return cc;
         }
 
-        private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData, bool isInitialComment)
+        private MixchMessageContext CreateMessageContext(Tools.IComment comment, IMixchCommentData commentData, bool isInitialComment)
         {
             var userId = commentData.UserId;
             var user = GetUser(userId) as IUser2;
@@ -316,11 +316,11 @@ namespace OpenrecSitePlugin
                 messageItems.Add(MessagePartFactory.CreateMessageText(commentData.Message));
             }
 
-            OpenrecMessageContext messageContext = null;
-            IOpenrecMessage message;
+            MixchMessageContext messageContext = null;
+            IMixchMessage message;
             if (commentData.IsYell)
             {
-                message = new OpenrecYell("")
+                message = new MixchYell("")
                 {
                     YellPoints = commentData.YellPoints,
                     Id = commentData.Id,
@@ -332,7 +332,7 @@ namespace OpenrecSitePlugin
             }
             else if (commentData.Stamp != null)
             {
-                message = new OpenrecStamp("")
+                message = new MixchStamp("")
                 {
                     Stamp = commentData.Stamp,
                     Id = commentData.Id,
@@ -343,7 +343,7 @@ namespace OpenrecSitePlugin
             }
             else
             {
-                message = new OpenrecComment("")
+                message = new MixchComment("")
                 {
                     MessageItems = messageItems,
                     Id = commentData.Id,
@@ -358,8 +358,8 @@ namespace OpenrecSitePlugin
                 IsInitialComment = isInitialComment,
                 SiteContextGuid = SiteContextGuid,
             };
-            var methods = new OpenrecMessageMethods();
-            messageContext = new OpenrecMessageContext(message, metadata, methods);
+            var methods = new MixchMessageMethods();
+            messageContext = new MixchMessageContext(message, metadata, methods);
             return messageContext;
         }
 
@@ -396,7 +396,7 @@ namespace OpenrecSitePlugin
             }
         }
 
-        IOpenrecWebsocket _ws;
+        IMixchWebsocket _ws;
         /// <summary>
         /// ユーザが意図した切断か
         /// </summary>
@@ -412,14 +412,14 @@ namespace OpenrecSitePlugin
         }
         public IUser GetUser(string userId)
         {
-            return _userStoreManager.GetUser(SiteType.Openrec, userId);
+            return _userStoreManager.GetUser(SiteType.Mixch, userId);
         }
         #endregion //ICommentProvider
 
 
         #region Fields
         private ICommentOptions _options;
-        private OpenrecSiteOptions _siteOptions;
+        private MixchSiteOptions _siteOptions;
         private ILogger _logger;
         private IUserStoreManager _userStoreManager;
         private readonly IDataSource _dataSource;
@@ -428,7 +428,7 @@ namespace OpenrecSitePlugin
 
         #region ctors
         System.Timers.Timer _500msTimer = new System.Timers.Timer();
-        public CommentProvider(ICommentOptions options, OpenrecSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
+        public CommentProvider(ICommentOptions options, MixchSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
             _siteOptions = siteOptions;
@@ -460,7 +460,7 @@ namespace OpenrecSitePlugin
             var context = InfoMessageContext.Create(new InfoMessage
             {
                 Text = message,
-                SiteType = SiteType.Openrec,
+                SiteType = SiteType.Mixch,
                 Type = type,
             }, _options);
             MessageReceived?.Invoke(this, context);
@@ -471,7 +471,7 @@ namespace OpenrecSitePlugin
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
         ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
         DateTime _startAt;
-        //private OpenrecCommentViewModel CreateCommentViewModel(IOpenrecCommentData data)
+        //private MixchCommentViewModel CreateCommentViewModel(IMixchCommentData data)
         //{
         //    var userId = data.UserId;
         //    bool isFirstComment;
@@ -492,7 +492,7 @@ namespace OpenrecSitePlugin
         //        userVm = new UserViewModel(user);
         //        _userViewModelDict.Add(userId, userVm);
         //    }
-        //    var cvm = new OpenrecCommentViewModel(data, _options, _siteOptions,  this, isFirstComment, user);
+        //    var cvm = new MixchCommentViewModel(data, _options, _siteOptions,  this, isFirstComment, user);
         //    return cvm;
         //}
         private static string GetUserAgent(BrowserType browser)

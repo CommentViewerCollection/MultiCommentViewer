@@ -1,5 +1,5 @@
 ﻿using System;
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     class MovieInfo
     {

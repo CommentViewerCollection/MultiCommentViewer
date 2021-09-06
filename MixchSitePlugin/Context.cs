@@ -1,4 +1,4 @@
-﻿namespace OpenrecSitePlugin
+﻿namespace MixchSitePlugin
 {
     public class Context
     {

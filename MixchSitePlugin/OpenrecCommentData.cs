@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using SitePlugin;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    class OpenrecCommentData : IOpenrecCommentData
+    class MixchCommentData : IMixchCommentData
     {
         public bool IsYell => !string.IsNullOrEmpty(YellPoints);
         public string YellPoints { get; set; }

@@ -1,15 +1,15 @@
 ﻿using SitePlugin;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    internal class OpenrecMessageContext : IMessageContext
+    internal class MixchMessageContext : IMessageContext
     {
         public SitePlugin.ISiteMessage Message { get; }
 
         public IMessageMetadata Metadata { get; }
 
         public IMessageMethods Methods { get; }
-        public OpenrecMessageContext(IOpenrecMessage message, MessageMetadata metadata, IMessageMethods methods)
+        public MixchMessageContext(IMixchMessage message, MessageMetadata metadata, IMessageMethods methods)
         {
             Message = message;
             Metadata = metadata;

@@ -5,7 +5,7 @@ using WebSocket4Net;
 using System.Diagnostics;
 using System.Collections.Generic;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     class Websocket
     {

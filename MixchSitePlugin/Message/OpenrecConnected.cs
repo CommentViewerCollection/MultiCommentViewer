@@ -1,15 +1,15 @@
 ﻿using SitePlugin;
 using System.Collections.Generic;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    internal class OpenrecConnected : MessageBase2, IOpenrecConnected
+    internal class MixchConnected : MessageBase2, IMixchConnected
     {
-        public override SiteType SiteType { get; } = SiteType.Openrec;
-        public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Connected;
+        public override SiteType SiteType { get; } = SiteType.Mixch;
+        public MixchMessageType MixchMessageType { get; } = MixchMessageType.Connected;
         public string Text { get; }
 
-        public OpenrecConnected(string raw) : base(raw)
+        public MixchConnected(string raw) : base(raw)
         {
             Text = "接続しました";
         }

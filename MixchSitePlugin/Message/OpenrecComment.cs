@@ -2,27 +2,27 @@
 using System;
 using System.Collections.Generic;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    internal class OpenrecComment : MessageBase2, IOpenrecComment
+    internal class MixchComment : MessageBase2, IMixchComment
     {
-        public override SiteType SiteType { get; } = SiteType.Openrec;
-        public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Comment;
+        public override SiteType SiteType { get; } = SiteType.Mixch;
+        public MixchMessageType MixchMessageType { get; } = MixchMessageType.Comment;
         public string Id { get; set; }
         public string UserId { get; set; }
         public DateTime PostTime { get; set; }
         public IMessageImage UserIcon { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IEnumerable<IMessagePart> MessageItems { get; set; }
-        public OpenrecComment(string raw) : base(raw)
+        public MixchComment(string raw) : base(raw)
         {
 
         }
     }
-    internal class OpenrecStamp : MessageBase2, IOpenrecStamp
+    internal class MixchStamp : MessageBase2, IMixchStamp
     {
-        public override SiteType SiteType { get; } = SiteType.Openrec;
-        public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Stamp;
+        public override SiteType SiteType { get; } = SiteType.Mixch;
+        public MixchMessageType MixchMessageType { get; } = MixchMessageType.Stamp;
         public string Id { get; set; }
         public string UserId { get; set; }
         public DateTime PostTime { get; set; }
@@ -30,15 +30,15 @@ namespace OpenrecSitePlugin
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IMessageImage Stamp { get; set; }
         public string Message { get; set; }
-        public OpenrecStamp(string raw) : base(raw)
+        public MixchStamp(string raw) : base(raw)
         {
 
         }
     }
-    internal class OpenrecYell : MessageBase2, IOpenrecYell
+    internal class MixchYell : MessageBase2, IMixchYell
     {
-        public override SiteType SiteType { get; } = SiteType.Openrec;
-        public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Yell;
+        public override SiteType SiteType { get; } = SiteType.Mixch;
+        public MixchMessageType MixchMessageType { get; } = MixchMessageType.Yell;
         public string Id { get; set; }
         public string UserId { get; set; }
         public DateTime PostTime { get; set; }
@@ -46,7 +46,7 @@ namespace OpenrecSitePlugin
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public string YellPoints { get; set; }
         public string Message { get; set; }
-        public OpenrecYell(string raw) : base(raw)
+        public MixchYell(string raw) : base(raw)
         {
 
         }

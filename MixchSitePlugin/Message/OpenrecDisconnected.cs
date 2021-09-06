@@ -1,15 +1,15 @@
 ﻿using SitePlugin;
 using System.Collections.Generic;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    internal class OpenrecDisconnected : MessageBase2, IOpenrecDisconnected
+    internal class MixchDisconnected : MessageBase2, IMixchDisconnected
     {
-        public override SiteType SiteType { get; } = SiteType.Openrec;
-        public OpenrecMessageType OpenrecMessageType { get; } = OpenrecMessageType.Disconnected;
+        public override SiteType SiteType { get; } = SiteType.Mixch;
+        public MixchMessageType MixchMessageType { get; } = MixchMessageType.Disconnected;
         public string Text { get; }
 
-        public OpenrecDisconnected(string raw) : base(raw)
+        public MixchDisconnected(string raw) : base(raw)
         {
             Text = "切断しました";
         }

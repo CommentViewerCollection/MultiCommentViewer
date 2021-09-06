@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using SitePlugin;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    interface IOpenrecCommentData
+    interface IMixchCommentData
     {
         string UserIconUrl { get; }
         bool IsYell { get; }

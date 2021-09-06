@@ -1,5 +1,5 @@
 ﻿using System;
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     [Serializable]
     public class ParseException : Exception

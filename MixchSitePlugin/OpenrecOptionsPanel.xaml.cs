@@ -9,24 +9,24 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     /// <summary>
-    /// Interaction logic for OpenrecOptionsPanel.xaml
+    /// Interaction logic for MixchOptionsPanel.xaml
     /// </summary>
-    public partial class OpenrecOptionsPanel : UserControl
+    public partial class MixchOptionsPanel : UserControl
     {
-        public OpenrecOptionsPanel()
+        public MixchOptionsPanel()
         {
             InitializeComponent();
         }
-        public void SetViewModel(OpenrecOptionsViewModel vm)
+        public void SetViewModel(MixchOptionsViewModel vm)
         {
             this.DataContext = vm;
         }
-        public OpenrecOptionsViewModel GetViewModel()
+        public MixchOptionsViewModel GetViewModel()
         {
-            return (OpenrecOptionsViewModel)this.DataContext;
+            return (MixchOptionsViewModel)this.DataContext;
         }
     }
 }

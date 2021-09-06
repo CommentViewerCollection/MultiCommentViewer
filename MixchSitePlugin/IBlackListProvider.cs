@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     interface IBlackListProvider
     {

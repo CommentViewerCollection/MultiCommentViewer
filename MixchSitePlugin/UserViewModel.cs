@@ -1,7 +1,7 @@
 ﻿using SitePlugin;
 using GalaSoft.MvvmLight;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     class UserViewModel :ViewModelBase
     {

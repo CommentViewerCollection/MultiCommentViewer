@@ -1,9 +1,9 @@
 ﻿using SitePlugin;
 using System.Threading.Tasks;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    internal class OpenrecMessageMethods : IMessageMethods
+    internal class MixchMessageMethods : IMessageMethods
     {
         public Task AfterCommentAdded()
         {

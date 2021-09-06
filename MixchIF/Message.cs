@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    public enum OpenrecMessageType
+    public enum MixchMessageType
     {
         Unknown,
         Comment,
@@ -16,19 +16,19 @@ namespace OpenrecSitePlugin
     }
 
 
-    public interface IOpenrecMessage : ISiteMessage
+    public interface IMixchMessage : ISiteMessage
     {
-        OpenrecMessageType OpenrecMessageType { get; }
+        MixchMessageType MixchMessageType { get; }
     }
-    public interface IOpenrecConnected : IOpenrecMessage
-    {
-        string Text { get; }
-    }
-    public interface IOpenrecDisconnected : IOpenrecMessage
+    public interface IMixchConnected : IMixchMessage
     {
         string Text { get; }
     }
-    public interface IOpenrecComment : IOpenrecMessage
+    public interface IMixchDisconnected : IMixchMessage
+    {
+        string Text { get; }
+    }
+    public interface IMixchComment : IMixchMessage
     {
         IEnumerable<IMessagePart> NameItems { get; }
         IEnumerable<IMessagePart> MessageItems { get; }
@@ -36,7 +36,7 @@ namespace OpenrecSitePlugin
         DateTime PostTime { get; }
         string UserId { get; }
     }
-    public interface IOpenrecStamp : IOpenrecMessage
+    public interface IMixchStamp : IMixchMessage
     {
         IMessageImage Stamp { get; }
         string Message { get; }
@@ -45,7 +45,7 @@ namespace OpenrecSitePlugin
         DateTime PostTime { get; }
         string Id { get; }
     }
-    public interface IOpenrecYell : IOpenrecMessage
+    public interface IMixchYell : IMixchMessage
     {
         string YellPoints { get; }
         string Message { get; }
@@ -54,7 +54,7 @@ namespace OpenrecSitePlugin
         DateTime PostTime { get; }
         string Id { get; }
     }
-    //public interface IOpenrecItem : IOpenrecMessage
+    //public interface IMixchItem : IMixchMessage
     //{
     //    string ItemName { get; }
     //    int ItemCount { get; }

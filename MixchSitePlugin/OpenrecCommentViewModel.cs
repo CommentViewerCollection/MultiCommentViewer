@@ -7,27 +7,27 @@ using System.Threading.Tasks;
 using Common;
 using SitePlugin;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    public interface IOpenrecCommentViewModel : ICommentViewModel
+    public interface IMixchCommentViewModel : ICommentViewModel
     {
         string PostDate { get; }
         string Elapsed { get; }
         bool IsStamp { get; }
         bool IsYell { get; }
     }
-    class OpenrecCommentViewModel : CommentViewModelBase, IOpenrecCommentViewModel
+    class MixchCommentViewModel : CommentViewModelBase, IMixchCommentViewModel
     {
         public override MessageType MessageType { get; protected set; }
         private ICommentOptions _options;
-        private readonly IOpenrecSiteOptions _siteOptions;
+        private readonly IMixchSiteOptions _siteOptions;
 
         public string PostDate { get; }
         public string Elapsed { get; }
         public override string UserId { get; }
         public bool IsStamp { get; }
         public bool IsYell { get; }
-        public OpenrecCommentViewModel(IOpenrecCommentData commentData, ICommentOptions options, IOpenrecSiteOptions siteOptions, ICommentProvider commentProvider, bool isFirstComment, IUser user)
+        public MixchCommentViewModel(IMixchCommentData commentData, ICommentOptions options, IMixchSiteOptions siteOptions, ICommentProvider commentProvider, bool isFirstComment, IUser user)
             : base(options, user, commentProvider, isFirstComment)
         {
             MessageType = MessageType.Comment;

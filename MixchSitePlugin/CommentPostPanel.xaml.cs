@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     /// <summary>
     /// Interaction logic for CommentPostPanel.xaml

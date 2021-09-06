@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OpenrecSitePlugin.Low.LivePage
+namespace MixchSitePlugin.Low.LivePage
 {
     public partial class RootObject
     {
@@ -390,8 +390,8 @@ namespace OpenrecSitePlugin.Low.LivePage
         [JsonProperty("recxuserId")]
         public long RecxuserId { get; set; }
 
-        [JsonProperty("openrecUserId")]
-        public long OpenrecUserId { get; set; }
+        [JsonProperty("mixchUserId")]
+        public long MixchUserId { get; set; }
 
         [JsonProperty("userName")]
         public string UserName { get; set; }

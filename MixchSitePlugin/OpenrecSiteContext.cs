@@ -7,21 +7,21 @@ using System.Windows.Controls;
 using System.Diagnostics;
 using SitePluginCommon;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    public class OpenrecSiteContext : SiteContextBase
+    public class MixchSiteContext : SiteContextBase
     {
         public override Guid Guid => new Guid("F4434012-3E68-4DD9-B2A8-F2BD7D601723");
 
-        public override string DisplayName => "OPENREC";
-        protected override SiteType SiteType => SiteType.Openrec;
+        public override string DisplayName => "MIXCH";
+        protected override SiteType SiteType => SiteType.Mixch;
         public override IOptionsTabPage TabPanel
         {
             get
             {
-                var panel = new OpenrecOptionsPanel();
-                panel.SetViewModel(new OpenrecOptionsViewModel(_siteOptions));
-                return new OpenrecOptionsTabPage(DisplayName, panel);
+                var panel = new MixchOptionsPanel();
+                panel.SetViewModel(new MixchOptionsViewModel(_siteOptions));
+                return new MixchOptionsTabPage(DisplayName, panel);
             }
         }
 
@@ -56,7 +56,7 @@ namespace OpenrecSitePlugin
 
         public override void LoadOptions(string path, IIo io)
         {
-            _siteOptions = new OpenrecSiteOptions();
+            _siteOptions = new MixchSiteOptions();
             try
             {
                 var s = io.ReadFile(path);
@@ -83,11 +83,11 @@ namespace OpenrecSitePlugin
                 _logger.LogException(ex, "", path);
             }
         }
-        private OpenrecSiteOptions _siteOptions;
+        private MixchSiteOptions _siteOptions;
         private ICommentOptions _options;
         private ILogger _logger;
 
-        public OpenrecSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
+        public MixchSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
             : base(options,userStoreManager, logger)
         {
             _options = options;

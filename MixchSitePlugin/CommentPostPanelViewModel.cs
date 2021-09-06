@@ -9,7 +9,7 @@ using System.Windows.Input;
 using Common;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     class CommentPostPanelViewModel : ViewModelBase
     {

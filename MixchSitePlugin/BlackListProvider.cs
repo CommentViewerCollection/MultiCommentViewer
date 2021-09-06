@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Common;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     class BlackListProvider : IBlackListProvider
     {

@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.Net;
 using Common;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    class OpenrecWebsocket : IOpenrecWebsocket
+    class MixchWebsocket : IMixchWebsocket
     {
         private Websocket _websocket;
         private readonly ILogger _logger;
-        //public event EventHandler<IOpenrecCommentData> CommentReceived;
+        //public event EventHandler<IMixchCommentData> CommentReceived;
         public event EventHandler<IPacket> Received;
 
         public async Task ReceiveAsync(string movieId, string userAgent, List<Cookie> cookies)
@@ -24,12 +24,12 @@ namespace OpenrecSitePlugin
                     cookieList.Add(new KeyValuePair<string, string>(cookie.Name, cookie.Value));
                 }
             }
-            var origin = "https://www.openrec.tv";
+            var origin = "https://www.mixch.tv";
 
             _websocket = new Websocket();
             _websocket.Received += Websocket_Received;
             _websocket.Opened += Websocket_Opened;
-            var url = $"wss://chat.openrec.tv/socket.io/?movieId={movieId}&EIO=3&transport=websocket";
+            var url = $"wss://chat.mixch.tv/socket.io/?movieId={movieId}&EIO=3&transport=websocket";
             await _websocket.ReceiveAsync(url, cookieList, userAgent, origin);
             //切断後処理
             _heartbeatTimer.Enabled = false;
@@ -78,7 +78,7 @@ namespace OpenrecSitePlugin
             await _websocket.SendAsync(s);
         }
         System.Timers.Timer _heartbeatTimer = new System.Timers.Timer();
-        public OpenrecWebsocket(ILogger logger)
+        public MixchWebsocket(ILogger logger)
         {
             _logger = logger;
             _heartbeatTimer.Interval = 25 * 1000;

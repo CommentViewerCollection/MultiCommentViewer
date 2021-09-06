@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OpenrecSitePlugin.Low.Movies
+namespace MixchSitePlugin.Low.Movies
 {
     public partial class RootObject
     {
@@ -159,8 +159,8 @@ namespace OpenrecSitePlugin.Low.Movies
         [JsonProperty("recxuser_id")]
         public long RecxuserId { get; set; }
 
-        [JsonProperty("openrec_user_id")]
-        public long OpenrecUserId { get; set; }
+        [JsonProperty("mixch_user_id")]
+        public long MixchUserId { get; set; }
 
         [JsonProperty("name")]
         public string Name { get; set; }

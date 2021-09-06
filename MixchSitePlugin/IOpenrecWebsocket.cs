@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
-    interface IOpenrecWebsocket
+    interface IMixchWebsocket
     {
         event EventHandler<IPacket> Received;
 

@@ -3,13 +3,13 @@ using System;
 using System.Windows;
 using System.Windows.Media;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     internal class MessageMetadata : IMessageMetadata
     {
-        private readonly IOpenrecMessage _message;
+        private readonly IMixchMessage _message;
         private readonly ICommentOptions _options;
-        private readonly IOpenrecSiteOptions _siteOptions;
+        private readonly IMixchSiteOptions _siteOptions;
 
         public Color BackColor
         {
@@ -24,7 +24,7 @@ namespace OpenrecSitePlugin
                 {
                     return _options.FirstCommentBackColor;
                 }
-                //if (_message is IOpenrecItem item)
+                //if (_message is IMixchItem item)
                 //{
                 //    return _siteOptions.ItemBackColor;
                 //}
@@ -48,7 +48,7 @@ namespace OpenrecSitePlugin
                 {
                     return _options.FirstCommentForeColor;
                 }
-                //if (_message is IOpenrecItem item)
+                //if (_message is IMixchItem item)
                 //{
                 //    return _siteOptions.ItemForeColor;
                 //}
@@ -141,7 +141,7 @@ namespace OpenrecSitePlugin
         public Guid SiteContextGuid { get; set; }
         public ISiteOptions SiteOptions { get; }
 
-        public MessageMetadata(IOpenrecMessage message, ICommentOptions options, IOpenrecSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
+        public MessageMetadata(IMixchMessage message, ICommentOptions options, IMixchSiteOptions siteOptions, IUser user, ICommentProvider cp, bool isFirstComment)
         {
             _message = message;
             _options = options;
@@ -179,13 +179,13 @@ namespace OpenrecSitePlugin
             switch (e.PropertyName)
             {
                 //case nameof(_siteOptions.ItemBackColor):
-                //    if (_message is IOpenrecItem)
+                //    if (_message is IMixchItem)
                 //    {
                 //        RaisePropertyChanged(nameof(BackColor));
                 //    }
                 //    break;
                 //case nameof(_siteOptions.ItemForeColor):
-                //    if (_message is IOpenrecItem)
+                //    if (_message is IMixchItem)
                 //    {
                 //        RaisePropertyChanged(nameof(ForeColor));
                 //    }
@@ -236,7 +236,7 @@ namespace OpenrecSitePlugin
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
         {
@@ -244,7 +244,7 @@ namespace OpenrecSitePlugin
             remove { _propertyChanged -= value; }
         }
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="propertyName"></param>
         protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")

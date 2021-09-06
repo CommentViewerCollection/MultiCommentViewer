@@ -48,7 +48,7 @@
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
+    <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
   </ItemGroup>
   <ItemGroup>

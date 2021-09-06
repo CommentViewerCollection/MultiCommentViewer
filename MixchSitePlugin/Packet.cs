@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Codeplex.Data;
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     public class AudienceCount
     {
@@ -17,16 +17,16 @@ namespace OpenrecSitePlugin
     }
     public class Packet
     {
-        const int OPENREC_SOCKET_TYPE_CHAT = 0;
-        const int OPENREC_SOCKET_TYPE_AUDIENCE_COUNT = 1;
-        const int OPENREC_SOCKET_TYPE_SYSTEM_MESSAGE = 2;
-        const int OPENREC_SOCKET_TYPE_LIVE_END = 3;
-        const int OPENREC_SOCKET_TYPE_STATUS = 4;
-        const int OPENREC_SOCKET_TYPE_LIVE_START = 5;
-        const int OPENREC_SOCKET_TYPE_BLACKLIST_ADD = 6;
-        const int OPENREC_SOCKET_TYPE_BLACKLIST_DELETE = 7;
-        const int OPENREC_SOCKET_TYPE_MODERATOR_ADD = 8;
-        const int OPENREC_SOCKET_TYPE_MODERATOR_DELETE = 9;
+        const int MIXCH_SOCKET_TYPE_CHAT = 0;
+        const int MIXCH_SOCKET_TYPE_AUDIENCE_COUNT = 1;
+        const int MIXCH_SOCKET_TYPE_SYSTEM_MESSAGE = 2;
+        const int MIXCH_SOCKET_TYPE_LIVE_END = 3;
+        const int MIXCH_SOCKET_TYPE_STATUS = 4;
+        const int MIXCH_SOCKET_TYPE_LIVE_START = 5;
+        const int MIXCH_SOCKET_TYPE_BLACKLIST_ADD = 6;
+        const int MIXCH_SOCKET_TYPE_BLACKLIST_DELETE = 7;
+        const int MIXCH_SOCKET_TYPE_MODERATOR_ADD = 8;
+        const int MIXCH_SOCKET_TYPE_MODERATOR_DELETE = 9;
         public static IPacket Parse(string str)
         {
 
@@ -84,44 +84,44 @@ namespace OpenrecSitePlugin
                                     {
                                         type = (int)t.type;
                                     }
-                                    if (type == OPENREC_SOCKET_TYPE_CHAT)
+                                    if (type == MIXCH_SOCKET_TYPE_CHAT)
                                     {
                                         var comment = JsonConvert.DeserializeObject<Low.Item>(t.data.ToString());
                                         ret = new PacketMessageEventMessageChat(comment);
                                     }
-                                    else if (type == OPENREC_SOCKET_TYPE_AUDIENCE_COUNT)
+                                    else if (type == MIXCH_SOCKET_TYPE_AUDIENCE_COUNT)
                                     {
                                         var audi = JsonConvert.DeserializeObject<AudienceCount>(t.data.ToString());
                                         ret = new PacketMessageEventMessageAudienceCount(audi);
                                     }
-                                    else if (type == OPENREC_SOCKET_TYPE_LIVE_END)
+                                    else if (type == MIXCH_SOCKET_TYPE_LIVE_END)
                                     {
                                         ret = new PacketMessageEventMessageLiveEnd();
                                     }
-                                    else if (type == OPENREC_SOCKET_TYPE_LIVE_START)
+                                    else if (type == MIXCH_SOCKET_TYPE_LIVE_START)
                                     {
                                         //"42[\"message\",\"{\\\"type\\\":5,\\\"data\\\":{\\\"movie_id\\\":\\\"427901\\\"}}\"]"
                                         ret = new PacketMessageEventMessageLiveStart();
                                     }
-                                    else if (type == OPENREC_SOCKET_TYPE_BLACKLIST_ADD)
+                                    else if (type == MIXCH_SOCKET_TYPE_BLACKLIST_ADD)
                                     {
                                         //なぜかtypeが文字列！！
                                         //"42[\"message\",\"{\\\"type\\\":\\\"6\\\",\\\"data\\\":{\\\"owner_to_banned_user_id\\\":\\\"96397446\\\"}}\"]"
                                         ret = new PacketMessageEventMessageBlacklistAdd();
                                     }
-                                    else if (type == OPENREC_SOCKET_TYPE_BLACKLIST_DELETE)
+                                    else if (type == MIXCH_SOCKET_TYPE_BLACKLIST_DELETE)
                                     {
                                         //なぜかtypeが文字列！！
                                         //"42[\"message\",\"{\\\"type\\\":\\\"7\\\",\\\"data\\\":{\\\"owner_to_banned_user_id\\\":\\\"68963280\\\"}}\"]"
                                         ret = new PacketMessageEventMessageBlacklistDelete();
                                     }
-                                    else if (type == OPENREC_SOCKET_TYPE_MODERATOR_ADD)
+                                    else if (type == MIXCH_SOCKET_TYPE_MODERATOR_ADD)
                                     {
                                         //なぜかtypeが文字列！！
                                         //"42[\"message\",\"{\\\"type\\\":\\\"8\\\",\\\"data\\\":{\\\"owner_to_moderator_user_id\\\":\\\"42978100\\\"}}\"]"
                                         ret = new PacketMessageEventMessageModeratorAdd();
                                     }
-                                    else if (type == OPENREC_SOCKET_TYPE_MODERATOR_DELETE)
+                                    else if (type == MIXCH_SOCKET_TYPE_MODERATOR_DELETE)
                                     {
                                         //なぜかtypeが文字列！！
                                         //"42[\"message\",\"{\\\"type\\\":\\\"9\\\",\\\"data\\\":{\\\"owner_to_moderator_user_id\\\":\\\"42978100\\\"}}\"]"

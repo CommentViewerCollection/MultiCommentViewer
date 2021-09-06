@@ -5,15 +5,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OpenrecSitePlugin.Low.BlackList
+namespace MixchSitePlugin.Low.BlackList
 {
     public class RootObject
     {
         [JsonProperty("id")]
         public string Id { get; set; }
 
-        [JsonProperty("openrec_user_id")]
-        public long OpenrecUserId { get; set; }
+        [JsonProperty("mixch_user_id")]
+        public long MixchUserId { get; set; }
 
         [JsonProperty("recxuser_id")]
         public long RecxuserId { get; set; }

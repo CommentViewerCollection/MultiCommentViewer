@@ -11,7 +11,7 @@ using Common;
 using Newtonsoft.Json;
 using SitePlugin;
 
-namespace OpenrecSitePlugin
+namespace MixchSitePlugin
 {
     static class Tools
     {
@@ -54,12 +54,12 @@ namespace OpenrecSitePlugin
         {
             //LIVE_ID
             //CHANNEL_ID
-            //https://www.openrec.tv/live/CHANNEL_ID
-            //https://www.openrec.tv/live/LIVE_ID
-            //https://www.openrec.tv/user/CHANNEL_ID
+            //https://www.mixch.tv/live/CHANNEL_ID
+            //https://www.mixch.tv/live/LIVE_ID
+            //https://www.mixch.tv/user/CHANNEL_ID
 
             string id;
-            var match = Regex.Match(input, "openrec\\.tv/(?:live|movie|user)/(?<id>[^?/&]+)");
+            var match = Regex.Match(input, "mixch\\.tv/(?:live|movie|user)/(?<id>[^?/&]+)");
             if (match.Success)
             {
                 id = match.Groups[1].Value;
@@ -141,12 +141,12 @@ namespace OpenrecSitePlugin
         }
         public static bool IsValidChannelUrl(string input)
         {
-            var b = Regex.IsMatch(input, "openrec\\.tv/user/(?<programid>[^?/&=]+)");
+            var b = Regex.IsMatch(input, "mixch\\.tv/user/(?<programid>[^?/&=]+)");
             return b;
         }
         public static string ExtractChannelId(string input)
         {
-            var match = Regex.Match(input, "openrec\\.tv/user/([^?/&=]+)");
+            var match = Regex.Match(input, "mixch\\.tv/user/([^?/&=]+)");
             if (match.Success)
             {
                 return match.Groups[1].Value;
@@ -158,7 +158,7 @@ namespace OpenrecSitePlugin
         }
         public static bool IsValidUrl(string input)
         {
-            var b = Regex.IsMatch(input, "openrec\\.tv/((?:live)|(?:movie))/(?<programid>[^?/]+)");
+            var b = Regex.IsMatch(input, "mixch\\.tv/((?:live)|(?:movie))/(?<programid>[^?/]+)");
             return b;
         }
         public static bool IsValidMovieId(string input)
@@ -168,7 +168,7 @@ namespace OpenrecSitePlugin
         public static string ExtractLiveId(string input)
         {
             var ret = "";
-            const string pattern = "openrec\\.tv/((?:live)|(?:movie))/(?<programid>[^?/]+)";
+            const string pattern = "mixch\\.tv/((?:live)|(?:movie))/(?<programid>[^?/]+)";
             var match = Regex.Match(input, pattern);
             if (match.Success)
             {
@@ -237,7 +237,7 @@ namespace OpenrecSitePlugin
                 //「 ユーザーIDを設定すると、チャットやコメントが可能になります。」との記載があるため、
                 //コメントを投稿できている時点でnullは無いと思っていた。
                 //恐らく設定直後で反映されていないんだろう。
-                UserId = obj.User.OpenrecUserId.ToString(),
+                UserId = obj.User.MixchUserId.ToString(),
                 YellPoints = obj.Yell?.Points,
                 UserIconUrl = obj.User.IconImageUrl,
             };
@@ -261,7 +261,7 @@ namespace OpenrecSitePlugin
             };
             return comment;
         }
-        public static IOpenrecCommentData CreateCommentData(IComment obj, DateTime startAt, OpenrecSiteOptions siteOptions)
+        public static IMixchCommentData CreateCommentData(IComment obj, DateTime startAt, MixchSiteOptions siteOptions)
         {
             var nameIcons = new List<IMessagePart>();
             if (obj.IsOfficial)
@@ -343,7 +343,7 @@ namespace OpenrecSitePlugin
             var yellPoints = obj.YellPoints?.ToString();
 
             var postTime = obj.PostedAt;
-            return new OpenrecCommentData
+            return new MixchCommentData
             {
                 Name = obj.Nickname,
                 NameIcons = nameIcons,
@@ -442,7 +442,7 @@ namespace OpenrecSitePlugin
             return s;
         }
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="str"></param>

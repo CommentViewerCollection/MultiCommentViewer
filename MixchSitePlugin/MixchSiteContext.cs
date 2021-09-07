@@ -11,7 +11,8 @@ namespace MixchSitePlugin
 {
     public class MixchSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("F4434012-3E68-4DD9-B2A8-F2BD7D601723");
+        public override Guid Guid => new Guid("F4434012-3E68-4DD9-B2A8-F2BD7D601724");
+        // TODO: Guidを自動生成する
 
         public override string DisplayName => "MIXCH";
         protected override SiteType SiteType => SiteType.Mixch;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,128 +53,26 @@ namespace MixchSitePlugin
         public static async Task<string> GetLiveId(IDataSource dataSource, string input)
         {
             //LIVE_ID
-            //CHANNEL_ID
-            //https://www.mixch.tv/live/CHANNEL_ID
-            //https://www.mixch.tv/live/LIVE_ID
-            //https://www.mixch.tv/user/CHANNEL_ID
+            //https://mixch.tv/u/LIVE_ID/live
 
             string id;
-            var match = Regex.Match(input, "mixch\\.tv/(?:live|movie|user)/(?<id>[^?/&]+)");
+            var match = Regex.Match(input, "mixch\\.tv/u/(?<id>[0-9]+)/live");
             if (match.Success)
             {
                 id = match.Groups[1].Value;
             }
             else
             {
-                var match1 = Regex.Match(input, "^([^?/\\.&=]+)$");
-                if (match1.Success)
-                {
-                    id = match1.Groups[1].Value;
-                }
-                else
-                {
-                    throw new InvalidInputException();
-                }
+                throw new InvalidInputException();
             }
-            try
-            {
-                var movies = await API.GetChannelMovies(dataSource, id);
-                if (movies.Length == 0)
-                {
-                    return id;//恐らくLiveId
-                }
-                var onairMovies = movies.Where(s => s.OnairStatus == 1).ToList();
-                var ntk = onairMovies.Select(k => k.Id).ToList();
-                if (ntk.Count == 0)
-                {
-                    //存在しないか配信中ではない
-                    //throw new TestException("入力されたチャンネルIDは存在しないか配信中ではありません。");
-                    throw new InvalidInputException();
-                }
-                else if (ntk.Count > 1)
-                {
-                    //複数
-                    throw new Exception("このチャンネルには配信中の番組が複数あります。");
-                }
-                else
-                {
-                    var liveId = ntk[0];
-                    return liveId;
-                }
-            }
-            catch (WebException ex)
-            {
 
-            }
+            // TODO: 配信中かどうかチェックが必要かも
             return id;
-            //if (Tools.IsValidUrl(input))
-            //{
-            //    return Tools.ExtractLiveId(input);
-            //}
-            //else if (Tools.IsValidChannelUrl(input))
-            //{
-            //    var channelId = Tools.ExtractChannelId(input);
-            //    var movies = await API.GetMovies(_dataSource, channelId);
-            //    var onairMovies = movies.Where(s => s.OnairStatus == 1).ToList();
-            //    if(onairMovies.Count == 0)
-            //    {
-
-            //    }
-            //    else if(onairMovies.Count > 1)
-            //    {
-
-            //    }
-            //    else
-            //    {
-            //        var liveId = onairMovies[0].Id;
-            //        return liveId;
-            //    }
-            //}
-            //else if (Tools.IsValidMovieId(input))
-            //{
-            //    return input;
-            //}
-            //else
-            //{
-            //    throw new InvalidInputException();
-            //}
-        }
-        public static bool IsValidChannelUrl(string input)
-        {
-            var b = Regex.IsMatch(input, "mixch\\.tv/user/(?<programid>[^?/&=]+)");
-            return b;
-        }
-        public static string ExtractChannelId(string input)
-        {
-            var match = Regex.Match(input, "mixch\\.tv/user/([^?/&=]+)");
-            if (match.Success)
-            {
-                return match.Groups[1].Value;
-            }
-            else
-            {
-                return "";
-            }
         }
         public static bool IsValidUrl(string input)
         {
-            var b = Regex.IsMatch(input, "mixch\\.tv/((?:live)|(?:movie))/(?<programid>[^?/]+)");
+            var b = Regex.IsMatch(input, "mixch\\.tv/u/([0-9]+)/live");
             return b;
-        }
-        public static bool IsValidMovieId(string input)
-        {
-            return Regex.IsMatch(input, "^[^/:?]+$");
-        }
-        public static string ExtractLiveId(string input)
-        {
-            var ret = "";
-            const string pattern = "mixch\\.tv/((?:live)|(?:movie))/(?<programid>[^?/]+)";
-            var match = Regex.Match(input, pattern);
-            if (match.Success)
-            {
-                ret = match.Groups["programid"].Value;
-            }
-            return ret;
         }
         public static string ElapsedToString(TimeSpan elapsed)
         {

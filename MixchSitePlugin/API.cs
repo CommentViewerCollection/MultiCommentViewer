@@ -31,27 +31,25 @@ namespace MixchSitePlugin
     class Me
     {
         public string DisplayName { get; set; }
-        public string UserPath { get; set; }
+        public string UserId { get; set; }
     }
     static class API
     {
         public static async Task<Me> GetMeAsync(IDataSource server, CookieContainer cc)
         {
             var me = new Me();
-            var url = "https://www.mixch.tv";
+            var url = "https://mixch.tv/mypage";
             var res = await server.GetAsync(url, cc);
-            var match0 = Regex.Match(res, "<div class=\"l-headerMain__content__usermenu__myIcon__myName[^\"]*?\">\\s*([^<\\s]*)?\\s*</div>");
+            var match0 = Regex.Match(res, "<p class=\"name\">\\s*([^<\\s]*)?\\s*</p>\\s*<p class=\"id\">");
             if (match0.Success)
             {
                 var displayName = match0.Groups[1].Value;
                 me.DisplayName = displayName;
             }
-            //<div class="l-headerMain__content__usermenu__myIcon__myNameKey js-menu__key">kv510k</div>
-            var match1 = Regex.Match(res, "<div class=\"l-headerMain__content__usermenu__myIcon__myNameKey[^\"]*?\">([^<]+)</div>");
+            var match1 = Regex.Match(res, "<p class=\"id\">\\s*ID\\s*:\\s*([0-9]+)");
             if (match1.Success)
             {
-                var userPath = match1.Groups[1].Value;
-                me.UserPath = userPath;
+                me.UserId = match1.Groups[1].Value;
             }
             return me;
         }

@@ -111,8 +111,6 @@ namespace MixchSitePlugin
     public class PacketMessageEventMessageLiveEnd : PacketMessageEventMessageBase { }
     public class PacketMessageEventMessageStatus : PacketMessageEventMessageBase { }
     public class PacketMessageEventMessageLiveStart : PacketMessageEventMessageBase { }
-    public class PacketMessageEventMessageBlacklistAdd : PacketMessageEventMessageBase { }
-    public class PacketMessageEventMessageBlacklistDelete : PacketMessageEventMessageBase { }
     public class PacketMessageEventMessageModeratorAdd : PacketMessageEventMessageBase { }
     public class PacketMessageEventMessageModeratorDelete : PacketMessageEventMessageBase { }
     public class PacketMessageAck : PacketMessageBase { }

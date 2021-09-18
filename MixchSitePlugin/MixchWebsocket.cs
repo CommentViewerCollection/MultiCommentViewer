@@ -55,17 +55,6 @@ namespace MixchSitePlugin
             Received?.Invoke(this, packet);
         }
 
-        public async Task SendAsync(IPacket packet)
-        {
-            if (packet is PacketPing ping)
-            {
-                await SendAsync(ping.Raw);
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-        }
         public async Task SendAsync(string s)
         {
             await _websocket.SendAsync(s);
@@ -74,20 +63,6 @@ namespace MixchSitePlugin
         public MixchWebsocket(ILogger logger)
         {
             _logger = logger;
-            _heartbeatTimer.Interval = 25 * 1000;
-            _heartbeatTimer.Elapsed += _heartBeatTimer_Elapsed;
-            _heartbeatTimer.AutoReset = true;
-        }
-        private async void _heartBeatTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            try
-            {
-                await SendAsync(new PacketPing());
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
         }
 
         public void Disconnect()

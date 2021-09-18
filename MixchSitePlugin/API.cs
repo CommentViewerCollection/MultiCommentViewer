@@ -76,14 +76,6 @@ namespace MixchSitePlugin
             var obj = Tools.Deserialize<Low.Movies.RootObject[]>(res);
             return obj;
         }
-        public static async Task<Low.WebsocketContext2> GetWebsocketContext2(IDataSource dataSource, string movieId, CookieContainer cc)
-        {
-            var url = $"https://chat.mixch.tv/socket.io/?movieId={movieId}&EIO=3&transport=polling&t={Tools.Yeast()}";
-            var bytes = await dataSource.GetByteArrayAsync(url, cc);
-            var str = Tools.Bytes2String(bytes);
-            var packet = Packet.Parse(str) as PacketOpen;
-            return packet.Context;
-        }
         public static async Task<(Low.Chats.RootObject[], string raw)> GetChats(IDataSource dataSource, string liveId, DateTime toCreatedAt, CookieContainer cc)
         {
             //https://public.mixch.tv/external/api/v5/movies/9PgmVnlqtMz/chats?to_created_at=2018-07-24T19:32:50.395Z

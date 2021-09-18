@@ -375,18 +375,26 @@ namespace MixchSitePlugin
             return userAgent;
         }
 
+        const int MIXCH_PACKET_TYPE_CHAT = 0;
+
         private void WebSocket_Received(object sender, IPacket e)
         {
             try
             {
                 if (e is PacketBase b)
                 {
-                    var comment = Tools.Parse(b.Context);
-                    var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                    var messageContext = CreateMessageContext(comment, commentData, false);
-                    if (messageContext != null)
+                    switch (b.Context.kind)
                     {
-                        MessageReceived?.Invoke(this, messageContext);
+                        case MIXCH_PACKET_TYPE_CHAT:
+                            // 通常コメント
+                            var comment = Tools.Parse(b.Context);
+                            var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
+                            var messageContext = CreateMessageContext(comment, commentData, false);
+                            if (messageContext != null)
+                            {
+                                MessageReceived?.Invoke(this, messageContext);
+                            }
+                            break;
                     }
                 }
             }

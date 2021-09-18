@@ -67,7 +67,7 @@ namespace MixchSitePlugin
         {
             _commentProvider = commentProvider;
             _logger = logger;
-            PostCommentCommand = new RelayCommand(()=> PostComment(Input));
+            PostCommentCommand = new RelayCommand(() => PostComment(Input));
 
             Input = "コメント投稿は未対応です";
             CanPostComment = false;

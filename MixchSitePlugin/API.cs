@@ -79,7 +79,7 @@ namespace MixchSitePlugin
         public static async Task<Low.WebsocketContext2> GetWebsocketContext2(IDataSource dataSource, string movieId, CookieContainer cc)
         {
             var url = $"https://chat.mixch.tv/socket.io/?movieId={movieId}&EIO=3&transport=polling&t={Tools.Yeast()}";
-            var bytes = await dataSource.GetByteArrayAsync(url,cc);
+            var bytes = await dataSource.GetByteArrayAsync(url, cc);
             var str = Tools.Bytes2String(bytes);
             var packet = Packet.Parse(str) as PacketOpen;
             return packet.Context;

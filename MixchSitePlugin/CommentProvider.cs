@@ -125,8 +125,8 @@ namespace MixchSitePlugin
                 return;
             }
 
-            // TODO: ライブが配信中かチェックする
-            // TODO: 過去のコメントを取得する
+        // TODO: ライブが配信中かチェックする
+        // TODO: 過去のコメントを取得する
         Reconnect:
             _ws = CreateMixchWebsocket();
             _ws.Received += WebSocket_Received;

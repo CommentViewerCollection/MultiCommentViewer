@@ -89,7 +89,7 @@ namespace MixchSitePlugin
         private ILogger _logger;
 
         public MixchSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options,userStoreManager, logger)
+            : base(options, userStoreManager, logger)
         {
             _options = options;
             _logger = logger;

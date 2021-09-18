@@ -3,7 +3,7 @@ using GalaSoft.MvvmLight;
 
 namespace MixchSitePlugin
 {
-    class UserViewModel :ViewModelBase
+    class UserViewModel : ViewModelBase
     {
         private readonly IUser _user;
         public string Name

@@ -141,24 +141,6 @@ namespace MixchSitePlugin
             };
             return comment;
         }
-        public static IComment Parse(Low.Item item)
-        {
-            var comment = new Comment
-            {
-                Id = item.chat_id,
-                IsFresh = item.is_fresh != 0,
-                IsModerating = item.is_moderator != 0,
-                IsOfficial = item.user_type == "1",
-                IsPremium = item.is_premium != 0,
-                Message = item.message,
-                Nickname = item.user_name,
-                PostedAt = DateTime.Parse(item.cre_dt),
-                StampUrl = item.stamp?.image_url,
-                UserId = item.user_id,
-                YellPoints = item.yell == null ? (long?)null : long.Parse(item.yell.points),
-            };
-            return comment;
-        }
         public static IMixchCommentData CreateCommentData(IComment obj, DateTime startAt, MixchSiteOptions siteOptions)
         {
             var nameIcons = new List<IMessagePart>();

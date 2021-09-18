@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Net;
+using Newtonsoft.Json;
 using Common;
 
 namespace MixchSitePlugin
@@ -12,7 +13,7 @@ namespace MixchSitePlugin
         private Websocket _websocket;
         private readonly ILogger _logger;
         //public event EventHandler<IMixchCommentData> CommentReceived;
-        public event EventHandler<IPacket> Received;
+        public event EventHandler<Packet> Received;
 
         public async Task ReceiveAsync(string userId, string userAgent, List<Cookie> cookies)
         {
@@ -37,14 +38,10 @@ namespace MixchSitePlugin
         private void Websocket_Received(object sender, string e)
         {
             Debug.WriteLine(e);
-            IPacket packet = null;
+            Packet packet = null;
             try
             {
-                packet = Packet.Parse(e);
-            }
-            catch (ParseException ex)
-            {
-                _logger.LogException(ex);
+                packet = JsonConvert.DeserializeObject<Packet>(e);
             }
             catch (Exception ex)
             {

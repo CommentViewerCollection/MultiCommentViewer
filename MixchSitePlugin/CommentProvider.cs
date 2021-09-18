@@ -5,6 +5,7 @@ using SitePlugin;
 using ryu_s.BrowserCookie;
 using Common;
 using System.Threading;
+using System.Diagnostics;
 using System.Net;
 using System.Drawing;
 using System.Linq;
@@ -377,25 +378,22 @@ namespace MixchSitePlugin
 
         const int MIXCH_PACKET_TYPE_CHAT = 0;
 
-        private void WebSocket_Received(object sender, IPacket e)
+        private void WebSocket_Received(object sender, Packet e)
         {
             try
             {
-                if (e is PacketBase b)
+                switch (e.kind)
                 {
-                    switch (b.Context.kind)
-                    {
-                        case MIXCH_PACKET_TYPE_CHAT:
-                            // 通常コメント
-                            var comment = Tools.Parse(b.Context);
-                            var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                            var messageContext = CreateMessageContext(comment, commentData, false);
-                            if (messageContext != null)
-                            {
-                                MessageReceived?.Invoke(this, messageContext);
-                            }
-                            break;
-                    }
+                    case MIXCH_PACKET_TYPE_CHAT:
+                        // 通常コメント
+                        var comment = Tools.Parse(e);
+                        var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
+                        var messageContext = CreateMessageContext(comment, commentData, false);
+                        if (messageContext != null)
+                        {
+                            MessageReceived?.Invoke(this, messageContext);
+                        }
+                        break;
                 }
             }
             catch (Exception ex)

@@ -7,7 +7,7 @@ namespace MixchSitePlugin
 {
     interface IMixchWebsocket
     {
-        event EventHandler<IPacket> Received;
+        event EventHandler<Packet> Received;
 
         Task ReceiveAsync(string movieId, string userAgent, List<Cookie> cookies);
         Task SendAsync(string s);

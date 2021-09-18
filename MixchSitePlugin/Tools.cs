@@ -117,7 +117,7 @@ namespace MixchSitePlugin
             public string UserId { get; set; }
             public string Id { get; set; }
         }
-        public static IComment Parse(Low.WebsocketContext2 obj)
+        public static IComment Parse(Packet obj)
         {
             var comment = new Comment
             {

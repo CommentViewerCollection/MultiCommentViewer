@@ -92,29 +92,6 @@ namespace MixchSitePlugin
             var obj = Tools.Deserialize<Low.Chats.RootObject[]>(res);
             return (obj, res);
         }
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="server"></param>
-        /// <param name="liveId"></param>
-        /// <param name="comment"></param>
-        /// <param name="postTime">投稿日時（JST）</param>
-        /// <param name="cc"></param>
-        /// <returns></returns>
-        public static async Task PostCommentAsync(IDataSource server, string liveId, string comment, DateTime postTime, Context context)
-        {
-            var headers = new Dictionary<string, string>
-            {
-                { "uuid", context.Uuid },
-                { "access-token", context.AccessToken },
-            };
-            var url = $"https://apiv5.mixch.tv/api/v5/movies/{liveId}/chats";
-            var data = $"{{\"message\":\"{comment}\",\"quality_type\":0,\"messaged_at\":\"{postTime.ToString("yyyy-MM-ddTHH:mm:ss.fff+09:00")}\",\"league_key\":\"\",\"to_user_id\":\"\"}}";
-            var res = await server.PostJsonAsync(url, headers, data);
-            //{"message":"authorization required","status":-4}
-            //{"status":0,"data":{"type":"chat","items":[{"id":213829498,"message":"a_a","quality_type":0,"posted_at":"2018-11-01T02:35:25+09:00","stamp":null,"yell_type":null,"yell":null,"user":{"id":"kv510k","mixch_user_id":137594,"recxuser_id":20487471,"nickname":"たこやき","introduction":"","icon_image_url":"https://hayabusa.io/mixch-image/user/204875/20487471.w90.v1470867009.png?format=png","l_icon_image_url":"https://hayabusa.io/mixch-image/user/204875/20487471.w320.v1470867009.png?format=png","cover_image_url":"","follows":5,"followers":1,"is_premium":false,"premium_start_at":null,"premium_charge_type":null,"is_official":false,"is_fresh":false,"is_warned":false,"is_team":false,"is_league_yell":false,"is_live":false,"live_views":0},"to_user":null,"chat_setting":{"name_color":"#F6A434","is_premium_hidden":false},"is_moderating":false,"has_banned_word":false}]}}
-            return;
-        }
     }
 }
 namespace MixchSitePlugin.Low

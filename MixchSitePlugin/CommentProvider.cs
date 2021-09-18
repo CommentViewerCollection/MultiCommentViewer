@@ -397,7 +397,7 @@ namespace MixchSitePlugin
         }
         public async Task PostCommentAsync(string str)
         {
-            await API.PostCommentAsync(_dataSource, _liveId, str, DateTime.Now, _context);
+            throw new NotImplementedException();
         }
 
         public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)

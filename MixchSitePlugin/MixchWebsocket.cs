@@ -14,23 +14,16 @@ namespace MixchSitePlugin
         //public event EventHandler<IMixchCommentData> CommentReceived;
         public event EventHandler<IPacket> Received;
 
-        public async Task ReceiveAsync(string movieId, string userAgent, List<Cookie> cookies)
+        public async Task ReceiveAsync(string userId, string userAgent, List<Cookie> cookies)
         {
-            var cookieList = new List<KeyValuePair<string, string>>();
-            foreach (Cookie cookie in cookies)
-            {
-                if (cookie.Name == "AWSALB")
-                {
-                    cookieList.Add(new KeyValuePair<string, string>(cookie.Name, cookie.Value));
-                }
-            }
-            var origin = "https://www.mixch.tv";
+            var origin = "https://mixch.tv";
 
             _websocket = new Websocket();
             _websocket.Received += Websocket_Received;
             _websocket.Opened += Websocket_Opened;
-            var url = $"wss://chat.mixch.tv/socket.io/?movieId={movieId}&EIO=3&transport=websocket";
-            await _websocket.ReceiveAsync(url, cookieList, userAgent, origin);
+
+            var url = $"wss://chat.mixch.tv/torte/room/{userId}";
+            await _websocket.ReceiveAsync(url, userAgent, origin);
             //切断後処理
             _heartbeatTimer.Enabled = false;
 

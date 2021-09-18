@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SitePlugin;
@@ -102,7 +102,6 @@ namespace MixchSitePlugin
             catch { }
             return cc;
         }
-        //protected virtual Extract()
         private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
             if (_ws != null)
@@ -126,117 +125,37 @@ namespace MixchSitePlugin
                 return;
             }
 
-            var movieContext2 = await GetMovieInfo(liveId);
-            var movieId = movieContext2.MovieId;
-            if (movieId == 0)
-            {
-                SendSystemInfo("存在しないURLまたはIDです", InfoType.Error);
-                AfterDisconnected();
-                return;
-            }
-            if (movieContext2.OnairStatus == 2)
-            {
-                SendSystemInfo("この放送は終了しています", InfoType.Error);
-                AfterDisconnected();
-                return;
-            }
-            MetadataUpdated?.Invoke(this, new Metadata { Title = movieContext2.Title });
-
-            _startAt = movieContext2.StartedAt.DateTime;
-            _500msTimer.Enabled = true;
-
-            var (chats, raw) = await GetChats(movieContext2);
-            try
-            {
-                foreach (var item in chats)
-                {
-                    var comment = Tools.Parse(item);
-                    var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                    var messageContext = CreateMessageContext(comment, commentData, true);
-                    if (messageContext != null)
-                    {
-                        MessageReceived?.Invoke(this, messageContext);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex, "", "raw=" + raw);
-            }
-            foreach (var user in _userStoreManager.GetAllUsers(SiteType.Mixch))
-            {
-                if (!(user is IUser2 user2)) continue;
-                _userDict.AddOrUpdate(user2.UserId, user2, (id, u) => u);
-            }
+            // TODO: ライブが配信中かチェックする
+            // TODO: 過去のコメントを取得する
         Reconnect:
             _ws = CreateMixchWebsocket();
             _ws.Received += WebSocket_Received;
 
             var userAgent = GetUserAgent(browserProfile.Type);
-            var wsTask = _ws.ReceiveAsync(movieId.ToString(), userAgent, cookies);
-            var blackListProvider = CreateBlacklistProvider();
-            blackListProvider.Received += BlackListProvider_Received;
-            var blackTask = blackListProvider.ReceiveAsync(movieId.ToString(), _context);
+            var wsTask = _ws.ReceiveAsync(liveId, userAgent, cookies);
 
             var tasks = new List<Task>
             {
                 wsTask,
-                blackTask
             };
 
             while (tasks.Count > 0)
             {
                 var t = await Task.WhenAny(tasks);
-                if (t == blackTask)
+                try
                 {
-                    try
-                    {
-                        await blackTask;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                    tasks.Remove(blackTask);
+                    await wsTask;
                 }
-                else
+                catch (Exception ex)
                 {
-                    blackListProvider.Disconnect();
-                    try
-                    {
-                        await blackTask;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                    tasks.Remove(blackTask);
-                    SendSystemInfo("ブラックリストタスク終了", InfoType.Debug);
-                    try
-                    {
-                        await wsTask;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                    tasks.Remove(wsTask);
-                    SendSystemInfo("wsタスク終了", InfoType.Debug);
+                    _logger.LogException(ex);
                 }
+                tasks.Remove(wsTask);
+                SendSystemInfo("wsタスク終了", InfoType.Debug);
             }
             _ws.Received -= WebSocket_Received;
-            blackListProvider.Received -= BlackListProvider_Received;
 
-            //意図的な切断では無い場合、配信がまだ続いているか確認して、配信中だったら再接続する。
-            //2019/03/12 heartbeatを送っているのにも関わらずwebsocketが切断されてしまう場合を確認。ブラウザでも配信中に切断されて再接続するのを確認済み。
-            if (!_isExpectedDisconnect)
-            {
-                var movieInfo = await GetMovieInfo(liveId);
-                if (movieInfo.OnairStatus == 1)
-                {
-                    goto Reconnect;
-                }
-            }
+            // TODO: 意図的ではない切断の場合は再接続する
         }
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
@@ -471,30 +390,6 @@ namespace MixchSitePlugin
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
         ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
         DateTime _startAt;
-        //private MixchCommentViewModel CreateCommentViewModel(IMixchCommentData data)
-        //{
-        //    var userId = data.UserId;
-        //    bool isFirstComment;
-
-        //    if (_userCommentCountDict.ContainsKey(userId))
-        //    {
-        //        _userCommentCountDict[userId]++;
-        //        isFirstComment = false;
-        //    }
-        //    else
-        //    {
-        //        _userCommentCountDict.Add(userId, 1);
-        //        isFirstComment = true;
-        //    }
-        //    var user = _userStore.GetUser(userId);
-        //    if (!_userViewModelDict.TryGetValue(userId, out UserViewModel userVm))
-        //    {
-        //        userVm = new UserViewModel(user);
-        //        _userViewModelDict.Add(userId, userVm);
-        //    }
-        //    var cvm = new MixchCommentViewModel(data, _options, _siteOptions,  this, isFirstComment, user);
-        //    return cvm;
-        //}
         private static string GetUserAgent(BrowserType browser)
         {
             string userAgent;
@@ -522,28 +417,15 @@ namespace MixchSitePlugin
         {
             try
             {
-                if (e is PacketMessageEventMessageChat chat)
+                if (e is PacketBase b)
                 {
-                    var comment = Tools.Parse(chat.Comment);
+                    var comment = Tools.Parse(b.Context);
                     var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
                     var messageContext = CreateMessageContext(comment, commentData, false);
                     if (messageContext != null)
                     {
                         MessageReceived?.Invoke(this, messageContext);
                     }
-                }
-                else if (e is PacketMessageEventMessageAudienceCount audienceCount)
-                {
-                    var ac = audienceCount.AudienceCount;
-                    MetadataUpdated?.Invoke(this, new Metadata
-                    {
-                        CurrentViewers = ac.live_viewers.ToString(),
-                        TotalViewers = ac.viewers.ToString(),
-                    });
-                }
-                else if (e is PacketMessageEventMessageLiveEnd liveEnd)
-                {
-                    Disconnect();
                 }
             }
             catch (Exception ex)

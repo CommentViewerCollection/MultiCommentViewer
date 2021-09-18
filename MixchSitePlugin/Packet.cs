@@ -9,8 +9,6 @@ namespace MixchSitePlugin
 {
     public class AudienceCount
     {
-        //"{\"movie_id\":\"139217\",\"viewers\":\"5999\",\"live_viewers\":1406}"
-
         public string movie_id { get; set; }
         public string viewers { get; set; }
         public long live_viewers { get; set; }
@@ -33,116 +31,14 @@ namespace MixchSitePlugin
             IPacket ret = null;
             try
             {
-                var c = str[0];
-                switch (c)
+                var context = JsonConvert.DeserializeObject<Low.WebsocketContext2>(str);
+                switch (context.kind)
                 {
-                    case '0':
-                        {
-                            var content = str.Substring(1);
-                            var context = JsonConvert.DeserializeObject<Low.WebsocketContext2>(content);
-                            ret = new PacketOpen(context);
-                        }
+                    case 0:
+                    {
+                        ret = new PacketBase(context);
                         break;
-                    case '1':
-                        break;
-                    case '2':
-                        break;
-                    case '3':
-                        {
-                            var content = str.Substring(1);
-                            if (string.IsNullOrEmpty(content))
-                            {
-                                ret = new PacketPong();
-                            }
-                            else
-                            {
-                                ret = new PacketPong(content);
-                            }
-                        }
-                        break;
-                    case '4':
-                        var c1 = str[1];
-                        switch (c1)
-                        {
-                            case '0':
-                                ret = new PacketMessageConnect();
-                                break;
-                            case '1':
-                                break;
-                            case '2':
-                                var d = DynamicJson.Parse(str.Substring(2));
-                                var s = d[0];
-                                var t = Codeplex.Data.DynamicJson.Parse(d[1]);
-                                if (s == "message")
-                                {
-                                    int type;
-                                    if (t.type.GetType() == typeof(string))
-                                    {
-                                        type = int.Parse(t.type);
-                                    }
-                                    else
-                                    {
-                                        type = (int)t.type;
-                                    }
-                                    if (type == MIXCH_SOCKET_TYPE_CHAT)
-                                    {
-                                        var comment = JsonConvert.DeserializeObject<Low.Item>(t.data.ToString());
-                                        ret = new PacketMessageEventMessageChat(comment);
-                                    }
-                                    else if (type == MIXCH_SOCKET_TYPE_AUDIENCE_COUNT)
-                                    {
-                                        var audi = JsonConvert.DeserializeObject<AudienceCount>(t.data.ToString());
-                                        ret = new PacketMessageEventMessageAudienceCount(audi);
-                                    }
-                                    else if (type == MIXCH_SOCKET_TYPE_LIVE_END)
-                                    {
-                                        ret = new PacketMessageEventMessageLiveEnd();
-                                    }
-                                    else if (type == MIXCH_SOCKET_TYPE_LIVE_START)
-                                    {
-                                        //"42[\"message\",\"{\\\"type\\\":5,\\\"data\\\":{\\\"movie_id\\\":\\\"427901\\\"}}\"]"
-                                        ret = new PacketMessageEventMessageLiveStart();
-                                    }
-                                    else if (type == MIXCH_SOCKET_TYPE_BLACKLIST_ADD)
-                                    {
-                                        //なぜかtypeが文字列！！
-                                        //"42[\"message\",\"{\\\"type\\\":\\\"6\\\",\\\"data\\\":{\\\"owner_to_banned_user_id\\\":\\\"96397446\\\"}}\"]"
-                                        ret = new PacketMessageEventMessageBlacklistAdd();
-                                    }
-                                    else if (type == MIXCH_SOCKET_TYPE_BLACKLIST_DELETE)
-                                    {
-                                        //なぜかtypeが文字列！！
-                                        //"42[\"message\",\"{\\\"type\\\":\\\"7\\\",\\\"data\\\":{\\\"owner_to_banned_user_id\\\":\\\"68963280\\\"}}\"]"
-                                        ret = new PacketMessageEventMessageBlacklistDelete();
-                                    }
-                                    else if (type == MIXCH_SOCKET_TYPE_MODERATOR_ADD)
-                                    {
-                                        //なぜかtypeが文字列！！
-                                        //"42[\"message\",\"{\\\"type\\\":\\\"8\\\",\\\"data\\\":{\\\"owner_to_moderator_user_id\\\":\\\"42978100\\\"}}\"]"
-                                        ret = new PacketMessageEventMessageModeratorAdd();
-                                    }
-                                    else if (type == MIXCH_SOCKET_TYPE_MODERATOR_DELETE)
-                                    {
-                                        //なぜかtypeが文字列！！
-                                        //"42[\"message\",\"{\\\"type\\\":\\\"9\\\",\\\"data\\\":{\\\"owner_to_moderator_user_id\\\":\\\"42978100\\\"}}\"]"
-                                        ret = new PacketMessageEventMessageModeratorDelete();
-                                    }
-                                }
-                                break;
-                            case '3':
-                                break;
-                            case '4':
-                                break;
-                            case '5':
-                                break;
-                        }
-                        break;
-                    case '5':
-                        ret = new PacketUpgrade();
-                        break;
-                    case '6':
-                        ret = new PacketNoop();
-                        break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -161,6 +57,14 @@ namespace MixchSitePlugin
     {
         public Low.WebsocketContext2 Context { get; }
         public PacketOpen(Low.WebsocketContext2 context)
+        {
+            Context = context;
+        }
+    }
+    public class PacketBase : IPacket
+    {
+        public Low.WebsocketContext2 Context { get; }
+        public PacketBase(Low.WebsocketContext2 context)
         {
             Context = context;
         }

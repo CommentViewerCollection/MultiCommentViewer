@@ -18,14 +18,14 @@ namespace MixchSitePlugin
             Debug.Write(DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
             Debug.WriteLine(str);
         }
-        public Task ReceiveAsync(string url, List<KeyValuePair<string, string>> cookies, string userAgent, string origin)
+        public Task ReceiveAsync(string url, string userAgent, string origin)
         {
             if (_ws != null)
                 throw new InvalidOperationException("_ws is not null");
 
             var tcs = new TaskCompletionSource<object>();
             var subProtocol = "";
-            _ws = new WebSocket4Net.WebSocket(url, subProtocol, cookies, null, userAgent, origin, WebSocket4Net.WebSocketVersion.Rfc6455)
+            _ws = new WebSocket4Net.WebSocket(url, subProtocol, null, null, userAgent, origin, WebSocket4Net.WebSocketVersion.Rfc6455)
             {
                 EnableAutoSendPing = false,
                 AutoSendPingInterval = 0,
@@ -39,12 +39,11 @@ namespace MixchSitePlugin
             };
             _ws.DataReceived += (s, e) =>
             {
-                //ここに来たことは今のところ一度もない。
-                Debug.WriteLine("Dataが送られてきた");
+                Debug.WriteLine("DataReceived");
             };
             _ws.Opened += (s, e) =>
             {
-                Log("_ws.Opend");
+                Log("_ws.Opened");
                 Opened?.Invoke(this, EventArgs.Empty);
             };
             _ws.Closed += (s, e) =>

@@ -167,10 +167,12 @@ namespace MixchSitePlugin.Low
 {
     public class WebsocketContext2
     {
-        public string sid { get; set; }
-        public List<string> upgrades { get; set; }
-        public int pingInterval { get; set; }
-        public int pingTimeout { get; set; }
+        public int kind { get; set; }
+        public int user_id { get; set; }
+        public string name { get; set; }
+        public int level { get; set; }
+        public int created { get; set; }
+        public string body { get; set; }
     }
     public class Item
     {

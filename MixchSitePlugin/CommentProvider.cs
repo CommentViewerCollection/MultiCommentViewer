@@ -413,21 +413,4 @@ namespace MixchSitePlugin
         public string UserId { get; set; }
         public bool IsLoggedIn { get; set; }
     }
-    class MessageImagePortion : IMessageImagePortion
-    {
-        public int SrcX { get; set; }
-
-        public int SrcY { get; set; }
-
-        public int SrcWidth { get; set; }
-
-        public int SrcHeight { get; set; }
-
-        public int Width { get; set; }
-
-        public int Height { get; set; }
-
-        public Image Image { get; set; }
-        public string Alt { get; set; }
-    }
 }

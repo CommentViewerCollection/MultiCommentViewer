@@ -40,6 +40,12 @@ namespace BouyomiPlugin
         public bool IsOpenrecComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsOpenrecCommentNickname { get { return GetValue(); } set { SetValue(value); } }
 
+        //ミクチャ
+        public bool IsMixchConnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixchDisconnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixchComment { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixchCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+
         //Twitch
         public bool IsTwitchConnect { get { return GetValue(); } set { SetValue(value); } }
         public bool IsTwitchDisconnect { get { return GetValue(); } set { SetValue(value); } }
@@ -153,6 +159,12 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsOpenrecDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsOpenrecComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsOpenrecCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            //ミクチャ
+            Dict.Add(nameof(IsMixchConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixchDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixchComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixchCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             //Twitch
             Dict.Add(nameof(IsTwitchConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

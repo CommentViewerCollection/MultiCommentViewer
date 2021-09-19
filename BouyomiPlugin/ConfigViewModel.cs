@@ -213,6 +213,41 @@ namespace BouyomiPlugin
         //}
         #endregion //OPENREC
 
+        #region ミクチャ
+        /// <summary>
+        /// MIXCHの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixchConnect
+        {
+            get => _options.IsMixchConnect;
+            set => _options.IsMixchConnect = value;
+        }
+        /// <summary>
+        /// MIXCHの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsMixchDisconnect
+        {
+            get => _options.IsMixchDisconnect;
+            set => _options.IsMixchDisconnect = value;
+        }
+        /// <summary>
+        /// MIXCHのコメントを読み上げるか
+        /// </summary>
+        public bool IsMixchComment
+        {
+            get => _options.IsMixchComment;
+            set => _options.IsMixchComment = value;
+        }
+        /// <summary>
+        /// MIXCHのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsMixchCommentNickname
+        {
+            get => _options.IsMixchCommentNickname;
+            set => _options.IsMixchCommentNickname = value;
+        }
+        #endregion //MIXCH
+
         #region Twitch
         /// <summary>
         /// Twitchの接続メッセージを読み上げるか

@@ -4,6 +4,7 @@ using MildomSitePlugin;
 using MirrativSitePlugin;
 using NicoSitePlugin;
 using OpenrecSitePlugin;
+using MixchSitePlugin;
 using PeriscopeSitePlugin;
 using Plugin;
 using PluginCommon;
@@ -213,6 +214,36 @@ namespace BouyomiPlugin
                                 name = (openrecMessage as IOpenrecComment).NameItems.ToText();
                             }
                             comment = (openrecMessage as IOpenrecComment).MessageItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is IMixchMessage mixchMessage)
+            {
+                switch (mixchMessage.MixchMessageType)
+                {
+                    case MixchMessageType.Connected:
+                        if (options.IsMixchConnect)
+                        {
+                            name = null;
+                            comment = (mixchMessage as IMixchConnected).Text;
+                        }
+                        break;
+                    case MixchMessageType.Disconnected:
+                        if (options.IsMixchDisconnect)
+                        {
+                            name = null;
+                            comment = (mixchMessage as IMixchDisconnected).Text;
+                        }
+                        break;
+                    case MixchMessageType.Comment:
+                        if (options.IsMixchComment)
+                        {
+                            if (options.IsMixchCommentNickname)
+                            {
+                                name = (mixchMessage as IMixchComment).NameItems.ToText();
+                            }
+                            comment = (mixchMessage as IMixchComment).MessageItems.ToText();
                         }
                         break;
                 }

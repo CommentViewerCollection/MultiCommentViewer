@@ -78,6 +78,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition />
                         </Grid.RowDefinitions>
                         <Border Grid.Row="0" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
@@ -564,10 +565,39 @@
                             </Grid>
                         </Border>
 
-                        <Border Grid.Row="13" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
+                        <Border Grid.Row="13" Grid.Column="0" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <TextBlock Text="ミクチャ" Margin="5" />
+                        </Border>
+                        <Border Grid.Row="13" Grid.Column="1" BorderBrush="Black" BorderThickness="0 0 0 1">
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <CheckBox Grid.Row="0" IsChecked="{Binding IsMixchConnect}" Content="接続" />
+                                <CheckBox Grid.Row="1" IsChecked="{Binding IsMixchDisconnect}" Content="切断" />
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckMixchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMixchComment}" Content="コメント" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMixchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMixchCommentNickname}" Content="コテハン" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="14" Grid.Column="0" BorderBrush="Black" BorderThickness="0,0,0,1">
                             <TextBlock Text="その他" Margin="5" />
                         </Border>
-                        <Border Grid.Row="13" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
+                        <Border Grid.Row="14" Grid.Column="1" BorderBrush="Black" BorderThickness="0,0,0,1">
                             <Grid Margin="5">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />

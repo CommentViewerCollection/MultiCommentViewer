@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SitePlugin;
@@ -73,7 +73,6 @@ namespace MixchSitePlugin
         }
         private void AfterDisconnected()
         {
-            _500msTimer.Enabled = false;
             _ws = null;
             CanConnect = true;
             CanDisconnect = false;
@@ -271,7 +270,6 @@ namespace MixchSitePlugin
         #endregion //Fields
 
         #region ctors
-        System.Timers.Timer _500msTimer = new System.Timers.Timer();
         public CommentProvider(ICommentOptions options, MixchSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
@@ -279,21 +277,9 @@ namespace MixchSitePlugin
             _logger = logger;
             _userStoreManager = userStoreManager;
             _dataSource = new DataSource();
-            _500msTimer.Interval = 500;
-            _500msTimer.Elapsed += _500msTimer_Elapsed;
-            _500msTimer.AutoReset = true;
 
             CanConnect = true;
             CanDisconnect = false;
-        }
-
-        private void _500msTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            var elapsed = DateTime.Now - _startAt;
-            MetadataUpdated?.Invoke(this, new Metadata
-            {
-                Elapsed = Tools.ElapsedToString(elapsed),
-            });
         }
         #endregion //ctors
 
@@ -314,7 +300,6 @@ namespace MixchSitePlugin
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
         ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
-        DateTime _startAt;
         private static string GetUserAgent(BrowserType browser)
         {
             string userAgent;

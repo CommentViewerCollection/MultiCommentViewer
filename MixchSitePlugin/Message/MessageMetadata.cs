@@ -20,6 +20,11 @@ namespace MixchSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (_message.MixchMessageType == MixchMessageType.SuperComment)
+                {
+                    // TODO: オプションで指定できるようにする
+                    return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
+                }
                 else if (_message.MixchMessageType == MixchMessageType.Stamp)
                 {
                     // TODO: オプションで指定できるようにする

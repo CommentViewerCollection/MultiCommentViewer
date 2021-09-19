@@ -8,6 +8,7 @@ namespace MixchSitePlugin
     {
         Comment = 0,
         Status = 10,
+        SuperComment = 42,
         Stamp = 45,
     }
 

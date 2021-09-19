@@ -34,8 +34,10 @@ namespace MixchSitePlugin
             {
                 case MixchMessageType.Comment:
                     return body;
+                case MixchMessageType.SuperComment:
+                    return $"【スパコメ】{body}";
                 case MixchMessageType.Stamp:
-                    return $"スタンプ{item_id}で応援しました";
+                    return $"【スタンプ】{item_id}で応援しました";
             }
             return "";
         }

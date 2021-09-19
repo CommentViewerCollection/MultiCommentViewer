@@ -224,6 +224,7 @@ namespace BouyomiPlugin
                 {
                     // TODO: オプションで読み上げる対象を指定できるようにする
                     case MixchMessageType.Comment:
+                    case MixchMessageType.SuperComment:
                     case MixchMessageType.Stamp:
                         if (options.IsMixchComment)
                         {

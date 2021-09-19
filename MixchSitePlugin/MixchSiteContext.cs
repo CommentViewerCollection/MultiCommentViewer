@@ -44,12 +44,12 @@ namespace MixchSitePlugin
 
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
-            var nicoCommentProvider = commentProvider as CommentProvider;
-            Debug.Assert(nicoCommentProvider != null);
-            if (nicoCommentProvider == null)
+            var lCommentProvider = commentProvider as CommentProvider;
+            Debug.Assert(lCommentProvider != null);
+            if (lCommentProvider == null)
                 return null;
 
-            var vm = new CommentPostPanelViewModel(nicoCommentProvider, _logger);
+            var vm = new CommentPostPanelViewModel(lCommentProvider, _logger);
             var panel = new CommentPostPanel
             {
                 //IsEnabled = false,

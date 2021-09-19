@@ -5,31 +5,28 @@ namespace MixchSitePlugin
 {
     public class Packet
     {
-
-        const int NORMAL_COMMENT = 0;
-
-        ReadOnlyCollection<int> kindOfChat = Array.AsReadOnly(new int[] {
-            NORMAL_COMMENT,
-        });
-
         public int kind { get; set; }
         public int user_id { get; set; }
         public string name { get; set; }
         public int level { get; set; }
         public int created { get; set; }
         public string body { get; set; }
+        public int item_id { get; set; }
+        public int count { get; set; }
 
-        public bool IsChat()
+        public bool HasMessage()
         {
-            return kindOfChat.Contains(kind);
+            return !string.IsNullOrEmpty(Message());
         }
 
         public string Message()
         {
-            switch (kind)
+            switch ((MixchMessageType)kind)
             {
-                case NORMAL_COMMENT:
+                case MixchMessageType.Comment:
                     return body;
+                case MixchMessageType.Stamp:
+                    return $"スタンプ{item_id}で応援しました";
             }
             return "";
         }

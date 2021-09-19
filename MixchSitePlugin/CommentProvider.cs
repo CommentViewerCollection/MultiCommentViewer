@@ -188,9 +188,9 @@ namespace MixchSitePlugin
             return cc;
         }
 
-        private MixchMessageContext CreateMessageContext(Tools.IComment comment, IMixchCommentData commentData, bool isInitialComment)
+        private MixchMessageContext CreateMessageContext(Packet p, bool isInitialComment)
         {
-            var userId = commentData.UserId;
+            var userId = p.user_id.ToString();
             var user = GetUser(userId) as IUser2;
             if (!_userDict.ContainsKey(userId))
             {
@@ -209,24 +209,26 @@ namespace MixchSitePlugin
             }
 
             var nameItems = new List<IMessagePart>();
-            nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
+            nameItems.Add(MessagePartFactory.CreateMessageText(p.name));
             user.Name = nameItems;
 
             var messageItems = new List<IMessagePart>();
-            if (commentData.Message != null)
+            var messageBody = p.Message();
+            if (!string.IsNullOrEmpty(messageBody))
             {
-                messageItems.Add(MessagePartFactory.CreateMessageText(commentData.Message));
+                messageItems.Add(MessagePartFactory.CreateMessageText(messageBody));
             }
 
             MixchMessageContext messageContext = null;
             IMixchMessage message;
             message = new MixchComment("")
             {
+                MixchMessageType = (MixchMessageType)p.kind,
                 MessageItems = messageItems,
-                Id = commentData.Id,
+                Id = "", // ミクチャはメッセージにIDが存在しない
                 NameItems = nameItems,
-                PostTime = commentData.PostTime,
-                UserId = commentData.UserId,
+                PostTime = DateTimeOffset.FromUnixTimeSeconds(p.created).LocalDateTime,
+                UserId = p.user_id.ToString(),
             };
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
             {
@@ -342,12 +344,9 @@ namespace MixchSitePlugin
         {
             try
             {
-                if (p.IsChat())
+                if (p.HasMessage())
                 {
-                    // 通常コメント
-                    var comment = Tools.Parse(p);
-                    var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                    var messageContext = CreateMessageContext(comment, commentData, false);
+                    var messageContext = CreateMessageContext(p, false);
                     if (messageContext != null)
                     {
                         MessageReceived?.Invoke(this, messageContext);

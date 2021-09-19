@@ -6,7 +6,7 @@ namespace MixchSitePlugin
     internal class MixchDisconnected : MessageBase2, IMixchDisconnected
     {
         public override SiteType SiteType { get; } = SiteType.Mixch;
-        public MixchMessageType MixchMessageType { get; } = MixchMessageType.Disconnected;
+        public MixchMessageType MixchMessageType { get; set; }
         public string Text { get; }
 
         public MixchDisconnected(string raw) : base(raw)

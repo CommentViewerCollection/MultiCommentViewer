@@ -222,21 +222,9 @@ namespace BouyomiPlugin
             {
                 switch (mixchMessage.MixchMessageType)
                 {
-                    case MixchMessageType.Connected:
-                        if (options.IsMixchConnect)
-                        {
-                            name = null;
-                            comment = (mixchMessage as IMixchConnected).Text;
-                        }
-                        break;
-                    case MixchMessageType.Disconnected:
-                        if (options.IsMixchDisconnect)
-                        {
-                            name = null;
-                            comment = (mixchMessage as IMixchDisconnected).Text;
-                        }
-                        break;
+                    // TODO: オプションで読み上げる対象を指定できるようにする
                     case MixchMessageType.Comment:
+                    case MixchMessageType.Stamp:
                         if (options.IsMixchComment)
                         {
                             if (options.IsMixchCommentNickname)

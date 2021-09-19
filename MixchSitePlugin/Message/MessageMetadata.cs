@@ -20,14 +20,15 @@ namespace MixchSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
+                else if (_message.MixchMessageType == MixchMessageType.Stamp)
+                {
+                    // TODO: オプションで指定できるようにする
+                    return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
+                }
                 else if (IsFirstComment)
                 {
                     return _options.FirstCommentBackColor;
                 }
-                //if (_message is IMixchItem item)
-                //{
-                //    return _siteOptions.ItemBackColor;
-                //}
                 else
                 {
                     return _options.BackColor;
@@ -48,10 +49,6 @@ namespace MixchSitePlugin
                 {
                     return _options.FirstCommentForeColor;
                 }
-                //if (_message is IMixchItem item)
-                //{
-                //    return _siteOptions.ItemForeColor;
-                //}
                 else
                 {
                     return _options.ForeColor;

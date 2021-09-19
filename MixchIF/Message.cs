@@ -4,21 +4,15 @@ using System.Collections.Generic;
 
 namespace MixchSitePlugin
 {
-    public enum MixchMessageType
+    public enum MixchMessageType : int
     {
-        Unknown,
-        Comment,
-        //Item,
-        Stamp,
-        Yell,
-        Connected,
-        Disconnected,
+        Comment = 0,
+        Stamp = 45,
     }
-
 
     public interface IMixchMessage : ISiteMessage
     {
-        MixchMessageType MixchMessageType { get; }
+        MixchMessageType MixchMessageType { get; set; }
     }
     public interface IMixchConnected : IMixchMessage
     {

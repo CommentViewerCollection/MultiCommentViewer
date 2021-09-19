@@ -148,9 +148,6 @@ namespace MixchSitePlugin
             get
             {
                 if (IsNgUser || IsSiteNgUser) return false;
-
-                // TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
-                // →Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
                 return true;
             }
         }
@@ -167,11 +164,7 @@ namespace MixchSitePlugin
             IsFirstComment = isFirstComment;
             User = user;
             CommentProvider = cp;
-
-            // TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
-
             options.PropertyChanged += Options_PropertyChanged;
-            siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
             user.PropertyChanged += User_PropertyChanged;
         }
 
@@ -180,7 +173,6 @@ namespace MixchSitePlugin
             switch (e.PropertyName)
             {
                 case nameof(User.IsNgUser):
-                    //case nameof(User.IsSiteNgUser):
                     RaisePropertyChanged(nameof(IsVisible));
                     break;
                 case nameof(User.BackColorArgb):
@@ -189,25 +181,6 @@ namespace MixchSitePlugin
                 case nameof(User.ForeColorArgb):
                     RaisePropertyChanged(nameof(ForeColor));
                     break;
-            }
-        }
-
-        private void SiteOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                //case nameof(_siteOptions.ItemBackColor):
-                //    if (_message is IMixchItem)
-                //    {
-                //        RaisePropertyChanged(nameof(BackColor));
-                //    }
-                //    break;
-                //case nameof(_siteOptions.ItemForeColor):
-                //    if (_message is IMixchItem)
-                //    {
-                //        RaisePropertyChanged(nameof(ForeColor));
-                //    }
-                //    break;
             }
         }
 

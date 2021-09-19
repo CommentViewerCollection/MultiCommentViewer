@@ -13,6 +13,15 @@ namespace MixchSitePlugin
         public string body { get; set; }
         public int item_id { get; set; }
         public int count { get; set; }
+        public string title { get; set; }
+        public int elapsed { get; set; }
+        public int display_point { get; set; }
+        public int status { get; set; }
+
+        public bool IsStatus()
+        {
+            return (MixchMessageType)kind == MixchMessageType.Status;
+        }
 
         public bool HasMessage()
         {
@@ -29,6 +38,11 @@ namespace MixchSitePlugin
                     return $"スタンプ{item_id}で応援しました";
             }
             return "";
+        }
+
+        public string DisplayPoint()
+        {
+            return String.Format("盛り上がり度: {0:#,0}", display_point);
         }
     }
 }

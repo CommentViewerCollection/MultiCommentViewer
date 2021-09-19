@@ -39,18 +39,10 @@ namespace MixchSitePlugin
             var b = Regex.IsMatch(input, $"{MixchSiteContext.MixchDomainRegex()}/u/([0-9]+)/live");
             return b;
         }
-        public static string ElapsedToString(TimeSpan elapsed)
+        public static string ElapsedToString(int elapsed)
         {
-            string ret;
-            if (elapsed.Hours == 0)
-            {
-                ret = elapsed.ToString("mm\\:ss");
-            }
-            else
-            {
-                ret = elapsed.ToString("h\\:mm\\:ss");
-            }
-            return ret;
+            var t = TimeSpan.FromSeconds(elapsed);
+            return t.Hours == 0 ? t.ToString("mm\\:ss") : t.ToString("h\\:mm\\:ss");
         }
     }
 }

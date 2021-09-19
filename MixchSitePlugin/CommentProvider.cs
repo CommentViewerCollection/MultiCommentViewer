@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SitePlugin;
@@ -61,6 +61,40 @@ namespace MixchSitePlugin
             }
         }
         #endregion //CanDisconnect
+
+        const int LiveStatusUnknown = -1;
+        const int LiveStatusOnAir = 0;
+        const int LiveStatusOffAir = 1;
+        private int _liveStatus = LiveStatusUnknown;
+        public int LiveStatus
+        {
+            get { return _liveStatus; }
+            set
+            {
+                if (_liveStatus == value)
+                    return;
+                if (_liveStatus != LiveStatusUnknown)
+                {
+                    if (value == LiveStatusOnAir)
+                    {
+                        SendSystemInfo("配信が開始しました", InfoType.Notice);
+                    }
+                    else if (value == LiveStatusOffAir)
+                    {
+                        SendSystemInfo("配信が終了しました", InfoType.Notice);
+                    }
+                }
+                else
+                {
+                    if (value == LiveStatusOffAir)
+                    {
+                        SendSystemInfo("配信が開始されていません", InfoType.Notice);
+                    }
+                }
+                _liveStatus = value;
+            }
+        }
+
         protected virtual Task<string> GetLiveId(string input)
         {
             return Tools.GetLiveId(_dataSource, input);
@@ -323,13 +357,21 @@ namespace MixchSitePlugin
             return userAgent;
         }
 
-        const int MIXCH_PACKET_TYPE_CHAT = 0;
-
         private void WebSocket_Received(object sender, Packet p)
         {
             try
             {
-                if (p.HasMessage())
+                if (p.IsStatus())
+                {
+                    MetadataUpdated?.Invoke(this, new Metadata
+                    {
+                        Title = p.title,
+                        Elapsed = Tools.ElapsedToString(p.elapsed),
+                        Others = p.DisplayPoint(),
+                    });
+                    LiveStatus = p.status;
+                }
+                else if (p.HasMessage())
                 {
                     var messageContext = CreateMessageContext(p, false);
                     if (messageContext != null)

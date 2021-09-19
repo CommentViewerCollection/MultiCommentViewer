@@ -7,6 +7,7 @@ namespace MixchSitePlugin
     public enum MixchMessageType : int
     {
         Comment = 0,
+        Status = 10,
         Stamp = 45,
     }
 

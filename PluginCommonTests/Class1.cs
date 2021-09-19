@@ -126,7 +126,7 @@ namespace PluginCommonTests
                 Assert.AreEqual(commentExpected, commentActual);
             }
             {
-                var m = new Mock<MixchSitePlugin.IMixchComment>();
+                var m = new Mock<MixchSitePlugin.IMixchMessage>();
 
                 m.Setup(x => x.NameItems).Returns(Common.MessagePartFactory.CreateMessageItems(nameExpected));
                 m.Setup(x => x.MessageItems).Returns(Common.MessagePartFactory.CreateMessageItems(commentExpected));

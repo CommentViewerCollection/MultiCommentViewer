@@ -254,7 +254,7 @@ namespace MixchSitePlugin
 
             MixchMessageContext messageContext = null;
             IMixchMessage message;
-            message = new MixchComment("")
+            message = new MixchMessage("")
             {
                 MixchMessageType = (MixchMessageType)p.kind,
                 MessageItems = messageItems,

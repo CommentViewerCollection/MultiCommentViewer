@@ -237,9 +237,9 @@ namespace BouyomiPlugin
                         {
                             if (options.IsMixchCommentNickname)
                             {
-                                name = (mixchMessage as IMixchComment).NameItems.ToText();
+                                name = mixchMessage.NameItems.ToText();
                             }
-                            comment = (mixchMessage as IMixchComment).MessageItems.ToText();
+                            comment = mixchMessage.MessageItems.ToText();
                         }
                         break;
                 }

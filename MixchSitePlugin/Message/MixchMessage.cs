@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MixchSitePlugin
 {
-    internal class MixchComment : MessageBase2, IMixchComment
+    internal class MixchMessage : MessageBase2, IMixchMessage
     {
         public override SiteType SiteType { get; } = SiteType.Mixch;
         public MixchMessageType MixchMessageType { get; set; }
@@ -14,7 +14,7 @@ namespace MixchSitePlugin
         public IMessageImage UserIcon { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IEnumerable<IMessagePart> MessageItems { get; set; }
-        public MixchComment(string raw) : base(raw)
+        public MixchMessage(string raw) : base(raw)
         {
 
         }

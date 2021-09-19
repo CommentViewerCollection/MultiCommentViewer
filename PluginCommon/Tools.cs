@@ -126,10 +126,10 @@ namespace PluginCommon
             //}
             //else if (message is MixchSitePlugin.IMixchMessage opMessage)
             //{
-            else if (message is MixchSitePlugin.IMixchComment mxComment)
+            else if (message is MixchSitePlugin.IMixchMessage mxMessage)
             {
-                comment = mxComment.MessageItems.ToText();
-                name = mxComment.NameItems.ToText();
+                comment = mxMessage.MessageItems.ToText();
+                name = mxMessage.NameItems.ToText();
             }
             //}
             //else if (message is MirrativSitePlugin.IMirrativMessage mrMessage)

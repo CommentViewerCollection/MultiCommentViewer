@@ -106,76 +106,16 @@ namespace MultiCommentViewer
                 SetNickname(user);
             }
         }
-        public MixchCommentViewModel(MixchSitePlugin.IMixchComment comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+        public MixchCommentViewModel(MixchSitePlugin.IMixchMessage message, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {
-            _message = comment;
+            _message = message;
 
-            _nameItems = comment.NameItems;
-            MessageItems = comment.MessageItems;
+            _nameItems = message.NameItems;
+            MessageItems = message.MessageItems;
             Thumbnail = null;
-            Id = comment.Id;
-            PostTime = comment.PostTime.ToString("HH:mm:ss");
-        }
-        public MixchCommentViewModel(MixchSitePlugin.IMixchStamp stamp, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
-        {
-            _message = stamp;
-
-            _nameItems = stamp.NameItems;
-            MessageItems = new List<IMessagePart> { stamp.Stamp };
-            Thumbnail = stamp.UserIcon;
-            Id = stamp.Id.ToString();
-            PostTime = stamp.PostTime.ToString("HH:mm:ss");
-        }
-        public MixchCommentViewModel(MixchSitePlugin.IMixchYell yell, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
-        {
-            _message = yell;
-            //messageItems.Add(MessagePartFactory.CreateMessageText("エールポイント：" + commentData.YellPoints + Environment.NewLine));
-
-            var messageItems = new List<IMessagePart>();
-            messageItems.Add(Common.MessagePartFactory.CreateMessageText("エールポイント：" + yell.YellPoints));
-            if (yell.Message != null)
-            {
-                messageItems.Add(Common.MessagePartFactory.CreateMessageText(Environment.NewLine));
-                messageItems.Add(Common.MessagePartFactory.CreateMessageText(yell.Message));
-            }
-            _nameItems = yell.NameItems;
-            MessageItems = messageItems;
-            Thumbnail = yell.UserIcon;
-            Id = yell.Id.ToString();
-            PostTime = yell.PostTime.ToString("HH:mm:ss");
-        }
-        //public MixchCommentViewModel(MixchSitePlugin.IMixchItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
-        //    : this(metadata, methods, connectionStatus)
-        //{
-        //    var comment = item;
-        //    _message = comment;
-
-        //    _nameItems = comment.NameItems;
-        //    MessageItems = comment.CommentItems;
-        //    Thumbnail = new Common.MessageImage
-        //    {
-        //        Url = comment.UserIconUrl,
-        //        Alt = "",
-        //        Height = 40,//_optionsにcolumnの幅を動的に入れて、ここで反映させたい。propertyChangedはどうやって発生させるか
-        //        Width = 40,
-        //    };
-        //    Id = comment.Id.ToString();
-        //    PostTime = UnixtimeToDateTime(comment.PostedAt / 1000).ToString("HH:mm:ss");
-        //}
-        public MixchCommentViewModel(MixchSitePlugin.IMixchConnected connected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
-        {
-            _message = connected;
-            MessageItems = Common.MessagePartFactory.CreateMessageItems(connected.Text);
-        }
-        public MixchCommentViewModel(MixchSitePlugin.IMixchDisconnected disconnected, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
-            : this(metadata, methods, connectionStatus, options)
-        {
-            _message = disconnected;
-            MessageItems = Common.MessagePartFactory.CreateMessageItems(disconnected.Text);
+            Id = message.Id;
+            PostTime = message.PostTime.ToString("HH:mm:ss");
         }
 
         public IConnectionStatus ConnectionName { get; }

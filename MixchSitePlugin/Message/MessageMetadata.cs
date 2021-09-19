@@ -30,6 +30,11 @@ namespace MixchSitePlugin
                     // TODO: オプションで指定できるようにする
                     return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
                 }
+                else if (_message.MixchMessageType == MixchMessageType.PoiPoi)
+                {
+                    // TODO: オプションで指定できるようにする
+                    return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
+                }
                 else if (_message.MixchMessageType == MixchMessageType.Item)
                 {
                     // TODO: オプションで指定できるようにする

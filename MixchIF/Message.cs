@@ -10,6 +10,7 @@ namespace MixchSitePlugin
         Status = 10,
         SuperComment = 42,
         Stamp = 45,
+        PoiPoi = 46,
         Item = 48,
     }
 

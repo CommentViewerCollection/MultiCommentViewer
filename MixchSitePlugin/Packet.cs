@@ -33,6 +33,11 @@ namespace MixchSitePlugin
             switch ((MixchMessageType)kind)
             {
                 case MixchMessageType.Comment:
+                case MixchMessageType.Share:
+                case MixchMessageType.EnterNewbie:
+                case MixchMessageType.EnterLevel:
+                case MixchMessageType.Follow:
+                case MixchMessageType.EnterFanclub:
                     return body;
                 case MixchMessageType.SuperComment:
                     return $"【スパコメ】{body}";

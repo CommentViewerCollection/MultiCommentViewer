@@ -1,5 +1,6 @@
 ﻿using SitePlugin;
 using System;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media;
 
@@ -11,6 +12,21 @@ namespace MixchSitePlugin
         private readonly ICommentOptions _options;
         private readonly IMixchSiteOptions _siteOptions;
 
+        ReadOnlyCollection<MixchMessageType> messageTypeItems = Array.AsReadOnly(new MixchMessageType[]{
+            MixchMessageType.SuperComment,
+            MixchMessageType.Stamp,
+            MixchMessageType.PoiPoi,
+            MixchMessageType.Item,
+        });
+
+        ReadOnlyCollection<MixchMessageType> messageTypeSystems = Array.AsReadOnly(new MixchMessageType[]{
+            MixchMessageType.Share,
+            MixchMessageType.EnterNewbie,
+            MixchMessageType.EnterLevel,
+            MixchMessageType.Follow,
+            MixchMessageType.EnterFanclub,
+        });
+
         public Color BackColor
         {
             get
@@ -20,25 +36,15 @@ namespace MixchSitePlugin
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
                 }
-                else if (_message.MixchMessageType == MixchMessageType.SuperComment)
+                else if (messageTypeItems.Contains(_message.MixchMessageType))
                 {
                     // TODO: オプションで指定できるようにする
                     return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
                 }
-                else if (_message.MixchMessageType == MixchMessageType.Stamp)
+                else if (messageTypeSystems.Contains(_message.MixchMessageType))
                 {
                     // TODO: オプションで指定できるようにする
-                    return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
-                }
-                else if (_message.MixchMessageType == MixchMessageType.PoiPoi)
-                {
-                    // TODO: オプションで指定できるようにする
-                    return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
-                }
-                else if (_message.MixchMessageType == MixchMessageType.Item)
-                {
-                    // TODO: オプションで指定できるようにする
-                    return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
+                    return Color.FromArgb(0xFF, 0x7F, 0xFF, 0xFF);
                 }
                 else if (IsFirstComment)
                 {

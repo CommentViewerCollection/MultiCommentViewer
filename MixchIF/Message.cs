@@ -12,6 +12,11 @@ namespace MixchSitePlugin
         Stamp = 45,
         PoiPoi = 46,
         Item = 48,
+        Share = 50,
+        EnterNewbie = 60,
+        EnterLevel = 61,
+        Follow = 62,
+        EnterFanclub = 63,
     }
 
     public interface IMixchMessage : ISiteMessage

@@ -228,6 +228,11 @@ namespace BouyomiPlugin
                     case MixchMessageType.Stamp:
                     case MixchMessageType.PoiPoi:
                     case MixchMessageType.Item:
+                    case MixchMessageType.Share:
+                    case MixchMessageType.EnterNewbie:
+                    case MixchMessageType.EnterLevel:
+                    case MixchMessageType.Follow:
+                    case MixchMessageType.EnterFanclub:
                         if (options.IsMixchComment)
                         {
                             if (options.IsMixchCommentNickname)

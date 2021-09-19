@@ -10,6 +10,7 @@ namespace MixchSitePlugin
         Status = 10,
         SuperComment = 42,
         Stamp = 45,
+        Item = 48,
     }
 
     public interface IMixchMessage : ISiteMessage

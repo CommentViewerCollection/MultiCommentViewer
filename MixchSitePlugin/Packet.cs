@@ -38,6 +38,8 @@ namespace MixchSitePlugin
                     return $"【スパコメ】{body}";
                 case MixchMessageType.Stamp:
                     return $"【スタンプ】{item_id}で応援しました";
+                case MixchMessageType.Item:
+                    return $"【アイテム】{item_id}で応援しました";
             }
             return "";
         }

@@ -226,6 +226,7 @@ namespace BouyomiPlugin
                     case MixchMessageType.Comment:
                     case MixchMessageType.SuperComment:
                     case MixchMessageType.Stamp:
+                    case MixchMessageType.Item:
                         if (options.IsMixchComment)
                         {
                             if (options.IsMixchCommentNickname)

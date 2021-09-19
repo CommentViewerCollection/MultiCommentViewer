@@ -378,22 +378,20 @@ namespace MixchSitePlugin
 
         const int MIXCH_PACKET_TYPE_CHAT = 0;
 
-        private void WebSocket_Received(object sender, Packet e)
+        private void WebSocket_Received(object sender, Packet p)
         {
             try
             {
-                switch (e.kind)
+                if (p.IsChat())
                 {
-                    case MIXCH_PACKET_TYPE_CHAT:
-                        // 通常コメント
-                        var comment = Tools.Parse(e);
-                        var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
-                        var messageContext = CreateMessageContext(comment, commentData, false);
-                        if (messageContext != null)
-                        {
-                            MessageReceived?.Invoke(this, messageContext);
-                        }
-                        break;
+                    // 通常コメント
+                    var comment = Tools.Parse(p);
+                    var commentData = Tools.CreateCommentData(comment, _startAt, _siteOptions);
+                    var messageContext = CreateMessageContext(comment, commentData, false);
+                    if (messageContext != null)
+                    {
+                        MessageReceived?.Invoke(this, messageContext);
+                    }
                 }
             }
             catch (Exception ex)

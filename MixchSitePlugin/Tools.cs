@@ -117,7 +117,7 @@ namespace MixchSitePlugin
             public string UserId { get; set; }
             public string Id { get; set; }
         }
-        public static IComment Parse(Packet obj)
+        public static IComment Parse(Packet p)
         {
             var comment = new Comment
             {
@@ -126,16 +126,16 @@ namespace MixchSitePlugin
                 // IsModerating = obj.IsModerating,
                 // IsOfficial = obj.User.IsOfficial,
                 // IsPremium = obj.User.IsPremium,
-                Message = obj.body,
-                Nickname = obj.name,
-                PostedAt = DateTimeOffset.FromUnixTimeSeconds(obj.created).LocalDateTime,
+                Message = p.Message(),
+                Nickname = p.name,
+                PostedAt = DateTimeOffset.FromUnixTimeSeconds(p.created).LocalDateTime,
                 // StampUrl = obj.Stamp?.ImageUrl,
                 //2019/07/09 obj.User.Idはnullの場合があったため変更した
                 //User.Idはユーザページの「ユーザ情報」で変更できる。
                 //「 ユーザーIDを設定すると、チャットやコメントが可能になります。」との記載があるため、
                 //コメントを投稿できている時点でnullは無いと思っていた。
                 //恐らく設定直後で反映されていないんだろう。
-                UserId = obj.user_id.ToString(),
+                UserId = p.user_id.ToString(),
                 // YellPoints = obj.Yell?.Points,
                 // UserIconUrl = obj.User.IconImageUrl,
             };

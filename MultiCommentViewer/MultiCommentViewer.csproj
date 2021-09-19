@@ -90,6 +90,7 @@
     <ProjectReference Include="..\WhowatchSitePlugin\WhowatchSitePlugin.csproj" />
     <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
     <ProjectReference Include="..\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj" />
+    <ProjectReference Include="..\BouyomiPlugin\BouyomiPlugin.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

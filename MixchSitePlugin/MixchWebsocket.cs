@@ -12,7 +12,6 @@ namespace MixchSitePlugin
     {
         private Websocket _websocket;
         private readonly ILogger _logger;
-        //public event EventHandler<IMixchCommentData> CommentReceived;
         public event EventHandler<Packet> Received;
 
         public async Task ReceiveAsync(string userId, string userAgent, List<Cookie> cookies)
@@ -25,7 +24,7 @@ namespace MixchSitePlugin
 
             var url = $"wss://chat.mixch.tv/{MixchSiteContext.MixchEnvName}/room/{userId}";
             await _websocket.ReceiveAsync(url, userAgent, origin);
-            //切断後処理
+            // 切断後処理
             _heartbeatTimer.Enabled = false;
 
         }

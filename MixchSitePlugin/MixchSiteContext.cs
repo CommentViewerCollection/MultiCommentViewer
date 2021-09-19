@@ -52,7 +52,6 @@ namespace MixchSitePlugin
             var vm = new CommentPostPanelViewModel(lCommentProvider, _logger);
             var panel = new CommentPostPanel
             {
-                //IsEnabled = false,
                 DataContext = vm
             };
             return panel;

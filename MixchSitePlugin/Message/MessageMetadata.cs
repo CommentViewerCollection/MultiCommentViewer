@@ -138,7 +138,7 @@ namespace MixchSitePlugin
         }
 
         public bool IsNgUser => User != null ? User.IsNgUser : false;
-        public bool IsSiteNgUser => false;//TODO:IUserにIsSiteNgUserを追加する
+        public bool IsSiteNgUser => false; // TODO:IUserにIsSiteNgUserを追加する
         public bool IsFirstComment { get; }
         public bool Is184 { get; }
         public IUser User { get; }
@@ -149,8 +149,8 @@ namespace MixchSitePlugin
             {
                 if (IsNgUser || IsSiteNgUser) return false;
 
-                //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
-                //→Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
+                // TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
+                // →Connected,Disconnectedくらいは常に表示でも良いかも。エラーメッセージだけエラーレベルを設けようか。
                 return true;
             }
         }
@@ -168,7 +168,7 @@ namespace MixchSitePlugin
             User = user;
             CommentProvider = cp;
 
-            //TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
+            // TODO:siteOptionsのpropertyChangedが発生したら関係するプロパティの変更通知を出したい
 
             options.PropertyChanged += Options_PropertyChanged;
             siteOptions.PropertyChanged += SiteOptions_PropertyChanged;

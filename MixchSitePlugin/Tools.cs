@@ -17,8 +17,8 @@ namespace MixchSitePlugin
     {
         public static async Task<string> GetLiveId(IDataSource dataSource, string input)
         {
-            //LIVE_ID
-            //https://mixch.tv/u/LIVE_ID/live
+            // LIVE_ID
+            // https://mixch.tv/u/LIVE_ID/live
 
             string id;
             var match = Regex.Match(input, $"{MixchSiteContext.MixchDomainRegex()}/u/(?<id>[0-9]+)/live");

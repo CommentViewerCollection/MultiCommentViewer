@@ -23,6 +23,7 @@ using SitePluginCommon;
 using System.Windows;
 using System.Windows.Controls;
 using NicoSitePlugin;
+using MixchSitePlugin;
 
 namespace MultiCommentViewer
 {
@@ -774,6 +775,29 @@ namespace MultiCommentViewer
                 else if (openrecMessage is OpenrecSitePlugin.IOpenrecDisconnected disconnected)
                 {
                     mcvCvm = new OpenrecCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
+            else if (messageContext.Message is MixchSitePlugin.IMixchMessage mixchMessage)
+            {
+                if (mixchMessage is MixchSitePlugin.IMixchComment comment)
+                {
+                    mcvCvm = new MixchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (mixchMessage is MixchSitePlugin.IMixchStamp stamp)
+                {
+                    mcvCvm = new MixchCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (mixchMessage is MixchSitePlugin.IMixchYell yell)
+                {
+                    mcvCvm = new MixchCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (mixchMessage is MixchSitePlugin.IMixchConnected connected)
+                {
+                    mcvCvm = new MixchCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (mixchMessage is MixchSitePlugin.IMixchDisconnected disconnected)
+                {
+                    mcvCvm = new MixchCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
@@ -2084,4 +2108,3 @@ namespace MultiCommentViewer
         }
     }
 }
-

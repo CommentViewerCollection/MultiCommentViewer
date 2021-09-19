@@ -498,6 +498,16 @@ namespace MultiCommentViewer
             get { return ChangedOptions.OpenrecForeColor; }
             set { ChangedOptions.OpenrecForeColor = value; }
         }
+        public Color MixchBackColor
+        {
+            get { return ChangedOptions.MixchBackColor; }
+            set { ChangedOptions.MixchBackColor = value; }
+        }
+        public Color MixchForeColor
+        {
+            get { return ChangedOptions.MixchForeColor; }
+            set { ChangedOptions.MixchForeColor = value; }
+        }
         public Color TwitchBackColor
         {
             get { return ChangedOptions.TwitchBackColor; }
@@ -927,7 +937,7 @@ namespace MultiCommentViewer
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
         {
@@ -935,7 +945,7 @@ namespace MultiCommentViewer
             remove { _propertyChanged -= value; }
         }
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="propertyName"></param>
         protected void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")

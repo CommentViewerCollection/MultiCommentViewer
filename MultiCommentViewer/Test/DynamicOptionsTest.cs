@@ -208,6 +208,8 @@ namespace MultiCommentViewer.Test
         public Color YouTubeLiveForeColor { get => GetValue(); set => SetValue(value); }
         public Color OpenrecBackColor { get => GetValue(); set => SetValue(value); }
         public Color OpenrecForeColor { get => GetValue(); set => SetValue(value); }
+        public Color MixchBackColor { get => GetValue(); set => SetValue(value); }
+        public Color MixchForeColor { get => GetValue(); set => SetValue(value); }
         public Color TwitchBackColor { get => GetValue(); set => SetValue(value); }
         public Color TwitchForeColor { get => GetValue(); set => SetValue(value); }
         public Color NicoLiveBackColor { get => GetValue(); set => SetValue(value); }
@@ -426,6 +428,8 @@ namespace MultiCommentViewer.Test
             Dict.Add(nameof(YouTubeLiveForeColor), new Item { DefaultValue = ColorFromArgb("#FF008000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(OpenrecBackColor), new Item { DefaultValue = ColorFromArgb("#FFEEE8AA"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(OpenrecForeColor), new Item { DefaultValue = ColorFromArgb("#FF483D8B"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MixchBackColor), new Item { DefaultValue = ColorFromArgb("#FFEEE8AA"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(MixchForeColor), new Item { DefaultValue = ColorFromArgb("#FF483D8B"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(TwitchBackColor), new Item { DefaultValue = ColorFromArgb("#FF7FFFD4"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(TwitchForeColor), new Item { DefaultValue = ColorFromArgb("#FF0000FF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(NicoLiveBackColor), new Item { DefaultValue = ColorFromArgb("#FFA52A2A"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });

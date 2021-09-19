@@ -56,7 +56,6 @@ namespace MixchSitePlugin
             {
                 var nameItems = new List<IMessagePart>();
                 nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
-                nameItems.AddRange(commentData.NameIcons);
                 NameItemsInternal = nameItems;
             }
             //Message

@@ -16,7 +16,6 @@ namespace MixchSitePlugin
         public string UserType { get; set; }
         public IMessageImage Stamp { get; set; }
         public string Name { get; set; }
-        public List<IMessagePart> NameIcons { get; set; }
         public TimeSpan Elapsed { get; set; }
         public string UserIconUrl { get; set; }
     }

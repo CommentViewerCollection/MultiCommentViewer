@@ -54,17 +54,4 @@ namespace MixchSitePlugin
         DateTime PostTime { get; }
         string Id { get; }
     }
-    //public interface IMixchItem : IMixchMessage
-    //{
-    //    string ItemName { get; }
-    //    int ItemCount { get; }
-    //    //string Comment { get; }
-    //    long Id { get; }
-    //    //string UserName { get; }
-    //    string UserPath { get; }
-    //    long UserId { get; }
-    //    string AccountName { get; }
-    //    long PostedAt { get; }
-    //    string UserIconUrl { get; }
-    //}
 }

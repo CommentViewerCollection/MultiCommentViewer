@@ -23,7 +23,6 @@ namespace MixchSitePlugin
     class CommentProvider : ICommentProvider
     {
         string _liveId;
-        Context _context;
         #region ICommentProvider
         #region Events
         public event EventHandler<IMetadata> MetadataUpdated;
@@ -111,7 +110,6 @@ namespace MixchSitePlugin
             }
             var cookies = GetCookies(browserProfile);
             _cc = CreateCookieContainer(cookies);
-            _context = Tools.GetContext(cookies);
             string liveId;
             try
             {
@@ -176,16 +174,6 @@ namespace MixchSitePlugin
             return new MixchWebsocket(_logger);
         }
 
-        protected virtual async Task<(Low.Chats.RootObject[], string raw)> GetChats(MovieInfo movieContext2)
-        {
-            return await API.GetChats(_dataSource, movieContext2.Id, DateTime.Now, _cc);
-        }
-
-        protected virtual async Task<MovieInfo> GetMovieInfo(string liveId)
-        {
-            return await API.GetMovieInfo(_dataSource, liveId, _cc);
-        }
-
         private CookieContainer CreateCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();
@@ -222,7 +210,6 @@ namespace MixchSitePlugin
 
             var nameItems = new List<IMessagePart>();
             nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
-            nameItems.AddRange(commentData.NameIcons);
             user.Name = nameItems;
 
             var messageItems = new List<IMessagePart>();
@@ -233,41 +220,14 @@ namespace MixchSitePlugin
 
             MixchMessageContext messageContext = null;
             IMixchMessage message;
-            if (commentData.IsYell)
+            message = new MixchComment("")
             {
-                message = new MixchYell("")
-                {
-                    YellPoints = commentData.YellPoints,
-                    Id = commentData.Id,
-                    NameItems = nameItems,
-                    PostTime = commentData.PostTime,
-                    UserId = commentData.UserId,
-                    Message = commentData.Message,
-                };
-            }
-            else if (commentData.Stamp != null)
-            {
-                message = new MixchStamp("")
-                {
-                    Stamp = commentData.Stamp,
-                    Id = commentData.Id,
-                    NameItems = nameItems,
-                    PostTime = commentData.PostTime,
-                    UserId = commentData.UserId,
-                };
-            }
-            else
-            {
-                message = new MixchComment("")
-                {
-                    MessageItems = messageItems,
-                    Id = commentData.Id,
-                    NameItems = nameItems,
-                    PostTime = commentData.PostTime,
-                    UserId = commentData.UserId,
-                };
-
-            }
+                MessageItems = messageItems,
+                Id = commentData.Id,
+                NameItems = nameItems,
+                PostTime = commentData.PostTime,
+                UserId = commentData.UserId,
+            };
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
             {
                 IsInitialComment = isInitialComment,
@@ -426,18 +386,6 @@ namespace MixchSitePlugin
         public string Username { get; set; }
         public string UserId { get; set; }
         public bool IsLoggedIn { get; set; }
-    }
-    public class MovieContext2
-    {
-        public string Title { get; set; }
-        //"0":予約？
-        //"1":放送中
-        //"2":放送終了
-        public string OnairStatus { get; set; }
-        public string MovieId { get; set; }
-        public string RecxuserId { get; set; }
-        public string Id { get; set; }
-        public DateTime StartAt { get; set; }
     }
     class MessageImagePortion : IMessageImagePortion
     {

@@ -15,6 +15,14 @@ namespace MixchSitePlugin
         // TODO: Guidを自動生成する
 
         public override string DisplayName => "ミクチャ";
+        public const string MixchDomain = "mixch.tv";
+        public const string MixchCookieDomain = "mixch.tv";
+        public const string MixchEnvName = "torte";
+        public static string MixchDomainRegex()
+        {
+            return MixchDomain.Replace(".", "\\.");
+        }
+
         protected override SiteType SiteType => SiteType.Mixch;
         public override IOptionsTabPage TabPanel
         {

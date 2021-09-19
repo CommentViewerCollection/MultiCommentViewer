@@ -17,13 +17,13 @@ namespace MixchSitePlugin
 
         public async Task ReceiveAsync(string userId, string userAgent, List<Cookie> cookies)
         {
-            var origin = "https://mixch.tv";
+            var origin = $"https://{MixchSiteContext.MixchDomain}";
 
             _websocket = new Websocket();
             _websocket.Received += Websocket_Received;
             _websocket.Opened += Websocket_Opened;
 
-            var url = $"wss://chat.mixch.tv/torte/room/{userId}";
+            var url = $"wss://chat.mixch.tv/{MixchSiteContext.MixchEnvName}/room/{userId}";
             await _websocket.ReceiveAsync(url, userAgent, origin);
             //切断後処理
             _heartbeatTimer.Enabled = false;

@@ -83,7 +83,7 @@ namespace MixchSitePlugin
             List<Cookie> cookies = null;
             try
             {
-                cookies = browserProfile.GetCookieCollection("mixch.tv");
+                cookies = browserProfile.GetCookieCollection(MixchSiteContext.MixchDomain);
             }
             catch { }
             return cookies ?? new List<Cookie>();
@@ -93,7 +93,7 @@ namespace MixchSitePlugin
             var cc = new CookieContainer();
             try
             {
-                var cookies = browserProfile.GetCookieCollection("mixch.tv");
+                var cookies = browserProfile.GetCookieCollection(MixchSiteContext.MixchCookieDomain);
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);

@@ -21,7 +21,7 @@ namespace MixchSitePlugin
             //https://mixch.tv/u/LIVE_ID/live
 
             string id;
-            var match = Regex.Match(input, "mixch\\.tv/u/(?<id>[0-9]+)/live");
+            var match = Regex.Match(input, $"{MixchSiteContext.MixchDomainRegex()}/u/(?<id>[0-9]+)/live");
             if (match.Success)
             {
                 id = match.Groups[1].Value;
@@ -36,7 +36,7 @@ namespace MixchSitePlugin
         }
         public static bool IsValidUrl(string input)
         {
-            var b = Regex.IsMatch(input, "mixch\\.tv/u/([0-9]+)/live");
+            var b = Regex.IsMatch(input, $"{MixchSiteContext.MixchDomainRegex()}/u/([0-9]+)/live");
             return b;
         }
         public static string ElapsedToString(TimeSpan elapsed)

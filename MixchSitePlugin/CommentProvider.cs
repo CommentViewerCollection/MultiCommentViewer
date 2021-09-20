@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SitePlugin;
@@ -392,14 +392,20 @@ namespace MixchSitePlugin
 
         public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
         {
-            var cc = CreateCookieContainer(browserProfile);
-            var me = await API.GetMeAsync(_dataSource, cc);
-            return new CurrentUserInfo
-            {
-                IsLoggedIn = !string.IsNullOrEmpty(me.UserId),
-                UserId = me.UserId,
-                Username = me.DisplayName,
-            };
+            // FIXME: コメビュでhttpsアクセスするとWeb版で開いているライブ視聴画面でアイテムの送信ができなくなる。
+            // リロードで直るので何らかのセッション不整合が起きている模様。
+            // 今現在はユーザー情報を使っていないのでログイン情報の取得を停止する
+
+            // var cc = CreateCookieContainer(browserProfile);
+            // var me = await API.GetMeAsync(_dataSource, cc);
+            // return new CurrentUserInfo
+            // {
+            //     IsLoggedIn = !string.IsNullOrEmpty(me.UserId),
+            //     UserId = me.UserId,
+            //     Username = me.DisplayName,
+            // };
+            //
+            return new CurrentUserInfo { };
         }
 
         public void SetMessage(string raw)

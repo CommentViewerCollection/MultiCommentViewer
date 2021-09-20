@@ -11,7 +11,7 @@ namespace MixchSitePlugin
         public int level { get; set; }
         public int created { get; set; }
         public string body { get; set; }
-        public int item_id { get; set; }
+        public int resource_id { get; set; }
         public int count { get; set; }
         public string title { get; set; }
         public int elapsed { get; set; }
@@ -42,11 +42,11 @@ namespace MixchSitePlugin
                 case MixchMessageType.SuperComment:
                     return $"【スパコメ】{body}";
                 case MixchMessageType.Stamp:
-                    return $"【スタンプ】{item_id}で応援しました";
+                    return $"【スタンプ】{ItemName()}で応援しました";
                 case MixchMessageType.PoiPoi:
-                    return $"【アイテム】{count}個のポイポイで応援しました";
+                    return $"【アイテム】{count}個のアイテムで応援しました";
                 case MixchMessageType.Item:
-                    return $"【アイテム】{item_id}で応援しました";
+                    return $"【アイテム】{ItemName()}で応援しました";
             }
             return "";
         }
@@ -54,6 +54,12 @@ namespace MixchSitePlugin
         public string DisplayPoint()
         {
             return String.Format("盛り上がり度: {0:#,0}", display_point);
+        }
+
+        private string ItemName()
+        {
+            var name = Item.NameByResourceId(resource_id);
+            return !string.IsNullOrEmpty(name) ? $"「{name}」" : $"名称不明(id={resource_id})";
         }
     }
 }

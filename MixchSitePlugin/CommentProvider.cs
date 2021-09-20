@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SitePlugin;
@@ -142,7 +142,6 @@ namespace MixchSitePlugin
                 throw new InvalidOperationException("");
             }
             var cookies = GetCookies(browserProfile);
-            _cc = CreateCookieContainer(cookies);
             string liveId;
             try
             {
@@ -163,8 +162,7 @@ namespace MixchSitePlugin
             _ws = CreateMixchWebsocket();
             _ws.Received += WebSocket_Received;
 
-            var userAgent = GetUserAgent(browserProfile.Type);
-            var wsTask = _ws.ReceiveAsync(liveId, userAgent, cookies);
+            var wsTask = _ws.ReceiveAsync(liveId, "", null);
 
             var tasks = new List<Task>
             {
@@ -300,7 +298,6 @@ namespace MixchSitePlugin
         private ILogger _logger;
         private IUserStoreManager _userStoreManager;
         private readonly IDataSource _dataSource;
-        private CookieContainer _cc;
         #endregion //Fields
 
         #region ctors
@@ -334,28 +331,6 @@ namespace MixchSitePlugin
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
         ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
-        private static string GetUserAgent(BrowserType browser)
-        {
-            string userAgent;
-            switch (browser)
-            {
-                case BrowserType.Chrome:
-                    userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36";
-                    break;
-                case BrowserType.Firefox:
-                    userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0";
-                    break;
-                case BrowserType.IE:
-                    userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; rv:11.0) like Gecko";
-                    break;
-                case BrowserType.Opera:
-                    userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36 OPR/43.0.2442.1144";
-                    break;
-                default:
-                    throw new Exception("未対応のブラウザ");
-            }
-            return userAgent;
-        }
 
         private void WebSocket_Received(object sender, Packet p)
         {

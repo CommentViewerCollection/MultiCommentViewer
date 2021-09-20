@@ -46,6 +46,7 @@ namespace MixchSitePlugin
                 case MixchMessageType.PoiPoi:
                     return $"【アイテム】{count}個のアイテムで応援しました";
                 case MixchMessageType.Item:
+                case MixchMessageType.CoinBox:
                     return $"【アイテム】{ItemName()}で応援しました";
             }
             return "";

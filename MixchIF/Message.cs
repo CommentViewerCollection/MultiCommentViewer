@@ -13,6 +13,7 @@ namespace MixchSitePlugin
         PoiPoi = 46,
         Item = 48,
         Share = 50,
+        CoinBox = 53,
         EnterNewbie = 60,
         EnterLevel = 61,
         Follow = 62,

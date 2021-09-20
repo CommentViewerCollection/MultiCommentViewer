@@ -229,6 +229,7 @@ namespace BouyomiPlugin
                     case MixchMessageType.PoiPoi:
                     case MixchMessageType.Item:
                     case MixchMessageType.Share:
+                    case MixchMessageType.CoinBox:
                     case MixchMessageType.EnterNewbie:
                     case MixchMessageType.EnterLevel:
                     case MixchMessageType.Follow:

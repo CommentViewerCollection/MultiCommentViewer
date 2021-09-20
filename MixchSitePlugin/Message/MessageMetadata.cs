@@ -17,6 +17,7 @@ namespace MixchSitePlugin
             MixchMessageType.Stamp,
             MixchMessageType.PoiPoi,
             MixchMessageType.Item,
+            MixchMessageType.CoinBox,
         });
 
         ReadOnlyCollection<MixchMessageType> messageTypeSystems = Array.AsReadOnly(new MixchMessageType[]{

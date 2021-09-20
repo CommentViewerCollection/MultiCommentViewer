@@ -221,7 +221,7 @@ namespace MixchSitePlugin
 
         private MixchMessageContext CreateMessageContext(Packet p, bool isInitialComment)
         {
-            var userId = p.user_id.ToString();
+            var userId = p.UserId.ToString();
             var user = GetUser(userId) as IUser2;
             if (!_userDict.ContainsKey(userId))
             {
@@ -240,7 +240,7 @@ namespace MixchSitePlugin
             }
 
             var nameItems = new List<IMessagePart>();
-            nameItems.Add(MessagePartFactory.CreateMessageText(p.name));
+            nameItems.Add(MessagePartFactory.CreateMessageText(p.Name));
             user.Name = nameItems;
 
             var messageItems = new List<IMessagePart>();
@@ -254,12 +254,12 @@ namespace MixchSitePlugin
             IMixchMessage message;
             message = new MixchMessage("")
             {
-                MixchMessageType = (MixchMessageType)p.kind,
+                MixchMessageType = (MixchMessageType)p.Kind,
                 MessageItems = messageItems,
                 Id = "", // ミクチャはメッセージにIDが存在しない
                 NameItems = nameItems,
-                PostTime = DateTimeOffset.FromUnixTimeSeconds(p.created).LocalDateTime,
-                UserId = p.user_id.ToString(),
+                PostTime = DateTimeOffset.FromUnixTimeSeconds(p.Created).LocalDateTime,
+                UserId = p.UserId.ToString(),
             };
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
             {
@@ -340,11 +340,11 @@ namespace MixchSitePlugin
                 {
                     MetadataUpdated?.Invoke(this, new Metadata
                     {
-                        Title = p.title,
-                        Elapsed = Tools.ElapsedToString(p.elapsed),
-                        Others = p.DisplayPoint(),
+                        Title = p.Title,
+                        Elapsed = Tools.ElapsedToString(p.Elapsed),
+                        Others = p.DisplayPointString(),
                     });
-                    LiveStatus = p.status;
+                    LiveStatus = p.Status;
                 }
                 else if (p.HasMessage())
                 {

@@ -1,26 +1,47 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using Newtonsoft.Json;
 
 namespace MixchSitePlugin
 {
     public class Packet
     {
-        public int kind { get; set; }
-        public int user_id { get; set; }
-        public string name { get; set; }
-        public int level { get; set; }
-        public int created { get; set; }
-        public string body { get; set; }
-        public int resource_id { get; set; }
-        public int count { get; set; }
-        public string title { get; set; }
-        public int elapsed { get; set; }
-        public int display_point { get; set; }
-        public int status { get; set; }
+        [JsonProperty("kind")]
+        public int Kind { get; set; }
+
+        [JsonProperty("user_id")]
+        public int UserId { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("created")]
+        public int Created { get; set; }
+
+        [JsonProperty("body")]
+        public string Body { get; set; }
+
+        [JsonProperty("resource_id")]
+        public int ResourceId { get; set; }
+
+        [JsonProperty("count")]
+        public int Count { get; set; }
+
+        [JsonProperty("title")]
+        public string Title { get; set; }
+
+        [JsonProperty("elapsed")]
+        public int Elapsed { get; set; }
+
+        [JsonProperty("display_point")]
+        public int DisplayPoint { get; set; }
+
+        [JsonProperty("status")]
+        public int Status { get; set; }
 
         public bool IsStatus()
         {
-            return (MixchMessageType)kind == MixchMessageType.Status;
+            return (MixchMessageType)Kind == MixchMessageType.Status;
         }
 
         public bool HasMessage()
@@ -30,7 +51,7 @@ namespace MixchSitePlugin
 
         public string Message()
         {
-            switch ((MixchMessageType)kind)
+            switch ((MixchMessageType)Kind)
             {
                 case MixchMessageType.Comment:
                 case MixchMessageType.Share:
@@ -38,13 +59,13 @@ namespace MixchSitePlugin
                 case MixchMessageType.EnterLevel:
                 case MixchMessageType.Follow:
                 case MixchMessageType.EnterFanclub:
-                    return body;
+                    return Body;
                 case MixchMessageType.SuperComment:
-                    return $"【スパコメ】{body}";
+                    return $"【スパコメ】{Body}";
                 case MixchMessageType.Stamp:
                     return $"【スタンプ】{ItemName()}で応援しました";
                 case MixchMessageType.PoiPoi:
-                    return $"【アイテム】{count}個のアイテムで応援しました";
+                    return $"【アイテム】{Count}個のアイテムで応援しました";
                 case MixchMessageType.Item:
                 case MixchMessageType.CoinBox:
                     return $"【アイテム】{ItemName()}で応援しました";
@@ -52,15 +73,15 @@ namespace MixchSitePlugin
             return "";
         }
 
-        public string DisplayPoint()
+        public string DisplayPointString()
         {
-            return String.Format("盛り上がり度: {0:#,0}", display_point);
+            return String.Format("盛り上がり度: {0:#,0}", DisplayPoint);
         }
 
         private string ItemName()
         {
-            var name = Item.NameByResourceId(resource_id);
-            return !string.IsNullOrEmpty(name) ? $"「{name}」" : $"名称不明(id={resource_id})";
+            var name = Item.NameByResourceId(ResourceId);
+            return !string.IsNullOrEmpty(name) ? $"「{name}」" : $"名称不明(id={ResourceId})";
         }
     }
 }

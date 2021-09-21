@@ -10,10 +10,20 @@ namespace MixchSitePlugin
         public int Kind { get; set; }
 
         [JsonProperty("user_id")]
-        public int UserId { get; set; }
+        public int UserId
+        {
+            get { return IsSystemMessage() ? 0 : _userId; }
+            set { _userId = value; }
+        }
+        private int _userId;
 
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string Name
+        {
+            get { return IsSystemMessage() ? "" : _name; }
+            set { _name = value; }
+        }
+        private string _name;
 
         [JsonProperty("created")]
         public int Created { get; set; }
@@ -38,6 +48,20 @@ namespace MixchSitePlugin
 
         [JsonProperty("status")]
         public int Status { get; set; }
+
+        public bool IsSystemMessage()
+        {
+            switch ((MixchMessageType)Kind)
+            {
+                case MixchMessageType.Share:
+                case MixchMessageType.EnterNewbie:
+                case MixchMessageType.EnterLevel:
+                case MixchMessageType.Follow:
+                case MixchMessageType.EnterFanclub:
+                    return true;
+            }
+            return false;
+        }
 
         public bool IsStatus()
         {

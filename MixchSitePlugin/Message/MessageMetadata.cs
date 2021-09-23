@@ -39,13 +39,11 @@ namespace MixchSitePlugin
                 }
                 else if (messageTypeItems.Contains(_message.MixchMessageType))
                 {
-                    // TODO: オプションで指定できるようにする
-                    return Color.FromArgb(0xFF, 0xFF, 0xBF, 0x7F);
+                    return _siteOptions.ItemBackColor;
                 }
                 else if (messageTypeSystems.Contains(_message.MixchMessageType))
                 {
-                    // TODO: オプションで指定できるようにする
-                    return Color.FromArgb(0xFF, 0x7F, 0xFF, 0xFF);
+                    return _siteOptions.SystemBackColor;
                 }
                 else if (IsFirstComment)
                 {
@@ -66,6 +64,14 @@ namespace MixchSitePlugin
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
+                }
+                else if (messageTypeItems.Contains(_message.MixchMessageType))
+                {
+                    return _siteOptions.ItemForeColor;
+                }
+                else if (messageTypeSystems.Contains(_message.MixchMessageType))
+                {
+                    return _siteOptions.SystemForeColor;
                 }
                 else if (IsFirstComment)
                 {

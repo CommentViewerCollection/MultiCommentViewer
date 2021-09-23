@@ -2,87 +2,31 @@
 using System;
 using System.ComponentModel;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace MixchSitePlugin
 {
     public class MixchOptionsViewModel : INotifyPropertyChanged
     {
-        public ICommand ShowOpenStampMusicSelectorCommand { get; }
-        public ICommand ShowOpenYellMusicSelectorCommand { get; }
-        private void ShowOpenStampMusicSelector()
+        public Color ItemBackColor
         {
-            var filename = OpenFileDialog("", "音声ファイルを指定して下さい", "waveファイル|*.wav");
-            if (!string.IsNullOrEmpty(filename))
-            {
-                StampMusicFilePath = filename;
-            }
+            get { return ChangedOptions.ItemBackColor; }
+            set { ChangedOptions.ItemBackColor = value; }
         }
-        private void ShowOpenYellMusicSelector()
+        public Color ItemForeColor
         {
-            var filename = OpenFileDialog("", "音声ファイルを指定して下さい", "waveファイル|*.wav");
-            if (!string.IsNullOrEmpty(filename))
-            {
-                YellMusicFilePath = filename;
-            }
+            get { return ChangedOptions.ItemForeColor; }
+            set { ChangedOptions.ItemForeColor = value; }
         }
-        protected virtual string OpenFileDialog(string defaultPath, string title, string filter)
+        public Color SystemBackColor
         {
-            string ret = null;
-            var fileDialog = new Microsoft.Win32.OpenFileDialog();
-            fileDialog.Title = title;
-            fileDialog.Filter = filter;
-            var result = fileDialog.ShowDialog();
-            if (result == true)
-            {
-                ret = fileDialog.FileName;
-            }
-            return ret;
+            get { return ChangedOptions.SystemBackColor; }
+            set { ChangedOptions.SystemBackColor = value; }
         }
-        public int StampSize
+        public Color SystemForeColor
         {
-            get { return _changed.StampSize; }
-            set { _changed.StampSize = value; }
-        }
-        public bool IsPlayStampMusic
-        {
-            get { return _changed.IsPlayStampMusic; }
-            set
-            {
-                _changed.IsPlayStampMusic = value;
-                RaisePropertyChanged();
-            }
-        }
-        public string StampMusicFilePath
-        {
-            get { return _changed.StampMusicFilePath; }
-            set
-            {
-                _changed.StampMusicFilePath = value;
-                RaisePropertyChanged();
-            }
-        }
-        public bool IsPlayYellMusic
-        {
-            get { return _changed.IsPlayYellMusic; }
-            set
-            {
-                _changed.IsPlayYellMusic = value;
-                RaisePropertyChanged();
-            }
-        }
-        public string YellMusicFilePath
-        {
-            get { return _changed.YellMusicFilePath; }
-            set
-            {
-                _changed.YellMusicFilePath = value;
-                RaisePropertyChanged();
-            }
-        }
-        public bool IsAutoSetNickname
-        {
-            get { return ChangedOptions.IsAutoSetNickname; }
-            set { ChangedOptions.IsAutoSetNickname = value; }
+            get { return ChangedOptions.SystemForeColor; }
+            set { ChangedOptions.SystemForeColor = value; }
         }
         private readonly MixchSiteOptions _origin;
         private readonly MixchSiteOptions _changed;
@@ -93,10 +37,7 @@ namespace MixchSitePlugin
         {
             _origin = siteOptions;
             _changed = siteOptions.Clone();
-            ShowOpenStampMusicSelectorCommand = new RelayCommand(ShowOpenStampMusicSelector);
-            ShowOpenYellMusicSelectorCommand = new RelayCommand(ShowOpenYellMusicSelector);
         }
-
         #region INotifyPropertyChanged
         [NonSerialized]
         private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;

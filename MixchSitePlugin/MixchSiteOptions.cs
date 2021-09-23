@@ -7,31 +7,25 @@ using System.Windows.Media;
 
 namespace MixchSitePlugin
 {
-    public interface IMixchSiteOptions: INotifyPropertyChanged
+    public interface IMixchSiteOptions : INotifyPropertyChanged
     {
-        int StampSize { get; }
-        bool IsPlayStampMusic { get; }
-        string StampMusicFilePath { get; }
-        bool IsPlayYellMusic { get; }
-        string YellMusicFilePath { get; }
-        bool IsAutoSetNickname { get; }
+        Color ItemBackColor { get; set; }
+        Color ItemForeColor { get; set; }
+        Color SystemBackColor { get; set; }
+        Color SystemForeColor { get; set; }
     }
     internal class MixchSiteOptions : DynamicOptionsBase, IMixchSiteOptions
     {
-        public int StampSize { get => GetValue(); set => SetValue(value); }
-        public bool IsPlayStampMusic { get => GetValue(); set => SetValue(value); }
-        public string StampMusicFilePath { get => GetValue(); set => SetValue(value); }
-        public bool IsPlayYellMusic { get => GetValue(); set => SetValue(value); }
-        public string YellMusicFilePath { get => GetValue(); set => SetValue(value); }
-        public bool IsAutoSetNickname { get => GetValue(); set => SetValue(value); }
+        public Color ItemBackColor { get => GetValue(); set => SetValue(value); }
+        public Color ItemForeColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemBackColor { get => GetValue(); set => SetValue(value); }
+        public Color SystemForeColor { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
-            Dict.Add(nameof(StampSize), new Item { DefaultValue = 64, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
-            Dict.Add(nameof(IsPlayStampMusic), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(StampMusicFilePath), new Item { DefaultValue = "", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
-            Dict.Add(nameof(IsPlayYellMusic), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
-            Dict.Add(nameof(YellMusicFilePath), new Item { DefaultValue = "", Predicate = s => !string.IsNullOrEmpty(s), Serializer = s => s, Deserializer = s => s });
-            Dict.Add(nameof(IsAutoSetNickname), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(ItemBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFBF7F"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(ItemForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemBackColor), new Item { DefaultValue = ColorFromArgb("#FF7FFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(SystemForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
         }
         internal MixchSiteOptions Clone()
         {

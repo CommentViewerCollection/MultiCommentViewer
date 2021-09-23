@@ -104,9 +104,12 @@ namespace MixchSitePlugin
             CanConnect = false;
             CanDisconnect = true;
             _isExpectedDisconnect = false;
+            _lastReceiveTime = DateTime.Now;
+            _keepaliveTimer.Enabled = true;
         }
         private void AfterDisconnected()
         {
+            _keepaliveTimer.Enabled = false;
             _ws = null;
             CanConnect = true;
             CanDisconnect = false;
@@ -156,36 +159,33 @@ namespace MixchSitePlugin
                 return;
             }
 
-        // TODO: ライブが配信中かチェックする
-        // TODO: 過去のコメントを取得する
-        Reconnect:
-            _ws = CreateMixchWebsocket();
-            _ws.Received += WebSocket_Received;
+            // TODO: 過去のコメントを取得する
 
-            var wsTask = _ws.ReceiveAsync(liveId, "", null);
-
-            var tasks = new List<Task>
+            while (!_isExpectedDisconnect)
             {
-                wsTask,
-            };
+                _ws = CreateMixchWebsocket();
+                _ws.Received += WebSocket_Received;
 
-            while (tasks.Count > 0)
-            {
-                var t = await Task.WhenAny(tasks);
-                try
+                var wsTask = _ws.ReceiveAsync(liveId, "", null);
+
+                var tasks = new List<Task> { wsTask };
+
+                while (tasks.Count > 0)
                 {
-                    await wsTask;
+                    var t = await Task.WhenAny(tasks);
+                    try
+                    {
+                        await wsTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(wsTask);
+                    SendSystemInfo("wsタスク終了", InfoType.Debug);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogException(ex);
-                }
-                tasks.Remove(wsTask);
-                SendSystemInfo("wsタスク終了", InfoType.Debug);
+                _ws.Received -= WebSocket_Received;
             }
-            _ws.Received -= WebSocket_Received;
-
-            // TODO: 意図的ではない切断の場合は再接続する
         }
         public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
         {
@@ -301,6 +301,7 @@ namespace MixchSitePlugin
         #endregion //Fields
 
         #region ctors
+        System.Timers.Timer _keepaliveTimer = new System.Timers.Timer();
         public CommentProvider(ICommentOptions options, MixchSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
@@ -309,8 +310,27 @@ namespace MixchSitePlugin
             _userStoreManager = userStoreManager;
             _dataSource = new DataSource();
 
+            _keepaliveTimer.Interval = 1000;
+            _keepaliveTimer.Elapsed += _KeepaliveTimer_Elapsed;
+            _keepaliveTimer.AutoReset = true;
+
             CanConnect = true;
             CanDisconnect = false;
+        }
+
+        // 指定秒数以上パケットの受信がなければWebSocketを再接続する
+        // 7秒毎にステータス更新パケットが届くので、コメントがなくても通信が正常なら最終受信時間は更新される
+        const int secondToReconnect = 15;
+        private DateTime _lastReceiveTime;
+        private void _KeepaliveTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var diffTime = DateTime.Now - _lastReceiveTime;
+            if (diffTime.Seconds >= secondToReconnect && _ws != null)
+            {
+                SendSystemInfo($"{secondToReconnect}秒以上データ受信がなかったので再接続します", InfoType.Notice);
+                _lastReceiveTime = DateTime.Now;
+                _ws.Disconnect();
+            }
         }
         #endregion //ctors
 
@@ -359,6 +379,7 @@ namespace MixchSitePlugin
             {
                 _logger.LogException(ex);
             }
+            _lastReceiveTime = DateTime.Now;
         }
         public async Task PostCommentAsync(string str)
         {

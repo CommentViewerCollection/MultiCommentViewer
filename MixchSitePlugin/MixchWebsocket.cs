@@ -36,7 +36,6 @@ namespace MixchSitePlugin
 
         private void Websocket_Received(object sender, string e)
         {
-            Debug.WriteLine(e);
             Packet packet = null;
             try
             {

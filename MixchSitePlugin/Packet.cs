@@ -87,12 +87,12 @@ namespace MixchSitePlugin
                 case MixchMessageType.SuperComment:
                     return $"【スパコメ】{Body}";
                 case MixchMessageType.Stamp:
-                    return $"【スタンプ】{ItemName()}で応援しました";
+                    return $"【スタンプ】「{ItemName()}」で応援しました";
                 case MixchMessageType.PoiPoi:
-                    return $"【アイテム】{Count}個のアイテムで応援しました";
+                    return $"【アイテム】{Count}個の「{ItemName()}」で応援しました";
                 case MixchMessageType.Item:
                 case MixchMessageType.CoinBox:
-                    return $"【アイテム】{ItemName()}で応援しました";
+                    return $"【アイテム】「{ItemName()}」で応援しました";
             }
             return "";
         }
@@ -105,7 +105,7 @@ namespace MixchSitePlugin
         private string ItemName()
         {
             var name = Item.NameByResourceId(ResourceId);
-            return !string.IsNullOrEmpty(name) ? $"「{name}」" : $"名称不明(id={ResourceId})";
+            return !string.IsNullOrEmpty(name) ? name : $"名称不明(id={ResourceId})";
         }
     }
 }

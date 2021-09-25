@@ -13,31 +13,39 @@ using SitePlugin;
 
 namespace MixchSitePlugin
 {
+    class LiveUrlInfo
+    {
+        public string LiveId { get; set; }
+        public string Environment { get; set; }
+    }
     static class Tools
     {
-        public static async Task<string> GetLiveId(IDataSource dataSource, string input)
+        private const string regexLiveUrl = "([a-z]*)\\.?mixch\\.tv/u/(?<id>[0-9]+)/live";
+        public static async Task<LiveUrlInfo> GetLiveId(IDataSource dataSource, string input)
         {
             // LIVE_ID
             // https://mixch.tv/u/LIVE_ID/live
 
-            string id;
-            var match = Regex.Match(input, $"{MixchSiteContext.MixchDomainRegex()}/u/(?<id>[0-9]+)/live");
+            var liveUrlInfo = new LiveUrlInfo();
+            var match = Regex.Match(input, regexLiveUrl);
             if (match.Success)
             {
-                id = match.Groups[1].Value;
+                liveUrlInfo.Environment = match.Groups[1].Value;
+                if (liveUrlInfo.Environment == "")
+                {
+                    liveUrlInfo.Environment = "torte";
+                }
+                liveUrlInfo.LiveId = match.Groups[2].Value;
             }
             else
             {
                 throw new InvalidInputException();
             }
-
-            // TODO: 配信中かどうかチェックが必要かも
-            return id;
+            return liveUrlInfo;
         }
         public static bool IsValidUrl(string input)
         {
-            var b = Regex.IsMatch(input, $"{MixchSiteContext.MixchDomainRegex()}/u/([0-9]+)/live");
-            return b;
+            return Regex.IsMatch(input, regexLiveUrl);
         }
         public static string ElapsedToString(int elapsed)
         {

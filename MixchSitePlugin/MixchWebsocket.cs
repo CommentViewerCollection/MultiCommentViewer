@@ -14,15 +14,15 @@ namespace MixchSitePlugin
         private readonly ILogger _logger;
         public event EventHandler<Packet> Received;
 
-        public async Task ReceiveAsync(string userId, string userAgent, List<Cookie> cookies)
+        public async Task ReceiveAsync(LiveUrlInfo liveUrlInfo, string userAgent, List<Cookie> cookies)
         {
-            var origin = $"https://{MixchSiteContext.MixchDomain}";
+            var origin = $"https://mixch.tv";
 
             _websocket = new Websocket();
             _websocket.Received += Websocket_Received;
             _websocket.Opened += Websocket_Opened;
 
-            var url = $"wss://chat.mixch.tv/{MixchSiteContext.MixchEnvName}/room/{userId}";
+            var url = $"wss://chat.mixch.tv/{liveUrlInfo.Environment}/room/{liveUrlInfo.LiveId}";
             await _websocket.ReceiveAsync(url, userAgent, origin);
             // 切断後処理
             _heartbeatTimer.Enabled = false;

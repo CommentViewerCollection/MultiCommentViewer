@@ -20,7 +20,7 @@ namespace MixchSitePlugin
         public static async Task<Me> GetMeAsync(IDataSource server, CookieContainer cc)
         {
             var me = new Me();
-            var url = $"https://{MixchSiteContext.MixchDomain}/mypage";
+            var url = "https://mixch.tv/mypage";
             var res = await server.GetAsync(url, cc);
             var match0 = Regex.Match(res, "<p class=\"name\">\\s*([^<\\s]*)?\\s*</p>\\s*<p class=\"id\">");
             if (match0.Success)

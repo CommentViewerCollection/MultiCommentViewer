@@ -9,7 +9,7 @@ namespace MixchSitePlugin
     {
         event EventHandler<Packet> Received;
 
-        Task ReceiveAsync(string movieId, string userAgent, List<Cookie> cookies);
+        Task ReceiveAsync(LiveUrlInfo liveUrlInfo, string userAgent, List<Cookie> cookies);
         Task SendAsync(string s);
         void Disconnect();
     }

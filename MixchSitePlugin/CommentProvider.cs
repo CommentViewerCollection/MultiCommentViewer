@@ -22,7 +22,6 @@ namespace MixchSitePlugin
     }
     class CommentProvider : ICommentProvider
     {
-        string _liveId;
         #region ICommentProvider
         #region Events
         public event EventHandler<IMetadata> MetadataUpdated;
@@ -94,11 +93,6 @@ namespace MixchSitePlugin
                 _liveStatus = value;
             }
         }
-
-        protected virtual Task<string> GetLiveId(string input)
-        {
-            return Tools.GetLiveId(_dataSource, input);
-        }
         private void BeforeConnecting()
         {
             CanConnect = false;
@@ -119,7 +113,7 @@ namespace MixchSitePlugin
             List<Cookie> cookies = null;
             try
             {
-                cookies = browserProfile.GetCookieCollection(MixchSiteContext.MixchDomain);
+                cookies = browserProfile.GetCookieCollection("mixch.tv");
             }
             catch { }
             return cookies ?? new List<Cookie>();
@@ -129,7 +123,7 @@ namespace MixchSitePlugin
             var cc = new CookieContainer();
             try
             {
-                var cookies = browserProfile.GetCookieCollection(MixchSiteContext.MixchCookieDomain);
+                var cookies = browserProfile.GetCookieCollection("mixch.tv");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -145,11 +139,10 @@ namespace MixchSitePlugin
                 throw new InvalidOperationException("");
             }
             var cookies = GetCookies(browserProfile);
-            string liveId;
+            LiveUrlInfo liveUrlInfo;
             try
             {
-                liveId = await GetLiveId(input);
-                _liveId = liveId;
+                liveUrlInfo = await Tools.GetLiveId(_dataSource, input);
             }
             catch (InvalidInputException ex)
             {
@@ -166,7 +159,7 @@ namespace MixchSitePlugin
                 _ws = CreateMixchWebsocket();
                 _ws.Received += WebSocket_Received;
 
-                var wsTask = _ws.ReceiveAsync(liveId, "", null);
+                var wsTask = _ws.ReceiveAsync(liveUrlInfo, "", null);
 
                 var tasks = new List<Task> { wsTask };
 

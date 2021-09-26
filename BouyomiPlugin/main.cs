@@ -222,24 +222,37 @@ namespace BouyomiPlugin
             {
                 switch (mixchMessage.MixchMessageType)
                 {
-                    // TODO: オプションで読み上げる対象を指定できるようにする
                     case MixchMessageType.Comment:
-                    case MixchMessageType.SuperComment:
-                    case MixchMessageType.Stamp:
-                    case MixchMessageType.PoiPoi:
-                    case MixchMessageType.Item:
-                    case MixchMessageType.Share:
-                    case MixchMessageType.CoinBox:
-                    case MixchMessageType.EnterNewbie:
-                    case MixchMessageType.EnterLevel:
-                    case MixchMessageType.Follow:
-                    case MixchMessageType.EnterFanclub:
                         if (options.IsMixchComment)
                         {
                             if (options.IsMixchCommentNickname)
                             {
                                 name = mixchMessage.NameItems.ToText();
                             }
+                            comment = mixchMessage.MessageItems.ToText();
+                        }
+                        break;
+                    case MixchMessageType.SuperComment:
+                    case MixchMessageType.Stamp:
+                    case MixchMessageType.PoiPoi:
+                    case MixchMessageType.Item:
+                    case MixchMessageType.CoinBox:
+                        if (options.IsMixchItem)
+                        {
+                            if (options.IsMixchItemNickname)
+                            {
+                                name = mixchMessage.NameItems.ToText();
+                            }
+                            comment = mixchMessage.MessageItems.ToText();
+                        }
+                        break;
+                    case MixchMessageType.Share:
+                    case MixchMessageType.EnterNewbie:
+                    case MixchMessageType.EnterLevel:
+                    case MixchMessageType.Follow:
+                    case MixchMessageType.EnterFanclub:
+                        if (options.IsMixchSystem)
+                        {
                             comment = mixchMessage.MessageItems.ToText();
                         }
                         break;

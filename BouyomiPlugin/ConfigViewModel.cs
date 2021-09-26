@@ -215,22 +215,6 @@ namespace BouyomiPlugin
 
         #region ミクチャ
         /// <summary>
-        /// MIXCHの接続メッセージを読み上げるか
-        /// </summary>
-        public bool IsMixchConnect
-        {
-            get => _options.IsMixchConnect;
-            set => _options.IsMixchConnect = value;
-        }
-        /// <summary>
-        /// MIXCHの切断メッセージを読み上げるか
-        /// </summary>
-        public bool IsMixchDisconnect
-        {
-            get => _options.IsMixchDisconnect;
-            set => _options.IsMixchDisconnect = value;
-        }
-        /// <summary>
         /// MIXCHのコメントを読み上げるか
         /// </summary>
         public bool IsMixchComment
@@ -245,6 +229,30 @@ namespace BouyomiPlugin
         {
             get => _options.IsMixchCommentNickname;
             set => _options.IsMixchCommentNickname = value;
+        }
+        /// <summary>
+        /// MIXCHのアイテムを読み上げるか
+        /// </summary>
+        public bool IsMixchItem
+        {
+            get => _options.IsMixchItem;
+            set => _options.IsMixchItem = value;
+        }
+        /// <summary>
+        /// MIXCHのアイテムのコテハンを読み上げるか
+        /// </summary>
+        public bool IsMixchItemNickname
+        {
+            get => _options.IsMixchItemNickname;
+            set => _options.IsMixchItemNickname = value;
+        }
+        /// <summary>
+        /// MIXCHのシステムメッセージを読み上げるか
+        /// </summary>
+        public bool IsMixchSystem
+        {
+            get => _options.IsMixchSystem;
+            set => _options.IsMixchSystem = value;
         }
         #endregion //MIXCH
 

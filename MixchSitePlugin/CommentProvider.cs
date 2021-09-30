@@ -100,10 +100,12 @@ namespace MixchSitePlugin
             _isExpectedDisconnect = false;
             _lastReceiveTime = DateTime.Now;
             _keepaliveTimer.Enabled = true;
+            _poipoiStockTimer.Enabled = true;
         }
         private void AfterDisconnected()
         {
             _keepaliveTimer.Enabled = false;
+            _poipoiStockTimer.Enabled = false;
             _ws = null;
             CanConnect = true;
             CanDisconnect = false;
@@ -295,6 +297,7 @@ namespace MixchSitePlugin
 
         #region ctors
         System.Timers.Timer _keepaliveTimer = new System.Timers.Timer();
+        System.Timers.Timer _poipoiStockTimer = new System.Timers.Timer();
         public CommentProvider(ICommentOptions options, MixchSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
         {
             _options = options;
@@ -306,6 +309,10 @@ namespace MixchSitePlugin
             _keepaliveTimer.Interval = 1000;
             _keepaliveTimer.Elapsed += _KeepaliveTimer_Elapsed;
             _keepaliveTimer.AutoReset = true;
+
+            _poipoiStockTimer.Interval = 10000;
+            _poipoiStockTimer.Elapsed += _PoipoiStockTimer_Elapsed;
+            _poipoiStockTimer.AutoReset = true;
 
             CanConnect = true;
             CanDisconnect = false;
@@ -324,6 +331,18 @@ namespace MixchSitePlugin
                 _lastReceiveTime = DateTime.Now;
                 _ws.Disconnect();
             }
+        }
+        private void _PoipoiStockTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            foreach (KeyValuePair<string, Packet> _poipoiStock in _poipoiStockDict)
+            {
+                var messageContext = CreateMessageContext(_poipoiStock.Value, false);
+                if (messageContext != null)
+                {
+                    MessageReceived?.Invoke(this, messageContext);
+                }
+            }
+            _poipoiStockDict.Clear();
         }
         #endregion //ctors
 
@@ -344,6 +363,7 @@ namespace MixchSitePlugin
         [Obsolete]
         Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
         ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
+        Dictionary<string, Packet> _poipoiStockDict = new Dictionary<string, Packet>();
 
         private void WebSocket_Received(object sender, Packet p)
         {
@@ -358,6 +378,18 @@ namespace MixchSitePlugin
                         Others = p.DisplayPointString(),
                     });
                     LiveStatus = p.Status;
+                }
+                else if ((MixchMessageType)p.Kind == MixchMessageType.PoiPoi)
+                {
+                    if (_poipoiStockDict.ContainsKey(p.PoiPoiKey()))
+                    {
+                        var _p = _poipoiStockDict[p.PoiPoiKey()];
+                        _p.Count += p.Count;
+                    }
+                    else
+                    {
+                        _poipoiStockDict[p.PoiPoiKey()] = p;
+                    }
                 }
                 else if (p.HasMessage())
                 {

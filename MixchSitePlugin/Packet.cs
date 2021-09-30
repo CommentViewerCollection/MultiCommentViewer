@@ -97,6 +97,11 @@ namespace MixchSitePlugin
             return "";
         }
 
+        public string PoiPoiKey()
+        {
+            return $"{UserId}_{ResourceId}";
+        }
+
         public string DisplayPointString()
         {
             return String.Format("盛り上がり度: {0:#,0}", DisplayPoint);

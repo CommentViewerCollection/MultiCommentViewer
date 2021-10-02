@@ -336,21 +336,24 @@ namespace MixchSitePlugin
         {
             var unixTimestampNow = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             List<string> processedKeys = new List<string>();
-            foreach (KeyValuePair<string, Packet> _poipoiStock in _poipoiStockDict)
+            lock (_poipoiStockDict)
             {
-                if (_poipoiStock.Value.Created + _siteOptions.PoipoiKeepSeconds <= unixTimestampNow)
+                foreach (KeyValuePair<string, Packet> _poipoiStock in _poipoiStockDict)
                 {
-                    var messageContext = CreateMessageContext(_poipoiStock.Value, false);
-                    if (messageContext != null)
+                    if (_poipoiStock.Value.Created + _siteOptions.PoipoiKeepSeconds <= unixTimestampNow)
                     {
-                        MessageReceived?.Invoke(this, messageContext);
+                        var messageContext = CreateMessageContext(_poipoiStock.Value, false);
+                        if (messageContext != null)
+                        {
+                            MessageReceived?.Invoke(this, messageContext);
+                        }
+                        processedKeys.Add(_poipoiStock.Key);
                     }
-                    processedKeys.Add(_poipoiStock.Key);
                 }
-            }
-            foreach (string key in processedKeys)
-            {
-                _poipoiStockDict.Remove(key);
+                foreach (string key in processedKeys)
+                {
+                    _poipoiStockDict.Remove(key);
+                }
             }
         }
         #endregion //ctors
@@ -390,14 +393,17 @@ namespace MixchSitePlugin
                 }
                 else if ((MixchMessageType)p.Kind == MixchMessageType.PoiPoi)
                 {
-                    if (_poipoiStockDict.ContainsKey(p.PoiPoiKey()))
+                    lock (_poipoiStockDict)
                     {
-                        var _p = _poipoiStockDict[p.PoiPoiKey()];
-                        _p.Count += p.Count;
-                    }
-                    else
-                    {
-                        _poipoiStockDict[p.PoiPoiKey()] = p;
+                        if (_poipoiStockDict.ContainsKey(p.PoiPoiKey()))
+                        {
+                            var _p = _poipoiStockDict[p.PoiPoiKey()];
+                            _p.Count += p.Count;
+                        }
+                        else
+                        {
+                            _poipoiStockDict[p.PoiPoiKey()] = p;
+                        }
                     }
                 }
                 else if (p.HasMessage())

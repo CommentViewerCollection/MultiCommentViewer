@@ -85,7 +85,7 @@ namespace MixchSitePlugin
                 case MixchMessageType.EnterFanclub:
                     return Body;
                 case MixchMessageType.SuperComment:
-                    return $"【スパコメ】{Body}";
+                    return $"【スパコメ {ItemName()}】{Body}";
                 case MixchMessageType.Stamp:
                     return $"【スタンプ】「{ItemName()}」で応援しました";
                 case MixchMessageType.PoiPoi:

@@ -18,5 +18,9 @@
         <xctk:ColorPicker  SelectedColor="{Binding SystemForeColor}" Margin="200,103,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
         <Label x:Name="SystemBackColor" Content="システムメッセージの背景色" HorizontalAlignment="Left" Margin="30,68,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
         <Label x:Name="SystemForeColor" Content="システムメッセージの文字色" HorizontalAlignment="Left" Margin="30,99,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="200,184,0,0" TextWrapping="Wrap" Text="{Binding PoipoiKeepSeconds}" VerticalAlignment="Top" Width="51"/>
+        <Label Content="ぽいぽいが届いてから表示するまでの秒数" HorizontalAlignment="Left" Margin="30,136,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.132,-0.192"/>
+        <Label Content="(それまでに届いたものは全部まとめて表示します)" HorizontalAlignment="Left" Margin="30,156,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.132,-0.192"/>
     </Grid>
 </UserControl>

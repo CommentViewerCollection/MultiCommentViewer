@@ -338,7 +338,7 @@ namespace MixchSitePlugin
             List<string> processedKeys = new List<string>();
             foreach (KeyValuePair<string, Packet> _poipoiStock in _poipoiStockDict)
             {
-                if (_poipoiStock.Value.Created + 10 <= unixTimestampNow)
+                if (_poipoiStock.Value.Created + _siteOptions.PoipoiKeepSeconds <= unixTimestampNow)
                 {
                     var messageContext = CreateMessageContext(_poipoiStock.Value, false);
                     if (messageContext != null)

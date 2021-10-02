@@ -28,6 +28,11 @@ namespace MixchSitePlugin
             get { return ChangedOptions.SystemForeColor; }
             set { ChangedOptions.SystemForeColor = value; }
         }
+        public int PoipoiKeepSeconds
+        {
+            get { return ChangedOptions.PoipoiKeepSeconds; }
+            set { ChangedOptions.PoipoiKeepSeconds = value; }
+        }
         private readonly MixchSiteOptions _origin;
         private readonly MixchSiteOptions _changed;
         internal MixchSiteOptions OriginOptions { get { return _origin; } }

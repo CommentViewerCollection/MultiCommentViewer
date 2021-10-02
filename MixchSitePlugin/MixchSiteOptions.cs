@@ -20,12 +20,14 @@ namespace MixchSitePlugin
         public Color ItemForeColor { get => GetValue(); set => SetValue(value); }
         public Color SystemBackColor { get => GetValue(); set => SetValue(value); }
         public Color SystemForeColor { get => GetValue(); set => SetValue(value); }
+        public int PoipoiKeepSeconds { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
             Dict.Add(nameof(ItemBackColor), new Item { DefaultValue = ColorFromArgb("#FFFFBF7F"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ItemForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SystemBackColor), new Item { DefaultValue = ColorFromArgb("#FF7FFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(SystemForeColor), new Item { DefaultValue = ColorFromArgb("#FF000000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
+            Dict.Add(nameof(PoipoiKeepSeconds), new Item { DefaultValue = 10, Predicate = n => n > 0, Serializer = n => n.ToString(), Deserializer = s => int.Parse(s) });
         }
         internal MixchSiteOptions Clone()
         {

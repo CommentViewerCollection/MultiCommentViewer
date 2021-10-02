@@ -310,7 +310,7 @@ namespace MixchSitePlugin
             _keepaliveTimer.Elapsed += _KeepaliveTimer_Elapsed;
             _keepaliveTimer.AutoReset = true;
 
-            _poipoiStockTimer.Interval = 10000;
+            _poipoiStockTimer.Interval = 1000;
             _poipoiStockTimer.Elapsed += _PoipoiStockTimer_Elapsed;
             _poipoiStockTimer.AutoReset = true;
 
@@ -334,15 +334,24 @@ namespace MixchSitePlugin
         }
         private void _PoipoiStockTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+            var unixTimestampNow = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            List<string> processedKeys = new List<string>();
             foreach (KeyValuePair<string, Packet> _poipoiStock in _poipoiStockDict)
             {
-                var messageContext = CreateMessageContext(_poipoiStock.Value, false);
-                if (messageContext != null)
+                if (_poipoiStock.Value.Created + 10 <= unixTimestampNow)
                 {
-                    MessageReceived?.Invoke(this, messageContext);
+                    var messageContext = CreateMessageContext(_poipoiStock.Value, false);
+                    if (messageContext != null)
+                    {
+                        MessageReceived?.Invoke(this, messageContext);
+                    }
+                    processedKeys.Add(_poipoiStock.Key);
                 }
             }
-            _poipoiStockDict.Clear();
+            foreach (string key in processedKeys)
+            {
+                _poipoiStockDict.Remove(key);
+            }
         }
         #endregion //ctors
 

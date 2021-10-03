@@ -231,6 +231,14 @@ namespace BouyomiPlugin
             set => _options.IsMixchCommentNickname = value;
         }
         /// <summary>
+        /// MIXCHのコメントで最初だけ読むか
+        /// </summary>
+        public bool IsMixchCommentOnlyFirst
+        {
+            get => _options.IsMixchCommentOnlyFirst;
+            set => _options.IsMixchCommentOnlyFirst = value;
+        }
+        /// <summary>
         /// MIXCHのアイテムを読み上げるか
         /// </summary>
         public bool IsMixchItem

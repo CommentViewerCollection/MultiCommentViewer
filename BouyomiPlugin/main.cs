@@ -223,7 +223,7 @@ namespace BouyomiPlugin
                 switch (mixchMessage.MixchMessageType)
                 {
                     case MixchMessageType.Comment:
-                        if (options.IsMixchComment)
+                        if (options.IsMixchComment && (!options.IsMixchCommentOnlyFirst || mixchMessage.IsFirstComment))
                         {
                             if (options.IsMixchCommentNickname)
                             {

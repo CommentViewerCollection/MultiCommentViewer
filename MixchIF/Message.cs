@@ -27,6 +27,7 @@ namespace MixchSitePlugin
         IEnumerable<IMessagePart> MessageItems { get; }
         string Id { get; }
         DateTime PostTime { get; }
+        bool IsFirstComment { get; }
         string UserId { get; }
     }
 }

@@ -43,6 +43,7 @@ namespace BouyomiPlugin
         //ミクチャ
         public bool IsMixchComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMixchCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMixchCommentOnlyFirst { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMixchItem { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMixchItemNickname { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMixchSystem { get { return GetValue(); } set { SetValue(value); } }
@@ -164,6 +165,7 @@ namespace BouyomiPlugin
             //ミクチャ
             Dict.Add(nameof(IsMixchComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMixchCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMixchCommentOnlyFirst), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMixchItem), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMixchItemNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMixchSystem), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

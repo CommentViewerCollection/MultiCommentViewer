@@ -11,6 +11,7 @@ namespace MixchSitePlugin
         public string Id { get; set; }
         public string UserId { get; set; }
         public DateTime PostTime { get; set; }
+        public bool IsFirstComment { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IEnumerable<IMessagePart> MessageItems { get; set; }
         public MixchMessage(string raw) : base(raw)

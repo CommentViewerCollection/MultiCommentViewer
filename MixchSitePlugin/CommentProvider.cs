@@ -255,6 +255,7 @@ namespace MixchSitePlugin
                 NameItems = nameItems,
                 PostTime = DateTimeOffset.FromUnixTimeSeconds(p.Created).LocalDateTime,
                 UserId = p.UserId.ToString(),
+                IsFirstComment = isFirstComment,
             };
             var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
             {

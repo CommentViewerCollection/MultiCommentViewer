@@ -12,7 +12,7 @@ namespace MixchSitePlugin
         [JsonProperty("user_id")]
         public int UserId
         {
-            get { return IsSystemMessage() ? 0 : _userId; }
+            get { return IsSystemMessage() || Anonymous == 1 ? 0 : _userId; }
             set { _userId = value; }
         }
         private int _userId;
@@ -48,6 +48,9 @@ namespace MixchSitePlugin
 
         [JsonProperty("status")]
         public int Status { get; set; }
+
+        [JsonProperty("anonymous")]
+        public int Anonymous { get; set; }
 
         public bool IsSystemMessage()
         {

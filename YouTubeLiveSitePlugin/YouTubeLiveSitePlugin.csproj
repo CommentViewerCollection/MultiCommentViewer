@@ -43,13 +43,13 @@
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\YouTubeLiveMessageParser\YouTubeLiveMessageParserIF\YouTubeLiveMessageParserIF.csproj" />
-    <ProjectReference Include="..\..\YouTubeLiveMessageParser\YouTubeLiveMessageParser\YouTubeLiveMessageParser.csproj" />
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
     <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
+    <ProjectReference Include="..\YouTubeLiveMessageParser\YouTubeLiveMessageParserIF\YouTubeLiveMessageParserIF.csproj" />
+    <ProjectReference Include="..\YouTubeLiveMessageParser\YouTubeLiveMessageParser\YouTubeLiveMessageParser.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

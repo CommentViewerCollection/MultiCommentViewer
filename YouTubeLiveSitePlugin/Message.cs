@@ -1,7 +1,9 @@
 ﻿using Common;
+using ryu_s.YouTubeLive.Message.Action;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace YouTubeLiveSitePlugin
 {
@@ -97,6 +99,30 @@ namespace YouTubeLiveSitePlugin
             PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.TimestampUsec / (1000 * 1000));
             PurchaseAmount = comment.PurchaseAmount;
         }
+        public YouTubeLiveSuperchat(SuperChat text) : base("")
+        {
+            UserId = text.AuthorExternalChannelId;//.UserId;
+            Id = text.Id;
+            CommentItems = text.MessageItems.Select(a => MessageConverter.Parse(a)).ToList();
+            var nameItems = new List<IMessagePart>();
+            if (text.AuthorName != null)
+            {
+                nameItems.Add(Common.MessagePartFactory.CreateMessageText(text.AuthorName));
+            }
+            foreach (var badge in text.AuthorBadges)
+            {
+
+            }
+            NameItems = nameItems;
+            UserIcon = new Common.MessageImage
+            {
+                Height = text.AuthorPhoto.Height,
+                Width = text.AuthorPhoto.Width,
+                Url = text.AuthorPhoto.Url,
+            };
+            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(text.TimestampUsec / (1000 * 1000));
+            PurchaseAmount = text.PurchaseAmount;
+        }
     }
     internal class YouTubeLiveComment : MessageBase2, IYouTubeLiveComment
     {
@@ -132,6 +158,100 @@ namespace YouTubeLiveSitePlugin
                 Url = comment.ThumbnailUrl,
             };
             PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.TimestampUsec / (1000 * 1000));
+        }
+
+        public YouTubeLiveComment(TextMessage text) : base("")
+        {
+            UserId = text.AuthorExternalChannelId;//.UserId;
+            Id = text.Id;
+            CommentItems = text.MessageItems.Select(a => MessageConverter.Parse(a)).ToList();
+            var nameItems = new List<IMessagePart>();
+            if (text.AuthorName != null)
+            {
+                nameItems.Add(Common.MessagePartFactory.CreateMessageText(text.AuthorName));
+            }
+            var badges = new List<IMessagePart>();
+            foreach (var badge in text.AuthorBadges)
+            {
+                var parsed = MessageConverter.Parse(badge);
+                if (parsed == null) continue;
+                badges.Add(parsed);
+            }
+            nameItems.AddRange(badges);
+            NameItems = nameItems;
+            UserIcon = new Common.MessageImage
+            {
+                Height = text.AuthorPhoto.Height,
+                Width = text.AuthorPhoto.Width,
+                Url = text.AuthorPhoto.Url,
+            };
+            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(text.TimestampUsec / (1000 * 1000));
+        }
+
+    }
+    static class MessageConverter
+    {
+        public static IMessagePart Parse(ryu_s.YouTubeLive.Message.IMessagePart a)
+        {
+            switch (a)
+            {
+                case ryu_s.YouTubeLive.Message.ITextPart text:
+                    return Common.MessagePartFactory.CreateMessageText(text.Raw);
+                case ryu_s.YouTubeLive.Message.EmojiPart emoji:
+                    return new Common.MessageSvgImage
+                    {
+                        Url = emoji.Url,
+                        Alt = "",
+                        Height = 24,
+                        Width = 24,
+                    };
+                case ryu_s.YouTubeLive.Message.CustomEmojiPart custom:
+                    return new Common.MessageImage
+                    {
+                        Url = custom.Url,
+                        Height = custom.Height,
+                        Width = custom.Width,
+                        Alt = custom.Tooltip,
+                    };
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+        public static IMessagePart Parse(ryu_s.YouTubeLive.Message.IBadge a)
+        {
+            throw new NotImplementedException();
+        }
+        public static IMessagePart? Parse(ryu_s.YouTubeLive.Message.Action.IAuthorBadge a)
+        {
+            switch (a)
+            {
+                case AuthorBadgeCustomThumb customThumb:
+                    return new Common.MessageImage
+                    {
+                        Url = customThumb.Thumbnails[1].Url,
+                        Alt = customThumb.Tooltip,
+                        Height = 16,
+                        Width = 16,
+                    };
+                case AuthorBadgeIcon icon:
+                    var data = icon.IconType switch
+                    {
+                        "MODERATOR" => @"<svg viewBox=""0 0 16 16"" preserveAspectRatio=""xMidYMid meet"" focusable=""false"" class=""style-scope yt-icon"" style=""pointer-events: none; display: block; width: 100%; height: 100%;"" xmlns=""http://www.w3.org/2000/svg"" version=""1.1""><g class=""style-scope yt-icon""><path d=""M9.64589146,7.05569719 C9.83346524,6.562372 9.93617022,6.02722257 9.93617022,5.46808511 C9.93617022,3.00042984 7.93574038,1 5.46808511,1 C4.90894765,1 4.37379823,1.10270499 3.88047304,1.29027875 L6.95744681,4.36725249 L4.36725255,6.95744681 L1.29027875,3.88047305 C1.10270498,4.37379824 1,4.90894766 1,5.46808511 C1,7.93574038 3.00042984,9.93617022 5.46808511,9.93617022 C6.02722256,9.93617022 6.56237198,9.83346524 7.05569716,9.64589147 L12.4098057,15 L15,12.4098057 L9.64589146,7.05569719 Z"" class=""style-scope yt-icon""></path></g></svg>",
+                        "OWNER" => null,
+                        "VERIFIED" => null,
+                        _ => null,
+                    };
+                    if (data == null) return null;
+                    return new Common.MessageSvgData
+                    {
+                        Data = data,
+                        Alt = icon.Tooltip,
+                        Height = 16,
+                        Width = 16,
+                    };
+                default:
+                    return null;
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ using System.Net.Http;
 using SitePluginCommon;
 using Newtonsoft.Json;
 using YouTubeLiveSitePlugin.Next;
+using ryu_s.YouTubeLive.Message;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -46,8 +47,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public async Task ReceiveInternalAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
-            var innerTubeKey = ytCfg.InnerTubeApiKey;
-            var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + innerTubeKey;
+            var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + ytCfg.InnertubeApiKey;
             var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"2.20210114.08.00\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";
             //var payloadBytes = Encoding.UTF8.GetBytes(payload);
 

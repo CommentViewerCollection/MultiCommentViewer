@@ -24,11 +24,6 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public override ICommentProvider CreateCommentProvider()
         {
-            //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-            //return new Test2.CommentProvider(_options, _server, _siteOptions, _logger, _userStoreManager)
-            //{
-            //    SiteContextGuid = Guid,
-            //};
             return new Next.CommentProviderNext(_options, _server, _siteOptions, _logger, _userStoreManager)
             {
                 SiteContextGuid = Guid,
@@ -86,10 +81,10 @@ namespace YouTubeLiveSitePlugin.Test2
         }
 
         private readonly ICommentOptions _options;
-        private readonly IYouTubeLibeServer _server;
+        private readonly IYouTubeLiveServer _server;
         private readonly ILogger _logger;
         private Test2.YouTubeLiveSiteOptions _siteOptions;
-        public YouTubeLiveSiteContext(ICommentOptions options, IYouTubeLibeServer server, ILogger logger, IUserStoreManager userStoreManager)
+        public YouTubeLiveSiteContext(ICommentOptions options, IYouTubeLiveServer server, ILogger logger, IUserStoreManager userStoreManager)
             : base(options, userStoreManager, logger)
         {
             _options = options;

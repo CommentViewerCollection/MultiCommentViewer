@@ -6,7 +6,7 @@ using SitePluginCommon;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    public interface IYouTubeLibeServer
+    public interface IYouTubeLiveServer
     {
         Task<string> GetAsync(string url);
         Task<string> GetAsync(string url, CookieContainer cc);

@@ -81,29 +81,6 @@ namespace YouTubeLiveSitePluginTests
             var s = YouTubeLiveSitePlugin.Test2.Tools.ExtractYtInitialDataFromChannelHtml(data);
             Assert.AreEqual("{\"a\":\"b\"}", s);
         }
-        //[Test]
-        //public void ParseGetLiveChat_ReloadContinuationTest()
-        //{
-        //    var data = Tools.GetSampleData("GetLiveChatJson_Reload.txt");
-        //    var (c, d, t) = YouTubeLiveSitePlugin.Test2.Tools.ParseGetLiveChat(data);
-        //    Assert.AreEqual("0ofMyANOGjRDaU1TSVFvWVZVTmFabDlmWldoc1EwVkNVRzl3TFY5emJHUndRbFZSRWdVdmJHbDJaU0FDMAFoBIIBBAgEEACIAQCgAcX4n-vnw-MC", c.Continuation);
-        //    Assert.AreEqual(0, c.TimeoutMs);
-        //    Assert.AreEqual("QUFFLUhqbGJxbGEzNWE1TGg0U2FYUzcyZXIyeF9hZTUxd3xBQ3Jtc0tuTEgtbGpITWdSQWlvUVZaZmJTU1IxQUMwQmw2djVUbXVLM19YMDFqeVpad0xxa1RPdjZOQ3A1MEtabk5xLWhUUExPdzMtVC16Z1ZHWE9ybjlZZ1hKeVo0R3ZCbzhGT2cta3pmLUtTeTQ0dlBPOHNCT01GSG1uZUpaUk5pa00tamhMeGdJclFmX1VtQU50UmgzdjhCUndMc0NjRnc=", t);
-        //}
-        [Test]
-        public void ExtractYtPlayerConfigTest()
-        {
-            var data = Tools.GetSampleData("LivePage_ytplayerconfig.txt");
-            var ytPlayerConfig = YouTubeLiveSitePlugin.Test2.Tools.ExtractYtPlayerConfig(data);
-            Assert.IsTrue(!string.IsNullOrEmpty(ytPlayerConfig));
-        }
-        [Test]
-        public void ExtractLiveBroadcastDetailsTest()
-        {
-            var data = Tools.GetSampleData("ytPlayerConfig.txt");
-            var liveBroadcastDetails = YouTubeLiveSitePlugin.Test2.Tools.ExtractLiveBroadcastDetails(data);
-            Assert.IsTrue(!string.IsNullOrEmpty(liveBroadcastDetails));
-        }
         [Test]
         public void Test1()
         {

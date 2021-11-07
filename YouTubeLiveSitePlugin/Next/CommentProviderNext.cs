@@ -981,7 +981,7 @@ namespace YouTubeLiveSitePlugin.Next
             return true;
         }
 
-        public CommentProviderNext(ICommentOptions options, IYouTubeLibeServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
+        public CommentProviderNext(ICommentOptions options, IYouTubeLiveServer server, YouTubeLiveSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
             : base(logger, options)
         {
             _options = options;
@@ -1001,7 +1001,7 @@ namespace YouTubeLiveSitePlugin.Next
         private readonly YouTubeLiveSiteOptions _siteOptions;
         private readonly ILogger _logger;
         private readonly IUserStoreManager _userStoreManager;
-        private readonly IYouTubeLibeServer _server;
+        private readonly IYouTubeLiveServer _server;
         void SetLoggedInState(bool isLoggedIn)
         {
             _isLoggedIn = isLoggedIn;

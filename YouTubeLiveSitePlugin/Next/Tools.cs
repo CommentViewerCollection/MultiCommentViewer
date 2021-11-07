@@ -72,26 +72,6 @@ namespace YouTubeLiveSitePlugin.Next
                 return null;
             }
         }
-        private ChatContinuation _chatContinuation;
-        public ChatContinuation ChatContinuation()
-        {
-            if (_chatContinuation != null)
-            {
-                return _chatContinuation;
-            }
-            if (_d.contents.liveChatRenderer == null)
-            {
-                //チャット無効。配信が終わったかチャットが無効に設定されている。
-
-            }
-            var chatContinuation = new ChatContinuation
-            {
-                AllChatContinuation = (string)_d.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[1].continuation.reloadContinuationData.continuation,
-                JouiChatContinuation = (string)_d.contents.liveChatRenderer.header.liveChatHeaderRenderer.viewSelector.sortFilterSubMenuRenderer.subMenuItems[0].continuation.reloadContinuationData.continuation,
-            };
-            _chatContinuation = chatContinuation;
-            return chatContinuation;
-        }
         public bool IsLoggedIn
         {
             get
@@ -105,22 +85,6 @@ namespace YouTubeLiveSitePlugin.Next
                 return n == 1;
             }
         }
-        //public List<IInternalMessage> GetActions()
-        //{
-        //    var list = new List<IInternalMessage>();
-        //    var actions = _d.contents?.liveChatRenderer?.actions;
-        //    if (actions == null)
-        //    {
-        //        return list;
-        //    }
-        //    foreach (var action in actions)
-        //    {
-        //        var message = (IInternalMessage)Parser2.ParseAction(action);
-        //        if (message == null) continue;
-        //        list.Add(message);
-        //    }
-        //    return list;
-        //}
         public string GetClientIdPrefix()
         {
             string @params;

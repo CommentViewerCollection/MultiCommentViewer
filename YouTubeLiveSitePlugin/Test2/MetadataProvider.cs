@@ -27,7 +27,7 @@ namespace YouTubeLiveSitePlugin.Test2
     /// </summary>
     class MetaDataYoutubeiProvider : IMetadataProvider
     {
-        private readonly IYouTubeLibeServer _server;
+        private readonly IYouTubeLiveServer _server;
 
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
@@ -129,7 +129,7 @@ namespace YouTubeLiveSitePlugin.Test2
             return await _server.PostAsync(new HttpOptions { Url = url, Cc = cc }, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
-        public MetaDataYoutubeiProvider(IYouTubeLibeServer server, ILogger logger) : base(logger)
+        public MetaDataYoutubeiProvider(IYouTubeLiveServer server, ILogger logger) : base(logger)
         {
             _server = server;
         }
@@ -139,7 +139,7 @@ namespace YouTubeLiveSitePlugin.Test2
     /// </summary>
     class MetadataProvider : IMetadataProvider
     {
-        private readonly IYouTubeLibeServer _server;
+        private readonly IYouTubeLiveServer _server;
 
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
@@ -264,7 +264,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }, new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded"));
         }
 
-        public MetadataProvider(IYouTubeLibeServer server, ILogger logger) : base(logger)
+        public MetadataProvider(IYouTubeLiveServer server, ILogger logger) : base(logger)
         {
             _server = server;
         }

@@ -1,9 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
+    <UseWPF>true</UseWPF>
     <TargetFramework>net462</TargetFramework>
     <LangVersion>8.0</LangVersion>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -30,30 +31,48 @@
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>4</WarningLevel>
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="System.Resources.Extensions" Version="4.6.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BigoIF\BigoIF.csproj" />
+    <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj" />
-    <ProjectReference Include="..\MildomIF\MildomIF.csproj" />
-    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
-    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj" />
-    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
     <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
-    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />
-    <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj" />
-    <ProjectReference Include="..\TestSiteIF\TestSiteIF.csproj" />
-    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />
-    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />
-    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj" />
-    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
+    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Windows" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

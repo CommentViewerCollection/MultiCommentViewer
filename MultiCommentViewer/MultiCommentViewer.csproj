@@ -73,6 +73,8 @@
     <ProjectReference Include="..\NicoSitePlugin2\NicoSitePlugin2.csproj" />
     <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
     <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj" />
+    <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
+    <ProjectReference Include="..\MixchSitePlugin\MixchSitePlugin.csproj" />
     <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />
     <ProjectReference Include="..\PeriscopeSitePlugin\PeriscopeSitePlugin.csproj" />
     <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj" />
@@ -88,6 +90,7 @@
     <ProjectReference Include="..\WhowatchSitePlugin\WhowatchSitePlugin.csproj" />
     <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
     <ProjectReference Include="..\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj" />
+    <ProjectReference Include="..\BouyomiPlugin\BouyomiPlugin.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

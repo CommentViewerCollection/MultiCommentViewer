@@ -1,0 +1,26 @@
+﻿<UserControl
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:local="clr-namespace:MixchSitePlugin"
+             xmlns:Common="clr-namespace:Common;assembly=Common" x:Class="MixchSitePlugin.MixchOptionsPanel"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="420">
+    <Grid Background="#FFE5E5E5">
+        <xctk:ColorPicker  SelectedColor="{Binding ItemBackColor}" Margin="200,12,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <xctk:ColorPicker  SelectedColor="{Binding ItemForeColor}" Margin="200,43,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <Label x:Name="ItemBackColor" Content="アイテムの背景色" HorizontalAlignment="Left" Margin="30,8,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="ItemForeColor" Content="アイテムの文字色" HorizontalAlignment="Left" Margin="30,39,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+
+        <xctk:ColorPicker  SelectedColor="{Binding SystemBackColor}" Margin="200,72,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <xctk:ColorPicker  SelectedColor="{Binding SystemForeColor}" Margin="200,103,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <Label x:Name="SystemBackColor" Content="システムメッセージの背景色" HorizontalAlignment="Left" Margin="30,68,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="SystemForeColor" Content="システムメッセージの文字色" HorizontalAlignment="Left" Margin="30,99,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="200,184,0,0" TextWrapping="Wrap" Text="{Binding PoipoiKeepSeconds}" VerticalAlignment="Top" Width="51"/>
+        <Label Content="ぽいぽいが届いてから表示するまでの秒数" HorizontalAlignment="Left" Margin="30,136,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.132,-0.192"/>
+        <Label Content="(それまでに届いたものは全部まとめて表示します)" HorizontalAlignment="Left" Margin="30,156,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.132,-0.192"/>
+    </Grid>
+</UserControl>

@@ -51,19 +51,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BrowserCookieImplementation
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BrowserCookieInterfaces", "BrowserCookieInterfaces\BrowserCookieInterfaces.csproj", "{CDBBBF25-AD0C-4EAF-B673-EB0BB198585A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentGeneratorPlugin", "CommentGeneratorPlugin\CommentGeneratorPlugin.csproj", "{88B68D39-41A4-4C10-B942-0F3BE976D7A3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommentGeneratorPlugin", "CommentGeneratorPlugin\CommentGeneratorPlugin.csproj", "{88B68D39-41A4-4C10-B942-0F3BE976D7A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentViewerCommon", "CommentViewerCommon\CommentViewerCommon.csproj", "{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommentViewerCommon", "CommentViewerCommon\CommentViewerCommon.csproj", "{18A7A590-4C58-4755-A24C-6EDA52E0C3EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{66D18DE1-4D66-41A5-B0E2-47DF9975495A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{66D18DE1-4D66-41A5-B0E2-47DF9975495A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin", "IPlugin\Plugin.csproj", "{735CFEEE-5B77-4D36-977B-4CD94A6F3CDB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Plugin", "IPlugin\Plugin.csproj", "{735CFEEE-5B77-4D36-977B-4CD94A6F3CDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitePlugin", "ISitePlugin\SitePlugin.csproj", "{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SitePlugin", "ISitePlugin\SitePlugin.csproj", "{C13BFDF0-3B93-475F-900E-E7BAD97ACE3D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SitePluginCommon", "SitePluginCommon\SitePluginCommon.csproj", "{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SitePluginCommon", "SitePluginCommon\SitePluginCommon.csproj", "{AAF4779F-F8BF-4794-A6E8-4ED88A8B6B68}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoyakuPlugin", "YoyakuPlugin\YoyakuPlugin.csproj", "{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YoyakuPlugin", "YoyakuPlugin\YoyakuPlugin.csproj", "{A04C3DC9-78CB-4DB2-B8BA-0D462A64314F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YoyakuPluginTests", "YoyakuPluginTests\YoyakuPluginTests.csproj", "{EC145D56-C6AA-4A3E-8D33-14DC562B8A84}"
 EndProject
@@ -103,7 +103,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PeriscopeIF", "PeriscopeIF\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PeriscopeSitePluginTests", "PeriscopeSitePluginTests\PeriscopeSitePluginTests.csproj", "{C2507D74-AD66-4B14-8C1A-557B30D9E472}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShowRoomSitePlugin", "ShowRoomSitePlugin\ShowRoomSitePlugin.csproj", "{3CB5F930-60CA-4430-8B79-3106868A7F51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShowRoomSitePlugin", "ShowRoomSitePlugin\ShowRoomSitePlugin.csproj", "{3CB5F930-60CA-4430-8B79-3106868A7F51}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShowRoomIF", "ShowRoomIF\ShowRoomIF.csproj", "{9D866A6C-39D6-470A-A25D-F704A2A28A23}"
 EndProject
@@ -115,7 +115,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MildomIF", "MildomIF\Mildom
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MildomSitePluginTests", "MildomSitePluginTests\MildomSitePluginTests.csproj", "{F4E9C5B4-F2C4-4FFA-A2ED-65CF9B7EB8CB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginCommon", "PluginCommon\PluginCommon.csproj", "{29482B94-D6B4-4D4D-ABDC-028606C22333}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PluginCommon", "PluginCommon\PluginCommon.csproj", "{29482B94-D6B4-4D4D-ABDC-028606C22333}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PluginCommonTests", "PluginCommonTests\PluginCommonTests.csproj", "{2787460A-2EF2-412D-8989-A1223D2FCEE0}"
 EndProject
@@ -126,6 +126,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigoSitePluginTests", "BigoSitePluginTests\BigoSitePluginTests.csproj", "{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NicoSitePlugin2", "NicoSitePlugin2\NicoSitePlugin2.csproj", "{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MixchIF", "MixchIF\MixchIF.csproj", "{06C52FBC-C9F9-4E80-8064-79F5D242ED95}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MixchSitePlugin", "MixchSitePlugin\MixchSitePlugin.csproj", "{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -591,6 +595,22 @@ Global
 		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Alpha|Any CPU.ActiveCfg = Alpha|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Alpha|Any CPU.Build.0 = Alpha|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Beta|Any CPU.ActiveCfg = Beta|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Beta|Any CPU.Build.0 = Beta|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06C52FBC-C9F9-4E80-8064-79F5D242ED95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Alpha|Any CPU.ActiveCfg = Alpha|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Alpha|Any CPU.Build.0 = Alpha|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Beta|Any CPU.ActiveCfg = Beta|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Beta|Any CPU.Build.0 = Beta|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

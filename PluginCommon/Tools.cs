@@ -124,6 +124,14 @@ namespace PluginCommon
                 name = opComment.NameItems.ToText();
             }
             //}
+            //else if (message is MixchSitePlugin.IMixchMessage opMessage)
+            //{
+            else if (message is MixchSitePlugin.IMixchMessage mxMessage)
+            {
+                comment = mxMessage.MessageItems.ToText();
+                name = mxMessage.NameItems.ToText();
+            }
+            //}
             //else if (message is MirrativSitePlugin.IMirrativMessage mrMessage)
             //{
             else if (message is MirrativSitePlugin.IMirrativComment mrComment)

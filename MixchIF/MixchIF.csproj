@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
@@ -36,19 +36,6 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Moq" Version="4.13.1" />
-    <PackageReference Include="NUnit" Version="3.12.0" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\LineLiveIF\LineLiveIF.csproj" />
-    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
-    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj" />
-    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
-    <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
-    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />
-    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />
-    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj" />
-    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
   </ItemGroup>
 </Project>

@@ -213,6 +213,57 @@ namespace BouyomiPlugin
         //}
         #endregion //OPENREC
 
+        #region ミクチャ
+        /// <summary>
+        /// MIXCHのコメントを読み上げるか
+        /// </summary>
+        public bool IsMixchComment
+        {
+            get => _options.IsMixchComment;
+            set => _options.IsMixchComment = value;
+        }
+        /// <summary>
+        /// MIXCHのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsMixchCommentNickname
+        {
+            get => _options.IsMixchCommentNickname;
+            set => _options.IsMixchCommentNickname = value;
+        }
+        /// <summary>
+        /// MIXCHのコメントで最初だけ読むか
+        /// </summary>
+        public bool IsMixchCommentOnlyFirst
+        {
+            get => _options.IsMixchCommentOnlyFirst;
+            set => _options.IsMixchCommentOnlyFirst = value;
+        }
+        /// <summary>
+        /// MIXCHのアイテムを読み上げるか
+        /// </summary>
+        public bool IsMixchItem
+        {
+            get => _options.IsMixchItem;
+            set => _options.IsMixchItem = value;
+        }
+        /// <summary>
+        /// MIXCHのアイテムのコテハンを読み上げるか
+        /// </summary>
+        public bool IsMixchItemNickname
+        {
+            get => _options.IsMixchItemNickname;
+            set => _options.IsMixchItemNickname = value;
+        }
+        /// <summary>
+        /// MIXCHのシステムメッセージを読み上げるか
+        /// </summary>
+        public bool IsMixchSystem
+        {
+            get => _options.IsMixchSystem;
+            set => _options.IsMixchSystem = value;
+        }
+        #endregion //MIXCH
+
         #region Twitch
         /// <summary>
         /// Twitchの接続メッセージを読み上げるか

@@ -35,6 +35,8 @@ namespace YouTubeLiveSitePlugin
         public string Id { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IEnumerable<IMessagePart> CommentItems { get; set; }
+        public IEnumerable<IMessagePart> HeaderPrimaryTextItems { get;  set; }
+        public IEnumerable<IMessagePart> HeaderSubTextItems { get;  set; }
         //public string UserName { get; set; }
         public string UserId { get; set; }
         public DateTime PostedAt { get; set; }
@@ -53,19 +55,15 @@ namespace YouTubeLiveSitePlugin
         //    };
         //    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.TimestampUsec / (1000 * 1000));
         //}
-        public YouTubeLiveMembership(MemberShip member) : base("")
+        public YouTubeLiveMembership(MemberShip text) : base("")
         {
-            //UserId = member.UserId;
-            //Id = member.Id;
-            //CommentItems = member.MessageItems;
-            //NameItems = member.NameItems;
-            //UserIcon = new Common.MessageImage
-            //{
-            //    Height = member.ThumbnailHeight,
-            //    Width = member.ThumbnailWidth,
-            //    Url = member.ThumbnailUrl,
-            //};
-            //PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(member.TimestampUsec / (1000 * 1000));
+            UserId = text.AuthorExternalChannelId;
+            Id = text.Id;
+            CommentItems = MessageBase.Convert(text.MessageItems);
+            NameItems = MessageBase.Convert(text.AuthorName, text.AuthorBadges);
+            UserIcon = MessageBase.Convert(text.AuthorPhoto);
+            PostedAt = MessageBase.Convert(text.TimestampUsec);
+
         }
     }
     internal class YouTubeLiveSuperchat : MessageBase2, IYouTubeLiveSuperchat
@@ -83,26 +81,12 @@ namespace YouTubeLiveSitePlugin
 
         public YouTubeLiveSuperchat(SuperChat text) : base("")
         {
-            UserId = text.AuthorExternalChannelId;//.UserId;
+            UserId = text.AuthorExternalChannelId;
             Id = text.Id;
-            CommentItems = text.MessageItems.Select(a => MessageConverter.Parse(a)).ToList();
-            var nameItems = new List<IMessagePart>();
-            if (text.AuthorName != null)
-            {
-                nameItems.Add(Common.MessagePartFactory.CreateMessageText(text.AuthorName));
-            }
-            foreach (var badge in text.AuthorBadges)
-            {
-
-            }
-            NameItems = nameItems;
-            UserIcon = new Common.MessageImage
-            {
-                Height = text.AuthorPhoto.Height,
-                Width = text.AuthorPhoto.Width,
-                Url = text.AuthorPhoto.Url,
-            };
-            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(text.TimestampUsec / (1000 * 1000));
+            CommentItems = MessageBase.Convert(text.MessageItems);
+            NameItems = MessageBase.Convert(text.AuthorName, text.AuthorBadges);
+            UserIcon = MessageBase.Convert(text.AuthorPhoto);
+            PostedAt = MessageBase.Convert(text.TimestampUsec);
             PurchaseAmount = text.PurchaseAmount;
         }
     }
@@ -121,32 +105,51 @@ namespace YouTubeLiveSitePlugin
 
         public YouTubeLiveComment(TextMessage text) : base("")
         {
-            UserId = text.AuthorExternalChannelId;//.UserId;
+            UserId = text.AuthorExternalChannelId;
             Id = text.Id;
-            CommentItems = text.MessageItems.Select(a => MessageConverter.Parse(a)).ToList();
-            var nameItems = new List<IMessagePart>();
-            if (text.AuthorName != null)
+            CommentItems = MessageBase.Convert(text.MessageItems);
+            NameItems = MessageBase.Convert(text.AuthorName, text.AuthorBadges);
+            UserIcon = MessageBase.Convert(text.AuthorPhoto);
+            PostedAt = MessageBase.Convert(text.TimestampUsec);
+        }
+
+    }
+    static class MessageBase
+    {
+        public static DateTime Convert(long timestampUsec)
+        {
+            return SitePluginCommon.Utils.UnixtimeToDateTime(timestampUsec / (1000 * 1000));
+        }
+        public static IMessageImage Convert(Thumbnail2 authorPhoto)
+        {
+            return new Common.MessageImage
             {
-                nameItems.Add(Common.MessagePartFactory.CreateMessageText(text.AuthorName));
+                Height = authorPhoto.Height,
+                Width = authorPhoto.Width,
+                Url = authorPhoto.Url,
+            };
+        }
+        public static IEnumerable<IMessagePart> Convert(IReadOnlyList<ryu_s.YouTubeLive.Message.IMessagePart> items)
+        {
+            return items.Select(a => MessageConverter.Parse(a)).ToList();
+        }
+        public static IEnumerable<IMessagePart> Convert(string? authorName, List<IAuthorBadge> authorBadges)
+        {
+            var nameItems = new List<IMessagePart>();
+            if (authorName != null)
+            {
+                nameItems.Add(Common.MessagePartFactory.CreateMessageText(authorName));
             }
             var badges = new List<IMessagePart>();
-            foreach (var badge in text.AuthorBadges)
+            foreach (var badge in authorBadges)
             {
                 var parsed = MessageConverter.Parse(badge);
                 if (parsed == null) continue;
                 badges.Add(parsed);
             }
             nameItems.AddRange(badges);
-            NameItems = nameItems;
-            UserIcon = new Common.MessageImage
-            {
-                Height = text.AuthorPhoto.Height,
-                Width = text.AuthorPhoto.Width,
-                Url = text.AuthorPhoto.Url,
-            };
-            PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(text.TimestampUsec / (1000 * 1000));
+            return nameItems;
         }
-
     }
     static class MessageConverter
     {

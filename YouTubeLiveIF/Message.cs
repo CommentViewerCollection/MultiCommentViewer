@@ -50,6 +50,8 @@ namespace YouTubeLiveSitePlugin
     {
         IEnumerable<IMessagePart> NameItems { get; }
         IEnumerable<IMessagePart> CommentItems { get; }
+        IEnumerable<IMessagePart> HeaderPrimaryTextItems { get; }
+        IEnumerable<IMessagePart> HeaderSubTextItems { get; }
         IMessageImage UserIcon { get; }
         DateTime PostedAt { get; }
         string Id { get; }

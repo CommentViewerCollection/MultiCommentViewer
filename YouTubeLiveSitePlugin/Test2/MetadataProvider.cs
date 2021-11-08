@@ -13,6 +13,7 @@ using System.Net.Http;
 using SitePluginCommon;
 using Newtonsoft.Json;
 using YouTubeLiveSitePlugin.Next;
+using ryu_s.YouTubeLive.Message;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
@@ -26,7 +27,7 @@ namespace YouTubeLiveSitePlugin.Test2
     /// </summary>
     class MetaDataYoutubeiProvider : IMetadataProvider
     {
-        private readonly IYouTubeLibeServer _server;
+        private readonly IYouTubeLiveServer _server;
 
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
@@ -46,8 +47,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public async Task ReceiveInternalAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
-            var innerTubeKey = ytCfg.InnerTubeApiKey;
-            var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + innerTubeKey;
+            var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + ytCfg.InnertubeApiKey;
             var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"2.20210114.08.00\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";
             //var payloadBytes = Encoding.UTF8.GetBytes(payload);
 
@@ -129,7 +129,7 @@ namespace YouTubeLiveSitePlugin.Test2
             return await _server.PostAsync(new HttpOptions { Url = url, Cc = cc }, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
-        public MetaDataYoutubeiProvider(IYouTubeLibeServer server, ILogger logger) : base(logger)
+        public MetaDataYoutubeiProvider(IYouTubeLiveServer server, ILogger logger) : base(logger)
         {
             _server = server;
         }
@@ -139,7 +139,7 @@ namespace YouTubeLiveSitePlugin.Test2
     /// </summary>
     class MetadataProvider : IMetadataProvider
     {
-        private readonly IYouTubeLibeServer _server;
+        private readonly IYouTubeLiveServer _server;
 
         public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
         {
@@ -264,7 +264,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }, new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded"));
         }
 
-        public MetadataProvider(IYouTubeLibeServer server, ILogger logger) : base(logger)
+        public MetadataProvider(IYouTubeLiveServer server, ILogger logger) : base(logger)
         {
             _server = server;
         }

@@ -144,7 +144,11 @@ namespace MultiCommentViewer
             _message = comment;
 
             _nameItems = comment.NameItems;
-            MessageItems = comment.CommentItems;
+            var messageItems = new List<IMessagePart>();
+            messageItems.AddRange(comment.HeaderPrimaryTextItems);
+            messageItems.AddRange(comment.HeaderSubTextItems);
+            messageItems.AddRange(comment.CommentItems);
+            MessageItems = messageItems;
             Thumbnail = comment.UserIcon;
             Id = comment.Id.ToString();
             PostTime = comment.PostedAt.ToString("HH:mm:ss");

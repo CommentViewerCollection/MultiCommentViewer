@@ -9,7 +9,7 @@ using SitePluginCommon;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    public class YouTubeLiveServer : ServerBase, IYouTubeLibeServer
+    public class YouTubeLiveServer : ServerBase, IYouTubeLiveServer
     {
         public async Task<string> GetAsync(HttpOptions options)
         {

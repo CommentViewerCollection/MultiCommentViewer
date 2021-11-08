@@ -142,6 +142,8 @@ namespace MultiCommentViewer
         Color YouTubeLiveForeColor { get; set; }
         Color OpenrecBackColor { get; set; }
         Color OpenrecForeColor { get; set; }
+        Color MixchBackColor { get; set; }
+        Color MixchForeColor { get; set; }
         Color TwitchBackColor { get; set; }
         Color TwitchForeColor { get; set; }
         Color NicoLiveBackColor { get; set; }
@@ -194,7 +196,7 @@ namespace MultiCommentViewer
         double ConnectionsViewConnectionForegroundWidth { get; set; }
     }
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public enum SiteConnectionColorType
     {
@@ -253,4 +255,3 @@ namespace MultiCommentViewer
         }
     }
 }
-

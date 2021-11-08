@@ -32,6 +32,21 @@
             CommunityId = communityId;
         }
     }
+    class LiveId : IInput
+    {
+        /// <summary>
+        /// lv\d+
+        /// </summary>
+        public string Raw { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="liveId">lv\d+</param>
+        public LiveId(string liveId)
+        {
+            Raw = liveId;
+        }
+    }
     class InvalidInput : IInput
     {
         public InvalidInput(string raw)

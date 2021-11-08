@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace SitePlugin
 {
     public interface IMessagePart { }
+    public interface IMessageEmpty : IMessagePart { }
     public interface IMessageText : IMessagePart
     {
         string Text { get; }
@@ -44,5 +45,19 @@ namespace SitePlugin
     public interface IMessageLink : IMessageText
     {
         string Url { get; }
+    }
+    public interface IMessageRemoteSvg : IMessagePart
+    {
+        int? Width { get; }
+        int? Height { get; }
+        string Url { get; }
+        string Alt { get; }
+    }
+    public interface IMessageSvg : IMessagePart
+    {
+        int? Width { get; }
+        int? Height { get; }
+        string Data { get; }
+        string Alt { get; }
     }
 }

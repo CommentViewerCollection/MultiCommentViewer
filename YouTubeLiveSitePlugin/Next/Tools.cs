@@ -700,7 +700,7 @@ namespace YouTubeLiveSitePlugin.Next
             }
             else if (VidResolver.IsCustomChannel(input))
             {
-                return new Input.StudioUrl(input);
+                return new Input.CustomChannelUrl(input);
             }
             else if (VidResolver.IsStudio(input))
             {

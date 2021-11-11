@@ -43,18 +43,25 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         private static ListType GetType(string ytInitialData)
         {
-            dynamic d = JsonConvert.DeserializeObject(ytInitialData);
-            var videoTab = GetVideosTab(d);
-            var arr = videoTab.tabRenderer.content.sectionListRenderer.subMenu.channelSubMenuRenderer.contentTypeSubMenuItems;
-            foreach (var item in arr)
+            try
             {
-                var title = (string)item.title;
-                var selected = (bool)item.selected;
-                if (selected)
+                dynamic d = JsonConvert.DeserializeObject(ytInitialData);
+                var videoTab = GetVideosTab(d);
+                var arr = videoTab.tabRenderer.content.sectionListRenderer.subMenu.channelSubMenuRenderer.contentTypeSubMenuItems;
+                foreach (var item in arr)
                 {
-                    var type = GetTypeByName(title);
-                    return type;
+                    var title = (string)item.title;
+                    var selected = (bool)item.selected;
+                    if (selected)
+                    {
+                        var type = GetTypeByName(title);
+                        return type;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException(ytInitialData, ex);
             }
             return ListType.Unknown;
         }

@@ -21,6 +21,10 @@ namespace NicoSitePlugin
                 var communityId = ExtractCommunityIdFromUrl(input);
                 return new CommunityUrl(communityId);
             }
+            else if (IsLiveId(input))
+            {
+                return new LiveId(input);
+            }
             else
             {
                 return new InvalidInput(input);
@@ -61,7 +65,10 @@ namespace NicoSitePlugin
             if (!match.Success) return null;
             return match.Groups[1].Value;
         }
-
+        public static bool IsLiveId(string input)
+        {
+            return Regex.IsMatch(input, "lv\\d+");
+        }
         internal static string ExtractLiveId(string str)
         {
             var match = Regex.Match(str, "(lv\\d+)");

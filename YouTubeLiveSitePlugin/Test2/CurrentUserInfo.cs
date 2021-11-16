@@ -19,12 +19,6 @@ using System.Windows.Media;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    class PostCommentContext
-    {
-        public string SessionToken { get; set; }
-        public string Sej { get; set; }
-        public string ClientIdPrefix { get; set; }
-    }
     class CurrentUserInfo : ICurrentUserInfo
     {
         public string Username { get; set; }

@@ -9,12 +9,6 @@ using YouTubeLiveSitePlugin.Input;
 
 namespace YouTubeLiveSitePlugin.Test2
 {
-    class LiveStatus
-    {
-        public string Title { get; set; }
-        public string Vid { get; set; }
-        public string State { get; set; }
-    }
     static class ChannelLiveResearcher
     {
         enum ListType
@@ -49,18 +43,25 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         private static ListType GetType(string ytInitialData)
         {
-            dynamic d = JsonConvert.DeserializeObject(ytInitialData);
-            var videoTab = GetVideosTab(d);
-            var arr = videoTab.tabRenderer.content.sectionListRenderer.subMenu.channelSubMenuRenderer.contentTypeSubMenuItems;
-            foreach (var item in arr)
+            try
             {
-                var title = (string)item.title;
-                var selected = (bool)item.selected;
-                if (selected)
+                dynamic d = JsonConvert.DeserializeObject(ytInitialData);
+                var videoTab = GetVideosTab(d);
+                var arr = videoTab.tabRenderer.content.sectionListRenderer.subMenu.channelSubMenuRenderer.contentTypeSubMenuItems;
+                foreach (var item in arr)
                 {
-                    var type = GetTypeByName(title);
-                    return type;
+                    var title = (string)item.title;
+                    var selected = (bool)item.selected;
+                    if (selected)
+                    {
+                        var type = GetTypeByName(title);
+                        return type;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new ParseException(ytInitialData, ex);
             }
             return ListType.Unknown;
         }
@@ -106,7 +107,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return url;
         }
-        private static async Task<(string ytInitialData, ListType)> GetYtinitialData(IYouTubeLibeServer server, string url)
+        private static async Task<(string ytInitialData, ListType)> GetYtinitialData(IYouTubeLiveServer server, string url)
         {
             var html = await server.GetEnAsync(url);
             var ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
@@ -127,7 +128,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return list;
         }
-        public static async Task<List<string>> GetVidsAsync(IYouTubeLibeServer server, string channelId)
+        public static async Task<List<string>> GetVidsAsync(IYouTubeLiveServer server, string channelId)
         {
             //まずは配信中という前提でデータを取得する
             {
@@ -178,15 +179,7 @@ namespace YouTubeLiveSitePlugin.Test2
         private static readonly Regex _regexUser = new Regex("youtube\\.com/user/(" + USERID_PATTERN + ")");
         private static readonly Regex _regexCustomChannel = new Regex("/c/(" + ChannelIdPattern + ")");
         private static readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/video/(" + VID_PATTERN + ")");
-        enum InputType
-        {
-            Unknown,
-            Vid,
-            User,
-            Watch,
-            Channel,
-            CustomChannel,
-        }
+
         internal static bool IsVid(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
@@ -223,23 +216,7 @@ namespace YouTubeLiveSitePlugin.Test2
             return IsWatch(input) || IsUser(input) || IsChannel(input) || IsCustomChannel(input) || IsStudio(input);
         }
 
-        internal bool TryVid(string input, out string vid)
-        {
-            if (string.IsNullOrEmpty(input))
-            {
-                vid = null;
-                return false;
-            }
-            var match = _regexVid.Match(input);
-            if (match.Success)
-            {
-                vid = input;
-                return true;
-            }
-            vid = null;
-            return false;
-        }
-        internal async Task<string> GetChannelIdFromUserId(IYouTubeLibeServer server, string userId)
+        internal async Task<string> GetChannelIdFromUserId(IYouTubeLiveServer server, string userId)
         {
             var url = "https://www.youtube.com/user/" + userId;
             var html = await server.GetAsync(url);
@@ -267,7 +244,7 @@ namespace YouTubeLiveSitePlugin.Test2
             vid = null;
             return false;
         }
-        internal async Task<(string channelId, string reason)> TryGetChannelIdFromCustomChannel(IYouTubeLibeServer server, string input)
+        internal async Task<(string channelId, string reason)> TryGetChannelIdFromCustomChannel(IYouTubeLiveServer server, string input)
         {
             var match1 = _regexCustomChannel.Match(input);
             if (match1.Success)
@@ -307,7 +284,7 @@ namespace YouTubeLiveSitePlugin.Test2
             var match = _regexUser.Match(input);
             return match.Groups[1].Value;
         }
-        public async Task<IVidResult> GetVid(IYouTubeLibeServer server, Input.IInput input)
+        public async Task<IVidResult> GetVid(IYouTubeLiveServer server, Input.IInput input)
         {
             if (input is Input.Vid vid)
             {
@@ -339,7 +316,7 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             return new NoVidResult();
         }
-        internal async Task<IVidResult> GetResultFromChannelId(IYouTubeLibeServer server, string channelId)
+        internal async Task<IVidResult> GetResultFromChannelId(IYouTubeLiveServer server, string channelId)
         {
             if (string.IsNullOrEmpty(channelId))
                 throw new ArgumentNullException(nameof(channelId));
@@ -358,117 +335,9 @@ namespace YouTubeLiveSitePlugin.Test2
                 return new MultiVidsResult { Vids = vids };
             }
         }
-        internal Task<List<string>> GetVidsFromChannelId3(IYouTubeLibeServer server, string channelId)
+        internal Task<List<string>> GetVidsFromChannelId3(IYouTubeLiveServer server, string channelId)
         {
             return ChannelLiveResearcher.GetVidsAsync(server, channelId);
-        }
-        internal async Task<List<string>> GetVidsFromChannelId2(IYouTubeLibeServer server, string channelId)
-        {
-            //2021/01/10 生放送履歴が無い場合は投稿された動画の一覧になってしまうっぽい。
-            var url = $"https://www.youtube.com/channel/{channelId}/videos?view=2&live_view=501";
-            var html = await server.GetEnAsync(url);
-            var matches = Regex.Matches(html, "\"url\":\"/watch\\?v=([^\"]+)\"");
-            var vids = new List<string>();
-            foreach (Match match in matches)
-            {
-                if (match == null) continue;
-                vids.Add(match.Groups[1].Value);
-            }
-            return vids;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="server"></param>
-        /// <param name="channelId"></param>
-        /// <returns></returns>
-        /// <exception cref="YtInitialDataNotFoundException"></exception>
-        /// <exception cref="SpecChangedException"></exception>
-        [Obsolete("2019/07/18放送開始から５分程度経過しないとvidを取得できなくなっている")]
-        internal async Task<List<string>> GetVidsFromChannelId(IYouTubeLibeServer server, string channelId)
-        {
-            var url = $"https://www.youtube.com/channel/{channelId}/videos?flow=list&view=0";
-            var html = await server.GetEnAsync(url);
-            string ytInitialData;
-            try
-            {
-                ytInitialData = Tools.ExtractYtInitialDataFromChannelHtml(html);
-            }
-            catch (ParseException)
-            {
-                if (!html.Contains("ytInitialData"))
-                {
-                    //条件がわからないけど結構よくある。
-                    throw new YtInitialDataNotFoundException(url: url, html: html);
-                }
-                else
-                {
-                    //空白が無くなったりだとかそういう系だろうか
-                    throw new SpecChangedException(html);
-                }
-            }
-
-            var list = new List<string>();
-            try
-            {
-                var json = JsonConvert.DeserializeObject<Low.ChannelYtInitialData.RootObject>(ytInitialData);
-                var tabs = json.contents.twoColumnBrowseResultsRenderer.tabs;
-                Low.ChannelYtInitialData.Tab videosTab = null;
-                foreach (var tab in tabs)
-                {
-                    if (tab.tabRenderer == null)
-                    {
-                        continue;
-                    }
-                    if (tab.tabRenderer.title == "Videos")
-                    {
-                        videosTab = tab;
-                        break;
-                    }
-                }
-                if (videosTab == null)
-                {
-                    return list;
-                }
-                var contents = videosTab.tabRenderer.content.sectionListRenderer.contents;
-
-                foreach (var content in contents)
-                {
-                    var videoRenderer = content.itemSectionRenderer.contents[0].videoRenderer;
-                    //"このチャンネルには動画がありません"のとき、videoRendererがnull
-                    if (videoRenderer == null)
-                    {
-                        continue;
-                    }
-                    var videoId = videoRenderer.videoId;
-
-                    var isLive = IsLive(videoRenderer.badges);
-                    if (isLive)
-                    {
-                        list.Add(videoId);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new SpecChangedException(html, ex);
-            }
-            return list;
-        }
-        private bool IsLive(List<Low.ChannelYtInitialData.Badge> badges)
-        {
-            if (badges == null) return false;
-            foreach (var badge in badges)
-            {
-                var renderer = badge.metadataBadgeRenderer;
-                if (renderer == null) continue;
-                //labelには他にも"CC"等がある。ちゃんと値を見ないとダメ。
-                if (renderer.label == "LIVE NOW" || renderer.style == "BADGE_STYLE_TYPE_LIVE_NOW")
-                {
-                    return true;
-                }
-            }
-            return false;
         }
     }
 }

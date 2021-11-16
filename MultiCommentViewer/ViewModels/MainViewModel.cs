@@ -23,6 +23,7 @@ using SitePluginCommon;
 using System.Windows;
 using System.Windows.Controls;
 using NicoSitePlugin;
+using MixchSitePlugin;
 
 namespace MultiCommentViewer
 {
@@ -775,6 +776,10 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new OpenrecCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
+            }
+            else if (messageContext.Message is MixchSitePlugin.IMixchMessage mixchMessage)
+            {
+                mcvCvm = new MixchCommentViewModel(mixchMessage, messageContext.Metadata, messageContext.Methods, connectionName, _options);
             }
             else if (messageContext.Message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
             {
@@ -2084,4 +2089,3 @@ namespace MultiCommentViewer
         }
     }
 }
-

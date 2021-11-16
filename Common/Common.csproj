@@ -42,7 +42,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MvvmLightLibs" Version="5.4.1.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SharpVectors" Version="1.7.6" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.114.3" PrivateAssets="none" />
     <PackageReference Include="WebSocket4Net" Version="0.15.2" />
   </ItemGroup>

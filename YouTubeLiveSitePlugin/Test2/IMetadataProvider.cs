@@ -7,6 +7,7 @@ using Common;
 using System.Threading;
 using System.Diagnostics;
 using YouTubeLiveSitePlugin.Next;
+using ryu_s.YouTubeLive.Message;
 
 namespace YouTubeLiveSitePlugin.Test2
 {

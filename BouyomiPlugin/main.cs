@@ -40,6 +40,14 @@ namespace BouyomiPlugin
                     {
                         s += image.Alt;
                     }
+                    else if(part is IMessageRemoteSvg remoteSvg)
+                    {
+                        s += remoteSvg.Alt;
+                    }
+                    else
+                    {
+
+                    }
                 }
             }
             return s;

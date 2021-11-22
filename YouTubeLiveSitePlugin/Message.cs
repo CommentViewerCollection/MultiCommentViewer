@@ -163,7 +163,7 @@ namespace YouTubeLiveSitePlugin
                     return new Common.MessageSvgImage
                     {
                         Url = emoji.Url,
-                        Alt = "",
+                        Alt = emoji.EmojiId,
                         Height = 24,
                         Width = 24,
                     };

@@ -68,43 +68,29 @@ namespace NicoSitePlugin
         }
         public static async Task<MyInfo> GetMyInfo(IDataSource server, CookieContainer cc)
         {
-            var url = "https://com.nicovideo.jp/community/co1034396";
+            var url = "https://www.nicovideo.jp/my";
             var html = await server.GetAsync(url, cc);
-            var match = Regex.Match(html, "user:\\s*({[^}]+?})");
+            var match = Regex.Match(html, "data-common-header=\"(.+)\"></div>");
             if (!match.Success)
             {
                 throw new SpecChangedException(html);
             }
-            var data = match.Groups[1].Value;
-            var myInfo = new MyInfo();
-            var matchUserId = Regex.Match(data, "id\\s*:\\s*(\\d+)");
-            if (matchUserId.Success)
-            {
-                myInfo.UserId = matchUserId.Groups[1].Value;
-            }
-            var matchNickname = Regex.Match(data, "nickname\\s*:\\s*'([^']+)'");
-            if (matchNickname.Success)
-            {
-                myInfo.Nickname = matchNickname.Groups[1].Value;
-            }
-            var matchIcon = Regex.Match(data, "iconUrl\\s*:\\s*'([^']+)'");
-            if (matchIcon.Success)
-            {
-                myInfo.IconUrl = matchIcon.Groups[1].Value;
-            }
-            var matchPremium = Regex.Match(data, "isPremium\\s*:\\s*(true|false)");
-            if (matchPremium.Success)
-            {
-                myInfo.IsPremium = matchPremium.Groups[1].Value == "true";
-            }
-            var matchLogin = Regex.Match(data, "isLogin\\s*:\\s*(true|false)");
-            if (matchLogin.Success)
-            {
-                myInfo.IsLogin = matchLogin.Groups[1].Value == "true";
-            }
+            var json = match.Groups[1].Value.Replace("&quot;", "\"");
+            dynamic d = JsonConvert.DeserializeObject(json);
+            var isLogin = (bool)d.initConfig.user.isLogin;
+            var userId = (long)d.initConfig.user.id;
+            var isPremium = (bool)d.initConfig.user.isPremium;
+            var nickname = (string)d.initConfig.user.nickname;
+            var iconUrl = (string)d.initConfig.user.iconUrl;
 
-
-            return myInfo;
+            return new MyInfo
+            {
+                IsLogin = isLogin,
+                Nickname = nickname,
+                IconUrl = iconUrl,
+                IsPremium = isPremium,
+                UserId = userId.ToString(),
+            };
         }
         /// <summary>
         /// 

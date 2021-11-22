@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using System.Net;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace NicoSitePlugin
 {
@@ -38,33 +40,47 @@ namespace NicoSitePlugin
             };
             return userInfo;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="server"></param>
-        /// <param name="cc"></param>
-        /// <param name="communityId">co\d+</param>
-        /// <param name="limit"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        public static async Task<NicoSitePlugin2.Low.CommunityLives.Live[]> GetCommunityLives(IDataSource server, CookieContainer cc, string communityId, int limit, int offset)
+        public static async Task<CommunityLiveInfo[]> GetCommunityLives(IDataSource server, CookieContainer cc, string communityId)
         {
-            var url = $"https://com.nicovideo.jp/api/v1/communities/{communityId.Substring(2)}/lives.json?limit={limit}&offset={offset}";
+            //以下のAPIだとON_AIRだけ取れる。
+            //https://com.nicovideo.jp/api/v1/communities/{communityIdWithoutCo}/lives/onair.json
+            //でも配信していないと
+            //{"meta":{"status":404,"error-code":"RESOURCE_NOT_FOUND","error-message":"このコミュニティは生放送中ではありません。"}}
+            //が返ってくる
+
+
+            var communityIdWithoutCo = communityId.Substring(2);
+            var url = $"https://com.nicovideo.jp/api/v1/communities/{communityIdWithoutCo}/lives.json";
             var res = await server.GetAsync(url, cc);
             dynamic d = JsonConvert.DeserializeObject(res);
-            //{"meta":{"status":404,"error-code":"RESOURCE_NOT_FOUND","error-message":"対象のコミュニティが存在しません。"}}
-            //{"meta":{"status":404,"error-code":"RESOURCE_NOT_FOUND","error-message":"リソース communities の値の形式が不正です"}}
-            var status = (int)d.meta.status;
-            if (status == 200)
-            {
-                var obj = JsonConvert.DeserializeObject<NicoSitePlugin2.Low.CommunityLives.RootObject>(res);
-                return obj.Data.Lives;
-
-            }
-            else
+            if(d.meta.status != 200)
             {
                 throw new ApiGetCommunityLivesException();
             }
+            var lives = new List<CommunityLiveInfo>();
+            foreach(var liveDyn in d.data.lives)
+            {
+                var live = new CommunityLiveInfo
+                {
+                    Description = (string)liveDyn.description,
+                    LiveId = (string)liveDyn.id,
+                    Status = (string)liveDyn.status,
+                    Title = (string)liveDyn.title,
+                    UserId = (long)liveDyn.user_id,
+                    WatchUrl = (string)liveDyn.watch_url,
+                };
+                lives.Add(live);
+            }
+            return lives.ToArray();
+        }
+        public class CommunityLiveInfo
+        {
+            public string LiveId { get; set; }
+            public string Title { get; set; }
+            public string Description { get; set; }
+            public string Status { get; set; }
+            public long UserId { get; set; }
+            public string WatchUrl { get; set; }
         }
         public static async Task<MyInfo> GetMyInfo(IDataSource server, CookieContainer cc)
         {
@@ -116,16 +132,8 @@ namespace NicoSitePlugin
         /// <returns>配信中であればその配信のID、そうでなければnull</returns>
         internal static async Task<string> GetCurrentCommunityLiveId(IDataSource dataSource, string communityId, CookieContainer cc)
         {
-            var lives = await GetCommunityLives(dataSource, cc, communityId, 1, 0);
-            if (lives.Length > 0 && lives[0].Status == "ON_AIR")
-            {
-                return lives[0].Id;
-            }
-            else
-            {
-                return null;
-            }
-
+            var lives = await GetCommunityLives(dataSource, cc, communityId);
+            return lives.FirstOrDefault(a => a.Status == "ON_AIR")?.LiveId;
         }
     }
 }

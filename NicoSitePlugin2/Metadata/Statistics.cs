@@ -7,8 +7,8 @@ namespace NicoSitePlugin.Metadata
         public Statistics(string json)
         {
             dynamic d = JsonConvert.DeserializeObject(json);
-            Viewers = (int)d.data.viewers;
-            Comments = (int)d.data.comments;
+            Viewers = (int?)d.data.viewers;
+            Comments = (int?)d.data.comments;
             if (d.data.ContainsKey("adPoints"))
             {
                 AdPoints = (int)d.data.adPoints;
@@ -19,8 +19,8 @@ namespace NicoSitePlugin.Metadata
             }
             Raw = json;
         }
-        public int Viewers { get; }
-        public int Comments { get; }
+        public int? Viewers { get; }
+        public int? Comments { get; }
         public int? AdPoints { get; }
         public int? GiftPoints { get; }
         public string Raw { get; }

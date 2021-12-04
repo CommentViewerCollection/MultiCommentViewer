@@ -494,7 +494,7 @@
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <ComboBox ItemsSource="{Binding Connections}" SelectedValue="{Binding SelectedConnection}" DisplayMemberPath="Name" Grid.Column="0" Margin="10" Height="30" />
+            <ComboBox ItemsSource="{Binding ConnectedConnections}" SelectedValue="{Binding SelectedConnection}" DisplayMemberPath="Name" Grid.Column="0" Margin="10" Height="30" />
             <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" x:Name="PostCommentPanelPlaceHolder" Grid.Column="2" />
         </Grid>
     </Grid>

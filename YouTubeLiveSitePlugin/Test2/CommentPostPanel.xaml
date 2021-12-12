@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:YouTubeLiveSitePlugin.Test2"
              d:DataContext="{d:DesignInstance local:CommentPostPanelViewModel, IsDesignTimeCreatable=True}"
              mc:Ignorable="d" Height="50" Width="330">
-    <Grid Margin="0">
+    <Grid Margin="0,0,5,5">
         <TextBox HorizontalAlignment="Stretch" Height="23" IsEnabled="{Binding CanPostComment}" Margin="0,27,85,0" TextWrapping="NoWrap" Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Bottom">
             <TextBox.InputBindings>
                 <KeyBinding Command="{Binding PostCommentCommand}" Key="Return" />

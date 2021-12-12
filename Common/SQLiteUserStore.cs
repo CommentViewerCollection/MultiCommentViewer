@@ -406,7 +406,10 @@ namespace Common
                         {
                             reader.Read();
                             var json = reader.GetString(0);
-                            var update = reader.GetDateTime(1);
+                            //2021/11/30
+                            //"文字列は有効な DateTime ではありませんでした"という例外が投げられた。
+                            //どうせ使っていないから削除したいけど、原因不明だからとりあえずコメントアウト
+                            //var update = reader.GetDateTime(1);
                             userInfo = FromJson(json);
                             return true;
                         }

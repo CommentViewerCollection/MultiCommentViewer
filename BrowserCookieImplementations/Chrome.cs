@@ -23,23 +23,53 @@ namespace ryu_s.BrowserCookie
                 //恐らくChromeがインストールされていない
                 return list;
             }
-            var defaultDbFilePath = ChromeSettingsDirPath + _defaultProfileName + "\\" + _dbFilename;
-            if (System.IO.File.Exists(defaultDbFilePath))
+            //2021/12/12
+            //仕様変更があった。
+            //Cookiesファイルの配置が変わった
+            //旧:"PROFILENAME"\Cookies
+            //新:"PROFILENAME"\Network\Cookies
+            //"Default"プロファイルは新しい配置になっていたけど、他のプロファイルはそのままだった。
+            //新しいプロファイルを作成すると新しい配置になっていた。
+            var defaultProfilePath = Path.Combine(ChromeSettingsDirPath, _defaultProfileName);
+            var defaultDbFilePathOld = GetCookiesFileOldPath(defaultProfilePath, _dbFilename);
+            var defaultDbFilePath = GetCookiesFilePath(defaultProfilePath, _dbFilename);
+            if (System.IO.File.Exists(defaultDbFilePathOld))
             {
-                list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, _defaultProfileName));
+                list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, defaultDbFilePathOld, _defaultProfileName));
+            }
+            else if (System.IO.File.Exists(defaultDbFilePath))
+            {
+                list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, defaultDbFilePath, _defaultProfileName));
             }
             var dirs = System.IO.Directory.GetDirectories(ChromeSettingsDirPath);
             foreach (var dir in dirs)
             {
                 var dirName = System.IO.Path.GetFileName(dir);
-                var testPath = dir + "\\" + _dbFilename;
-                if (dirName.StartsWith("Profile", StringComparison.CurrentCultureIgnoreCase) && System.IO.File.Exists(testPath))
+                if (!dirName.StartsWith("Profile", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    var profileName = dirName;
-                    list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, profileName));
+                    continue;
+                }
+                var profileCookiesFilePath = GetCookiesFilePath(dir, _dbFilename);
+                var profileCookiesFilePathOld = GetCookiesFileOldPath(dir, _dbFilename);
+                var profileName = dirName;
+                if (File.Exists(profileCookiesFilePath))
+                {
+                    list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, profileCookiesFilePath, profileName));
+                }
+                else if (File.Exists(profileCookiesFilePathOld))
+                {
+                    list.Add(new ChromeProfile(Type, ChromeSettingsDirPath, profileCookiesFilePathOld, profileName));
                 }
             }
             return list;
+        }
+        private static string GetCookiesFilePath(string profilePath, string cookieFileName)
+        {
+            return Path.Combine(profilePath, "Network", cookieFileName);
+        }
+        private static string GetCookiesFileOldPath(string profilePath, string cookieFileName)
+        {
+            return Path.Combine(profilePath, cookieFileName);
         }
         #endregion
         private readonly string _dbFilename = "Cookies";
@@ -73,9 +103,17 @@ namespace ryu_s.BrowserCookie
             #endregion
 
             #region Constructors
+            [Obsolete]
             public ChromeProfile(BrowserType type, string userDataDirPath, string profileName)
             {
                 Path = userDataDirPath + "" + profileName + "\\Cookies";
+                ProfileName = profileName;
+                Type = type;
+                _decryptor.LocalStatePath = userDataDirPath + "Local State";
+            }
+            public ChromeProfile(BrowserType type, string userDataDirPath, string cookiesPath, string profileName)
+            {
+                Path = cookiesPath;
                 ProfileName = profileName;
                 Type = type;
                 _decryptor.LocalStatePath = userDataDirPath + "Local State";

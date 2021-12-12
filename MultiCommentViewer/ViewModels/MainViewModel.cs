@@ -1043,6 +1043,7 @@ namespace MultiCommentViewer
         public ObservableCollection<PluginMenuItemViewModel> PluginMenuItemCollection { get; } = new ObservableCollection<PluginMenuItemViewModel>();
         private readonly ObservableCollection<IMcvCommentViewModel> _comments = new ObservableCollection<IMcvCommentViewModel>();
         public ObservableCollection<ConnectionViewModel> Connections { get; } = new ObservableCollection<ConnectionViewModel>();
+        public ICollectionViewLiveShaping ConnectedConnections { get; }
 
         private ConnectionViewModel _selectedConnection;
         public ConnectionViewModel SelectedConnection
@@ -1705,6 +1706,28 @@ namespace MultiCommentViewer
             _browserLoader = browserLoader;
 
             Comments = CollectionViewSource.GetDefaultView(_comments);
+            //ConnectedConnections = CollectionViewSource.GetDefaultView(Connections);
+            //ConnectedConnections.Filter = x =>
+            //{
+            //    return x is ConnectionViewModel connVm && connVm.CanDisconnect;
+            //};
+            var view = new CollectionViewSource { Source = Connections }.View;
+            view.Filter = obj =>
+            {
+                if (!(obj is ConnectionViewModel connVm))
+                {
+                    return false;
+                }
+                return connVm.CanDisconnect;
+                //return true;
+            };
+            ConnectedConnections = view as ICollectionViewLiveShaping;
+            if (ConnectedConnections.CanChangeLiveFiltering)
+            {
+                //ConnectedConnections.LiveFilteringProperties.Add("CanDisconnect");
+                ConnectedConnections.LiveFilteringProperties.Add(nameof(ConnectionViewModel.CanDisconnect));
+                ConnectedConnections.IsLiveFiltering = true;
+            }
 
             MainViewContentRenderedCommand = new RelayCommand(ContentRendered);
             MainViewClosingCommand = new RelayCommand<CancelEventArgs>(Closing);

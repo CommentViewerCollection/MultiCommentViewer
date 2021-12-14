@@ -6,7 +6,7 @@ namespace NicoSitePlugin.Chat
     {
         public string Thread { get; }
         public int? No { get; }
-        public long Vpos { get; }
+        public long? Vpos { get; }
         public long Date { get; }
         public long DateUsec { get; }
         public string Mail { get; }
@@ -23,7 +23,7 @@ namespace NicoSitePlugin.Chat
             {
                 No = (int)d.chat.no;
             }
-            Vpos = (long)d.chat.vpos;
+            Vpos = (long?)d.chat.vpos;
             Date = (long)d.chat.date;
             DateUsec = (long)d.chat.date_usec;
             Mail = (string)d.chat.mail;

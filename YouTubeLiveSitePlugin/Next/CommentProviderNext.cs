@@ -338,8 +338,7 @@ namespace YouTubeLiveSitePlugin.Next
                 dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject(liveBroadcastDetails);
                 if (d.ContainsKey("startTimestamp"))
                 {
-                    var startedStr = (string)d.startTimestamp;
-                    _startedAt = DateTime.Parse(startedStr);
+                    _startedAt = (DateTime)d.startTimestamp;
                     _elapsedTimer.Interval = 500;
                     _elapsedTimer.Elapsed += (s, e) =>
                     {

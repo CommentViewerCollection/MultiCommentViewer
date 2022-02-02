@@ -571,8 +571,15 @@ namespace NicoSitePlugin
         public override async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
         {
             var cc = GetCookieContainer(browserProfile);
-            var myInfo = await Api.GetMyInfo(_server, cc);
-            return await Task.FromResult(new CurrentUserInfo { Username = myInfo.Nickname, IsLoggedIn = myInfo.IsLogin });
+            try
+            {
+                var myInfo = await Api.GetMyInfo(_server, cc);
+                return await Task.FromResult(new CurrentUserInfo { Username = myInfo.Nickname, IsLoggedIn = myInfo.IsLogin });
+            }
+            catch (NotLoggedInException)
+            {
+                return await Task.FromResult(new CurrentUserInfo { Username = "(未ログイン)", IsLoggedIn = false });
+            }
         }
         class CurrentUserInfo : ICurrentUserInfo
         {

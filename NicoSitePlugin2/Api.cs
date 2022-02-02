@@ -15,6 +15,7 @@ namespace NicoSitePlugin
 
         }
     }
+    class NotLoggedInException : Exception { }
     class UserInfo
     {
         public string Nickname { get; set; }
@@ -53,12 +54,12 @@ namespace NicoSitePlugin
             var url = $"https://com.nicovideo.jp/api/v1/communities/{communityIdWithoutCo}/lives.json";
             var res = await server.GetAsync(url, cc);
             dynamic d = JsonConvert.DeserializeObject(res);
-            if(d.meta.status != 200)
+            if (d.meta.status != 200)
             {
                 throw new ApiGetCommunityLivesException();
             }
             var lives = new List<CommunityLiveInfo>();
-            foreach(var liveDyn in d.data.lives)
+            foreach (var liveDyn in d.data.lives)
             {
                 var live = new CommunityLiveInfo
                 {
@@ -82,6 +83,14 @@ namespace NicoSitePlugin
             public long UserId { get; set; }
             public string WatchUrl { get; set; }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="server"></param>
+        /// <param name="cc"></param>
+        /// <returns></returns>
+        /// <exception cref="NotLoggedInException">未ログインの場合</exception>
+        /// <exception cref="SpecChangedException"></exception>
         public static async Task<MyInfo> GetMyInfo(IDataSource server, CookieContainer cc)
         {
             var url = "https://www.nicovideo.jp/my";
@@ -89,7 +98,16 @@ namespace NicoSitePlugin
             var match = Regex.Match(html, "data-common-header=\"(.+)\"></div>");
             if (!match.Success)
             {
-                throw new SpecChangedException(html);
+                var matchHtmlTitle = Regex.Match(html, "<title>([^<]*)</title>");
+                var title = matchHtmlTitle.Groups[1].Value;
+                if (matchHtmlTitle.Success && title.Contains("ログイン"))
+                {
+                    throw new NotLoggedInException();
+                }
+                else
+                {
+                    throw new SpecChangedException(html);
+                }
             }
             var json = match.Groups[1].Value.Replace("&quot;", "\"");
             dynamic d = JsonConvert.DeserializeObject(json);

@@ -91,6 +91,7 @@ namespace MildomSitePlugin
             var websocketUrl = "wss://jp-room1.mildom.com/?roomId=" + roomId;
             var p1 = new MessageProvider(new SytemNetWebSockets(websocketUrl), _logger);
             p1.MessageReceived += P1_MessageReceived;
+            p1.BinaryMessageReceived += P1_BinaryMessageReceived;
             p1.MetadataUpdated += P1_MetadataUpdated;
             //var p2 = new MetadataProvider2(_server, _siteOptions);
             //p2.MetadataUpdated += P2_MetadataUpdated;
@@ -105,9 +106,19 @@ namespace MildomSitePlugin
             finally
             {
                 p1.MessageReceived -= P1_MessageReceived;
+                p1.BinaryMessageReceived -= P1_BinaryMessageReceived;
                 p1.MetadataUpdated -= P1_MetadataUpdated;
                 //p2.MetadataUpdated -= P2_MetadataUpdated;
             }
+        }
+
+        private void P1_BinaryMessageReceived(object sender, byte[] e)
+        {
+            var raw = e;
+            var a = InternalMessage.InternalMessageParser.DecryptMessage(raw);
+            //var b = InternalMessage.InternalMessageParser.DecryptMessageWithBase64(raw);
+            SetMessage(a);
+            return;
         }
 
         private void P2_MetadataUpdated(object sender, ILiveInfo e)

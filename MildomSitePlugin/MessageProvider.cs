@@ -9,6 +9,7 @@ using Common;
 using Newtonsoft.Json.Linq;
 using SitePlugin;
 using SitePluginCommon.AutoReconnection;
+using System.Linq;
 
 namespace MildomSitePlugin
 {
@@ -264,6 +265,7 @@ namespace MildomSitePlugin
 
         //public event EventHandler<IInternalMessage> MessageReceived;
         public event EventHandler<string> MessageReceived;
+        public event EventHandler<byte[]> BinaryMessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
 
         public void Start()
@@ -281,7 +283,15 @@ namespace MildomSitePlugin
             _logger = logger;
             webSocket.Opened += WebSocket_Opened;
             webSocket.Received += WebSocket_Received;
+            webSocket.BinaryReceived += WebSocket_BinaryReceived;
         }
+
+        private void WebSocket_BinaryReceived(object sender, byte[] e)
+        {
+            var raw = e;
+            BinaryMessageReceived?.Invoke(this, raw);
+        }
+
         private void WebSocket_Received(object sender, string e)
         {
             var raw = e;
@@ -321,12 +331,24 @@ namespace MildomSitePlugin
                 return s;
             }
         }
+        private string CreateFirstMessage(string roomId, string userName, string guestId)
+        {
+            var userId = 0;
+            var level = 1;
+            var nonopara = "fr=web`sfr=pc`devi=Windows 10 64-bit`la=ja`gid=pc-gp-c5f6f156-12ab-4f7a-9f7a-13f103f2799a`na=Japan`loc=Japan|Tokyo`clu=aws_japan`wh=1920*1080`rtm=2022-01-30T14:46:10.215Z`ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36`click_time=2022-01-30 23:46:07.788`pcv=v3.8.5`source=homepage`sub_source=face_up_live`room_id=13284111`live_id=13284111-c7r96n4irkrcmvq9bal0`live_status=live`live_content_type=face_up_live";
+            var reqId = 1;
+            var reConnect = 0;
+            return $"{{\"userId\":{userId},\"level\":{level},\"userName\":\"{userName}\",\"gareaArgsObj\":{{\"source\":\"homepage\",\"sub_source\":\"face_up_live\"}},\"guestId\":\"{guestId}\",\"nonopara\":\"{nonopara}\",\"roomId\":{roomId},\"reqId\":{reqId},\"cmd\":\"enterRoom\",\"reConnect\":{reConnect},\"nobleLevel\":0,\"avatarDecortaion\":0,\"enterroomEffect\":0,\"nobleClose\":0,\"nobleSeatClose\":0}}";
+        }
         private async void WebSocket_Opened(object sender, EventArgs e)
         {
             try
             {
-                var msg = Create();
-                await _webSocket.SendAsync(msg);
+                var guestInfo = (AnonymousUserInfo)MyInfo;
+                var msg = CreateFirstMessage(RoomId, guestInfo.GuestName, guestInfo.GuestId);
+                var bytes = InternalMessage.InternalMessageParser.EnctyptMessage(msg);
+                await _webSocket.SendAsync(bytes);
+
                 //MessageReceived?.Invoke(this, new MildomConnected(""));
             }
             catch (Exception ex)

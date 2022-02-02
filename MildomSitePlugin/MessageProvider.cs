@@ -23,7 +23,11 @@ namespace MildomSitePlugin
     }
     class UnImplementedMessage : IInternalMessage
     {
-        public string Raw { get; set; }
+        public string Raw { get; }
+        public UnImplementedMessage(string raw)
+        {
+            Raw = raw;
+        }
     }
     class OnChatMessage : IInternalMessage
     {
@@ -216,11 +220,11 @@ namespace MildomSitePlugin
                     break;
                 case "runCmdNotify":
                     //{"cmd": "runCmdNotify", "runBody": {"host_id": 10038336, "room_id": 10038336, "user_id": 10008249, "user_level": 31, "user_name": "odoritora / Riddle"}, "runCmd": "on_host_followed", "type": 3}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = new UnImplementedMessage(raw);
                     break;
                 case "onLove":
                     //{"area": 2000, "cmd": "onLove", "count": 2, "countSum": 11, "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 46, "loveId": 4, "medals": [], "msg": "taps", "reqId": 0, "roomId": 10038336, "toId": 0, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10005716, "userImg": "https://lh3.googleusercontent.com/a-/AAuE7mDLSMHK8SDSzPp4b8GGKiPzml7J0xND7p6s7uw_=s120", "userName": "hashi070429"}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = new UnImplementedMessage(raw);
                     break;
                 case "onUserCount":
                     //{"cmd": "onUserCount", "roomId": 10000157, "type": 3, "userCount": 179}

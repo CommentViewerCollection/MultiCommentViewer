@@ -19,7 +19,11 @@ namespace MildomSitePlugin
     }
     class UnknownMessage : IInternalMessage
     {
-        public string Raw { get; set; }
+        public string Raw { get; }
+        public UnknownMessage(string raw)
+        {
+            Raw = raw;
+        }
     }
     class UnImplementedMessage : IInternalMessage
     {
@@ -236,17 +240,17 @@ namespace MildomSitePlugin
                     break;
                 case "onActivity":
                     //"{\"activity_id\": \"Valorant_8/5-8/31\", \"category\": \"defaultV2\", \"cmd\": \"onActivity\", \"content\": {\"endTime\": \"2020-08-31 23:00:00\", \"link\": \"https://event.mildom.com/activity/view?series_id=343&week=1&check_id=72d8d737028de098695a9823c34a69cc\", \"numberDesc\": \"rank\", \"pic\": \"https://up.mildom.com/jp/mildom/nnimgs/36e91c8a38ca5155ee5d9d251cce3e6f?p=0\", \"pointDesc\": \"point\", \"top_pic\": \"\"}, \"effect\": {\"effectId\": 0, \"endTime\": 0, \"rate\": 0, \"startTime\": 0, \"status\": 0}, \"enable\": 1, \"rst\": 0, \"type\": 3, \"weight\": 10}"
-                    internalMessage = new UnknownMessage();
+                    internalMessage = new UnknownMessage(raw);
                     break;
                 case "onForbidden":
                     //"{\"area\": 2000, \"cmd\": \"onForbidden\", \"fobiddenGlobal\": 0, \"reqId\": 0, \"roomId\": 10093333, \"rst\": 0, \"time\": 300, \"type\": 3, \"userId\": 10285881, \"userName\": \"かもちゃん\"}"
-                    internalMessage = new UnknownMessage();
+                    internalMessage = new UnknownMessage(raw);
                     break;
                 default:
                     //d.cmd = "onLiveStart"
                     //"{\"cmd\": \"onLiveStart\", \"reqId\": 0, \"roomId\": 10093333, \"type\": 3}"
                     //"{\"cmd\": \"onRecallMsg\", \"msgId\": \"1598498266966_10423897_3353\", \"reqId\": 5, \"roomId\": 10050854, \"rst\": 0, \"type\": 3, \"userId\": 10423897}"
-                    internalMessage = new UnknownMessage();
+                    internalMessage = new UnknownMessage(raw);
                     break;
             }
             return internalMessage;

@@ -41,6 +41,87 @@ namespace MildomSitePlugin
         public string UserImg { get; internal set; }
         public DateTime PostedAt { get; internal set; }
         public string Raw { get; set; }
+        public static IInternalMessage CreateChat(string raw, Dictionary<int, string> imageDict, dynamic d)
+        {
+            IInternalMessage internalMessage;
+            //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
+            var messageItems = PlainTextToCommentAndStamp(imageDict, d);
+            //2020/08/27 userIdの無いコメントを確認。ゲストユーザでもコメント投稿できるのだろうか？定型文だけ？
+            //{"area": 2000, "cmd": "onChat", "msg": "よくやった", "msgId": "1598498460835_0_8192", "reqId": 0, "roomId": 10007428, "time": "1598498460835", "toId": 10007428, "toName": "*", "type": 3, "userName": "guest737168"}
+            //2020/08/29 onAddでは匿名ユーザーのユーザーIDは0になっている。統一したい。
+            string userId;
+            if (d.IsDefined("userId"))
+            {
+                userId = ((long)d.userId).ToString();
+            }
+            else
+            {
+                //匿名ユーザー。userNameが"guest737168"のような形式だからこれを流用してみる。
+                userId = d.userName;
+            }
+            //userIdが無い場合はuserImgも無さそう。
+            string userImg;
+            if (d.IsDefined("userImg"))
+            {
+                userImg = d.userImg;
+            }
+            else
+            {
+                userImg = null;
+            }
+            internalMessage = new OnChatMessage
+            {
+                MessageItems = messageItems,
+                UserId = userId,
+                UserName = d.userName,
+                UserImg = userImg,
+                PostedAt = Utils.GetCurrentDateTime(),
+                Raw = raw,
+            };
+            return internalMessage;
+        }
+        /// <summary>
+        /// コメントの中に[/7]のような形式でスタンプが埋め込まれているから分離する
+        /// </summary>
+        /// <param name="imageDict"></param>
+        /// <param name="rawComment"></param>
+        /// <returns></returns>
+        private static List<IMessagePart> PlainTextToCommentAndStamp(Dictionary<int, string> imageDict, string rawComment)
+        {
+            var messageItems = new List<IMessagePart>();
+            var arr = Regex.Split(rawComment, "\\[/(\\d+)\\]");
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var item = arr[i];
+                if (i % 2 == 0)
+                {
+                    if (string.IsNullOrEmpty(item))
+                    {
+                        continue;
+                    }
+                    messageItems.Add(Common.MessagePartFactory.CreateMessageText(item));
+                }
+                else
+                {
+                    if (int.TryParse(item, out int n))
+                    {
+                        if (imageDict.TryGetValue(n, out var emotUrl))
+                        {
+                            messageItems.Add(new Common.MessageImage
+                            {
+                                Alt = $"[/{item}]",
+                                Height = 40,
+                                Width = 40,
+                                Url = emotUrl,
+                                X = null,
+                                Y = null,
+                            });
+                        }
+                    }
+                }
+            }
+            return messageItems;
+        }
     }
     class OnBroadcast : IInternalMessage
     {
@@ -100,12 +181,15 @@ namespace MildomSitePlugin
             };
         }
     }
-    class MessageParser
+    static class Utils
     {
         public static DateTime GetCurrentDateTime()
         {
             return DateTime.Now;
         }
+    }
+    class MessageParser
+    {
         public static IInternalMessage Parse(string raw, Dictionary<int, string> imageDict)
         {
             IInternalMessage internalMessage;
@@ -118,70 +202,7 @@ namespace MildomSitePlugin
                     break;
                 case "onChat":
                     {
-                        //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
-                        var messageItems = new List<IMessagePart>();
-                        var arr = Regex.Split(d.msg, "\\[/(\\d+)\\]");
-                        for (int i = 0; i < arr.Length; i++)
-                        {
-                            if (i % 2 == 0)
-                            {
-                                if (string.IsNullOrEmpty(arr[i]))
-                                {
-                                    continue;
-                                }
-                                messageItems.Add(Common.MessagePartFactory.CreateMessageText(arr[i]));
-                            }
-                            else
-                            {
-                                if (int.TryParse(arr[i], out int n))
-                                {
-                                    if (imageDict.TryGetValue(n, out var emotUrl))
-                                    {
-                                        messageItems.Add(new Common.MessageImage
-                                        {
-                                            Alt = $"[/{item}]",
-                                            Height = 40,
-                                            Width = 40,
-                                            Url = emotUrl,
-                                            X = null,
-                                            Y = null,
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                        //2020/08/27 userIdの無いコメントを確認。ゲストユーザでもコメント投稿できるのだろうか？定型文だけ？
-                        //{"area": 2000, "cmd": "onChat", "msg": "よくやった", "msgId": "1598498460835_0_8192", "reqId": 0, "roomId": 10007428, "time": "1598498460835", "toId": 10007428, "toName": "*", "type": 3, "userName": "guest737168"}
-                        //2020/08/29 onAddでは匿名ユーザーのユーザーIDは0になっている。統一したい。
-                        string userId;
-                        if (d.IsDefined("userId"))
-                        {
-                            userId = ((long)d.userId).ToString();
-                        }
-                        else
-                        {
-                            //匿名ユーザー。userNameが"guest737168"のような形式だからこれを流用してみる。
-                            userId = d.userName;
-                        }
-                        //userIdが無い場合はuserImgも無さそう。
-                        string userImg;
-                        if (d.IsDefined("userImg"))
-                        {
-                            userImg = d.userImg;
-                        }
-                        else
-                        {
-                            userImg = null;
-                        }
-                        internalMessage = new OnChatMessage
-                        {
-                            MessageItems = messageItems,
-                            UserId = userId,
-                            UserName = d.userName,
-                            UserImg = userImg,
-                            PostedAt = GetCurrentDateTime(),
-                            Raw = raw,
-                        };
+                        internalMessage =OnChatMessage. CreateChat(raw, imageDict, d);
                     }
                     break;
                 case "onAdd":
@@ -208,7 +229,7 @@ namespace MildomSitePlugin
                             UserId = userId,
                             UserName = username,
                             UserImg = d.userImg,
-                            PostedAt = GetCurrentDateTime(),
+                            PostedAt = Utils.GetCurrentDateTime(),
                             Raw = raw,
                         };
                     }
@@ -233,7 +254,7 @@ namespace MildomSitePlugin
                         UserId = (long)d.userId,
                         UserName = d.userName,
                         UserImg = d.userImg,
-                        PostedAt = GetCurrentDateTime(),
+                        PostedAt = Utils.GetCurrentDateTime(),
                         Raw = raw,
                     };
                     break;
@@ -271,9 +292,6 @@ namespace MildomSitePlugin
             return internalMessage;
         }
     }
-
-
-
     class MessageProvider : IProvider
     {
         public IProvider Master { get; set; }

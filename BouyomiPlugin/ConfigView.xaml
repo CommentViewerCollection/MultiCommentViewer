@@ -477,6 +477,7 @@
                                     <RowDefinition />
                                     <RowDefinition />
                                     <RowDefinition />
+                                    <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <CheckBox Grid.Row="0" IsChecked="{Binding IsMildomConnect}" Content="接続" />
                                 <CheckBox Grid.Row="1" IsChecked="{Binding IsMildomDisconnect}" Content="切断" />
@@ -496,8 +497,24 @@
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMildomComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMildomCommentNickname}" Content="コテハン" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMildomComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMildomCommentStampId}" Content="スタンプID" />
                                 </Grid>
-                                <CheckBox Grid.Row="3" IsChecked="{Binding IsMildomJoin}" Content="入室" />
-                                <CheckBox Grid.Row="4" IsChecked="{Binding IsMildomLeave}" Content="退室" />
+
+                                <Grid Grid.Row="3">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="CheckMildomGift" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMildomComment}" Content="ギフト" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMildomGift}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMildomGiftNickname}" Content="コテハン" />
+                                </Grid>
+                                <CheckBox Grid.Row="4" IsChecked="{Binding IsMildomJoin}" Content="入室" />
+                                <CheckBox Grid.Row="5" IsChecked="{Binding IsMildomLeave}" Content="退室" />
                             </Grid>
                         </Border>
 

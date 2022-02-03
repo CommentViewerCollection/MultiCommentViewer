@@ -590,13 +590,24 @@ namespace BouyomiPlugin
                             comment = (MildomMessage as IMildomJoinRoom).CommentItems.ToText();
                         }
                         break;
-                        //case MildomMessageType.Leave:
-                        //    if (_options.IsMildomLeave)
-                        //    {
-                        //        name = null;
-                        //        comment = (MildomMessage as IMildomLeave).CommentItems.ToText();
-                        //    }
-                        //    break;
+                    //case MildomMessageType.Leave:
+                    //    if (_options.IsMildomLeave)
+                    //    {
+                    //        name = null;
+                    //        comment = (MildomMessage as IMildomLeave).CommentItems.ToText();
+                    //    }
+                    //    break;
+                    case MildomMessageType.Gift:
+                        if (options.IsMildomGift)
+                        {
+                            if (options.IsMildomGiftNickname)
+                            {
+                                name = (MildomMessage as IMildomGift).UserName;
+                            }
+                            var giftName = ((IMildomGift)MildomMessage).GiftName;
+                            comment = $"{giftName}を贈りました";
+                        }
+                        break;
                 }
             }
             else if (message is IShowRoomMessage showroomMessage)

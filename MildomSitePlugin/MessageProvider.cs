@@ -85,6 +85,21 @@ namespace MildomSitePlugin
         public DateTime PostedAt { get; internal set; }
         public string Raw { get; set; }
     }
+    internal class OnUserCountMessage : IInternalMessage
+    {
+        public int UserCount { get; private set; }
+        public string Raw { get; private set; }
+        private OnUserCountMessage() { }
+        public static OnUserCountMessage Create(dynamic json, string raw)
+        {
+            var userCount = (int)json.userCount;
+            return new OnUserCountMessage()
+            {
+                UserCount = userCount,
+                Raw = raw,
+            };
+        }
+    }
     class MessageParser
     {
         public static DateTime GetCurrentDateTime()
@@ -232,7 +247,7 @@ namespace MildomSitePlugin
                     break;
                 case "onUserCount":
                     //{"cmd": "onUserCount", "roomId": 10000157, "type": 3, "userCount": 179}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = OnUserCountMessage.Create(d, raw);
                     break;
                 case "onLiveEnd":
                     //{"cmd": "onLiveEnd", "roomId": 10038336, "type": 3}

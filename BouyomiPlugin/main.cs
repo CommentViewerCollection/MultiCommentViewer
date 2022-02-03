@@ -573,7 +573,14 @@ namespace BouyomiPlugin
                             {
                                 name = (MildomMessage as IMildomComment).UserName;
                             }
-                            comment = (MildomMessage as IMildomComment).CommentItems.ToText();
+                            if (options.IsMildomCommentStampId)
+                            {
+                                comment = (MildomMessage as IMildomComment).CommentItems.ToTextWithImageAlt();
+                            }
+                            else
+                            {
+                                comment = (MildomMessage as IMildomComment).CommentItems.ToText();
+                            }
                         }
                         break;
                     case MildomMessageType.JoinRoom:

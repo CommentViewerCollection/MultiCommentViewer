@@ -484,6 +484,7 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition />
                                         <RowDefinition />
+                                        <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition />
@@ -493,6 +494,7 @@
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckMildomComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMildomComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMildomComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMildomCommentNickname}" Content="コテハン" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMildomComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMildomCommentStampId}" Content="スタンプID" />
                                 </Grid>
                                 <CheckBox Grid.Row="3" IsChecked="{Binding IsMildomJoin}" Content="入室" />
                                 <CheckBox Grid.Row="4" IsChecked="{Binding IsMildomLeave}" Content="退室" />

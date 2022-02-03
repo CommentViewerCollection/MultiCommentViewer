@@ -139,7 +139,7 @@ namespace MildomSitePlugin
                                     {
                                         messageItems.Add(new Common.MessageImage
                                         {
-                                            Alt = "",
+                                            Alt = $"[/{item}]",
                                             Height = 40,
                                             Width = 40,
                                             Url = emotUrl,

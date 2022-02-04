@@ -45,7 +45,7 @@ namespace MildomSitePlugin
         {
             IInternalMessage internalMessage;
             //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
-            var messageItems = PlainTextToCommentAndStamp(imageDict, d);
+            var messageItems = PlainTextToCommentAndStamp(imageDict, d.msg);
             //2020/08/27 userIdの無いコメントを確認。ゲストユーザでもコメント投稿できるのだろうか？定型文だけ？
             //{"area": 2000, "cmd": "onChat", "msg": "よくやった", "msgId": "1598498460835_0_8192", "reqId": 0, "roomId": 10007428, "time": "1598498460835", "toId": 10007428, "toName": "*", "type": 3, "userName": "guest737168"}
             //2020/08/29 onAddでは匿名ユーザーのユーザーIDは0になっている。統一したい。

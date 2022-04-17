@@ -421,11 +421,8 @@ namespace NicoSitePlugin
                             if (IsRawUserId(chat.UserId) && chat.UserId != SystemUserId && _siteOptions.IsAutoGetUsername)
                             {
                                 var userInfo = await Api.GetUserInfo(_server, _cc, chat.UserId);
-                                if (userInfo != null)
-                                {
-                                    username = userInfo.Nickname;
-                                    user.Name = Common.MessagePartFactory.CreateMessageItems(username);
-                                }
+                                username = userInfo?.Nickname;
+                                user.Name = Common.MessagePartFactory.CreateMessageItems(username);
                             }
                             if (_siteOptions.IsAutoSetNickname)
                             {

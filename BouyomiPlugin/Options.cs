@@ -53,6 +53,7 @@ namespace BouyomiPlugin
         public bool IsTwitchDisconnect { get { return GetValue(); } set { SetValue(value); } }
         public bool IsTwitchComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsTwitchCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsTwitchCommentEmoteId { get { return GetValue(); } set { SetValue(value); } }
 
         //ニコ生
         public bool IsNicoConnect { get { return GetValue(); } set { SetValue(value); } }
@@ -178,6 +179,7 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsTwitchDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTwitchComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTwitchCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsTwitchCommentEmoteId), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             //ニコ生
             Dict.Add(nameof(IsNicoConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

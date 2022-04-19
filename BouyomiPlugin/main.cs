@@ -291,7 +291,14 @@ namespace BouyomiPlugin
                             {
                                 name = (twitchMessage as ITwitchComment).DisplayName;
                             }
-                            comment = (twitchMessage as ITwitchComment).CommentItems.ToText();
+                            if (options.IsTwitchCommentEmoteId)
+                            {
+                                comment = (twitchMessage as ITwitchComment).CommentItems.ToTextWithImageAlt();
+                            }
+                            else
+                            {
+                                comment = (twitchMessage as ITwitchComment).CommentItems.ToText();
+                            }
                         }
                         break;
                 }

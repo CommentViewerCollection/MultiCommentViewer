@@ -297,6 +297,14 @@ namespace BouyomiPlugin
             get => _options.IsTwitchCommentNickname;
             set => _options.IsTwitchCommentNickname = value;
         }
+        /// <summary>
+        /// TwitchのコメントのエモートIDを読み上げるか
+        /// </summary>
+        public bool IsTwitchCommentEmoteId
+        {
+            get => _options.IsTwitchCommentEmoteId;
+            set => _options.IsTwitchCommentEmoteId = value;
+        }
         ///// <summary>
         ///// Twitchのアイテムを読み上げるか
         ///// </summary>

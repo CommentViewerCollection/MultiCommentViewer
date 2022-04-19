@@ -187,6 +187,7 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition />
                                         <RowDefinition />
+                                        <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition />
@@ -196,6 +197,7 @@
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckTwitchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwitchComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentNickname}" Content="コテハン" />
+                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentEmoteId}" Content="エモートID" />
                                 </Grid>
                             </Grid>
                         </Border>

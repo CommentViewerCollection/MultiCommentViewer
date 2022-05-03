@@ -730,6 +730,14 @@ namespace BouyomiPlugin
             set => _options.IsMildomCommentNickname = value;
         }
         /// <summary>
+        /// MildomのコメントのスタンプIDを読み上げるか
+        /// </summary>
+        public bool IsMildomCommentStampId
+        {
+            get => _options.IsMildomCommentStampId;
+            set => _options.IsMildomCommentStampId = value;
+        }
+        /// <summary>
         /// Mildomの入室メッセージを読み上げるか
         /// </summary>
         public bool IsMildomJoin

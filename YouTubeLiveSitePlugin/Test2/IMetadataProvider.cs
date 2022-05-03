@@ -42,92 +42,95 @@ namespace YouTubeLiveSitePlugin.Test2
             }
             string like = null;
             string dislike = null;
-            foreach (var action in actions)
+            if (actions != null)
             {
-                if (action.ContainsKey("updateViewershipAction"))
+                foreach (var action in actions)
                 {
-                    dynamic re;
-                    if (action.updateViewershipAction.ContainsKey("viewCount"))//2018/06/22 仕様変更だろうか。こっちに移行したっぽい
+                    if (action.ContainsKey("updateViewershipAction"))
                     {
-                        re = action.updateViewershipAction.viewCount.videoViewCountRenderer;
-                    }
-                    else
-                    {
-                        re = action.updateViewershipAction.viewership.videoViewCountRenderer;
-                    }
-                    if (re.ContainsKey("isLive"))
-                    {
-                        var isLive = re.isLive;
-                        metadata.IsLive = isLive;
-                    }
-                    if (re.ContainsKey("viewCount"))//viewCountが存在しない場合があった
-                    {
-                        if (re.viewCount.ContainsKey("runs"))
+                        dynamic re;
+                        if (action.updateViewershipAction.ContainsKey("viewCount"))//2018/06/22 仕様変更だろうか。こっちに移行したっぽい
                         {
-                            var lowViewCount = (string)re.viewCount.runs[0].text;
-                            metadata.CurrentViewers = new string(lowViewCount.Where(char.IsDigit).ToArray());
+                            re = action.updateViewershipAction.viewCount.videoViewCountRenderer;
                         }
-                        else if (re.viewCount.ContainsKey("simpleText"))
+                        else
                         {
-                            var lowViewCount = (string)re.viewCount.simpleText;
-                            metadata.CurrentViewers = new string(lowViewCount.Where(char.IsDigit).ToArray());
+                            re = action.updateViewershipAction.viewership.videoViewCountRenderer;
                         }
-                    }
-                    else
-                    {
-                        metadata.CurrentViewers = "0";
-                    }
-                }
-                else if (action.ContainsKey("updateTitleAction"))
-                {
-                    string title;
-                    if (action.updateTitleAction.title.ContainsKey("runs"))
-                    {
-                        title = "";
-                        var runs = action.updateTitleAction.title.runs;
-                        foreach (var run in runs)
+                        if (re.ContainsKey("isLive"))
                         {
-                            if (run.ContainsKey("text"))
+                            var isLive = re.isLive;
+                            metadata.IsLive = isLive;
+                        }
+                        if (re.ContainsKey("viewCount"))//viewCountが存在しない場合があった
+                        {
+                            if (re.viewCount.ContainsKey("runs"))
                             {
-                                title += (string)run.text;
+                                var lowViewCount = (string)re.viewCount.runs[0].text;
+                                metadata.CurrentViewers = new string(lowViewCount.Where(char.IsDigit).ToArray());
+                            }
+                            else if (re.viewCount.ContainsKey("simpleText"))
+                            {
+                                var lowViewCount = (string)re.viewCount.simpleText;
+                                metadata.CurrentViewers = new string(lowViewCount.Where(char.IsDigit).ToArray());
                             }
                         }
+                        else
+                        {
+                            metadata.CurrentViewers = "0";
+                        }
                     }
-                    else if (action.updateTitleAction.title.ContainsKey("simpleText"))
+                    else if (action.ContainsKey("updateTitleAction"))
                     {
-                        title = action.updateTitleAction.title.simpleText;
+                        string title;
+                        if (action.updateTitleAction.title.ContainsKey("runs"))
+                        {
+                            title = "";
+                            var runs = action.updateTitleAction.title.runs;
+                            foreach (var run in runs)
+                            {
+                                if (run.ContainsKey("text"))
+                                {
+                                    title += (string)run.text;
+                                }
+                            }
+                        }
+                        else if (action.updateTitleAction.title.ContainsKey("simpleText"))
+                        {
+                            title = action.updateTitleAction.title.simpleText;
+                        }
+                        else
+                        {
+                            title = null;
+                        }
+                        metadata.Title = title;
+                    }
+                    else if (action.ContainsKey("updateDescriptionAction"))
+                    {
+
+                    }
+                    else if (action.ContainsKey("updateToggleButtonTextAction"))
+                    {
+                        //"toggledText"は自分が押した場合の数値
+                        //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"1227"},"toggledText":{"simpleText":"1228"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_LIKE"}}}
+                        //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"42"},"toggledText":{"simpleText":"43"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_DISLIKE"}}}
+                        if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_LIKE")
+                        {
+                            like = (string)action.updateToggleButtonTextAction.defaultText.simpleText;
+                        }
+                        else if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_DISLIKE")
+                        {
+                            dislike = (string)action.updateToggleButtonTextAction.defaultText.simpleText;
+                        }
+                    }
+                    else if (action.ContainsKey("updateDateTextAction"))
+                    {
+                        //別の方法で経過時間を取得するから無視。
                     }
                     else
                     {
-                        title = null;
+                        Debug.WriteLine((string)action.ToString());
                     }
-                    metadata.Title = title;
-                }
-                else if (action.ContainsKey("updateDescriptionAction"))
-                {
-
-                }
-                else if (action.ContainsKey("updateToggleButtonTextAction"))
-                {
-                    //"toggledText"は自分が押した場合の数値
-                    //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"1227"},"toggledText":{"simpleText":"1228"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_LIKE"}}}
-                    //{{"updateToggleButtonTextAction":{"defaultText":{"simpleText":"42"},"toggledText":{"simpleText":"43"},"buttonId":"TOGGLE_BUTTON_ID_TYPE_DISLIKE"}}}
-                    if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_LIKE")
-                    {
-                        like = (string)action.updateToggleButtonTextAction.defaultText.simpleText;
-                    }
-                    else if (action.updateToggleButtonTextAction.buttonId == "TOGGLE_BUTTON_ID_TYPE_DISLIKE")
-                    {
-                        dislike = (string)action.updateToggleButtonTextAction.defaultText.simpleText;
-                    }
-                }
-                else if (action.ContainsKey("updateDateTextAction"))
-                {
-                    //別の方法で経過時間を取得するから無視。
-                }
-                else
-                {
-                    Debug.WriteLine((string)action.ToString());
                 }
             }
             string others = "";

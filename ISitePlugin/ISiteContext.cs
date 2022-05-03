@@ -15,7 +15,7 @@ namespace SitePlugin
         string DisplayName { get; }
         IOptionsTabPage TabPanel { get; }
         void SaveOptions(string path, IIo io);
-        void LoadOptions(string path, IIo io);        
+        void LoadOptions(string path, IIo io);
         void Init();
         void Save();
         ICommentProvider CreateCommentProvider();

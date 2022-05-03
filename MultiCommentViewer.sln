@@ -125,6 +125,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YouTubeLiveMessageParserIF"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YouTubeLiveMessageParserTests", "YouTubeLiveMessageParser\YouTubeLiveSitePluginTests\YouTubeLiveMessageParserTests.csproj", "{8FD19D9D-DBDA-4015-9F2C-0166226ACD1A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "McvCore", "McvCore\McvCore.csproj", "{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD} = {8311E2C5-B793-40D9-B8C4-107FF24859AD}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MainViewPlugin", "MainViewPlugin\MainViewPlugin.csproj", "{8311E2C5-B793-40D9-B8C4-107FF24859AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MainViewPluginTests", "MainViewPluginTests\MainViewPluginTests.csproj", "{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Alpha|Any CPU = Alpha|Any CPU
@@ -581,6 +590,30 @@ Global
 		{8FD19D9D-DBDA-4015-9F2C-0166226ACD1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FD19D9D-DBDA-4015-9F2C-0166226ACD1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FD19D9D-DBDA-4015-9F2C-0166226ACD1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Alpha|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Alpha|Any CPU.Build.0 = Debug|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Beta|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Beta|Any CPU.Build.0 = Debug|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA88F1C6-1558-4ACD-88AB-6547057A5E1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Alpha|Any CPU.ActiveCfg = Debug|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Alpha|Any CPU.Build.0 = Debug|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Beta|Any CPU.ActiveCfg = Debug|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Beta|Any CPU.Build.0 = Debug|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8311E2C5-B793-40D9-B8C4-107FF24859AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Alpha|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Alpha|Any CPU.Build.0 = Debug|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Beta|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Beta|Any CPU.Build.0 = Debug|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EA18984-DEFC-4EC5-A51C-8882BA12FD54}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -133,7 +133,7 @@ namespace MultiCommentViewer
         #region Fields
         private readonly Dictionary<IPlugin, PluginMenuItemViewModel> _pluginMenuItemDict = new Dictionary<IPlugin, PluginMenuItemViewModel>();
         private readonly ILogger _logger;
-        private IPluginManager _pluginManager;
+        //private IPluginManager _pluginManager;
         private readonly ISitePluginLoader _sitePluginLoader;
         public ISiteContext GetSiteContext(Guid siteContextGuid)
         {
@@ -270,18 +270,18 @@ namespace MultiCommentViewer
             }
 
             //PluginManagerの作成とプラグインの読み込み・初期化
-            _pluginManager = new PluginManager(_options);
-            _pluginManager.PluginAdded += PluginManager_PluginAdded;
-            try
-            {
-                _pluginManager.LoadPlugins(new PluginHost(this, _options, _io, _logger));
-                _pluginManager.OnLoaded();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                Debug.WriteLine(ex.Message);
-            }
+            //_pluginManager = new PluginManager(_options);
+            //_pluginManager.PluginAdded += PluginManager_PluginAdded;
+            //try
+            //{
+            //    _pluginManager.LoadPlugins(new PluginHost(this, _options, _io, _logger));
+            //    _pluginManager.OnLoaded();
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogException(ex);
+            //    Debug.WriteLine(ex.Message);
+            //}
 
             //前回保存したConnectionの読み込み
             try
@@ -346,7 +346,7 @@ namespace MultiCommentViewer
             }
             try
             {
-                _pluginManager?.OnClosing();
+                //_pluginManager.OnClosing();
             }
             catch (Exception ex)
             {
@@ -960,7 +960,7 @@ namespace MultiCommentViewer
                 //プラグインに渡すのはIInfoMessage以外全て
                 if (!(e.Message is IInfoMessage))
                 {
-                    _pluginManager.SetMessage(e.Message, e.Metadata);
+                    //_pluginManager.SetMessage(e.Message, e.Metadata);
                 }
                 await methods.AfterCommentAdded();
             }

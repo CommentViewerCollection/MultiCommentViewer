@@ -1,31 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using WebSocket4Net;
 using System.Diagnostics;
+using Mcv.PluginV2;
+
 namespace TwitchSitePlugin
 {
     public class MessageProvider2 : IMessageProvider
     {
-        public event EventHandler Opened;
+        public event EventHandler? Opened;
 
-        public event EventHandler<string> Received;
-        Common.IWebsocket _ws;
-        TaskCompletionSource<object> _tcs;
+        public event EventHandler<string>? Received;
+        IWebsocket? _ws;
+        TaskCompletionSource<object?> _tcs = new();
         public Task ReceiveAsync()
         {
-            _tcs = new TaskCompletionSource<object>();
+            _tcs = new TaskCompletionSource<object?>();
             var cookies = new List<KeyValuePair<string, string>>();
             if (_ws != null)
             {
-                _ws.Received -= _ws_MessageReceived;
-                _ws.Opened -= _ws_Opened;
+                _ws.Received -= Ws_MessageReceived;
+                _ws.Opened -= Ws_Opened;
             }
-            _ws = new Common.Websocket();
-            _ws.Received += _ws_MessageReceived;
-            _ws.Opened += _ws_Opened;
+            _ws = new Websocket();
+            _ws.Received += Ws_MessageReceived;
+            _ws.Opened += Ws_Opened;
             return _ws.ReceiveAsync("wss://irc-ws.chat.twitch.tv/");
         }
 
@@ -39,7 +39,7 @@ namespace TwitchSitePlugin
             _tcs.TrySetException(e.Exception);
         }
 
-        private void _ws_Opened(object sender, EventArgs e)
+        private void Ws_Opened(object? sender, EventArgs e)
         {
             Opened?.Invoke(this, e);
         }
@@ -48,10 +48,13 @@ namespace TwitchSitePlugin
         {
             Debug.WriteLine("send: " + s);
             await Task.Yield();
-            await _ws.SendAsync(s + "\r\n");
+            if (_ws is not null)
+            {
+                await _ws.SendAsync(s + "\r\n");
+            }
         }
 
-        private void _ws_MessageReceived(object sender, string e)
+        private void Ws_MessageReceived(object? sender, string e)
         {
             var arr = e.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var message in arr)

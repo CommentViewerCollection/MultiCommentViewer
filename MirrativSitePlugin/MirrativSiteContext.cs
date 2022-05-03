@@ -1,17 +1,12 @@
-﻿using Common;
-using SitePlugin;
-using SitePluginCommon;
+﻿using Mcv.PluginV2;
 using System;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Windows.Controls;
 
 namespace MirrativSitePlugin
 {
     public class MirrativSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("6DAFA768-280D-4E70-8494-FD5F31812EF5");
-
         public override string DisplayName => "Mirrativ";
         protected override SiteType SiteType => SiteType.Mirrativ;
         public override IOptionsTabPage TabPanel
@@ -26,10 +21,7 @@ namespace MirrativSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new MirrativCommentProvider2(_server, _logger, _options, _siteOptions, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new MirrativCommentProvider2(_server, _logger, _siteOptions);
         }
         private MirrativSiteOptions _siteOptions;
         public override void LoadOptions(string path, IIo io)
@@ -61,6 +53,23 @@ namespace MirrativSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new MirrativSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         public override bool IsValidInput(string input)
         {
             return Tools.IsValidLiveId(input) || Tools.IsValidUserId(input);
@@ -69,13 +78,11 @@ namespace MirrativSitePlugin
         {
             return null;
         }
-        private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        public MirrativSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public MirrativSiteContext(IDataServer server, ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _server = server;
             _logger = logger;
         }

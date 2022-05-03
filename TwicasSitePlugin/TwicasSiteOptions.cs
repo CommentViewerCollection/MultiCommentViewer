@@ -1,13 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Common;
-using System.Text.RegularExpressions;
+﻿using System.Linq;
 using System.Windows.Media;
 using System.Windows;
 using System;
 using System.ComponentModel;
+using Mcv.PluginV2;
 
 namespace TwicasSitePlugin
 {

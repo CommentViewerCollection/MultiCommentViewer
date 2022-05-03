@@ -7,9 +7,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Common;
+using Mcv.PluginV2;
 using Newtonsoft.Json;
-using SitePlugin;
 
 namespace OpenrecSitePlugin
 {

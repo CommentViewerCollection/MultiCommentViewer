@@ -1,5 +1,5 @@
-﻿using MildomSitePlugin;
-using SitePlugin;
+﻿using Mcv.PluginV2;
+using MildomSitePlugin;
 using System;
 using System.Collections.Generic;
 
@@ -19,9 +19,9 @@ internal class MildomJoinRoom : MessageBase2, IMildomJoinRoom
     {
         UserId = add.UserId.ToString();
         Id = "";
-        CommentItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(add.Message) };
-        NameItems = new List<IMessagePart> { Common.MessagePartFactory.CreateMessageText(add.UserName) };
-        UserIcon = new Common.MessageImage
+        CommentItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(add.Message) };
+        NameItems = new List<IMessagePart> { MessagePartFactory.CreateMessageText(add.UserName) };
+        UserIcon = new MessageImage
         {
             Url = add.UserImg,
             X = null,

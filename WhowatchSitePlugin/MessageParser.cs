@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Codeplex.Data;
-using Common;
+using Mcv.PluginV2;
 using Newtonsoft.Json;
-using SitePlugin;
 
 namespace WhowatchSitePlugin
 {
@@ -129,7 +128,7 @@ namespace WhowatchSitePlugin
                             UserName = comment.User.Name,
                             Comment = comment.Message,
                             Id = comment.Id.ToString(),
-                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
+                            PostTime = Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
                             UserId = comment.User.Id.ToString(),
                             UserPath = comment.User.UserPath,
                             //OriginalMessage = comment.OriginalMessage,
@@ -150,7 +149,7 @@ namespace WhowatchSitePlugin
                             UserName = comment.User.Name,
                             Comment = comment.Message,
                             Id = comment.Id.ToString(),
-                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
+                            PostTime = Utils.UnixtimeToDateTime((long)comment.PostedAt / 1000).ToString("HH:mm:ss"),
                             UserId = comment.User.Id.ToString(),
                             UserPath = comment.User.UserPath,
                             UserIcon = new MessageImage
@@ -212,7 +211,7 @@ namespace WhowatchSitePlugin
                             UserName = comment.user.name,
                             Comment = comment.message,
                             Id = comment.id.ToString(),
-                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
+                            PostTime = Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
                             UserId = comment.user.id.ToString(),
                             UserPath = comment.user.user_path,
                             OriginalMessage = comment.original_message,
@@ -233,7 +232,7 @@ namespace WhowatchSitePlugin
                             UserName = comment.user.name,
                             Comment = comment.message,
                             Id = comment.id.ToString(),
-                            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
+                            PostTime = Utils.UnixtimeToDateTime((long)comment.posted_at / 1000).ToString("HH:mm:ss"),
                             UserId = comment.user.id.ToString(),
                             UserPath = comment.user.user_path,
                             UserIcon = new MessageImage

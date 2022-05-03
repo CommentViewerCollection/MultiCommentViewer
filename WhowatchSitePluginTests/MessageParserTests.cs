@@ -1,10 +1,7 @@
-﻿using Moq;
+﻿using Mcv.PluginV2;
+using Moq;
 using NUnit.Framework;
-using SitePlugin;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using WhowatchSitePlugin;
 
@@ -35,8 +32,6 @@ namespace WhowatchSitePluginTests
             Assert.AreEqual("メガホンをプレゼントしました。", shout.Comment);
             Assert.AreEqual(568502964, shout.Id);
             Assert.AreEqual(1547574410000, shout.PostedAt);
-            Assert.AreEqual(data, shout.Raw);
-            Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
             Assert.AreEqual(12764231, shout.UserId);
             Assert.AreEqual("🔹SAPPOROイケチャン🔹休止中", shout.UserName);
             Assert.AreEqual("w:satorou", shout.UserPath);
@@ -58,8 +53,6 @@ namespace WhowatchSitePluginTests
             Assert.AreEqual("てｓｔ", shout.Comment);
             Assert.AreEqual("714170546", shout.Id);
             Assert.AreEqual("03:52:58", shout.PostTime);
-            Assert.AreEqual(data, shout.Raw);
-            Assert.AreEqual(SiteType.Whowatch, shout.SiteType);
             Assert.AreEqual("1072838", shout.UserId);
             Assert.AreEqual("Ryu", shout.UserName);
             Assert.AreEqual("t:kv510k", shout.UserPath);

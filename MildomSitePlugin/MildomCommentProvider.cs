@@ -1,12 +1,9 @@
-﻿using Common;
-using ryu_s.BrowserCookie;
-using SitePlugin;
-using SitePluginCommon;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using SitePluginCommon.AutoReconnection;
 using System.Collections.Generic;
+using Mcv.PluginV2;
+using Mcv.PluginV2.AutoReconnection;
 
 namespace MildomSitePlugin
 {
@@ -49,17 +46,15 @@ namespace MildomSitePlugin
         FirstCommentDetector _first = new FirstCommentDetector();
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly ICommentOptions _options;
         private readonly IMildomSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
 
         Dictionary<long, GiftItem> _giftDict;
-        public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public override async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             BeforeConnect();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternalAsync(input, cookies);
             }
             catch (Exception ex)
             {
@@ -72,7 +67,7 @@ namespace MildomSitePlugin
         }
         NewAutoReconnector _autoReconnector;
         Dictionary<int, string> _imageDict;
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, List<Cookie> cookies)
         {
             _isBeeingSentInitialComments = true;
             var mayBeRoomId = Tools.ExtractRoomId(input);
@@ -82,7 +77,7 @@ namespace MildomSitePlugin
                 return;
             }
             var roomId = mayBeRoomId.Value;
-            var cc = GetCookieContainer(browserProfile);
+            var cc = GetCookieContainer(cookies);
             _imageDict = await Api.GetImageDictionary(_server, roomId, cc);
             _giftDict = await Tools.GetGiftDict(_server);
 
@@ -98,7 +93,7 @@ namespace MildomSitePlugin
             //p2.Master = p1;
             try
             {
-                var dummy = new DummyImpl(_server, input, browserProfile, _logger, _siteOptions, p1);//, p2);
+                var dummy = new DummyImpl(_server, input, cookies, _logger, _siteOptions, p1);//, p2);
                 var connectionManager = new ConnectionManager(_logger);
                 _autoReconnector = new NewAutoReconnector(connectionManager, dummy, new MessageUntara(), _logger);
                 await _autoReconnector.AutoReconnectAsync();
@@ -181,43 +176,31 @@ namespace MildomSitePlugin
             {
                 var userId = chat.UserId.ToString();
                 var isFirst = _first.IsFirstComment(userId);
-                var user = GetUser(userId);
                 var comment = new MildomComment(chat, chat.Raw);
-                var metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirst)
-                {
-                    IsInitialComment = _isBeeingSentInitialComments,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new MildomMessageMethods();
+                string? newNickname = null;
                 if (_siteOptions.NeedAutoSubNickname)
                 {
                     var messageText = chat.MessageItems.ToText();
-                    var nick = SitePluginCommon.Utils.ExtractNickname(messageText);
+                    var nick = Utils.ExtractNickname(messageText);
                     if (!string.IsNullOrEmpty(nick))
                     {
-                        user.Nickname = nick;
+                        newNickname = nick;
                     }
                 }
-                return new MildomMessageContext(comment, metadata, methods);
+                return new MildomMessageContext(comment, userId, newNickname);
             }
             else if (message is OnGiftMessage internalGift)
             {
                 var userId = internalGift.UserId.ToString();
                 //var isFirst = _first.IsFirstComment(userId);
-                var user = GetUser(userId);
 
                 if (!_giftDict.TryGetValue(internalGift.GiftId, out var item))
                 {
                     item = new GiftItem("(未知のギフト)");
                 }
                 var gift = new MildomGift(internalGift, item);
-                var metadata = new GiftMessageMetadata(gift, _options, _siteOptions, user, this)
-                {
-                    IsInitialComment = _isBeeingSentInitialComments,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new MildomMessageMethods();
-                return new MildomMessageContext(gift, metadata, methods);
+
+                return new MildomMessageContext(gift, userId, null);
             }
             //if (message is IMildomComment comment)
             //{
@@ -245,15 +228,8 @@ namespace MildomSitePlugin
             else if (message is OnAddMessage add && _siteOptions.IsShowJoinMessage)
             {
                 var userId = add.UserId.ToString();
-                var user = GetUser(userId);
                 var join = new MildomJoinRoom(add);
-                var metadata = new JoinMessageMetadata(join, _options, _siteOptions, user, this)
-                {
-                    IsInitialComment = false,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new MildomMessageMethods();
-                return new MildomMessageContext(join, metadata, methods);
+                return new MildomMessageContext(join, userId, null);
             }
             ////else if (message is IMildomItem item)
             ////{
@@ -299,13 +275,12 @@ namespace MildomSitePlugin
         }
 
 
-        protected virtual CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
+        protected virtual CookieContainer GetCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();
 
             try
             {
-                var cookies = browserProfile.GetCookieCollection("mildom.com");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -317,10 +292,10 @@ namespace MildomSitePlugin
             }
             return cc;
         }
-        public override async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public override async Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
             await Task.Yield();
-            var userInfo = Tools.GetUserInfoFromCookie(browserProfile);
+            var userInfo = Tools.GetUserInfoFromCookie(cookies);
             if (userInfo != null)
             {
 
@@ -342,23 +317,16 @@ namespace MildomSitePlugin
             }
         }
 
-        public override IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.Mildom, userId);
-        }
-
         public override Task PostCommentAsync(string text)
         {
             throw new NotImplementedException();
         }
-        public MildomCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IMildomSiteOptions siteOptions, IUserStoreManager userStoreManager)
-            : base(logger, options)
+        public MildomCommentProvider(IDataServer server, ILogger logger, IMildomSiteOptions siteOptions)
+            : base(logger)
         {
             _server = server;
             _logger = logger;
-            _options = options;
             _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
         }
     }
     class CurrentUserInfo : ICurrentUserInfo

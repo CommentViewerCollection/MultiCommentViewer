@@ -1,17 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SitePlugin;
-using ryu_s.BrowserCookie;
-using Common;
-using System.Threading;
-using System.Diagnostics;
 using System.Net;
-using System.Drawing;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace MixchSitePlugin
 {
@@ -110,22 +102,15 @@ namespace MixchSitePlugin
             CanConnect = true;
             CanDisconnect = false;
         }
-        protected virtual List<Cookie> GetCookies(IBrowserProfile browserProfile)
+        protected virtual List<Cookie> GetCookies(List<Cookie> cookies)
         {
-            List<Cookie> cookies = null;
-            try
-            {
-                cookies = browserProfile.GetCookieCollection("mixch.tv");
-            }
-            catch { }
-            return cookies ?? new List<Cookie>();
+            return cookies;
         }
-        protected virtual CookieContainer CreateCookieContainer(IBrowserProfile browserProfile)
+        protected virtual CookieContainer CreateCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();
             try
             {
-                var cookies = browserProfile.GetCookieCollection("mixch.tv");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -134,13 +119,12 @@ namespace MixchSitePlugin
             catch { }
             return cc;
         }
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, List<Cookie> cookies)
         {
             if (_ws != null)
             {
                 throw new InvalidOperationException("");
             }
-            var cookies = GetCookies(browserProfile);
             LiveUrlInfo liveUrlInfo;
             try
             {
@@ -182,12 +166,12 @@ namespace MixchSitePlugin
                 _ws.Received -= WebSocket_Received;
             }
         }
-        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             BeforeConnecting();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternalAsync(input, cookies);
             }
             finally
             {
@@ -199,44 +183,14 @@ namespace MixchSitePlugin
         {
             return new MixchWebsocket(_logger);
         }
-
-        private CookieContainer CreateCookieContainer(List<Cookie> cookies)
-        {
-            var cc = new CookieContainer();
-            try
-            {
-                foreach (var cookie in cookies)
-                {
-                    cc.Add(cookie);
-                }
-            }
-            catch { }
-            return cc;
-        }
-
         private MixchMessageContext CreateMessageContext(Packet p, bool isInitialComment)
         {
             var userId = p.UserId.ToString();
-            var user = GetUser(userId) as IUser2;
-            if (!_userDict.ContainsKey(userId))
-            {
-                _userDict.AddOrUpdate(user.UserId, user, (id, u) => u);
-            }
-            bool isFirstComment;
-            if (_userCommentCountDict.ContainsKey(userId))
-            {
-                _userCommentCountDict[userId]++;
-                isFirstComment = false;
-            }
-            else
-            {
-                _userCommentCountDict.Add(userId, 1);
-                isFirstComment = true;
-            }
 
-            var nameItems = new List<IMessagePart>();
-            nameItems.Add(MessagePartFactory.CreateMessageText(p.Name));
-            user.Name = nameItems;
+            var nameItems = new List<IMessagePart>
+            {
+                MessagePartFactory.CreateMessageText(p.Name)
+            };
 
             var messageItems = new List<IMessagePart>();
             var messageBody = p.Message();
@@ -255,15 +209,8 @@ namespace MixchSitePlugin
                 NameItems = nameItems,
                 PostTime = DateTimeOffset.FromUnixTimeSeconds(p.Created).LocalDateTime,
                 UserId = p.UserId.ToString(),
-                IsFirstComment = isFirstComment,
             };
-            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-            {
-                IsInitialComment = isInitialComment,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new MixchMessageMethods();
-            messageContext = new MixchMessageContext(message, metadata, methods);
+            messageContext = new MixchMessageContext(message, userId, null);
             return messageContext;
         }
 
@@ -281,30 +228,22 @@ namespace MixchSitePlugin
                 _ws.Disconnect();
             }
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.Mixch, userId);
-        }
         #endregion //ICommentProvider
 
 
         #region Fields
-        private ICommentOptions _options;
         private MixchSiteOptions _siteOptions;
         private ILogger _logger;
-        private IUserStoreManager _userStoreManager;
         private readonly IDataSource _dataSource;
         #endregion //Fields
 
         #region ctors
         System.Timers.Timer _keepaliveTimer = new System.Timers.Timer();
         System.Timers.Timer _poipoiStockTimer = new System.Timers.Timer();
-        public CommentProvider(ICommentOptions options, MixchSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
+        public CommentProvider(MixchSiteOptions siteOptions, ILogger logger)
         {
-            _options = options;
             _siteOptions = siteOptions;
             _logger = logger;
-            _userStoreManager = userStoreManager;
             _dataSource = new DataSource();
 
             _keepaliveTimer.Interval = 1000;
@@ -368,14 +307,11 @@ namespace MixchSitePlugin
                 Text = message,
                 SiteType = SiteType.Mixch,
                 Type = type,
-            }, _options);
+            });
             MessageReceived?.Invoke(this, context);
         }
         public Guid SiteContextGuid { get; set; }
         Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
-        [Obsolete]
-        Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
-        ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
         Dictionary<string, Packet> _poipoiStockDict = new Dictionary<string, Packet>();
 
         private void WebSocket_Received(object sender, Packet p)
@@ -427,7 +363,7 @@ namespace MixchSitePlugin
             throw new NotImplementedException();
         }
 
-        public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public async Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
             // FIXME: コメビュでhttpsアクセスするとWeb版で開いているライブ視聴画面でアイテムの送信ができなくなる。
             // リロードで直るので何らかのセッション不整合が起きている模様。

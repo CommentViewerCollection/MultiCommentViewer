@@ -1,11 +1,7 @@
-﻿using MirrativSitePlugin;
+﻿using Mcv.PluginV2;
+using MirrativSitePlugin;
 using NUnit.Framework;
-using SitePlugin;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MirrativSitePluginTests
 {

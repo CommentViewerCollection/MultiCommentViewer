@@ -2,14 +2,11 @@
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 using System.Collections;
 using System.Reflection;
-using SitePlugin;
-using Common;
 using TwitchSitePlugin.Low.ChannelProduct;
+using Mcv.PluginV2;
 
 namespace TwitchSitePlugin
 {
@@ -58,9 +55,9 @@ namespace TwitchSitePlugin
         /// <param name="json"></param>
         /// <exception cref="ParseException"></exception>
         /// <returns></returns>
-        public static T Deserialize<T>(string json)
+        public static T? Deserialize<T>(string json)
         {
-            T low;
+            T? low;
             try
             {
                 low = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);

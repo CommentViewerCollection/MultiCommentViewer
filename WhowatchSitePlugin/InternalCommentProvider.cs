@@ -1,5 +1,4 @@
-﻿using Codeplex.Data;
-using Common;
+﻿using Mcv.PluginV2;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -49,7 +48,7 @@ namespace WhowatchSitePlugin
                 var raw = internalMessage.Raw;
                 Debug.WriteLine(raw);
 
-                if(internalMessage.InternalMessageType == WhowatchInternalMessageType.Shout)
+                if (internalMessage.InternalMessageType == WhowatchInternalMessageType.Shout)
                 {
                     var message = MessageParser.ParseShoutMessage(internalMessage);
                     if (message is IWhowatchNgComment)

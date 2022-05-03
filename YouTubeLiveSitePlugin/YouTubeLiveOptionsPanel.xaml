@@ -1,0 +1,34 @@
+﻿<UserControl x:Class="Mcv.YouTubeLiveSitePlugin.YouTubeLiveOptionsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:p="clr-namespace:Mcv.PluginV2;assembly=McvPlugin"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <UserControl.Resources>
+        <p:NotConverter x:Key="notConverter" />
+    </UserControl.Resources>
+    <Grid Background="#FFE5E5E5">
+        <xctk:ColorPicker  SelectedColor="{Binding PaidCommentBackColor}" Margin="160,32,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <xctk:ColorPicker  SelectedColor="{Binding PaidCommentForeColor}" Margin="160,63,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <Label x:Name="label10_Copy" Content="スーパーチャットの背景色" HorizontalAlignment="Left" Margin="30,28,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="label11_Copy" Content="スーパーチャットの文字色" HorizontalAlignment="Left" Margin="30,59,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="10,160,0,0" VerticalAlignment="Top"/>
+        <GroupBox x:Name="groupBox" Header="チャットの種類" HorizontalAlignment="Left" Height="75" Margin="50,200,0,0" VerticalAlignment="Top" Width="195">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="43*"/>
+                    <ColumnDefinition Width="18*"/>
+                </Grid.ColumnDefinitions>
+                <RadioButton x:Name="radioJouiChat" GroupName="ChatType" Content="上位チャット" IsChecked="{Binding ElementName=radioAllChat, Path=IsChecked, Converter={StaticResource notConverter}, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                <RadioButton x:Name="radioAllChat" GroupName="ChatType" Content="すべてのチャット" IsChecked="{Binding IsAllChat, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Margin="10,30,0,0" VerticalAlignment="Top"/>
+            </Grid>
+        </GroupBox>
+        <xctk:ColorPicker  SelectedColor="{Binding MembershipBackColor}" Margin="160,93,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <xctk:ColorPicker  SelectedColor="{Binding MembershipForeColor}" Margin="160,124,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Height="22" />
+        <Label x:Name="label10_Copy1" Content="メンバー登録の背景色" HorizontalAlignment="Left" Margin="30,89,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.163,0.462"/>
+        <Label x:Name="label11_Copy1" Content="メンバー登録の文字色" HorizontalAlignment="Left" Margin="30,120,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.564,1.631"/>
+    </Grid>
+</UserControl>

@@ -1,9 +1,8 @@
-﻿using Common;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
-using SitePluginCommon.AutoReconnection;
-using System;
-using ryu_s.BrowserCookie;
+using Mcv.PluginV2;
+using Mcv.PluginV2.AutoReconnection;
 
 namespace MildomSitePlugin
 {
@@ -11,7 +10,7 @@ namespace MildomSitePlugin
     {
         private readonly IDataServer _server;
         private readonly string _input;
-        private readonly IBrowserProfile _browserProfile;
+        private readonly List<Cookie> _cookies;
         private readonly ILogger _logger;
         private readonly IMildomSiteOptions _siteOptions;
         private readonly MessageProvider _p1;
@@ -26,7 +25,7 @@ namespace MildomSitePlugin
 
         public async Task<IEnumerable<IProvider>> GenerateGroupAsync()
         {
-            var myUserInfo = Tools.GetUserInfoFromCookie(_browserProfile);
+            var myUserInfo = Tools.GetUserInfoFromCookie(_cookies);
             var roomId = Tools.ExtractRoomId(_input);
             _p1.MyInfo = myUserInfo;
             _p1.RoomId = roomId.Value.ToString();
@@ -38,11 +37,11 @@ namespace MildomSitePlugin
             };
         }
 
-        public DummyImpl(IDataServer server, string input, IBrowserProfile browserProfile, ILogger logger, IMildomSiteOptions siteOptions, MessageProvider p1)
+        public DummyImpl(IDataServer server, string input, List<Cookie> cookies, ILogger logger, IMildomSiteOptions siteOptions, MessageProvider p1)
         {
             _server = server;
             _input = input;
-            _browserProfile = browserProfile;
+            _cookies = cookies;
             _logger = logger;
             _siteOptions = siteOptions;
             _p1 = p1;

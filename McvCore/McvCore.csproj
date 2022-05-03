@@ -1,0 +1,120 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net60-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <Configurations>Release;Beta;Alpha;Debug</Configurations>
+    <ApplicationIcon>mcv_icon2.ico</ApplicationIcon>
+    <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
+    <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
+    <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
+    <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <Version>$(VersionPrefix)</Version>
+    <AssemblyName>MultiCommentViewer</AssemblyName>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>embedded</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
+    <OutputPath>bin\Beta\</OutputPath>
+    <DefineConstants>TRACE;BETA</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>true</Optimize>
+    <DebugType>embedded</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Alpha|AnyCPU'">
+    <OutputPath>bin\Alpha\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;ALPHA</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="7.0.10" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SQLitePCLRaw.bundle_winsqlite3" Version="2.1.6" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="7.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BigoIF\BigoIF.csproj" />
+    <ProjectReference Include="..\BigoSitePlugin\BigoSitePlugin.csproj" />
+    <ProjectReference Include="..\BrowserCookiePlugin\BrowserCookiePlugin.csproj" />
+    <ProjectReference Include="..\MainViewPlugin\MainViewPlugin.csproj" />
+    <ProjectReference Include="..\McvPlugin\McvPlugin.csproj" />
+    <ProjectReference Include="..\MildomSitePlugin\MildomSitePlugin.csproj" />
+    <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj" />
+    <ProjectReference Include="..\MixchSitePlugin\MixchSitePlugin.csproj" />
+    <ProjectReference Include="..\NicoSitePlugin2\NicoSitePlugin.csproj" />
+    <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj" />
+    <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj" />
+    <ProjectReference Include="..\ShowRoomSitePlugin\ShowRoomSitePlugin.csproj" />
+    <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj" />
+    <ProjectReference Include="..\TwitchSitePlugin\TwitchSitePlugin.csproj" />
+    <ProjectReference Include="..\WhowatchSitePlugin\WhowatchSitePlugin.csproj" />
+    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
+    <ProjectReference Include="..\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj" />
+  </ItemGroup>
+  <Target Name="PostBuildMacros">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="Targets" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <VersionNumber Include="$([System.Text.RegularExpressions.Regex]::Replace(&quot;%(Targets.Version)&quot;, &quot;^([^\.]+)\.([^\.]+)\.([^\.]+)(.*)$&quot;, &quot;$1.$2.$3&quot;))" />
+    </ItemGroup>
+  </Target>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Release\</MyOutputDir>
+    <NoWarn>1701;1702;CA1416</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Beta|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Beta\</MyOutputDir>
+    <NoWarn>1701;1702;CA1416</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Alpha|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Alpha\</MyOutputDir>
+    <NoWarn>1701;1702;CA1416</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Debug\</MyOutputDir>
+    <NoWarn>1701;1702;CA1416</NoWarn>
+  </PropertyGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  </Target>
+  <Target Name="MyAfterPublish" AfterTargets="Publish">
+
+  </Target>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command=":: 余分なファイルをリリースしてしまわないように一旦全部消す&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;  rd /s /q &quot;$(MyOutputDir)&quot;&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;  rd /s /q &quot;$(MyOutputDir)&quot;&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;  rd /s /q &quot;$(MyOutputDir)&quot;&#xD;&#xA;) else if $(ConfigurationName) == Debug (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;  rd /s /q &quot;$(MyOutputDir)&quot;&#xD;&#xA;)&#xD;&#xA;" />
+  </Target>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="&#xD;&#xA;:: フォルダがごちゃごちゃしていると実行ファイルを見つけにくいからdllディレクトリを作成し、全部突っ込む&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;::ReadMe.txtをコピー&#xD;&#xA;if $(ConfigurationName) == Debug (&#xD;&#xA;  xcopy /y &quot;$(ProjectDir)ReadMe.txt&quot; &quot;$(OutDir)&quot;&#xD;&#xA;) else (&#xD;&#xA;  xcopy /y &quot;$(ProjectDir)ReadMe.txt&quot; &quot;$(MyOutputDir)&quot;&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;:: settingsディレクトリを作成&#xD;&#xA;if not exist &quot;$(OutDir)settings&quot; mkdir &quot;$(OutDir)settings&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)settings&quot; mkdir &quot;$(MyOutputDir)settings&quot;&#xD;&#xA;:: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある&#xD;&#xA;if not exist &quot;$(OutDir)settings\placeholder&quot; powershell New-Item &quot;$(OutDir)settings\placeholder&quot; -ItemType file&#xD;&#xA;if not exist &quot;$(MyOutputDir)settings\placeholder&quot; powershell New-Item &quot;$(MyOutputDir)settings\placeholder&quot; -ItemType file&#xD;&#xA;&#xD;&#xA;:: MainViewPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\MainView&quot; mkdir &quot;$(OutDir)plugins\MainView&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MainViewPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\MainView&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\MainView&quot; mkdir &quot;$(MyOutputDir)plugins\MainView&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MainViewPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\MainView&quot;&#xD;&#xA;&#xD;&#xA;:: BigoSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\BigoSitePlugin&quot; mkdir &quot;$(OutDir)plugins\BigoSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BigoSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\BigoSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\BigoSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\BigoSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BigoSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\BigoSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: MildomSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\MildomSitePlugin&quot; mkdir &quot;$(OutDir)plugins\MildomSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MildomSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\MildomSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\MildomSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\MildomSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MildomSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\MildomSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: MirrativSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\MirrativSitePlugin&quot; mkdir &quot;$(OutDir)plugins\MirrativSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MirrativSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\MirrativSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\MirrativSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\MirrativSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MirrativSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\MirrativSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: MixchSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\MixchSitePlugin&quot; mkdir &quot;$(OutDir)plugins\MixchSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MixchSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\MixchSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\MixchSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\MixchSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\MixchSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\MixchSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: NicoSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\NicoSitePlugin&quot; mkdir &quot;$(OutDir)plugins\NicoSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\NicoSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\NicoSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\NicoSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\NicoSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\NicoSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\NicoSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: OpenrecSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\OpenrecSitePlugin&quot; mkdir &quot;$(OutDir)plugins\OpenrecSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\OpenrecSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\OpenrecSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\OpenrecSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\OpenrecSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\OpenrecSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\OpenrecSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: ShowRoomSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\ShowRoomSitePlugin&quot; mkdir &quot;$(OutDir)plugins\ShowRoomSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\ShowRoomSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\ShowRoomSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\ShowRoomSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\ShowRoomSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\ShowRoomSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\ShowRoomSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: TwicasSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\TwicasSitePlugin&quot; mkdir &quot;$(OutDir)plugins\TwicasSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\TwicasSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\TwicasSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\TwicasSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\TwicasSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\TwicasSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\TwicasSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: TwitchSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\TwitchSitePlugin&quot; mkdir &quot;$(OutDir)plugins\TwitchSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\TwitchSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\TwitchSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\TwitchSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\TwitchSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\TwitchSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\TwitchSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: YouTubeLiveSitePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\YouTubeLiveSitePlugin&quot; mkdir &quot;$(OutDir)plugins\YouTubeLiveSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\YouTubeLiveSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\YouTubeLiveSitePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\YouTubeLiveSitePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\YouTubeLiveSitePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\YouTubeLiveSitePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\YouTubeLiveSitePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: BouyomiPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\BouyomiPlugin&quot; mkdir &quot;$(OutDir)plugins\BouyomiPlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BouyomiPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\BouyomiPlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\BouyomiPlugin&quot; mkdir &quot;$(MyOutputDir)plugins\BouyomiPlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BouyomiPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\BouyomiPlugin&quot;&#xD;&#xA;&#xD;&#xA;:: BrowserCookiePluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\BrowserCookiePlugin&quot; mkdir &quot;$(OutDir)plugins\BrowserCookiePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BrowserCookiePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\BrowserCookiePlugin&quot;&#xD;&#xA;if not exist &quot;$(MyOutputDir)plugins\BrowserCookiePlugin&quot; mkdir &quot;$(MyOutputDir)plugins\BrowserCookiePlugin&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BrowserCookiePlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\BrowserCookiePlugin&quot;&#xD;&#xA;&#xD;&#xA;:: 自動アップデートに必要なlist.txtを作成&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File &quot;$(ProjectDir)\updateFileList.ps1&quot; -TargetDir &quot;$(TargetDir)\&quot;&#xD;&#xA;&#xD;&#xA;::zip化&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(TargetDir)\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;stable&quot;&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(TargetDir)\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;beta&quot;&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(TargetDir)\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;alpha&quot;&#xD;&#xA;)&#xD;&#xA;" />
+  </Target>
+</Project>

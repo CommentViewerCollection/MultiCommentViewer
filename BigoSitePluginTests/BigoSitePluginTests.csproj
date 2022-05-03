@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net60-windows</TargetFramework>
-    <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -38,11 +38,12 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BigoIF\BigoIF.csproj" />
     <ProjectReference Include="..\BigoSitePlugin\BigoSitePlugin.csproj" />
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
   </ItemGroup>
 </Project>

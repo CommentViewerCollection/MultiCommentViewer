@@ -1,19 +1,16 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 
 namespace BigoSitePlugin
 {
     internal class BigoMessageContext : IMessageContext
     {
-        public SitePlugin.ISiteMessage Message { get; }
+        public ISiteMessage Message { get; }
+        public string? UserId { get; }
+        public string? NewNickname { get; }
 
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public BigoMessageContext(IBigoMessage message, BigoMessageMetadata metadata, IMessageMethods methods)
+        public BigoMessageContext(IBigoMessage message)
         {
             Message = message;
-            Metadata = metadata;
-            Methods = methods;
         }
     }
 }

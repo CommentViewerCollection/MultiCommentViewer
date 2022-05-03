@@ -1,4 +1,4 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -68,7 +68,7 @@ namespace MirrativSitePlugin
         /// </summary>
         /// <param name="keyValueData">{"key1":"value1","key2":0,"key3":"value3"}のような文字列</param>
         /// <returns></returns>
-        public static Dictionary<string,string> KeyValue2Dict(string keyValueData)
+        public static Dictionary<string, string> KeyValue2Dict(string keyValueData)
         {
             var temp = keyValueData;
             var dict = new Dictionary<string, string>();
@@ -76,13 +76,13 @@ namespace MirrativSitePlugin
             {
                 return dict;
             }
-            if(keyValueData.Length < 2)
+            if (keyValueData.Length < 2)
             {
                 return dict;
             }
             temp = temp.Substring(1, temp.Length - 2);//囲っている{}を外す
             var kvArr = temp.Split(new[] { "," }, StringSplitOptions.None);
-            foreach(var kv in kvArr)
+            foreach (var kv in kvArr)
             {
                 var match = Regex.Match(kv, "\"(?<key>[^\"]+)\":\"?(?<value>[^\"]+)\"?");
                 if (match.Success)

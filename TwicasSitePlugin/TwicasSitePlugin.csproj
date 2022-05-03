@@ -2,7 +2,7 @@
   <PropertyGroup>
     <UseWPF>true</UseWPF>
     <TargetFramework>net60-windows</TargetFramework>
-    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -39,16 +39,14 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="7.0.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
+    <ProjectReference Include="..\McvPlugin\McvPlugin.csproj" />
     <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />
   </ItemGroup>
 </Project>

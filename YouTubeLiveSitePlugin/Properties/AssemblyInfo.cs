@@ -2,4 +2,3 @@
 
 [assembly: InternalsVisibleTo("YouTubeLiveSitePluginTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-[assembly: InternalsVisibleTo("SitePluginTests")]

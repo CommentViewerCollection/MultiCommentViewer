@@ -1,4 +1,4 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 using System.Collections.Generic;
 
 namespace TwitchSitePlugin

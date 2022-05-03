@@ -1,23 +1,14 @@
-﻿using Common;
-using SitePlugin;
-using SitePluginCommon;
+﻿using Mcv.PluginV2;
 using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace WhowatchSitePlugin
 {
     public class WhowatchSiteContext : SiteContextBase
     {
         private IWhowatchSiteOptions _siteOptions;
-        private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-
-        public override Guid Guid => new Guid("EA695072-BABB-4FC9-AB9F-2F87D829AE7D");
-
         public override string DisplayName => "ふわっち";
         protected override SiteType SiteType => SiteType.Whowatch;
         public override IOptionsTabPage TabPanel
@@ -32,10 +23,7 @@ namespace WhowatchSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new WhowatchCommentProvider(_server, _options, _siteOptions, _userStoreManager, _logger)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new WhowatchCommentProvider(_server, _siteOptions, _logger);
         }
 
         public override System.Windows.Controls.UserControl GetCommentPostPanel(ICommentProvider commentProvider)
@@ -91,14 +79,30 @@ namespace WhowatchSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new WhowatchSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         protected virtual IDataServer CreateServer()
         {
             return new DataServer();
         }
-        public WhowatchSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public WhowatchSiteContext(ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _server = CreateServer();
             _logger = logger;
         }

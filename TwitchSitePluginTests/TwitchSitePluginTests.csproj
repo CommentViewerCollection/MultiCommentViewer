@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net60-windows</TargetFramework>
-    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -38,16 +38,21 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Moq" Version="4.13.1" />
-    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
+    <PackageReference Include="Moq" Version="4.20.69" />
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BrowserCookieImplementationsTests\BrowserCookieImplementationsTests.csproj" />
-    <ProjectReference Include="..\BrowserCookieImplementations\BrowserCookieImplementations.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
     <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />
     <ProjectReference Include="..\TwitchSitePlugin\TwitchSitePlugin.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="SampleData\ChannelProduct.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleData\Streams.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

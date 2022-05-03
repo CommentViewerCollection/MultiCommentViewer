@@ -1,0 +1,97 @@
+﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+
+namespace Mcv.PluginV2
+{
+    /// <summary>
+    /// Interaction logic for NumericUpDown.xaml
+    /// </summary>
+    public partial class NumericUpDown : UserControl
+    {
+        public NumericUpDown()
+        {
+            InitializeComponent();
+            Minimum = int.MinValue;
+            Maximum = int.MaxValue;
+            Value = Maximum - 1;
+        }
+
+        private void UpButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Value < int.MaxValue)
+            {
+                Value++;
+            }
+        }
+
+        private void DownButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Value > int.MinValue)
+            {
+                Value--;
+            }
+        }
+
+        public static readonly DependencyProperty ValueProperty =
+            DependencyProperty.Register(
+        "Value",
+        typeof(int),
+        typeof(NumericUpDown),
+        new FrameworkPropertyMetadata(0, PropertyChanged) { BindsTwoWayByDefault = true, DefaultUpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+
+        public int Value
+        {
+            get { return (int)GetValue(ValueProperty); }
+            set { SetValue(ValueProperty, value); }
+        }
+
+        public static readonly DependencyProperty MinimumProperty =
+            DependencyProperty.Register(
+                "Minimum",
+                typeof(int),
+                typeof(NumericUpDown),
+                new PropertyMetadata(0));
+        public int Minimum
+        {
+            get { return (int)GetValue(MinimumProperty); }
+            set { SetValue(MinimumProperty, value); }
+        }
+
+        public static readonly DependencyProperty MaximumProperty =
+            DependencyProperty.Register(
+                "Maximum",
+                typeof(int),
+                typeof(NumericUpDown),
+                new PropertyMetadata(0));
+
+        public int Maximum
+        {
+            get { return (int)GetValue(MaximumProperty); }
+            set { SetValue(MaximumProperty, value); }
+        }
+
+        private static void PropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is NumericUpDown nud)
+            {
+                if (nud.Value <= nud.Minimum)
+                {
+                    nud.downButton.IsEnabled = false;
+                }
+                else
+                {
+                    nud.downButton.IsEnabled = true;
+                }
+                if (nud.Value >= nud.Maximum)
+                {
+                    nud.upButton.IsEnabled = false;
+                }
+                else
+                {
+                    nud.upButton.IsEnabled = true;
+                }
+            }
+        }
+    }
+}

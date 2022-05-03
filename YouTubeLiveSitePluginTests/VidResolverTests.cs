@@ -1,14 +1,7 @@
-﻿using Moq;
+﻿using Mcv.YouTubeLiveSitePlugin;
+using Moq;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using YouTubeLiveSitePlugin.Input;
-using YouTubeLiveSitePlugin.Test2;
 namespace YouTubeLiveSitePluginTests
 {
     [TestFixture]

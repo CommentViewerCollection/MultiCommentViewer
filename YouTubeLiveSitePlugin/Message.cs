@@ -1,12 +1,10 @@
-﻿using Common;
+﻿using Mcv.PluginV2;
 using ryu_s.YouTubeLive.Message.Action;
-using SitePlugin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Policy;
 
-namespace YouTubeLiveSitePlugin
+namespace Mcv.YouTubeLiveSitePlugin
 {
     internal class YouTubeLiveConnected : MessageBase2, IYouTubeLiveConnected
     {
@@ -174,11 +172,11 @@ namespace YouTubeLiveSitePlugin
     {
         public static DateTime Convert(long timestampUsec)
         {
-            return SitePluginCommon.Utils.UnixtimeToDateTime(timestampUsec / (1000 * 1000));
+            return Utils.UnixtimeToDateTime(timestampUsec / (1000 * 1000));
         }
         public static IMessageImage Convert(Thumbnail2 authorPhoto)
         {
-            return new Common.MessageImage
+            return new MessageImage
             {
                 Height = authorPhoto.Height,
                 Width = authorPhoto.Width,
@@ -194,7 +192,7 @@ namespace YouTubeLiveSitePlugin
             var nameItems = new List<IMessagePart>();
             if (authorName != null)
             {
-                nameItems.Add(Common.MessagePartFactory.CreateMessageText(authorName));
+                nameItems.Add(MessagePartFactory.CreateMessageText(authorName));
             }
             var badges = new List<IMessagePart>();
             foreach (var badge in authorBadges)
@@ -214,9 +212,9 @@ namespace YouTubeLiveSitePlugin
             switch (a)
             {
                 case ryu_s.YouTubeLive.Message.ITextPart text:
-                    return Common.MessagePartFactory.CreateMessageText(text.Raw);
+                    return MessagePartFactory.CreateMessageText(text.Raw);
                 case ryu_s.YouTubeLive.Message.EmojiPart emoji:
-                    return new Common.MessageSvgImage
+                    return new MessageSvgImage
                     {
                         Url = emoji.Url,
                         Alt = emoji.EmojiId,
@@ -224,7 +222,7 @@ namespace YouTubeLiveSitePlugin
                         Width = 24,
                     };
                 case ryu_s.YouTubeLive.Message.CustomEmojiPart custom:
-                    return new Common.MessageImage
+                    return new MessageImage
                     {
                         Url = custom.Url,
                         Height = custom.Height,
@@ -244,7 +242,7 @@ namespace YouTubeLiveSitePlugin
             switch (a)
             {
                 case AuthorBadgeCustomThumb customThumb:
-                    return new Common.MessageImage
+                    return new MessageImage
                     {
                         Url = customThumb.Thumbnails[1].Url,
                         Alt = customThumb.Tooltip,
@@ -252,7 +250,7 @@ namespace YouTubeLiveSitePlugin
                         Width = 16,
                     };
                 case AuthorBadgeCustomThumbWithSize customThumbWithSize:
-                    return new Common.MessageImage
+                    return new MessageImage
                     {
                         Url = customThumbWithSize.Thumbnails[1].Url,
                         Alt = customThumbWithSize.Tooltip,
@@ -268,7 +266,7 @@ namespace YouTubeLiveSitePlugin
                         _ => null,
                     };
                     if (data == null) return null;
-                    return new Common.MessageSvgData
+                    return new MessageSvgData
                     {
                         Data = data,
                         Alt = icon.Tooltip,

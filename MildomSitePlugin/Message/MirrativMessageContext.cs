@@ -1,19 +1,18 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 
 namespace MildomSitePlugin
 {
     internal class MildomMessageContext : IMessageContext
     {
-        public SitePlugin.ISiteMessage Message { get; }
+        public ISiteMessage Message { get; }
+        public string? UserId { get; }
+        public string? NewNickname { get; }
 
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public MildomMessageContext(IMildomMessage message, IMildomMessageMetadata metadata, IMessageMethods methods)
+        public MildomMessageContext(IMildomMessage message, string? userId, string? newNickname)
         {
             Message = message;
-            Metadata = metadata;
-            Methods = methods;
+            UserId = userId;
+            NewNickname = newNickname;
         }
     }
 }

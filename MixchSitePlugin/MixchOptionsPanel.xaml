@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:local="clr-namespace:MixchSitePlugin"
-             xmlns:Common="clr-namespace:Common;assembly=Common" x:Class="MixchSitePlugin.MixchOptionsPanel"
+             x:Class="MixchSitePlugin.MixchOptionsPanel"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="420">
     <Grid Background="#FFE5E5E5">

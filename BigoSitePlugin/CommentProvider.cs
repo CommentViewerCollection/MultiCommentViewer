@@ -2,21 +2,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Net;
-using SitePlugin;
-using ryu_s.BrowserCookie;
-using Common;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Codeplex.Data;
-using System.Web;
-using System.Collections.Concurrent;
 using System.Linq;
-using SitePluginCommon;
-using System.Net.Http;
-using System.ComponentModel;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Controls;
+using Mcv.PluginV2;
 
 namespace BigoSitePlugin
 {
@@ -197,7 +186,6 @@ namespace BigoSitePlugin
         public event EventHandler<ConnectedEventArgs> Connected;
 
         CookieContainer _cc;
-        private readonly ICommentOptions _options;
         private readonly BigoSiteOptions _siteOptions;
         private readonly ILogger _logger;
         private readonly IUserStoreManager _userStoreManager;
@@ -209,7 +197,7 @@ namespace BigoSitePlugin
                 Text = comment,
                 SiteType = SiteType.Bigo,
                 Type = type,
-            }, _options);
+            });
             MessageReceived?.Invoke(this, context);
         }
         private void BeforeConnect()
@@ -226,12 +214,11 @@ namespace BigoSitePlugin
             SendInfo("切断しました", InfoType.Notice);
         }
 
-        protected virtual CookieContainer CreateCookieContainer(IBrowserProfile browserProfile)
+        protected virtual CookieContainer CreateCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();//まずCookieContainerのインスタンスを作っておく。仮にCookieの取得で失敗しても/live_chatで"YSC"と"VISITOR_INFO1_LIVE"が取得できる。これらは/service_ajaxでメタデータを取得する際に必須。
             try
             {
-                var cookies = browserProfile.GetCookieCollection("www.bigo.tv");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -244,19 +231,19 @@ namespace BigoSitePlugin
             return cc;
         }
         MessageProvider messageProvider;
-        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             BeforeConnect();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternalAsync(input, cookies);
             }
             finally
             {
                 AfterConnect();
             }
         }
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, List<Cookie> cookies)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -273,7 +260,7 @@ namespace BigoSitePlugin
                 TotalViewers = "-",
             });
 
-            _cc = CreateCookieContainer(browserProfile);
+            _cc = CreateCookieContainer(cookies);
             var bigoId = GetBigoId(input);
             _webSocketLink = await Api.GetWebSocketLink(_server, _cc);
             _internalStudioInfo = await Api.GetInternalStudioInfo(bigoId, _server, _cc);
@@ -298,7 +285,7 @@ namespace BigoSitePlugin
             messageProvider.Received += MessageProvider_Received;
             try
             {
-            reload:
+reload:
                 await messageProvider.ReceiveAsync(websocketUrl);
                 if (!_disconnectedExpected)
                 {
@@ -400,8 +387,7 @@ namespace BigoSitePlugin
                             PostedAt = DateTime.Now,
                             UserId = null,
                         };
-                        var metadata = new BigoMessageMetadata(m, _options, _siteOptions, null, this, false);
-                        var context = new BigoMessageContext(m, metadata, new BigoMessageMethods());
+                        var context = new BigoMessageContext(m);
                         MessageReceived?.Invoke(this, context);
                     }
                     break;
@@ -418,8 +404,7 @@ namespace BigoSitePlugin
                             GiftCount = 1,
                             GiftImgUrl = heart.ImgUrl,
                         };
-                        var metadata = new BigoMessageMetadata(m, _options, _siteOptions, null, this, false);
-                        var context = new BigoMessageContext(m, metadata, new BigoMessageMethods());
+                        var context = new BigoMessageContext(m);
                         MessageReceived?.Invoke(this, context);
                     }
                     break;
@@ -437,8 +422,7 @@ namespace BigoSitePlugin
                             GiftCount = int.Parse(giftText.C),
                             GiftImgUrl = gift.ImgUrl,
                         };
-                        var metadata = new BigoMessageMetadata(m, _options, _siteOptions, null, this, false);
-                        var context = new BigoMessageContext(m, metadata, new BigoMessageMethods());
+                        var context = new BigoMessageContext(m);
                         MessageReceived?.Invoke(this, context);
                     }
                     break;
@@ -472,7 +456,7 @@ namespace BigoSitePlugin
         private string GetBigoId(string input)
         {
             if (string.IsNullOrEmpty(input)) return null;
-            var match = Regex.Match(input, "bigo\\.tv/(\\d+)");
+            var match = Regex.Match(input, "bigo\\.tv/ja/(\\d+)");
             if (!match.Success) return null;
             return match.Groups[1].Value;
         }
@@ -480,10 +464,6 @@ namespace BigoSitePlugin
         {
             _disconnectedExpected = true;
             messageProvider?.Disconnect();
-        }
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.Bigo, userId);
         }
 
         async Task ICommentProvider.PostCommentAsync(string text)
@@ -495,10 +475,10 @@ namespace BigoSitePlugin
             return false;
         }
 
-        public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public async Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
             var currentUserInfo = new CurrentUserInfo();
-            var cc = CreateCookieContainer(browserProfile);
+            var cc = CreateCookieContainer(cookies);
             var url = "https://www.youtube.com/embed";
             var html = await _server.GetAsync(url, cc);
             //"user_display_name":"Ryu"
@@ -523,12 +503,10 @@ namespace BigoSitePlugin
 
         public Guid SiteContextGuid { get; set; }
         IBigoServer _server;
-        public CommentProvider(ICommentOptions options, IBigoServer server, BigoSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
+        public CommentProvider(IBigoServer server, BigoSiteOptions siteOptions, ILogger logger)
         {
-            _options = options;
             _siteOptions = siteOptions;
             _logger = logger;
-            _userStoreManager = userStoreManager;
             _server = server;
 
             CanConnect = true;

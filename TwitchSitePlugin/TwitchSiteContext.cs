@@ -1,20 +1,13 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
-using SitePlugin;
 using System.Diagnostics;
-using System.Windows.Threading;
-using Common;
 using System.Text.RegularExpressions;
 using System.Windows.Controls;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace TwitchSitePlugin
 {
     public class TwitchSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("22F7824A-EA1B-411E-85CA-6C9E6BE94E39");
-
         public override string DisplayName => "Twitch";
 
         protected override SiteType SiteType => SiteType.Twitch;
@@ -30,10 +23,7 @@ namespace TwitchSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new TwitchCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new TwitchCommentProvider(_server, _logger, _siteOptions);
         }
         private TwitchSiteOptions _siteOptions;
         public override void LoadOptions(string path, IIo io)
@@ -65,13 +55,22 @@ namespace TwitchSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
-        public override void Init()
+        public override void LoadOptions(string rawOptions)
         {
-            base.Init();
+            _siteOptions = new TwitchSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
         }
-        public override void Save()
+        public override string GetSiteOptions()
         {
-            base.Save();
+            return _siteOptions.Serialize();
         }
         public override bool IsValidInput(string input)
         {
@@ -81,7 +80,7 @@ namespace TwitchSitePlugin
             return b;
         }
 
-        public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
+        public override UserControl? GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var twitchCommentProvider = commentProvider as TwitchCommentProvider;
             Debug.Assert(twitchCommentProvider != null);
@@ -96,13 +95,11 @@ namespace TwitchSitePlugin
             };
             return panel;
         }
-        private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        public TwitchSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public TwitchSiteContext(IDataServer server, ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _server = server;
             _logger = logger;
         }

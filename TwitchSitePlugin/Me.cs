@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using Newtonsoft.Json;
 using System.Net.Http;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace TwitchSitePlugin
 {
@@ -173,7 +172,7 @@ namespace TwitchSitePlugin
             //{"data":[],"pagination":{}}
 
             var lowObject = Tools.Deserialize<Low.Streams.RootObject>(s);
-            if(lowObject.Data.Length > 0)
+            if (lowObject.Data.Length > 0)
             {
                 var ret = new Stream(lowObject.Data[0]);
                 return ret;
@@ -192,7 +191,7 @@ namespace TwitchSitePlugin
         /// <returns></returns>
         public static async Task<IUserInfo> GetChannelInfoByName(IDataServer server, string username)
         {
-            var headers = new Dictionary<string,string>
+            var headers = new Dictionary<string, string>
             {
                 {"client-id","jzkbprff40iqj646a697cyrvl0zt2m6" },//固定値
                 {"Accept","application/vnd.twitchtv.v5+json" },
@@ -275,7 +274,7 @@ namespace TwitchSitePlugin
 }
 namespace TwitchSitePlugin.LowObject.ChannelInfo
 {
-    public partial class RootObject:IChannelInfo
+    public partial class RootObject : IChannelInfo
     {
         [JsonProperty("mature")]
         public bool Mature { get; set; }

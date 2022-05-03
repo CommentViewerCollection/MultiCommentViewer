@@ -1,18 +1,12 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
-using SitePlugin;
-using Common;
 using System.Windows.Controls;
 using System.Diagnostics;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace OpenrecSitePlugin
 {
     public class OpenrecSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("F4434012-3E68-4DD9-B2A8-F2BD7D601723");
-
         public override string DisplayName => "OPENREC";
         protected override SiteType SiteType => SiteType.Openrec;
         public override IOptionsTabPage TabPanel
@@ -27,12 +21,8 @@ namespace OpenrecSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new CommentProvider(_options, _siteOptions, _logger, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new CommentProvider(_siteOptions, _logger);
         }
-
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var nicoCommentProvider = commentProvider as CommentProvider;
@@ -83,14 +73,29 @@ namespace OpenrecSitePlugin
                 _logger.LogException(ex, "", path);
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new OpenrecSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         private OpenrecSiteOptions _siteOptions;
-        private ICommentOptions _options;
         private ILogger _logger;
 
-        public OpenrecSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options,userStoreManager, logger)
+        public OpenrecSiteContext(ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _logger = logger;
         }
     }

@@ -1,14 +1,8 @@
-﻿using Common;
-using ryu_s.BrowserCookie;
-using SitePlugin;
-using SitePluginCommon;
-using SitePluginCommon.AutoReconnection;
+﻿using Mcv.PluginV2;
+using Mcv.PluginV2.AutoReconnection;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
-using System.Net.WebSockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TwicasSitePlugin
@@ -17,9 +11,7 @@ namespace TwicasSitePlugin
     {
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly ICommentOptions _options;
         private readonly TwicasSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
         private readonly FirstCommentDetector _first = new FirstCommentDetector();
         private readonly MessageUntara _messenger = new MessageUntara();
         TwicasAutoReconnector _autoReconnector;
@@ -70,11 +62,11 @@ namespace TwicasSitePlugin
         }
         CookieContainer _cc;
         string _broadcasterId;
-        public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public override async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             BeforeConnect();
             _first.Reset();
-            _cc = GetCookieContainer(browserProfile, "twitcasting.tv");
+            _cc = CreateCookieContainer(cookies);
             _broadcasterId = Tools.ExtractBroadcasterId(input);
             _lastCommentId = 0;
             var (context, contextRaw) = await API.GetLiveContext(_server, _broadcasterId, _cc);
@@ -136,13 +128,12 @@ namespace TwicasSitePlugin
         }
         private TwicasMessageContext CreateMessageContext(InternalItem item, bool isInitialComment)
         {
-            var user = GetUser(item.UserId);
             var _ = _first.IsFirstComment(item.UserId);//アイテムを最初に投げる場合もありえる。
             var isFirstComment = false;//常にfalseにしておく。現状こうしないとアイテムの文字色背景色が適用されない。そっちのコードを直したとしてもアイテムには不要だろう。
             var commentItems = new List<IMessagePart>();
             if (!string.IsNullOrEmpty(item.Message))
             {
-                commentItems.Add(Common.MessagePartFactory.CreateMessageText(item.Message + Environment.NewLine));
+                commentItems.Add(MessagePartFactory.CreateMessageText(item.Message + Environment.NewLine));
             }
             commentItems.Add(new MessageImage
             {
@@ -166,13 +157,7 @@ namespace TwicasSitePlugin
                 UserId = item.UserId,
                 UserName = item.ScreenName,
             };
-            var metadata = new MessageMetadata(itemMessage, _options, _siteOptions, user, this, isFirstComment)
-            {
-                IsInitialComment = isInitialComment,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new TwicasMessageMethods();
-            var context = new TwicasMessageContext(itemMessage, metadata, methods);
+            var context = new TwicasMessageContext(itemMessage, item.UserId, null);
             return context;
         }
         private void P1_MessageReceived(object sender, IInternalMessage e)
@@ -191,8 +176,6 @@ namespace TwicasSitePlugin
         }
         private TwicasMessageContext CreateMessageContext(InternalComment comment, bool isInitialComment)
         {
-            var user = GetUser(comment.UserId);
-            var isFirstComment = _first.IsFirstComment(comment.UserId);
             var message = new TwicasComment(comment.Raw)
             {
                 CommentItems = Tools.ParseMessage(comment.Message),
@@ -208,13 +191,7 @@ namespace TwicasSitePlugin
                     Width = 40,//commentData.ThumbnailWidth,
                 },
             };
-            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-            {
-                IsInitialComment = isInitialComment,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new TwicasMessageMethods();
-            var messageContext = new TwicasMessageContext(message, metadata, methods);
+            var messageContext = new TwicasMessageContext(message, comment.UserId, null);
             return messageContext;
         }
         public override void Disconnect()
@@ -222,10 +199,10 @@ namespace TwicasSitePlugin
             _autoReconnector?.Disconnect();
         }
 
-        public override Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public override Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
-            var cc = GetCookieContainer(browserProfile, "twitcasting.tv");
-            string name = null;
+            var cc = CreateCookieContainer(cookies);
+            string? name = null;
             foreach (var cookie in Tools.ExtractCookies(cc))
             {
                 switch (cookie.Name)
@@ -242,12 +219,6 @@ namespace TwicasSitePlugin
             };
             return Task.FromResult<ICurrentUserInfo>(info);
         }
-
-        public override IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.Twicas, userId);
-        }
-
         public override async Task PostCommentAsync(string text)
         {
             var (res, raw) = await API.PostCommentAsync(_server, _broadcasterId, _liveId.Value, _lastCommentId, text, _cc);
@@ -256,18 +227,16 @@ namespace TwicasSitePlugin
                 //error
             }
         }
-        public TwicasCommentProvider2(IDataServer server, ILogger logger, ICommentOptions options, TwicasSiteOptions siteOptions, IUserStoreManager userStoreManager)
-            : base(logger, options)
+        public TwicasCommentProvider2(IDataServer server, ILogger logger, TwicasSiteOptions siteOptions)
+            : base(logger)
         {
             _server = server;
             _logger = logger;
-            _options = options;
             _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
             _messenger.SystemInfoReiceved += _messenger_SystemInfoReiceved;
         }
 
-        private void _messenger_SystemInfoReiceved(object sender, SitePluginCommon.AutoReconnector.SystemInfoEventArgs e)
+        private void _messenger_SystemInfoReiceved(object sender, Mcv.PluginV2.AutoReconnector.SystemInfoEventArgs e)
         {
 
         }

@@ -1,19 +1,12 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
-using SitePlugin;
-using Common;
 using System.Windows.Controls;
 using System.Diagnostics;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace MixchSitePlugin
 {
     public class MixchSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("F4434012-3E68-4DD9-B2A8-F2BD7D601724");
-        // TODO: Guidを自動生成する
-
         public override string DisplayName => "ミクチャ";
 
         protected override SiteType SiteType => SiteType.Mixch;
@@ -29,10 +22,7 @@ namespace MixchSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new CommentProvider(_options, _siteOptions, _logger, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new CommentProvider(_siteOptions, _logger);
         }
 
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
@@ -84,14 +74,29 @@ namespace MixchSitePlugin
                 _logger.LogException(ex, "", path);
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new MixchSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         private MixchSiteOptions _siteOptions;
-        private ICommentOptions _options;
         private ILogger _logger;
 
-        public MixchSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public MixchSiteContext(ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _logger = logger;
         }
     }

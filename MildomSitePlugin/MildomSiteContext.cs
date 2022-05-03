@@ -1,17 +1,12 @@
-﻿using Common;
-using SitePlugin;
-using SitePluginCommon;
+﻿using Mcv.PluginV2;
 using System;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Windows.Controls;
 
 namespace MildomSitePlugin
 {
     public class MildomSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("DBBA654F-0A5D-41CC-8153-5DB2D5869BCF");
-
         public override string DisplayName => "Mildom";
         protected override SiteType SiteType => SiteType.Mildom;
         public override IOptionsTabPage TabPanel
@@ -23,13 +18,9 @@ namespace MildomSitePlugin
                 return new MildomOptionsTabPage(DisplayName, panel);
             }
         }
-
         public override ICommentProvider CreateCommentProvider()
         {
-            return new MildomCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new MildomCommentProvider(_server, _logger, _siteOptions);
         }
         private MildomSiteOptions _siteOptions;
         public override void LoadOptions(string path, IIo io)
@@ -61,6 +52,23 @@ namespace MildomSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new MildomSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         public override bool IsValidInput(string input)
         {
             return Tools.IsValidRoomUrl(input);
@@ -69,13 +77,11 @@ namespace MildomSitePlugin
         {
             return null;
         }
-        private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        public MildomSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public MildomSiteContext(IDataServer server, ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _server = server;
             _logger = logger;
         }

@@ -1,11 +1,8 @@
-﻿using MildomSitePlugin;
+﻿using Mcv.PluginV2;
+using MildomSitePlugin;
 using NUnit.Framework;
-using SitePlugin;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MildomSitePluginTests
 {
@@ -22,17 +19,17 @@ namespace MildomSitePluginTests
                 { 1002, "xyz" },
             }) as OnChatMessage;
             var l = chat.MessageItems.ToList();
-            Assert.AreEqual(Common.MessagePartFactory.CreateMessageText("あ"), l[0]);
+            Assert.AreEqual(MessagePartFactory.CreateMessageText("あ"), l[0]);
             Assert.AreEqual("abc", (l[1] as IMessageImage).Url);
             Assert.AreEqual("xyz", (l[2] as IMessageImage).Url);
-            Assert.AreEqual(Common.MessagePartFactory.CreateMessageText("い"), l[3]);
+            Assert.AreEqual(MessagePartFactory.CreateMessageText("い"), l[3]);
         }
         [Test]
         public void userIdが無いonChat()
         {
             var data = "{\"area\": 2000, \"cmd\": \"onChat\", \"msg\": \"よくやった\", \"msgId\": \"1598498460835_0_8192\", \"reqId\": 0, \"roomId\": 10007428, \"time\": \"1598498460835\", \"toId\": 10007428, \"toName\": \"*\", \"type\": 3, \"userName\": \"guest737168\"}";
             var chat = MessageParser.Parse(data, new Dictionary<int, string>()) as OnChatMessage;
-            Assert.IsNull(chat.UserId);
+            Assert.AreEqual("guest737168", chat.UserId);
             Assert.IsNull(chat.UserImg);
         }
         [Test]

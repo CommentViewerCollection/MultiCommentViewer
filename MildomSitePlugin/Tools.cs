@@ -1,20 +1,17 @@
-﻿using ryu_s.BrowserCookie;
-using SitePlugin;
+﻿using Mcv.PluginV2;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Xceed.Wpf.Toolkit.Core.Converters;
 
 namespace MildomSitePlugin
 {
     static class Tools
     {
-        public static IMyUserInfo GetUserInfoFromCookie(IBrowserProfile browserProfile)
+        public static IMyUserInfo GetUserInfoFromCookie(List<Cookie> cookies)
         {
-            var cookies = browserProfile.GetCookieCollection("mildom.com");
             if (cookies.Exists(item => item.Name == "user"))
             {
                 var cookie = cookies.Where(item => item.Name == "user").First();

@@ -1,5 +1,4 @@
-﻿using SitePlugin;
-using System.Collections.Generic;
+﻿using Mcv.PluginV2;
 
 namespace MirrativSitePlugin
 {
@@ -21,7 +20,7 @@ namespace MirrativSitePlugin
             Text = commentData.Comment;
             UserName = commentData.Username;
             UserIcon = null;
-            PostTime = SitePluginCommon.Utils.UnixtimeToDateTime(commentData.CreatedAt).ToString("HH:mm:ss");
+            PostTime = Utils.UnixtimeToDateTime(commentData.CreatedAt).ToString("HH:mm:ss");
         }
     }
 }

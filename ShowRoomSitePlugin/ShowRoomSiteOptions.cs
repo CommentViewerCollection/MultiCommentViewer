@@ -1,4 +1,4 @@
-﻿using Common;
+﻿using Mcv.PluginV2;
 using System;
 using System.Linq;
 using System.Windows;
@@ -41,7 +41,7 @@ namespace ShowRoomSitePlugin
         }
         public void Set(IShowRoomSiteOptions t)
         {
-            if(t is ShowRoomSiteOptions other)
+            if (t is ShowRoomSiteOptions other)
             {
                 this.Set(other);
             }

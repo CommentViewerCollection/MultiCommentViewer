@@ -1,8 +1,8 @@
 ﻿using System;
-using Common;
 using System.Windows.Media;
 using System.Windows;
 using System.Linq;
+using Mcv.PluginV2;
 
 namespace BigoSitePlugin
 {

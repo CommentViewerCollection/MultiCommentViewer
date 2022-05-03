@@ -4,11 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-             xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
+             xmlns:p="clr-namespace:Mcv.PluginV2;assembly=McvPlugin"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <UserControl.Resources>
-        <w:NotConverter x:Key="notConverter" />
+        <p:NotConverter x:Key="notConverter" />
     </UserControl.Resources>
     <Grid Background="#FFE5E5E5"/>
 </UserControl>

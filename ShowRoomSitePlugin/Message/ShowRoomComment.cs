@@ -1,6 +1,5 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 using System;
-using System.Collections.Generic;
 
 namespace ShowRoomSitePlugin
 {
@@ -16,7 +15,7 @@ namespace ShowRoomSitePlugin
         {
             UserName = t1.UserName;
             Text = t1.Comment;
-            PostedAt = Common.UnixTimeConverter.FromUnixTime(t1.CreatedAt).ToLocalTime();
+            PostedAt = UnixTimeConverter.FromUnixTime(t1.CreatedAt).ToLocalTime();
             UserId = t1.UserId.ToString();
         }
     }

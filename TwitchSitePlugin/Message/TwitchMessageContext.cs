@@ -1,19 +1,18 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 
 namespace TwitchSitePlugin
 {
     internal class TwitchMessageContext : IMessageContext
     {
-        public SitePlugin.ISiteMessage Message { get; }
+        public ISiteMessage Message { get; }
+        public string? NewNickname { get; }
+        public string? UserId { get; }
 
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public TwitchMessageContext(ITwitchMessage message, MessageMetadata metadata, IMessageMethods methods)
+        public TwitchMessageContext(ITwitchMessage message, string? userId, string? newNickname)
         {
             Message = message;
-            Metadata = metadata;
-            Methods = methods;
+            UserId = userId;
+            NewNickname = newNickname;
         }
     }
 }

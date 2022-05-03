@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Mcv.PluginV2;
+using System;
 using System.Threading.Tasks;
-using SitePlugin;
-namespace YouTubeLiveSitePlugin
+
+namespace Mcv.YouTubeLiveSitePlugin
 {
     public interface IYouTubeCommentProvider : ICommentProvider
     {

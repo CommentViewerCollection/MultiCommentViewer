@@ -1,4 +1,4 @@
-﻿using Common;
+﻿using Mcv.PluginV2;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Windows.Media;
 
 namespace OpenrecSitePlugin
 {
-    public interface IOpenrecSiteOptions: INotifyPropertyChanged
+    public interface IOpenrecSiteOptions : INotifyPropertyChanged
     {
         int StampSize { get; }
         bool IsPlayStampMusic { get; }

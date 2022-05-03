@@ -1,11 +1,4 @@
-﻿using Common;
-using ryu_s.BrowserCookie;
-using SitePlugin;
-using SitePluginCommon;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net;
-using System.Text.RegularExpressions;
+﻿using Mcv.PluginV2;
 
 namespace MirrativSitePlugin
 {

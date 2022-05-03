@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using SitePlugin;
+using Mcv.PluginV2;
 
 namespace OpenrecSitePlugin
 {

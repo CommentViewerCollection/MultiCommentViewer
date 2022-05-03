@@ -1,5 +1,5 @@
-﻿using Common;
-using SitePluginCommon.AutoReconnection;
+﻿using Mcv.PluginV2;
+using Mcv.PluginV2.AutoReconnection;
 using System;
 using System.Collections.Generic;
 using System.Net;

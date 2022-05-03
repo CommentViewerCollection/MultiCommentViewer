@@ -1,4 +1,5 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
+
 namespace BigoSitePlugin
 {
     public class Metadata : IMetadata

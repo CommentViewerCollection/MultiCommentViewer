@@ -1,9 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
 using System.Collections.Generic;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace OpenrecSitePlugin
 {
@@ -13,7 +12,7 @@ namespace OpenrecSitePlugin
         Task<string> GetAsync(string url, Dictionary<string, string> headers);
         Task<string> GetAsync(string url, CookieContainer cc);
         Task<byte[]> GetByteArrayAsync(string url, CookieContainer cc);
-        Task<string> PostJsonAsync(string url, Dictionary<string,string> headers, string json);
+        Task<string> PostJsonAsync(string url, Dictionary<string, string> headers, string json);
     }
     class DataSource : ServerBase, IDataSource
     {
@@ -31,7 +30,7 @@ namespace OpenrecSitePlugin
         {
             return GetAsync(url, (CookieContainer)null);
         }
-        public async Task<string> GetAsync(string url, Dictionary<string,string> headers)
+        public async Task<string> GetAsync(string url, Dictionary<string, string> headers)
         {
             var result = await GetInternalAsync(new HttpOptions
             {

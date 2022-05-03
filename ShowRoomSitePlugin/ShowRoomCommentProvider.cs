@@ -1,28 +1,17 @@
-﻿using Common;
-using ryu_s.BrowserCookie;
-using SitePlugin;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
-using SitePluginCommon;
-using SitePluginCommon.AutoReconnector;
+using Mcv.PluginV2;
+using Mcv.PluginV2.AutoReconnector;
+using System.Net;
 
 namespace ShowRoomSitePlugin
 {
     internal class ShowRoomCommentProvider : CommentProviderBase
     {
-        private MessageMetadata CreateMessageMetadata(IShowRoomComment message, IUser user, bool isFirstComment, bool isInitialComment)
-        {
-            return new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-            {
-                SiteContextGuid = SiteContextGuid,
-                IsInitialComment = isInitialComment,
-            };
-        }
         private void MessageProvider_Received(object sender, IInternalMessage e)
         {
 
@@ -38,7 +27,7 @@ namespace ShowRoomSitePlugin
             _cts = new CancellationTokenSource();
         }
         CancellationTokenSource _cts = new CancellationTokenSource();
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, List<Cookie> cookies)
         {
             var roomUrlKey = GetRoomUrlKeyFromInput(input);
 
@@ -119,11 +108,8 @@ namespace ShowRoomSitePlugin
             var message = new ShowRoomComment(t1);
             var userId = message.UserId;
             var isFirstComment = _first.IsFirstComment(userId);
-            var user = GetUser(userId);
-            user.Name = Common.MessagePartFactory.CreateMessageItems(message.UserName);
-            var metadata = CreateMessageMetadata(message, user, isFirstComment, isInitialComment);
-            var methods = new MessageMethods();
-            RaiseMessageReceived(new MessageContext(message, metadata, methods));
+            var name = MessagePartFactory.CreateMessageItems(message.UserName);
+            RaiseMessageReceived(new MessageContext(message, userId, null));
         }
         private void ProcessInternalMessage(IInternalMessage e)
         {
@@ -170,12 +156,12 @@ namespace ShowRoomSitePlugin
                 return null;
             }
         }
-        public override async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public override async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             BeforeConnect();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternalAsync(input, cookies);
             }
             catch (Exception ex)
             {
@@ -191,23 +177,11 @@ namespace ShowRoomSitePlugin
         {
             _cts?.Cancel();
         }
-
-        public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
-        {
-            throw new NotImplementedException();
-        }
-
         public override async Task PostCommentAsync(string text)
         {
             await Task.FromResult<object>(null);
         }
-
-        public override IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.ShowRoom, userId);
-        }
-
-        public override async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public override async Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
             var userInfo = new CurrentUserInfo
             {
@@ -223,18 +197,14 @@ namespace ShowRoomSitePlugin
 
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly ICommentOptions _options;
         private readonly IShowRoomSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
         private readonly MessageProvider _messageProvider;
-        public ShowRoomCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IShowRoomSiteOptions siteOptions, IUserStoreManager userStoreManager)
-            : base(logger, options)
+        public ShowRoomCommentProvider(IDataServer server, ILogger logger, IShowRoomSiteOptions siteOptions)
+            : base(logger)
         {
             _server = server;
             _logger = logger;
-            _options = options;
             _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
             _messageProvider = new MessageProvider(new Websocket(), _logger);
             _messageProvider.Received += MessageProvider_Received1;
         }

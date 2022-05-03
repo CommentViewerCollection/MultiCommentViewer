@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net60-windows</TargetFramework>
-    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -38,6 +38,6 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
+    <ProjectReference Include="..\McvPlugin\McvPlugin.csproj" />
   </ItemGroup>
 </Project>

@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using SitePlugin;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
-using Common;
 using System.Windows.Media;
 using System.Net;
 using System.Reflection;
 using System.Collections;
 using TwicasSitePlugin.LowObject;
+using Mcv.PluginV2;
 
 namespace TwicasSitePlugin
 {
@@ -295,7 +291,7 @@ namespace TwicasSitePlugin
         {
             return new InternalComment
             {
-                CreatedAt = Common.UnixTimeConverter.FromUnixTime(low.CreatedAt.Value / 1000).ToLocalTime(),
+                CreatedAt = UnixTimeConverter.FromUnixTime(low.CreatedAt.Value / 1000).ToLocalTime(),
                 Grade = low.Author.Grade,
                 Id = low.Id,
                 ProfileImageUrl = low.Author.ProfileImage,

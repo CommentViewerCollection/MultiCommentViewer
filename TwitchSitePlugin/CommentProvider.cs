@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ryu_s.BrowserCookie;
-using SitePlugin;
 using System.Net;
-using System.Text;
-using System.ComponentModel;
-using System.Windows;
-using System.Windows.Media;
-using Common;
-using System.Linq;
 using System.Diagnostics;
 using System.Windows.Threading;
-using System.Collections.ObjectModel;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace TwitchSitePlugin
 {
+    class Metadata : IMetadata
+    {
+        public string? Title { get; set; }
+        public string? Elapsed { get; set; }
+        public string? CurrentViewers { get; set; }
+        public string? Active { get; set; }
+        public string? TotalViewers { get; set; }
+        public bool? IsLive { get; set; }
+        public string? Others { get; set; }
+    }
     class UserState
     {
         public Dictionary<string, string> Tags { get; }
@@ -88,13 +89,12 @@ namespace TwitchSitePlugin
         private string _channelName;
         private IMessageProvider _provider;
         //private CookieContainer _cc;
-        protected virtual CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
+        protected virtual CookieContainer GetCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();
 
             try
             {
-                var cookies = browserProfile.GetCookieCollection("twitch.tv");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -119,7 +119,7 @@ namespace TwitchSitePlugin
             _commentCounter = new CommentCounter();
         }
         CommentCounter _commentCounter;
-        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             CanConnect = false;
             CanDisconnect = true;
@@ -135,10 +135,8 @@ namespace TwitchSitePlugin
             }
             try
             {
-                var cc = GetCookieContainer(browserProfile);
                 //cookieの例
-                //language=ja; _ga=GA1.2.1920479743.1518016680; unique_id=eTRVJSWTkPRuT1uLoWBbg5aQ5CaM4Ljo; __utmz=165406266.1520768529.6.4.utmcsr=twitch.tv|utmccn=(referral)|utmcmd=referral|utmcct=/kv501k/dashboard; __gads=ID=ef2e7365c12367c1:T=1523611207:S=ALNI_MbbhnPy2IqfXsKZVSa-OeOBuKGsPg; Unique_ID=2c6b62cbb53a4a7493a3129ef8b38002; mp_809576468572134f909dffa6bd0dcfcf_mixpanel=%7B%22distinct_id%22%3A%20%2216170d840fb315-054303055d0714-d35346d-1fa400-16170d840fc9f0%22%2C%22%24initial_referrer%22%3A%20%22https%3A%2F%2Fwww.twitch.tv%2Fsettings%2Fprofile%22%2C%22%24initial_referring_domain%22%3A%20%22www.twitch.tv%22%7D; __utma=165406266.1920479743.1518016680.1524682833.1526145797.8; Unique_ID_v2=2c6b62cbb53a4a7493a3129ef8b38002; session_unique_id=ArrQHYWS55SLOCTQKdvFME0Nc57Qn1vH; _gid=GA1.2.511219589.1540912015; persistent=270919349%3A%3Arptndai1hlfiz2x658fjs56i63kq9v; sudo=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNzA5MTkzNDkiLCJhdWQiOlsic3VkbyJdLCJleHAiOjE1NDA5MjAwMjAsImlhdCI6MTU0MDkxNjQyMH0=.pY5YvJrcvb6o5j67qsNXrT9YBZO8e2NO-qictdIp15fC6efmbd8ivys-tNA6Zot7AwckDd8JsmKqwAQPEBJAiA==; bits_sudo=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNzA5MTkzNDkiLCJhdWQiOlsic3VkbyIsImJpdHMiXSwiZXhwIjoxNTQxNTIxMjIwLCJpYXQiOjE1NDA5MTY0MjB9.k7pm0x6PvcvL8B9R4d-VYFz4nrL_fR-4ozWWO7o4boSIKHY3uxOzW3FseLTEr0CZ7T_oeXLyHE_6pw1bWaj3Qg==; login=ryu8107; name=ryu8107; last_login=2018-10-30T16:20:20Z; api_token=14a0b0a43fc8d41a279adf0865317921; device_cookie=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3Bhc3Nwb3J0LnR3aXRjaC50diIsInN1YiI6InJ5dTgxMDciLCJhdWQiOiJicnV0ZS1mb3JjZS1wcm90ZWN0aW9uIiwiZXhwIjoxNTU2NDY4NDIwLCJpYXQiOjE1NDA5MTY0MjAsIm5vbmNlIjoiTzBtWXJBYkVXU1ZULXJ5XzRIOXd3a3BlQTBPdjNSOUtMVmI5enRaNlZQbz0ifQ%3D%3D.uzFfEDu2yN17Dswjt8nEDaXlaqg4ZZUETOwql-x-WiboJw0hgNYgWFGbN_1FWJsO5OswcKxFB5dbaMfuYhNFIA%3D%3D; twilight-user={%22authToken%22:%22qlxy239ugu4we0rzvs5u9fcpcuvjj4%22%2C%22displayName%22:%22RYU8107%22%2C%22id%22:%22270919349%22%2C%22login%22:%22ryu8107%22%2C%22roles%22:{%22isStaff%22:false}%2C%22version%22:2}; auth-token=qlxy239ugu4we0rzvs5u9fcpcuvjj4; server_session_id=19358718db714130bdefc3b898bcccf9
-                var cookies = Tools.ExtractCookies(cc);
+                //language=ja; _ga=GA1.2.1920479743.1518016680; unique_id=eTRVJSWTkPRuT1uLoWBbg5aQ5CaM4Ljo; __utmz=165406266.1520768529.6.4.utmcsr=twitch.tv|utmccn=(referral)|utmcmd=referral|utmcct=/kv501k/dashboard; __gads=ID=ef2e7365c12367c1:T=1523611207:S=ALNI_MbbhnPy2IqfXsKZVSa-OeOBuKGsPg; Unique_ID=2c6b62cbb53a4a7493a3129ef8b38002; mp_809576468572134f909dffa6bd0dcfcf_mixpanel=%7B%22distinct_id%22%3A%20%2216170d840fb315-054303055d0714-d35346d-1fa400-16170d840fc9f0%22%2C%22%24initial_referrer%22%3A%20%22https%3A%2F%2Fwww.twitch.tv%2Fsettings%2Fprofile%22%2C%22%24initial_referring_domain%22%3A%20%22www.twitch.tv%22%7D; __utma=165406266.1920479743.1518016680.1524682833.1526145797.8; Unique_ID_v2=2c6b62cbb53a4a7493a3129ef8b38002; session_unique_id=ArrQHYWS55SLOCTQKdvFME0Nc57Qn1vH; _gid=GA1.2.511219589.1540912015; persistent=270919349%3A%3Arptndai1hlfiz2x658fjs56i63kq9v; sudo=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNzA5MTkzNDkiLCJhdWQiOlsic3VkbyJdLCJleHAiOjE1NDA5MjAwMjAsImlhdCI6MTU0MDkxNjQyMH0=.pY5YvJrcvb6o5j67qsNXrT9YBZO8e2NO-qictdIp15fC6efmbd8ivys-tNA6Zot7AwckDd8JsmKqwAQPEBJAiA==; bits_sudo=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNzA5MTkzNDkiLCJhdWQiOlsic3VkbyIsImJpdHMiXSwiZXhwIjoxNTQxNTIxMjIwLCJpYXQiOjE1NDA5MTY0MjB9.k7pm0x6PvcvL8B9R4d-VYFz4nrL_fR-4ozWWO7o4boSIKHY3uxOzW3FseLTEr0CZ7T_oeXLyHE_6pw1bWaj3Qg==; login=ryu8107; name=ryu8107; last_login=2018-10-30T16:20:20Z; api_token=14a0b0a43fc8d41a279adf0865317921; device_cookie=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3Bhc3Nwb3J0LnR3aXRjaC50diIsInN1YiI6InJ5dTgxMDciLCJhdWQiOiJicnV0ZS1mb3JjZS1wcm90ZWN0aW9uIiwiZXhwIjoxNTU2NDY4NDIwLCJpYXQiOjE1NDA5MTY0MjAsIm5vbmNlIjoiTzBtWXJBYkVXU1ZULXJ5XzRIOXd3a3BlQTBPdjNSOUtMVmI5enRaNlZQbz0ifQ%3D%3D.uzFfEDu2yN17Dswjt8nEDaXlaqg4ZZUETOwql-x-WiboJw0hgNYgWFGbN_1FWJsO5OswcKxFB5dbaMfuYhNFIA%3D%3D; twilight-user={%22authToken%22:%22qlxy239ugu4we0rzvs5u9fcpcuvjj4%22%2C%22displayName%22:%22RYU8107%22%2C%22id%22:%22270919349%22%2C%22login%22:%22ryu8107%22%2C%22roles%22:{%22isStaff%22:false}%2C%22version%22:2}; auth-token=qlxy239ugu4we0rzvs5u9fcpcuvjj4; server_session_id=19358718db714130bdefc3b898bcccf9                
                 foreach (var cookie in cookies)
                 {
                     if (cookie.Name == "auth-token")
@@ -342,10 +340,14 @@ namespace TwitchSitePlugin
             var userId = commentData.UserId;
             var displayName = commentData.DisplayName;
             var isFirstComment = _commentCounter.UpdateCount(userId);
-            var user = GetUser(userId);
+            string? newNickname = null;
             if (_siteOptions.NeedAutoSubNickname)
             {
-                SitePluginCommon.Utils.SetNickname(commentData.Message, user, _siteOptions.NeedAutoSubNicknameStr);
+                var nick = Utils.ExtractNickname(commentData.Message, _siteOptions.NeedAutoSubNicknameStr);
+                if (!string.IsNullOrEmpty(nick))
+                {
+                    newNickname = nick;
+                }
             }
             var message = new TwitchComment(result.Raw)
             {
@@ -357,13 +359,7 @@ namespace TwitchSitePlugin
                 IsDisplayNameSame = commentData.Username == commentData.DisplayName,
                 DisplayName = commentData.DisplayName,
             };
-            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-            {
-                IsInitialComment = false,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new TwitchMessageMethods();
-            var messageContext = new TwitchMessageContext(message, metadata, methods);
+            var messageContext = new TwitchMessageContext(message, userId, newNickname);
             MessageReceived?.Invoke(this, messageContext);
         }
         private void OnNoticeReceived(Result result)
@@ -373,13 +369,7 @@ namespace TwitchSitePlugin
             {
                 Message = message,
             };
-            var metadata = new MessageMetadata(notice, _options, _siteOptions, null, this, false)
-            {
-                IsInitialComment = false,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new TwitchMessageMethods();
-            var messageContext = new TwitchMessageContext(notice, metadata, methods);
+            var messageContext = new TwitchMessageContext(notice, null, null);
             MessageReceived?.Invoke(this, messageContext);
         }
 
@@ -425,15 +415,6 @@ namespace TwitchSitePlugin
         {
             _provider.Disconnect();
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.Twitch, userId);
-        }
-        public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task PostCommentAsync(string text)
         {
             var s = $"PRIVMSG #{_channelName} :{text}";
@@ -447,16 +428,12 @@ namespace TwitchSitePlugin
         public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly ICommentOptions _options;
         private readonly TwitchSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
-        public TwitchCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, TwitchSiteOptions siteOptions, IUserStoreManager userStoreManager)
+        public TwitchCommentProvider(IDataServer server, ILogger logger, TwitchSiteOptions siteOptions)
         {
             _server = server;
             _logger = logger;
-            _options = options;
             _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
 
             CanConnect = true;
             CanDisconnect = false;
@@ -477,7 +454,7 @@ namespace TwitchSitePlugin
             var elapsed = GetCurrentDateTime() - _startedAt.Value;
             var metadata = new Metadata
             {
-                Elapsed = SitePluginCommon.Utils.ElapsedToString(elapsed),
+                Elapsed = Utils.ElapsedToString(elapsed),
             };
             MetadataUpdated?.Invoke(this, metadata);
         }
@@ -489,14 +466,12 @@ namespace TwitchSitePlugin
                 Text = message,
                 SiteType = SiteType.Twitch,
                 Type = type,
-            }, _options);
+            });
             MessageReceived?.Invoke(this, context);
         }
 
-        public Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
-            var cc = GetCookieContainer(browserProfile);
-            var cookies = Tools.ExtractCookies(cc);
             var info = new CurrentUserInfo();
             string name = null;
             string displayName = null;

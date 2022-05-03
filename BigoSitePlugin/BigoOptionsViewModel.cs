@@ -49,11 +49,11 @@ namespace BigoSitePlugin
 
         #region INotifyPropertyChanged
         [NonSerialized]
-        private System.ComponentModel.PropertyChangedEventHandler _propertyChanged;
+        private System.ComponentModel.PropertyChangedEventHandler? _propertyChanged;
         /// <summary>
         /// 
         /// </summary>
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged
         {
             add { _propertyChanged += value; }
             remove { _propertyChanged -= value; }

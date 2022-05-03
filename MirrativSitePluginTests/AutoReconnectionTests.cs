@@ -1,13 +1,7 @@
 ﻿using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Moq;
-using Common;
-using MirrativSitePlugin;
-using SitePluginCommon.AutoReconnection;
+using Mcv.PluginV2.AutoReconnection;
+using Mcv.PluginV2;
 
 namespace MirrativSitePluginTests
 {

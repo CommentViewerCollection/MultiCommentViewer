@@ -12,7 +12,7 @@ namespace TwitchSitePlugin
         private readonly IDataServer _server;
         private readonly ITwitchSiteOptions _siteOptions;
         private readonly string _channelName;
-        public event EventHandler<Stream> MetadataUpdated;
+        public event EventHandler<Stream>? MetadataUpdated;
 
         public MetadataProvider(IDataServer server, ITwitchSiteOptions siteOptions, string channelName)
         {
@@ -53,6 +53,6 @@ namespace TwitchSitePlugin
             _isDisconnectRequested = true;
             _cts?.Cancel();
         }
-        CancellationTokenSource _cts;
+        CancellationTokenSource? _cts;
     }
 }

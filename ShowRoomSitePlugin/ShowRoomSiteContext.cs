@@ -1,17 +1,12 @@
-﻿using Common;
-using SitePlugin;
-using SitePluginCommon;
+﻿using Mcv.PluginV2;
 using System;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Windows.Controls;
 
 namespace ShowRoomSitePlugin
 {
     public class ShowRoomSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("C64FBE36-029E-483D-AA56-F1906C42B43B");
-
         public override string DisplayName => "SHOWROOM";
         protected override SiteType SiteType => SiteType.ShowRoom;
         public override IOptionsTabPage TabPanel
@@ -26,10 +21,7 @@ namespace ShowRoomSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new ShowRoomCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new ShowRoomCommentProvider(_server, _logger, _siteOptions);
         }
         private ShowRoomSiteOptions _siteOptions;
         public override void LoadOptions(string path, IIo io)
@@ -61,6 +53,23 @@ namespace ShowRoomSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new ShowRoomSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         public override bool IsValidInput(string input)
         {
             var liveId = Tools.ExtractLiveId(input);
@@ -71,13 +80,11 @@ namespace ShowRoomSitePlugin
         {
             return null;
         }
-        private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        public ShowRoomSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public ShowRoomSiteContext(IDataServer server, ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _server = server;
             _logger = logger;
         }

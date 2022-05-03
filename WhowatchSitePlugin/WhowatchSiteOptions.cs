@@ -1,9 +1,8 @@
-﻿using Common;
+﻿using Mcv.PluginV2;
 using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
-using System.Runtime.Serialization;
 namespace WhowatchSitePlugin
 {
     internal class WhowatchSiteOptions : DynamicOptionsBase, IWhowatchSiteOptions
@@ -18,7 +17,7 @@ namespace WhowatchSitePlugin
         public Color ItemForeColor { get => GetValue(); set => SetValue(value); }
         void IWhowatchSiteOptions.Set(IWhowatchSiteOptions siteOptions)
         {
-            if(siteOptions is WhowatchSiteOptions op)
+            if (siteOptions is WhowatchSiteOptions op)
             {
                 Set(op);
             }

@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SitePlugin;
-using ryu_s.BrowserCookie;
-using Common;
-using System.Threading;
 using System.Net;
 using System.Drawing;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace OpenrecSitePlugin
 {
+    class OpenrecUser
+    {
+        public bool IsSiteNgUser { get; set; }
+    }
     [Serializable]
     public class InvalidInputException : Exception
     {
@@ -78,38 +77,13 @@ namespace OpenrecSitePlugin
             CanConnect = true;
             CanDisconnect = false;
         }
-        protected virtual List<Cookie> GetCookies(IBrowserProfile browserProfile)
-        {
-            List<Cookie> cookies = null;
-            try
-            {
-                cookies = browserProfile.GetCookieCollection("openrec.tv");
-            }
-            catch { }
-            return cookies ?? new List<Cookie>();
-        }
-        protected virtual CookieContainer CreateCookieContainer(IBrowserProfile browserProfile)
-        {
-            var cc = new CookieContainer();
-            try
-            {
-                var cookies = browserProfile.GetCookieCollection("openrec.tv");
-                foreach (var cookie in cookies)
-                {
-                    cc.Add(cookie);
-                }
-            }
-            catch { }
-            return cc;
-        }
         //protected virtual Extract()
-        private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
+        private async Task ConnectInternalAsync(string input, List<Cookie> cookies)
         {
             if (_ws != null)
             {
                 throw new InvalidOperationException("");
             }
-            var cookies = GetCookies(browserProfile);
             _cc = CreateCookieContainer(cookies);
             _context = Tools.GetContext(cookies);
             string liveId;
@@ -163,16 +137,11 @@ namespace OpenrecSitePlugin
             {
                 _logger.LogException(ex, "", "raw=" + raw);
             }
-            foreach (var user in _userStoreManager.GetAllUsers(SiteType.Openrec))
-            {
-                if (!(user is IUser2 user2)) continue;
-                _userDict.AddOrUpdate(user2.UserId, user2, (id, u) => u);
-            }
-        Reconnect:
+Reconnect:
             _ws = CreateOpenrecWebsocket();
             _ws.Received += WebSocket_Received;
 
-            var userAgent = GetUserAgent(browserProfile.Type);
+            var userAgent = GetUserAgent(BrowserType.Chrome);
             var wsTask = _ws.ReceiveAsync(movieId.ToString(), userAgent, cookies);
             var blackListProvider = CreateBlacklistProvider();
             blackListProvider.Received += BlackListProvider_Received;
@@ -238,12 +207,12 @@ namespace OpenrecSitePlugin
                 }
             }
         }
-        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             BeforeConnecting();
             try
             {
-                await ConnectInternalAsync(input, browserProfile);
+                await ConnectInternalAsync(input, cookies);
             }
             finally
             {
@@ -288,27 +257,10 @@ namespace OpenrecSitePlugin
         private OpenrecMessageContext CreateMessageContext(Tools.IComment comment, IOpenrecCommentData commentData, bool isInitialComment)
         {
             var userId = commentData.UserId;
-            var user = GetUser(userId) as IUser2;
-            if (!_userDict.ContainsKey(userId))
-            {
-                _userDict.AddOrUpdate(user.UserId, user, (id, u) => u);
-            }
-            bool isFirstComment;
-            if (_userCommentCountDict.ContainsKey(userId))
-            {
-                _userCommentCountDict[userId]++;
-                isFirstComment = false;
-            }
-            else
-            {
-                _userCommentCountDict.Add(userId, 1);
-                isFirstComment = true;
-            }
 
             var nameItems = new List<IMessagePart>();
             nameItems.Add(MessagePartFactory.CreateMessageText(commentData.Name));
             nameItems.AddRange(commentData.NameIcons);
-            user.Name = nameItems;
 
             var messageItems = new List<IMessagePart>();
             if (commentData.Message != null)
@@ -353,13 +305,7 @@ namespace OpenrecSitePlugin
                 };
 
             }
-            var metadata = new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
-            {
-                IsInitialComment = isInitialComment,
-                SiteContextGuid = SiteContextGuid,
-            };
-            var methods = new OpenrecMessageMethods();
-            messageContext = new OpenrecMessageContext(message, metadata, methods);
+            messageContext = new OpenrecMessageContext(message, userId, null);
             return messageContext;
         }
 
@@ -410,30 +356,22 @@ namespace OpenrecSitePlugin
                 _ws.Disconnect();
             }
         }
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.Openrec, userId);
-        }
         #endregion //ICommentProvider
 
 
         #region Fields
-        private ICommentOptions _options;
         private OpenrecSiteOptions _siteOptions;
         private ILogger _logger;
-        private IUserStoreManager _userStoreManager;
         private readonly IDataSource _dataSource;
         private CookieContainer _cc;
         #endregion //Fields
 
         #region ctors
         System.Timers.Timer _500msTimer = new System.Timers.Timer();
-        public CommentProvider(ICommentOptions options, OpenrecSiteOptions siteOptions, ILogger logger, IUserStoreManager userStoreManager)
+        public CommentProvider(OpenrecSiteOptions siteOptions, ILogger logger)
         {
-            _options = options;
             _siteOptions = siteOptions;
             _logger = logger;
-            _userStoreManager = userStoreManager;
             _dataSource = new DataSource();
             _500msTimer.Interval = 500;
             _500msTimer.Elapsed += _500msTimer_Elapsed;
@@ -462,14 +400,11 @@ namespace OpenrecSitePlugin
                 Text = message,
                 SiteType = SiteType.Openrec,
                 Type = type,
-            }, _options);
+            });
             MessageReceived?.Invoke(this, context);
         }
         public Guid SiteContextGuid { get; set; }
-        Dictionary<string, int> _userCommentCountDict = new Dictionary<string, int>();
-        [Obsolete]
-        Dictionary<string, UserViewModel> _userViewModelDict = new Dictionary<string, UserViewModel>();
-        ConcurrentDictionary<string, IUser2> _userDict = new ConcurrentDictionary<string, IUser2>();
+        private readonly ConcurrentDictionary<string, OpenrecUser> _userDict = new();
         DateTime _startAt;
         //private OpenrecCommentViewModel CreateCommentViewModel(IOpenrecCommentData data)
         //{
@@ -556,9 +491,9 @@ namespace OpenrecSitePlugin
             await API.PostCommentAsync(_dataSource, _liveId, str, DateTime.Now, _context);
         }
 
-        public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public async Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
-            var cc = CreateCookieContainer(browserProfile);
+            var cc = CreateCookieContainer(cookies);
             //cookie: lang=ja; device=PC; _ga=GA1.2.942154475.1539615843; __gads=ID=88a3291937a6efee:T=1539615844:S=ALNI_MYcBerafVCLa-gDyYh9JnTfgleU-A; PHPSESSID=o1c7pk8c59qhruldatq57rg320; AWSELB=1DABC705044630618CF68466538D9E569C7CC479D88EB62F0E575B53AB66195021246B2874519AA68BDD9EC54E82BF3783441568103E6D3709DD7C06C7DE99E0A0C470B14E; _gid=GA1.2.1053933165.1541004736; init_dt=20181101023826; GED_PLAYLIST_ACTIVITY=W3sidSI6IkRNZGYiLCJ0c2wiOjE1NDEwMDc1NjEsIm52IjoxLCJ1cHQiOjE1NDEwMDc1MDYsImx0IjoxNTQxMDA3NTYxfV0.; random=RDMYEFRDLLPBQZJSRBUF; token=7bb004826a2d9b00d4bc6e3d933c88757e61b1c2; uuid=7A4E34CD-F8DD-3748-5A4A-3B2FD8D03DFC; access_token=1a9b0308-f56a-479d-bb63-43469ec90c1a; ci_session=CzIJaQI0Aj0AIl0sWTZRZVFgADxUdVBzDWkGdFF3BzBSaQE%2BV15RPVpmAXkIMg95Xj0AMVA3Aj1WdVdlAzIBYQsyUWNbNgVsVjRSNFcxUGELagkxAjUCNABgXWpZaVEyUWMAM1QyUGYNbgY0UTUHbVI3ATNXNVE2WjoBeQgyD3lePQAzUDYCPVZ1Vz0DYQEiC35RD1tvBThWdlJqV3dQPAsnCSoCIQI8ADBdZVk9UWFRZAA3VGdQNw05BjFRMQduUj0BI1c7UWVaMgFhCCsPY153AF1QZAJjVjNXIwNlASILeVFyWzUFKFY4UjJXMlBvC3EJZQIyAikAaF1mWT5RelFiADdUYVAuDT4GPlEmB2JSdQFqVzhRblogAS4Ieg9vXnUAXVBhAmZWI1cwAyIBagt5UWpbPgVhViBSIVc6UCYLaQlrAjkCJQArXTpZb1EsUSUAdVQyUHINLgY8UWUHY1IyAWpXelEnWjgBagg5DzBeJQB3UHYCYlYlVw4DdAE%2BC2FRNVtgBXlWOVJwVztQZgthCWkCIQI3AGBdbFk%2BUWJRYwBgVDVQZQ09BjRRPQdoUjABYlc5UWVaZAFjCGgPaV41ADdQMgI%2BVjNXYQM1ATcLblFnW28FeVY5UnBXO1BkC2IJaQIhAnMAPF0tWWFRPVE%2BAGdUO1BfDWUGY1EmB2JSdQFqVzJRYlo4AXkIPg9LXjMAR1A2AjNWFFcVAy0BFwsyURRbSgV2VjFSNFc1UG0LfglmAkICMwAYXXJZP1EWUWIAQFQTUDgNSAY3UTcHHVJAARNXI1FvWnEBYQg4DztePQAgUHcCYlY0VykDdQEiC29RIltRBTJWZlIhVzpQJgtpCWsCOQIlAGtdb1k4UWxRZwAyVGBQMQ0uBjxRdwdjUjcBZVc7UXZabQErCGwPZF51AGdQZgJYViJXIgNlASMLVVE5W2oFeVY5UnBXO1BjC2kJcQIyAjQAbl1qWTVRYFFyAD1UKlBzDTYGP1E%2BB3tSbwEjV15ROFptATwIYA9kXiUAOVBnAj1WZldqA3MBaws7UWJbNAV5Vm1Sc1dkUDsLIQk2AmACWAAsXSxZaVEmUXIAPVQ2UDoNPQY9UX8HKlI8AWFXMFFuWiABLgh6D29edQBdUHYCc1Y2VyUDdQEiCyhRa1t9BWFWNlI5VyNQNwsyCT0CZAIlAGJdIllx
             var me = await API.GetMeAsync(_dataSource, cc);
             return new CurrentUserInfo

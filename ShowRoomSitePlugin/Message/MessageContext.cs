@@ -1,19 +1,18 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 
 namespace ShowRoomSitePlugin
 {
     internal class MessageContext : IMessageContext
     {
-        public SitePlugin.ISiteMessage Message { get; }
+        public ISiteMessage Message { get; }
+        public string? UserId { get; }
+        public string? NewNickname { get; }
 
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public MessageContext(IShowRoomMessage message, MessageMetadata metadata, IMessageMethods methods)
+        public MessageContext(IShowRoomMessage message, string? userId, string? newNickname)
         {
             Message = message;
-            Metadata = metadata;
-            Methods = methods;
+            UserId = userId;
+            NewNickname = newNickname;
         }
     }
 }

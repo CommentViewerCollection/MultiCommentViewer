@@ -1,6 +1,5 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Media;
 
@@ -92,7 +91,7 @@ namespace NicoSitePlugin
         string RoomName { get; }
         int No { get; }
     }
-    public interface INicoSiteOptions : ISiteOptions, INotifyPropertyChanged
+    public interface INicoSiteOptions : INotifyPropertyChanged
     {
         //公式放送では自分の部屋を入れて何部屋取得するか
         //"アリーナ:123456"等のコメントIDの表示形式。カスタマイズできるようにしたい

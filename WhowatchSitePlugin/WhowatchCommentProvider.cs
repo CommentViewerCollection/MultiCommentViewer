@@ -1,7 +1,4 @@
-﻿using Common;
-using ryu_s.BrowserCookie;
-using SitePlugin;
-using SitePluginCommon;
+﻿using Mcv.PluginV2;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,9 +31,7 @@ namespace WhowatchSitePlugin
         #region CanDisconnect
         private bool _canDisconnect;
         private readonly IDataServer _server;
-        private readonly ICommentOptions _options;
         private readonly IWhowatchSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
         private readonly ILogger _logger;
 
         public bool IsConnected => CanConnect;
@@ -59,9 +54,9 @@ namespace WhowatchSitePlugin
         public event EventHandler CanDisconnectChanged;
         public event EventHandler<IMessageContext> MessageReceived;
 
-        public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
+        public async Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
-            var cc = CreateCookieContainer(browserProfile);
+            var cc = CreateCookieContainer(cookies);
             var me = await Api.GetMeAsync(_server, cc);
 
             return new CurrentUserInfo
@@ -72,12 +67,11 @@ namespace WhowatchSitePlugin
             };
         }
 
-        protected virtual CookieContainer CreateCookieContainer(IBrowserProfile browserProfile)
+        protected virtual CookieContainer CreateCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();
             try
             {
-                var cookies = browserProfile.GetCookieCollection("whowatch.tv");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -93,7 +87,7 @@ namespace WhowatchSitePlugin
                 Text = message,
                 SiteType = SiteType.Whowatch,
                 Type = type,
-            }, _options);
+            });
             MessageReceived?.Invoke(this, context);
         }
         public bool IsLoggedIn => _me != null && !string.IsNullOrEmpty(_me.UserPath);
@@ -131,7 +125,7 @@ namespace WhowatchSitePlugin
 
         }
         FirstCommentDetector _first = new FirstCommentDetector();
-        public virtual async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public virtual async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             //lastUpdatedAt==0でLiveDataを取る
             //配信中だったらそこに入っているInitialCommentsを送る
@@ -142,7 +136,7 @@ namespace WhowatchSitePlugin
             LiveData initialLiveData = null;
             try
             {
-                _cc = CreateCookieContainer(browserProfile);
+                _cc = CreateCookieContainer(cookies);
                 var itemDict = await GetPlayItemsAsync();
                 MessageParser.Resolver = new ItemNameResolver(itemDict);
 
@@ -216,7 +210,7 @@ namespace WhowatchSitePlugin
             //var d = internal
 
             var retryCount = 0;
-        Retry:
+Retry:
             var commentProviderTask = internalCommentProvider.ReceiveAsync(_live_id, initialLiveData.Jwt);
 
 
@@ -285,35 +279,17 @@ namespace WhowatchSitePlugin
 
         private WhowatchMessageContext CreateMessageContext(IWhowatchMessage message, bool isInitialComment)
         {
-            IMessageMetadata metadata = null;
+            string? userId = null;
+            string? newNickname = null;
             if (message is IWhowatchComment comment)
             {
-                var user = GetUser(comment.UserId);
-                user.Name = MessagePartFactory.CreateMessageItems(comment.UserName);
-                var isFirstComment = _first.IsFirstComment(user.UserId);
-                metadata = new CommentMessageMetadata(comment, _options, _siteOptions, user, this, isFirstComment)
-                {
-                    IsInitialComment = isInitialComment,
-                    SiteContextGuid = SiteContextGuid,
-                };
+                userId = comment.UserId;
             }
             else if (message is IWhowatchItem item)
             {
-                var user = GetUser(item.UserId.ToString());
-                user.Name = MessagePartFactory.CreateMessageItems(item.UserName);
-                metadata = new ItemMessageMetadata(item, _options, _siteOptions, user, this)
-                {
-                    IsInitialComment = isInitialComment,
-                    SiteContextGuid = SiteContextGuid,
-                };
+                userId = item.UserId.ToString();
             }
-            WhowatchMessageContext context = null;
-            if (metadata != null)
-            {
-                var methods = new WhowatchMessageMethods();
-                context = new WhowatchMessageContext(message, metadata, methods);
-            }
-            return context;
+            return new WhowatchMessageContext(message, userId, newNickname);
         }
 
         InternalCommentProvider _internalCommentProvider;
@@ -342,17 +318,6 @@ namespace WhowatchSitePlugin
                 }
             }
         }
-        private void SetNickname(string messageText, IUser user)
-        {
-            if (_siteOptions.NeedAutoSubNickname)
-            {
-                var nick = ExtractNickname(messageText);
-                if (!string.IsNullOrEmpty(nick))
-                {
-                    user.Nickname = nick;
-                }
-            }
-        }
         private void InternalCommentProvider_MessageReceived(object sender, IWhowatchMessage e)
         {
             var whowatchMessage = e;
@@ -366,7 +331,6 @@ namespace WhowatchSitePlugin
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(whowatchMessage.Raw);
                 _logger.LogException(ex);
             }
         }
@@ -407,12 +371,6 @@ namespace WhowatchSitePlugin
             _cts?.Cancel();
             _internalCommentProvider?.Disconnect();
         }
-
-        public IUser GetUser(string userId)
-        {
-            return _userStoreManager.GetUser(SiteType.Whowatch, userId);
-        }
-
         public async Task PostCommentAsync(string text)
         {
             var res = await Api.PostCommentAsync(_server, _live_id, _lastUpdatedAt, text, _cc);
@@ -420,12 +378,10 @@ namespace WhowatchSitePlugin
         public Guid SiteContextGuid { get; set; }
 
         #endregion //ICommentProvider
-        public WhowatchCommentProvider(IDataServer server, ICommentOptions options, IWhowatchSiteOptions siteOptions, IUserStoreManager userStoreManager, ILogger logger)
+        public WhowatchCommentProvider(IDataServer server, IWhowatchSiteOptions siteOptions, ILogger logger)
         {
             _server = server;
-            _options = options;
             _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
             _logger = logger;
             CanConnect = true;
             CanDisconnect = false;

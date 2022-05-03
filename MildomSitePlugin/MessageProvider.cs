@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Codeplex.Data;
-using Common;
-using Newtonsoft.Json.Linq;
-using SitePlugin;
-using SitePluginCommon.AutoReconnection;
-using System.Linq;
+using Mcv.PluginV2;
+using Mcv.PluginV2.AutoReconnection;
 
 namespace MildomSitePlugin
 {
@@ -75,7 +70,7 @@ namespace MildomSitePlugin
                 UserId = userId,
                 UserName = d.userName,
                 UserImg = userImg,
-                PostedAt = Utils.GetCurrentDateTime(),
+                PostedAt = TimeUtils.GetCurrentDateTime(),
                 Raw = raw,
             };
             return internalMessage;
@@ -99,7 +94,7 @@ namespace MildomSitePlugin
                     {
                         continue;
                     }
-                    messageItems.Add(Common.MessagePartFactory.CreateMessageText(item));
+                    messageItems.Add(MessagePartFactory.CreateMessageText(item));
                 }
                 else
                 {
@@ -107,7 +102,7 @@ namespace MildomSitePlugin
                     {
                         if (imageDict.TryGetValue(n, out var emotUrl))
                         {
-                            messageItems.Add(new Common.MessageImage
+                            messageItems.Add(new MessageImage
                             {
                                 Alt = $"[/{item}]",
                                 Height = 40,
@@ -181,7 +176,7 @@ namespace MildomSitePlugin
             };
         }
     }
-    static class Utils
+    static class TimeUtils
     {
         public static DateTime GetCurrentDateTime()
         {
@@ -202,7 +197,7 @@ namespace MildomSitePlugin
                     break;
                 case "onChat":
                     {
-                        internalMessage =OnChatMessage. CreateChat(raw, imageDict, d);
+                        internalMessage = OnChatMessage.CreateChat(raw, imageDict, d);
                     }
                     break;
                 case "onAdd":
@@ -229,7 +224,7 @@ namespace MildomSitePlugin
                             UserId = userId,
                             UserName = username,
                             UserImg = d.userImg,
-                            PostedAt = Utils.GetCurrentDateTime(),
+                            PostedAt = TimeUtils.GetCurrentDateTime(),
                             Raw = raw,
                         };
                     }
@@ -254,7 +249,7 @@ namespace MildomSitePlugin
                         UserId = (long)d.userId,
                         UserName = d.userName,
                         UserImg = d.userImg,
-                        PostedAt = Utils.GetCurrentDateTime(),
+                        PostedAt = TimeUtils.GetCurrentDateTime(),
                         Raw = raw,
                     };
                     break;

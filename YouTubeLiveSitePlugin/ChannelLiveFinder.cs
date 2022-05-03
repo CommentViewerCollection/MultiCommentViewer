@@ -3,14 +3,13 @@ using System.Net;
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using YouTubeLiveSitePlugin.Test2;
 using System.Text.RegularExpressions;
 
-namespace YouTubeLiveSitePlugin
+namespace Mcv.YouTubeLiveSitePlugin
 {
     internal static class ChannelLiveFinder
     {
-        public static async Task<List<string>> FindLiveVidsAsync(IYouTubeLiveServer server, YouTubeLiveSitePlugin.Input.IChannelUrl channelUrl)
+        public static async Task<List<string>> FindLiveVidsAsync(IYouTubeLiveServer server, IChannelUrl channelUrl)
         {
             var url = $"{channelUrl.Raw}/streams";
             var html = await server.GetEnAsync(url);//2022/11/30 Cookieを渡してしまうとアカウント設定かなんかのせいで強制的に英語にすることができなかった。

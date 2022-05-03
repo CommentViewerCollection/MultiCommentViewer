@@ -4,11 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OpenrecSitePlugin"
-             xmlns:Common="clr-namespace:Common;assembly=Common" x:Class="OpenrecSitePlugin.OpenrecOptionsPanel"
+             x:Class="OpenrecSitePlugin.OpenrecOptionsPanel"
              mc:Ignorable="d" Height="290" Width="420">
     <Grid>
 
-        <Common:NumericUpDown Value="{Binding StampSize,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Minimum="1" HorizontalAlignment="Left" Height="30" Margin="94,20,0,0" VerticalAlignment="Top" Width="90"/>
+        <local:NumericUpDown Value="{Binding StampSize,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Minimum="1" HorizontalAlignment="Left" Height="30" Margin="94,20,0,0" VerticalAlignment="Top" Width="90"/>
         <Label Content="スタンプのサイズ" HorizontalAlignment="Left" Margin="10,22,0,0" VerticalAlignment="Top"/>
         <CheckBox x:Name="checkBoxStampMusic" Content="スタンプが貼られた時に音を鳴らす（現状、waveファイルのみ対応）" IsChecked="{Binding IsPlayStampMusic}" HorizontalAlignment="Left" Margin="10,70,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.352,0.333"/>
         <Button Content="開く" HorizontalAlignment="Left" IsEnabled="{Binding IsChecked, ElementName=checkBoxStampMusic}" Command="{Binding ShowOpenStampMusicSelectorCommand}" Margin="322,91,0,0" VerticalAlignment="Top" Width="53"/>

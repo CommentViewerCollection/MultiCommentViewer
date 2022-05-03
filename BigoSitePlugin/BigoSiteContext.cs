@@ -1,16 +1,12 @@
-﻿using System;
-using SitePlugin;
-using Common;
+﻿using Mcv.PluginV2;
+using System;
 using System.Diagnostics;
 using System.Windows.Controls;
-using SitePluginCommon;
 
 namespace BigoSitePlugin
 {
     public class BigoSiteContext : SiteContextBase, IBigoSiteContext
     {
-        public override Guid Guid => new Guid("0BB9758A-D755-48B9-A102-E4D26F9A9591");
-
         public override string DisplayName => "Bigo";
         protected override SiteType SiteType => SiteType.Bigo;
         public override IOptionsTabPage TabPanel
@@ -24,13 +20,8 @@ namespace BigoSitePlugin
         }
         public override ICommentProvider CreateCommentProvider()
         {
-            //return new YouTubeCommentProvider(connectionName, _options, _siteOptions);
-            return new CommentProvider(_options, _server, _siteOptions, _logger, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new CommentProvider(_server, _siteOptions, _logger);
         }
-
         public override void LoadOptions(string path, IIo io)
         {
             _siteOptions = new BigoSiteOptions();
@@ -60,7 +51,23 @@ namespace BigoSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
-
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new BigoSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         public override bool IsValidInput(string input)
         {
             return System.Text.RegularExpressions.Regex.IsMatch(input, "bigo\\.tv/\\d+");
@@ -81,14 +88,12 @@ namespace BigoSitePlugin
             return panel;
         }
 
-        private readonly ICommentOptions _options;
         private readonly IBigoServer _server;
         private readonly ILogger _logger;
         private BigoSiteOptions _siteOptions;
-        public BigoSiteContext(ICommentOptions options, IBigoServer server, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public BigoSiteContext(IBigoServer server, ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _server = server;
             _logger = logger;
         }

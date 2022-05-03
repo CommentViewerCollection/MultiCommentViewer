@@ -1,19 +1,18 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 
 namespace TwicasSitePlugin
 {
     internal class TwicasMessageContext : IMessageContext
     {
-        public SitePlugin.ISiteMessage Message { get; }
+        public ISiteMessage Message { get; }
+        public string? UserId { get; }
+        public string? NewNickname { get; }
 
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public TwicasMessageContext(ITwicasMessage message, MessageMetadata metadata, IMessageMethods methods)
+        public TwicasMessageContext(ITwicasMessage message, string? userId, string? newNickname)
         {
             Message = message;
-            Metadata = metadata;
-            Methods = methods;
+            UserId = userId;
+            NewNickname = newNickname;
         }
     }
 }

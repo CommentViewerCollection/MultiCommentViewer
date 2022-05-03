@@ -35,7 +35,6 @@ namespace ShowRoomSitePluginTests
             Assert.AreEqual("マイクが小さい", internalMessage.Comment);
             Assert.AreEqual(1561880210, internalMessage.CreatedAt);
             Assert.AreEqual(InternalMessageType.t1, internalMessage.MessageType);
-            Assert.AreEqual(data, internalMessage.Raw);
             Assert.AreEqual(2370410, internalMessage.UserId);
         }
         [Test]
@@ -55,7 +54,6 @@ namespace ShowRoomSitePluginTests
             Assert.AreEqual(0, internalMessage.H);
             Assert.AreEqual(10, internalMessage.N);
             Assert.AreEqual(InternalMessageType.t2, internalMessage.MessageType);
-            Assert.AreEqual(data, internalMessage.Raw);
             Assert.AreEqual(842213, internalMessage.U);
         }
     }

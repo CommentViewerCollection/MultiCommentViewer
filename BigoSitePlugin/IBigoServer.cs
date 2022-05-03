@@ -2,7 +2,7 @@
 using System.Net;
 using System.Collections.Generic;
 using System.Net.Http;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace BigoSitePlugin
 {

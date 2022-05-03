@@ -1,15 +1,8 @@
 ﻿using System;
-using Common;
-using SitePlugin;
 using System.Threading.Tasks;
-using System.Net;
-using System.Threading;
-using System.Linq;
-using System.Net.Http;
-using System.Diagnostics;
 using Codeplex.Data;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
+using Mcv.PluginV2;
 
 namespace ShowRoomSitePlugin
 {
@@ -159,7 +152,7 @@ namespace ShowRoomSitePlugin
         /// <param name="raw">json</param>
         /// <returns></returns>
         /// <exception cref="ParseException"></exception>
-        public static IInternalMessage ParseMsg(string raw)
+        public static IInternalMessage? ParseMsg(string raw)
         {
             IInternalMessage internalMessage;
             var match = Regex.Match(raw, "\"t\":\"?(\\d+)");
@@ -167,7 +160,7 @@ namespace ShowRoomSitePlugin
             {
                 //MSG	70724a:VGEKqmGT	{"av":1010794,"d":8,"ac":"@LTFismar_","cm":"頑張って...
                 //MSG	70724a:VGEKqmGT	{"av":1018790,"d":0,"ac":"やいず216","cm":"みさきちゃん頑張ろうね！
-                throw new ParseException(raw);
+                return null;
             }
             var type = match.Groups[1].Value;
             switch (type)
@@ -238,7 +231,7 @@ namespace ShowRoomSitePlugin
                 throw new ParseException(raw);
             }
             var command = arr[0];
-            IInternalMessage internalMessage;
+            IInternalMessage? internalMessage;
             switch (command)
             {
                 case "MSG":

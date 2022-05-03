@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
-using Common;
+using Mcv.PluginV2;
 
 namespace OpenrecSitePlugin
 {
@@ -25,7 +23,7 @@ namespace OpenrecSitePlugin
                     var list = await API.GetBanList(_dataSource, context);
                     Received?.Invoke(this, list);
                 }
-                catch(System.Net.Http.HttpRequestException ex)
+                catch (System.Net.Http.HttpRequestException ex)
                 {
                     _logger.LogException(ex);
                     if (ex.Message.Contains("401"))

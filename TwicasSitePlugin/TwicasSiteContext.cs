@@ -1,11 +1,7 @@
 ﻿using System;
-using Common;
-using System.Windows.Threading;
-using SitePlugin;
 using System.Windows.Controls;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
-using SitePluginCommon;
+using Mcv.PluginV2;
 
 namespace TwicasSitePlugin
 {
@@ -33,8 +29,6 @@ namespace TwicasSitePlugin
     }
     public class TwicasSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("8649A30C-D9C8-4ADB-862D-E0DAAEA24CE2");
-
         public override string DisplayName => "ツイキャス";
         protected override SiteType SiteType => SiteType.Twicas;
         public override IOptionsTabPage TabPanel
@@ -49,10 +43,7 @@ namespace TwicasSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new TwicasCommentProvider2(new TwicasServer(), _logger, _options, _siteOptions, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new TwicasCommentProvider2(new TwicasServer(), _logger, _siteOptions);
         }
 
         public override bool IsValidInput(string input)
@@ -107,6 +98,23 @@ namespace TwicasSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new TwicasSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         public override UserControl GetCommentPostPanel(ICommentProvider commentProvider)
         {
             var youtubeCommentProvider = commentProvider as TwicasCommentProvider2;
@@ -122,12 +130,10 @@ namespace TwicasSitePlugin
             };
             return panel;
         }
-        private readonly ICommentOptions _options;
         private readonly ILogger _logger;
-        public TwicasSiteContext(ICommentOptions options, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public TwicasSiteContext(ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _logger = logger;
         }
     }

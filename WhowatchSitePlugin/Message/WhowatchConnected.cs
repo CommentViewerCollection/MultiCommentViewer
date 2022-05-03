@@ -1,5 +1,4 @@
-﻿using SitePlugin;
-using System.Collections.Generic;
+﻿using Mcv.PluginV2;
 
 namespace WhowatchSitePlugin
 {

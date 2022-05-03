@@ -1,7 +1,7 @@
-﻿using Common;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using SitePluginCommon.AutoReconnection;
+using Mcv.PluginV2;
+using Mcv.PluginV2.AutoReconnection;
 
 namespace MirrativSitePlugin
 {

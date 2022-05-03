@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using SitePlugin;
+﻿using Mcv.PluginV2;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -45,7 +45,7 @@ namespace MirrativSitePlugin
             var res = await server.GetAsync(url, null);
             var obj = Tools.Deserialize<Low.LiveComments.RootObject>(res);
             var list = new List<Message>();
-            foreach(var c in obj.Comments)
+            foreach (var c in obj.Comments)
             {
                 list.Add(new Message
                 {
@@ -86,7 +86,7 @@ namespace MirrativSitePlugin
         public string OnLiveLiveId { get; set; }
         public UserProfile(Low.UserProfile.RootObject lowObject)
         {
-            OnLiveLiveId= lowObject.Onlive?.LiveId;
+            OnLiveLiveId = lowObject.Onlive?.LiveId;
             Name = lowObject.Name;
         }
     }

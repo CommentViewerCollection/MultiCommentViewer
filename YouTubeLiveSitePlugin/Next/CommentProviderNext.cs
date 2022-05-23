@@ -1,25 +1,21 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Net;
-using SitePlugin;
-using ryu_s.BrowserCookie;
-using Common;
-using System.Text.RegularExpressions;
-using SitePluginCommon;
-using YouTubeLiveSitePlugin.Test2;
-using System.Net.Http;
-using System.Windows.Documents;
-using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
-using System.Threading;
-using System.Security.Cryptography;
+﻿using Common;
 using Newtonsoft.Json;
-using System.Linq;
-using YouTubeLiveSitePlugin.Input;
+using ryu_s.BrowserCookie;
 using ryu_s.YouTubeLive.Message;
 using ryu_s.YouTubeLive.Message.Action;
 using ryu_s.YouTubeLive.Message.Continuation;
+using SitePlugin;
+using SitePluginCommon;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using YouTubeLiveSitePlugin.Input;
+using YouTubeLiveSitePlugin.Test2;
 
 namespace YouTubeLiveSitePlugin.Input
 {
@@ -472,21 +468,6 @@ namespace YouTubeLiveSitePlugin.Next
                     {
                         await chatTask;
                     }
-                    catch (GetLiveChatException ex)
-                    {
-                        _isDisconnectedExpected = true;
-                        string html;
-                        try
-                        {
-                            html = await GetLiveChat(vid, _cc);
-                        }
-                        catch
-                        {
-                            html = "";
-                        }
-                        _logger.LogException(ex, "", $"input={input.Raw},html={html}");
-                        SendSystemInfo($"エラーが発生したため、これ以上コメントを取得できません{Environment.NewLine}{ex.Message}", InfoType.Notice);
-                    }
                     catch (ContinuationNotExistsException)
                     {
                         break;
@@ -495,7 +476,7 @@ namespace YouTubeLiveSitePlugin.Next
                     {
                         _isDisconnectedExpected = true;
                         _logger.LogException(ex);
-                        SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Notice);
+                        SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Error);
                     }
                     catch (ReloadException)
                     {

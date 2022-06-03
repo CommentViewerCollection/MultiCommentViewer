@@ -40,7 +40,7 @@ namespace NicoSitePlugin
         {
             get
             {
-                if (IsNgUser || IsSiteNgUser) return false;
+                if (IsNgUser || IsSiteNgUser || (!_siteOptions.IsShow184 && Is184)) return false;
 
                 //TODO:ConnectedとかDisconnectedの場合、表示するエラーレベルがError以下の場合にfalseにしたい
                 return true;

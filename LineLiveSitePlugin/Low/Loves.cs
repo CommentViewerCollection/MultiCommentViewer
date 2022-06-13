@@ -5,6 +5,55 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+namespace LineLive.Api
+{
+    class Loves
+    {
+        public long Status { get; private set; }
+        public List<Item> Items { get; private set; }
+        public static Loves Parse(string json)
+        {
+            dynamic d = JsonConvert.DeserializeObject(json);
+            var status = (long)d.status;
+            var items = new List<Item>();
+            foreach (var tab in d.tabs)
+            {
+                foreach (var item in tab.items)
+                {
+                    items.Add(Item.Parse(item));
+                }
+            }
+
+            return new Loves
+            {
+                Status = status,
+                Items = items,
+            };
+
+        }
+    }
+    class Item
+    {
+        public string Name { get; private set; }
+        public string NameJs { get; private set; }
+        public string ItemId { get; private set; }
+        public string ThumbnailUrl { get; private set; }
+        internal static Item Parse(dynamic d)
+        {
+            var itemId = (string)d.itemId;
+            var name = (string)d.name;
+            var nameJa = (string)d.nameJa;
+            var thumbnailUrl = (string)d.assets.thumbnailUrl;
+            return new Item
+            {
+                ItemId = itemId,
+                Name = name,
+                NameJs = nameJa,
+                ThumbnailUrl = thumbnailUrl,
+            };
+        }
+    }
+}
 namespace LineLiveSitePlugin.Low.Loves
 {
     public partial class RootObject

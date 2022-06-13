@@ -127,7 +127,7 @@ namespace LineLiveSitePlugin
         {
             var url = $"https://live-api.line-apps.com/web/v4.0/channel/{channelId}/broadcast/{liveId}";
             var res = await server.GetAsync(url);//, cc);
-
+            //{"status":4030005,"errorMessage":"LIVE Gateway Failed","apistatusCode":4030005}
             dynamic d = Tools.Deserialize(res);
             var liveInfo = new LiveInfo
             {
@@ -143,6 +143,18 @@ namespace LineLiveSitePlugin
             var s = await server.GetAsync(url);
             var channelInfo = Tools.Deserialize<LineLiveSitePlugin.Low.ChannelInfo.RootObject>(s);
             return (channelInfo, s);
+        }
+        public static async Task<LineLive.Api.Loves> GetLovesV4(IDataServer server)
+        {
+            //https://live-api.line-apps.com/web/v4.0/billing/gift/loves?storeType=WEB&channelId={channelId}&broadcastId={broadcastId}
+            var url = "https://live-api.line-apps.com/web/v4.0/billing/gift/loves";
+            var headers = new Dictionary<string, string>
+            {
+                {"Accept-Language","ja" },
+            };
+            var s = await server.GetAsync(url,headers,new CookieContainer());
+            var loves = LineLive.Api.Loves.Parse(s);
+            return loves;
         }
         public static async Task<LineLiveSitePlugin.Low.Loves.RootObject> GetLoves(IDataServer server)
         {

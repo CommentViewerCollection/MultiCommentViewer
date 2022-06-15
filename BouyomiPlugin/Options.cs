@@ -54,6 +54,8 @@ namespace BouyomiPlugin
         public bool IsTwitchComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsTwitchCommentNickname { get { return GetValue(); } set { SetValue(value); } }
         public bool IsTwitchCommentEmoteId { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsTwitchSkipSameEmote { get { return GetValue(); } set { SetValue(value); } }
+        public int TwitchMaxEmotes { get { return GetValue(); } set { SetValue(value); } }
 
         //ニコ生
         public bool IsNicoConnect { get { return GetValue(); } set { SetValue(value); } }
@@ -180,6 +182,8 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsTwitchComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTwitchCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsTwitchCommentEmoteId), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsTwitchSkipSameEmote), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(TwitchMaxEmotes), new Item { DefaultValue = 3, Predicate = n => true, Serializer = n => n.ToString(), Deserializer = n => int.Parse(n) });
 
             //ニコ生
             Dict.Add(nameof(IsNicoConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

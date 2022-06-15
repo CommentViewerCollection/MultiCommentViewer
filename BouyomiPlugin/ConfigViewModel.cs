@@ -305,6 +305,22 @@ namespace BouyomiPlugin
             get => _options.IsTwitchCommentEmoteId;
             set => _options.IsTwitchCommentEmoteId = value;
         }
+        /// <summary>
+        /// TwitchのコメントのエモートIDを何個まで読み上げるか
+        /// </summary>
+        public int TwitchMaxEmotes
+        {
+            get { return _options.TwitchMaxEmotes; }
+            set { _options.TwitchMaxEmotes = value; }
+        }
+        /// <summary>
+        /// Twitchのコメントの連続する同一エモートを省略するか
+        /// </summary>
+        public bool IsTwitchSkipSameEmote
+        {
+            get { return _options.IsTwitchSkipSameEmote; }
+            set { _options.IsTwitchSkipSameEmote = value; }
+        }
         ///// <summary>
         ///// Twitchのアイテムを読み上げるか
         ///// </summary>

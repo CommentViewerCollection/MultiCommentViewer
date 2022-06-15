@@ -8,6 +8,9 @@
         d:DesignHeight="1500"
         d:DataContext="{d:DesignInstance local:ConfigViewModel, IsDesignTimeCreatable=True}"
         Title="棒読みちゃん連携プラグイン"  Width="439" Background="#F0F0F0">
+    <Window.Resources>
+        <local:AndConverter x:Key="AndConverter"/>
+    </Window.Resources>
     <Grid>
         <CheckBox x:Name="checkBox" Content="棒読みちゃんにコメントを読んでもらう" IsChecked="{Binding IsEnabled}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
         <TabControl HorizontalAlignment="Stretch" Margin="5,30,5,5" VerticalAlignment="Stretch">
@@ -196,6 +199,8 @@
                                         <RowDefinition />
                                         <RowDefinition />
                                         <RowDefinition />
+                                        <RowDefinition />
+                                        <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition />
@@ -207,7 +212,24 @@
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckTwitchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwitchComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentNickname}" Content="コテハン" />
-                                    <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentEmoteId}" Content="エモートID" />
+                                    <CheckBox x:Name="CheckTwitchCommentEmoteId" IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentEmoteId}" Content="エモートID" />
+                                    <TextBox x:Name="TwitchMaxEmotes" Grid.Row="3" Grid.Column="2" MaxLength="3" Text="{Binding TwitchMaxEmotes}" PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged">
+                                        <TextBox.IsEnabled>
+                                            <MultiBinding Converter="{StaticResource AndConverter}">
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchComment"/>
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchCommentEmoteId"/>
+                                            </MultiBinding>
+                                        </TextBox.IsEnabled>
+                                    </TextBox>
+                                    <Label Content="個まで" Grid.Row="3" Grid.Column="3"/>
+                                    <CheckBox Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="4" IsChecked="{Binding IsTwitchSkipSameEmote}" Content="連続する同一エモートを省略">
+                                        <CheckBox.IsEnabled>
+                                            <MultiBinding Converter="{StaticResource AndConverter}">
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchComment"/>
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchCommentEmoteId"/>
+                                            </MultiBinding>
+                                        </CheckBox.IsEnabled>
+                                    </CheckBox>
                                 </Grid>
                             </Grid>
                         </Border>

@@ -9,6 +9,7 @@ using Common;
 using Newtonsoft.Json.Linq;
 using SitePlugin;
 using SitePluginCommon.AutoReconnection;
+using System.Linq;
 
 namespace MildomSitePlugin
 {
@@ -18,11 +19,19 @@ namespace MildomSitePlugin
     }
     class UnknownMessage : IInternalMessage
     {
-        public string Raw { get; set; }
+        public string Raw { get; }
+        public UnknownMessage(string raw)
+        {
+            Raw = raw;
+        }
     }
     class UnImplementedMessage : IInternalMessage
     {
-        public string Raw { get; set; }
+        public string Raw { get; }
+        public UnImplementedMessage(string raw)
+        {
+            Raw = raw;
+        }
     }
     class OnChatMessage : IInternalMessage
     {
@@ -32,6 +41,87 @@ namespace MildomSitePlugin
         public string UserImg { get; internal set; }
         public DateTime PostedAt { get; internal set; }
         public string Raw { get; set; }
+        public static IInternalMessage CreateChat(string raw, Dictionary<int, string> imageDict, dynamic d)
+        {
+            IInternalMessage internalMessage;
+            //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
+            var messageItems = PlainTextToCommentAndStamp(imageDict, d.msg);
+            //2020/08/27 userIdの無いコメントを確認。ゲストユーザでもコメント投稿できるのだろうか？定型文だけ？
+            //{"area": 2000, "cmd": "onChat", "msg": "よくやった", "msgId": "1598498460835_0_8192", "reqId": 0, "roomId": 10007428, "time": "1598498460835", "toId": 10007428, "toName": "*", "type": 3, "userName": "guest737168"}
+            //2020/08/29 onAddでは匿名ユーザーのユーザーIDは0になっている。統一したい。
+            string userId;
+            if (d.IsDefined("userId"))
+            {
+                userId = ((long)d.userId).ToString();
+            }
+            else
+            {
+                //匿名ユーザー。userNameが"guest737168"のような形式だからこれを流用してみる。
+                userId = d.userName;
+            }
+            //userIdが無い場合はuserImgも無さそう。
+            string userImg;
+            if (d.IsDefined("userImg"))
+            {
+                userImg = d.userImg;
+            }
+            else
+            {
+                userImg = null;
+            }
+            internalMessage = new OnChatMessage
+            {
+                MessageItems = messageItems,
+                UserId = userId,
+                UserName = d.userName,
+                UserImg = userImg,
+                PostedAt = Utils.GetCurrentDateTime(),
+                Raw = raw,
+            };
+            return internalMessage;
+        }
+        /// <summary>
+        /// コメントの中に[/7]のような形式でスタンプが埋め込まれているから分離する
+        /// </summary>
+        /// <param name="imageDict"></param>
+        /// <param name="rawComment"></param>
+        /// <returns></returns>
+        private static List<IMessagePart> PlainTextToCommentAndStamp(Dictionary<int, string> imageDict, string rawComment)
+        {
+            var messageItems = new List<IMessagePart>();
+            var arr = Regex.Split(rawComment, "\\[/(\\d+)\\]");
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var item = arr[i];
+                if (i % 2 == 0)
+                {
+                    if (string.IsNullOrEmpty(item))
+                    {
+                        continue;
+                    }
+                    messageItems.Add(Common.MessagePartFactory.CreateMessageText(item));
+                }
+                else
+                {
+                    if (int.TryParse(item, out int n))
+                    {
+                        if (imageDict.TryGetValue(n, out var emotUrl))
+                        {
+                            messageItems.Add(new Common.MessageImage
+                            {
+                                Alt = $"[/{item}]",
+                                Height = 40,
+                                Width = 40,
+                                Url = emotUrl,
+                                X = null,
+                                Y = null,
+                            });
+                        }
+                    }
+                }
+            }
+            return messageItems;
+        }
     }
     class OnBroadcast : IInternalMessage
     {
@@ -76,12 +166,30 @@ namespace MildomSitePlugin
         public DateTime PostedAt { get; internal set; }
         public string Raw { get; set; }
     }
-    class MessageParser
+    internal class OnUserCountMessage : IInternalMessage
+    {
+        public int UserCount { get; private set; }
+        public string Raw { get; private set; }
+        private OnUserCountMessage() { }
+        public static OnUserCountMessage Create(dynamic json, string raw)
+        {
+            var userCount = (int)json.userCount;
+            return new OnUserCountMessage()
+            {
+                UserCount = userCount,
+                Raw = raw,
+            };
+        }
+    }
+    static class Utils
     {
         public static DateTime GetCurrentDateTime()
         {
             return DateTime.Now;
         }
+    }
+    class MessageParser
+    {
         public static IInternalMessage Parse(string raw, Dictionary<int, string> imageDict)
         {
             IInternalMessage internalMessage;
@@ -94,70 +202,7 @@ namespace MildomSitePlugin
                     break;
                 case "onChat":
                     {
-                        //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
-                        var messageItems = new List<IMessagePart>();
-                        var arr = Regex.Split(d.msg, "\\[/(\\d+)\\]");
-                        for (int i = 0; i < arr.Length; i++)
-                        {
-                            if (i % 2 == 0)
-                            {
-                                if (string.IsNullOrEmpty(arr[i]))
-                                {
-                                    continue;
-                                }
-                                messageItems.Add(Common.MessagePartFactory.CreateMessageText(arr[i]));
-                            }
-                            else
-                            {
-                                if (int.TryParse(arr[i], out int n))
-                                {
-                                    if (imageDict.TryGetValue(n, out var emotUrl))
-                                    {
-                                        messageItems.Add(new Common.MessageImage
-                                        {
-                                            Alt = "",
-                                            Height = 40,
-                                            Width = 40,
-                                            Url = emotUrl,
-                                            X = null,
-                                            Y = null,
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                        //2020/08/27 userIdの無いコメントを確認。ゲストユーザでもコメント投稿できるのだろうか？定型文だけ？
-                        //{"area": 2000, "cmd": "onChat", "msg": "よくやった", "msgId": "1598498460835_0_8192", "reqId": 0, "roomId": 10007428, "time": "1598498460835", "toId": 10007428, "toName": "*", "type": 3, "userName": "guest737168"}
-                        //2020/08/29 onAddでは匿名ユーザーのユーザーIDは0になっている。統一したい。
-                        string userId;
-                        if (d.IsDefined("userId"))
-                        {
-                            userId = ((long)d.userId).ToString();
-                        }
-                        else
-                        {
-                            //匿名ユーザー。userNameが"guest737168"のような形式だからこれを流用してみる。
-                            userId = d.userName;
-                        }
-                        //userIdが無い場合はuserImgも無さそう。
-                        string userImg;
-                        if (d.IsDefined("userImg"))
-                        {
-                            userImg = d.userImg;
-                        }
-                        else
-                        {
-                            userImg = null;
-                        }
-                        internalMessage = new OnChatMessage
-                        {
-                            MessageItems = messageItems,
-                            UserId = userId,
-                            UserName = d.userName,
-                            UserImg = userImg,
-                            PostedAt = GetCurrentDateTime(),
-                            Raw = raw,
-                        };
+                        internalMessage =OnChatMessage. CreateChat(raw, imageDict, d);
                     }
                     break;
                 case "onAdd":
@@ -184,7 +229,7 @@ namespace MildomSitePlugin
                             UserId = userId,
                             UserName = username,
                             UserImg = d.userImg,
-                            PostedAt = GetCurrentDateTime(),
+                            PostedAt = Utils.GetCurrentDateTime(),
                             Raw = raw,
                         };
                     }
@@ -209,21 +254,21 @@ namespace MildomSitePlugin
                         UserId = (long)d.userId,
                         UserName = d.userName,
                         UserImg = d.userImg,
-                        PostedAt = GetCurrentDateTime(),
+                        PostedAt = Utils.GetCurrentDateTime(),
                         Raw = raw,
                     };
                     break;
                 case "runCmdNotify":
                     //{"cmd": "runCmdNotify", "runBody": {"host_id": 10038336, "room_id": 10038336, "user_id": 10008249, "user_level": 31, "user_name": "odoritora / Riddle"}, "runCmd": "on_host_followed", "type": 3}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = new UnImplementedMessage(raw);
                     break;
                 case "onLove":
                     //{"area": 2000, "cmd": "onLove", "count": 2, "countSum": 11, "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 46, "loveId": 4, "medals": [], "msg": "taps", "reqId": 0, "roomId": 10038336, "toId": 0, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10005716, "userImg": "https://lh3.googleusercontent.com/a-/AAuE7mDLSMHK8SDSzPp4b8GGKiPzml7J0xND7p6s7uw_=s120", "userName": "hashi070429"}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = new UnImplementedMessage(raw);
                     break;
                 case "onUserCount":
                     //{"cmd": "onUserCount", "roomId": 10000157, "type": 3, "userCount": 179}
-                    internalMessage = new UnImplementedMessage();
+                    internalMessage = OnUserCountMessage.Create(d, raw);
                     break;
                 case "onLiveEnd":
                     //{"cmd": "onLiveEnd", "roomId": 10038336, "type": 3}
@@ -231,25 +276,22 @@ namespace MildomSitePlugin
                     break;
                 case "onActivity":
                     //"{\"activity_id\": \"Valorant_8/5-8/31\", \"category\": \"defaultV2\", \"cmd\": \"onActivity\", \"content\": {\"endTime\": \"2020-08-31 23:00:00\", \"link\": \"https://event.mildom.com/activity/view?series_id=343&week=1&check_id=72d8d737028de098695a9823c34a69cc\", \"numberDesc\": \"rank\", \"pic\": \"https://up.mildom.com/jp/mildom/nnimgs/36e91c8a38ca5155ee5d9d251cce3e6f?p=0\", \"pointDesc\": \"point\", \"top_pic\": \"\"}, \"effect\": {\"effectId\": 0, \"endTime\": 0, \"rate\": 0, \"startTime\": 0, \"status\": 0}, \"enable\": 1, \"rst\": 0, \"type\": 3, \"weight\": 10}"
-                    internalMessage = new UnknownMessage();
+                    internalMessage = new UnknownMessage(raw);
                     break;
                 case "onForbidden":
                     //"{\"area\": 2000, \"cmd\": \"onForbidden\", \"fobiddenGlobal\": 0, \"reqId\": 0, \"roomId\": 10093333, \"rst\": 0, \"time\": 300, \"type\": 3, \"userId\": 10285881, \"userName\": \"かもちゃん\"}"
-                    internalMessage = new UnknownMessage();
+                    internalMessage = new UnknownMessage(raw);
                     break;
                 default:
                     //d.cmd = "onLiveStart"
                     //"{\"cmd\": \"onLiveStart\", \"reqId\": 0, \"roomId\": 10093333, \"type\": 3}"
                     //"{\"cmd\": \"onRecallMsg\", \"msgId\": \"1598498266966_10423897_3353\", \"reqId\": 5, \"roomId\": 10050854, \"rst\": 0, \"type\": 3, \"userId\": 10423897}"
-                    internalMessage = new UnknownMessage();
+                    internalMessage = new UnknownMessage(raw);
                     break;
             }
             return internalMessage;
         }
     }
-
-
-
     class MessageProvider : IProvider
     {
         public IProvider Master { get; set; }
@@ -264,6 +306,7 @@ namespace MildomSitePlugin
 
         //public event EventHandler<IInternalMessage> MessageReceived;
         public event EventHandler<string> MessageReceived;
+        public event EventHandler<byte[]> BinaryMessageReceived;
         public event EventHandler<IMetadata> MetadataUpdated;
 
         public void Start()
@@ -281,7 +324,15 @@ namespace MildomSitePlugin
             _logger = logger;
             webSocket.Opened += WebSocket_Opened;
             webSocket.Received += WebSocket_Received;
+            webSocket.BinaryReceived += WebSocket_BinaryReceived;
         }
+
+        private void WebSocket_BinaryReceived(object sender, byte[] e)
+        {
+            var raw = e;
+            BinaryMessageReceived?.Invoke(this, raw);
+        }
+
         private void WebSocket_Received(object sender, string e)
         {
             var raw = e;
@@ -321,12 +372,24 @@ namespace MildomSitePlugin
                 return s;
             }
         }
+        private string CreateFirstMessage(string roomId, string userName, string guestId)
+        {
+            var userId = 0;
+            var level = 1;
+            var nonopara = "fr=web`sfr=pc`devi=Windows 10 64-bit`la=ja`gid=pc-gp-c5f6f156-12ab-4f7a-9f7a-13f103f2799a`na=Japan`loc=Japan|Tokyo`clu=aws_japan`wh=1920*1080`rtm=2022-01-30T14:46:10.215Z`ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36`click_time=2022-01-30 23:46:07.788`pcv=v3.8.5`source=homepage`sub_source=face_up_live`room_id=13284111`live_id=13284111-c7r96n4irkrcmvq9bal0`live_status=live`live_content_type=face_up_live";
+            var reqId = 1;
+            var reConnect = 0;
+            return $"{{\"userId\":{userId},\"level\":{level},\"userName\":\"{userName}\",\"gareaArgsObj\":{{\"source\":\"homepage\",\"sub_source\":\"face_up_live\"}},\"guestId\":\"{guestId}\",\"nonopara\":\"{nonopara}\",\"roomId\":{roomId},\"reqId\":{reqId},\"cmd\":\"enterRoom\",\"reConnect\":{reConnect},\"nobleLevel\":0,\"avatarDecortaion\":0,\"enterroomEffect\":0,\"nobleClose\":0,\"nobleSeatClose\":0}}";
+        }
         private async void WebSocket_Opened(object sender, EventArgs e)
         {
             try
             {
-                var msg = Create();
-                await _webSocket.SendAsync(msg);
+                var guestInfo = (AnonymousUserInfo)MyInfo;
+                var msg = CreateFirstMessage(RoomId, guestInfo.GuestName, guestInfo.GuestId);
+                var bytes = InternalMessage.InternalMessageParser.EnctyptMessage(msg);
+                await _webSocket.SendAsync(bytes);
+
                 //MessageReceived?.Invoke(this, new MildomConnected(""));
             }
             catch (Exception ex)

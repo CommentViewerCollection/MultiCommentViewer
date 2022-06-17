@@ -157,8 +157,6 @@ namespace MultiCommentViewer
 
         public SolidColorBrush Background => new SolidColorBrush(_metadata.BackColor);
 
-        public ICommentProvider CommentProvider => _metadata.CommentProvider;
-
         public FontFamily FontFamily => _metadata.FontFamily;
 
         public int FontSize => _metadata.FontSize;

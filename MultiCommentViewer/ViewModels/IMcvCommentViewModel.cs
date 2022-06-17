@@ -11,7 +11,6 @@ namespace MultiCommentViewer
     public interface IMcvCommentViewModel : INotifyPropertyChanged
     {
         SolidColorBrush Background { get; }
-        ICommentProvider CommentProvider { get; }
         IConnectionStatus ConnectionName { get; }
         FontFamily FontFamily { get; }
         int FontSize { get; }

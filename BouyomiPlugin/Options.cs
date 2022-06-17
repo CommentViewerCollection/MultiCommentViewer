@@ -116,8 +116,11 @@ namespace BouyomiPlugin
         public bool IsMildomDisconnect { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMildomComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMildomCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomCommentStampId { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMildomJoin { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMildomLeave { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomGift { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsMildomGiftNickname { get { return GetValue(); } set { SetValue(value); } }
 
         //ShowRoom
         public bool IsShowRoomComment { get { return GetValue(); } set { SetValue(value); } }
@@ -238,8 +241,12 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsMildomDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMildomComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMildomCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomCommentStampId), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMildomJoin), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsMildomLeave), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomGift), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsMildomGiftNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
 
             //ShowRoom
             Dict.Add(nameof(IsShowRoomComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

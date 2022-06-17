@@ -348,7 +348,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <xctk:ColorPicker SelectedColor="{Binding BackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                                <xctk:ColorPicker SelectedColor="{Binding BackColor, UpdateSourceTrigger=PropertyChanged}"  Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -360,7 +360,7 @@
                         >
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <xctk:ColorPicker  SelectedColor="{Binding ForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                                <xctk:ColorPicker  SelectedColor="{Binding ForeColor, UpdateSourceTrigger=PropertyChanged}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

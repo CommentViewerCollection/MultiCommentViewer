@@ -204,8 +204,6 @@ namespace MultiCommentViewer
             }
         }
 
-        public ICommentProvider CommentProvider => _metadata.CommentProvider;
-
         public FontFamily FontFamily => _metadata.FontFamily;
 
         public int FontSize => _metadata.FontSize;

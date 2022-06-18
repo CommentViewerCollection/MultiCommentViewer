@@ -679,16 +679,6 @@ namespace YouTubeLiveSitePlugin.Next
     //    }
     //    private readonly dynamic _d;
     //}
-
-    [Serializable]
-    public class GetLiveChatException : Exception
-    {
-        public string Raw { get; }
-        public GetLiveChatException(string message, string raw) : base(message)
-        {
-            Raw = raw;
-        }
-    }
     static class Tools
     {
         public static Input.IInput ParseInput(string input)

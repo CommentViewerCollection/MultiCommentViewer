@@ -133,10 +133,10 @@ namespace LineLiveSitePlugin
         public int LiveCheckIntervalMs { get; set; } = 30 * 1000;
         protected virtual async Task InitLoveIconUrlDict()
         {
-            var loves = await Api.GetLoves(_server);
-            foreach (var item in loves.Items)
+            var lovesV4 = await Api.GetLovesV4(_server);
+            foreach (var item in lovesV4.Items)
             {
-                _loveIconUrlDict.Add(item.ItemId, item.Assets.ThumbnailUrl);
+                _loveIconUrlDict.Add(item.ItemId, item.ThumbnailUrl);
             }
         }
         protected virtual Task<(ILiveInfo, string raw)> GetLiveInfo(string channelId, string liveId)

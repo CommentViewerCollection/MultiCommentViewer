@@ -31,15 +31,12 @@ namespace ShowRoomSitePluginTests
             var data = "MSG\t6cda70:87HHYS8k\t{\"av\":1014474,\"d\":0,\"ac\":\"しまやん♥\",\"cm\":\"マイクが小さい\",\"u\":2370410,\"created_at\":1561880210,\"at\":0,\"t\":\"1\"}";
             var internalMessage = MessageParser.Parse(data) as T1;
             Assert.IsNotNull(internalMessage);
-            Assert.AreEqual("しまやん♥", internalMessage.Ac);
-            Assert.AreEqual(0, internalMessage.At);
-            Assert.AreEqual(1014474, internalMessage.Av);
-            Assert.AreEqual("マイクが小さい", internalMessage.Cm);
+            Assert.AreEqual("しまやん♥", internalMessage.UserName);
+            Assert.AreEqual("マイクが小さい", internalMessage.Comment);
             Assert.AreEqual(1561880210, internalMessage.CreatedAt);
-            Assert.AreEqual(0, internalMessage.D);
             Assert.AreEqual(InternalMessageType.t1, internalMessage.MessageType);
             Assert.AreEqual(data, internalMessage.Raw);
-            Assert.AreEqual(2370410, internalMessage.U);
+            Assert.AreEqual(2370410, internalMessage.UserId);
         }
         [Test]
         public void Type2ParseTest()

@@ -121,6 +121,11 @@ namespace YouTubeLiveSitePlugin.Next
         /// 配信サイトの仕様変更に未対応
         /// </summary>
         SpecChanged,
+        /// <summary>
+        /// YouTubeサーバーからリロード指示があった
+        /// </summary>
+        Reload,
+        ChatUnavailable,
     }
     //class ChatProviderNext
     //{
@@ -384,14 +389,15 @@ namespace YouTubeLiveSitePlugin.Next
             var res = await client.GetAsync(url);
             return await res.Content.ReadAsStringAsync();
         }
+        ReasonForDisconnection? _reason;
         /// <summary>
         /// 何らかの理由で切断/中断されるまでコメントを取得し続ける
         /// 例外は投げないようにしたい-.
         /// </summary>
         /// <returns>再接続すべきか</returns>
-        private async Task<bool> ConnectOnceAsync(string vid, CookieContainer cc,ChatProvider2 chatProvider, MetaDataYoutubeiProvider metaProvider)
+        private async Task<ReasonForDisconnection> ConnectOnceAsync(string vid, CookieContainer cc,ChatProvider2 chatProvider, MetaDataYoutubeiProvider metaProvider)
         {
-            var isDisconnectedExpected = false;
+            _reason = null;
 
             var liveChatHtml = await GetLiveChat(vid, cc);
             var liveChat = LiveChat.Parse(liveChatHtml);
@@ -403,7 +409,7 @@ namespace YouTubeLiveSitePlugin.Next
             if (!ytInitialData.CanChat)
             {
                 SendSystemInfo("このライブストリームではチャットは無効です。", InfoType.Notice);
-                return false;
+                return ReasonForDisconnection.ChatUnavailable;
             }
             var loginInfo = Tools.CreateLoginInfo(liveChat.YtCfg.IsLoggedIn);
             //ログイン済みユーザの正常にコメントが取得できるようになったら以下のコードは不要
@@ -419,7 +425,6 @@ namespace YouTubeLiveSitePlugin.Next
                     var keys = string.Join(",", cookies.Select(c => c.Name));
                     _logger.LogException(new Exception(), "", $"cver={cver},keys={keys}");
                     cc = new CookieContainer();
-                    return true;
                 }
             }
             //---ここまで---
@@ -429,12 +434,6 @@ namespace YouTubeLiveSitePlugin.Next
             {
                 OnMessageReceived(action, true);
             }
-
-            //var initialActions = ytInitialData.GetActions();
-            //foreach (var action in initialActions)
-            //{
-            //    OnMessageReceived(action, true);
-            //}
 
             var chatTask = chatProvider.ReceiveAsync(vid, liveChat.YtInitialData, ytCfg, cc, loginInfo);
             var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, cc);
@@ -465,22 +464,22 @@ namespace YouTubeLiveSitePlugin.Next
                     }
                     catch (ContinuationNotExistsException)
                     {
+                        _reason = ReasonForDisconnection.Finished;
                         break;
                     }
                     catch (ChatUnavailableException ex)
                     {
-                        isDisconnectedExpected = true;
                         _logger.LogException(ex);
-                        SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Error);
+                        _reason = ReasonForDisconnection.Finished;
                     }
                     catch (ReloadException)
                     {
+                        _reason = ReasonForDisconnection.Reload;
                     }
                     catch (SpecChangedException ex)
                     {
-                        SendSystemInfo("YouTubeの仕様変更に未対応のためコメント取得を継続できません", InfoType.Error);
                         _logger.LogException(ex);
-                        isDisconnectedExpected = true;
+                        _reason = ReasonForDisconnection.SpecChanged;
                     }
                     catch (Exception ex)
                     {
@@ -489,15 +488,11 @@ namespace YouTubeLiveSitePlugin.Next
                         //ただし、サーバーからReloadメッセージが来た場合と違って、単純にリロードすれば済む問題ではない。
                         _logger.LogException(ex);
                         await Task.Delay(1000);
+                        _reason = ReasonForDisconnection.Unknown;
                     }
                     tasks.Remove(chatTask);
 
-                    if (isDisconnectedExpected == false)
-                    {
-                        //何らかの原因で意図しない切断が発生した。
-                        SendSystemInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Notice);
-                        return true;
-                    }
+                    return _reason == null ? ReasonForDisconnection.Unknown : _reason.Value;
                 }
                 else
                 {
@@ -512,7 +507,8 @@ namespace YouTubeLiveSitePlugin.Next
                     tasks.Remove(metaTask);
                 }
             }
-            return true;
+            //ここに来ることは無いと思う。
+            return _reason==null ? ReasonForDisconnection.Unknown : _reason.Value;
         }
         private async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
@@ -549,21 +545,36 @@ namespace YouTubeLiveSitePlugin.Next
             metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
 
         reload:
-            var needReload = true;
+            var reason= ReasonForDisconnection.Unknown;
             try
             {
-                needReload = await ConnectOnceAsync(vid,_cc,_chatProvider,metaProvider);
+                reason = await ConnectOnceAsync(vid,_cc,_chatProvider,metaProvider);
             }
             catch(Exception ex)
             {
-                //do something
+                _logger.LogException(ex);
+                //TODO: do something
             }
-            if (!_isDisconnectionButtonPushed)
+            if(reason == ReasonForDisconnection.User)
             {
-                if (needReload)
-                {
-                    goto reload;
-                }
+                //何もしないでこのまま終了。
+            }
+            else if(reason == ReasonForDisconnection.Finished)
+            {
+                SendSystemInfo("配信が終了しました", InfoType.Notice);
+            }
+            else if(reason == ReasonForDisconnection.SpecChanged)
+            {
+                SendSystemInfo("YouTubeの仕様変更があったため、コメント取得を継続できません", InfoType.Error);
+            }
+            else if(reason == ReasonForDisconnection.ChatUnavailable)
+            {
+                SendSystemInfo("この配信ではチャットが無効になっています", InfoType.Error);
+            }
+            else
+            {
+                SendSystemInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Error);
+                goto reload;
             }
 
             _chatProvider.MessageReceived -= ChatProvider_MessageReceived;
@@ -929,6 +940,7 @@ namespace YouTubeLiveSitePlugin.Next
         {
             _chatProvider?.Disconnect();
             _isDisconnectionButtonPushed = true;
+            _reason = ReasonForDisconnection.User;
         }
         protected override void BeforeConnect()
         {

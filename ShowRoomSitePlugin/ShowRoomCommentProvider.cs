@@ -108,7 +108,7 @@ namespace ShowRoomSitePlugin
         }
         private void ProcessT1(T1 t1, bool isInitialComment)
         {
-            if (_siteOptions.IsIgnore50Counts && int.TryParse(t1.Cm, out int count))
+            if (_siteOptions.IsIgnore50Counts && int.TryParse(t1.Comment, out int count))
             {
                 if (count >= 1 && count <= 50)
                 {

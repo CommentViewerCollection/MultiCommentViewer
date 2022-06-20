@@ -18,19 +18,16 @@ namespace ShowRoom.Api
             var list = new List<T1>();
             foreach (var message in d.comment_log)
             {
-                var ua = (int)message.ua;
-                var avatarId = (long)message.avatar_id;
-                var aft = (int)message.aft;
                 var name = (string)message.name;
                 var createdAt = (long)message.created_at;
                 var comment = (string)message.comment;
                 var userId = (long)message.user_id;
                 var t1 = new T1()
                 {
-                    Ac = name,
-                    Cm = comment,
+                    UserName = name,
+                    Comment = comment,
                     CreatedAt = createdAt,
-                    U = userId,
+                    UserId = userId,
                 };
                 list.Add(t1);
             }

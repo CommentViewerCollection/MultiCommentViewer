@@ -19,7 +19,7 @@ namespace ShowRoomSitePlugin
         {
             Raw = raw;
         }
-        public abstract InternalMessageType MessageType { get;}
+        public abstract InternalMessageType MessageType { get; }
         public string Raw { get; }
     }
     abstract class MsgInternalMessageBase : InternalMessageBase
@@ -55,39 +55,39 @@ namespace ShowRoomSitePlugin
         /// <summary>
         /// comment
         /// </summary>
-        public string Cm { get; internal set; }
-        /// <summary>
-        /// avatarImage
-        /// </summary>
-        public long Av { get; internal set; }
-        /// <summary>
-        /// delay
-        /// </summary>
-        public long D { get; }
+        public string Comment { get; internal set; }
         /// <summary>
         /// userName
         /// </summary>
-        public string Ac { get; internal set; }
+        public string UserName { get; internal set; }
         /// <summary>
         /// UserId
         /// </summary>
-        public long U { get; internal set; }
+        public long UserId { get; internal set; }
         /// <summary>
         /// 投稿日時(UTC)
         /// </summary>
         public long CreatedAt { get; internal set; }
-        public long At { get; }
         public T1() : base("") { }
         public T1(string raw) : base(raw)
         {
+
+        }
+        public static T1 Parse(string raw)
+        {
             var json = DynamicJson.Parse(raw);
-            Cm = json.cm;
-            Av = (long)json.av;
-            D = (long)json.d;
-            Ac = json.ac;
-            U = (long)json.u;
-            CreatedAt = (long)json.created_at;
-            At = (long)json.at;
+
+            var comment = (string)json.cm;
+            var userName = (string)json.ac;
+            var userId = (long)json.u;
+            var createdAt = (long)json.created_at;
+            return new T1(raw)
+            {
+                Comment = comment,
+                CreatedAt = createdAt,
+                UserId = userId,
+                UserName = userName,
+            };
         }
         public override InternalMessageType MessageType { get; } = InternalMessageType.t1;
     }
@@ -225,7 +225,7 @@ namespace ShowRoomSitePlugin
                     //"MSG\t6ce05f:8Jvx9D6M\t{\"telops\":[{\"color\":{\"r\":255,\"b\":255,\"g\":255},\"text\":\"最高です！ありがとう！ファミマ行けー！\",\"type\":\"user\"}],\"telop\":\"最高です！ありがとう！ファミマ行けー！\",\"interval\":6000,\"t\":8,\"api\":\"https://www.showroom-live.com/live/telop?live_id=7135327\"}"
                     //"MSG\tef9dc3:3M8XqUaq\t{\"created_at\":1655446677,\"c\":\"FF6C1A\",\"u\":2789719,\"me\":\"たいき leveled up to fan level 9!\",\"m\":\"たいきのファンレベルが9にあがりました！\",\"tt\":0,\"t\":18}"
                     //"MSG\tef9dc3:3M8XqUaq\t{\"created_at\":1655446700,\"c\":\"FF6C1A\",\"u\":6392080,\"me\":\"さんしろう is here again😊\",\"m\":\"さんしろうさんが2度目の訪問✨\",\"tt\":1,\"t\":18}"
-                    internalMessage= new UnknownMessage(raw);
+                    internalMessage = new UnknownMessage(raw);
                     break;
             }
             return internalMessage;
@@ -233,7 +233,7 @@ namespace ShowRoomSitePlugin
         public static IInternalMessage Parse(string raw)
         {
             var arr = raw.Split('\t');
-            if(arr.Length == 0)
+            if (arr.Length == 0)
             {
                 throw new ParseException(raw);
             }
@@ -242,9 +242,7 @@ namespace ShowRoomSitePlugin
             switch (command)
             {
                 case "MSG":
-                    {
-                        internalMessage = ParseMsg(arr[2]);
-                    }
+                    internalMessage = ParseMsg(arr[2]);
                     break;
                 case "PING":
                     internalMessage = new Ping(raw);
@@ -259,7 +257,7 @@ namespace ShowRoomSitePlugin
                 default:
                     throw new ParseException(raw);
             }
-            if(internalMessage == null)
+            if (internalMessage == null)
             {
                 throw new ParseException(raw);
             }

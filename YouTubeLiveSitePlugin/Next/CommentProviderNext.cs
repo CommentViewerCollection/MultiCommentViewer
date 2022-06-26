@@ -1,25 +1,21 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Net;
-using SitePlugin;
-using ryu_s.BrowserCookie;
-using Common;
-using System.Text.RegularExpressions;
-using SitePluginCommon;
-using YouTubeLiveSitePlugin.Test2;
-using System.Net.Http;
-using System.Windows.Documents;
-using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
-using System.Threading;
-using System.Security.Cryptography;
+﻿using Common;
 using Newtonsoft.Json;
-using System.Linq;
-using YouTubeLiveSitePlugin.Input;
+using ryu_s.BrowserCookie;
 using ryu_s.YouTubeLive.Message;
 using ryu_s.YouTubeLive.Message.Action;
 using ryu_s.YouTubeLive.Message.Continuation;
+using SitePlugin;
+using SitePluginCommon;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using YouTubeLiveSitePlugin.Input;
+using YouTubeLiveSitePlugin.Test2;
 
 namespace YouTubeLiveSitePlugin.Input
 {
@@ -104,7 +100,33 @@ namespace YouTubeLiveSitePlugin.Input
 }
 namespace YouTubeLiveSitePlugin.Next
 {
-
+    /// <summary>
+    /// 接続が切れた原因
+    /// </summary>
+    enum ReasonForDisconnection
+    {
+        /// <summary>
+        /// 原因不明
+        /// </summary>
+        Unknown,
+        /// <summary>
+        /// ユーザーによって切断された
+        /// </summary>
+        User,
+        /// <summary>
+        /// 配信が終了した
+        /// </summary>
+        Finished,
+        /// <summary>
+        /// 配信サイトの仕様変更に未対応
+        /// </summary>
+        SpecChanged,
+        /// <summary>
+        /// YouTubeサーバーからリロード指示があった
+        /// </summary>
+        Reload,
+        ChatUnavailable,
+    }
     //class ChatProviderNext
     //{
     //    private readonly YtCfg _ytCfg;
@@ -367,6 +389,127 @@ namespace YouTubeLiveSitePlugin.Next
             var res = await client.GetAsync(url);
             return await res.Content.ReadAsStringAsync();
         }
+        ReasonForDisconnection? _reason;
+        /// <summary>
+        /// 何らかの理由で切断/中断されるまでコメントを取得し続ける
+        /// 例外は投げないようにしたい-.
+        /// </summary>
+        /// <returns>再接続すべきか</returns>
+        private async Task<ReasonForDisconnection> ConnectOnceAsync(string vid, CookieContainer cc,ChatProvider2 chatProvider, MetaDataYoutubeiProvider metaProvider)
+        {
+            _reason = null;
+
+            var liveChatHtml = await GetLiveChat(vid, cc);
+            var liveChat = LiveChat.Parse(liveChatHtml);
+
+            var ytCfgStr = Tools.ExtractYtCfg(liveChatHtml);
+            //var ytCfg = new YtCfgOld(ytCfgStr);
+            var ytCfg = liveChat.YtCfg;
+            var ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
+            if (!ytInitialData.CanChat)
+            {
+                SendSystemInfo("このライブストリームではチャットは無効です。", InfoType.Notice);
+                return ReasonForDisconnection.ChatUnavailable;
+            }
+            var loginInfo = Tools.CreateLoginInfo(liveChat.YtCfg.IsLoggedIn);
+            //ログイン済みユーザの正常にコメントが取得できるようになったら以下のコードは不要
+            //---ここから---
+            if (loginInfo is LoggedIn)
+            {
+                var k = Tools.GetSapiSid(cc);
+                if (k == null)
+                {
+                    //SIDが無い。ログイン済み判定なのにSIDが無い場合が散見されるが原因不明。強制的に未ログインにする。
+                    var cookies = Tools.ExtractCookies(cc);
+                    var cver = ytInitialData.Cver;
+                    var keys = string.Join(",", cookies.Select(c => c.Name));
+                    _logger.LogException(new Exception(), "", $"cver={cver},keys={keys}");
+                    cc = new CookieContainer();
+                }
+            }
+            //---ここまで---
+            SetLoggedInState(liveChat.YtCfg.IsLoggedIn);
+            _postCommentCoodinator = new DataCreator(ytInitialData, liveChat.YtCfg.InnertubeApiKey, liveChat.YtCfg.DelegatedSessionId, cc);
+            foreach (var action in liveChat.YtInitialData.Actions)
+            {
+                OnMessageReceived(action, true);
+            }
+
+            var chatTask = chatProvider.ReceiveAsync(vid, liveChat.YtInitialData, ytCfg, cc, loginInfo);
+            var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, cc);
+
+            var tasks = new List<Task>
+            {
+                chatTask,
+                metaTask
+            };
+            while (tasks.Count > 0)
+            {
+                var t = await Task.WhenAny(tasks);
+                if (t == chatTask)
+                {
+                    metaProvider.Disconnect();
+                    try
+                    {
+                        await metaTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaTask);
+                    try
+                    {
+                        await chatTask;
+                    }
+                    catch (ContinuationNotExistsException)
+                    {
+                        _reason = ReasonForDisconnection.Finished;
+                        break;
+                    }
+                    catch (ChatUnavailableException ex)
+                    {
+                        _logger.LogException(ex);
+                        _reason = ReasonForDisconnection.Finished;
+                    }
+                    catch (ReloadException)
+                    {
+                        _reason = ReasonForDisconnection.Reload;
+                    }
+                    catch (SpecChangedException ex)
+                    {
+                        _logger.LogException(ex);
+                        _reason = ReasonForDisconnection.SpecChanged;
+                    }
+                    catch (Exception ex)
+                    {
+                        SendSystemInfo(ex.Message, InfoType.Error);
+                        //意図しない切断
+                        //ただし、サーバーからReloadメッセージが来た場合と違って、単純にリロードすれば済む問題ではない。
+                        _logger.LogException(ex);
+                        await Task.Delay(1000);
+                        _reason = ReasonForDisconnection.Unknown;
+                    }
+                    tasks.Remove(chatTask);
+
+                    return _reason == null ? ReasonForDisconnection.Unknown : _reason.Value;
+                }
+                else
+                {
+                    try
+                    {
+                        await metaTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogException(ex);
+                    }
+                    tasks.Remove(metaTask);
+                }
+            }
+            //ここに来ることは無いと思う。
+            return _reason==null ? ReasonForDisconnection.Unknown : _reason.Value;
+        }
         private async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
             var resolver = new VidResolver();
@@ -402,139 +545,36 @@ namespace YouTubeLiveSitePlugin.Next
             metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
 
         reload:
-            var liveChatHtml = await GetLiveChat(vid, _cc);
-            var liveChat = LiveChat.Parse(liveChatHtml);
-
-            var ytCfgStr = Tools.ExtractYtCfg(liveChatHtml);
-            //var ytCfg = new YtCfgOld(ytCfgStr);
-            var ytCfg = liveChat.YtCfg;
-            var ytInitialData = Tools.ExtractYtInitialData(liveChatHtml);
-            if (!ytInitialData.CanChat)
+            var reason= ReasonForDisconnection.Unknown;
+            try
             {
-                SendSystemInfo("このライブストリームではチャットは無効です。", InfoType.Notice);
-                return;
+                reason = await ConnectOnceAsync(vid,_cc,_chatProvider,metaProvider);
             }
-            var loginInfo = Tools.CreateLoginInfo(liveChat.YtCfg.IsLoggedIn);
-            //ログイン済みユーザの正常にコメントが取得できるようになったら以下のコードは不要
-            //---ここから---
-            if (loginInfo is LoggedIn)
+            catch(Exception ex)
             {
-                var k = Tools.GetSapiSid(_cc);
-                if (k == null)
-                {
-                    //SIDが無い。ログイン済み判定なのにSIDが無い場合が散見されるが原因不明。強制的に未ログインにする。
-                    var cookies = Tools.ExtractCookies(_cc);
-                    var cver = ytInitialData.Cver;
-                    var keys = string.Join(",", cookies.Select(c => c.Name));
-                    _logger.LogException(new Exception(), "", $"cver={cver},keys={keys}");
-                    _cc = new CookieContainer();
-                    goto reload;
-                }
+                _logger.LogException(ex);
+                //TODO: do something
             }
-            //---ここまで---
-            SetLoggedInState(liveChat.YtCfg.IsLoggedIn);
-            _postCommentCoodinator = new DataCreator(ytInitialData, liveChat.YtCfg.InnertubeApiKey, liveChat.YtCfg.DelegatedSessionId, _cc);
-            foreach (var action in liveChat.YtInitialData.Actions)
+            if(reason == ReasonForDisconnection.User)
             {
-                OnMessageReceived(action, true);
+                //何もしないでこのまま終了。
             }
-
-            //var initialActions = ytInitialData.GetActions();
-            //foreach (var action in initialActions)
-            //{
-            //    OnMessageReceived(action, true);
-            //}
-
-            var chatTask = _chatProvider.ReceiveAsync(vid, liveChat.YtInitialData, ytCfg, _cc, loginInfo);
-            var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, _cc);
-
-            var tasks = new List<Task>
+            else if(reason == ReasonForDisconnection.Finished)
             {
-                chatTask,
-                metaTask
-            };
-            while (tasks.Count > 0)
+                SendSystemInfo("配信が終了しました", InfoType.Notice);
+            }
+            else if(reason == ReasonForDisconnection.SpecChanged)
             {
-                var t = await Task.WhenAny(tasks);
-                if (t == chatTask)
-                {
-                    metaProvider.Disconnect();
-                    try
-                    {
-                        await metaTask;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                    tasks.Remove(metaTask);
-                    try
-                    {
-                        await chatTask;
-                    }
-                    catch (GetLiveChatException ex)
-                    {
-                        _isDisconnectedExpected = true;
-                        string html;
-                        try
-                        {
-                            html = await GetLiveChat(vid, _cc);
-                        }
-                        catch
-                        {
-                            html = "";
-                        }
-                        _logger.LogException(ex, "", $"input={input.Raw},html={html}");
-                        SendSystemInfo($"エラーが発生したため、これ以上コメントを取得できません{Environment.NewLine}{ex.Message}", InfoType.Notice);
-                    }
-                    catch (ContinuationNotExistsException)
-                    {
-                        break;
-                    }
-                    catch (ChatUnavailableException ex)
-                    {
-                        _isDisconnectedExpected = true;
-                        _logger.LogException(ex);
-                        SendSystemInfo("配信が終了したか、チャットが無効です。", InfoType.Notice);
-                    }
-                    catch (ReloadException)
-                    {
-                    }
-                    catch (SpecChangedException ex)
-                    {
-                        SendSystemInfo("YouTubeの仕様変更に未対応のためコメント取得を継続できません", InfoType.Error);
-                        _logger.LogException(ex);
-                        _isDisconnectedExpected = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        SendSystemInfo(ex.Message, InfoType.Error);
-                        //意図しない切断
-                        //ただし、サーバーからReloadメッセージが来た場合と違って、単純にリロードすれば済む問題ではない。
-                        _logger.LogException(ex);
-                        await Task.Delay(1000);
-                    }
-                    tasks.Remove(chatTask);
-
-                    if (_isDisconnectedExpected == false)
-                    {
-                        //何らかの原因で意図しない切断が発生した。
-                        SendSystemInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Notice);
-                        goto reload;
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        await metaTask;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogException(ex);
-                    }
-                    tasks.Remove(metaTask);
-                }
+                SendSystemInfo("YouTubeの仕様変更があったため、コメント取得を継続できません", InfoType.Error);
+            }
+            else if(reason == ReasonForDisconnection.ChatUnavailable)
+            {
+                SendSystemInfo("この配信ではチャットが無効になっています", InfoType.Error);
+            }
+            else
+            {
+                SendSystemInfo("エラーが発生したためサーバーとの接続が切断されましたが、自動的に再接続します", InfoType.Error);
+                goto reload;
             }
 
             _chatProvider.MessageReceived -= ChatProvider_MessageReceived;
@@ -893,19 +933,20 @@ namespace YouTubeLiveSitePlugin.Next
             }
         }
         /// <summary>
-        /// 意図的な切断か
+        /// 切断ボタンが押されたか
         /// </summary>
-        bool _isDisconnectedExpected;
+        bool _isDisconnectionButtonPushed;
         public override void Disconnect()
         {
             _chatProvider?.Disconnect();
-            _isDisconnectedExpected = true;
+            _isDisconnectionButtonPushed = true;
+            _reason = ReasonForDisconnection.User;
         }
         protected override void BeforeConnect()
         {
             _userCommentCountDict.Clear();
             _receivedCommentIds.Clear();
-            _isDisconnectedExpected = false;
+            _isDisconnectionButtonPushed = false;
             base.BeforeConnect();
         }
         protected override void AfterDisconnected()

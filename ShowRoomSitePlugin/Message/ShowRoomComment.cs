@@ -14,10 +14,10 @@ namespace ShowRoomSitePlugin
         public string Text { get; }
         public ShowRoomComment(T1 t1) : base(t1.Raw)
         {
-            UserName = t1.Ac;
-            Text = t1.Cm;
-            PostedAt = Common.UnixTimeConverter.FromUnixTime(t1.CreatedAt);
-            UserId = t1.U.ToString();
+            UserName = t1.UserName;
+            Text = t1.Comment;
+            PostedAt = Common.UnixTimeConverter.FromUnixTime(t1.CreatedAt).ToLocalTime();
+            UserId = t1.UserId.ToString();
         }
     }
 }

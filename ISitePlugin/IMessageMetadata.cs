@@ -23,7 +23,6 @@ namespace SitePlugin
         bool IsInitialComment { get; }
         bool Is184 { get; }
         IUser User { get; }
-        ICommentProvider CommentProvider { get; }
         bool IsVisible { get; }
         bool IsNameWrapping { get; }
         Guid SiteContextGuid { get; }

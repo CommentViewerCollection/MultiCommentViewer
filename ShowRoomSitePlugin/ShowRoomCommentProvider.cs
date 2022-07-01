@@ -13,104 +13,19 @@ using SitePluginCommon.AutoReconnector;
 
 namespace ShowRoomSitePlugin
 {
-
-    class PeriscopeConnector : IConnector
-    {
-        System.Timers.Timer _pingTimer = new System.Timers.Timer();
-        private readonly IDataServer _server;
-        private readonly string _broadcastId;
-        private readonly IMessageProvider _messageProvider;
-        private readonly ILogger _logger;
-        DisconnectReason _disconnectReason = DisconnectReason.Unknown;
-        public async Task<DisconnectReason> ConnectAsync()
-        {
-            _disconnectReason = DisconnectReason.Unknown;
-            var liveInfo = await Api.GetLiveInfo(_server, _broadcastId);
-            _pingTimer.Enabled = true;
-            try
-            {
-                await _messageProvider.ReceiveAsync(liveInfo.BcsvrHost, liveInfo.BcsvrKey);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
-            _pingTimer.Enabled = false;
-            return _disconnectReason;
-        }
-        public void Disconnect()
-        {
-            _messageProvider.Disconnect();
-            _disconnectReason = DisconnectReason.User;
-        }
-
-        public async Task<bool> IsLivingAsync()
-        {
-            var liveInfo = await Api.GetLiveInfo(_server, _broadcastId);
-            return IsBroadcastRunning(liveInfo);
-        }
-        private bool IsBroadcastRunning(LiveInfo liveInfo)
-        {
-            Debug.WriteLine($"SHOWROOM LiveInfo.LiveStatus: {liveInfo.LiveStatus}");
-            return liveInfo.LiveStatus == 2;
-        }
-        public PeriscopeConnector(IDataServer server, string broadcastId, IMessageProvider messageProvider, ILogger logger)
-        {
-            _server = server;
-            _broadcastId = broadcastId;
-            _messageProvider = messageProvider;
-            _logger = logger;
-            _pingTimer.Interval = 1 * 60 * 1000;
-            _pingTimer.Elapsed += PingTimer_Elapsed;
-        }
-        private async void PingTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            try
-            {
-                await _messageProvider.SendAsync("PING\tshowroom");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
-        }
-    }
-
-
     internal class ShowRoomCommentProvider : CommentProviderBase
     {
-        private MessageMetadata CreateMessageMetadata(IShowRoomComment message, IUser user, bool isFirstComment)
+        private MessageMetadata CreateMessageMetadata(IShowRoomComment message, IUser user, bool isFirstComment, bool isInitialComment)
         {
             return new MessageMetadata(message, _options, _siteOptions, user, this, isFirstComment)
             {
                 SiteContextGuid = SiteContextGuid,
+                IsInitialComment = isInitialComment,
             };
         }
         private void MessageProvider_Received(object sender, IInternalMessage e)
         {
-            switch (e)
-            {
-                case T1 t1:
-                    {
-                        if (_siteOptions.IsIgnore50Counts && int.TryParse(t1.Cm, out int count))
-                        {
-                            if (count >= 1 && count <= 50)
-                            {
-                                //1-50の数字のみのコメントは無視する
-                                return;
-                            }
-                        }
-                        var message = new ShowRoomComment(t1);
-                        var userId = message.UserId;
-                        var isFirstComment = _first.IsFirstComment(userId);
-                        var user = GetUser(userId);
-                        user.Name = Common.MessagePartFactory.CreateMessageItems(message.Text);
-                        var metadata = CreateMessageMetadata(message, user, isFirstComment);
-                        var methods = new MessageMethods();
-                        RaiseMessageReceived(new MessageContext(message, metadata, methods));
-                    }
-                    break;
-            }
+
         }
         protected override void BeforeConnect()
         {
@@ -119,54 +34,129 @@ namespace ShowRoomSitePlugin
         protected override void AfterDisconnected()
         {
             base.AfterDisconnected();
-            _autoReconnector = null;
+
+            _cts = new CancellationTokenSource();
         }
-        AutoReconnector _autoReconnector;
+        CancellationTokenSource _cts = new CancellationTokenSource();
         private async Task ConnectInternalAsync(string input, IBrowserProfile browserProfile)
         {
-            var roomName = GetRoomNameFromInput(input);
-            if (string.IsNullOrEmpty(roomName))
-            {
-                throw new Exception("invalid input");
-            }
-            var livePageUrl = "https://www.showroom-live.com/" + roomName;
-            var livePageHtml = await _server.GetAsync(livePageUrl);
-            var match = Regex.Match(livePageHtml, "room_id=(\\d+)");
-            if (!match.Success)
-            {
-                throw new Exception("room_idが無い");
-            }
-            var room_id = match.Groups[1].Value;
+            var roomUrlKey = GetRoomUrlKeyFromInput(input);
 
-            var messageProvider = new MessageProvider(new Websocket(), _logger);
-            messageProvider.Received += MessageProvider_Received;
-            var connector = new PeriscopeConnector(_server, room_id, messageProvider, _logger);
-            var me = new MessageUntara();
-            me.SystemInfoReiceved += Me_SystemInfoReiceved;
-            _autoReconnector = new AutoReconnector(connector, me);
-            await _autoReconnector.AutoConnect();
-            me.SystemInfoReiceved -= Me_SystemInfoReiceved;
-            messageProvider.Received -= MessageProvider_Received;
-            //var liveInfo = await Api.GetLiveInfo(_server, room_id);
-            //if(liveInfo.LiveStatus == 1)
-            //{
-            //    //放送終了？
-            //    return;
-            //}
-            //_pingTimer.Enabled = true;
-            //try
-            //{
-            //    await _messageProvider.ReceiveAsync(liveInfo.BcsvrHost, liveInfo.BcsvrKey);
-            //}
-            //finally
-            //{
-            //    _pingTimer.Enabled = false;
-            //}
-            //return;
+            //直近の過去コメントを取得する
+            var st = await ShowRoom.Api.Status.GetStatusAsync(_server, roomUrlKey);
+            var commentLog = await ShowRoom.Api.CommentLog.GetCommentLogAsync(_server, st.RoomId);
+            foreach (var comment in Enumerable.Reverse(commentLog.Comments))
+            {
+                ProcessT1(comment, true);
+            }
+
+            while (true)
+            {
+                RaiseMetadataUpdated(new Metadata
+                {
+                    Title = "（次の配信が始まるまで待機中...）",
+                });
+                var status = await WaitForLiveAsync(roomUrlKey, 30, _cts);
+                if (status == null)
+                {
+                    RaiseMetadataUpdated(new Metadata
+                    {
+                        Title = "-",
+                    });
+                    return;
+                }
+                RaiseMetadataUpdated(new Metadata
+                {
+                    Title = status.RoomName,
+                });
+                try
+                {
+                    await _messageProvider.ReceiveAsync(status.BroadcastHost, status.BroadcastKey);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogException(ex);
+                }
+            }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="roomUrlKey"></param>
+        /// <param name="intervalSec"></param>
+        /// <param name="cts"></param>
+        /// <returns>ctsがCancel()された場合nullを返す</returns>
+        private async Task<ShowRoom.Api.Status> WaitForLiveAsync(string roomUrlKey, int intervalSec, CancellationTokenSource cts)
+        {
+            while (true)
+            {
+                var status = await ShowRoom.Api.Status.GetStatusAsync(_server, roomUrlKey);
+                if (status.IsLive)
+                {
+                    return status;
+                }
+                try
+                {
+                    await Task.Delay(intervalSec * 1000, cts.Token);
+                }
+                catch (TaskCanceledException) { }
+                if (cts.IsCancellationRequested)
+                {
+                    return null;
+                }
+            }
+        }
+        private void ProcessT1(T1 t1, bool isInitialComment)
+        {
+            if (_siteOptions.IsIgnore50Counts && int.TryParse(t1.Comment, out int count))
+            {
+                if (count >= 1 && count <= 50)
+                {
+                    //1-50の数字のみのコメントは無視する
+                    return;
+                }
+            }
+            var message = new ShowRoomComment(t1);
+            var userId = message.UserId;
+            var isFirstComment = _first.IsFirstComment(userId);
+            var user = GetUser(userId);
+            user.Name = Common.MessagePartFactory.CreateMessageItems(message.Text);
+            var metadata = CreateMessageMetadata(message, user, isFirstComment, isInitialComment);
+            var methods = new MessageMethods();
+            RaiseMessageReceived(new MessageContext(message, metadata, methods));
+        }
+        private void ProcessInternalMessage(IInternalMessage e)
+        {
+            switch (e)
+            {
+                case T1 t1:
+                    {
+                        ProcessT1(t1, false);
+                    }
+                    break;
+            }
+        }
+        private void MessageProvider_Received1(object sender, IInternalMessage e)
+        {
+            ProcessInternalMessage(e);
+        }
+
         private void Me_SystemInfoReiceved(object sender, SystemInfoEventArgs e)
         {
             SendSystemInfo(e.Message, e.Type);
+        }
+        private string GetRoomUrlKeyFromInput(string input)
+        {
+            //https://www.showroom-live.com/r/1077f4117133
+            var match = Regex.Match(input, "showroom-live.com/r/([0-9a-zA-Z_]+)");
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+            else
+            {
+                return null;
+            }
         }
         private string GetRoomNameFromInput(string input)
         {
@@ -199,7 +189,7 @@ namespace ShowRoomSitePlugin
         FirstCommentDetector _first = new FirstCommentDetector();
         public override void Disconnect()
         {
-            _autoReconnector?.Disconnect();
+            _cts?.Cancel();
         }
 
         public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
@@ -236,6 +226,7 @@ namespace ShowRoomSitePlugin
         private readonly ICommentOptions _options;
         private readonly IShowRoomSiteOptions _siteOptions;
         private readonly IUserStoreManager _userStoreManager;
+        private readonly MessageProvider _messageProvider;
         public ShowRoomCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, IShowRoomSiteOptions siteOptions, IUserStoreManager userStoreManager)
             : base(logger, options)
         {
@@ -244,7 +235,10 @@ namespace ShowRoomSitePlugin
             _options = options;
             _siteOptions = siteOptions;
             _userStoreManager = userStoreManager;
+            _messageProvider = new MessageProvider(new Websocket(), _logger);
+            _messageProvider.Received += MessageProvider_Received1;
         }
+
     }
     class CurrentUserInfo : ICurrentUserInfo
     {

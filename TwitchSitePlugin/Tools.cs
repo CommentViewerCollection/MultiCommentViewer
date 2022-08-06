@@ -43,7 +43,7 @@ namespace TwitchSitePlugin
             {
                 commentData.DisplayName = displayName;
             }
-            if(result.Tags.TryGetValue("tmi-sent-ts", out string ts))
+            if (result.Tags.TryGetValue("tmi-sent-ts", out string ts))
             {
                 var unix = new DateTime(1970, 1, 1).AddMilliseconds(long.Parse(ts));
                 commentData.SentAt = unix.ToLocalTime();
@@ -115,13 +115,13 @@ namespace TwitchSitePlugin
             return s;
         }
         public static List<IMessagePart> GetMessageItems(string message, string emotes)
-        { 
+        {
             if (string.IsNullOrEmpty(emotes))
             {
                 return new List<IMessagePart> { MessagePartFactory.CreateMessageText(message) };
             }
             var emote = emotes.Split('/');
-            var emoteList = new List<EmotContext>();         
+            var emoteList = new List<EmotContext>();
             foreach (var emo in emote)
             {
                 var r = emo.IndexOf(':');
@@ -194,7 +194,7 @@ namespace TwitchSitePlugin
                 }
                 else
                 {
-                    actual.Add(new MessageImage { Url = $"https://static-cdn.jtvnw.net/emoticons/v1/{m.Emot.Id}/1.0", Alt = m.Message, Height=28,Width=28 });
+                    actual.Add(new MessageImage { Url = $"https://static-cdn.jtvnw.net/emoticons/v1/{m.Emot.Id}/1.0", Alt = m.Message, Height = 28, Width = 28 });
                 }
             }
             return actual;
@@ -209,8 +209,8 @@ namespace TwitchSitePlugin
         {
             var s = input;
             //https://www.twitch.tv/stylishnoob4
-            
-            if(Regex.IsMatch(s, "^[^/:?]+$"))
+
+            if (Regex.IsMatch(s, "^[^/:?]+$"))
             {
                 return s;
             }
@@ -219,7 +219,7 @@ namespace TwitchSitePlugin
             {
                 return match.Groups[1].Value;
             }
-        
+
             throw new ArgumentException();
         }
         public static List<Cookie> ExtractCookies(CookieContainer container)
@@ -259,7 +259,7 @@ namespace TwitchSitePlugin
 
         public static Product[] CreateProducts(RootObject obj)
         {
-            if(obj.Plans == null)
+            if (obj.Plans == null)
             {
                 var p = new Product(obj);
                 return new[] { p };
@@ -276,8 +276,16 @@ namespace TwitchSitePlugin
             var millis = (long)(time.ToUniversalTime() - UnixTime).TotalMilliseconds;
             kvList.Add(new KeyValuePair<string, string>("tmi-sent-ts", millis.ToString()));
             var tagsStr = string.Join(";", kvList.Select(kv => kv.Key + '=' + kv.Value));
-            var id = Guid.NewGuid();
-            var message = $"@{tagsStr};id={id.ToString()} :{name}!{name}@{name}.tmi.twitch.tv PRIVMSG #{channelName} :{text}";
+            string message;
+            if (userState.Tags.ContainsKey("id"))
+            {
+                message = $"@{tagsStr} :{name}!{name}@{name}.tmi.twitch.tv PRIVMSG #{channelName} :{text}";
+            }
+            else
+            {
+                var id = Guid.NewGuid();
+                message = $"@{tagsStr};id={id.ToString()} :{name}!{name}@{name}.tmi.twitch.tv PRIVMSG #{channelName} :{text}";
+            }
             return message;
         }
         private static DateTime UnixTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);

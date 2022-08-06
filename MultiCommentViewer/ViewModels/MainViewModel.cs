@@ -753,6 +753,10 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new TwitchCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
+                if (twitchMessage is TwitchSitePlugin.ITwitchNotice notice)
+                {
+                    mcvCvm = new TwitchCommentViewModel(notice, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
             }
             else if (messageContext.Message is OpenrecSitePlugin.IOpenrecMessage openrecMessage)
             {

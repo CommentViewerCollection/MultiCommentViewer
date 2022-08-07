@@ -265,6 +265,9 @@ namespace TwitchSitePlugin
                     case "GLOBALUSERSTATE":
                         _userState = new UserState(result.Tags, result.Params);
                         break;
+                    case "HOSTTARGET":
+                        //:tmi.twitch.tv HOSTTARGET #evo6 :evo 4922
+                        break;
                     case "USERSTATE":
                         _userState.UpdateTags(result.Tags);
                         break;

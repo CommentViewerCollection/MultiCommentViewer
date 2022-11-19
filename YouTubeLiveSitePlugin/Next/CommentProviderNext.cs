@@ -395,7 +395,7 @@ namespace YouTubeLiveSitePlugin.Next
         /// 例外は投げないようにしたい-.
         /// </summary>
         /// <returns>再接続すべきか</returns>
-        private async Task<ReasonForDisconnection> ConnectOnceAsync(string vid, CookieContainer cc,ChatProvider2 chatProvider, MetaDataYoutubeiProvider metaProvider)
+        private async Task<ReasonForDisconnection> ConnectOnceAsync(string vid, CookieContainer cc, ChatProvider2 chatProvider, MetaDataYoutubeiProvider metaProvider)
         {
             _reason = null;
 
@@ -508,7 +508,7 @@ namespace YouTubeLiveSitePlugin.Next
                 }
             }
             //ここに来ることは無いと思う。
-            return _reason==null ? ReasonForDisconnection.Unknown : _reason.Value;
+            return _reason == null ? ReasonForDisconnection.Unknown : _reason.Value;
         }
         private async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
@@ -544,30 +544,30 @@ namespace YouTubeLiveSitePlugin.Next
             metaProvider.InfoReceived += MetaProvider_InfoReceived;
             metaProvider.MetadataReceived += MetaProvider_MetadataReceived;
 
-        reload:
-            var reason= ReasonForDisconnection.Unknown;
+reload:
+            var reason = ReasonForDisconnection.Unknown;
             try
             {
-                reason = await ConnectOnceAsync(vid,_cc,_chatProvider,metaProvider);
+                reason = await ConnectOnceAsync(vid, _cc, _chatProvider, metaProvider);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
                 //TODO: do something
             }
-            if(reason == ReasonForDisconnection.User)
+            if (reason == ReasonForDisconnection.User)
             {
                 //何もしないでこのまま終了。
             }
-            else if(reason == ReasonForDisconnection.Finished)
+            else if (reason == ReasonForDisconnection.Finished)
             {
                 SendSystemInfo("配信が終了しました", InfoType.Notice);
             }
-            else if(reason == ReasonForDisconnection.SpecChanged)
+            else if (reason == ReasonForDisconnection.SpecChanged)
             {
                 SendSystemInfo("YouTubeの仕様変更があったため、コメント取得を継続できません", InfoType.Error);
             }
-            else if(reason == ReasonForDisconnection.ChatUnavailable)
+            else if (reason == ReasonForDisconnection.ChatUnavailable)
             {
                 SendSystemInfo("この配信ではチャットが無効になっています", InfoType.Error);
             }
@@ -645,6 +645,16 @@ namespace YouTubeLiveSitePlugin.Next
                             _logger.LogException(new Exception(), "ParseError", parseError.Raw);
                         }
                         break;
+                    case MemberShip memberShip:
+                        break;
+                    case TickerPaidMessage tickerPaidMessage:
+                        break;
+                    case TickerPaidSticker tickerPaidSticker:
+                        break;
+                    case TickerSponser tickerSponser:
+                        break;
+                    case IgnoredMessage ignoredMessage:
+                        break;
                     default:
                         {
 
@@ -652,7 +662,7 @@ namespace YouTubeLiveSitePlugin.Next
                         break;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogException(ex);
             }

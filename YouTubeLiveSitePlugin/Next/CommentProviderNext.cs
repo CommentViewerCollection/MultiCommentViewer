@@ -49,44 +49,84 @@ namespace YouTubeLiveSitePlugin.Input
             Vid = vid;
         }
     }
-    class ChannelUrl : IInput
+    interface IChannelUrl : IInput { }
+    static class ChannelUrlTools
     {
-        public string Raw { get; }
+        const string VID_PATTERN = "[^?#:/&]+";
+        const string USERID_PATTERN = VID_PATTERN;
+        const string ChannelIdPattern = VID_PATTERN;
+        public static IChannelUrl CreateChannelUrl(string channelUrl)
+        {
+            if (string.IsNullOrWhiteSpace(channelUrl))
+            {
+                throw new Exception("不正なチャンネルURL");
+            }
+
+            {
+                var match = Regex.Match(channelUrl, "youtube\\.com/channel/(" + ChannelIdPattern + ")");
+                if (match.Success)
+                {
+                    return new NormalChannelUrl(match.Groups[1].Value);
+                }
+            }
+            {
+                var match = Regex.Match(channelUrl, "youtube\\.com/@(" + ChannelIdPattern + ")");
+                if (match.Success)
+                {
+                    return new HandleChannelUrl(match.Groups[1].Value);
+                }
+            }
+            {
+                var match = Regex.Match(channelUrl, "youtube\\.com/c/(" + ChannelIdPattern + ")");
+                if (match.Success)
+                {
+                    return new CustomChannelUrl(match.Groups[1].Value);
+                }
+            }
+            {
+                var match = Regex.Match(channelUrl, "youtube\\.com/user/(" + USERID_PATTERN + ")");
+                if (match.Success)
+                {
+                    return new UserChannelUrl(match.Groups[1].Value);
+                }
+            }
+            throw new Exception("不正なチャンネルURL");
+        }
+    }
+    class NormalChannelUrl : IChannelUrl
+    {
+        public string Raw => $"https://www.youtube.com/channel/{ChannelId}";
         public string ChannelId { get; }
-        public ChannelUrl(string channelUrl)
+        internal NormalChannelUrl(string channelId)
         {
-            Raw = channelUrl;
-            ChannelId = VidResolver.ExtractChannelId(channelUrl);
+            ChannelId = channelId;
         }
     }
-    class UserUrl : IInput
+    class HandleChannelUrl : IChannelUrl
     {
-        public string Raw { get; }
-        public string UserId { get; }
-        public UserUrl(string userUrl)
+        public string Raw => $"https://www.youtube.com/@{ChannelId}";
+        public string ChannelId { get; }
+        internal HandleChannelUrl(string channelId)
         {
-            Raw = userUrl;
-            UserId = VidResolver.ExtractUserId(userUrl);
+            ChannelId = channelId;
         }
     }
-    class StudioUrl : IInput
+    class CustomChannelUrl : IChannelUrl
     {
-        public string Raw { get; }
-        public string Vid { get; }
-        public StudioUrl(string studioUrl)
+        public string Raw => $"https://www.youtube.com/c/{ChannelId}";
+        public string ChannelId { get; }
+        internal CustomChannelUrl(string channelId)
         {
-            Raw = studioUrl;
-            Vid = VidResolver.ExtractVidFromStudioUrl(studioUrl);
+            ChannelId = channelId;
         }
     }
-    class CustomChannelUrl : IInput
+    class UserChannelUrl : IChannelUrl
     {
-        public string Raw { get; }
-        public string CustomChannelId { get; }
-        public CustomChannelUrl(string customChannelUrl)
+        public string Raw => $"https://www.youtube.com/user/{ChannelId}";
+        public string ChannelId { get; }
+        internal UserChannelUrl(string channelId)
         {
-            Raw = customChannelUrl;
-            CustomChannelId = VidResolver.ExtractCustomChannelId(customChannelUrl);
+            ChannelId = channelId;
         }
     }
     class InvalidInput : IInput
@@ -512,8 +552,22 @@ namespace YouTubeLiveSitePlugin.Next
         }
         private async Task ConnectInternalAsync(IInput input, IBrowserProfile browserProfile)
         {
+            _cc = CreateCookieContainer(browserProfile);
+
             var resolver = new VidResolver();
-            var vidResult = await resolver.GetVid(_server, input);
+            IVidResult vidResult;
+            try
+            {
+                vidResult = await resolver.GetVid(_server, input);
+            }
+            catch (SpecChangedException ex)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                return;
+            }
             string vid;
             switch (vidResult)
             {
@@ -533,7 +587,7 @@ namespace YouTubeLiveSitePlugin.Next
                 default:
                     throw new NotImplementedException();
             }
-            _cc = CreateCookieContainer(browserProfile);
+
             await InitElapsedTimer(vid);
             _chatProvider = new ChatProvider2(_siteOptions, _logger);
             _chatProvider.MessageReceived += ChatProvider_MessageReceived;
@@ -550,10 +604,15 @@ reload:
             {
                 reason = await ConnectOnceAsync(vid, _cc, _chatProvider, metaProvider);
             }
+            catch (Test2.ParseException ex)
+            {
+                _logger.LogException(ex, "", $"input={input.Raw}");
+                SendSystemInfo("サーバから送られてきたデータの解析に失敗しました", InfoType.Notice);
+            }
             catch (Exception ex)
             {
-                _logger.LogException(ex);
-                //TODO: do something
+                _logger.LogException(ex, "", $"input={input.Raw}");
+                SendSystemInfo("未知の例外が発生しました", InfoType.Notice);
             }
             if (reason == ReasonForDisconnection.User)
             {

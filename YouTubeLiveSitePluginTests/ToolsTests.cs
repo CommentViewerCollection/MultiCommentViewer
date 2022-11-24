@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using YouTubeLiveSitePlugin.Input;
 
 namespace YouTubeLiveSitePluginTests
 {
@@ -94,6 +95,16 @@ namespace YouTubeLiveSitePluginTests
             var data = Tools.GetSampleData("LivePage_ytplayerconfig.txt");
             var liveBroadcastDetails = YouTubeLiveSitePlugin.Test2.Tools.ExtractLiveBroadcastDetailsFromLivePage(data);
             Assert.IsTrue(!string.IsNullOrEmpty(liveBroadcastDetails));
+        }
+        [Test]
+        public void ParseInputTest()
+        {
+            Assert.IsTrue(YouTubeLiveSitePlugin.Next.Tools.ParseInput("https://www.youtube.com/channel/test") is NormalChannelUrl);
+            Assert.IsTrue(YouTubeLiveSitePlugin.Next.Tools.ParseInput("https://www.youtube.com/@test") is HandleChannelUrl);
+            Assert.IsTrue(YouTubeLiveSitePlugin.Next.Tools.ParseInput("https://www.youtube.com/c/test") is CustomChannelUrl);
+            Assert.IsTrue(YouTubeLiveSitePlugin.Next.Tools.ParseInput("https://www.youtube.com/user/test") is UserChannelUrl);
+            Assert.IsTrue(YouTubeLiveSitePlugin.Next.Tools.ParseInput("https://studio.youtube.com/channel/test") is NormalChannelUrl);
+
         }
     }
 }

@@ -572,7 +572,7 @@ namespace YouTubeLiveSitePlugin.Next
     //            messageItems.AddRange(message);
     //            ahh.MessageItems = messageItems;
     //        }
-         
+
     //        //name
     //        ahh.NameItems = (List<IMessagePart>)GetNameParts(ren);
     //        return ahh;
@@ -684,21 +684,21 @@ namespace YouTubeLiveSitePlugin.Next
         public static Input.IInput ParseInput(string input)
         {
             if (string.IsNullOrEmpty(input)) throw new ArgumentNullException(nameof(input));
-            if (VidResolver.IsChannel(input))
+            if (VidResolver.IsNormalChannel(input))
             {
-                return new Input.ChannelUrl(input);
+                return Input.ChannelUrlTools.CreateChannelUrl(input);
             }
             else if (VidResolver.IsCustomChannel(input))
             {
-                return new Input.CustomChannelUrl(input);
+                return Input.ChannelUrlTools.CreateChannelUrl(input);
             }
-            else if (VidResolver.IsStudio(input))
+            else if (VidResolver.IsHandleChannel(input))
             {
-                return new Input.StudioUrl(input);
+                return Input.ChannelUrlTools.CreateChannelUrl(input);
             }
             else if (VidResolver.IsUser(input))
             {
-                return new Input.UserUrl(input);
+                return Input.ChannelUrlTools.CreateChannelUrl(input);
             }
             else if (VidResolver.IsVid(input))
             {

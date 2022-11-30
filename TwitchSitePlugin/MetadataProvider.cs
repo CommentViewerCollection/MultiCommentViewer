@@ -31,11 +31,11 @@ namespace TwitchSitePlugin
                 {
                     break;
                 }
-                var liveInfo = await API.GetStreamAsync(_server, _channelName);
-                if (liveInfo != null)
-                {
-                    MetadataUpdated?.Invoke(this, liveInfo);
-                }
+                //var liveInfo = await API.GetStreamAsync(_server, _channelName);
+                //if (liveInfo != null)
+                //{
+                //    MetadataUpdated?.Invoke(this, liveInfo);
+                //}
                 try
                 {
                     await Task.Delay(_pollingIntervalSec * 1000, _cts.Token);
@@ -46,7 +46,7 @@ namespace TwitchSitePlugin
                 }
             }
         }
-        const int _pollingIntervalSec=30;
+        const int _pollingIntervalSec = 30;
         bool _isDisconnectRequested;
         public void Disconnect()
         {

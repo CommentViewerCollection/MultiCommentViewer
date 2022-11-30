@@ -15,7 +15,11 @@ namespace TwitchSitePlugin
         {
             get
             {
-                if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
+                if (_message is ITwitchNotice)
+                {
+                    return _siteOptions.NoticeBackColor;
+                }
+                else if (User != null && !string.IsNullOrEmpty(User.BackColorArgb))
                 {
                     var color = Common.Utils.ColorFromArgb(User.BackColorArgb);
                     return color;
@@ -24,10 +28,6 @@ namespace TwitchSitePlugin
                 {
                     return _options.FirstCommentBackColor;
                 }
-                //if (_message is ITwitchItem item)
-                //{
-                //    return _siteOptions.ItemBackColor;
-                //}
                 else
                 {
                     return _options.BackColor;
@@ -39,7 +39,11 @@ namespace TwitchSitePlugin
         {
             get
             {
-                if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
+                if (_message is ITwitchNotice)
+                {
+                    return _siteOptions.NoticeForeColor;
+                }
+                else if (User != null && !string.IsNullOrEmpty(User.ForeColorArgb))
                 {
                     var color = Common.Utils.ColorFromArgb(User.ForeColorArgb);
                     return color;
@@ -48,10 +52,6 @@ namespace TwitchSitePlugin
                 {
                     return _options.FirstCommentForeColor;
                 }
-                //if (_message is ITwitchItem item)
-                //{
-                //    return _siteOptions.ItemForeColor;
-                //}
                 else
                 {
                     return _options.ForeColor;
@@ -154,7 +154,10 @@ namespace TwitchSitePlugin
 
             options.PropertyChanged += Options_PropertyChanged;
             siteOptions.PropertyChanged += SiteOptions_PropertyChanged;
-            user.PropertyChanged += User_PropertyChanged;
+            if (user != null)
+            {
+                user.PropertyChanged += User_PropertyChanged;
+            }
         }
 
         private void User_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -129,6 +129,12 @@ namespace MultiCommentViewer
             Id = comment.Id.ToString();
             PostTime = comment.PostTime;
         }
+        public TwitchCommentViewModel(TwitchSitePlugin.ITwitchNotice notice, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+            : this(metadata, methods, connectionStatus, options)
+        {
+            _message = notice;
+            MessageItems = Common.MessagePartFactory.CreateMessageItems(notice.Message);
+        }
         //public TwitchCommentViewModel(TwitchSitePlugin.ITwitchItem item, IMessageMetadata metadata, IMessageMethods methods, ConnectionName connectionStatus)
         //    : this(metadata, methods, connectionStatus)
         //{

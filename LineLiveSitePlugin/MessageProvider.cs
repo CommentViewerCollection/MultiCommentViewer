@@ -45,7 +45,7 @@ namespace LineLiveSitePlugin
 
         private void _ws_Closed(object sender, EventArgs e)
         {
-            _tcs.SetResult(null);
+            _tcs.TrySetResult(null);
         }
 
         private void _ws_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)

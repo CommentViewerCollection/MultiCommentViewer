@@ -10,6 +10,7 @@ namespace TwitchSitePlugin
         //Item,
         Connected,
         Disconnected,
+        Notice,
     }
 
 
@@ -37,6 +38,10 @@ namespace TwitchSitePlugin
         IEnumerable<IMessagePart> CommentItems { get; }
         string PostTime { get; }
         IMessageImage UserIcon { get; }
+    }
+    public interface ITwitchNotice : ITwitchMessage
+    {
+        string Message { get; }
     }
     //public interface ITwitchItem : ITwitchMessage
     //{

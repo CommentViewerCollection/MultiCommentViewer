@@ -265,6 +265,9 @@ namespace TwitchSitePlugin
                     case "GLOBALUSERSTATE":
                         _userState = new UserState(result.Tags, result.Params);
                         break;
+                    case "HOSTTARGET":
+                        //:tmi.twitch.tv HOSTTARGET #evo6 :evo 4922
+                        break;
                     case "USERSTATE":
                         _userState.UpdateTags(result.Tags);
                         break;
@@ -284,9 +287,11 @@ namespace TwitchSitePlugin
                             //CommentReceived?.Invoke(this, cvm);
                         }
                         break;
-                    //case "NOTICE":
-                    //    //@msg-id=msg_channel_suspended :tmi.twitch.tv NOTICE #videos :This channel has been suspended.
-                    //    break;
+                    case "NOTICE":
+                        //@msg-id=msg_channel_suspended :tmi.twitch.tv NOTICE #videos :This channel has been suspended.
+                        //@msg-id=msg_requires_verified_phone_number :tmi.twitch.tv NOTICE #ksonsouchou :A verified phone number is required to chat in this channel. Please visit https://www.twitch.tv/settings/security to verify your phone number.
+                        OnNoticeReceived(result);
+                        break;
                     case "CAP":
                         break;
                     case "JOIN":
@@ -359,6 +364,22 @@ namespace TwitchSitePlugin
             };
             var methods = new TwitchMessageMethods();
             var messageContext = new TwitchMessageContext(message, metadata, methods);
+            MessageReceived?.Invoke(this, messageContext);
+        }
+        private void OnNoticeReceived(Result result)
+        {
+            var message = result.Params[1];
+            var notice = new TwitchNotice(result.Raw)
+            {
+                Message = message,
+            };
+            var metadata = new MessageMetadata(notice, _options, _siteOptions, null, this, false)
+            {
+                IsInitialComment = false,
+                SiteContextGuid = SiteContextGuid,
+            };
+            var methods = new TwitchMessageMethods();
+            var messageContext = new TwitchMessageContext(notice, metadata, methods);
             MessageReceived?.Invoke(this, messageContext);
         }
 

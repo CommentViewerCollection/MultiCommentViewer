@@ -1,5 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Windows.Media;
+
 namespace TwitchSitePlugin
 {
     class TwitchSiteOptionsViewModel : INotifyPropertyChanged
@@ -13,6 +15,16 @@ namespace TwitchSitePlugin
         {
             get => changed.NeedAutoSubNicknameStr;
             set => changed.NeedAutoSubNicknameStr = value;
+        }
+        public Color NoticeBackColor
+        {
+            get { return ChangedOptions.NoticeBackColor; }
+            set { ChangedOptions.NoticeBackColor = value; }
+        }
+        public Color NoticeForeColor
+        {
+            get { return ChangedOptions.NoticeForeColor; }
+            set { ChangedOptions.NoticeForeColor = value; }
         }
         private readonly TwitchSiteOptions _origin;
         private readonly TwitchSiteOptions changed;

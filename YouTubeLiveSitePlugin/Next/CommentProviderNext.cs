@@ -395,26 +395,23 @@ namespace YouTubeLiveSitePlugin.Next
         {
             var html = await _server.GetAsync($"https://www.youtube.com/watch?v={vid}");
             var liveBroadcastDetails = Test2.Tools.ExtractLiveBroadcastDetailsFromLivePage(html);
-            if (liveBroadcastDetails != null)
+            if (liveBroadcastDetails == null) return;
+            dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject(liveBroadcastDetails);
+            if (d == null) return;
+            if (!d.ContainsKey("startTimestamp")) return;
+            var startedStr = (string)d.startTimestamp;
+            _startedAt = DateTime.Parse(startedStr);
+            _elapsedTimer.Interval = 500;
+            _elapsedTimer.Elapsed += (s, e) =>
             {
-                dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject(liveBroadcastDetails);
-                if (d.ContainsKey("startTimestamp"))
+                if (!_startedAt.HasValue) return;
+                var elapsed = DateTime.Now - _startedAt.Value;
+                RaiseMetadataUpdated(new Test2.Metadata
                 {
-                    var startedStr = (string)d.startTimestamp;
-                    _startedAt = DateTime.Parse(startedStr);
-                    _elapsedTimer.Interval = 500;
-                    _elapsedTimer.Elapsed += (s, e) =>
-                    {
-                        if (!_startedAt.HasValue) return;
-                        var elapsed = DateTime.Now - _startedAt.Value;
-                        RaiseMetadataUpdated(new Test2.Metadata
-                        {
-                            Elapsed = Tools.ToElapsedString(elapsed),
-                        });
-                    };
-                    _elapsedTimer.Enabled = true;
-                }
-            }
+                    Elapsed = Tools.ToElapsedString(elapsed),
+                });
+            };
+            _elapsedTimer.Enabled = true;
         }
         private static async Task<string> GetLiveChat(string vid, CookieContainer cc)
         {

@@ -217,7 +217,7 @@ namespace YouTubeLiveSitePlugin.Next
         /// <returns></returns>
         /// <exception cref="ReloadException"></exception>
         /// <exception cref="SpecChangedException"></exception>
-        public async Task ReceiveAsync(string vid, YtInitialData ytInitialData1, YtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
+        public async Task ReceiveAsync(string vid, LiveChatYtInitialData ytInitialData1, LiveChatYtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
         {
             if (_cts != null)
             {
@@ -233,7 +233,7 @@ namespace YouTubeLiveSitePlugin.Next
                 _cts = null;
             }
         }
-        public async Task ReceiveInternalAsync(YtInitialData ytInitialData1, YtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
+        public async Task ReceiveInternalAsync(LiveChatYtInitialData ytInitialData1, LiveChatYtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
         {
             var dataToPost = new DataToPost(ytCfg);
             string initialContinuation;

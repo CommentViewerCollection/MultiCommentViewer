@@ -157,7 +157,7 @@ namespace YouTubeLiveSitePlugin.Next
         {
             _d.continuation = continuation;
         }
-        public DataToPost(YtCfg ytCfg)
+        public DataToPost(LiveChatYtCfg ytCfg)
         {
             dynamic d = JsonConvert.DeserializeObject("{\"context\":{}}", new JsonSerializerSettings { Formatting = Formatting.None });
             dynamic context = JsonConvert.DeserializeObject(ytCfg.InnertubeContext, new JsonSerializerSettings { Formatting = Formatting.None });

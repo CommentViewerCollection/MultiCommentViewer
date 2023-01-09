@@ -207,6 +207,37 @@ namespace YouTubeLiveSitePlugin.Next
         {
             InfoReceived?.Invoke(this, new InfoData { Comment = message, Type = type });
         }
+        static string ExtractRawWatchYtInitialData(string watchHtml)
+        {
+            var match = Regex.Match(watchHtml, "var\\s*ytInitialData\\s*=\\s*({.+?});");
+            if (!match.Success)
+            {
+                throw new Exception("");
+            }
+            var raw = match.Groups[1].Value;
+            if (string.IsNullOrEmpty(raw))
+            {
+                throw new SpecChangedException(watchHtml);
+            }
+            return raw;
+        }
+        private static async Task<bool> IsLiveAsync(string vid, IYouTubeLiveServer server, CookieContainer cc)
+        {
+            var watchPageUrl = $"https://www.youtube.com/watch?v={vid}";
+            var watchHtml = await server.GetAsync(watchPageUrl, cc);
+            var watchYtInitialDataRaw = ExtractRawWatchYtInitialData(watchHtml);
+            try
+            {
+                dynamic d = JsonConvert.DeserializeObject(watchYtInitialDataRaw);
+                var isLive = d.contents.twoColumnWatchNextResults.results.results.contents[0].videoPrimaryInfoRenderer.viewCount.videoViewCountRenderer.isLive;
+                return isLive ?? false;
+            }
+            catch (Exception)
+            {
+
+            }
+            return false;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -217,7 +248,7 @@ namespace YouTubeLiveSitePlugin.Next
         /// <returns></returns>
         /// <exception cref="ReloadException"></exception>
         /// <exception cref="SpecChangedException"></exception>
-        public async Task ReceiveAsync(string vid, LiveChatYtInitialData ytInitialData1, LiveChatYtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
+        public async Task ReceiveAsync(string vid, LiveChatYtInitialData ytInitialData1, LiveChatYtCfg ytCfg, CookieContainer cc, ILoginState loginInfo, IYouTubeLiveServer server)
         {
             if (_cts != null)
             {
@@ -226,14 +257,14 @@ namespace YouTubeLiveSitePlugin.Next
             _cts = new CancellationTokenSource();
             try
             {
-                await ReceiveInternalAsync(ytInitialData1, ytCfg, cc, loginInfo);
+                await ReceiveInternalAsync(vid, ytInitialData1, ytCfg, cc, loginInfo, server);
             }
             finally
             {
                 _cts = null;
             }
         }
-        public async Task ReceiveInternalAsync(LiveChatYtInitialData ytInitialData1, LiveChatYtCfg ytCfg, CookieContainer cc, ILoginState loginInfo)
+        public async Task ReceiveInternalAsync(string vid, LiveChatYtInitialData ytInitialData1, LiveChatYtCfg ytCfg, CookieContainer cc, ILoginState loginInfo, IYouTubeLiveServer server)
         {
             var dataToPost = new DataToPost(ytCfg);
             string initialContinuation;
@@ -255,7 +286,14 @@ namespace YouTubeLiveSitePlugin.Next
                 var continuation = getLiveChat.Continuation;// s.GetContinuation();
                 if (continuation is null)
                 {
-                    throw new ContinuationNotExistsException();
+                    if (await IsLiveAsync(vid, server, cc))
+                    {
+                        throw new ReloadException();
+                    }
+                    else
+                    {
+                        throw new ContinuationNotExistsException();
+                    }
                 }
                 if (continuation is ReloadContinuationData reload)
                 {
@@ -432,7 +470,7 @@ namespace YouTubeLiveSitePlugin.Next
         /// 例外は投げないようにしたい-.
         /// </summary>
         /// <returns>再接続すべきか</returns>
-        private async Task<ReasonForDisconnection> ConnectOnceAsync(string vid, CookieContainer cc, ChatProvider2 chatProvider, MetaDataYoutubeiProvider metaProvider)
+        private async Task<ReasonForDisconnection> ConnectOnceAsync(string vid, CookieContainer cc, ChatProvider2 chatProvider, MetaDataYoutubeiProvider metaProvider, IYouTubeLiveServer server)
         {
             _reason = null;
 
@@ -472,7 +510,7 @@ namespace YouTubeLiveSitePlugin.Next
                 OnMessageReceived(action, true);
             }
 
-            var chatTask = chatProvider.ReceiveAsync(vid, liveChat.YtInitialData, ytCfg, cc, loginInfo);
+            var chatTask = chatProvider.ReceiveAsync(vid, liveChat.YtInitialData, ytCfg, cc, loginInfo, server);
             var metaTask = metaProvider.ReceiveAsync(ytCfg, vid, cc);
 
             var tasks = new List<Task>
@@ -599,7 +637,7 @@ reload:
             var reason = ReasonForDisconnection.Unknown;
             try
             {
-                reason = await ConnectOnceAsync(vid, _cc, _chatProvider, metaProvider);
+                reason = await ConnectOnceAsync(vid, _cc, _chatProvider, metaProvider, _server);
             }
             catch (Test2.ParseException ex)
             {

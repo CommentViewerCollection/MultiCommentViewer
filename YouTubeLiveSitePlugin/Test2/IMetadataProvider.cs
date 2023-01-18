@@ -138,7 +138,7 @@ namespace YouTubeLiveSitePlugin.Test2
             metadata.Others = others;
             return metadata;
         }
-        public abstract Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc);
+        public abstract Task ReceiveAsync(LiveChatYtCfg ytCfg, string vid, CookieContainer cc);
         public IMetadataProvider(ILogger logger)
         {
             _logger = logger;

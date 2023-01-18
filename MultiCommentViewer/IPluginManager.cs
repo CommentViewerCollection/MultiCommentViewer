@@ -30,14 +30,22 @@ namespace MultiCommentViewer
         private IEnumerable<IPlugin> _plugins;
         public void LoadPlugins(IPluginHost host)
         {
-            var dir = _options.PluginDir;
-            var pluginDirs = Directory.GetDirectories(dir);
+            var plugins = new List<IPlugin>();
+            _plugins = plugins;
+            var pluginDir = _options.PluginDir;
+            if (!System.IO.Directory.Exists(pluginDir))
+            {
+                return;
+            }
+
+
+            var pluginDirs = Directory.GetDirectories(pluginDir);
             var list = new List<DirectoryCatalog>();
             var def = new ImportDefinition(d => d.ContractName == typeof(IPlugin).FullName, "", ImportCardinality.ExactlyOne, false, false);
-            var plugins = new List<IPlugin>();
-            foreach (var pluginDir in pluginDirs)
+
+            foreach (var eachPluginDir in pluginDirs)
             {
-                var files = Directory.GetFiles(pluginDir).Where(s => s.EndsWith("Plugin.dll"));//ファイル名がPlugin.dllで終わるアセンブリだけ探す
+                var files = Directory.GetFiles(eachPluginDir).Where(s => s.EndsWith("Plugin.dll"));//ファイル名がPlugin.dllで終わるアセンブリだけ探す
                 foreach (var file in files)
                 {
                     var filename = Path.GetFileName(file);
@@ -54,9 +62,8 @@ namespace MultiCommentViewer
                         Debug.WriteLine(ex.Message);
                     }
                 }
-                list.Add(new DirectoryCatalog(pluginDir));
+                list.Add(new DirectoryCatalog(eachPluginDir));
             }
-            _plugins = plugins;
             foreach (var plugin in _plugins)
             {
                 plugin.Host = host;

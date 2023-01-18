@@ -29,7 +29,7 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         private readonly IYouTubeLiveServer _server;
 
-        public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
+        public override async Task ReceiveAsync(LiveChatYtCfg ytCfg, string vid, CookieContainer cc)
         {
             if (_cts != null)
             {
@@ -45,7 +45,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 _cts = null;
             }
         }
-        public async Task ReceiveInternalAsync(YtCfg ytCfg, string vid, CookieContainer cc)
+        public async Task ReceiveInternalAsync(LiveChatYtCfg ytCfg, string vid, CookieContainer cc)
         {
             var url = "https://www.youtube.com/youtubei/v1/updated_metadata?alt=json&key=" + ytCfg.InnertubeApiKey;
             var payload = "{\"context\":{\"client\":{\"hl\":\"ja\",\"gl\":\"JP\",\"clientName\":1,\"clientVersion\":\"2.20210114.08.00\",\"screenDensityFloat\":\"1.25\"}},\"videoId\":\"" + vid + "\"}";
@@ -141,7 +141,7 @@ namespace YouTubeLiveSitePlugin.Test2
     {
         private readonly IYouTubeLiveServer _server;
 
-        public override async Task ReceiveAsync(YtCfg ytCfg, string vid, CookieContainer cc)
+        public override async Task ReceiveAsync(LiveChatYtCfg ytCfg, string vid, CookieContainer cc)
         {
             _cts = new CancellationTokenSource();
             var token = ytCfg.XsrfToken;

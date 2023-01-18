@@ -708,6 +708,10 @@ namespace YouTubeLiveSitePlugin.Next
             {
                 return new Input.WatchUrl(input);
             }
+            else if (VidResolver.IsStudio(input))
+            {
+                return Input.StudioUrl.CreateStudioUrl(input);
+            }
             return new Input.InvalidInput(input);
         }
         public static string ToElapsedString(TimeSpan timeSpan)

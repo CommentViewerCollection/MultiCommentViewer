@@ -49,6 +49,24 @@ namespace YouTubeLiveSitePlugin.Input
             Vid = vid;
         }
     }
+    class StudioUrl : IInput
+    {
+        public string Raw { get; }
+        public string Vid { get; }
+        public static StudioUrl CreateStudioUrl(string input)
+        {
+            if (VidResolver.TryStudio(input, out var vid))
+            {
+                return new StudioUrl(input, vid);
+            }
+            throw new ArgumentException(nameof(vid));
+        }
+        private StudioUrl(string studioUrl, string vid)
+        {
+            Raw = studioUrl;
+            Vid = vid;
+        }
+    }
     interface IChannelUrl : IInput { }
     static class ChannelUrlTools
     {

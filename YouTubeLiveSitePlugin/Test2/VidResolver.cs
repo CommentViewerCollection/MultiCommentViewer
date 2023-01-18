@@ -36,6 +36,7 @@ namespace YouTubeLiveSitePlugin.Test2
         const string ChannelIdPattern = VID_PATTERN;
         private static readonly Regex _regexUser = new Regex("youtube\\.com/user/(" + USERID_PATTERN + ")");
         private static readonly Regex _regexCustomChannel = new Regex("/c/(" + ChannelIdPattern + ")");
+        private static readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/[a-z]+/(" + VID_PATTERN + ")");
 
         internal static bool IsVid(string input)
         {
@@ -67,10 +68,14 @@ namespace YouTubeLiveSitePlugin.Test2
             if (string.IsNullOrEmpty(input)) return false;
             return _regexCustomChannel.IsMatch(input);
         }
-
+        public static bool IsStudio(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return false;
+            return _regexStudio.IsMatch(input);
+        }
         public static bool IsValidInput(string input)
         {
-            return IsWatch(input) || IsUser(input) || IsNormalChannel(input) || IsCustomChannel(input) || IsHandleChannel(input);
+            return IsWatch(input) || IsUser(input) || IsNormalChannel(input) || IsCustomChannel(input) || IsHandleChannel(input) || IsStudio(input);
         }
         internal static bool TryWatch(string input, out string vid)
         {
@@ -80,6 +85,22 @@ namespace YouTubeLiveSitePlugin.Test2
                 return false;
             }
             var match = _regexWatch.Match(input);
+            if (match.Success)
+            {
+                vid = match.Groups[1].Value;
+                return true;
+            }
+            vid = null;
+            return false;
+        }
+        internal static bool TryStudio(string input, out string vid)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                vid = null;
+                return false;
+            }
+            var match = _regexStudio.Match(input);
             if (match.Success)
             {
                 vid = match.Groups[1].Value;
@@ -113,6 +134,10 @@ namespace YouTubeLiveSitePlugin.Test2
                 {
                     return new MultiVidsResult { Vids = vids };
                 }
+            }
+            else if (input is StudioUrl studioUrl)
+            {
+                return new VidResult { Vid = studioUrl.Vid };
             }
             return new NoVidResult();
         }

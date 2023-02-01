@@ -36,7 +36,7 @@ namespace YouTubeLiveSitePlugin.Test2
         const string ChannelIdPattern = VID_PATTERN;
         private static readonly Regex _regexUser = new Regex("youtube\\.com/user/(" + USERID_PATTERN + ")");
         private static readonly Regex _regexCustomChannel = new Regex("/c/(" + ChannelIdPattern + ")");
-        private static readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/[a-z]+/(" + VID_PATTERN + ")");
+        private static readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/video/(" + VID_PATTERN + ")");
 
         internal static bool IsVid(string input)
         {

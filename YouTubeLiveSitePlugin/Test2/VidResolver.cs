@@ -31,12 +31,12 @@ namespace YouTubeLiveSitePlugin.Test2
         static readonly Regex _regexChannel = new Regex("youtube\\.com/channel/(" + ChannelIdPattern + ")");
         static readonly Regex _regexHandleChannel = new Regex("youtube\\.com/@(" + ChannelIdPattern + ")");
         static readonly Regex _regexWatch = new Regex("(?:youtube\\.com/watch\\?v=|youtu\\.be/|dashboard\\?v=)(" + VID_PATTERN + ")");
-        const string VID_PATTERN = "[^?#:/&]+";
+        public const string VID_PATTERN = "[^?#:/&]+";
         const string USERID_PATTERN = VID_PATTERN;
         const string ChannelIdPattern = VID_PATTERN;
         private static readonly Regex _regexUser = new Regex("youtube\\.com/user/(" + USERID_PATTERN + ")");
         private static readonly Regex _regexCustomChannel = new Regex("/c/(" + ChannelIdPattern + ")");
-        private static readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/[a-z]+/(" + VID_PATTERN + ")");
+        private static readonly Regex _regexStudio = new Regex("studio\\.youtube\\.com/video/(" + VID_PATTERN + ")");
 
         internal static bool IsVid(string input)
         {
@@ -75,7 +75,7 @@ namespace YouTubeLiveSitePlugin.Test2
         }
         public static bool IsValidInput(string input)
         {
-            return IsWatch(input) || IsUser(input) || IsNormalChannel(input) || IsCustomChannel(input) || IsHandleChannel(input) || IsStudio(input);
+            return IsWatch(input) || IsUser(input) || IsNormalChannel(input) || IsCustomChannel(input) || IsHandleChannel(input) || IsStudio(input) || LiveUrl.IsLiveUrl(input);
         }
         internal static bool TryWatch(string input, out string vid)
         {
@@ -138,6 +138,10 @@ namespace YouTubeLiveSitePlugin.Test2
             else if (input is StudioUrl studioUrl)
             {
                 return new VidResult { Vid = studioUrl.Vid };
+            }
+            else if (input is LiveUrl liveUrl)
+            {
+                return new VidResult { Vid = liveUrl.Vid };
             }
             return new NoVidResult();
         }

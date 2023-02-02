@@ -67,6 +67,38 @@ namespace YouTubeLiveSitePlugin.Input
             Vid = vid;
         }
     }
+    class LiveUrl : IInput
+    {
+        private static readonly Regex _regexLiveUrl = new Regex("youtube\\.com/live/(" + VidResolver.VID_PATTERN + ")");
+        public string Raw { get; }
+        public string Vid { get; }
+        public static bool TryExtractLiveUrl(string input, out LiveUrl url)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                url = null;
+                return false;
+            }
+            var match = _regexLiveUrl.Match(input);
+            if (match.Success)
+            {
+                url = new LiveUrl(input, match.Groups[1].Value);
+                return true;
+            }
+            url = null;
+            return false;
+        }
+        public static bool IsLiveUrl(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return false;
+            return _regexLiveUrl.IsMatch(input);
+        }
+        private LiveUrl(string studioUrl, string vid)
+        {
+            Raw = studioUrl;
+            Vid = vid;
+        }
+    }
     interface IChannelUrl : IInput { }
     static class ChannelUrlTools
     {

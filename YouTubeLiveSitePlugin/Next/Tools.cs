@@ -15,6 +15,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using YouTubeLiveSitePlugin.Input;
 using YouTubeLiveSitePlugin.Test2;
 
 namespace YouTubeLiveSitePlugin.Next
@@ -711,6 +712,10 @@ namespace YouTubeLiveSitePlugin.Next
             else if (VidResolver.IsStudio(input))
             {
                 return Input.StudioUrl.CreateStudioUrl(input);
+            }
+            else if (LiveUrl.TryExtractLiveUrl(input, out var liveUrl))
+            {
+                return liveUrl;
             }
             return new Input.InvalidInput(input);
         }

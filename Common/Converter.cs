@@ -52,6 +52,9 @@ namespace Common.Wpf
                     Height = remoteIcon.Height ?? bi.Height,
                     Source = imageSource,
                 };
+                //これを入れるとアニメーションGIFが動く
+                WpfAnimatedGif.ImageBehavior.SetAnimatedSource(image, imageSource);
+
                 if (!string.IsNullOrEmpty(remoteIcon.Alt))
                 {
                     image.ToolTip = remoteIcon.Alt;

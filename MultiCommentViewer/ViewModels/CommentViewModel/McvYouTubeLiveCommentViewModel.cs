@@ -138,6 +138,28 @@ namespace MultiCommentViewer
             Id = comment.Id;
             PostTime = comment.PostedAt.ToString("HH:mm:ss");
         }
+        public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLivePaidSticker sticker, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
+    : this(metadata, methods, connectionStatus, options)
+        {
+            _message = sticker;
+
+            _nameItems = sticker.NameItems;
+
+            var list = new List<IMessagePart>();
+            list.Add(MessagePartFactory.CreateMessageText(sticker.PurchaseAmount + Environment.NewLine));
+            list.Add(new Common.MessageImage
+            {
+                Url = sticker.StickerUrl,
+                Alt = sticker.StickerTooltip,
+                Width = sticker.StickerWidth,
+                Height = sticker.StickerHeight,
+            });
+            MessageItems = list;
+
+            Thumbnail = sticker.UserIcon;
+            Id = sticker.Id;
+            PostTime = sticker.PostedAt.ToString("HH:mm:ss");
+        }
         public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveMembership comment, IMessageMetadata metadata, IMessageMethods methods, IConnectionStatus connectionStatus, IOptions options)
             : this(metadata, methods, connectionStatus, options)
         {

@@ -4,6 +4,7 @@ using SitePlugin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 
 namespace YouTubeLiveSitePlugin
 {
@@ -35,8 +36,8 @@ namespace YouTubeLiveSitePlugin
         public string Id { get; set; }
         public IEnumerable<IMessagePart> NameItems { get; set; }
         public IEnumerable<IMessagePart> CommentItems { get; set; }
-        public IEnumerable<IMessagePart> HeaderPrimaryTextItems { get;  set; }
-        public IEnumerable<IMessagePart> HeaderSubTextItems { get;  set; }
+        public IEnumerable<IMessagePart> HeaderPrimaryTextItems { get; set; }
+        public IEnumerable<IMessagePart> HeaderSubTextItems { get; set; }
         //public string UserName { get; set; }
         public string UserId { get; set; }
         public DateTime PostedAt { get; set; }
@@ -88,6 +89,38 @@ namespace YouTubeLiveSitePlugin
             UserIcon = MessageBase.Convert(text.AuthorPhoto);
             PostedAt = MessageBase.Convert(text.TimestampUsec);
             PurchaseAmount = text.PurchaseAmount;
+        }
+    }
+    internal class YouTubeLivePaidSticker : MessageBase2, IYouTubeLivePaidSticker
+    {
+        public override SiteType SiteType { get; } = SiteType.YouTubeLive;
+        public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.PaidSticker;
+        //public string Comment { get; set; }
+        public string Id { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        //public IEnumerable<IMessagePart> CommentItems { get; set; }
+        public string UserId { get; set; }
+        public DateTime PostedAt { get; set; }
+        public IMessageImage UserIcon { get; set; }
+        public string PurchaseAmount { get; }
+        public string StickerUrl { get; }
+        public int StickerWidth { get; }
+        public int StickerHeight { get; }
+        public string StickerTooltip { get; }
+
+        public YouTubeLivePaidSticker(PaidSticker text) : base("")
+        {
+            UserId = text.ChannelId;
+            Id = text.Id;
+            //CommentItems = MessageBase.Convert(text.MessageItems);
+            NameItems = MessageBase.Convert(text.AuthorName, text.AuthorBadges);
+            UserIcon = MessageBase.Convert(text.AuthorPhoto);
+            PostedAt = MessageBase.Convert(text.TimestampUsec);
+            PurchaseAmount = text.PurchaseAmount;
+            StickerUrl = text.StickerThumbnailUrl;
+            StickerWidth = text.StickerThumbnailWidth;
+            StickerHeight = text.StickerThumbnailHeight;
+            StickerTooltip = text.StickerTooltip;
         }
     }
     internal class YouTubeLiveComment : MessageBase2, IYouTubeLiveComment

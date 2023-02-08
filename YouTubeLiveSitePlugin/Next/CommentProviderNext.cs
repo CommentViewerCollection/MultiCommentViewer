@@ -784,18 +784,30 @@ reload:
                             RaiseMessageReceived(CreateMessageContext2(superChat, isInitialComment));
                         }
                         break;
+                    case PaidSticker paidSticker:
+                        {
+                            if (IsDuplicate(paidSticker.Id))
+                            {
+                                return;
+                            }
+                            RaiseMessageReceived(CreateMessageContext2(paidSticker, isInitialComment));
+                        }
+                        break;
+                    case SponsorshipsGiftPurchaseAnnouncement giftPurchase:
+                        {
+                            if (IsDuplicate(giftPurchase.Id))
+                            {
+                                return;
+                            }
+                            RaiseMessageReceived(CreateMessageContext2(giftPurchase, isInitialComment));
+                        }
+                        break;
                     case ParseError parseError:
                         {
                             _logger.LogException(new Exception(), "ParseError", parseError.Raw);
                         }
                         break;
                     case MemberShip memberShip:
-                        break;
-                    case TickerPaidMessage tickerPaidMessage:
-                        break;
-                    case TickerPaidSticker tickerPaidSticker:
-                        break;
-                    case TickerSponser tickerSponser:
                         break;
                     case IgnoredMessage ignoredMessage:
                         break;
@@ -861,6 +873,29 @@ reload:
                 }
             }
             metadata.User.Name = nameItems;
+            return new YouTubeLiveMessageContext(message, metadata, methods);
+        }
+        private YouTubeLiveMessageContext CreateMessageContext2(PaidSticker text, bool isInitialComment)
+        {
+            //IYouTubeLiveMessage message;
+
+            var message = new YouTubeLivePaidSticker(text);
+            //message = a;
+
+            var metadata = CreateMetadata(message, isInitialComment);
+            var methods = new YouTubeLiveMessageMethods();
+
+            metadata.User.Name = message.NameItems;
+            return new YouTubeLiveMessageContext(message, metadata, methods);
+        }
+        private YouTubeLiveMessageContext CreateMessageContext2(SponsorshipsGiftPurchaseAnnouncement text, bool isInitialComment)
+        {
+            var message = new YouTubeLiveSponsorshipsGiftPurchaseAnnouncement(text);
+
+            var metadata = CreateMetadata(message, isInitialComment);
+            var methods = new YouTubeLiveMessageMethods();
+
+            metadata.User.Name = message.NameItems;
             return new YouTubeLiveMessageContext(message, metadata, methods);
         }
         //private void OnMessageReceived(IInternalMessage e, bool isInitialComment)
@@ -1034,6 +1069,14 @@ reload:
             else if (message is IYouTubeLiveMembership membership)
             {
                 userId = membership.UserId;
+            }
+            else if (message is IYouTubeLivePaidSticker paidSticker)
+            {
+                userId = paidSticker.UserId;
+            }
+            else if (message is IYouTubeLiveSponsorshipsGiftPurchaseAnnouncement purchaseAnnouncement)
+            {
+                userId = purchaseAnnouncement.UserId;
             }
             bool isFirstComment;
             IUser user;

@@ -715,6 +715,10 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new McvYouTubeLiveCommentViewModel(sticker, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
+                else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveSponsorshipsGiftPurchaseAnnouncement GiftPurchaseAnnouncement)
+                {
+                    mcvCvm = new McvYouTubeLiveCommentViewModel(GiftPurchaseAnnouncement, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
                 else if (youtubeMessage is YouTubeLiveSitePlugin.IYouTubeLiveMembership member)
                 {
                     mcvCvm = new McvYouTubeLiveCommentViewModel(member, messageContext.Metadata, messageContext.Methods, connectionName, _options);

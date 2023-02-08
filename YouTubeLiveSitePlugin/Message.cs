@@ -123,6 +123,27 @@ namespace YouTubeLiveSitePlugin
             StickerTooltip = text.StickerTooltip;
         }
     }
+    internal class YouTubeLiveSponsorshipsGiftPurchaseAnnouncement : MessageBase2, IYouTubeLiveSponsorshipsGiftPurchaseAnnouncement
+    {
+        public override SiteType SiteType { get; } = SiteType.YouTubeLive;
+        public YouTubeLiveMessageType YouTubeLiveMessageType { get; } = YouTubeLiveMessageType.SponsorshipsGiftPurchaseAnnouncement;
+        public string Id { get; set; }
+        public IEnumerable<IMessagePart> NameItems { get; set; }
+        public IEnumerable<IMessagePart> MessageItems { get; set; }
+        public string UserId { get; set; }
+        public DateTime PostedAt { get; set; }
+        public IMessageImage UserIcon { get; set; }
+
+        public YouTubeLiveSponsorshipsGiftPurchaseAnnouncement(SponsorshipsGiftPurchaseAnnouncement text) : base("")
+        {
+            UserId = text.ChannelId;
+            Id = text.Id;
+            MessageItems = MessageBase.Convert(text.HeaderPrimaryText);
+            NameItems = MessageBase.Convert(text.AuthorName, text.AuthorBadges);
+            UserIcon = MessageBase.Convert(text.AuthorPhoto);
+            PostedAt = MessageBase.Convert(text.TimestampUsec);
+        }
+    }
     internal class YouTubeLiveComment : MessageBase2, IYouTubeLiveComment
     {
         public override SiteType SiteType { get; } = SiteType.YouTubeLive;

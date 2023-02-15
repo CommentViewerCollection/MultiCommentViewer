@@ -46,6 +46,7 @@
     <PackageReference Include="SharpVectors" Version="1.7.6" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.114.3" PrivateAssets="none" />
     <PackageReference Include="WebSocket4Net" Version="0.15.2" />
+    <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />

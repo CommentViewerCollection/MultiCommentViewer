@@ -9,6 +9,8 @@ namespace YouTubeLiveSitePlugin
         Unknown,
         Comment,
         Superchat,
+        PaidSticker,
+        SponsorshipsGiftPurchaseAnnouncement,
         Membership,
         Connected,
         Disconnected,
@@ -45,6 +47,28 @@ namespace YouTubeLiveSitePlugin
         string Id { get; }
         string UserId { get; }
         string PurchaseAmount { get; }
+    }
+    public interface IYouTubeLivePaidSticker : IYouTubeLiveMessage
+    {
+        IEnumerable<IMessagePart> NameItems { get; }
+        IMessageImage UserIcon { get; }
+        DateTime PostedAt { get; }
+        string Id { get; }
+        string UserId { get; }
+        string PurchaseAmount { get; }
+        string StickerUrl { get; }
+        int StickerWidth { get; }
+        int StickerHeight { get; }
+        string StickerTooltip { get; }
+    }
+    public interface IYouTubeLiveSponsorshipsGiftPurchaseAnnouncement : IYouTubeLiveMessage
+    {
+        IEnumerable<IMessagePart> NameItems { get; }
+        IEnumerable<IMessagePart> MessageItems { get; set; }
+        IMessageImage UserIcon { get; }
+        DateTime PostedAt { get; }
+        string Id { get; }
+        string UserId { get; }
     }
     public interface IYouTubeLiveMembership : IYouTubeLiveMessage
     {

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net60-windows</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
@@ -41,10 +41,5 @@
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\IPlugin\Plugin.csproj" />
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System.Net.Http" />
   </ItemGroup>
 </Project>

@@ -775,7 +775,7 @@ namespace BouyomiPlugin
         }
         public BouyomiPlugin()
         {
-            _talker = new IpcTalker();
+            _talker = new TcpTalker("127.0.0.1", 50001);
             _options = new Options();
         }
 

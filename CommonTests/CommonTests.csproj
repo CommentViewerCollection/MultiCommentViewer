@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net60-windows</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
@@ -42,8 +42,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 </Project>

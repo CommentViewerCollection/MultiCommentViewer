@@ -101,7 +101,7 @@ namespace YouTubeLiveSitePlugin.Test2
                 {
                     _logger.LogException(ex);
                 }
-                catch(ContinuationNotExistsException ex)
+                catch (ContinuationNotExistsException ex)
                 {
                     _logger.LogException(ex);
                     break;
@@ -209,12 +209,6 @@ namespace YouTubeLiveSitePlugin.Test2
                     }
                 }
                 catch (HttpRequestException ex)
-                {
-                    _logger.LogException(ex);
-                    SendInfo($"メタデータの取得でエラーが発生 ({ex.Message})", InfoType.Notice);
-                    break;
-                }
-                catch (HttpException ex)
                 {
                     _logger.LogException(ex);
                     SendInfo($"メタデータの取得でエラーが発生 ({ex.Message})", InfoType.Notice);

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net60-windows</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
@@ -47,8 +47,5 @@
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
     <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />
     <ProjectReference Include="..\TwitchSitePlugin\TwitchSitePlugin.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="PresentationCore" />
   </ItemGroup>
 </Project>

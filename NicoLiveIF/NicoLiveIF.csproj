@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net60-windows</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
@@ -37,10 +37,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="System.Windows" />
-    <Reference Include="WindowsBase" />
   </ItemGroup>
 </Project>

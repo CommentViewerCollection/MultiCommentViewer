@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net60-windows</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
   </PropertyGroup>
@@ -44,9 +44,5 @@
     <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
     <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj" />
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="PresentationCore" />
   </ItemGroup>
 </Project>

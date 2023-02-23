@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net60-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
@@ -12,39 +12,43 @@
     <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
     <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
     <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>..\Output\Release\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>4</WarningLevel>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Beta|AnyCPU'">
-    <OutputPath>..\Output\Beta\</OutputPath>
+    <OutputPath>bin\Beta\</OutputPath>
     <DefineConstants>TRACE;BETA</DefineConstants>
     <WarningLevel>4</WarningLevel>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>embedded</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Alpha|AnyCPU'">
-    <OutputPath>..\Output\Alpha\</OutputPath>
+    <OutputPath>bin\Alpha\</OutputPath>
     <DefineConstants>TRACE;DEBUG;ALPHA</DefineConstants>
     <WarningLevel>4</WarningLevel>
-    <DebugType>full</DebugType>
+    <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>..\Output\Debug\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>4</WarningLevel>
-    <DebugType>full</DebugType>
+    <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
@@ -98,11 +102,24 @@
       <VersionNumber Include="$([System.Text.RegularExpressions.Regex]::Replace(&quot;%(Targets.Version)&quot;, &quot;^([^\.]+)\.([^\.]+)\.([^\.]+)(.*)$&quot;, &quot;$1.$2.$3&quot;))" />
     </ItemGroup>
   </Target>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command=":: 余分なファイルをリリースしてしまわないように一旦全部消す&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;)&#xD;&#xA;" />
-  </Target>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Release\</MyOutputDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Beta|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Beta\</MyOutputDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Alpha|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Alpha\</MyOutputDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <MyOutputDir>$(SolutionDir)Output\Debug\</MyOutputDir>
+  </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command=":: フォルダがごちゃごちゃしていると実行ファイルを見つけにくいからdllディレクトリを作成し、全部突っ込む&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File $(ProjectDir)postbuild.ps1 -TargetDir $(TargetDir)  -TargetName $(TargetName)&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;::ReadMe.txtをコピー&#xD;&#xA;xcopy /y &quot;$(ProjectDir)ReadMe.txt&quot; &quot;$(ProjectDir)$(OutDir)&quot;&#xD;&#xA;&#xD;&#xA;:: settingsディレクトリを作成&#xD;&#xA;if not exist &quot;$(OutDir)settings&quot; mkdir &quot;$(OutDir)settings&quot;&#xD;&#xA;:: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある&#xD;&#xA;if not exist &quot;$(OutDir)settings\placeholder&quot; powershell New-Item &quot;$(OutDir)settings\placeholder&quot; -ItemType file&#xD;&#xA;&#xD;&#xA;:: BouyomiPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\Bouyomi&quot; mkdir &quot;$(OutDir)plugins\Bouyomi&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BouyomiPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\Bouyomi&quot;&#xD;&#xA;&#xD;&#xA;:: CommentGeneratorPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\CommentGenerator&quot; mkdir &quot;$(OutDir)plugins\CommentGenerator&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\CommentGeneratorPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\CommentGenerator\&quot;&#xD;&#xA;&#xD;&#xA;:: YoyakuPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\Yoyaku&quot; mkdir &quot;$(OutDir)plugins\Yoyaku&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\YoyakuPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(OutDir)plugins\Yoyaku&quot;&#xD;&#xA;&#xD;&#xA;:: 自動アップデートに必要なlist.txtを作成&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File &quot;$(ProjectDir)\updateFileList.ps1&quot; -TargetDir &quot;$(TargetDir)\&quot;&#xD;&#xA;&#xD;&#xA;::zip化&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(SolutionDir)Output\Release\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;stable&quot;&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(SolutionDir)Output\Beta\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;beta&quot;&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(SolutionDir)Output\Alpha\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;alpha&quot;&#xD;&#xA;)" />
   </Target>
-
+  <Target Name="MyAfterPublish" AfterTargets="Publish">
+    <Exec Command="::ReadMe.txtをコピー&#xD;&#xA;xcopy /y &quot;$(ProjectDir)ReadMe.txt&quot; &quot;$(MyOutputDir)&quot;&#xD;&#xA;&#xD;&#xA;:: settingsディレクトリを作成&#xD;&#xA;if not exist &quot;$(OutDir)settings&quot; mkdir &quot;$(MyOutputDir)settings&quot;&#xD;&#xA;:: zip化した時に空ディレクトリは無くなってしまうから何かを置いておく必要がある&#xD;&#xA;if not exist &quot;$(OutDir)settings\placeholder&quot; powershell New-Item &quot;$(MyOutputDir)settings\placeholder&quot; -ItemType file&#xD;&#xA;&#xD;&#xA;:: BouyomiPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\Bouyomi&quot; mkdir &quot;$(MyOutputDir)plugins\Bouyomi&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\BouyomiPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\Bouyomi&quot;&#xD;&#xA;&#xD;&#xA;:: CommentGeneratorPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\CommentGenerator&quot; mkdir &quot;$(MyOutputDir)plugins\CommentGenerator&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\CommentGeneratorPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\CommentGenerator\&quot;&#xD;&#xA;&#xD;&#xA;:: YoyakuPluginのファイルを全部持ってくる&#xD;&#xA;if not exist &quot;$(OutDir)plugins\Yoyaku&quot; mkdir &quot;$(MyOutputDir)plugins\Yoyaku&quot;&#xD;&#xA;copy &quot;$(SolutionDir)\YoyakuPlugin\bin\$(ConfigurationName)\*&quot; &quot;$(MyOutputDir)plugins\Yoyaku&quot;&#xD;&#xA;&#xD;&#xA;:: 自動アップデートに必要なlist.txtを作成&#xD;&#xA;powershell.exe -ExecutionPolicy Unrestricted -File &quot;$(ProjectDir)\updateFileList.ps1&quot; -TargetDir &quot;$(TargetDir)\&quot;&#xD;&#xA;&#xD;&#xA;::zip化&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(SolutionDir)Output\Release\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;stable&quot;&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(SolutionDir)Output\Beta\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;beta&quot;&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;  powershell.exe -ExecutionPolicy Unrestricted -File zipping.ps1 -outputDir &quot;$(SolutionDir)Output&quot; -targetDir &quot;$(SolutionDir)Output\Alpha\*&quot; -exePath &quot;$(TargetPath)&quot; -zipFileSuffix &quot;alpha&quot;&#xD;&#xA;)" />
+  </Target>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command=":: 余分なファイルをリリースしてしまわないように一旦全部消す&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;  rd /s /q &quot;$(MyOutputDir)&quot;&#xD;&#xA;) else if $(ConfigurationName) == Beta (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;  rd /s /q &quot;$(MyOutputDir)&quot;&#xD;&#xA;) else if $(ConfigurationName) == Alpha (&#xD;&#xA;  rd /s /q &quot;$(TargetDir)&quot;&#xD;&#xA;  rd /s /q &quot;$(MyOutputDir)&quot;&#xD;&#xA;)&#xD;&#xA;" />
+  </Target>
 </Project>

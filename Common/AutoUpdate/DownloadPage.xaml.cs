@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 
@@ -29,7 +31,24 @@ namespace Common.AutoUpdate
             _userAgent = userAgent;
             _dispatcher = Dispatcher.CurrentDispatcher;
         }
-
+        private List<string> GetDeleteFileListFromFile(string listFilePath)
+        {
+            var list = new List<string>();
+            if (!File.Exists(listFilePath))
+            {
+                return list;
+            }
+            using (var sr = new System.IO.StreamReader(listFilePath))
+            {
+                while (!sr.EndOfStream)
+                {
+                    var filename = sr.ReadLine();
+                    if (!string.IsNullOrEmpty(filename))
+                        list.Add(filename);
+                }
+            }
+            return list;
+        }
         private async void DownloadPage_Loaded(object sender, RoutedEventArgs e)
         {
             var exeFile = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -73,16 +92,7 @@ namespace Common.AutoUpdate
             //list.txtに記載されているファイル全てに.oldを付加            
             try
             {
-                var list = new List<string>();
-                using (var sr = new System.IO.StreamReader(System.IO.Path.Combine(baseDir, "list.txt")))
-                {
-                    while (!sr.EndOfStream)
-                    {
-                        var filename = sr.ReadLine();
-                        if (!string.IsNullOrEmpty(filename))
-                            list.Add(filename);
-                    }
-                }
+                var list = GetDeleteFileListFromFile(System.IO.Path.Combine(baseDir, "list.txt"));
                 foreach (var filename in list)
                 {
                     var srcPath = System.IO.Path.Combine(baseDir, filename);

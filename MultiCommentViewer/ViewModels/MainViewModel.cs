@@ -603,7 +603,7 @@ namespace MultiCommentViewer
             {
 #if BETA
                 return Name + "_Beta";
-#elif Alpha
+#elif ALPHA
                 return Name + "_Alpha";
 #else
                 return Name;

@@ -47,15 +47,17 @@ namespace TwicasSitePlugin
     }
     static class API
     {
-        public static async Task<string> GetWebsocketUrl(IDataServer server, long movie_id, CookieContainer cc)
+        public static async Task<string> GetWebsocketUrl(IDataServer server, long movie_id, long unixMillisec, CookieContainer cc)
         {
             var url = "https://twitcasting.tv/eventpubsuburl.php";
             var data = new Dictionary<string, string>
             {
-                {"movie_id",  movie_id.ToString()}
+                {"movie_id",  movie_id.ToString()},
+                {"__n", unixMillisec.ToString() }
             };
-            var res = await server.PostAsync(url, data, cc);
+            var res = await server.PostMultipartFormdataAsync(url, data, cc);
             var d = DynamicJson.Parse(res);
+            //ブラウザだとurlの属性に"n=cce425f940dea58b"のようなものが付加されるけど、これだと無い。なんで？multipart/form-dataの形式がおかしい？
             if (d.IsDefined("url"))
             {
                 return d.url;

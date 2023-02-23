@@ -29,7 +29,7 @@ namespace Common
             var tcs = new TaskCompletionSource<object>();
             _tcs = tcs;
             var cookies = new List<KeyValuePair<string, string>>();
-            var ws = new WebSocket(url, SubProtocol, cookies, null, UserAgent, Origin)
+            var ws = new WebSocket(url, SubProtocol, cookies, null, UserAgent, Origin, WebSocketVersion.None, null, System.Security.Authentication.SslProtocols.Tls12)
             {
                 EnableAutoSendPing = EnableAutoSendPing,
                 AutoSendPingInterval = AutoSendPingInterval,

@@ -1,5 +1,6 @@
 ﻿using Common;
 using SitePluginCommon.AutoReconnection;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -36,6 +37,8 @@ namespace TwicasSitePlugin
                 _p1.Cc = _cc;
                 _p1.BroadcasterId = _broadcasterId;
                 _p1.LiveId = _currentLiveId ?? liveId;
+                var nowUnixMillisec = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                _p1.WebsocketUrl = await API.GetWebsocketUrl(_server, _p1.LiveId, nowUnixMillisec, _cc) + "&gift=1";
                 _p1.Master = _p2;
                 //var p = new WebsocketMessageProvider(new Common.Websocket());
                 //p.MessageReceived += (sender, e) => { Debug.WriteLine(e.Raw); };

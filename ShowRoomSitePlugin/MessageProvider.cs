@@ -173,7 +173,7 @@ namespace ShowRoomSitePlugin
             switch (type)
             {
                 case "1":
-                    internalMessage = new T1(raw);
+                    internalMessage = T1.Parse(raw);
                     break;
                 case "2"://throwGifts
                     internalMessage = new T2(raw);

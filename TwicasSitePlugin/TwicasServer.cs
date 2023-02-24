@@ -35,9 +35,24 @@ namespace TwicasSitePlugin
         {
             return GetAsync(url, null);
         }
-        public async Task<string> PostAsync(string url, Dictionary<string,string> data, CookieContainer cc)
+        public async Task<string> PostAsync(string url, Dictionary<string, string> data, CookieContainer cc)
         {
             var content = new FormUrlEncodedContent(data);
+            var result = await PostInternalAsync(new HttpOptions
+            {
+                Url = url,
+                Cc = cc,
+            }, content);
+            var str = await result.Content.ReadAsStringAsync();
+            return str;
+        }
+        public async Task<string> PostMultipartFormdataAsync(string url, Dictionary<string, string> data, CookieContainer cc)
+        {
+            var content = new MultipartFormDataContent();
+            foreach (var kv in data)
+            {
+                content.Add(new StringContent(kv.Value), kv.Key);
+            }
             var result = await PostInternalAsync(new HttpOptions
             {
                 Url = url,

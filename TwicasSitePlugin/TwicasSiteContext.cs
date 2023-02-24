@@ -35,7 +35,7 @@ namespace TwicasSitePlugin
     {
         public override Guid Guid => new Guid("8649A30C-D9C8-4ADB-862D-E0DAAEA24CE2");
 
-        public override string DisplayName => "Twicas";
+        public override string DisplayName => "ツイキャス";
         protected override SiteType SiteType => SiteType.Twicas;
         public override IOptionsTabPage TabPanel
         {

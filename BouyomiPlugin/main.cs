@@ -14,8 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
-using System.Runtime.Remoting.Contexts;
-using System.Runtime.Remoting.Messaging;
 using TwicasSitePlugin;
 using TwitchSitePlugin;
 using WhowatchSitePlugin;
@@ -40,7 +38,7 @@ namespace BouyomiPlugin
                     {
                         s += image.Alt;
                     }
-                    else if(part is IMessageRemoteSvg remoteSvg)
+                    else if (part is IMessageRemoteSvg remoteSvg)
                     {
                         s += remoteSvg.Alt;
                     }
@@ -53,10 +51,28 @@ namespace BouyomiPlugin
             return s;
         }
     }
+    interface ITalker : IDisposable
+    {
+        void TalkText(string text);
+
+        void TalkText(string text, Int16 voiceSpeed, Int16 voiceTone, Int16 voiceVolume, FNF.Utility.VoiceType voiceType);
+    }
+
+    [Serializable]
+    public class TalkException : Exception
+    {
+        public TalkException() { }
+        public TalkException(string message) : base(message) { }
+        public TalkException(string message, Exception inner) : base(message, inner) { }
+        protected TalkException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
     [Export(typeof(IPlugin))]
     public class BouyomiPlugin : IPlugin, IDisposable
     {
-        private readonly FNF.Utility.BouyomiChanClient _bouyomiChanClient;
+        //private readonly FNF.Utility.BouyomiChanClient _bouyomiChanClient;
+        private readonly ITalker _talker;
         private Options _options;
         Process _bouyomiChanProcess;
         public string Name => "棒読みちゃん連携";
@@ -695,7 +711,7 @@ namespace BouyomiPlugin
                 }
                 TalkText(dataToRead);
             }
-            catch (System.Runtime.Remoting.RemotingException)
+            catch (TalkException)
             {
                 //多分棒読みちゃんが起動していない。
                 if (_bouyomiChanProcess == null && System.IO.File.Exists(_options.BouyomiChanPath))
@@ -720,21 +736,17 @@ namespace BouyomiPlugin
             }
         }
 
-        private int TalkText(string text)
+        private void TalkText(string text)
         {
             if (_options.IsVoiceTypeSpecfied)
             {
-                return _bouyomiChanClient.AddTalkTask2(
-                    text,
-                    _options.VoiceSpeed,
-                    _options.VoiceTone,
-                    _options.VoiceVolume,
-                    (FNF.Utility.VoiceType)Enum.ToObject(typeof(FNF.Utility.VoiceType), _options.VoiceTypeIndex)
-                );
+                _talker.TalkText(text, (Int16)_options.VoiceSpeed,
+                   (Int16)_options.VoiceTone,
+                   (Int16)_options.VoiceVolume, (FNF.Utility.VoiceType)Enum.ToObject(typeof(FNF.Utility.VoiceType), _options.VoiceTypeIndex));
             }
             else
             {
-                return _bouyomiChanClient.AddTalkTask2(text);
+                _talker.TalkText(text);
             }
         }
 
@@ -763,7 +775,7 @@ namespace BouyomiPlugin
         }
         public BouyomiPlugin()
         {
-            _bouyomiChanClient = new FNF.Utility.BouyomiChanClient();
+            _talker = new IpcTalker();
             _options = new Options();
         }
 
@@ -777,7 +789,7 @@ namespace BouyomiPlugin
                 if (disposing)
                 {
                 }
-                _bouyomiChanClient.Dispose();
+                _talker.Dispose();
                 if (_bouyomiChanProcess != null)
                 {
                     _bouyomiChanProcess.Close();

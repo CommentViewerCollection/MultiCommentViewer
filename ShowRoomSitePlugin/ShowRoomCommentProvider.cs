@@ -120,7 +120,7 @@ namespace ShowRoomSitePlugin
             var userId = message.UserId;
             var isFirstComment = _first.IsFirstComment(userId);
             var user = GetUser(userId);
-            user.Name = Common.MessagePartFactory.CreateMessageItems(message.Text);
+            user.Name = Common.MessagePartFactory.CreateMessageItems(message.UserName);
             var metadata = CreateMessageMetadata(message, user, isFirstComment, isInitialComment);
             var methods = new MessageMethods();
             RaiseMessageReceived(new MessageContext(message, metadata, methods));

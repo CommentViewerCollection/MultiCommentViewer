@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MultiCommentViewer"
              xmlns:w="clr-namespace:Common.Wpf;assembly=Common"
-             xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="300" d:DesignWidth="370">

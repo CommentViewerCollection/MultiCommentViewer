@@ -126,7 +126,7 @@ namespace MultiCommentViewer
             _user = user;
             user.PropertyChanged += User_PropertyChanged;
         }
-        public UserViewModel(IUser user, IOptions option, ICollectionView comments) 
+        public UserViewModel(IUser user, IOptions option, ICollectionView comments)
             : base(option, comments)
         {
             _user = user;
@@ -138,21 +138,21 @@ namespace MultiCommentViewer
             switch (e.PropertyName)
             {
                 case nameof(_user.IsNgUser):
-                    RaisePropertyChanged(nameof(IsNgUser));
+                    OnPropertyChanged(nameof(IsNgUser));
                     break;
                 case nameof(_user.BackColorArgb):
-                    RaisePropertyChanged(nameof(IsEnabledUserBackColor));
-                    RaisePropertyChanged(nameof(BackColor));
+                    OnPropertyChanged(nameof(IsEnabledUserBackColor));
+                    OnPropertyChanged(nameof(BackColor));
                     break;
                 case nameof(_user.ForeColorArgb):
-                    RaisePropertyChanged(nameof(IsEnabledUserForeColor));
-                    RaisePropertyChanged(nameof(ForeColor));
+                    OnPropertyChanged(nameof(IsEnabledUserForeColor));
+                    OnPropertyChanged(nameof(ForeColor));
                     break;
                 case nameof(_user.Nickname):
-                    RaisePropertyChanged(nameof(Nickname));
+                    OnPropertyChanged(nameof(Nickname));
                     break;
                 case nameof(_user.Name):
-                    RaisePropertyChanged(nameof(UsernameItems));
+                    OnPropertyChanged(nameof(UsernameItems));
                     break;
             }
         }

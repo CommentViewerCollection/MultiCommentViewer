@@ -1,5 +1,5 @@
-﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Diagnostics;
 using System.Windows.Input;
@@ -14,7 +14,7 @@ namespace FNF.Utility
 }
 namespace BouyomiPlugin
 {
-    class ConfigViewModel : ViewModelBase
+    class ConfigViewModel : ObservableObject
     {
         private const int VoiceTypeSapi5Offset = 10001;
         private readonly int VoiceTypeLength = Enum.GetNames(typeof(FNF.Utility.VoiceType)).Length;
@@ -896,7 +896,6 @@ namespace BouyomiPlugin
             //    throw new NotSupportedException();
             //}
         }
-        [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         public ConfigViewModel(Options options)
         {
             _options = options;
@@ -905,19 +904,19 @@ namespace BouyomiPlugin
                 switch (e.PropertyName)
                 {
                     case nameof(_options.IsEnabled):
-                        RaisePropertyChanged(nameof(IsEnabled));
+                        OnPropertyChanged(nameof(IsEnabled));
                         break;
                     case nameof(_options.BouyomiChanPath):
-                        RaisePropertyChanged(nameof(ExeLocation));
+                        OnPropertyChanged(nameof(ExeLocation));
                         break;
                     case nameof(_options.IsReadHandleName):
-                        RaisePropertyChanged(nameof(IsReadHandleName));
+                        OnPropertyChanged(nameof(IsReadHandleName));
                         break;
                     case nameof(_options.IsReadComment):
-                        RaisePropertyChanged(nameof(IsReadComment));
+                        OnPropertyChanged(nameof(IsReadComment));
                         break;
                     case nameof(_options.IsVoiceTypeSpecfied):
-                        RaisePropertyChanged(nameof(IsVoiceTypeSpecfied));
+                        OnPropertyChanged(nameof(IsVoiceTypeSpecfied));
                         break;
                 }
             };

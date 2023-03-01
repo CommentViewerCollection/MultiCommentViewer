@@ -8,8 +8,8 @@ using System.Windows;
 using SitePlugin;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
-using GalaSoft.MvvmLight.CommandWpf;
 using System.Diagnostics;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Common
 {
@@ -115,7 +115,7 @@ namespace Common
                 {
                     return new SolidColorBrush(_options.InfoForeColor);
                 }
-                else if(MessageType == MessageType.BroadcastInfo)
+                else if (MessageType == MessageType.BroadcastInfo)
                 {
                     return new SolidColorBrush(_options.BroadcastInfoForeColor);
                 }
@@ -162,7 +162,7 @@ namespace Common
             var matches = Regex.Matches(text, "(?:@|＠)(\\S+)", RegexOptions.Singleline);
             if (matches.Count > 0)
             {
-                foreach(Match match in matches.Cast<Match>().Reverse())
+                foreach (Match match in matches.Cast<Match>().Reverse())
                 {
                     var val = match.Groups[1].Value;
                     if (!int.TryParse(val, out _))

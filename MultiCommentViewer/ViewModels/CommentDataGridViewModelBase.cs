@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Windows.Input;
 using SitePlugin;
 using System.Threading;
@@ -24,7 +24,7 @@ namespace MultiCommentViewer
     /// <summary>
     /// MainViewModelとUserViewModelの共通項
     /// </summary>
-    public abstract class CommentDataGridViewModelBase : ViewModelBase
+    public abstract class CommentDataGridViewModelBase : ObservableObject
     {
         public ICommand TranslateCommand { get; }
         public ICollectionView Comments
@@ -36,7 +36,7 @@ namespace MultiCommentViewer
             set
             {
                 _comments = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public System.Windows.Controls.ScrollUnit ScrollUnit

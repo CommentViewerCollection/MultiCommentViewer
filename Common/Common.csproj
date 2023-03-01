@@ -2,7 +2,6 @@
   <PropertyGroup>
     <UseWPF>true</UseWPF>
     <TargetFramework>net60-windows</TargetFramework>
-    <LangVersion>8.0</LangVersion>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
     <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
     <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
@@ -43,7 +42,7 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MvvmLightLibs" Version="5.4.1.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="SharpVectors" Version="1.7.6" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.117" />

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
 using System.Windows.Input;
 using SitePlugin;
 using System.Collections.ObjectModel;
@@ -10,6 +8,8 @@ using Common;
 using Plugin;
 using System.Windows.Threading;
 using System.Windows.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace MultiCommentViewer
 {
@@ -25,7 +25,7 @@ namespace MultiCommentViewer
         public ConnectionContext OldValue { get; set; }
         public ConnectionContext NewValue { get; set; }
     }
-    public class ConnectionViewModel : ViewModelBase, IConnectionStatus
+    public class ConnectionViewModel : ObservableObject, IConnectionStatus
     {
         public ConnectionName ConnectionName => _connectionName;
         public string Name
@@ -45,7 +45,7 @@ namespace MultiCommentViewer
             {
                 if (_isSelected == value) return;
                 _isSelected = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         #endregion //IsSelected
@@ -108,7 +108,7 @@ namespace MultiCommentViewer
                     SiteGuid = nextGuid,
                     //SiteContext = _selectedSite.Site,
                 };
-                RaisePropertyChanged();
+                OnPropertyChanged();
                 SelectedSiteChanged?.Invoke(this, new SelectedSiteChangedEventArgs
                 {
                     ConnectionName = this.ConnectionName,
@@ -128,7 +128,7 @@ namespace MultiCommentViewer
             set
             {
                 _backColor = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private Color _foreColor;
@@ -141,7 +141,7 @@ namespace MultiCommentViewer
             set
             {
                 _foreColor = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -205,7 +205,7 @@ namespace MultiCommentViewer
             set
             {
                 _LoggedInUsername = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private void CommentProvider_Connected(object sender, ConnectedEventArgs e)
@@ -222,7 +222,7 @@ namespace MultiCommentViewer
             {
                 if (_commentPostPanel == value) return;
                 _commentPostPanel = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -239,12 +239,12 @@ namespace MultiCommentViewer
         }
         private void CommentProvider_CanDisconnectChanged(object sender, EventArgs e)
         {
-            RaisePropertyChanged(nameof(CanDisconnect));
+            OnPropertyChanged(nameof(CanDisconnect));
         }
 
         private void CommentProvider_CanConnectChanged(object sender, EventArgs e)
         {
-            RaisePropertyChanged(nameof(CanConnect));
+            OnPropertyChanged(nameof(CanConnect));
         }
 
         private BrowserViewModel _selectedBrowser;
@@ -257,7 +257,7 @@ namespace MultiCommentViewer
                     return;
                 _selectedBrowser = value;
                 UpdateLoggedInInfo();
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public bool CanConnect
@@ -278,7 +278,7 @@ namespace MultiCommentViewer
             set
             {
                 _needSave = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _input;
@@ -310,7 +310,7 @@ namespace MultiCommentViewer
                 if (_input == value)
                     return;
                 _input = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -383,7 +383,7 @@ namespace MultiCommentViewer
                         var newName = _connectionName.Name;
                         Renamed?.Invoke(this, new RenamedEventArgs(_beforeName, newName));
                         _beforeName = newName;
-                        RaisePropertyChanged(nameof(Name));
+                        OnPropertyChanged(nameof(Name));
                         break;
                 }
             };
@@ -392,12 +392,12 @@ namespace MultiCommentViewer
                 switch (e.PropertyName)
                 {
                     case nameof(options.IsEnabledSiteConnectionColor):
-                        RaisePropertyChanged(nameof(BackColor));
-                        RaisePropertyChanged(nameof(ForeColor));
+                        OnPropertyChanged(nameof(BackColor));
+                        OnPropertyChanged(nameof(ForeColor));
                         break;
                     case nameof(options.SiteConnectionColorType):
-                        RaisePropertyChanged(nameof(BackColor));
-                        RaisePropertyChanged(nameof(ForeColor));
+                        OnPropertyChanged(nameof(BackColor));
+                        OnPropertyChanged(nameof(ForeColor));
                         break;
                 }
             };

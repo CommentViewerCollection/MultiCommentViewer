@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GalaSoft.MvvmLight.Command;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Input;
 using System.Windows.Input;
 using SitePlugin;
 using System.Threading;
@@ -22,8 +23,6 @@ using CommentViewerCommon;
 using SitePluginCommon;
 using System.Windows;
 using System.Windows.Controls;
-using NicoSitePlugin;
-using MixchSitePlugin;
 
 namespace MultiCommentViewer
 {
@@ -197,7 +196,7 @@ namespace MultiCommentViewer
                         Debug.WriteLine(ex.Message);
                     }
                 }
-                MessengerInstance.Send(new ShowOptionsViewMessage(list));
+                WeakReferenceMessenger.Default.Send(new ShowOptionsViewMessage(new ShowOptionsViewMessageItems(list)));
             }
             catch (Exception ex)
             {
@@ -529,7 +528,7 @@ namespace MultiCommentViewer
             {
                 if (connectionVm == SelectedConnection)
                 {
-                    MessengerInstance.Send(new SetPostCommentPanel(connectionVm.CommentPostPanel));
+                    WeakReferenceMessenger.Default.Send(new SetPostCommentPanel(new SetPostCommentPanelItems(connectionVm.CommentPostPanel)));
                 }
             }
             catch (Exception ex)
@@ -635,7 +634,7 @@ namespace MultiCommentViewer
                 if (myVer < latestVersionInfo.Version)
                 {
                     //新しいバージョンがあった
-                    MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(true, myVer, latestVersionInfo, _logger, GetUserAgent()));
+                    WeakReferenceMessenger.Default.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(new Common.AutoUpdate.ShowUpdateDialogMessageItems(true, myVer, latestVersionInfo, _logger, GetUserAgent())));
                 }
                 else
                 {
@@ -643,7 +642,7 @@ namespace MultiCommentViewer
                     if (!isAutoCheck)
                     {
                         //アップデートはありません
-                        MessengerInstance.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(false, myVer, latestVersionInfo, _logger, GetUserAgent()));
+                        WeakReferenceMessenger.Default.Send(new Common.AutoUpdate.ShowUpdateDialogMessage(new Common.AutoUpdate.ShowUpdateDialogMessageItems(false, myVer, latestVersionInfo, _logger, GetUserAgent())));
                     }
                 }
             }
@@ -822,7 +821,7 @@ namespace MultiCommentViewer
                 {
                     mcvCvm = new NicoCommentViewModel(spi, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
-                else if (nicoMessage is NicoSitePlugin.INicoEmotion emotion && messageContext.Metadata.SiteOptions is INicoSiteOptions nicoSiteOptions)
+                else if (nicoMessage is NicoSitePlugin.INicoEmotion emotion && messageContext.Metadata.SiteOptions is NicoSitePlugin.INicoSiteOptions nicoSiteOptions)
                 {
                     if (nicoSiteOptions.IsShowEmotion)
                     {
@@ -1066,13 +1065,13 @@ namespace MultiCommentViewer
                 _selectedConnection = value;
                 if (_selectedConnection == null)
                 {
-                    MessengerInstance.Send(new SetPostCommentPanel(null));
+                    WeakReferenceMessenger.Default.Send(new SetPostCommentPanel(new SetPostCommentPanelItems(null)));
                 }
                 else
                 {
-                    MessengerInstance.Send(new SetPostCommentPanel(_selectedConnection.CommentPostPanel));
+                    WeakReferenceMessenger.Default.Send(new SetPostCommentPanel(new SetPostCommentPanelItems(_selectedConnection.CommentPostPanel)));
                 }
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string GetVersionNumber()
@@ -1708,7 +1707,6 @@ namespace MultiCommentViewer
                 throw new NotSupportedException();
             }
         }
-        [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         public MainViewModel(IIo io, ILogger logger, IOptions options, ISitePluginLoader sitePluginLoader, IBrowserLoader browserLoader)
             : base(options)
         {
@@ -1763,133 +1761,133 @@ namespace MultiCommentViewer
                 switch (e.PropertyName)
                 {
                     case nameof(_options.MainViewLeft):
-                        RaisePropertyChanged(nameof(MainViewLeft));
+                        OnPropertyChanged(nameof(MainViewLeft));
                         break;
                     case nameof(_options.MainViewTop):
-                        RaisePropertyChanged(nameof(MainViewTop));
+                        OnPropertyChanged(nameof(MainViewTop));
                         break;
                     case nameof(_options.MainViewHeight):
-                        RaisePropertyChanged(nameof(MainViewHeight));
+                        OnPropertyChanged(nameof(MainViewHeight));
                         break;
                     case nameof(_options.MainViewWidth):
-                        RaisePropertyChanged(nameof(MainViewWidth));
+                        OnPropertyChanged(nameof(MainViewWidth));
                         break;
                     case nameof(_options.IsShowThumbnail):
-                        RaisePropertyChanged(nameof(IsShowThumbnail));
+                        OnPropertyChanged(nameof(IsShowThumbnail));
                         break;
                     case nameof(_options.IsShowUsername):
-                        RaisePropertyChanged(nameof(IsShowUsername));
+                        OnPropertyChanged(nameof(IsShowUsername));
                         break;
                     case nameof(_options.IsShowConnectionName):
-                        RaisePropertyChanged(nameof(IsShowConnectionName));
+                        OnPropertyChanged(nameof(IsShowConnectionName));
                         break;
                     case nameof(_options.IsShowCommentId):
-                        RaisePropertyChanged(nameof(IsShowCommentId));
+                        OnPropertyChanged(nameof(IsShowCommentId));
                         break;
                     case nameof(_options.IsShowMessage):
-                        RaisePropertyChanged(nameof(IsShowMessage));
+                        OnPropertyChanged(nameof(IsShowMessage));
                         break;
                     case nameof(_options.IsShowPostTime):
-                        RaisePropertyChanged(nameof(IsShowPostTime));
+                        OnPropertyChanged(nameof(IsShowPostTime));
                         break;
                     case nameof(_options.IsShowInfo):
-                        RaisePropertyChanged(nameof(IsShowInfo));
+                        OnPropertyChanged(nameof(IsShowInfo));
                         break;
 
                     case nameof(_options.TitleBackColor):
-                        RaisePropertyChanged(nameof(TitleBackground));
+                        OnPropertyChanged(nameof(TitleBackground));
                         break;
                     case nameof(_options.TitleForeColor):
-                        RaisePropertyChanged(nameof(TitleForeground));
+                        OnPropertyChanged(nameof(TitleForeground));
                         break;
                     case nameof(_options.ViewBackColor):
-                        RaisePropertyChanged(nameof(ViewBackground));
+                        OnPropertyChanged(nameof(ViewBackground));
                         break;
                     case nameof(_options.WindowBorderColor):
-                        RaisePropertyChanged(nameof(WindowBorderBrush));
+                        OnPropertyChanged(nameof(WindowBorderBrush));
                         break;
                     case nameof(_options.SystemButtonBackColor):
-                        RaisePropertyChanged(nameof(SystemButtonBackground));
+                        OnPropertyChanged(nameof(SystemButtonBackground));
                         break;
                     case nameof(_options.SystemButtonForeColor):
-                        RaisePropertyChanged(nameof(SystemButtonForeground));
+                        OnPropertyChanged(nameof(SystemButtonForeground));
                         break;
                     case nameof(_options.SystemButtonBorderColor):
-                        RaisePropertyChanged(nameof(SystemButtonBorderBrush));
+                        OnPropertyChanged(nameof(SystemButtonBorderBrush));
                         break;
                     case nameof(_options.SystemButtonMouseOverBackColor):
-                        RaisePropertyChanged(nameof(SystemButtonMouseOverBackground));
+                        OnPropertyChanged(nameof(SystemButtonMouseOverBackground));
                         break;
                     case nameof(_options.SystemButtonMouseOverForeColor):
-                        RaisePropertyChanged(nameof(SystemButtonMouseOverForeground));
+                        OnPropertyChanged(nameof(SystemButtonMouseOverForeground));
                         break;
                     case nameof(_options.SystemButtonMouseOverBorderColor):
-                        RaisePropertyChanged(nameof(SystemButtonMouseOverBorderBrush));
+                        OnPropertyChanged(nameof(SystemButtonMouseOverBorderBrush));
                         break;
 
                     case nameof(_options.MenuBackColor):
-                        RaisePropertyChanged(nameof(MenuBackground));
-                        RaisePropertyChanged(nameof(ContextMenuBackground));
+                        OnPropertyChanged(nameof(MenuBackground));
+                        OnPropertyChanged(nameof(ContextMenuBackground));
                         break;
                     case nameof(_options.MenuForeColor):
-                        RaisePropertyChanged(nameof(MenuForeground));
-                        RaisePropertyChanged(nameof(ContextMenuForeground));
+                        OnPropertyChanged(nameof(MenuForeground));
+                        OnPropertyChanged(nameof(ContextMenuForeground));
                         break;
                     case nameof(_options.MenuPopupBorderColor):
-                        RaisePropertyChanged(nameof(MenuPopupBorderBrush));
+                        OnPropertyChanged(nameof(MenuPopupBorderBrush));
                         break;
                     case nameof(_options.MenuSeparatorBackColor):
-                        RaisePropertyChanged(nameof(MenuSeparatorBackground));
+                        OnPropertyChanged(nameof(MenuSeparatorBackground));
                         break;
                     case nameof(_options.MenuItemCheckMarkColor):
-                        RaisePropertyChanged(nameof(MenuItemCheckMarkBrush));
+                        OnPropertyChanged(nameof(MenuItemCheckMarkBrush));
                         break;
                     case nameof(_options.MenuItemMouseOverBackColor):
-                        RaisePropertyChanged(nameof(MenuItemMouseOverBackground));
+                        OnPropertyChanged(nameof(MenuItemMouseOverBackground));
                         break;
                     case nameof(_options.MenuItemMouseOverForeColor):
-                        RaisePropertyChanged(nameof(MenuItemMouseOverForeground));
+                        OnPropertyChanged(nameof(MenuItemMouseOverForeground));
                         break;
                     case nameof(_options.MenuItemMouseOverBorderColor):
-                        RaisePropertyChanged(nameof(MenuItemMouseOverBorderBrush));
+                        OnPropertyChanged(nameof(MenuItemMouseOverBorderBrush));
                         break;
                     case nameof(_options.MenuItemMouseOverCheckMarkColor):
-                        RaisePropertyChanged(nameof(MenuItemMouseOverCheckMarkBrush));
+                        OnPropertyChanged(nameof(MenuItemMouseOverCheckMarkBrush));
                         break;
 
 
                     case nameof(_options.ButtonBackColor):
-                        RaisePropertyChanged(nameof(ButtonBackground));
+                        OnPropertyChanged(nameof(ButtonBackground));
                         break;
                     case nameof(_options.ButtonForeColor):
-                        RaisePropertyChanged(nameof(ButtonForeground));
+                        OnPropertyChanged(nameof(ButtonForeground));
                         break;
                     case nameof(_options.ButtonBorderColor):
-                        RaisePropertyChanged(nameof(ButtonBorderBrush));
+                        OnPropertyChanged(nameof(ButtonBorderBrush));
                         break;
                     case nameof(_options.CommentListBackColor):
-                        RaisePropertyChanged(nameof(CommentListBackground));
-                        RaisePropertyChanged(nameof(ConnectionListBackground));
+                        OnPropertyChanged(nameof(CommentListBackground));
+                        OnPropertyChanged(nameof(ConnectionListBackground));
                         break;
                     case nameof(_options.CommentListHeaderBackColor):
-                        RaisePropertyChanged(nameof(CommentListHeaderBackground));
-                        RaisePropertyChanged(nameof(ConnectionListHeaderBackground));
+                        OnPropertyChanged(nameof(CommentListHeaderBackground));
+                        OnPropertyChanged(nameof(ConnectionListHeaderBackground));
                         break;
                     case nameof(_options.CommentListHeaderForeColor):
-                        RaisePropertyChanged(nameof(CommentListHeaderForeground));
-                        RaisePropertyChanged(nameof(ConnectionListHeaderForeground));
+                        OnPropertyChanged(nameof(CommentListHeaderForeground));
+                        OnPropertyChanged(nameof(ConnectionListHeaderForeground));
                         break;
                     case nameof(_options.CommentListHeaderBorderColor):
-                        RaisePropertyChanged(nameof(CommentListHeaderBorderBrush));
-                        RaisePropertyChanged(nameof(ConnectionListHeaderBorderBrush));
+                        OnPropertyChanged(nameof(CommentListHeaderBorderBrush));
+                        OnPropertyChanged(nameof(ConnectionListHeaderBorderBrush));
                         break;
                     case nameof(_options.CommentListBorderColor):
-                        RaisePropertyChanged(nameof(CommentListBorderBrush));
-                        RaisePropertyChanged(nameof(ConnectionListBorderBrush));
+                        OnPropertyChanged(nameof(CommentListBorderBrush));
+                        OnPropertyChanged(nameof(ConnectionListBorderBrush));
                         break;
                     case nameof(_options.CommentListSeparatorColor):
-                        RaisePropertyChanged(nameof(CommentListSeparatorBrush));
-                        RaisePropertyChanged(nameof(ConnectionListSeparatorBrush));
+                        OnPropertyChanged(nameof(CommentListSeparatorBrush));
+                        OnPropertyChanged(nameof(ConnectionListSeparatorBrush));
                         break;
                     //case nameof(_options.ConnectionListBackColor):
                     //    RaisePropertyChanged(nameof(ConnectionListBackground));
@@ -1901,103 +1899,103 @@ namespace MultiCommentViewer
                     //    RaisePropertyChanged(nameof(ConnectionListHeaderForeground));
                     //    break;
                     case nameof(_options.ConnectionListRowBackColor):
-                        RaisePropertyChanged(nameof(ConnectionListRowBackground));
+                        OnPropertyChanged(nameof(ConnectionListRowBackground));
                         break;
 
                     case nameof(_options.ScrollBarBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarBackground));
+                        OnPropertyChanged(nameof(ScrollBarBackground));
                         break;
                     case nameof(_options.ScrollBarBorderColor):
-                        RaisePropertyChanged(nameof(ScrollBarBorderBrush));
+                        OnPropertyChanged(nameof(ScrollBarBorderBrush));
                         break;
                     case nameof(_options.ScrollBarThumbBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarThumbBackground));
+                        OnPropertyChanged(nameof(ScrollBarThumbBackground));
                         break;
                     case nameof(_options.ScrollBarThumbMouseOverBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarThumbMouseOverBackground));
+                        OnPropertyChanged(nameof(ScrollBarThumbMouseOverBackground));
                         break;
                     case nameof(_options.ScrollBarThumbPressedBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarThumbPressedBackground));
+                        OnPropertyChanged(nameof(ScrollBarThumbPressedBackground));
                         break;
 
 
                     case nameof(_options.ScrollBarButtonBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonBackground));
+                        OnPropertyChanged(nameof(ScrollBarButtonBackground));
                         break;
                     case nameof(_options.ScrollBarButtonForeColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonForeground));
+                        OnPropertyChanged(nameof(ScrollBarButtonForeground));
                         break;
                     case nameof(_options.ScrollBarButtonBorderColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonBorderBrush));
+                        OnPropertyChanged(nameof(ScrollBarButtonBorderBrush));
                         break;
 
 
                     case nameof(_options.ScrollBarButtonDisabledBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonDisabledBackground));
+                        OnPropertyChanged(nameof(ScrollBarButtonDisabledBackground));
                         break;
                     case nameof(_options.ScrollBarButtonDisabledForeColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonDisabledForeground));
+                        OnPropertyChanged(nameof(ScrollBarButtonDisabledForeground));
                         break;
                     case nameof(_options.ScrollBarButtonDisabledBorderColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonDisabledBorderBrush));
+                        OnPropertyChanged(nameof(ScrollBarButtonDisabledBorderBrush));
                         break;
 
                     case nameof(_options.ScrollBarButtonMouseOverBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonMouseOverBackground));
+                        OnPropertyChanged(nameof(ScrollBarButtonMouseOverBackground));
                         break;
                     case nameof(_options.ScrollBarButtonPressedBackColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonPressedBackground));
+                        OnPropertyChanged(nameof(ScrollBarButtonPressedBackground));
                         break;
                     case nameof(_options.ScrollBarButtonPressedBorderColor):
-                        RaisePropertyChanged(nameof(ScrollBarButtonPressedBorderBrush));
+                        OnPropertyChanged(nameof(ScrollBarButtonPressedBorderBrush));
                         break;
 
                     case nameof(_options.IsEnabledSiteConnectionColor):
                     case nameof(_options.SiteConnectionColorType):
-                        RaisePropertyChanged(nameof(ConnectionColorColumnWidth));
-                        RaisePropertyChanged(nameof(IsShowConnectionsViewConnectionBackground));
-                        RaisePropertyChanged(nameof(IsShowConnectionsViewConnectionForeground));
+                        OnPropertyChanged(nameof(ConnectionColorColumnWidth));
+                        OnPropertyChanged(nameof(IsShowConnectionsViewConnectionBackground));
+                        OnPropertyChanged(nameof(IsShowConnectionsViewConnectionForeground));
                         break;
                     case nameof(_options.IsTopmost):
                         _pluginManager.OnTopmostChanged(_options.IsTopmost);
-                        RaisePropertyChanged(nameof(Topmost));
+                        OnPropertyChanged(nameof(Topmost));
                         break;
 
                     case nameof(_options.IsShowHorizontalGridLine):
                         break;
                     case nameof(_options.HorizontalGridLineColor):
-                        RaisePropertyChanged(nameof(HorizontalGridLineBrush));
+                        OnPropertyChanged(nameof(HorizontalGridLineBrush));
                         break;
                     case nameof(_options.IsShowVerticalGridLine):
                         break;
                     case nameof(_options.VerticalGridLineColor):
-                        RaisePropertyChanged(nameof(VerticalGridLineBrush));
+                        OnPropertyChanged(nameof(VerticalGridLineBrush));
                         break;
 
                     case nameof(_options.IsShowMetaConnectionName):
-                        RaisePropertyChanged(nameof(IsShowMetaConnectionName));
+                        OnPropertyChanged(nameof(IsShowMetaConnectionName));
                         break;
                     case nameof(_options.IsShowMetaTitle):
-                        RaisePropertyChanged(nameof(IsShowMetaTitle));
+                        OnPropertyChanged(nameof(IsShowMetaTitle));
                         break;
                     case nameof(_options.IsShowMetaElapse):
-                        RaisePropertyChanged(nameof(IsShowMetaElapse));
+                        OnPropertyChanged(nameof(IsShowMetaElapse));
                         break;
                     case nameof(_options.IsShowMetaCurrentViewers):
-                        RaisePropertyChanged(nameof(IsShowMetaCurrentViewers));
+                        OnPropertyChanged(nameof(IsShowMetaCurrentViewers));
                         break;
                     case nameof(_options.IsShowMetaTotalViewers):
-                        RaisePropertyChanged(nameof(IsShowMetaTotalViewers));
+                        OnPropertyChanged(nameof(IsShowMetaTotalViewers));
                         break;
                     case nameof(_options.IsShowMetaActive):
-                        RaisePropertyChanged(nameof(IsShowMetaActive));
+                        OnPropertyChanged(nameof(IsShowMetaActive));
                         break;
                     case nameof(_options.IsShowMetaOthers):
-                        RaisePropertyChanged(nameof(IsShowMetaOthers));
+                        OnPropertyChanged(nameof(IsShowMetaOthers));
                         break;
                 }
             };
-            RaisePropertyChanged(nameof(Topmost));
+            OnPropertyChanged(nameof(Topmost));
         }
 
         private async void PluginManager_PluginAdded(object sender, IPlugin e)
@@ -2057,7 +2055,7 @@ namespace MultiCommentViewer
                 return cvm.UserId == userId;
             };
             uvm.Comments = view;
-            MessengerInstance.Send(new ShowUserViewMessage(uvm));
+            WeakReferenceMessenger.Default.Send(new ShowUserViewMessage(new ShowUserViewMessageItems(uvm)));
         }
         private void ShowUserInfo()
         {
@@ -2083,7 +2081,7 @@ namespace MultiCommentViewer
         }
         private void ShowUserList()
         {
-            MessengerInstance.Send(new ShowUserListViewMessage(_userViewModels, this, _options));
+            WeakReferenceMessenger.Default.Send(new ShowUserListViewMessage(new ShowUserListViewMessageItems(_userViewModels, this, _options)));
         }
         private async void CheckUpdate()
         {

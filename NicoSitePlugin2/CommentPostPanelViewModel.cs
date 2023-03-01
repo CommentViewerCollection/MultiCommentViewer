@@ -8,12 +8,12 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using Common;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace NicoSitePlugin
 {
-    class CommentPostPanelViewModel : ViewModelBase
+    class CommentPostPanelViewModel : ObservableObject
     {
         public ObservableCollection<CommentSize> CommentSizeCollection { get; }
         public CommentSize SelectedCommentSize { get; set; }
@@ -35,7 +35,7 @@ namespace NicoSitePlugin
             set
             {
                 _comment = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public ICommand PostCommentCommand { get; }

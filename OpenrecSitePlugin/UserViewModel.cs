@@ -1,9 +1,9 @@
-﻿using SitePlugin;
-using GalaSoft.MvvmLight;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using SitePlugin;
 
 namespace OpenrecSitePlugin
 {
-    class UserViewModel :ViewModelBase
+    class UserViewModel : ObservableObject
     {
         private readonly IUser _user;
         public string Name
@@ -14,7 +14,7 @@ namespace OpenrecSitePlugin
                 if (_user.Nickname == value)
                     return;
                 _user.Nickname = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private bool _isNgUser;
@@ -25,7 +25,7 @@ namespace OpenrecSitePlugin
             {
                 if (_isNgUser == value) return;
                 _isNgUser = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public UserViewModel(IUser user)

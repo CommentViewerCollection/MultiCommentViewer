@@ -1,13 +1,13 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Windows.Media;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.CommandWpf;
 
 namespace MultiCommentViewer.ViewModels
 {
-    public class UserListViewModel : ViewModelBase
+    public class UserListViewModel : ObservableObject
     {
         public ICommand ShowUserInfoCommand { get; }
         private readonly MainViewModel _mainVm;
@@ -20,7 +20,6 @@ namespace MultiCommentViewer.ViewModels
         {
 
         }
-        [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         public UserListViewModel(ObservableCollection<UserViewModel> uvms, MainViewModel mainVm, IOptions options)
         {
             if (options == null) throw new ArgumentNullException(nameof(options));
@@ -34,10 +33,10 @@ namespace MultiCommentViewer.ViewModels
                 switch (e.PropertyName)
                 {
                     case nameof(options.CommentListBackColor):
-                        RaisePropertyChanged(nameof(CommentListBackground));
+                        OnPropertyChanged(nameof(CommentListBackground));
                         break;
                     case nameof(options.CommentListBorderColor):
-                        RaisePropertyChanged(nameof(CommentListBorderBrush));
+                        OnPropertyChanged(nameof(CommentListBorderBrush));
                         break;
                 }
             };

@@ -1,11 +1,11 @@
-﻿using GalaSoft.MvvmLight;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SitePlugin;
 //TODO:過去コメントの取得
 
 
 namespace MultiCommentViewer
 {
-    public class MetadataViewModel : ViewModelBase
+    public class MetadataViewModel : ObservableObject
     {
         private string _title;
         public string Title
@@ -14,7 +14,7 @@ namespace MultiCommentViewer
             set
             {
                 _title = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _elapsed;
@@ -24,7 +24,7 @@ namespace MultiCommentViewer
             set
             {
                 _elapsed = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _currentViewers;
@@ -34,7 +34,7 @@ namespace MultiCommentViewer
             set
             {
                 _currentViewers = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _totalViewers;
@@ -44,7 +44,7 @@ namespace MultiCommentViewer
             set
             {
                 _totalViewers = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _active;
@@ -54,7 +54,7 @@ namespace MultiCommentViewer
             set
             {
                 _active = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _others;
@@ -64,7 +64,7 @@ namespace MultiCommentViewer
             set
             {
                 _others = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 
@@ -84,7 +84,7 @@ namespace MultiCommentViewer
                 switch (e.PropertyName)
                 {
                     case nameof(_connectionName.Name):
-                        base.RaisePropertyChanged(nameof(ConnectionName));
+                        OnPropertyChanged(nameof(ConnectionName));
                         break;
                 }
             };

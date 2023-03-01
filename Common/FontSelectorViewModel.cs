@@ -7,22 +7,29 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Globalization;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
-using GalaSoft.MvvmLight.Messaging;
 using System.Windows.Markup;
 using System.Windows.Data;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging.Messages;
+using SitePlugin;
 
 namespace Common.Wpf
 {
-    public class ShowFontSelectorViewOkMessage : MessageBase { }
-    public class SetFontMessage : MessageBase
+    public class ShowFontSelectorViewOkMessage : ValueChangedMessage<object>
+    {
+        public ShowFontSelectorViewOkMessage() : base(null)
+        {
+        }
+    }
+    public class SetFontMessageItems
     {
         public FontFamily FontFamily { get; private set; }
         public FontStyle FontStyle { get; private set; }
         public FontWeight FontWeight { get; private set; }
         public int FontSize { get; private set; }
-        public SetFontMessage(FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, int fontSize)
+        public SetFontMessageItems(FontFamily fontFamily, FontStyle fontStyle, FontWeight fontWeight, int fontSize)
         {
             FontFamily = fontFamily;
             FontStyle = fontStyle;
@@ -30,17 +37,39 @@ namespace Common.Wpf
             FontSize = fontSize;
         }
     }
-    public class GetFontMessage : MessageBase
+    public class SetFontMessage : ValueChangedMessage<SetFontMessageItems>
+    {
+        public SetFontMessage(SetFontMessageItems value) : base(value)
+        {
+        }
+    }
+    public class GetFontMessageItems
     {
         public Action<FontFamily, FontStyle, FontWeight, int> Callback { get; private set; }
-        public GetFontMessage(Action<FontFamily, FontStyle, FontWeight, int> callback)
+        public GetFontMessageItems(Action<FontFamily, FontStyle, FontWeight, int> callback)
         {
             Callback = callback;
         }
     }
-    public class FontSelectorViewOkMessage : MessageBase { }
-    public class FontSelectorViewCancelMessage : MessageBase { }
-    public sealed class FontSelectorViewModel : ViewModelBase
+    public class GetFontMessage : ValueChangedMessage<GetFontMessageItems>
+    {
+        public GetFontMessage(GetFontMessageItems value) : base(value)
+        {
+        }
+    }
+    public class FontSelectorViewOkMessage : ValueChangedMessage<object>
+    {
+        public FontSelectorViewOkMessage() : base(null)
+        {
+        }
+    }
+    public class FontSelectorViewCancelMessage : ValueChangedMessage<object>
+    {
+        public FontSelectorViewCancelMessage() : base(null)
+        {
+        }
+    }
+    public sealed class FontSelectorViewModel : ObservableObject
     {
         #region Command
         private RelayCommand _okCommand;
@@ -66,7 +95,7 @@ namespace Common.Wpf
                 if (_title != value)
                 {
                     _title = value;
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -77,7 +106,7 @@ namespace Common.Wpf
             set
             {
                 _background = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public string SelectedFont
@@ -93,8 +122,8 @@ namespace Common.Wpf
                 if (_selectedFontFamily != value)
                 {
                     _selectedFontFamily = value;
-                    RaisePropertyChanged();
-                    RaisePropertyChanged(nameof(SelectedFont));
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SelectedFont));
                 }
             }
         }
@@ -107,8 +136,8 @@ namespace Common.Wpf
                 if (_selectedFontStyle != value)
                 {
                     _selectedFontStyle = value;
-                    RaisePropertyChanged();
-                    RaisePropertyChanged(nameof(SelectedFont));
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SelectedFont));
                 }
             }
         }
@@ -121,8 +150,8 @@ namespace Common.Wpf
                 if (_selectedFontWeight != value)
                 {
                     _selectedFontWeight = value;
-                    RaisePropertyChanged();
-                    RaisePropertyChanged(nameof(SelectedFont));
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SelectedFont));
                 }
             }
         }
@@ -135,8 +164,8 @@ namespace Common.Wpf
                 if (_selectedFontSize != value)
                 {
                     _selectedFontSize = value;
-                    RaisePropertyChanged();
-                    RaisePropertyChanged(nameof(SelectedFont));
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SelectedFont));
                 }
             }
         }
@@ -187,13 +216,14 @@ namespace Common.Wpf
 
             FontSizeCollection = new ObservableCollection<int>(Enumerable.Range(8, 30));
 
-            Messenger.Default.Register<SetFontMessage>(this, message =>
+            WeakReferenceMessenger.Default.Register<SetFontMessage>(this, (_, message) =>
             {
-                Set(message.FontFamily, message.FontStyle, message.FontWeight, message.FontSize);
+                var a = message.Value;
+                Set(a.FontFamily, a.FontStyle, a.FontWeight, a.FontSize);
             });
-            Messenger.Default.Register<GetFontMessage>(this, message =>
+            WeakReferenceMessenger.Default.Register<GetFontMessage>(this, (_, message) =>
             {
-                message.Callback(SelectedFontFamily, SelectedFontStyle, SelectedFontWeight, SelectedFontSize);
+                message.Value.Callback(SelectedFontFamily, SelectedFontStyle, SelectedFontWeight, SelectedFontSize);
             });
 
             _okCommand = new RelayCommand(ExecuteOkCommand);
@@ -234,12 +264,12 @@ namespace Common.Wpf
         }
         private void ExecuteOkCommand()
         {
-            Messenger.Default.Send(new FontSelectorViewOkMessage());
+            WeakReferenceMessenger.Default.Send(new FontSelectorViewOkMessage());
         }
         private void ExecuteCancelCommand()
         {
             Reset();
-            Messenger.Default.Send(new FontSelectorViewCancelMessage());
+            WeakReferenceMessenger.Default.Send(new FontSelectorViewCancelMessage());
         }
     }
     internal class ListBoxScroll : ListBox
@@ -275,7 +305,7 @@ namespace Common.Wpf
     {
         public string Text { get; private set; }
         public FontFamily FontFamily { get; private set; }
-        
+
         public FontFamilyViewModel(FontFamily fontFamily, CultureInfo culture)
         {
             Text = Utils.ConvertFontFamilyToName(fontFamily, culture);

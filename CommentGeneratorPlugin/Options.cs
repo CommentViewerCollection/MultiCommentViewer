@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using GalaSoft.MvvmLight;
 using System.Runtime.Serialization;
 namespace CommentViewer.Plugin
 {
@@ -40,7 +39,7 @@ namespace CommentViewer.Plugin
             }
         }
         [DataMember]
-        private bool _isMirrativeJoin=false;
+        private bool _isMirrativeJoin = false;
         public bool IsMirrativeJoin
         {
             get

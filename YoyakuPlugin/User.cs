@@ -1,11 +1,11 @@
 ﻿using System;
 using Common;
-using GalaSoft.MvvmLight;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SitePlugin;
 
 namespace OpenrecYoyakuPlugin
 {
-    public class User : ViewModelBase
+    public class User : ObservableObject
     {
         private void SetName()
         {
@@ -39,7 +39,7 @@ namespace OpenrecYoyakuPlugin
             set
             {
                 _date = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _id;
@@ -49,7 +49,7 @@ namespace OpenrecYoyakuPlugin
             set
             {
                 _id = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         private string _name;
@@ -59,7 +59,7 @@ namespace OpenrecYoyakuPlugin
             set
             {
                 _name = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public Guid SitePluginGuid { get; set; }
@@ -75,7 +75,7 @@ namespace OpenrecYoyakuPlugin
             set
             {
                 _hasCalled = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public override string ToString()

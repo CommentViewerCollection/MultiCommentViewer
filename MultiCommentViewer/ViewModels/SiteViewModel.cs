@@ -1,10 +1,10 @@
-﻿using GalaSoft.MvvmLight;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using SitePlugin;
 using System;
 
 namespace MultiCommentViewer
 {
-    public class SiteViewModel : ViewModelBase
+    public class SiteViewModel : ObservableObject
     {
         public string DisplayName { get; }
         public Guid Guid { get; }

@@ -1,5 +1,5 @@
-﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SitePlugin;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using System.Windows.Input;
 
 namespace MultiCommentViewer.Views.Mildom
 {
-    class MildomRawMessagePostPanelViewModel : ViewModelBase
+    class MildomRawMessagePostPanelViewModel : ObservableObject
     {
         private readonly ICommentProvider _cp;
         private string _input;
@@ -24,7 +24,7 @@ namespace MultiCommentViewer.Views.Mildom
             set
             {
                 _input = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public ICommand PostCommand { get; }

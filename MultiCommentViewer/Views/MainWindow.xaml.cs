@@ -11,9 +11,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using GalaSoft.MvvmLight.Messaging;
 using System.Diagnostics;
 using Common.Wpf;
+using CommunityToolkit.Mvvm.Messaging;
+
 namespace MultiCommentViewer
 {
     /// <summary>
@@ -25,15 +26,16 @@ namespace MultiCommentViewer
         {
             InitializeComponent();
 
-            Messenger.Default.Register<SetAddingCommentDirection>(this, message =>
+            WeakReferenceMessenger.Default.Register<SetAddingCommentDirection>(this, (_, message) =>
             {
-                _addingCommentToTop = message.IsTop;
+                var a = message.Value;
+                _addingCommentToTop = a.IsTop;
             });
-            Messenger.Default.Register<SetPostCommentPanel>(this, message =>
+            WeakReferenceMessenger.Default.Register<SetPostCommentPanel>(this, (_, message) =>
             {
                 PostCommentPanelPlaceHolder.Children.Clear();
-
-                var newPanel = message.Panel;
+                var a = message.Value;
+                var newPanel = a.Panel;
                 if (newPanel == null)
                 {
                     PostCommentPanelPlaceHolder.IsEnabled = false;
@@ -49,12 +51,13 @@ namespace MultiCommentViewer
                     PostCommentPanelPlaceHolder.Children.Add(newPanel);
                 }
             });
-            Messenger.Default.Register<ShowOptionsViewMessage>(this, message =>
+            WeakReferenceMessenger.Default.Register<ShowOptionsViewMessage>(this, (_, message) =>
             {
                 try
                 {
+                    var a = message.Value;
                     var optionsView = new OptionsView();
-                    foreach (var tab in message.Tabs)
+                    foreach (var tab in a.Tabs)
                     {
                         optionsView.AddTabPage(tab);
                     }
@@ -67,11 +70,12 @@ namespace MultiCommentViewer
                     Debugger.Break();
                 }
             });
-            Messenger.Default.Register<ShowUserViewMessage>(this, message =>
+            WeakReferenceMessenger.Default.Register<ShowUserViewMessage>(this, (_, message) =>
             {
                 try
                 {
-                    var uvm = message.Uvm;
+                    var a = message.Value;
+                    var uvm = a.Uvm;
                     var userView = new UserView
                     {
                         DataContext = uvm
@@ -83,13 +87,14 @@ namespace MultiCommentViewer
                     Debug.WriteLine(ex.Message);
                 }
             });
-            Messenger.Default.Register<ShowUserListViewMessage>(this, message =>
+            WeakReferenceMessenger.Default.Register<ShowUserListViewMessage>(this, (_, message) =>
             {
                 try
                 {
-                    var uvms = message.UserViewModels;
-                    var mainVm = message.MainVm;
-                    var options = message.Options;
+                    var a = message.Value;
+                    var uvms = a.UserViewModels;
+                    var mainVm = a.MainVm;
+                    var options = a.Options;
                     var vm = new ViewModels.UserListViewModel(uvms, mainVm, options);
                     var userView = new View.UserListView
                     {
@@ -102,9 +107,10 @@ namespace MultiCommentViewer
                     Debug.WriteLine(ex.Message);
                 }
             });
-            Messenger.Default.Register<Common.AutoUpdate.ShowUpdateDialogMessage>(this, message =>
+            WeakReferenceMessenger.Default.Register<Common.AutoUpdate.ShowUpdateDialogMessage>(this, (_, message) =>
             {
-                var logger = message.Logger;
+                var a = message.Value;
+                var logger = a.Logger;
                 try
                 {
                     var updateView = new Common.AutoUpdate.UpdateView();
@@ -112,11 +118,11 @@ namespace MultiCommentViewer
                     updateView.Left = showPos.X;
                     updateView.Top = showPos.Y;
                     //updateView.DataContext = new ViewModel.OptionsViewModel(message.Options);
-                    updateView.IsUpdateExists = message.IsUpdateExists;
-                    updateView.CurrentVersion = message.CurrentVersion;
-                    updateView.LatestVersionInfo = message.LatestVersionInfo;
-                    updateView.Logger = message.Logger;
-                    updateView.UserAgent = message.UserAgent;
+                    updateView.IsUpdateExists = a.IsUpdateExists;
+                    updateView.CurrentVersion = a.CurrentVersion;
+                    updateView.LatestVersionInfo = a.LatestVersionInfo;
+                    updateView.Logger = a.Logger;
+                    updateView.UserAgent = a.UserAgent;
                     updateView.Owner = this;
                     updateView.ShowDialog();
                 }

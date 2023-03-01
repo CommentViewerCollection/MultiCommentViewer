@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -12,7 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using GalaSoft.MvvmLight.Messaging;
+
 namespace Common.Wpf
 {
     /// <summary>
@@ -23,12 +24,12 @@ namespace Common.Wpf
         public FontSelectorView()
         {
             InitializeComponent();
-            Messenger.Default.Register<FontSelectorViewOkMessage>(this, _ =>
+            WeakReferenceMessenger.Default.Register<FontSelectorViewOkMessage>(this, (_, _) =>
             {
                 //DialogResultに値を入れると一回目は正常に動作するが、2回目は例外が発生してしまう。DialogResultに2回以上値を入れてはいけないらしい。
                 this.Close();
             });
-            Messenger.Default.Register<FontSelectorViewCancelMessage>(this, _ =>
+            WeakReferenceMessenger.Default.Register<FontSelectorViewCancelMessage>(this, (_, _) =>
             {
                 this.Close();
             });

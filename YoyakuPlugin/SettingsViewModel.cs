@@ -4,13 +4,13 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.ComponentModel;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
 using System.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace OpenrecYoyakuPlugin
 {
-    public class SettingsViewModel : ViewModelBase
+    public class SettingsViewModel : ObservableObject
     {
         #region Commands
         private RelayCommand _clearCommand;
@@ -159,7 +159,7 @@ namespace OpenrecYoyakuPlugin
             {
                 if (_topmost == value) return;
                 _topmost = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public ObservableCollection<User> RegisteredUsers { get; } = new ObservableCollection<User>();
@@ -186,9 +186,9 @@ namespace OpenrecYoyakuPlugin
             set
             {
                 _isListSelected = value;
-                RaisePropertyChanged();
-                RaisePropertyChanged(nameof(ListVisibility));
-                RaisePropertyChanged(nameof(SettingsVisibility));
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ListVisibility));
+                OnPropertyChanged(nameof(SettingsVisibility));
             }
         }
         public Visibility ListVisibility
@@ -346,7 +346,6 @@ namespace OpenrecYoyakuPlugin
                 IsListSelected = false;
             }
         }
-        [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         internal SettingsViewModel(Model model, Dispatcher dispatcher)
         {
             _model = model;
@@ -368,7 +367,7 @@ namespace OpenrecYoyakuPlugin
             switch (e.PropertyName)
             {
                 case nameof(_model.TestResult):
-                    RaisePropertyChanged(nameof(TestResult));
+                    OnPropertyChanged(nameof(TestResult));
                     break;
             }
         }

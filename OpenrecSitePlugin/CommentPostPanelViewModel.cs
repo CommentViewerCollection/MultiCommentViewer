@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Common;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
 namespace OpenrecSitePlugin
 {
-    class CommentPostPanelViewModel : ViewModelBase
+    class CommentPostPanelViewModel : ObservableObject
     {
         public ICommand PostCommentCommand { get; }
 
@@ -24,7 +25,7 @@ namespace OpenrecSitePlugin
             {
                 if (_input == value) return;
                 _input = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         #endregion //Input
@@ -38,7 +39,7 @@ namespace OpenrecSitePlugin
             {
                 if (_canPostComment == value) return;
                 _canPostComment = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         #endregion //CanPostComment
@@ -67,7 +68,7 @@ namespace OpenrecSitePlugin
         {
             _commentProvider = commentProvider;
             _logger = logger;
-            PostCommentCommand = new RelayCommand(()=> PostComment(Input));
+            PostCommentCommand = new RelayCommand(() => PostComment(Input));
 
             Input = "コメント投稿は未対応です";
             CanPostComment = false;

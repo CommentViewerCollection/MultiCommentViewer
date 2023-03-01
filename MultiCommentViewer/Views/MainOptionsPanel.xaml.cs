@@ -17,8 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Common;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.CommandWpf;
+using CommunityToolkit.Mvvm.Input;
 using MultiCommentViewer.Test;
 using SitePlugin;
 namespace MultiCommentViewer
@@ -800,7 +799,7 @@ namespace MultiCommentViewer
             MenuItemCheckMarkColor = Colors.Blue;
             MenuItemMouseOverBackColor = control;
             MenuItemMouseOverForeColor = black;
-            MenuItemMouseOverBorderColor= Color.FromArgb(0xFF, 0x26, 0xA0, 0xDA);
+            MenuItemMouseOverBorderColor = Color.FromArgb(0xFF, 0x26, 0xA0, 0xDA);
             MenuItemMouseOverCheckMarkColor = Colors.Blue;
             MenuSeparatorBackColor = lightGray;
             MenuPopupBorderColor = black;
@@ -825,12 +824,12 @@ namespace MultiCommentViewer
             ScrollBarButtonDisabledBackColor = control;
             ScrollBarButtonDisabledForeColor = Color.FromArgb(0xFF, 0xD5, 0xD5, 0xD5);
             ScrollBarButtonDisabledBorderColor = control;
-            ScrollBarButtonMouseOverBackColor= Color.FromArgb(0xFF, 0xDA, 0xDA, 0xDA);
+            ScrollBarButtonMouseOverBackColor = Color.FromArgb(0xFF, 0xDA, 0xDA, 0xDA);
             ScrollBarButtonMouseOverForeColor = black;
             ScrollBarButtonMouseOverBorderColor = Color.FromArgb(0xFF, 0xDA, 0xDA, 0xDA);
             ScrollBarButtonPressedBackColor = Color.FromArgb(0xFF, 0x60, 0x60, 0x60);
             ScrollBarButtonPressedForeColor = white;
-            ScrollBarButtonPressedBorderColor= Color.FromArgb(0xFF, 0x60, 0x60, 0x60);
+            ScrollBarButtonPressedBorderColor = Color.FromArgb(0xFF, 0x60, 0x60, 0x60);
         }
         private void DarkTheme()
         {

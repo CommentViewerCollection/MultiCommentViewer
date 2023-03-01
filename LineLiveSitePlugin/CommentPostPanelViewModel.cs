@@ -1,13 +1,13 @@
 ﻿using Common;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Windows;
 using System.Windows.Input;
 
 namespace LineLiveSitePlugin
 {
-    class CommentPostPanelViewModel:ViewModelBase
+    class CommentPostPanelViewModel : ObservableObject
     {
 
         private bool _canPostComment;
@@ -18,7 +18,7 @@ namespace LineLiveSitePlugin
             {
                 if (_canPostComment == value) return;
                 _canPostComment = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public ICommand PostCommentCommand { get; }
@@ -38,7 +38,7 @@ namespace LineLiveSitePlugin
                     _logger.LogException(ex, "", $"Comment={commentTemp}");
                     Comment = commentTemp;
                 }
-                
+
                 CanPostComment = true;
             }
         }
@@ -53,7 +53,7 @@ namespace LineLiveSitePlugin
             {
                 if (_comment == value) return;
                 _comment = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public CommentPostPanelViewModel(LineLiveCommentProvider commentProvider, ILogger logger)

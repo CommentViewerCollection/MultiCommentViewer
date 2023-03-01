@@ -20,14 +20,14 @@ using System.Runtime.CompilerServices;
 using System.Collections;
 using System.Globalization;
 using System.Collections.Concurrent;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
-using GalaSoft.MvvmLight.Messaging;
 using System.Diagnostics;
 using System.Net;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
 namespace CommentViewer.Plugin
 {
-    public sealed class ConfigViewModel : ViewModelBase
+    public sealed class ConfigViewModel : ObservableObject
     {
         private readonly Options _options;
         public bool IsEnabled
@@ -73,7 +73,6 @@ namespace CommentViewer.Plugin
                 throw new NotSupportedException();
             }
         }
-        [GalaSoft.MvvmLight.Ioc.PreferredConstructor]
         public ConfigViewModel(Options options)
         {
             _options = options;
@@ -82,13 +81,13 @@ namespace CommentViewer.Plugin
                 switch (e.PropertyName)
                 {
                     case nameof(_options.IsEnabled):
-                        RaisePropertyChanged(nameof(IsEnabled));
+                        OnPropertyChanged(nameof(IsEnabled));
                         break;
                     case nameof(_options.HcgSettingFilePath):
-                        RaisePropertyChanged(nameof(HcgSettingFilePath));
+                        OnPropertyChanged(nameof(HcgSettingFilePath));
                         break;
                     case nameof(_options.IsMirrativeJoin):
-                        RaisePropertyChanged(nameof(IsMirrativJoin));
+                        OnPropertyChanged(nameof(IsMirrativJoin));
                         break;
                 }
             };

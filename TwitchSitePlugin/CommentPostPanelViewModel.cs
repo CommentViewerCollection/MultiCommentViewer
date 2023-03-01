@@ -1,13 +1,13 @@
 ﻿using Common;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Windows;
 using System.Windows.Input;
 
 namespace TwitchSitePlugin
 {
-    class CommentPostPanelViewModel:ViewModelBase
+    class CommentPostPanelViewModel : ObservableObject
     {
 
         private bool _canPostComment;
@@ -18,7 +18,7 @@ namespace TwitchSitePlugin
             {
                 if (_canPostComment == value) return;
                 _canPostComment = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public ICommand PostCommentCommand { get; }
@@ -56,7 +56,7 @@ namespace TwitchSitePlugin
             {
                 if (_comment == value) return;
                 _comment = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
         public CommentPostPanelViewModel(TwitchCommentProvider commentProvider, ILogger logger)

@@ -1,10 +1,10 @@
-﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.CommandWpf;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Windows.Input;
 
 namespace TestSitePlugin
 {
-    public class CommentPostPanelViewModel : ViewModelBase
+    public class CommentPostPanelViewModel : ObservableObject
     {
         private TestCommentProvider _testCommentProvider;
         private string _input;
@@ -20,7 +20,7 @@ namespace TestSitePlugin
             set
             {
                 _input = value;
-                RaisePropertyChanged();
+                OnPropertyChanged();
             }
         }
 

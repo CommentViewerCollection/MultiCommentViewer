@@ -11,11 +11,8 @@ using System.ComponentModel;
 
 namespace TwicasSitePlugin
 {
-    interface ITwicasSiteOptions:INotifyPropertyChanged
+    interface ITwicasSiteOptions : INotifyPropertyChanged
     {
-        int CommentRetrieveIntervalSec { get; set; }
-        Color KiitosBackColor { get; set; }
-        Color KiitosForeColor { get; set; }
         bool IsAutoSetNickname { get; set; }
         Color ItemBackColor { get; set; }
         Color ItemForeColor { get; set; }
@@ -23,11 +20,6 @@ namespace TwicasSitePlugin
     }
     internal class TwicasSiteOptions : DynamicOptionsBase, ITwicasSiteOptions
     {
-        //コメント取得インターバル
-        public int CommentRetrieveIntervalSec { get => GetValue(); set => SetValue(value); }
-        //キートス
-        public Color KiitosBackColor { get => GetValue(); set => SetValue(value); }
-        public Color KiitosForeColor { get => GetValue(); set => SetValue(value); }
 
         public Color ItemBackColor { get => GetValue(); set => SetValue(value); }
         public Color ItemForeColor { get => GetValue(); set => SetValue(value); }
@@ -36,9 +28,6 @@ namespace TwicasSitePlugin
         public bool IsShowItem { get => GetValue(); set => SetValue(value); }
         protected override void Init()
         {
-            Dict.Add(nameof(CommentRetrieveIntervalSec), new Item { DefaultValue = 1, Predicate = f => f > 0, Serializer = f => f.ToString(), Deserializer = s => int.Parse(s) });
-            Dict.Add(nameof(KiitosBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
-            Dict.Add(nameof(KiitosForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ItemBackColor), new Item { DefaultValue = ColorFromArgb("#FFFF0000"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(ItemForeColor), new Item { DefaultValue = ColorFromArgb("#FFFFFFFF"), Predicate = c => true, Serializer = c => ColorToArgb(c), Deserializer = s => ColorFromArgb(s) });
             Dict.Add(nameof(IsAutoSetNickname), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

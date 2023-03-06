@@ -49,9 +49,11 @@ namespace TwicasSitePlugin
         public string BroadcasterId { get; set; }
         public long LiveId { get; set; }
         public string WebsocketUrl { get; set; }
+        public Func<Task<string>> GetWsUrl { get; set; }
         private async Task ConnectAsync()
         {
-            await _websocket.ReceiveAsync(WebsocketUrl);
+            var url = await GetWsUrl();
+            await _websocket.ReceiveAsync(url);
         }
         public WebsocketMessageProvider(IWebsocket websocket, IDataServer server)
         {

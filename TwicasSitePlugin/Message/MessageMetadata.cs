@@ -24,10 +24,6 @@ namespace TwicasSitePlugin
                 {
                     return _options.FirstCommentBackColor;
                 }
-                else if (_message is ITwicasKiitos)
-                {
-                    return _siteOptions.KiitosBackColor;
-                }
                 else if (_message is ITwicasItem)
                 {
                     return _siteOptions.ItemBackColor;
@@ -51,10 +47,6 @@ namespace TwicasSitePlugin
                 else if (IsFirstComment)
                 {
                     return _options.FirstCommentForeColor;
-                }
-                else if (_message is ITwicasKiitos)
-                {
-                    return _siteOptions.KiitosForeColor;
                 }
                 else if (_message is ITwicasItem)
                 {
@@ -193,18 +185,6 @@ namespace TwicasSitePlugin
                     break;
                 case nameof(_siteOptions.ItemForeColor):
                     if (_message is ITwicasItem)
-                    {
-                        RaisePropertyChanged(nameof(ForeColor));
-                    }
-                    break;
-                case nameof(_siteOptions.KiitosBackColor):
-                    if (_message is ITwicasKiitos)
-                    {
-                        RaisePropertyChanged(nameof(BackColor));
-                    }
-                    break;
-                case nameof(_siteOptions.KiitosForeColor):
-                    if (_message is ITwicasKiitos)
                     {
                         RaisePropertyChanged(nameof(ForeColor));
                     }

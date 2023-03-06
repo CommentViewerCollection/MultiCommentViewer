@@ -8,19 +8,11 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Label Content="コメント取得間隔（秒）" HorizontalAlignment="Left" Margin="42,79,0,0" VerticalAlignment="Top"/>
-        <TextBox HorizontalAlignment="Left" Height="23" Margin="190,82,0,0" TextWrapping="Wrap" Text="{Binding CommentRetrieveIntervalSec}" VerticalAlignment="Top" Width="120" />
-        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="46,125,0,0" VerticalAlignment="Top"/>
-        <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="45,192,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.457,0.731"/>
-        <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="145,192,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="3.467,1.727" />
-        <Label Content="アイテム文字色" HorizontalAlignment="Left" Margin="45,223,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.109,-0.577"/>
-        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="145,223,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.4,2.591" />
-        <Label Content="キートス背景色" HorizontalAlignment="Left" Margin="45,254,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.457,0.731"/>
-        <xctk:ColorPicker  SelectedColor="{Binding KiitosBackColor}" Margin="145,258,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="3.467,1.727" />
-        <Label Content="キートス文字色" HorizontalAlignment="Left" Margin="45,285,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.109,-0.577"/>
-        <xctk:ColorPicker SelectedColor="{Binding KiitosForeColor}" Margin="145,289,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.4,2.591" />
-        <CheckBox Content="アイテムを表示する" IsChecked="{Binding IsShowItem}" HorizontalAlignment="Left" Margin="46,155,0,0" VerticalAlignment="Top"/>
-
-
+        <CheckBox Content="@のあとの文字列を自動的にコテハンとして登録する" IsChecked="{Binding IsAutoSetNickname}" HorizontalAlignment="Left" Margin="45,50,0,0" VerticalAlignment="Top"/>
+        <Label Content="アイテム背景色" HorizontalAlignment="Left" Margin="45,103,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.457,0.731"/>
+        <xctk:ColorPicker SelectedColor="{Binding ItemBackColor}" Margin="145,103,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="3.467,1.727" />
+        <Label Content="アイテム文字色" HorizontalAlignment="Left" Margin="45,134,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.109,-0.577"/>
+        <xctk:ColorPicker SelectedColor="{Binding ItemForeColor}" Margin="145,134,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.4,2.591" />
+        <CheckBox Content="アイテムを表示する" IsChecked="{Binding IsShowItem}" HorizontalAlignment="Left" Margin="45,70,0,0" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>

@@ -6,21 +6,6 @@ namespace TwicasSitePlugin
 {
     class TwicasSiteOptionsViewModel : INotifyPropertyChanged
     {
-        public int CommentRetrieveIntervalSec
-        {
-            get { return ChangedOptions.CommentRetrieveIntervalSec; }
-            set { ChangedOptions.CommentRetrieveIntervalSec = value; }
-        }
-        public Color KiitosBackColor
-        {
-            get { return ChangedOptions.KiitosBackColor; }
-            set { ChangedOptions.KiitosBackColor = value; }
-        }
-        public Color KiitosForeColor
-        {
-            get { return ChangedOptions.KiitosForeColor; }
-            set { ChangedOptions.KiitosForeColor = value; }
-        }
         public Color ItemBackColor
         {
             get { return ChangedOptions.ItemBackColor; }

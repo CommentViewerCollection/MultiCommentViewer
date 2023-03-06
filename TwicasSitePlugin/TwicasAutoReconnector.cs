@@ -20,7 +20,6 @@ namespace TwicasSitePlugin
         private readonly ILogger _logger;
         private readonly WebsocketMessageProvider _p1;
         private readonly MetadataProvider _p2;
-
         public async Task AutoReconnectAsync()
         {
             _isDisconnectCalled = false;
@@ -37,14 +36,13 @@ namespace TwicasSitePlugin
                 _p1.Cc = _cc;
                 _p1.BroadcasterId = _broadcasterId;
                 _p1.LiveId = _currentLiveId ?? liveId;
-                var nowUnixMillisec = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
-                _p1.WebsocketUrl = await API.GetWebsocketUrl(_server, _p1.LiveId, nowUnixMillisec, _cc) + "&gift=1";
                 _p1.Master = _p2;
-                //var p = new WebsocketMessageProvider(new Common.Websocket());
-                //p.MessageReceived += (sender, e) => { Debug.WriteLine(e.Raw); };
-
-                //var p2 = new MetadataProvider(_logger, _server, _broadcasterId);
-
+                Func<Task<string>> f = async () =>
+                {
+                    var nowUnixMillisec = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                    return await API.GetWebsocketUrl(_server, _p1.LiveId, nowUnixMillisec, _cc) + "&gift=1";
+                };
+                _p1.GetWsUrl = f;
                 var reason = await _connectionManager.ConnectAsync(new List<IProvider> { _p1, _p2 });
                 if (_newLiveStarted)
                 {
@@ -57,6 +55,20 @@ namespace TwicasSitePlugin
                 }
             }
         }
+
+        private async void _p1_Connecting(object sender, EventArgs e)
+        {
+            try
+            {
+                var nowUnixMillisec = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                _p1.WebsocketUrl = await API.GetWebsocketUrl(_server, _p1.LiveId, nowUnixMillisec, _cc) + "&gift=1";
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
         bool _isDisconnectCalled;
         ConnectionManager _connectionManager;
         public void Disconnect()

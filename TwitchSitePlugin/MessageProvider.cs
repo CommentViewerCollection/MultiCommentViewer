@@ -7,6 +7,69 @@ using WebSocket4Net;
 using System.Diagnostics;
 namespace TwitchSitePlugin
 {
+    public class MessageProvider2 : IMessageProvider
+    {
+        public event EventHandler Opened;
+
+        public event EventHandler<string> Received;
+        Common.IWebsocket _ws;
+        TaskCompletionSource<object> _tcs;
+        public Task ReceiveAsync()
+        {
+            _tcs = new TaskCompletionSource<object>();
+            var cookies = new List<KeyValuePair<string, string>>();
+            if (_ws != null)
+            {
+                _ws.Received -= _ws_MessageReceived;
+                _ws.Opened -= _ws_Opened;
+            }
+            _ws = new Common.Websocket();
+            _ws.Received += _ws_MessageReceived;
+            _ws.Opened += _ws_Opened;
+            return _ws.ReceiveAsync("wss://irc-ws.chat.twitch.tv/");
+        }
+
+        private void _ws_Closed(object sender, EventArgs e)
+        {
+            _tcs.TrySetResult(null);
+        }
+
+        private void _ws_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
+        {
+            _tcs.TrySetException(e.Exception);
+        }
+
+        private void _ws_Opened(object sender, EventArgs e)
+        {
+            Opened?.Invoke(this, e);
+        }
+
+        public async Task SendAsync(string s)
+        {
+            Debug.WriteLine("send: " + s);
+            await Task.Yield();
+            await _ws.SendAsync(s + "\r\n");
+        }
+
+        private void _ws_MessageReceived(object sender, string e)
+        {
+            var arr = e.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var message in arr)
+            {
+                Received?.Invoke(this, message);
+            }
+        }
+
+        public void Disconnect()
+        {
+            _ws?.Disconnect();
+            _ws = null;
+        }
+        public MessageProvider2()
+        {
+
+        }
+    }
     /// <summary>
     /// 
     /// </summary>

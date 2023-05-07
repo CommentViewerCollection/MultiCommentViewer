@@ -36,6 +36,10 @@ namespace YouTubeLiveSitePlugin.Test2
         protected Metadata ActionsToMetadata(dynamic actions)
         {
             var metadata = new Metadata();
+            if (actions == null)
+            {
+                return metadata;
+            }
             string like = null;
             string dislike = null;
             foreach (var action in actions)

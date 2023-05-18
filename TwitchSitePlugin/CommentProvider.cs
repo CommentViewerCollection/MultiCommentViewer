@@ -108,7 +108,7 @@ namespace TwitchSitePlugin
         }
         protected virtual IMessageProvider CreateMessageProvider()
         {
-            return new MessageProvider();
+            return new MessageProvider2();
         }
         protected virtual IMetadataProvider CreateMetadataProvider(string channelName)
         {

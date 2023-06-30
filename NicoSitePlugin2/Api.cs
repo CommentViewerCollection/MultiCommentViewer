@@ -30,9 +30,7 @@ namespace NicoSitePlugin
             var res = await server.GetAsync(url, cc);
             var obj = JsonConvert.DeserializeObject<NicoSitePlugin2.Low.UserInfo.RootObject>(res);
             if (obj.Data.Length == 0)
-            {
-                throw new ArgumentException("指定されたuserIdは存在しない:" + userId);
-            }
+                return null;
             var data = obj.Data[0];
             var userInfo = new UserInfo
             {

@@ -61,6 +61,8 @@ namespace YouTubeLiveSitePlugin
             UserId = text.AuthorExternalChannelId;
             Id = text.Id;
             CommentItems = MessageBase.Convert(text.MessageItems);
+            HeaderPrimaryTextItems = MessageBase.Convert(text.HeaderPrimaryTextItems);
+            HeaderSubTextItems = MessageBase.Convert(text.HeaderSubTextItems);
             NameItems = MessageBase.Convert(text.AuthorName, text.AuthorBadges);
             UserIcon = MessageBase.Convert(text.AuthorPhoto);
             PostedAt = MessageBase.Convert(text.TimestampUsec);

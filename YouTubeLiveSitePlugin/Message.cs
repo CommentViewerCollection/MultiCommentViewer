@@ -251,6 +251,14 @@ namespace YouTubeLiveSitePlugin
                         Height = 16,
                         Width = 16,
                     };
+                case AuthorBadgeCustomThumbWithSize customThumbWithSize:
+                    return new Common.MessageImage
+                    {
+                        Url = customThumbWithSize.Thumbnails[1].Url,
+                        Alt = customThumbWithSize.Tooltip,
+                        Height = customThumbWithSize.Thumbnails[1].Height,
+                        Width = customThumbWithSize.Thumbnails[1].Width,
+                    };
                 case AuthorBadgeIcon icon:
                     var data = icon.IconType switch
                     {

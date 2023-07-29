@@ -144,14 +144,6 @@ namespace PluginCommon
                 comment = mrJoin.Text;
                 name = mrJoin.UserName;
             }
-            //}
-            //else if (message is LineLiveSitePlugin.ILineLiveMessage lineLiveMessage)
-            //{
-            else if (message is LineLiveSitePlugin.ILineLiveComment llComment)
-            {
-                comment = llComment.Text;
-                name = llComment.DisplayName;
-            }
             else if (message is ShowRoomSitePlugin.IShowRoomComment srComment)
             {
                 comment = srComment.Text;

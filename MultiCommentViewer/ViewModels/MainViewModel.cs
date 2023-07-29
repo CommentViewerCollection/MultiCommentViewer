@@ -792,17 +792,6 @@ namespace MultiCommentViewer
             {
                 mcvCvm = new MixchCommentViewModel(mixchMessage, messageContext.Metadata, messageContext.Methods, connectionName, _options);
             }
-            else if (messageContext.Message is LineLiveSitePlugin.ILineLiveMessage lineliveMessage)
-            {
-                if (lineliveMessage is LineLiveSitePlugin.ILineLiveComment comment)
-                {
-                    mcvCvm = new LineLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-                else if (lineliveMessage is LineLiveSitePlugin.ILineLiveItem item)
-                {
-                    mcvCvm = new LineLiveCommentViewModel(item, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-            }
             else if (messageContext.Message is NicoSitePlugin.INicoMessage nicoMessage)
             {
                 if (nicoMessage is NicoSitePlugin.INicoComment comment)

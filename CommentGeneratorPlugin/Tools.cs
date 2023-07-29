@@ -50,9 +50,6 @@ namespace CommentViewer.Plugin
                 case MirrativSitePlugin.IMirrativMessage _:
                     siteName = "mirrativ";
                     break;
-                case LineLiveSitePlugin.ILineLiveMessage _:
-                    siteName = "linelive";
-                    break;
                 case MildomSitePlugin.IMildomMessage _:
                     siteName = "mildom";
                     break;

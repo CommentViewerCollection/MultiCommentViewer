@@ -1,5 +1,4 @@
 ﻿using BigoSitePlugin;
-using LineLiveSitePlugin;
 using MildomSitePlugin;
 using MirrativSitePlugin;
 using NicoSitePlugin;
@@ -401,36 +400,6 @@ namespace BouyomiPlugin
                                 name = (twicasMessage as ITwicasItem).UserName;
                             }
                             comment = (twicasMessage as ITwicasItem).CommentItems.ToTextWithImageAlt();
-                        }
-                        break;
-                }
-            }
-            else if (message is ILineLiveMessage lineLiveMessage)
-            {
-                switch (lineLiveMessage.LineLiveMessageType)
-                {
-                    case LineLiveMessageType.Connected:
-                        if (options.IsLineLiveConnect)
-                        {
-                            name = null;
-                            comment = (lineLiveMessage as ILineLiveConnected).Text;
-                        }
-                        break;
-                    case LineLiveMessageType.Disconnected:
-                        if (options.IsLineLiveDisconnect)
-                        {
-                            name = null;
-                            comment = (lineLiveMessage as ILineLiveDisconnected).Text;
-                        }
-                        break;
-                    case LineLiveMessageType.Comment:
-                        if (options.IsLineLiveComment)
-                        {
-                            if (options.IsLineLiveCommentNickname)
-                            {
-                                name = (lineLiveMessage as ILineLiveComment).DisplayName;
-                            }
-                            comment = (lineLiveMessage as ILineLiveComment).Text;
                         }
                         break;
                 }

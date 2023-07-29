@@ -61,6 +61,8 @@ namespace YouTubeLiveSitePlugin
             UserId = text.AuthorExternalChannelId;
             Id = text.Id;
             CommentItems = MessageBase.Convert(text.MessageItems);
+            HeaderPrimaryTextItems = MessageBase.Convert(text.HeaderPrimaryTextItems);
+            HeaderSubTextItems = MessageBase.Convert(text.HeaderSubTextItems);
             NameItems = MessageBase.Convert(text.AuthorName, text.AuthorBadges);
             UserIcon = MessageBase.Convert(text.AuthorPhoto);
             PostedAt = MessageBase.Convert(text.TimestampUsec);
@@ -248,6 +250,14 @@ namespace YouTubeLiveSitePlugin
                         Alt = customThumb.Tooltip,
                         Height = 16,
                         Width = 16,
+                    };
+                case AuthorBadgeCustomThumbWithSize customThumbWithSize:
+                    return new Common.MessageImage
+                    {
+                        Url = customThumbWithSize.Thumbnails[1].Url,
+                        Alt = customThumbWithSize.Tooltip,
+                        Height = customThumbWithSize.Thumbnails[1].Height,
+                        Width = customThumbWithSize.Thumbnails[1].Width,
                     };
                 case AuthorBadgeIcon icon:
                     var data = icon.IconType switch

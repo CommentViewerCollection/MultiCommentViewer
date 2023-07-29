@@ -802,12 +802,19 @@ reload:
                             RaiseMessageReceived(CreateMessageContext2(giftPurchase, isInitialComment));
                         }
                         break;
+                    case MemberShip memberShip:
+                        {
+                            if (IsDuplicate(memberShip.Id))
+                            {
+                                return;
+                            }
+                            RaiseMessageReceived(CreateMessageContext2(memberShip, isInitialComment));
+                        }
+                        break;
                     case ParseError parseError:
                         {
                             _logger.LogException(new Exception(), "ParseError", parseError.Raw);
                         }
-                        break;
-                    case MemberShip memberShip:
                         break;
                     case IgnoredMessage ignoredMessage:
                         break;
@@ -891,6 +898,16 @@ reload:
         private YouTubeLiveMessageContext CreateMessageContext2(SponsorshipsGiftPurchaseAnnouncement text, bool isInitialComment)
         {
             var message = new YouTubeLiveSponsorshipsGiftPurchaseAnnouncement(text);
+
+            var metadata = CreateMetadata(message, isInitialComment);
+            var methods = new YouTubeLiveMessageMethods();
+
+            metadata.User.Name = message.NameItems;
+            return new YouTubeLiveMessageContext(message, metadata, methods);
+        }
+        private YouTubeLiveMessageContext CreateMessageContext2(MemberShip text, bool isInitialComment)
+        {
+            var message = new YouTubeLiveMembership(text);
 
             var metadata = CreateMetadata(message, isInitialComment);
             var methods = new YouTubeLiveMessageMethods();

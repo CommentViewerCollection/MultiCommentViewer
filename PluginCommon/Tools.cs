@@ -152,14 +152,6 @@ namespace PluginCommon
                 comment = llComment.Text;
                 name = llComment.DisplayName;
             }
-            //}
-            //else if (message is PeriscopeSitePlugin.IPeriscopeMessage psMessage)
-            //{
-            else if (message is PeriscopeSitePlugin.IPeriscopeComment psComment)
-            {
-                comment = psComment.Text;
-                name = psComment.DisplayName;
-            }
             else if (message is ShowRoomSitePlugin.IShowRoomComment srComment)
             {
                 comment = srComment.Text;

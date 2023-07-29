@@ -43,7 +43,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />
-    <ProjectReference Include="..\PeriscopeSitePlugin\PeriscopeSitePlugin.csproj" />
   </ItemGroup>
 </Project>

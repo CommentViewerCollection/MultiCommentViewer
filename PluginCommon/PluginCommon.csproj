@@ -50,7 +50,6 @@
     <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj" />
     <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
     <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
-    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />
     <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj" />
     <ProjectReference Include="..\TestSiteIF\TestSiteIF.csproj" />
     <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />

@@ -77,8 +77,6 @@
     <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj" />
     <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
     <ProjectReference Include="..\MixchSitePlugin\MixchSitePlugin.csproj" />
-    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />
-    <ProjectReference Include="..\PeriscopeSitePlugin\PeriscopeSitePlugin.csproj" />
     <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj" />
     <ProjectReference Include="..\ShowRoomSitePlugin\ShowRoomSitePlugin.csproj" />
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />

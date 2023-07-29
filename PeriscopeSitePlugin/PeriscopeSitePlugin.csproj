@@ -48,7 +48,6 @@
     <ProjectReference Include="..\BrowserCookieInterfaces\BrowserCookieInterfaces.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />
     <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
   </ItemGroup>
 </Project>

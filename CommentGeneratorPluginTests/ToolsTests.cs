@@ -28,7 +28,6 @@ namespace CommentGeneratorPluginTests
                 new object[]{ new Mock<OpenrecSitePlugin.IOpenrecComment>().Object, "openrec" },
                 new object[]{ new Mock<MirrativSitePlugin.IMirrativComment>().Object, "mirrativ" },
                 new object[]{ new Mock<LineLiveSitePlugin.ILineLiveComment>().Object, "linelive" },
-                new object[]{ new Mock<PeriscopeSitePlugin.IPeriscopeComment>().Object, "periscope" },
                 new object[]{ new Mock<MildomSitePlugin.IMildomComment>().Object, "mildom" },
             };
         }

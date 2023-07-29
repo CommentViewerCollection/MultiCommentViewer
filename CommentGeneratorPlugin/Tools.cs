@@ -53,9 +53,6 @@ namespace CommentViewer.Plugin
                 case LineLiveSitePlugin.ILineLiveMessage _:
                     siteName = "linelive";
                     break;
-                case PeriscopeSitePlugin.IPeriscopeMessage _:
-                    siteName = "periscope";
-                    break;
                 case MildomSitePlugin.IMildomMessage _:
                     siteName = "mildom";
                     break;

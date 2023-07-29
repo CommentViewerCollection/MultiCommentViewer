@@ -860,29 +860,6 @@ namespace MultiCommentViewer
                     mcvCvm = new TwicasCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName);
                 }
             }
-            else if (messageContext.Message is PeriscopeSitePlugin.IPeriscopeMessage periscopeMessage)
-            {
-                if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeComment comment)
-                {
-                    mcvCvm = new PeriscopeCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeConnected connected)
-                {
-                    mcvCvm = new PeriscopeCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeDisconnected disconnected)
-                {
-                    mcvCvm = new PeriscopeCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeJoin join)
-                {
-                    mcvCvm = new PeriscopeCommentViewModel(join, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-                else if (periscopeMessage is PeriscopeSitePlugin.IPeriscopeLeave leave)
-                {
-                    mcvCvm = new PeriscopeCommentViewModel(leave, messageContext.Metadata, messageContext.Methods, connectionName, _options);
-                }
-            }
             else if (messageContext.Message is ShowRoomSitePlugin.IShowRoomMessage showRoomMessage)
             {
                 if (showRoomMessage is ShowRoomSitePlugin.IShowRoomComment comment)

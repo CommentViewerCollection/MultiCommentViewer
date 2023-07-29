@@ -5,7 +5,6 @@ using MirrativSitePlugin;
 using NicoSitePlugin;
 using OpenrecSitePlugin;
 using MixchSitePlugin;
-using PeriscopeSitePlugin;
 using Plugin;
 using PluginCommon;
 using ShowRoomSitePlugin;
@@ -516,50 +515,6 @@ namespace BouyomiPlugin
                         {
                             name = null;
                             comment = (mirrativMessage as IMirrativItem).Text;
-                        }
-                        break;
-                }
-            }
-            else if (message is IPeriscopeMessage PeriscopeMessage)
-            {
-                switch (PeriscopeMessage.PeriscopeMessageType)
-                {
-                    case PeriscopeMessageType.Connected:
-                        if (options.IsPeriscopeConnect)
-                        {
-                            name = null;
-                            comment = (PeriscopeMessage as IPeriscopeConnected).Text;
-                        }
-                        break;
-                    case PeriscopeMessageType.Disconnected:
-                        if (options.IsPeriscopeDisconnect)
-                        {
-                            name = null;
-                            comment = (PeriscopeMessage as IPeriscopeDisconnected).Text;
-                        }
-                        break;
-                    case PeriscopeMessageType.Comment:
-                        if (options.IsPeriscopeComment)
-                        {
-                            if (options.IsPeriscopeCommentNickname)
-                            {
-                                name = (PeriscopeMessage as IPeriscopeComment).DisplayName;
-                            }
-                            comment = (PeriscopeMessage as IPeriscopeComment).Text;
-                        }
-                        break;
-                    case PeriscopeMessageType.Join:
-                        if (options.IsPeriscopeJoin)
-                        {
-                            name = null;
-                            comment = (PeriscopeMessage as IPeriscopeJoin).Text;
-                        }
-                        break;
-                    case PeriscopeMessageType.Leave:
-                        if (options.IsPeriscopeLeave)
-                        {
-                            name = null;
-                            comment = (PeriscopeMessage as IPeriscopeLeave).Text;
                         }
                         break;
                 }

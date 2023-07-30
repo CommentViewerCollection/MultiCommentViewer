@@ -1,9 +1,0 @@
-diff a/MultiCommentViewer/MultiCommentViewer.csproj b/MultiCommentViewer/MultiCommentViewer.csproj	(rejected hunks)
-@@ -97,6 +97,7 @@
-     <Compile Include="AppNoStartupUri.xaml.cs">
-       <DependentUpon>AppNoStartupUri.xaml</DependentUpon>
-     </Compile>
-+    <Compile Include="CustomChrome.cs" />
-     <Compile Include="Program.cs" />
-     <Compile Include="ViewModels\CommentViewModel\PeriscopeCommentViewModel.cs" />
-     <Compile Include="ViewModels\CommentViewModel\TestCommentViewModel.cs" />

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging.Messages;
 using Mcv.PluginV2;
 using Mcv.YouTubeLiveSitePlugin;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -20,7 +21,7 @@ namespace Mcv.MainViewPlugin
 {
     interface IConnectionNameHost : INotifyPropertyChanged
     {
-        string GetConnectionName(ConnectionId connId);
+        Task<string> GetConnectionName(ConnectionId connId);
         void SetConnectionName(ConnectionId connId, string newConnectionName);
     }
     class ConnectionName : ViewModelBase, INotifyPropertyChanged
@@ -31,11 +32,22 @@ namespace Mcv.MainViewPlugin
         {
             get
             {
-                return _host.GetConnectionName(_connId);
+                GetName();
+                return _name;
             }
             set
             {
                 _host.SetConnectionName(_connId, value);
+            }
+        }
+        string _name = "";
+        private async void GetName()
+        {
+            var name = await _host.GetConnectionName(_connId);
+            if (_name != name)
+            {
+                _name = name;
+                RaisePropertyChanged(nameof(Name));
             }
         }
 
@@ -292,13 +304,13 @@ namespace Mcv.MainViewPlugin
                 LogException(ex);
             }
         }
-        private void ShowOptionsWindow()
+        private async void ShowOptionsWindow()
         {
             var list = new List<IOptionsTabPage>();
             var mainOptionsPanel = new MainOptionsPanel();
             mainOptionsPanel.SetViewModel(new MainOptionsViewModel(_adapter.Options));
             list.Add(new MainTabPage("一般", mainOptionsPanel));
-            var panels = _adapter.RequestSettingsPanels();
+            var panels = await _adapter.RequestSettingsPanels();
             list.AddRange(panels.Select(kv => kv.Item2));
             WeakReferenceMessenger.Default.Send(new ShowOptionsViewMessage(list));
         }
@@ -462,8 +474,8 @@ namespace Mcv.MainViewPlugin
             }
         }
 
-        private readonly Dictionary<PluginId, SiteViewModel> _siteDict = new();
-        private readonly Dictionary<BrowserProfileId, BrowserViewModel> _browserDict = new();
+        private readonly ConcurrentDictionary<PluginId, SiteViewModel> _siteDict = new();
+        private readonly ConcurrentDictionary<BrowserProfileId, BrowserViewModel> _browserDict = new();
         private readonly Dictionary<ConnectionId, ConnectionViewModel> _connDict = new();
         private readonly Dictionary<ConnectionId, ConnectionName> _connNameDict = new();
         private readonly Dictionary<ConnectionId, MetadataViewModel> _metaDict = new();
@@ -515,23 +527,37 @@ namespace Mcv.MainViewPlugin
                 RaisePropertyChanged();
             }
         }
-        private string GetVersionNumber()
+        private Task<string> GetVersionNumber()
         {
             return _adapter.GetVersion();
         }
-        private string GetAppName()
+        private Task<string> GetAppName()
         {
             return _adapter.GetAppName();
         }
-        private string GetAppSolutionConfiguration()
+        private Task<string> GetAppSolutionConfiguration()
         {
             return _adapter.GetAppSolutionConfiguration();
         }
+        private async void GetTitleAsync()
+        {
+            var name = await GetAppName();
+            var version = await GetVersionNumber();
+            var conf = await GetAppSolutionConfiguration();
+            var title = $"{name} v{version} ({conf})";
+            if (title != _title)
+            {
+                _title = title;
+                RaisePropertyChanged(nameof(Title));
+            }
+        }
+        private string _title = "";
         public string Title
         {
             get
             {
-                return $"{GetAppName()} v{GetVersionNumber()} ({GetAppSolutionConfiguration()})";
+                GetTitleAsync();
+                return _title;
             }
         }
         private void OpenUrl()
@@ -1073,21 +1099,21 @@ namespace Mcv.MainViewPlugin
         private void OnBrowserRemoved(BrowserProfileId browserId)
         {
             var browser = GetBrowserViewModel(browserId);
-            _browserDict.Remove(browser.Id);
+            _browserDict.Remove(browser.Id, out var _);
             Browsers.Remove(browser);
         }
 
         private void OnBrowserAdded(BrowserProfileId browserId, string name, string? profileName)
         {
             var browser = new BrowserViewModel(browserId, name, profileName);
-            _browserDict.Add(browserId, browser);
+            _browserDict.TryAdd(browserId, browser);
             Browsers.Add(browser);
         }
 
         private void OnSiteRemoved(PluginId sitePluginId)
         {
             var site = GetSiteViewModel(sitePluginId);
-            _siteDict.Remove(site.Id);
+            _siteDict.Remove(site.Id, out var _);
             Sites.Remove(site);
         }
         ObservableCollection<SiteViewModel> Sites { get; } = new ObservableCollection<SiteViewModel>();
@@ -1101,7 +1127,7 @@ namespace Mcv.MainViewPlugin
                 return;
             }
             var site = new SiteViewModel(sitePluginId, name);
-            _siteDict.Add(sitePluginId, site);
+            _siteDict.TryAdd(sitePluginId, site);
             Sites.Add(site);
         }
         public void ShowUserInfo(string userId)

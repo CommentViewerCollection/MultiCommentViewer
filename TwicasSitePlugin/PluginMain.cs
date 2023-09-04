@@ -18,12 +18,12 @@ namespace TwicasSitePlugin.V2
 
         internal void NotifyMetadataUpdated(IMetadata e)
         {
-            _host.SetMessage(new SetMetadata(_connId, _pluginId, e));
+            _host.SetMessageAsync(new SetMetadata(_connId, _pluginId, e));
         }
 
         internal void NotifyMessageReceived(ISiteMessage message, string userId, string? newNickname)
         {
-            _host.SetMessage(new SetMessage(_connId, _pluginId, message, userId, newNickname));
+            _host.SetMessageAsync(new SetMessage(_connId, _pluginId, message, userId, newNickname));
         }
         public CommentProviderHost(IPluginHost host, ConnectionId connId, PluginId pluginId)
         {
@@ -76,16 +76,16 @@ namespace TwicasSitePlugin.V2
         public string Name { get; } = "TwicasSitePlugin";
         public List<string> Roles { get; } = new List<string> { "site:twicas" };
         TwicasSiteContext _context;
-        public async void SetMessage(ISetMessageToPluginV2 message)
+        public async Task SetMessage(ISetMessageToPluginV2 message)
         {
             switch (message)
             {
                 case SetLoading _:
                     {
                         _context = new TwicasSiteContext(new Logger(Host));
-                        var res = Host.RequestMessage(new RequestLoadPluginOptions(Name)) as ReplyPluginOptions;
+                        var res = await Host.RequestMessageAsync(new RequestLoadPluginOptions(Name)) as ReplyPluginOptions;
                         _context.LoadOptions(res.RawOptions);
-                        Host.SetMessage(new SetPluginHello(Id, Name, Roles));
+                        await Host.SetMessageAsync(new SetPluginHello(Id, Name, Roles));
                     }
                     break;
                 case SetLoaded _:
@@ -123,7 +123,7 @@ namespace TwicasSitePlugin.V2
                         }
                         var connectionTask = wrapper.ConnectAsync(connect.Input, connect.Cookies);
                         _connectionTaskDict.Add(connect.ConnId, connectionTask);
-                        Host.SetMessage(new NotifySiteConnected(connect.ConnId));
+                        await Host.SetMessageAsync(new NotifySiteConnected(connect.ConnId));
                     }
                     break;
                 case SetDisconnectSite disconnect:
@@ -143,10 +143,8 @@ namespace TwicasSitePlugin.V2
                             Debug.WriteLine(ex.Message);
                         }
                         _connectionTaskDict.Remove(disconnect.ConnId);
-                        Host.SetMessage(new NotifySiteDisconnected(disconnect.ConnId));
+                        await Host.SetMessageAsync(new NotifySiteDisconnected(disconnect.ConnId));
                     }
-                    break;
-                case RequestCloseToPlugin close:
                     break;
                 default:
                     break;
@@ -155,11 +153,11 @@ namespace TwicasSitePlugin.V2
         private readonly Dictionary<ConnectionId, Task> _connectionTaskDict = new();
         private readonly Dictionary<ConnectionId, CommentProviderWrapper> _connDict = new Dictionary<ConnectionId, CommentProviderWrapper>();
 
-        public void SetMessage(INotifyMessageV2 message)
+        public async Task SetMessage(INotifyMessageV2 message)
         {
         }
 
-        public IReplyMessageToPluginV2 RequestMessage(IGetMessageToPluginV2 message)
+        public async Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message)
         {
             switch (message)
             {
@@ -186,7 +184,7 @@ namespace TwicasSitePlugin.V2
 
         public void LogException(Exception ex, string message = "", string detail = "")
         {
-            _host.SetMessage(new SetException(ex, message, detail));
+            _host.SetMessageAsync(new SetException(ex, message, detail));
         }
         public Logger(IPluginHost host)
         {

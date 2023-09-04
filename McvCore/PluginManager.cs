@@ -1,170 +1,141 @@
-﻿using System;
+﻿using Akka.Actor;
+using Mcv.PluginV2;
+using Mcv.PluginV2.Messages;
+using McvCore.PluginActorMessages;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Mcv.PluginV2.Messages;
-using Mcv.PluginV2;
-using Org.BouncyCastle.Asn1.X509;
+using System.Threading.Tasks;
 
 namespace McvCore;
-class PluginManager
+class PluginManagerActor : ReceiveActor
 {
+    private readonly ConcurrentDictionary<PluginId, IActorRef> _actorDict = new();
+    private readonly ConcurrentDictionary<PluginId, IList<string>> _pluginRoleDict = new();
+    public static Props Props()
+    {
+        return Akka.Actor.Props.Create(() => new PluginManagerActor());
+    }
+    public PluginManagerActor()
+    {
+        Receive<AddPlugins>(m =>
+        {
+            foreach (var plugin in m.Plugins)
+            {
+                AddPlugin(plugin, m.PluginHost);
+            }
+        });
+        Receive<RemovePlugin>(m =>
+        {
+            RemovePlugin(m.PluginId);
+        });
+        Receive<SetPluginRole>(m =>
+        {
+            _pluginRoleDict.TryAdd(m.PluginId, m.PluginRole);
+        });
+        Receive<GetPluginList>(m =>
+        {
+            Sender.Tell(GetPluginList());
+        });
+        Receive<SetNotifyToAPlugin>(m =>
+        {
+            var target = GetPluginActorById(m.PluginId);
+            if (target == null)
+            {
+                return;
+            }
+            target.Tell(new NotifyMessageV2(m.Message));
+        });
+        Receive<SetNotifyToAllPlugin>(m =>
+        {
+            foreach (var target in GetActors())
+            {
+                target.Tell(new NotifyMessageV2(m.Message));
+            }
+        });
+        Receive<SetSetToAPlugin>(m =>
+        {
+            var target = GetPluginActorById(m.PluginId);
+            if (target == null)
+            {
+                return;
+            }
+            target.Tell(new SetMessageToPluginV2(m.Message));
+        });
+        Receive<SetSetToAllPlugin>(m =>
+        {
+            foreach (var target in GetActors())
+            {
+                target.Tell(new SetMessageToPluginV2(m.Message));
+            }
+        });
+        ReceiveAsync<GetMessage>(async m =>
+        {
+            Sender.Tell(await RequestMessage(m.PluginId, m.Message));
+        });
+        Receive<GetDefaultSite>(m =>
+        {
+            Sender.Tell(GetDefaultSite());
+        });
+    }
+    private static IActorRef CreateActor(IPlugin plugin)
+    {
+        return Context.ActorOf(PluginActor.Props(plugin).WithDispatcher("akka.actor.synchronized-dispatcher"));
+    }
     public void AddPlugin(IPlugin plugin, IPluginHost host)
     {
-        _pluginsV2.Add(plugin);
+        var actor = CreateActor(plugin);
+        _actorDict.TryAdd(plugin.Id, actor);
         plugin.Host = host;
-        plugin.SetMessage(new SetLoading());
+        actor.Tell(new SetMessageToPluginV2(new SetLoading()));
         //Plugin側がHelloメッセージを送ってくるまで登録はしない。
-    }
-    public void AddPlugins(List<IPlugin> plugins, IPluginHost host)
-    {
-        foreach (var plugin in plugins)
-        {
-            AddPlugin(plugin, host);
-        }
     }
     internal List<IPluginInfo> GetPluginList()
     {
-        return _pluginsV2.Cast<IPluginInfo>().ToList();
+        //このメソッドはPluginManagerの外部から参照できるから、HelloメッセージによってPluginRoleを登録済みのプラグインのみを返す。
+        return _pluginRoleDict.Select(kv => _actorDict[kv.Key]).Cast<IPluginInfo>().ToList();
     }
-
-    private readonly List<IPlugin> _pluginsV2 = new();
-    internal void SetMessage(INotifyMessageV2 message)
+    private IEnumerable<IActorRef> GetActors()
     {
-        foreach (var plugin in _pluginsV2)
-        {
-            plugin.SetMessage(message);
-        }
-    }
-    internal void SetMessage(PluginId targetId, INotifyMessageV2 message)
-    {
-        var target = GetPluginById(targetId);
-        if (target == null)
-        {
-            return;
-        }
-        target.SetMessage(message);
-    }
-    internal void SetMessage(PluginId targetId, ISetMessageToPluginV2 message)
-    {
-        var target = GetPluginById(targetId);
-        if (target == null)
-        {
-            return;
-        }
-        target.SetMessage(message);
-    }
-    internal void SetMessage(ISetMessageToPluginV2 message)
-    {
-        foreach (var plugin in _pluginsV2)
-        {
-            plugin.SetMessage(message);
-        }
-    }
-
-
-
-
-
-    //public void OnClosing()
-    //{
-    //    if (_pluginsV2 == null)
-    //        return;
-    //    foreach (var plugin in _pluginsV2)
-    //    {
-    //        try
-    //        {
-    //            plugin.OnClosing();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            Debug.WriteLine(ex.Message);
-    //        }
-    //    }
-    //}
-
-    //public void ForeachPlugin(Action<PluginV0.IPlugin> p)
-    //{
-    //    foreach (var plugin in _pluginsV2)
-    //    {
-    //        try
-    //        {
-    //            p(plugin);
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            Debug.WriteLine(ex.Message);
-    //        }
-    //    }
-    //}
-
-    //public void SetMessage(ISiteMessage message, IMessageMetadata messageMetadata)
-    //{
-    //    foreach (var plugin in _pluginsV2)
-    //    {
-    //        plugin.OnMessageReceived(message, messageMetadata);
-    //    }
-    //}
-
-    //public void OnTopmostChanged(bool isTopmost)
-    //{
-    //    foreach (var plugin in _pluginsV2)
-    //    {
-    //        plugin.OnTopmostChanged(isTopmost);
-    //    }
-    //}
-
-    //private readonly IMcvCoreOptions _options;
-    //public PluginManager()
-    //{
-    //    //_options = options;
-    //}
-
-
-
-    public PluginManager()
-    {
+        return _actorDict.Values;
     }
     internal PluginId? GetDefaultSite()
     {
         return _pluginRoleDict.Where(p => PluginTypeChecker.IsSitePlugin(p.Value)).Select(p => p.Key).FirstOrDefault();
     }
-    internal IReplyMessageToPluginV2 RequestMessage(PluginId pluginId, IGetMessageToPluginV2 message)
+    internal Task<IReplyMessageToPluginV2> RequestMessage(PluginId pluginId, IGetMessageToPluginV2 message)
     {
-        var plugin = GetPluginById(pluginId);
+        var plugin = GetPluginActorById(pluginId);
         if (plugin is null)
         {
             return null;//TODO:
         }
-        return plugin.RequestMessage(message);
+        return plugin.Ask<IReplyMessageToPluginV2>(new GetMessageToPluginV2(message));
     }
-    private IPlugin? GetPluginById(PluginId pluginId)
+    private IActorRef? GetPluginActorById(PluginId pluginId)
     {
-        return _pluginsV2.Find(p => p.Id == pluginId)!;
+        //return _pluginsV2.Find(p => p.Id == pluginId)!;
+        if (_actorDict.TryGetValue(pluginId, out var actor))
+        {
+            return actor;
+        }
+        else
+        {
+            return null;
+        }
     }
-    private readonly Dictionary<PluginId, IList<string>> _pluginRoleDict = new();
-    internal void SetPluginRole(PluginId pluginId, List<string> pluginRole)
-    {
-        _pluginRoleDict.Add(pluginId, pluginRole);
-    }
-
     internal void RemovePlugin(PluginId pluginId)
     {
         try
         {
-            _pluginRoleDict.Remove(pluginId);
-            var plugin = GetPluginById(pluginId);
-            _pluginsV2.Remove(plugin);
+            _pluginRoleDict.Remove(pluginId, out var _);
+            _actorDict.Remove(pluginId, out var _);
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
         }
-    }
-
-    internal IPluginInfo? GetPluginInfo(PluginId pluginId)
-    {
-        var plugin = GetPluginById(pluginId);
-        return plugin;
     }
 }

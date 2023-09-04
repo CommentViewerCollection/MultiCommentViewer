@@ -6,14 +6,14 @@ namespace Mcv.PluginV2
     public interface IPlugin : IPluginInfo
     {
         IPluginHost Host { get; set; }
-        void SetMessage(ISetMessageToPluginV2 message);
-        void SetMessage(INotifyMessageV2 message);
-        IReplyMessageToPluginV2 RequestMessage(IGetMessageToPluginV2 message);
+        Task SetMessage(ISetMessageToPluginV2 message);
+        Task SetMessage(INotifyMessageV2 message);
+        Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message);
     }
     public interface IPluginHost
     {
-        void SetMessage(ISetMessageToCoreV2 message);
-        void SetMessage(INotifyMessageV2 message);
-        IReplyMessageToPluginV2 RequestMessage(IGetMessageToCoreV2 message);
+        Task SetMessageAsync(ISetMessageToCoreV2 message);
+        Task SetMessageAsync(INotifyMessageV2 message);
+        Task<IReplyMessageToPluginV2> RequestMessageAsync(IGetMessageToCoreV2 message);
     }
 }

@@ -56,12 +56,14 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Akka" Version="1.5.12" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="7.0.10" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SQLitePCLRaw.bundle_winsqlite3" Version="2.1.6" />
     <PackageReference Include="System.ComponentModel.Composition" Version="7.0.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BigoIF\BigoIF.csproj" />
@@ -69,15 +71,23 @@
     <ProjectReference Include="..\BrowserCookiePlugin\BrowserCookiePlugin.csproj" />
     <ProjectReference Include="..\MainViewPlugin\MainViewPlugin.csproj" />
     <ProjectReference Include="..\McvPlugin\McvPlugin.csproj" />
+    <ProjectReference Include="..\MildomIF\MildomIF.csproj" />
     <ProjectReference Include="..\MildomSitePlugin\MildomSitePlugin.csproj" />
+    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
     <ProjectReference Include="..\MirrativSitePlugin\MirrativSitePlugin.csproj" />
+    <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
     <ProjectReference Include="..\MixchSitePlugin\MixchSitePlugin.csproj" />
-    <ProjectReference Include="..\NicoSitePlugin2\NicoSitePlugin.csproj" />
+    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj" />
     <ProjectReference Include="..\NicoSitePlugin\NicoSitePlugin.csproj" />
+    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
     <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj" />
+    <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj" />
     <ProjectReference Include="..\ShowRoomSitePlugin\ShowRoomSitePlugin.csproj" />
+    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />
     <ProjectReference Include="..\TwicasSitePlugin\TwicasSitePlugin.csproj" />
+    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />
     <ProjectReference Include="..\TwitchSitePlugin\TwitchSitePlugin.csproj" />
+    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj" />
     <ProjectReference Include="..\WhowatchSitePlugin\WhowatchSitePlugin.csproj" />
     <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
     <ProjectReference Include="..\YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj" />

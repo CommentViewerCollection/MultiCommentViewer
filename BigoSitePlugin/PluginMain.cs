@@ -15,14 +15,13 @@ namespace BigoSitePlugin.V2
         private readonly ConnectionId _connId;
         private readonly PluginId _pluginId;
 
-        internal void NotifyMetadataUpdated(IMetadata e)
+        internal Task NotifyMetadataUpdated(IMetadata e)
         {
-            _host.SetMessage(new SetMetadata(_connId, _pluginId, e));
+            return _host.SetMessageAsync(new SetMetadata(_connId, _pluginId, e));
         }
-
         internal void NotifyMessageReceived(ISiteMessage message, string userId, string? newNickname)
         {
-            _host.SetMessage(new SetMessage(_connId, _pluginId, message, userId, newNickname));
+            _host.SetMessageAsync(new SetMessage(_connId, _pluginId, message, userId, newNickname));
         }
         public CommentProviderHost(IPluginHost host, ConnectionId connId, PluginId pluginId)
         {
@@ -48,9 +47,9 @@ namespace BigoSitePlugin.V2
             _commentProvider.MessageReceived -= CommentProvider_MessageReceived;
             _commentProvider.MetadataUpdated -= CommentProvider_MetadataUpdated;
         }
-        private void CommentProvider_MetadataUpdated(object sender, IMetadata e)
+        private async void CommentProvider_MetadataUpdated(object sender, IMetadata e)
         {
-            _host.NotifyMetadataUpdated(e);
+            await _host.NotifyMetadataUpdated(e);
         }
 
         private void CommentProvider_MessageReceived(object sender, IMessageContext e)
@@ -75,16 +74,16 @@ namespace BigoSitePlugin.V2
         public string Name { get; } = "BigoSitePlugin";
         public List<string> Roles { get; } = new List<string> { "site:bigo" };
         BigoSiteContext _context;
-        public async void SetMessage(ISetMessageToPluginV2 message)
+        public async Task SetMessage(ISetMessageToPluginV2 message)
         {
             switch (message)
             {
                 case SetLoading _:
                     {
                         _context = new BigoSiteContext(new BigoServer(), new Logger(Host));
-                        var res = Host.RequestMessage(new RequestLoadPluginOptions(Name)) as ReplyPluginOptions;
+                        var res = await Host.RequestMessageAsync(new RequestLoadPluginOptions(Name)) as ReplyPluginOptions;
                         _context.LoadOptions(res.RawOptions);
-                        Host.SetMessage(new SetPluginHello(Id, Name, Roles));
+                        await Host.SetMessageAsync(new SetPluginHello(Id, Name, Roles));
                     }
                     break;
                 case SetLoaded _:
@@ -122,7 +121,7 @@ namespace BigoSitePlugin.V2
                         }
                         var connectionTask = wrapper.ConnectAsync(connect.Input, connect.Cookies);
                         _connectionTaskDict.Add(connect.ConnId, connectionTask);
-                        Host.SetMessage(new NotifySiteConnected(connect.ConnId));
+                        await Host.SetMessageAsync(new NotifySiteConnected(connect.ConnId));
                     }
                     break;
                 case SetDisconnectSite disconnect:
@@ -142,10 +141,8 @@ namespace BigoSitePlugin.V2
                             Debug.WriteLine(ex.Message);
                         }
                         _connectionTaskDict.Remove(disconnect.ConnId);
-                        Host.SetMessage(new NotifySiteDisconnected(disconnect.ConnId));
+                        await Host.SetMessageAsync(new NotifySiteDisconnected(disconnect.ConnId));
                     }
-                    break;
-                case RequestCloseToPlugin _:
                     break;
                 default:
                     break;
@@ -154,11 +151,11 @@ namespace BigoSitePlugin.V2
         private readonly Dictionary<ConnectionId, Task> _connectionTaskDict = new();
         private readonly Dictionary<ConnectionId, CommentProviderWrapper> _connDict = new Dictionary<ConnectionId, CommentProviderWrapper>();
 
-        public void SetMessage(INotifyMessageV2 message)
+        public async Task SetMessage(INotifyMessageV2 message)
         {
         }
 
-        public IReplyMessageToPluginV2 RequestMessage(IGetMessageToPluginV2 message)
+        public async Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message)
         {
             switch (message)
             {
@@ -185,7 +182,7 @@ namespace BigoSitePlugin.V2
 
         public void LogException(Exception ex, string message = "", string detail = "")
         {
-            _host.SetMessage(new SetException(ex, message, detail));
+            _host.SetMessageAsync(new SetException(ex, message, detail));
         }
         public Logger(IPluginHost host)
         {

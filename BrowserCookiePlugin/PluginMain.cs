@@ -49,7 +49,7 @@ public class PluginMain : IPlugin
     private readonly Dictionary<BrowserProfileId, ProfileInfo> _profileInfoDict = new();
     private readonly Dictionary<BrowserProfileId, IBrowserProfile> _profileDict = new();
 
-    public IReplyMessageToPluginV2 RequestMessage(IGetMessageToPluginV2 message)
+    public async Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message)
     {
         switch (message)
         {
@@ -76,14 +76,14 @@ public class PluginMain : IPlugin
         throw new Exception("bug");
     }
 
-    public void SetMessage(ISetMessageToPluginV2 message)
+    public async Task SetMessage(ISetMessageToPluginV2 message)
     {
         switch (message)
         {
             case SetLoading _:
                 {
                     LoadBrowsers();
-                    Host.SetMessage(new SetPluginHello(Id, Name, Roles));
+                    await Host.SetMessageAsync(new SetPluginHello(Id, Name, Roles));
                 }
                 break;
             case SetLoaded _:
@@ -97,7 +97,7 @@ public class PluginMain : IPlugin
         }
     }
 
-    public void SetMessage(INotifyMessageV2 message)
+    public async Task SetMessage(INotifyMessageV2 message)
     {
     }
 }

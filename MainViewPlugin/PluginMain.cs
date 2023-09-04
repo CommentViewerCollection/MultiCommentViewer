@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Documents;
 using Mcv.PluginV2;
 using Mcv.PluginV2.Messages;
@@ -18,9 +20,9 @@ namespace Mcv.MainViewPlugin
         private IAdapter _adapter;
         private MainViewModel _vm;
         private readonly DynamicOptionsTest _options;
-        private IMainViewPluginOptions LoadOptions()
+        private async Task<IMainViewPluginOptions> LoadOptions()
         {
-            var loadedOptions = Host.RequestMessage(new RequestLoadPluginOptions(Name)) as ReplyPluginOptions;
+            var loadedOptions = await Host.RequestMessageAsync(new RequestLoadPluginOptions(Name)) as ReplyPluginOptions;
 
             var options = new DynamicOptionsTest();
             options.Deserialize(loadedOptions?.RawOptions);
@@ -28,7 +30,7 @@ namespace Mcv.MainViewPlugin
         }
         private MainWindow _v;
 
-        public void SetMessage(INotifyMessageV2 message)
+        public async Task SetMessage(INotifyMessageV2 message)
         {
             if (_adapter == null)
             {
@@ -47,7 +49,7 @@ namespace Mcv.MainViewPlugin
                         foreach (var pluginInfo in pluginInfoList.Plugins)
                         {
                             //_adapter.OnPluginAdded(pluginInfo);
-                            OnPluginAdded(pluginInfo);
+                            await OnPluginAdded(pluginInfo);
                         }
                     }
                     break;
@@ -76,29 +78,30 @@ namespace Mcv.MainViewPlugin
                     break;
                 case NotifyPluginAdded pluginAdded:
                     {
-                        OnPluginAdded(pluginAdded.PluginId, pluginAdded.PluginName, pluginAdded.PluginRole);
+                        await OnPluginAdded(pluginAdded.PluginId, pluginAdded.PluginName, pluginAdded.PluginRole);
                     }
                     break;
             }
         }
-        private void OnPluginAdded(IPluginInfo pluginInfo)
+        private Task OnPluginAdded(IPluginInfo pluginInfo)
         {
-            OnPluginAdded(pluginInfo.Id, pluginInfo.Name, pluginInfo.Roles);
+            return OnPluginAdded(pluginInfo.Id, pluginInfo.Name, pluginInfo.Roles);
         }
-        private void OnPluginAdded(PluginId pluginId, string pluginName, List<string> pluginRole)
+        private async Task OnPluginAdded(PluginId pluginId, string pluginName, List<string> pluginRole)
         {
+            Debug.WriteLine($"OnPluginAdded={pluginName}");
             if (pluginId == Id)
             {
                 return;
             }
             if (PluginTypeChecker.IsSitePlugin(pluginRole))
             {
-                var displayName = _adapter.GetSitePluginDisplayName(pluginId);
+                var displayName = await _adapter.GetSitePluginDisplayName(pluginId);
                 _adapter.OnSiteAdded(pluginId, displayName);
             }
             else if (PluginTypeChecker.IsBrowserPlugin(pluginRole))
             {
-                var browserProfiles = Host.RequestMessage(new GetDirectMessage(pluginId, new GetBrowserProfiles())) as ReplyBrowserProfiles;
+                var browserProfiles = await Host.RequestMessageAsync(new GetDirectMessage(pluginId, new GetBrowserProfiles())) as ReplyBrowserProfiles;
                 if (browserProfiles is null)
                 {
                     throw new Exception("");
@@ -114,17 +117,17 @@ namespace Mcv.MainViewPlugin
             }
         }
 
-        public void SetMessage(ISetMessageToPluginV2 message)
+        public async Task SetMessage(ISetMessageToPluginV2 message)
         {
             switch (message)
             {
                 case SetLoading _:
                     {
-                        _options.Set(LoadOptions());
+                        _options.Set(await LoadOptions());
                         _adapter = new IAdapter(Host, _options);
                         _vm = new MainViewModel(_adapter);//_adapterのイベントを購読する処理がctorにある。SiteAddedがOnLoaded()の前に来るからこのタイミングで初期化しないと間に合わない。            
                         _adapter.AddEmptyBrowserProfile();
-                        Host.SetMessage(new SetPluginHello(Id, Name, Roles));
+                        await Host.SetMessageAsync(new SetPluginHello(Id, Name, Roles));
                     }
                     break;
                 case SetLoaded _:
@@ -138,21 +141,19 @@ namespace Mcv.MainViewPlugin
                     break;
                 case SetClosing _:
                     {
-                        Host.SetMessage(new RequestSavePluginOptions(Name, _options.Serialize()));
+                        await Host.SetMessageAsync(new RequestSavePluginOptions(Name, _options.Serialize()));
+                        _vm.IsClose = true;
+                        _v.Visibility = System.Windows.Visibility.Hidden;
                     }
                     break;
                 case RequestShowSettingsPanelToPlugin _:
                     break;
-                case RequestCloseToPlugin _:
-                    _vm.IsClose = true;
-
-                    _v.Visibility = System.Windows.Visibility.Hidden;
-
+                default:
                     break;
             }
         }
 
-        public IReplyMessageToPluginV2 RequestMessage(IGetMessageToPluginV2 message)
+        public Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message)
         {
             throw new NotImplementedException();
         }

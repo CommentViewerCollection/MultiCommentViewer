@@ -39,5 +39,3 @@ public interface IReplyMessageToPluginV2 : IMessage
     string Raw { get; }
 }
 
-
-public class RequestCloseToPlugin : ISetMessageToPluginV2 { }

@@ -6,9 +6,19 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using System.Diagnostics;
+using Akka.Actor;
 
 namespace McvCore
 {
+    class McvCore
+    {
+        private readonly McvCoreActor _actor;
+
+        public McvCore(McvCoreActor actor)
+        {
+            _actor = actor;
+        }
+    }
     class Program
     {
         [STAThread]
@@ -34,26 +44,31 @@ namespace McvCore
             //settingsディレクトリが無ければ作成する
             Directory.CreateDirectory("settings");
 
-            //var actorSystem = ActorSystem.Create("mcv");
-            //var core = actorSystem.ActorOf(Props.Create(() => new CoreActor(app)).WithDispatcher("akka.actor.synchronized-dispatcher"));
-            //core.Tell(new LoadPlugins());
+            var actorSystem = ActorSystem.Create("mcv");
+            var deadletterWatchMonitorProps = Props.Create(() => new DeadletterMonitor());
+            var deadletterWatchActorRef = actorSystem.ActorOf(deadletterWatchMonitorProps, "DeadLetterMonitoringActor");
+            actorSystem.EventStream.Subscribe(deadletterWatchActorRef, typeof(Akka.Event.DeadLetter));
 
-            var core = new McvCore();
-            core.ExitRequested += (s, e) =>
-            {
-                app.Shutdown();
-            };
+            var monitorActor = actorSystem.ActorOf<UnhandledMessagesMonitorActor>();
+            actorSystem.EventStream.Subscribe(monitorActor, typeof(Akka.Event.UnhandledMessage));
 
-            if (!core.Initialize())
-            {
-                return;
-            }
-            var task = core.RunAsync();
-            Handle(task);
+            var actor = actorSystem.ActorOf(McvCoreActor.Props(), "coreActor");
+
+
+            var t = actorSystem.WhenTerminated;
+            Handle(t).ContinueWith(t => app.Shutdown());
+            actor.Tell(new Initialize());
+
+            ////if (!core.Initialize())
+            ////{
+            ////    return;
+            ////}
+            //var task = a.RunAsync();
+            //Handle(task);
             app.Run();
         }
 
-        static async void Handle(Task task)
+        static async Task Handle(Task task)
         {
             try
             {
@@ -86,5 +101,27 @@ namespace McvCore
 
         }
     }
+    public class DeadletterMonitor : ReceiveActor
+    {
 
+        public DeadletterMonitor()
+        {
+            Receive<Akka.Event.DeadLetter>(dl => HandleDeadletter(dl));
+        }
+
+        private void HandleDeadletter(Akka.Event.DeadLetter dl)
+        {
+            Debug.WriteLine($"DeadLetter captured: {dl.Message}, sender: {dl.Sender}, recipient: {dl.Recipient}");
+        }
+    }
+    public class UnhandledMessagesMonitorActor : ReceiveActor
+    {
+        public UnhandledMessagesMonitorActor()
+        {
+            Receive<Akka.Event.UnhandledMessage>(m =>
+            {
+                Debug.WriteLine(m);
+            });
+        }
+    }
 }

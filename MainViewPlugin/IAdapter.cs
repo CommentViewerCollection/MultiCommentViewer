@@ -4,6 +4,8 @@ using System;
 using Mcv.PluginV2.Messages;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Mcv.MainViewPlugin
 {
@@ -159,11 +161,17 @@ namespace Mcv.MainViewPlugin
 
 
         //public bool IsShowConnectionName { get { return _options.IsShowConnectionName; } set { _options.IsShowConnectionName = value; } }
-        private readonly List<PluginId> _sitePlugins = new();
+        private readonly ConcurrentDictionary<PluginId, string> _sitePlugins = new();
         internal void OnSiteAdded(PluginId siteId, string siteDisplayName)
         {
-            _sitePlugins.Add(siteId);
-            SiteAdded?.Invoke(this, new SiteAddedEventArgs(siteId, siteDisplayName));
+            if (_sitePlugins.TryAdd(siteId, siteDisplayName))
+            {
+                SiteAdded?.Invoke(this, new SiteAddedEventArgs(siteId, siteDisplayName));
+            }
+            else
+            {
+                //bug
+            }
         }
 
         //public int ConnectionNameDisplayIndex { get { return _options.ConnectionNameDisplayIndex; } set { _options.ConnectionNameDisplayIndex = value; } }
@@ -277,7 +285,7 @@ namespace Mcv.MainViewPlugin
 
         internal void RequestCloseApp()
         {
-            _host.SetMessage(new SetCloseApp());
+            _host.SetMessageAsync(new SetCloseApp());
         }
 
         //public double ConnectionsViewInputWidth { get { return _options.ConnectionsViewInputWidth; } set { _options.ConnectionsViewInputWidth = value; } }
@@ -486,32 +494,32 @@ namespace Mcv.MainViewPlugin
         {
             foreach (var connId in selectedConnections)
             {
-                _host.SetMessage(new RequestRemoveConnection(connId));
+                _host.SetMessageAsync(new RequestRemoveConnection(connId));
             }
         }
         internal void RequestAddConnection()
         {
-            _host.SetMessage(new RequestAddConnection());
+            _host.SetMessageAsync(new RequestAddConnection());
         }
 
         internal void RequestChangeConnectionStatus(ConnectionStatusDiff connectionStatusDiff)
         {
-            _host.SetMessage(new RequestChangeConnectionStatus(connectionStatusDiff));
+            _host.SetMessageAsync(new RequestChangeConnectionStatus(connectionStatusDiff));
         }
         public void SetConnectionName(ConnectionId connId, string newConnectionName)
         {
-            _host.SetMessage(new RequestChangeConnectionStatus(new ConnectionStatusDiff(connId)
+            _host.SetMessageAsync(new RequestChangeConnectionStatus(new ConnectionStatusDiff(connId)
             {
                 Name = newConnectionName,
             }));
         }
-        public List<(PluginId, IOptionsTabPage)> RequestSettingsPanels()
+        public async Task<List<(PluginId, IOptionsTabPage)>> RequestSettingsPanels()
         {
             var list = new List<(PluginId, IOptionsTabPage)>();
             var sites = _sitePlugins.ToArray();
-            foreach (var site in sites)
+            foreach (var (site, _) in sites)
             {
-                if (_host.RequestMessage(new GetDirectMessage(site, new GetSettingsPanel())) is not AnswerSettingsPanel reply)
+                if (await _host.RequestMessageAsync(new GetDirectMessage(site, new GetSettingsPanel())) is not AnswerSettingsPanel reply)
                 {
                     throw new Exception("bug");
                 }
@@ -519,46 +527,50 @@ namespace Mcv.MainViewPlugin
             }
             return list;
         }
-        public string GetConnectionName(ConnectionId connId)
+        public async Task<string> GetConnectionName(ConnectionId connId)
         {
-            var reply = _host.RequestMessage(new GetConnectionStatus(connId)) as ReplyConnectionStatus;
+            var reply = await _host.RequestMessageAsync(new GetConnectionStatus(connId)) as ReplyConnectionStatus;
             if (reply is null)
             {
                 throw new Exception("bug");
             }
             return reply.ConnSt.Name;
         }
-        public string GetAppName()
+        public async Task<string> GetAppName()
         {
-            var reply = _host.RequestMessage(new GetAppName()) as ReplyAppName;
+            var reply = await _host.RequestMessageAsync(new GetAppName()) as ReplyAppName;
             if (reply is null)
             {
                 throw new Exception("bug");
             }
             return reply.AppName;
         }
-        public string GetVersion()
+        public async Task<string> GetVersion()
         {
-            var reply = _host.RequestMessage(new GetAppVersion()) as ReplyAppVersion;
+            var reply = await _host.RequestMessageAsync(new GetAppVersion()) as ReplyAppVersion;
             if (reply is null)
             {
                 throw new Exception("bug");
             }
             return reply.AppVersion;
         }
-        public string GetAppSolutionConfiguration()
+        public async Task<string> GetAppSolutionConfiguration()
         {
-            var reply = _host.RequestMessage(new GetAppSolutionConfiguration()) as ReplyAppSolutionConfiguration;
+            var reply = await _host.RequestMessageAsync(new GetAppSolutionConfiguration()) as ReplyAppSolutionConfiguration;
+            if (reply is null)
+            {
+                throw new Exception("bug");
+            }
             return reply.AppSolutionConfiguration;
         }
 
         internal void RequestShowSettingsPanel(PluginId pluginId)
         {
-            _host.SetMessage(new RequestShowSettingsPanel(pluginId));
+            _host.SetMessageAsync(new RequestShowSettingsPanel(pluginId));
         }
-        internal string GetSitePluginDisplayName(PluginId pluginId)
+        internal async Task<string> GetSitePluginDisplayName(PluginId pluginId)
         {
-            var res = _host.RequestMessage(new GetDirectMessage(pluginId, new GetSitePluginDisplayName())) as ReplySitePluginDisplayName;
+            var res = await _host.RequestMessageAsync(new GetDirectMessage(pluginId, new GetSitePluginDisplayName())) as ReplySitePluginDisplayName;
             if (res is null)
             {
                 throw new Exception("bug");
@@ -566,12 +578,12 @@ namespace Mcv.MainViewPlugin
             return res.DisplayName;
         }
 
-        internal void AfterInputChanged(ConnectionId connId, string input)
+        internal async void AfterInputChanged(ConnectionId connId, string input)
         {
             var sites = _sitePlugins.ToArray();
-            foreach (var site in sites)
+            foreach (var (site, _) in sites)
             {
-                var reply = _host.RequestMessage(new GetDirectMessage(site, new GetIsValidSiteUrl(input))) as ReplyIsValidSiteUrl;
+                var reply = await _host.RequestMessageAsync(new GetDirectMessage(site, new GetIsValidSiteUrl(input))) as ReplyIsValidSiteUrl;
                 if (reply is null)
                 {
                     throw new Exception("bug");
@@ -579,54 +591,54 @@ namespace Mcv.MainViewPlugin
                 if (reply.IsValid)
                 {
                     //SelectedSiteChanged?.Invoke(this, new SelectedSiteChangedEventArgs(connId, site));
-                    _host.SetMessage(new RequestChangeConnectionStatus(new ConnectionStatusDiff(connId) { SelectedSite = site }));
+                    _host.SetMessageAsync(new RequestChangeConnectionStatus(new ConnectionStatusDiff(connId) { SelectedSite = site }));
                     break;
                 }
             }
         }
 
-        internal void SetConnectSite(PluginId selectedSite, ConnectionId connId, string input, BrowserProfileId browserProfileId)
+        internal async void SetConnectSite(PluginId selectedSite, ConnectionId connId, string input, BrowserProfileId browserProfileId)
         {
-            var resDomain = _host.RequestMessage(new GetDirectMessage(selectedSite, new GetSiteDomain(connId))) as ReplySiteDomain;
+            var resDomain = await _host.RequestMessageAsync(new GetDirectMessage(selectedSite, new GetSiteDomain(connId))) as ReplySiteDomain;
             if (resDomain is null)
             {
                 throw new Exception("bug");
             }
             var profile = _browserProfileDict[browserProfileId];
-            var res = _host.RequestMessage(new GetDirectMessage(profile.PluginId, new GetCookies(browserProfileId, resDomain.Domain))) as ReplyCookies;
+            var res = await _host.RequestMessageAsync(new GetDirectMessage(profile.PluginId, new GetCookies(browserProfileId, resDomain.Domain))) as ReplyCookies;
             if (res is null)
             {
                 throw new Exception("bug");
             }
-            _host.SetMessage(new SetDirectMessage(selectedSite, new SetConnectSite(connId, input, res.Cookies)));
+            _host.SetMessageAsync(new SetDirectMessage(selectedSite, new SetConnectSite(connId, input, res.Cookies)));
         }
         internal void SetDisconectSite(PluginId selectedSite, ConnectionId connId)
         {
-            _host.SetMessage(new SetDirectMessage(selectedSite, new SetDisconnectSite(connId)));
+            _host.SetMessageAsync(new SetDirectMessage(selectedSite, new SetDisconnectSite(connId)));
         }
         internal void AddBrowserProfile(ProfileInfo browserProfileInfo)
         {
             if (_browserProfileDict.ContainsKey(_emptyBrowserProfileId))
             {
-                _browserProfileDict.Remove(_emptyBrowserProfileId);
+                _browserProfileDict.Remove(_emptyBrowserProfileId, out var _);
                 BrowserRemoved?.Invoke(this, new BrowserRemovedEventArgs(_emptyBrowserProfileId));
             }
-            _browserProfileDict.Add(browserProfileInfo.ProfileId, browserProfileInfo);
+            _browserProfileDict.TryAdd(browserProfileInfo.ProfileId, browserProfileInfo);
 
             BrowserAdded?.Invoke(this, new BrowserAddedEventArgs(browserProfileInfo.ProfileId, browserProfileInfo.BrowserName, browserProfileInfo.ProfileName));
         }
         internal void RemoveBrowserProfile(BrowserProfileId browserProfileId)
         {
-            _browserProfileDict.Remove(browserProfileId);
+            _browserProfileDict.Remove(browserProfileId, out var _);
             if (_browserProfileDict.Count == 0)
             {
-                _browserProfileDict.Add(_emptyBrowserProfileId, _emptyBrowserProfileInfo);
+                _browserProfileDict.TryAdd(_emptyBrowserProfileId, _emptyBrowserProfileInfo);
                 BrowserAdded?.Invoke(this, new BrowserAddedEventArgs(_emptyBrowserProfileId, _emptyBrowserProfileInfo.BrowserName, _emptyBrowserProfileInfo.ProfileName));
             }
             BrowserRemoved?.Invoke(this, new BrowserRemovedEventArgs(browserProfileId));
         }
         //空にしない。ブラウザが無い時は_emptyBrowserViewModelを必ず入れる。
-        private readonly Dictionary<BrowserProfileId, ProfileInfo> _browserProfileDict = new();
+        private readonly ConcurrentDictionary<BrowserProfileId, ProfileInfo> _browserProfileDict = new();
         public IMainViewPluginOptions Options { get; }
         private readonly IPluginHost _host;
 

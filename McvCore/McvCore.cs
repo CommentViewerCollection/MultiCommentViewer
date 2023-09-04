@@ -9,30 +9,69 @@ using System.Windows;
 using Mcv.PluginV2.Messages;
 using McvCore.V1;
 using System.Diagnostics;
+using Akka.Actor;
+using System.Threading;
 
 namespace McvCore;
-class McvCore
+
+class McvCoreActor : ReceiveActor
 {
     public event EventHandler? ExitRequested;
     private readonly ConnectionManager _connManager;
-    private readonly PluginManager _pluginManager;
+    private readonly IActorRef _pluginManager;
     private readonly V1.IUserStoreManager _userStoreManager;
     private static readonly string OptionsPath = Path.Combine("settings", "options.txt");
     private static readonly string MainViewPluginOptionsPath = Path.Combine("settings", "MainViewPlugin.txt");
     private static readonly ILogger _logger = new LoggerTest();
     private IMcvCoreOptions _coreOptions = default!;
+    private void SetMessageToPluginManager(ISetMessageToPluginV2 message)
+    {
+        _pluginManager.Tell(new SetSetToAllPlugin(message));
+    }
+    private void SetMessageToPluginManager(PluginId pluginId, ISetMessageToPluginV2 message)
+    {
+        _pluginManager.Tell(new SetSetToAPlugin(pluginId, message));
+    }
+    private void SetMessageToPluginManager(INotifyMessageV2 message)
+    {
+        _pluginManager.Tell(new SetNotifyToAllPlugin(message));
+    }
+    private void SetMessageToPluginManager(PluginId pluginId, INotifyMessageV2 message)
+    {
+        _pluginManager.Tell(new SetNotifyToAPlugin(pluginId, message));
+    }
+    private Task<IReplyMessageToPluginV2> GetMessageToPluginManagerAsync(PluginId pluginId, IGetMessageToPluginV2 message)
+    {
+        return _pluginManager.Ask<IReplyMessageToPluginV2>(new GetMessage(pluginId, message));
+    }
+    private Task<List<IPluginInfo>> GetPluginListAsync()
+    {
+        return _pluginManager.Ask<List<IPluginInfo>>(new GetPluginList(), CancellationToken.None);
+    }
+    private void RemovePlugin(PluginId pluginId)
+    {
+        _pluginManager.Tell(new RemovePlugin(pluginId));
+    }
+    private void SetPluginRole(PluginId pluginId, List<string> pluginRole)
+    {
+        _pluginManager.Tell(new SetPluginRole(pluginId, pluginRole));
+    }
+    private void AddPlugins(List<IPlugin> plugins, PluginHost pluginHost)
+    {
+        _pluginManager.Tell(new AddPlugins(plugins, pluginHost));
+    }
     internal void RequestCloseApp()
     {
-        _pluginManager.SetMessage(new SetClosing());
-        _pluginManager.SetMessage(new PluginV2.Messages.RequestCloseToPlugin());
+        SetMessageToPluginManager(new SetClosing());
 
         _userStoreManager.Save();
+
         ExitRequested?.Invoke(this, EventArgs.Empty);
     }
-    public McvCore()
+    public McvCoreActor()
     {
         var io = new IOTest();
-        _pluginManager = new PluginManager();
+        _pluginManager = Context.ActorOf(PluginManagerActor.Props().WithDispatcher("akka.actor.synchronized-dispatcher"));
 
         _connManager = new ConnectionManager();
         _connManager.ConnectionAdded += ConnManager_ConnectionAdded;
@@ -41,19 +80,24 @@ class McvCore
 
         _userStoreManager = new V1.UserStoreManager();
         _userStoreManager.UserAdded += UserStoreManager_UserAdded;
+
+        Receive<Initialize>(_ =>
+        {
+            Initialize();
+        });
     }
 
     private void ConnManager_ConnectionRemoved(object? sender, ConnectionRemovedEventArgs e)
     {
-        _pluginManager.SetMessage(new PluginV2.Messages.NotifyConnectionRemoved(e.ConnId));
+        SetMessageToPluginManager(new PluginV2.Messages.NotifyConnectionRemoved(e.ConnId));
     }
 
     private void ConnManager_ConnectionStatusChanged(object? sender, ConnectionStatusChangedEventArgs e)
     {
-        _pluginManager.SetMessage(new PluginV2.Messages.NotifyConnectionStatusChanged(e.ConnStDiff));
+        SetMessageToPluginManager(new PluginV2.Messages.NotifyConnectionStatusChanged(e.ConnStDiff));
     }
 
-    internal void SetMessage(ISetMessageToCoreV2 m)
+    internal async Task SetMessageAsync(ISetMessageToCoreV2 m)
     {
         switch (m)
         {
@@ -62,7 +106,9 @@ class McvCore
                     var success = true;
                     try
                     {
-                        _pluginManager.SetPluginRole(pluginHello.PluginId, pluginHello.PluginRole);
+                        //Roleを登録した時点でPluginManagerの内部ではそのプラグインが登録され、PluginListで取得できるようになる。
+                        var pluginList = await GetPluginListAsync();
+                        SetPluginRole(pluginHello.PluginId, pluginHello.PluginRole);
                         if (PluginTypeChecker.IsSitePlugin(pluginHello.PluginRole))
                         {
                             _userStoreManager.SetUserStore(pluginHello.PluginId, new V1.SQLiteUserStore(GetSettingsFilePath("users_" + pluginHello.PluginName + ".db"), _logger));
@@ -74,9 +120,10 @@ class McvCore
                         //新たに追加されたプラグインに対して次の情報を通知する
                         //・読み込み済みのプラグイン
                         //・Connection
-                        _pluginManager.SetMessage(pluginHello.PluginId, new NotifyPluginInfoList(_pluginManager.GetPluginList().Where(p => p.Id != pluginHello.PluginId).ToList()));
 
-                        _pluginManager.SetMessage(pluginHello.PluginId, new NotifyConnectionStatusList(_connManager.GetConnectionStatusList()));
+                        SetMessageToPluginManager(pluginHello.PluginId, new NotifyPluginInfoList(pluginList.Where(p => p.Id != pluginHello.PluginId).ToList()));
+
+                        SetMessageToPluginManager(pluginHello.PluginId, new NotifyConnectionStatusList(_connManager.GetConnectionStatusList()));
                     }
                     catch (Exception)
                     {
@@ -85,15 +132,15 @@ class McvCore
                     if (!success)
                     {
                         //rollback
-                        _pluginManager.RemovePlugin(pluginHello.PluginId);
+                        RemovePlugin(pluginHello.PluginId);
                     }
-                    _pluginManager.SetMessage(pluginHello.PluginId, new SetLoaded());
-                    _pluginManager.SetMessage(new NotifyPluginAdded(pluginHello.PluginId, pluginHello.PluginName, pluginHello.PluginRole));
+                    SetMessageToPluginManager(pluginHello.PluginId, new SetLoaded());
+                    SetMessageToPluginManager(new NotifyPluginAdded(pluginHello.PluginId, pluginHello.PluginName, pluginHello.PluginRole));
                 }
                 break;
             case SetMetadata metadata:
                 {
-                    _pluginManager.SetMessage(new NotifyMetadataUpdated(metadata.ConnId, metadata.SiteId, metadata.Metadata));
+                    SetMessageToPluginManager(new NotifyMetadataUpdated(metadata.ConnId, metadata.SiteId, metadata.Metadata));
                 }
                 break;
             case SetMessage setMessage:
@@ -115,13 +162,13 @@ class McvCore
                         IEnumerable<IMessagePart>? username = user.Name;// Common.MessagePartFactory.CreateMessageItems("");
                         var nickname = user.Nickname;
                         var isNgUser = user.IsNgUser;
-                        _pluginManager.SetMessage(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, userId, username, nickname, isNgUser));
+                        SetMessageToPluginManager(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, userId, username, nickname, isNgUser));
                     }
                     else
                     {
                         //InfoMessageとかがUserId==nullになるからこれが必要。
                         //他にも配信サイトのメッセージでもUserIdが無いものもある。
-                        _pluginManager.SetMessage(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, null, null, null, false));
+                        SetMessageToPluginManager(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, null, null, null, false));
                     }
                 }
                 break;
@@ -129,7 +176,7 @@ class McvCore
                 ChangeConnectionStatus(connStDiffMsg.ConnStDiff);
                 break;
             case RequestAddConnection _:
-                AddConnection();
+                await AddConnection();
                 break;
             case RequestShowSettingsPanel reqShowSettingsPanel:
                 ShowPluginSettingsPanel(reqShowSettingsPanel.PluginId);
@@ -144,23 +191,26 @@ class McvCore
                 RequestCloseApp();
                 break;
             case SetDirectMessage directMsg:
-                _pluginManager.SetMessage(directMsg.Target, directMsg.Message);
+                SetMessageToPluginManager(directMsg.Target, directMsg.Message);
                 break;
         }
     }
-    internal void SetMessage(INotifyMessageV2 message)
+    internal async Task SetMessageAsync(INotifyMessageV2 message)
     {
         switch (message)
         {
             case NotifySiteConnected connected:
-                _pluginManager.SetMessage(new NotifyConnectionStatusChanged(new ConnectionStatusDiff(connected.ConnId) { CanConnect = false, CanDisconnect = true }));
+                SetMessageToPluginManager(new NotifyConnectionStatusChanged(new ConnectionStatusDiff(connected.ConnId) { CanConnect = false, CanDisconnect = true }));
                 break;
             case NotifySiteDisconnected disconnected:
-                _pluginManager.SetMessage(new PluginV2.Messages.NotifyConnectionStatusChanged(new ConnectionStatusDiff(disconnected.ConnId) { CanConnect = true, CanDisconnect = false }));
+                SetMessageToPluginManager(new PluginV2.Messages.NotifyConnectionStatusChanged(new ConnectionStatusDiff(disconnected.ConnId) { CanConnect = true, CanDisconnect = false }));
+                break;
+            default:
                 break;
         }
+        await Task.CompletedTask;
     }
-    internal IReplyMessageToPluginV2 RequestMessage(IGetMessageToCoreV2 message)
+    internal async Task<IReplyMessageToPluginV2> RequestMessageAsync(IGetMessageToCoreV2 message)
     {
         switch (message)
         {
@@ -201,7 +251,7 @@ class McvCore
                 }
             case GetDirectMessage directMsg:
                 {
-                    return _pluginManager.RequestMessage(directMsg.Target, directMsg.Message);
+                    return await GetMessageToPluginManagerAsync(directMsg.Target, directMsg.Message);
                 }
         }
         throw new Exception("bug");
@@ -220,23 +270,19 @@ class McvCore
     }
     internal void ShowPluginSettingsPanel(PluginId pluginId)
     {
-        _pluginManager.SetMessage(pluginId, new PluginV2.Messages.RequestShowSettingsPanelToPlugin());
+        SetMessageToPluginManager(pluginId, new PluginV2.Messages.RequestShowSettingsPanelToPlugin());
     }
 
     private void ConnManager_ConnectionAdded(object? sender, ConnectionAddedEventArgs e)
     {
-        _pluginManager.SetMessage(new NotifyConnectionAdded(e.ConnSt));
-    }
-    enum ReadWriteTestResult
-    {
-        Ok,
+        SetMessageToPluginManager(new NotifyConnectionAdded(e.ConnSt));
     }
     /// <summary>
     /// 
     /// </summary>
     /// <returns></returns>
     /// <exception cref="UnauthorizedAccessException"></exception>
-    private static ReadWriteTestResult CheckIfCanReadWrite()
+    private static bool CheckIfCanReadWrite()
     {
         var filename = "test.txt";
         using (var sw = new StreamWriter(filename))
@@ -248,7 +294,7 @@ class McvCore
             var _ = sr.ReadToEnd();
         }
         File.Delete(filename);
-        return ReadWriteTestResult.Ok;
+        return true;
     }
     private string GetSettingsFilePath(string filename)
     {
@@ -287,7 +333,7 @@ class McvCore
         var pluginHost = new PluginHost(this);
 
         var plugins = PluginLoader.LoadPlugins(_coreOptions.PluginDir);
-        _pluginManager.AddPlugins(plugins, pluginHost);
+        AddPlugins(plugins, pluginHost);
 
         //var options = LoadOptions(GetOptionsPath(), logger);
         //_sitePluginOptions = LoadSitePluginOptions(GetSitePluginOptionsPath(), _logger);
@@ -324,18 +370,9 @@ class McvCore
         }
         return options;
     }
-
-    internal async Task RunAsync()
+    internal async Task AddConnection()
     {
-        while (true)
-        {
-            await Task.Delay(200);
-        }
-    }
-
-    internal void AddConnection()
-    {
-        var defaultSite = _pluginManager.GetDefaultSite();
+        var defaultSite = await GetDefaultSite();
         if (defaultSite is null)
         {
             Debug.WriteLine("siteが無い");
@@ -345,6 +382,12 @@ class McvCore
 
         _userCommentCountManager.AddConnection(connId);
     }
+
+    private Task<PluginId> GetDefaultSite()
+    {
+        return _pluginManager.Ask<PluginId>(new GetDefaultSite());
+    }
+
     private readonly UserCommentCountManager _userCommentCountManager = new();
 
     internal void RemoveConnection(ConnectionId connId)
@@ -392,8 +435,8 @@ class McvCore
         {
             var before = _connManager.GetConnectionStatus(connId).SelectedSite;
             var after = connStDiff.SelectedSite;
-            _pluginManager.SetMessage(before, new SetDestroyCommentProvider(connId));
-            _pluginManager.SetMessage(after, new SetCreateCommentProvider(connId));
+            SetMessageToPluginManager(before, new SetDestroyCommentProvider(connId));
+            SetMessageToPluginManager(after, new SetCreateCommentProvider(connId));
         }
         _connManager.ChangeConnectionStatus(connStDiff);
     }
@@ -417,8 +460,44 @@ class McvCore
         return _connManager.GetConnectionStatus(connId);
     }
 
-    internal void SetMessage(PluginId target, ISetMessageToPluginV2 message)
+    internal async Task SetMessageAsync(PluginId target, ISetMessageToPluginV2 message)
     {
-        _pluginManager.SetMessage(target, message);
+        SetMessageToPluginManager(target, message);
+        await Task.CompletedTask;
+    }
+    protected override SupervisorStrategy SupervisorStrategy()
+    {
+        return new OneForOneStrategy(
+        maxNrOfRetries: 10,
+        withinTimeRange: TimeSpan.FromMinutes(1),
+        localOnlyDecider: ex =>
+        {
+            switch (ex)
+            {
+                case ArithmeticException ae:
+                    return Directive.Resume;
+                case NullReferenceException nre:
+                    return Directive.Restart;
+                case ArgumentException are:
+                    return Directive.Stop;
+                default:
+                    return Directive.Escalate;
+            }
+        });
+    }
+    public static Props Props()
+    {
+        return Akka.Actor.Props.Create(() => new McvCoreActor()).WithDispatcher("akka.actor.synchronized-dispatcher");
     }
 }
+internal record Initialize();
+internal record RemovePlugin(PluginId PluginId);
+internal record GetMessage(PluginId PluginId, IGetMessageToPluginV2 Message);
+internal record GetDefaultSite;
+internal record SetSetToAllPlugin(ISetMessageToPluginV2 Message);
+internal record SetSetToAPlugin(PluginId PluginId, ISetMessageToPluginV2 Message);
+internal record SetNotifyToAllPlugin(INotifyMessageV2 Message);
+internal record SetNotifyToAPlugin(PluginId PluginId, INotifyMessageV2 Message);
+internal record GetPluginList;
+internal record SetPluginRole(PluginId PluginId, List<string> PluginRole);
+internal record AddPlugins(List<IPlugin> Plugins, PluginHost PluginHost);

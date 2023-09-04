@@ -10,7 +10,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
         d:DesignWidth="1000"
-        Title="{Binding Title}" Topmost="{Binding Topmost, Mode=TwoWay}"
+        Title="{Binding Title, IsAsync=True}" Topmost="{Binding Topmost, Mode=TwoWay}"
         Height="{Binding MainViewHeight, Mode=TwoWay}" Width="{Binding MainViewWidth, Mode=TwoWay}"
         Left="{Binding MainViewLeft, Mode=TwoWay}" Top="{Binding MainViewTop, Mode=TwoWay}"
         >

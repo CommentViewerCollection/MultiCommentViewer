@@ -1,29 +1,29 @@
 ﻿using Mcv.PluginV2;
 using Mcv.PluginV2.Messages;
+using System.Threading.Tasks;
 
 namespace McvCore;
-
 class PluginHost : IPluginHost
 {
-    private readonly McvCore _core;
+    private readonly McvCoreActor _core;
 
-    public IReplyMessageToPluginV2 RequestMessage(IGetMessageToCoreV2 message)
+    public Task<IReplyMessageToPluginV2> RequestMessageAsync(IGetMessageToCoreV2 message)
     {
-        return _core.RequestMessage(message);
+        return _core.RequestMessageAsync(message);
     }
-    public void SetMessage(ISetMessageToCoreV2 message)
+    public async Task SetMessageAsync(ISetMessageToCoreV2 message)
     {
-        _core.SetMessage(message);
+        await _core.SetMessageAsync(message);
     }
-    public void SetMessage(INotifyMessageV2 message)
+    public Task SetMessageAsync(INotifyMessageV2 message)
     {
-        _core.SetMessage(message);
+        return _core.SetMessageAsync(message);
     }
-    public void SetMessage(PluginId target, ISetMessageToPluginV2 message)
+    public Task SetMessageAsync(PluginId target, ISetMessageToPluginV2 message)
     {
-        _core.SetMessage(target, message);
+        return _core.SetMessageAsync(target, message);
     }
-    public PluginHost(McvCore core)
+    public PluginHost(McvCoreActor core)
     {
         _core = core;
     }

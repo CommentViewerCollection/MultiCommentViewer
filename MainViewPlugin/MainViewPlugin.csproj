@@ -4,6 +4,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWPF>true</UseWPF>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <Configurations>Release;Beta;Alpha;Debug</Configurations>
     <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
     <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
@@ -59,17 +60,17 @@
     <PackageReference Include="System.ComponentModel.Composition" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BigoIF\BigoIF.csproj" />
-    <ProjectReference Include="..\MildomIF\MildomIF.csproj" />
-    <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
-    <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj" />
-    <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
-    <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
-    <ProjectReference Include="..\ShowRoomIF\ShowRoomIF.csproj" />
-    <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />
-    <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />
-    <ProjectReference Include="..\WhowatchIF\WhowatchIF.csproj" />
-    <ProjectReference Include="..\YouTubeLiveIF\YouTubeLiveIF.csproj" />
+    <ProjectReference Include="..\Mcv.BigoIF\Mcv.BigoIF.csproj" />
+    <ProjectReference Include="..\Mcv.MildomIF\Mcv.MildomIF.csproj" />
+    <ProjectReference Include="..\Mcv.MirrativIF\Mcv.MirrativIF.csproj" />
+    <ProjectReference Include="..\Mcv.NicoLiveIF\Mcv.NicoLiveIF.csproj" />
+    <ProjectReference Include="..\Mcv.OpenrecIF\Mcv.OpenrecIF.csproj" />
+    <ProjectReference Include="..\Mcv.MixchIF\Mcv.MixchIF.csproj" />
+    <ProjectReference Include="..\Mcv.ShowRoomIF\Mcv.ShowRoomIF.csproj" />
+    <ProjectReference Include="..\Mcv.TwicasIF\Mcv.TwicasIF.csproj" />
+    <ProjectReference Include="..\Mcv.TwitchIF\Mcv.TwitchIF.csproj" />
+    <ProjectReference Include="..\Mcv.WhowatchIF\Mcv.WhowatchIF.csproj" />
+    <ProjectReference Include="..\Mcv.YouTubeLiveIF\Mcv.YouTubeLiveIF.csproj" />
   </ItemGroup>
   <Target Name="PostBuildMacros">
     <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">

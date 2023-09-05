@@ -101,6 +101,7 @@ class McvCoreActor : ReceiveActor
 
     internal async Task SetMessageAsync(ISetMessageToCoreV2 m)
     {
+        Debug.WriteLine($"McvCoreActor::SetMessageAsync(): {m}");
         switch (m)
         {
             case SetPluginHello pluginHello:

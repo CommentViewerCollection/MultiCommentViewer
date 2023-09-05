@@ -3,73 +3,73 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31825.309
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwitchSitePlugin", "TwitchSitePlugin\TwitchSitePlugin.csproj", "{45C68E6E-3C4D-4B28-9B89-FF9F4CA467BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.TwitchSitePlugin", "Mcv.TwitchSitePlugin\Mcv.TwitchSitePlugin.csproj", "{45C68E6E-3C4D-4B28-9B89-FF9F4CA467BF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwitchSitePluginTests", "TwitchSitePluginTests\TwitchSitePluginTests.csproj", "{5C5D8468-1FA6-44DB-B196-003164FBB91A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.TwitchSitePluginTests", "Mcv.TwitchSitePluginTests\Mcv.TwitchSitePluginTests.csproj", "{5C5D8468-1FA6-44DB-B196-003164FBB91A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwicasSitePlugin", "TwicasSitePlugin\TwicasSitePlugin.csproj", "{EBCBADAB-C5BE-440A-BE08-C660244D1F15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.TwicasSitePlugin", "Mcv.TwicasSitePlugin\Mcv.TwicasSitePlugin.csproj", "{EBCBADAB-C5BE-440A-BE08-C660244D1F15}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwicasSitePluginTests", "TwicasSitePluginTests\TwicasSitePluginTests.csproj", "{EF2FABAC-9D97-4FFC-8FEE-B4FBDEA0CF34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.TwicasSitePluginTests", "Mcv.TwicasSitePluginTests\Mcv.TwicasSitePluginTests.csproj", "{EF2FABAC-9D97-4FFC-8FEE-B4FBDEA0CF34}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MirrativIF", "MirrativIF\MirrativIF.csproj", "{D2C2C0AF-3A29-45F7-B653-CF20AACAA051}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MirrativIF", "Mcv.MirrativIF\Mcv.MirrativIF.csproj", "{D2C2C0AF-3A29-45F7-B653-CF20AACAA051}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MirrativSitePlugin", "MirrativSitePlugin\MirrativSitePlugin.csproj", "{C6F57847-D6C3-4F64-B0A4-C778D7CEA333}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MirrativSitePlugin", "Mcv.MirrativSitePlugin\Mcv.MirrativSitePlugin.csproj", "{C6F57847-D6C3-4F64-B0A4-C778D7CEA333}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MirrativSitePluginTests", "MirrativSitePluginTests\MirrativSitePluginTests.csproj", "{3F84B446-A643-4959-8D2A-3D24A5C8B677}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MirrativSitePluginTests", "Mcv.MirrativSitePluginTests\Mcv.MirrativSitePluginTests.csproj", "{3F84B446-A643-4959-8D2A-3D24A5C8B677}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhowatchIF", "WhowatchIF\WhowatchIF.csproj", "{5A83AFC8-E6CE-4DD2-8389-1F43A731388F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.WhowatchIF", "Mcv.WhowatchIF\Mcv.WhowatchIF.csproj", "{5A83AFC8-E6CE-4DD2-8389-1F43A731388F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YouTubeLiveIF", "YouTubeLiveIF\YouTubeLiveIF.csproj", "{83974E62-4D55-4E67-8F88-BBFF2222E5A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.YouTubeLiveIF", "Mcv.YouTubeLiveIF\Mcv.YouTubeLiveIF.csproj", "{83974E62-4D55-4E67-8F88-BBFF2222E5A1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YouTubeLiveSitePlugin", "YouTubeLiveSitePlugin\YouTubeLiveSitePlugin.csproj", "{D3FD476C-9801-4861-8FA1-C3D57FF30C83}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.YouTubeLiveSitePlugin", "Mcv.YouTubeLiveSitePlugin\Mcv.YouTubeLiveSitePlugin.csproj", "{D3FD476C-9801-4861-8FA1-C3D57FF30C83}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YouTubeLiveSitePluginTests", "YouTubeLiveSitePluginTests\YouTubeLiveSitePluginTests.csproj", "{A39D3546-FB5F-41FC-AAE0-2AC1B5C61ECF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.YouTubeLiveSitePluginTests", "Mcv.YouTubeLiveSitePluginTests\Mcv.YouTubeLiveSitePluginTests.csproj", "{A39D3546-FB5F-41FC-AAE0-2AC1B5C61ECF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhowatchSitePlugin", "WhowatchSitePlugin\WhowatchSitePlugin.csproj", "{92BDC986-1D50-48A3-9A94-5A94A285C53D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.WhowatchSitePlugin", "Mcv.WhowatchSitePlugin\Mcv.WhowatchSitePlugin.csproj", "{92BDC986-1D50-48A3-9A94-5A94A285C53D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhowatchSitePluginTests", "WhowatchSitePluginTests\WhowatchSitePluginTests.csproj", "{4098E8D6-7954-4B24-96C9-1CFC6BC8A654}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.WhowatchSitePluginTests", "Mcv.WhowatchSitePluginTests\Mcv.WhowatchSitePluginTests.csproj", "{4098E8D6-7954-4B24-96C9-1CFC6BC8A654}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenrecSitePlugin", "OpenrecSitePlugin\OpenrecSitePlugin.csproj", "{B56F2F0D-197A-4A29-A29A-1F92ECD81902}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.OpenrecSitePlugin", "Mcv.OpenrecSitePlugin\Mcv.OpenrecSitePlugin.csproj", "{B56F2F0D-197A-4A29-A29A-1F92ECD81902}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenrecSitePluginTests", "OpenrecSitePluginTests\OpenrecSitePluginTests.csproj", "{8C6AB9F7-E1C9-4B2A-9F17-E51E32EA43CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.OpenrecSitePluginTests", "Mcv.OpenrecSitePluginTests\Mcv.OpenrecSitePluginTests.csproj", "{8C6AB9F7-E1C9-4B2A-9F17-E51E32EA43CC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwitchIF", "TwitchIF\TwitchIF.csproj", "{AA70074D-1C40-4CC0-9E1C-7ACDCBDD7D32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.TwitchIF", "Mcv.TwitchIF\Mcv.TwitchIF.csproj", "{AA70074D-1C40-4CC0-9E1C-7ACDCBDD7D32}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenrecIF", "OpenrecIF\OpenrecIF.csproj", "{02A55625-E735-4909-A470-E8405EEE1A32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.OpenrecIF", "Mcv.OpenrecIF\Mcv.OpenrecIF.csproj", "{02A55625-E735-4909-A470-E8405EEE1A32}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NicoLiveIF", "NicoLiveIF\NicoLiveIF.csproj", "{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.NicoLiveIF", "Mcv.NicoLiveIF\Mcv.NicoLiveIF.csproj", "{DAF5E126-C37F-4181-AAE5-89E8FC89AAE4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwicasIF", "TwicasIF\TwicasIF.csproj", "{4DA33B17-792D-44D7-93F6-D0561788676D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.TwicasIF", "Mcv.TwicasIF\Mcv.TwicasIF.csproj", "{4DA33B17-792D-44D7-93F6-D0561788676D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShowRoomSitePlugin", "ShowRoomSitePlugin\ShowRoomSitePlugin.csproj", "{3CB5F930-60CA-4430-8B79-3106868A7F51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.ShowRoomSitePlugin", "Mcv.ShowRoomSitePlugin\Mcv.ShowRoomSitePlugin.csproj", "{3CB5F930-60CA-4430-8B79-3106868A7F51}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShowRoomIF", "ShowRoomIF\ShowRoomIF.csproj", "{9D866A6C-39D6-470A-A25D-F704A2A28A23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.ShowRoomIF", "Mcv.ShowRoomIF\Mcv.ShowRoomIF.csproj", "{9D866A6C-39D6-470A-A25D-F704A2A28A23}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShowRoomSitePluginTests", "ShowRoomSitePluginTests\ShowRoomSitePluginTests.csproj", "{AFC8CDCD-02E7-4517-8A8B-3623B913F6C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.ShowRoomSitePluginTests", "Mcv.ShowRoomSitePluginTests\Mcv.ShowRoomSitePluginTests.csproj", "{AFC8CDCD-02E7-4517-8A8B-3623B913F6C7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MildomSitePlugin", "MildomSitePlugin\MildomSitePlugin.csproj", "{991729D3-3CE5-4B4E-B48F-90DD196DC0E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MildomSitePlugin", "Mcv.MildomSitePlugin\Mcv.MildomSitePlugin.csproj", "{991729D3-3CE5-4B4E-B48F-90DD196DC0E4}"
 	ProjectSection(ProjectDependencies) = postProject
 		{28D2A140-48CB-45D0-BE28-A394BB56187C} = {28D2A140-48CB-45D0-BE28-A394BB56187C}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MildomIF", "MildomIF\MildomIF.csproj", "{FD868431-6667-4394-89DF-44764AAFCAE5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MildomIF", "Mcv.MildomIF\Mcv.MildomIF.csproj", "{FD868431-6667-4394-89DF-44764AAFCAE5}"
 	ProjectSection(ProjectDependencies) = postProject
 		{28D2A140-48CB-45D0-BE28-A394BB56187C} = {28D2A140-48CB-45D0-BE28-A394BB56187C}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MildomSitePluginTests", "MildomSitePluginTests\MildomSitePluginTests.csproj", "{F4E9C5B4-F2C4-4FFA-A2ED-65CF9B7EB8CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MildomSitePluginTests", "Mcv.MildomSitePluginTests\Mcv.MildomSitePluginTests.csproj", "{F4E9C5B4-F2C4-4FFA-A2ED-65CF9B7EB8CB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigoIF", "BigoIF\BigoIF.csproj", "{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.BigoIF", "Mcv.BigoIF\Mcv.BigoIF.csproj", "{6E6AED10-D8E4-4C61-A26A-CB063EBDBE2A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigoSitePlugin", "BigoSitePlugin\BigoSitePlugin.csproj", "{A1A18F87-CC82-480D-9902-99E5BA1A5551}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.BigoSitePlugin", "Mcv.BigoSitePlugin\Mcv.BigoSitePlugin.csproj", "{A1A18F87-CC82-480D-9902-99E5BA1A5551}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigoSitePluginTests", "BigoSitePluginTests\BigoSitePluginTests.csproj", "{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.BigoSitePluginTests", "Mcv.BigoSitePluginTests\Mcv.BigoSitePluginTests.csproj", "{BBFBB5E0-BCCF-41EF-B650-AFC9774C0D5D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NicoSitePlugin", "NicoSitePlugin\NicoSitePlugin.csproj", "{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.NicoSitePlugin", "Mcv.NicoSitePlugin\Mcv.NicoSitePlugin.csproj", "{D29602F8-B7D7-440F-AF04-4FEF74A2EFCB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MixchIF", "MixchIF\MixchIF.csproj", "{06C52FBC-C9F9-4E80-8064-79F5D242ED95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MixchIF", "Mcv.MixchIF\Mcv.MixchIF.csproj", "{06C52FBC-C9F9-4E80-8064-79F5D242ED95}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MixchSitePlugin", "MixchSitePlugin\MixchSitePlugin.csproj", "{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mcv.MixchSitePlugin", "Mcv.MixchSitePlugin\Mcv.MixchSitePlugin.csproj", "{2528F495-6AEA-4D85-9F25-783BC8D6D4A6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YouTubeLiveMessageParser", "YouTubeLiveMessageParser\YouTubeLiveMessageParser\YouTubeLiveMessageParser.csproj", "{130F34E8-5231-476B-B1AA-4D92E277E32A}"
 EndProject

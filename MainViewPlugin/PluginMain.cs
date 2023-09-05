@@ -30,7 +30,7 @@ namespace Mcv.MainViewPlugin
         }
         private MainWindow _v;
 
-        public async Task SetMessage(INotifyMessageV2 message)
+        public async Task SetMessageAsync(INotifyMessageV2 message)
         {
             if (_adapter == null)
             {
@@ -117,7 +117,7 @@ namespace Mcv.MainViewPlugin
             }
         }
 
-        public async Task SetMessage(ISetMessageToPluginV2 message)
+        public async Task SetMessageAsync(ISetMessageToPluginV2 message)
         {
             switch (message)
             {
@@ -153,7 +153,7 @@ namespace Mcv.MainViewPlugin
             }
         }
 
-        public Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message)
+        public Task<IReplyMessageToPluginV2> RequestMessageAsync(IGetMessageToPluginV2 message)
         {
             throw new NotImplementedException();
         }

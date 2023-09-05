@@ -75,7 +75,7 @@ namespace TwitchSitePlugin.V2
         public string Name { get; } = "TwitchSitePlugin";
         public List<string> Roles { get; } = new List<string> { "site:twitch" };
         TwitchSiteContext _context;
-        public async Task SetMessage(ISetMessageToPluginV2 message)
+        public async Task SetMessageAsync(ISetMessageToPluginV2 message)
         {
             switch (message)
             {
@@ -152,11 +152,11 @@ namespace TwitchSitePlugin.V2
         private readonly Dictionary<ConnectionId, Task> _connectionTaskDict = new();
         private readonly Dictionary<ConnectionId, CommentProviderWrapper> _connDict = new();
 
-        public async Task SetMessage(INotifyMessageV2 message)
+        public async Task SetMessageAsync(INotifyMessageV2 message)
         {
         }
 
-        public async Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message)
+        public async Task<IReplyMessageToPluginV2> RequestMessageAsync(IGetMessageToPluginV2 message)
         {
             switch (message)
             {

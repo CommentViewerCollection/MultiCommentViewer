@@ -80,7 +80,7 @@ namespace NicoSitePlugin.V2
             var res = await Host.RequestMessageAsync(new GetUserAgent()) as ReplyUserAgent;
             return res.UserAgent;
         }
-        public async Task SetMessage(ISetMessageToPluginV2 message)
+        public async Task SetMessageAsync(ISetMessageToPluginV2 message)
         {
             switch (message)
             {
@@ -158,11 +158,11 @@ namespace NicoSitePlugin.V2
         private readonly Dictionary<ConnectionId, Task> _connectionTaskDict = new();
         private readonly Dictionary<ConnectionId, CommentProviderWrapper> _connDict = new Dictionary<ConnectionId, CommentProviderWrapper>();
 
-        public async Task SetMessage(INotifyMessageV2 message)
+        public async Task SetMessageAsync(INotifyMessageV2 message)
         {
         }
 
-        public async Task<IReplyMessageToPluginV2> RequestMessage(IGetMessageToPluginV2 message)
+        public async Task<IReplyMessageToPluginV2> RequestMessageAsync(IGetMessageToPluginV2 message)
         {
             switch (message)
             {

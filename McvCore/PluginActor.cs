@@ -1,8 +1,8 @@
 ﻿using Akka.Actor;
 using Mcv.PluginV2;
-using McvCore.PluginActorMessages;
+using Mcv.Core.PluginActorMessages;
 
-namespace McvCore;
+namespace Mcv.Core;
 
 class PluginActor : ReceiveActor
 {

@@ -1,7 +1,7 @@
 ﻿using Mcv.PluginV2;
 using System.Collections.Generic;
 
-namespace McvCore;
+namespace Mcv.Core;
 
 class UserCommentCountManager
 {

@@ -1,127 +1,118 @@
-﻿using Mcv.Core;
+﻿using Akka.Actor;
+using Mcv.Core;
+using Mcv.Core.CoreActorMessages;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using System.Diagnostics;
-using Akka.Actor;
 
-namespace McvCore
+namespace Mcv.Core;
+
+class Program
 {
-    class McvCore
+    [STAThread]
+    static void Main()
     {
-        private readonly McvCoreActor _actor;
-
-        public McvCore(McvCoreActor actor)
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        var app = new AppNoStartupUri
         {
-            _actor = actor;
+            ShutdownMode = ShutdownMode.OnExplicitShutdown
+        };
+        app.InitializeComponent();
+        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
+
+        var p = new Program();
+        p.ExitRequested += (sender, e) =>
+        {
+            app.Shutdown();
+        };
+
+        //pluginsディレクトリが無ければ作成する
+        Directory.CreateDirectory("plugins");
+
+        //settingsディレクトリが無ければ作成する
+        Directory.CreateDirectory("settings");
+
+        var actorSystem = ActorSystem.Create("mcv");
+        var deadletterWatchMonitorProps = Props.Create(() => new DeadletterMonitor());
+        var deadletterWatchActorRef = actorSystem.ActorOf(deadletterWatchMonitorProps, "DeadLetterMonitoringActor");
+        actorSystem.EventStream.Subscribe(deadletterWatchActorRef, typeof(Akka.Event.DeadLetter));
+
+        var monitorActor = actorSystem.ActorOf<UnhandledMessagesMonitorActor>();
+        actorSystem.EventStream.Subscribe(monitorActor, typeof(Akka.Event.UnhandledMessage));
+
+        var actor = actorSystem.ActorOf(McvCoreActor.Props(), "coreActor");
+
+
+        var t = actorSystem.WhenTerminated;
+        Handle(t).ContinueWith(t => app.Shutdown());
+        actor.Tell(new Initialize());
+
+        ////if (!core.Initialize())
+        ////{
+        ////    return;
+        ////}
+        //var task = a.RunAsync();
+        //Handle(task);
+        app.Run();
+    }
+
+    static async Task Handle(Task task)
+    {
+        try
+        {
+            await Task.Yield();
+            await task;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
         }
     }
-    class Program
+
+    public event EventHandler<EventArgs>? ExitRequested;
+    void ViewModel_CloseRequested(object sender, EventArgs e)
     {
-        [STAThread]
-        static void Main()
-        {
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            var app = new AppNoStartupUri
-            {
-                ShutdownMode = ShutdownMode.OnExplicitShutdown
-            };
-            app.InitializeComponent();
-            SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
-
-            var p = new Program();
-            p.ExitRequested += (sender, e) =>
-            {
-                app.Shutdown();
-            };
-
-            //pluginsディレクトリが無ければ作成する
-            Directory.CreateDirectory("plugins");
-
-            //settingsディレクトリが無ければ作成する
-            Directory.CreateDirectory("settings");
-
-            var actorSystem = ActorSystem.Create("mcv");
-            var deadletterWatchMonitorProps = Props.Create(() => new DeadletterMonitor());
-            var deadletterWatchActorRef = actorSystem.ActorOf(deadletterWatchMonitorProps, "DeadLetterMonitoringActor");
-            actorSystem.EventStream.Subscribe(deadletterWatchActorRef, typeof(Akka.Event.DeadLetter));
-
-            var monitorActor = actorSystem.ActorOf<UnhandledMessagesMonitorActor>();
-            actorSystem.EventStream.Subscribe(monitorActor, typeof(Akka.Event.UnhandledMessage));
-
-            var actor = actorSystem.ActorOf(McvCoreActor.Props(), "coreActor");
-
-
-            var t = actorSystem.WhenTerminated;
-            Handle(t).ContinueWith(t => app.Shutdown());
-            actor.Tell(new Initialize());
-
-            ////if (!core.Initialize())
-            ////{
-            ////    return;
-            ////}
-            //var task = a.RunAsync();
-            //Handle(task);
-            app.Run();
-        }
-
-        static async Task Handle(Task task)
-        {
-            try
-            {
-                await Task.Yield();
-                await task;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-        }
-
-        public event EventHandler<EventArgs>? ExitRequested;
-        void ViewModel_CloseRequested(object sender, EventArgs e)
-        {
-            OnExitRequested(EventArgs.Empty);
-        }
-
-        protected virtual void OnExitRequested(EventArgs e)
-        {
-            ExitRequested?.Invoke(this, e);
-        }
-        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            var ex = e.ExceptionObject as Exception;
-            if (ex is not null)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-
-        }
+        OnExitRequested(EventArgs.Empty);
     }
-    public class DeadletterMonitor : ReceiveActor
+
+    protected virtual void OnExitRequested(EventArgs e)
     {
-
-        public DeadletterMonitor()
-        {
-            Receive<Akka.Event.DeadLetter>(dl => HandleDeadletter(dl));
-        }
-
-        private void HandleDeadletter(Akka.Event.DeadLetter dl)
-        {
-            Debug.WriteLine($"DeadLetter captured: {dl.Message}, sender: {dl.Sender}, recipient: {dl.Recipient}");
-        }
+        ExitRequested?.Invoke(this, e);
     }
-    public class UnhandledMessagesMonitorActor : ReceiveActor
+    private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
-        public UnhandledMessagesMonitorActor()
+        var ex = e.ExceptionObject as Exception;
+        if (ex is not null)
         {
-            Receive<Akka.Event.UnhandledMessage>(m =>
-            {
-                Debug.WriteLine(m);
-            });
+            Debug.WriteLine(ex.Message);
         }
+
+    }
+}
+public class DeadletterMonitor : ReceiveActor
+{
+
+    public DeadletterMonitor()
+    {
+        Receive<Akka.Event.DeadLetter>(dl => HandleDeadletter(dl));
+    }
+
+    private void HandleDeadletter(Akka.Event.DeadLetter dl)
+    {
+        Debug.WriteLine($"DeadLetter captured: {dl.Message}, sender: {dl.Sender}, recipient: {dl.Recipient}");
+    }
+}
+public class UnhandledMessagesMonitorActor : ReceiveActor
+{
+    public UnhandledMessagesMonitorActor()
+    {
+        Receive<Akka.Event.UnhandledMessage>(m =>
+        {
+            Debug.WriteLine(m);
+        });
     }
 }

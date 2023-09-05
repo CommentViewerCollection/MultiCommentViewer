@@ -1,4 +1,4 @@
-﻿namespace McvCore;
+﻿namespace Mcv.Core;
 
 interface IMcvCoreOptions
 {

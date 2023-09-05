@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace McvCore
+namespace Mcv.Core
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace McvCore.V1;
+namespace Mcv.Core.V1;
 
 public interface IUserStoreManager
 {

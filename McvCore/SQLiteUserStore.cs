@@ -5,7 +5,7 @@ using System.Data.SQLite;
 using System.Diagnostics;
 using Mcv.PluginV2;
 
-namespace McvCore.V1
+namespace Mcv.Core.V1
 {
     public class SQLiteUserStore : IUserStore
     {

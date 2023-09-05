@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
 using Mcv.PluginV2;
 using Mcv.PluginV2.Messages;
-using McvCore.PluginActorMessages;
+using Mcv.Core.PluginActorMessages;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace McvCore;
+namespace Mcv.Core;
 class PluginManagerActor : ReceiveActor
 {
     private readonly ConcurrentDictionary<PluginId, IActorRef> _actorDict = new();

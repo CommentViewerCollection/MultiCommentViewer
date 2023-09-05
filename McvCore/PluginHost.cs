@@ -2,7 +2,7 @@
 using Mcv.PluginV2.Messages;
 using System.Threading.Tasks;
 
-namespace McvCore;
+namespace Mcv.Core;
 class PluginHost : IPluginHost
 {
     private readonly McvCoreActor _core;

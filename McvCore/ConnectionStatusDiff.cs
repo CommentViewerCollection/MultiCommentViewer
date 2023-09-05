@@ -1,6 +1,6 @@
 ﻿using Mcv.PluginV2;
 
-namespace McvCore;
+namespace Mcv.Core;
 
 class ConnectionStatusDiff : IConnectionStatusDiff
 {

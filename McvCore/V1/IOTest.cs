@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace McvCore.V1
+namespace Mcv.Core.V1
 {
     public class IOTest : IIo
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace McvCore.V1;
+namespace Mcv.Core.V1;
 
 public class UserStoreManager : IUserStoreManager
 {

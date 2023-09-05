@@ -20,6 +20,7 @@
     <Version>$(VersionPrefix)</Version>
     <AssemblyName>MultiCommentViewer</AssemblyName>
     <Nullable>enable</Nullable>
+    <RootNamespace>Mcv.Core</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>

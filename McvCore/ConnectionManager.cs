@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Mcv.PluginV2;
 using System.Linq;
 
-namespace McvCore;
+namespace Mcv.Core;
 
 class ConnectionAddedEventArgs : EventArgs
 {

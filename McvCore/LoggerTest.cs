@@ -7,7 +7,7 @@ using System.Net;
 using System.Diagnostics;
 using Mcv.PluginV2;
 
-namespace McvCore
+namespace Mcv.Core
 {
     public class LoggerTest : ILogger
     {

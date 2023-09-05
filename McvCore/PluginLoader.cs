@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using Mcv.PluginV2;
 
-namespace McvCore;
+namespace Mcv.Core;
 
 static class PluginLoader
 {

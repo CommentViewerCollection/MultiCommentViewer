@@ -42,7 +42,7 @@ namespace NicoSitePlugin
                 return;
             }
             _isFirstConnection = true;
-        reload:
+reload:
             _isDisconnectedExpected = false;
             _disconnectCts = new CancellationTokenSource();
             try
@@ -83,7 +83,7 @@ namespace NicoSitePlugin
         }
         private async Task<string> GetChannelLiveId(ChannelUrl channelUrl)
         {
-        check:
+check:
             var currentLiveId = await Api.GetCurrentChannelLiveId(_server, channelUrl.ChannelScreenName);
             if (currentLiveId != null)
             {
@@ -101,7 +101,7 @@ namespace NicoSitePlugin
         }
         private async Task<string> GetCommunityLiveId(CommunityUrl communityUrl, CookieContainer cc)
         {
-        check:
+check:
             var currentLiveId = await Api.GetCurrentCommunityLiveId(_server, communityUrl.CommunityId, cc);
             if (currentLiveId != null)
             {
@@ -135,7 +135,7 @@ namespace NicoSitePlugin
             {
                 vid = await GetCommunityLiveId(communityUrl, cc);
             }
-            else if(input is LiveId liveId)
+            else if (input is LiveId liveId)
             {
                 vid = liveId.Raw;
             }
@@ -417,17 +417,6 @@ namespace NicoSitePlugin
                             {
                                 _chatProvider?.Disconnect();
                             }
-                            string username;
-                            if (IsRawUserId(chat.UserId) && chat.UserId != SystemUserId && _siteOptions.IsAutoGetUsername)
-                            {
-                                var userInfo = await Api.GetUserInfo(_server, _cc, chat.UserId);
-                                username = userInfo.Nickname;
-                                user.Name = Common.MessagePartFactory.CreateMessageItems(username);
-                            }
-                            else
-                            {
-                                username = null;
-                            }
                             if (_siteOptions.IsAutoSetNickname)
                             {
                                 var nick = SitePluginCommon.Utils.ExtractNickname(chat.Content);
@@ -444,7 +433,7 @@ namespace NicoSitePlugin
                                 PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
                                 Text = chat.Content,
                                 UserId = chat.UserId,
-                                UserName = username,
+                                UserName = null,
                             };
                             comment = abc;
                             metadata = new CommentMessageMetadata(abc, _options, _siteOptions, user, this, isFirstComment)

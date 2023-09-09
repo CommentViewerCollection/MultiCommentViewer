@@ -24,23 +24,6 @@ namespace NicoSitePlugin
     }
     static class Api
     {
-        public static async Task<UserInfo> GetUserInfo(IDataSource server, CookieContainer cc, string userId)
-        {
-            var url = $"https://public.api.nicovideo.jp/v1/users.json?userIds={userId}";
-            var res = await server.GetAsync(url, cc);
-            var obj = JsonConvert.DeserializeObject<NicoSitePlugin2.Low.UserInfo.RootObject>(res);
-            if (obj.Data.Length == 0)
-            {
-                throw new ArgumentException("指定されたuserIdは存在しない:" + userId);
-            }
-            var data = obj.Data[0];
-            var userInfo = new UserInfo
-            {
-                Nickname = data.Nickname,
-                UserIconUrl = data.Icons.Urls.The150X150,
-            };
-            return userInfo;
-        }
         public static async Task<CommunityLiveInfo[]> GetCommunityLives(IDataSource server, CookieContainer cc, string communityId)
         {
             //以下のAPIだとON_AIRだけ取れる。

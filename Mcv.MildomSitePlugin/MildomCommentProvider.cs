@@ -93,6 +93,14 @@ namespace MildomSitePlugin
             //p2.Master = p1;
             try
             {
+                if (cookies.Count == 0)
+                {
+                    //何らかの理由でブラウザからCookieが取れなかった場合にCookieを自前で用意する。
+                    //Cookieが全くないとコメントが取れない。恐らくguest_idが空欄になるから。
+                    var _ = await _server.GetAsync($"https://cloudac-cf-jp.mildom.com/nonolive/gappserv/guest/h5init?timestamp={DateTime.UtcNow:yyyy-MM-ddTHH%3Amm%3Ass.fffZ}&__guest_id=&__location=Japan%7CTokyo&__country=Japan&__cluster=aws_japan&__pcv=v4.9.68&__platform=web&__la=ja&sfr=pc&accessToken=", new Dictionary<string, string>(), cc);
+                    var ccc = Tools.ExtractCookies(cc);
+                    cookies.AddRange(ccc);
+                }
                 var dummy = new DummyImpl(_server, input, cookies, _logger, _siteOptions, p1);//, p2);
                 var connectionManager = new ConnectionManager(_logger);
                 _autoReconnector = new NewAutoReconnector(connectionManager, dummy, new MessageUntara(), _logger);

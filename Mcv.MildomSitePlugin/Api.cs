@@ -1,4 +1,4 @@
-﻿using Codeplex.Data;
+﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -11,9 +11,13 @@ namespace MildomSitePlugin
         {
             var url = $"https://cloudac.mildom.com/nonolive/gappserv/emotion/getListV1?room_id={room_id}&__platform=web";
             var res = await server.GetAsync(url, new Dictionary<string, string>());
-            var d = DynamicJson.Parse(res);
+            dynamic? d = JsonConvert.DeserializeObject(res);
             var dict = new Dictionary<int, string>();
-            if ((int)d == 0)
+            if (d is null)
+            {
+                return dict;
+            }
+            if ((int)d.code == 0)
             {
                 const string urlPrefix = "https://res.mildom.com/download/file/";
                 var obj = Tools.Deserialize<Low.emotions.RootObject>(res);

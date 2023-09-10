@@ -1,8 +1,10 @@
 ﻿using Mcv.PluginV2;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -10,6 +12,39 @@ namespace MildomSitePlugin
 {
     static class Tools
     {
+        public static List<Cookie> ExtractCookies(CookieContainer container)
+        {
+            var cookies = new List<Cookie>();
+
+            var table = (Hashtable)container.GetType().InvokeMember("m_domainTable",
+                                                                    BindingFlags.NonPublic |
+                                                                    BindingFlags.GetField |
+                                                                    BindingFlags.Instance,
+                                                                    null,
+                                                                    container,
+                                                                    new object[] { })!;
+
+            foreach (var key in table.Keys)
+            {
+                if (key is not string domain)
+                    continue;
+
+                if (domain.StartsWith("."))
+                    domain = domain[1..];
+
+                var address = string.Format("http://{0}/", domain);
+
+                if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out Uri? uri) == false)
+                    continue;
+
+                foreach (Cookie cookie in container.GetCookies(uri))
+                {
+                    cookies.Add(cookie);
+                }
+            }
+
+            return cookies;
+        }
         public static IMyUserInfo GetUserInfoFromCookie(List<Cookie> cookies)
         {
             if (cookies.Exists(item => item.Name == "user"))

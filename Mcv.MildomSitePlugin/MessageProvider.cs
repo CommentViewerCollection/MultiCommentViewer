@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Codeplex.Data;
 using Mcv.PluginV2;
 using Mcv.PluginV2.AutoReconnection;
+using Newtonsoft.Json;
 
 namespace MildomSitePlugin
 {
@@ -40,12 +40,12 @@ namespace MildomSitePlugin
         {
             IInternalMessage internalMessage;
             //{"area": 2000, "cmd": "onChat", "fansBgPic": null, "fansGroupType": null, "fansLevel": null, "fansName": null, "level": 7, "medals": null, "msg": "うめえぇぇえ", "reqId": 0, "roomAdmin": 0, "roomId": 10038336, "toId": 10038336, "toName": "Nephrite【ネフライト】", "type": 3, "userId": 10088625, "userImg": "https://vpic.mildom.com/download/file/jp/mildom/nnphotos/10088625/5F0AB42E-8BF4-4A3A-9E70-FC6A9A49AAF0.jpg", "userName": "FSｰSavage"}
-            var messageItems = PlainTextToCommentAndStamp(imageDict, d.msg);
+            var messageItems = PlainTextToCommentAndStamp(imageDict, (string)d.msg);
             //2020/08/27 userIdの無いコメントを確認。ゲストユーザでもコメント投稿できるのだろうか？定型文だけ？
             //{"area": 2000, "cmd": "onChat", "msg": "よくやった", "msgId": "1598498460835_0_8192", "reqId": 0, "roomId": 10007428, "time": "1598498460835", "toId": 10007428, "toName": "*", "type": 3, "userName": "guest737168"}
             //2020/08/29 onAddでは匿名ユーザーのユーザーIDは0になっている。統一したい。
             string userId;
-            if (d.IsDefined("userId"))
+            if (d.ContainsKey("userId"))
             {
                 userId = ((long)d.userId).ToString();
             }
@@ -56,7 +56,7 @@ namespace MildomSitePlugin
             }
             //userIdが無い場合はuserImgも無さそう。
             string userImg;
-            if (d.IsDefined("userImg"))
+            if (d.ContainsKey("userImg"))
             {
                 userImg = d.userImg;
             }
@@ -188,8 +188,16 @@ namespace MildomSitePlugin
         public static IInternalMessage Parse(string raw, Dictionary<int, string> imageDict)
         {
             IInternalMessage internalMessage;
-            var d = DynamicJson.Parse(raw);
-            switch (d.cmd)
+            dynamic? d = JsonConvert.DeserializeObject(raw);
+            if (d is null)
+            {
+                return new UnknownMessage(raw);
+            }
+            if (!d.ContainsKey("cmd"))
+            {
+                return new UnknownMessage(raw);
+            }
+            switch ((string)d.cmd)
             {
                 case "enterRoom":
                     //{"admin": 0, "cmd": "enterRoom", "fobiddenGlobal": 0, "forbidden": 0, "reqId": 1, "rst": 0, "type": 2, "userCount": 239}
@@ -382,6 +390,7 @@ namespace MildomSitePlugin
             {
                 var guestInfo = (AnonymousUserInfo)MyInfo;
                 var msg = CreateFirstMessage(RoomId, guestInfo.GuestName, guestInfo.GuestId);
+                //var msg = "{\"userId\":0,\"level\":1,\"userName\":\"guest376035\",\"gareaArgsObj\":{\"source\":\"others\",\"sub_source\":\"\"},\"guestId\":\"pc-gp-54330fc4-d665-4435-a9cf-4444294f460b\",\"nonopara\":\"fr=web`sfr=pc`devi=Windows 10 64-bit`la=ja`gid=pc-gp-54330fc4-d665-4435-a9cf-4444294f460b`na=Japan`loc=Japan|Kanagawa`clu=aws_japan`wh=1920*1080`rtm=2023-09-10T12:23:35.857Z`ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36`click_time=`pcv=v4.9.68`__pcv=v4.9.68`source=others`room_id=13443210`live_id=13443210-cjupul4b8i5mo3daa430`live_status=live`live_content_type=Gen_shin_PC\",\"roomId\":13443210,\"reqId\":1,\"cmd\":\"enterRoom\",\"reConnect\":0,\"notifyObj\":{}}";
                 var bytes = InternalMessage.InternalMessageParser.EnctyptMessage(msg);
                 await _webSocket.SendAsync(bytes);
 

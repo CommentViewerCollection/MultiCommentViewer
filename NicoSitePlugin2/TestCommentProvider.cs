@@ -273,6 +273,15 @@ check:
             throw new NotImplementedException();
         }
         private const string SystemUserId = "900000000";
+        private static string? GetThumbnail(string userId)
+        {
+            if (long.TryParse(userId, out var userIdNum))
+            {
+                var k = userIdNum / 10000;
+                return $"https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/{k}/{userId}.jpg";
+            }
+            return null;
+        }
         private async Task ProcessChatMessageAsync(Chat.IChatMessage message)
         {
             switch (message)
@@ -297,6 +306,7 @@ check:
                             _userCommentCountDict.AddOrUpdate(userId, 1, (s, n) => n);
                             isFirstComment = true;
                         }
+                        var thumbNailUrl = GetThumbnail(userId);
                         //var comment = await Tools.CreateNicoComment(chat, user, _siteOptions, roomName, async userid => await API.GetUserInfo(_dataSource, userid), _logger);
                         INicoMessage comment;
                         INicoMessageMetadata metadata;
@@ -433,7 +443,8 @@ check:
                                 PostedAt = Common.UnixTimeConverter.FromUnixTime(chat.Date),
                                 Text = chat.Content,
                                 UserId = chat.UserId,
-                                UserName = null,
+                                UserName = chat.Name,
+                                ThumbnailUrl = thumbNailUrl,
                             };
                             comment = abc;
                             metadata = new CommentMessageMetadata(abc, _options, _siteOptions, user, this, isFirstComment)

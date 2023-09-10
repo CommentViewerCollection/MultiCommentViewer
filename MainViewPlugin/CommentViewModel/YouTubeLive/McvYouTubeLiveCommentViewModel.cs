@@ -1,4 +1,5 @@
 ﻿using Mcv.PluginV2;
+using Mcv.YouTubeLiveSitePlugin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -96,7 +97,7 @@ class McvYouTubeLiveCommentViewModel : IMcvCommentViewModel
             SetNickname(user);
         }
     }
-    public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveComment comment, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
+    public McvYouTubeLiveCommentViewModel(IYouTubeLiveComment comment, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
         : this(connName, options, user)
     {
         _message = comment;
@@ -120,7 +121,7 @@ class McvYouTubeLiveCommentViewModel : IMcvCommentViewModel
             }
         };
     }
-    public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveSuperchat item, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
+    public McvYouTubeLiveCommentViewModel(IYouTubeLiveSuperchat item, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
         : this(connName, options, user)
     {
         var comment = item;
@@ -141,7 +142,7 @@ class McvYouTubeLiveCommentViewModel : IMcvCommentViewModel
         Id = comment.Id;
         PostTime = comment.PostedAt.ToString("HH:mm:ss");
     }
-    public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLivePaidSticker sticker, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
+    public McvYouTubeLiveCommentViewModel(IYouTubeLivePaidSticker sticker, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
         : this(connName, options, user)
     {
         _message = sticker;
@@ -163,7 +164,7 @@ class McvYouTubeLiveCommentViewModel : IMcvCommentViewModel
         Id = sticker.Id;
         PostTime = sticker.PostedAt.ToString("HH:mm:ss");
     }
-    public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveSponsorshipsGiftPurchaseAnnouncement sticker, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
+    public McvYouTubeLiveCommentViewModel(IYouTubeLiveSponsorshipsGiftPurchaseAnnouncement sticker, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
         : this(connName, options, user)
     {
         _message = sticker;
@@ -178,7 +179,7 @@ class McvYouTubeLiveCommentViewModel : IMcvCommentViewModel
         Id = sticker.Id;
         PostTime = sticker.PostedAt.ToString("HH:mm:ss");
     }
-    public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveMembership comment, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
+    public McvYouTubeLiveCommentViewModel(IYouTubeLiveMembership comment, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
         : this(connName, options, user)
     {
         _message = comment;
@@ -212,13 +213,13 @@ class McvYouTubeLiveCommentViewModel : IMcvCommentViewModel
             Info = "メンバーシップメッセージ";
         }
     }
-    public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveConnected connected, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
+    public McvYouTubeLiveCommentViewModel(IYouTubeLiveConnected connected, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
         : this(connName, options, user)
     {
         _message = connected;
         MessageItems = MessagePartFactory.CreateMessageItems(connected.Text);
     }
-    public McvYouTubeLiveCommentViewModel(YouTubeLiveSitePlugin.IYouTubeLiveDisconnected disconnected, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
+    public McvYouTubeLiveCommentViewModel(IYouTubeLiveDisconnected disconnected, ConnectionName connName, IMainViewPluginOptions options, MyUser? user)
         : this(connName, options, user)
     {
         _message = disconnected;

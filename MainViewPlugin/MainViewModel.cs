@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using Mcv.PluginV2;
-using Mcv.YouTubeLiveSitePlugin;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,10 +14,14 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using TwitchSitePlugin;
 
 namespace Mcv.MainViewPlugin
 {
+    interface ILiveSiteMessageProcessor
+    {
+        bool IsValidMessage(ISiteMessage message);
+        IMcvCommentViewModel? CreateViewModel(ISiteMessage message, ConnectionName connName, IMainViewPluginOptions options, MyUser? user);
+    }
     interface IConnectionNameHost : INotifyPropertyChanged
     {
         Task<string> GetConnectionName(ConnectionId connId);
@@ -1028,50 +1031,32 @@ namespace Mcv.MainViewPlugin
 
             public event PropertyChangedEventHandler? PropertyChanged;
         }
+        readonly List<ILiveSiteMessageProcessor> _siteMessageProcessor = new()
+        {
+            new YouTubeMessageProcessor(),
+            new TwitchMessageProcessor(),
+            new BigoMessageProcessor(),
+            new MildomMessageProcessor(),
+            new MirrativMessageProcessor(),
+            new NicoLiveMessageProcessor(),
+            new MixchMessageProcessor(),
+            new OpenrecMessageProcessor(),
+            new ShowRoomMessageProcessor(),
+            new TwicasMessageProcessor(),
+            new WhowatchMessageProcessor(),
+        };
         private void OnMessageReceived(ConnectionId connectionId, ISiteMessage message, MyUser? user)
         {
             var connection = _connDict[connectionId];
             var connName = _connNameDict[connectionId];
 
-            IMcvCommentViewModel vm = null;
-            if (message is IYouTubeLiveMessage ytMessage)
+            IMcvCommentViewModel? vm = null;
+            foreach (var site in _siteMessageProcessor)
             {
-                switch (ytMessage)
+                if (site.IsValidMessage(message))
                 {
-                    case IYouTubeLiveComment ytComment:
-                        vm = new McvYouTubeLiveCommentViewModel(ytComment, connName, _adapter.Options, user);
-                        break;
-                    case IYouTubeLiveSuperchat ytSuperChat:
-                        vm = new McvYouTubeLiveCommentViewModel(ytSuperChat, connName, _adapter.Options, user);
-                        break;
-                    case IYouTubeLivePaidSticker ytPaidSticker:
-                        vm = new McvYouTubeLiveCommentViewModel(ytPaidSticker, connName, _adapter.Options, user);
-                        break;
-                    case IYouTubeLiveSponsorshipsGiftPurchaseAnnouncement ytSponsorGift:
-                        vm = new McvYouTubeLiveCommentViewModel(ytSponsorGift, connName, _adapter.Options, user);
-                        break;
-                    case IYouTubeLiveMembership ytMembership:
-                        vm = new McvYouTubeLiveCommentViewModel(ytMembership, connName, _adapter.Options, user);
-                        break;
-                    case IYouTubeLiveConnected ytConnected:
-                        vm = new McvYouTubeLiveCommentViewModel(ytConnected, connName, _adapter.Options, user);
-                        break;
-                    case IYouTubeLiveDisconnected ytDisconnected:
-                        vm = new McvYouTubeLiveCommentViewModel(ytDisconnected, connName, _adapter.Options, user);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (message is ITwitchMessage twitchMessage)
-            {
-                switch (twitchMessage)
-                {
-                    case ITwitchComment twitchComment:
-                        vm = new McvTwitchCommentViewModel(twitchComment, connName, _adapter.Options, user);
-                        break;
-                    default:
-                        break;
+                    vm = site.CreateViewModel(message, connName, _adapter.Options, user);
+                    break;
                 }
             }
             if (vm != null)

@@ -263,6 +263,15 @@ check:
             throw new NotImplementedException();
         }
         private const string SystemUserId = "900000000";
+        private static string? GetThumbnail(string userId)
+        {
+            if (long.TryParse(userId, out var userIdNum))
+            {
+                var k = userIdNum / 10000;
+                return $"https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/{k}/{userId}.jpg";
+            }
+            return null;
+        }
         private async Task ProcessChatMessageAsync(Chat.IChatMessage message)
         {
             switch (message)
@@ -276,6 +285,7 @@ check:
                         }
                         var userId = chat.UserId;
                         string? newNickname = null;
+                        var thumbNailUrl = GetThumbnail(userId);
                         //var comment = await Tools.CreateNicoComment(chat, user, _siteOptions, roomName, async userid => await API.GetUserInfo(_dataSource, userid), _logger);
                         INicoMessage comment;
                         if (IsAd(chat))
@@ -370,16 +380,6 @@ check:
                             {
                                 _chatProvider?.Disconnect();
                             }
-                            string username;
-                            if (IsRawUserId(chat.UserId) && chat.UserId != SystemUserId && _siteOptions.IsAutoGetUsername)
-                            {
-                                var userInfo = await Api.GetUserInfo(_server, _cc, chat.UserId);
-                                username = userInfo.Nickname;
-                            }
-                            else
-                            {
-                                username = null;
-                            }
                             if (_siteOptions.IsAutoSetNickname)
                             {
                                 var nick = Utils.ExtractNickname(chat.Content);
@@ -396,7 +396,8 @@ check:
                                 PostedAt = UnixTimeConverter.FromUnixTime(chat.Date),
                                 Text = chat.Content,
                                 UserId = chat.UserId,
-                                UserName = username,
+                                UserName = chat.Name,
+                                ThumbnailUrl = thumbNailUrl,
                             };
                             comment = abc;
                         }

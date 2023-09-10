@@ -14,6 +14,7 @@ namespace NicoSitePlugin.Chat
         public int Anonymity { get; }
         public int Premium { get; }
         public string Content { get; }
+        public string? Name { get; }
         public string Raw { get; }
         public ChatMessage(string json)
         {
@@ -31,6 +32,10 @@ namespace NicoSitePlugin.Chat
             if (d.chat.ContainsKey("anonymity"))
             {
                 Anonymity = (int)d.chat.anonymity;
+            }
+            if (d.chat.ContainsKey("name"))
+            {
+                Name = (string)d.chat.name;
             }
             if (d.chat.ContainsKey("premium"))
             {

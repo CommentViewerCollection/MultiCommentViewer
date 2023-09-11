@@ -73,7 +73,7 @@ class McvCoreActor : ReceiveActor
     public McvCoreActor()
     {
         var io = new IOTest();
-        _pluginManager = Context.ActorOf(PluginManagerActor.Props().WithDispatcher("akka.actor.synchronized-dispatcher"));
+        _pluginManager = Context.ActorOf(PluginManagerActor.Props());
 
         _connManager = new ConnectionManager();
         _connManager.ConnectionAdded += ConnManager_ConnectionAdded;
@@ -91,12 +91,12 @@ class McvCoreActor : ReceiveActor
 
     private void ConnManager_ConnectionRemoved(object? sender, ConnectionRemovedEventArgs e)
     {
-        SetMessageToPluginManager(new PluginV2.Messages.NotifyConnectionRemoved(e.ConnId));
+        SetMessageToPluginManager(new NotifyConnectionRemoved(e.ConnId));
     }
 
     private void ConnManager_ConnectionStatusChanged(object? sender, ConnectionStatusChangedEventArgs e)
     {
-        SetMessageToPluginManager(new PluginV2.Messages.NotifyConnectionStatusChanged(e.ConnStDiff));
+        SetMessageToPluginManager(new NotifyConnectionStatusChanged(e.ConnStDiff));
     }
 
     internal async Task SetMessageAsync(ISetMessageToCoreV2 m)
@@ -206,7 +206,7 @@ class McvCoreActor : ReceiveActor
                 SetMessageToPluginManager(new NotifyConnectionStatusChanged(new ConnectionStatusDiff(connected.ConnId) { CanConnect = false, CanDisconnect = true }));
                 break;
             case NotifySiteDisconnected disconnected:
-                SetMessageToPluginManager(new PluginV2.Messages.NotifyConnectionStatusChanged(new ConnectionStatusDiff(disconnected.ConnId) { CanConnect = true, CanDisconnect = false }));
+                SetMessageToPluginManager(new NotifyConnectionStatusChanged(new ConnectionStatusDiff(disconnected.ConnId) { CanConnect = true, CanDisconnect = false }));
                 break;
             default:
                 break;
@@ -273,7 +273,7 @@ class McvCoreActor : ReceiveActor
     }
     internal void ShowPluginSettingsPanel(PluginId pluginId)
     {
-        SetMessageToPluginManager(pluginId, new PluginV2.Messages.RequestShowSettingsPanelToPlugin());
+        SetMessageToPluginManager(pluginId, new RequestShowSettingsPanelToPlugin());
     }
 
     private void ConnManager_ConnectionAdded(object? sender, ConnectionAddedEventArgs e)
@@ -467,26 +467,6 @@ class McvCoreActor : ReceiveActor
     {
         SetMessageToPluginManager(target, message);
         await Task.CompletedTask;
-    }
-    protected override SupervisorStrategy SupervisorStrategy()
-    {
-        return new OneForOneStrategy(
-        maxNrOfRetries: 10,
-        withinTimeRange: TimeSpan.FromMinutes(1),
-        localOnlyDecider: ex =>
-        {
-            switch (ex)
-            {
-                case ArithmeticException ae:
-                    return Directive.Resume;
-                case NullReferenceException nre:
-                    return Directive.Restart;
-                case ArgumentException are:
-                    return Directive.Stop;
-                default:
-                    return Directive.Escalate;
-            }
-        });
     }
     public static Props Props()
     {

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Mcv.Core.V1;
 
-public class UserStoreManager : IUserStoreManager
+class UserStoreManager : IUserStoreManager
 {
     public event EventHandler<McvUser>? UserAdded;
     public McvUser GetUser(PluginId siteType, string userId)

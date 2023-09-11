@@ -32,32 +32,3 @@ public class ConnectedEventArgs : EventArgs
     /// </summary>
     public string UrlToRestore { get; set; }
 }
-//[Obsolete]
-//public interface IUser : INotifyPropertyChanged
-//{
-//    string UserId { get; }
-//    IEnumerable<IMessagePart> Name { get; set; }
-//    string Nickname { get; set; }
-//    string ForeColorArgb { get; set; }
-//    string BackColorArgb { get; set; }
-//    bool IsNgUser { get; set; }
-//}
-//[Obsolete]
-//public interface IUser2 : IUser
-//{
-//    bool IsSiteNgUser { get; set; }
-//}
-public class McvUser
-{
-    public string UserId { get; }
-    public IEnumerable<IMessagePart>? Name { get; set; }
-    public string? Nickname { get; set; }
-    public bool IsNgUser { get; set; }
-    public bool IsSiteNgUser { get; set; }
-    public string? BackColorArgb { get; set; }
-    public string? ForeColorArgb { get; set; }
-    public McvUser(string userId)
-    {
-        UserId = userId;
-    }
-}

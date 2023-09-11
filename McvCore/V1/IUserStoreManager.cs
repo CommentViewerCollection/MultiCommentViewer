@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Mcv.Core.V1;
 
-public interface IUserStoreManager
+interface IUserStoreManager
 {
     event EventHandler<McvUser> UserAdded;
 

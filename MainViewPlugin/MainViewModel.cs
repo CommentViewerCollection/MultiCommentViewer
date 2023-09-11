@@ -253,9 +253,6 @@ namespace Mcv.MainViewPlugin
             get => _adapter.Options.MetadataViewOthersDisplayIndex;
             set => _adapter.Options.MetadataViewOthersDisplayIndex = value;
         }
-
-
-
         #region Commands
         public ICommand MainViewClosingCommand { get; }
         public ICommand ShowOptionsWindowCommand { get; }
@@ -292,7 +289,6 @@ namespace Mcv.MainViewPlugin
         //ConnectionSerializerLoader _connectionSerializerLoader = new ConnectionSerializerLoader("settings\\connections.txt");
         #endregion //Fields
 
-
         #region Methods
         private void ClearAllComments()
         {
@@ -317,7 +313,6 @@ namespace Mcv.MainViewPlugin
             list.AddRange(panels.Select(kv => kv.Item2));
             WeakReferenceMessenger.Default.Send(new ShowOptionsViewMessage(list));
         }
-
         private void LogException(Exception ex)
         {
 
@@ -757,259 +752,6 @@ namespace Mcv.MainViewPlugin
             ShowUserListCommand = new RelayCommand(ShowUserList);
             CommentCopyCommand = new RelayCommand(CopyComment);
             OpenUrlCommand = new RelayCommand(OpenUrl);
-
-            //adapter.ConnectionAdded += (s, e) => OnConnectionAdded(e.ConnId, e.ConnSt);
-            //adapter.ConnectionRemoved += (s, e) => OnConnectionRemoved(e.ConnId);
-            //adapter.SiteAdded += (s, e) => OnSiteAdded(e.SitePluginId, e.Name);
-            //adapter.SiteRemoved += (s, e) => OnSiteRemoved(e.SitePluginId);
-            //adapter.BrowserAdded += (s, e) => OnBrowserAdded(e.PluginId, e.Name, e.ProfileName);
-            //adapter.BrowserRemoved += (s, e) => OnBrowserRemoved(e.PluginId);
-            //adapter.ConnectionStatusChanged += (s, e) => OnConnectionStatusChanged(e.ConnId, e.ConnStDiff);
-            //adapter.MessageReceived += (s, e) => OnMessageReceived(e.Vm);
-            //adapter.SitePluginSettingsReceived += (s, e) => OnSitePluginSettingsReceived(e.PluginSettingsList);
-
-
-
-            //_options.PropertyChanged += (s, e) =>
-            //{
-            //    switch (e.PropertyName)
-            //    {
-            //        case nameof(_options.MainViewLeft):
-            //            RaisePropertyChanged(nameof(MainViewLeft));
-            //            break;
-            //        case nameof(_options.MainViewTop):
-            //            RaisePropertyChanged(nameof(MainViewTop));
-            //            break;
-            //        case nameof(_options.MainViewHeight):
-            //            RaisePropertyChanged(nameof(MainViewHeight));
-            //            break;
-            //        case nameof(_options.MainViewWidth):
-            //            RaisePropertyChanged(nameof(MainViewWidth));
-            //            break;
-            //        case nameof(_options.IsShowThumbnail):
-            //            RaisePropertyChanged(nameof(IsShowThumbnail));
-            //            break;
-            //        case nameof(_options.IsShowUsername):
-            //            RaisePropertyChanged(nameof(IsShowUsername));
-            //            break;
-            //        case nameof(_options.IsShowConnectionName):
-            //            RaisePropertyChanged(nameof(IsShowConnectionName));
-            //            break;
-            //        case nameof(_options.IsShowCommentId):
-            //            RaisePropertyChanged(nameof(IsShowCommentId));
-            //            break;
-            //        case nameof(_options.IsShowMessage):
-            //            RaisePropertyChanged(nameof(IsShowMessage));
-            //            break;
-            //        case nameof(_options.IsShowPostTime):
-            //            RaisePropertyChanged(nameof(IsShowPostTime));
-            //            break;
-            //        case nameof(_options.IsShowInfo):
-            //            RaisePropertyChanged(nameof(IsShowInfo));
-            //            break;
-
-            //        case nameof(_options.TitleBackColor):
-            //            RaisePropertyChanged(nameof(TitleBackground));
-            //            break;
-            //        case nameof(_options.TitleForeColor):
-            //            RaisePropertyChanged(nameof(TitleForeground));
-            //            break;
-            //        case nameof(_options.ViewBackColor):
-            //            RaisePropertyChanged(nameof(ViewBackground));
-            //            break;
-            //        case nameof(_options.WindowBorderColor):
-            //            RaisePropertyChanged(nameof(WindowBorderBrush));
-            //            break;
-            //        case nameof(_options.SystemButtonBackColor):
-            //            RaisePropertyChanged(nameof(SystemButtonBackground));
-            //            break;
-            //        case nameof(_options.SystemButtonForeColor):
-            //            RaisePropertyChanged(nameof(SystemButtonForeground));
-            //            break;
-            //        case nameof(_options.SystemButtonBorderColor):
-            //            RaisePropertyChanged(nameof(SystemButtonBorderBrush));
-            //            break;
-            //        case nameof(_options.SystemButtonMouseOverBackColor):
-            //            RaisePropertyChanged(nameof(SystemButtonMouseOverBackground));
-            //            break;
-            //        case nameof(_options.SystemButtonMouseOverForeColor):
-            //            RaisePropertyChanged(nameof(SystemButtonMouseOverForeground));
-            //            break;
-            //        case nameof(_options.SystemButtonMouseOverBorderColor):
-            //            RaisePropertyChanged(nameof(SystemButtonMouseOverBorderBrush));
-            //            break;
-
-            //        case nameof(_options.MenuBackColor):
-            //            RaisePropertyChanged(nameof(MenuBackground));
-            //            RaisePropertyChanged(nameof(ContextMenuBackground));
-            //            break;
-            //        case nameof(_options.MenuForeColor):
-            //            RaisePropertyChanged(nameof(MenuForeground));
-            //            RaisePropertyChanged(nameof(ContextMenuForeground));
-            //            break;
-            //        case nameof(_options.MenuPopupBorderColor):
-            //            RaisePropertyChanged(nameof(MenuPopupBorderBrush));
-            //            break;
-            //        case nameof(_options.MenuSeparatorBackColor):
-            //            RaisePropertyChanged(nameof(MenuSeparatorBackground));
-            //            break;
-            //        case nameof(_options.MenuItemCheckMarkColor):
-            //            RaisePropertyChanged(nameof(MenuItemCheckMarkBrush));
-            //            break;
-            //        case nameof(_options.MenuItemMouseOverBackColor):
-            //            RaisePropertyChanged(nameof(MenuItemMouseOverBackground));
-            //            break;
-            //        case nameof(_options.MenuItemMouseOverForeColor):
-            //            RaisePropertyChanged(nameof(MenuItemMouseOverForeground));
-            //            break;
-            //        case nameof(_options.MenuItemMouseOverBorderColor):
-            //            RaisePropertyChanged(nameof(MenuItemMouseOverBorderBrush));
-            //            break;
-            //        case nameof(_options.MenuItemMouseOverCheckMarkColor):
-            //            RaisePropertyChanged(nameof(MenuItemMouseOverCheckMarkBrush));
-            //            break;
-
-
-            //        case nameof(_options.ButtonBackColor):
-            //            RaisePropertyChanged(nameof(ButtonBackground));
-            //            break;
-            //        case nameof(_options.ButtonForeColor):
-            //            RaisePropertyChanged(nameof(ButtonForeground));
-            //            break;
-            //        case nameof(_options.ButtonBorderColor):
-            //            RaisePropertyChanged(nameof(ButtonBorderBrush));
-            //            break;
-            //        case nameof(_options.CommentListBackColor):
-            //            RaisePropertyChanged(nameof(CommentListBackground));
-            //            RaisePropertyChanged(nameof(ConnectionListBackground));
-            //            break;
-            //        case nameof(_options.CommentListHeaderBackColor):
-            //            RaisePropertyChanged(nameof(CommentListHeaderBackground));
-            //            RaisePropertyChanged(nameof(ConnectionListHeaderBackground));
-            //            break;
-            //        case nameof(_options.CommentListHeaderForeColor):
-            //            RaisePropertyChanged(nameof(CommentListHeaderForeground));
-            //            RaisePropertyChanged(nameof(ConnectionListHeaderForeground));
-            //            break;
-            //        case nameof(_options.CommentListHeaderBorderColor):
-            //            RaisePropertyChanged(nameof(CommentListHeaderBorderBrush));
-            //            RaisePropertyChanged(nameof(ConnectionListHeaderBorderBrush));
-            //            break;
-            //        case nameof(_options.CommentListBorderColor):
-            //            RaisePropertyChanged(nameof(CommentListBorderBrush));
-            //            RaisePropertyChanged(nameof(ConnectionListBorderBrush));
-            //            break;
-            //        case nameof(_options.CommentListSeparatorColor):
-            //            RaisePropertyChanged(nameof(CommentListSeparatorBrush));
-            //            RaisePropertyChanged(nameof(ConnectionListSeparatorBrush));
-            //            break;
-            //        //case nameof(_options.ConnectionListBackColor):
-            //        //    RaisePropertyChanged(nameof(ConnectionListBackground));
-            //        //    break;
-            //        //case nameof(_options.ConnectionListHeaderBackColor):
-            //        //    RaisePropertyChanged(nameof(ConnectionListHeaderBackground));
-            //        //    break;
-            //        //case nameof(_options.ConnectionListHeaderForeColor):
-            //        //    RaisePropertyChanged(nameof(ConnectionListHeaderForeground));
-            //        //    break;
-            //        case nameof(_options.ConnectionListRowBackColor):
-            //            RaisePropertyChanged(nameof(ConnectionListRowBackground));
-            //            break;
-
-            //        case nameof(_options.ScrollBarBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarBackground));
-            //            break;
-            //        case nameof(_options.ScrollBarBorderColor):
-            //            RaisePropertyChanged(nameof(ScrollBarBorderBrush));
-            //            break;
-            //        case nameof(_options.ScrollBarThumbBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarThumbBackground));
-            //            break;
-            //        case nameof(_options.ScrollBarThumbMouseOverBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarThumbMouseOverBackground));
-            //            break;
-            //        case nameof(_options.ScrollBarThumbPressedBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarThumbPressedBackground));
-            //            break;
-
-
-            //        case nameof(_options.ScrollBarButtonBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonBackground));
-            //            break;
-            //        case nameof(_options.ScrollBarButtonForeColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonForeground));
-            //            break;
-            //        case nameof(_options.ScrollBarButtonBorderColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonBorderBrush));
-            //            break;
-
-
-            //        case nameof(_options.ScrollBarButtonDisabledBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonDisabledBackground));
-            //            break;
-            //        case nameof(_options.ScrollBarButtonDisabledForeColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonDisabledForeground));
-            //            break;
-            //        case nameof(_options.ScrollBarButtonDisabledBorderColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonDisabledBorderBrush));
-            //            break;
-
-            //        case nameof(_options.ScrollBarButtonMouseOverBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonMouseOverBackground));
-            //            break;
-            //        case nameof(_options.ScrollBarButtonPressedBackColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonPressedBackground));
-            //            break;
-            //        case nameof(_options.ScrollBarButtonPressedBorderColor):
-            //            RaisePropertyChanged(nameof(ScrollBarButtonPressedBorderBrush));
-            //            break;
-
-            //        case nameof(_options.IsEnabledSiteConnectionColor):
-            //        case nameof(_options.SiteConnectionColorType):
-            //            RaisePropertyChanged(nameof(ConnectionColorColumnWidth));
-            //            RaisePropertyChanged(nameof(IsShowConnectionsViewConnectionBackground));
-            //            RaisePropertyChanged(nameof(IsShowConnectionsViewConnectionForeground));
-            //            break;
-            //        case nameof(_options.IsTopmost):
-            //            _pluginManager.OnTopmostChanged(_options.IsTopmost);
-            //            RaisePropertyChanged(nameof(Topmost));
-            //            break;
-
-            //        case nameof(_options.IsShowHorizontalGridLine):
-            //            break;
-            //        case nameof(_options.HorizontalGridLineColor):
-            //            RaisePropertyChanged(nameof(HorizontalGridLineBrush));
-            //            break;
-            //        case nameof(_options.IsShowVerticalGridLine):
-            //            break;
-            //        case nameof(_options.VerticalGridLineColor):
-            //            RaisePropertyChanged(nameof(VerticalGridLineBrush));
-            //            break;
-
-            //        case nameof(_options.IsShowMetaConnectionName):
-            //            RaisePropertyChanged(nameof(IsShowMetaConnectionName));
-            //            break;
-            //        case nameof(_options.IsShowMetaTitle):
-            //            RaisePropertyChanged(nameof(IsShowMetaTitle));
-            //            break;
-            //        case nameof(_options.IsShowMetaElapse):
-            //            RaisePropertyChanged(nameof(IsShowMetaElapse));
-            //            break;
-            //        case nameof(_options.IsShowMetaCurrentViewers):
-            //            RaisePropertyChanged(nameof(IsShowMetaCurrentViewers));
-            //            break;
-            //        case nameof(_options.IsShowMetaTotalViewers):
-            //            RaisePropertyChanged(nameof(IsShowMetaTotalViewers));
-            //            break;
-            //        case nameof(_options.IsShowMetaActive):
-            //            RaisePropertyChanged(nameof(IsShowMetaActive));
-            //            break;
-            //        case nameof(_options.IsShowMetaOthers):
-            //            RaisePropertyChanged(nameof(IsShowMetaOthers));
-            //            break;
-            //    }
-            //};
-            //RaisePropertyChanged(nameof(Topmost));
         }
 
         private void OnSelectedSiteChanged(ConnectionId connId, PluginId selectedSite)
@@ -1023,13 +765,6 @@ namespace Mcv.MainViewPlugin
         {
             var vm = new PluginMenuItemViewModel(pluginName, pluginId, _adapter);
             PluginMenuItemCollection.Add(vm);
-        }
-        class User : IUser
-        {
-            public string UserId { get; }
-            public string Nickname { get; }
-
-            public event PropertyChangedEventHandler? PropertyChanged;
         }
         readonly List<ILiveSiteMessageProcessor> _siteMessageProcessor = new()
         {
@@ -1064,15 +799,6 @@ namespace Mcv.MainViewPlugin
                 OnMessageReceived(vm);
             }
         }
-
-        //private void OnSitePluginSettingsReceived(List<IPluginSettings> pluginSettingsList)
-        //{
-        //    //viewmodelを作る
-        //    //viewmodelを渡してviewを表示
-        //    _settingsContext.SetPluginSettings(pluginSettingsList);
-        //    WeakReferenceMessenger.Default.Send(new Settings.ShowSettingsViewMessage(_settingsContext));
-        //}
-
         private void OnMessageReceived(IMcvCommentViewModel vm)
         {
             _dispatcher.Invoke(() =>
@@ -1080,21 +806,18 @@ namespace Mcv.MainViewPlugin
                 _comments.Add(vm);
             });
         }
-
         private void OnBrowserRemoved(BrowserProfileId browserId)
         {
             var browser = GetBrowserViewModel(browserId);
             _browserDict.Remove(browser.Id, out var _);
             Browsers.Remove(browser);
         }
-
         private void OnBrowserAdded(BrowserProfileId browserId, string name, string? profileName)
         {
             var browser = new BrowserViewModel(browserId, name, profileName);
             _browserDict.TryAdd(browserId, browser);
             Browsers.Add(browser);
         }
-
         private void OnSiteRemoved(PluginId sitePluginId)
         {
             var site = GetSiteViewModel(sitePluginId);
@@ -1103,8 +826,6 @@ namespace Mcv.MainViewPlugin
         }
         ObservableCollection<SiteViewModel> Sites { get; } = new ObservableCollection<SiteViewModel>();
         ObservableCollection<BrowserViewModel> Browsers { get; } = new ObservableCollection<BrowserViewModel>();
-
-
         private void OnSiteAdded(PluginId sitePluginId, string name)
         {
             if (_siteDict.ContainsKey(sitePluginId))
@@ -1117,22 +838,6 @@ namespace Mcv.MainViewPlugin
         }
         public void ShowUserInfo(string userId)
         {
-            //    if (!_userViewModelDict.TryGetValue(userId, out var uvm))
-            //    {
-            //        Debug.WriteLine($"{nameof(_userViewModelDict)}にuserId={userId}が存在しない");
-            //        return;
-            //    }
-            //    var view = new CollectionViewSource { Source = _comments }.View;
-            //    view.Filter = obj =>
-            //    {
-            //        if (!(obj is IMcvCommentViewModel cvm))
-            //        {
-            //            return false;
-            //        }
-            //        return cvm.UserId == userId;
-            //    };
-            //    uvm.Comments = view;
-            //    MessengerInstance.Send(new ShowUserViewMessage(uvm));
         }
         private void ShowUserInfo()
         {
@@ -1160,8 +865,6 @@ namespace Mcv.MainViewPlugin
         }
         private void ShowUserList()
         {
-            //MessengerInstance.Send(new ShowUserListViewMessage(_userViewModels, this, _options));
-            //WeakReferenceMessenger.Default.Send(new LoggedInUserChangedMessage(user));
         }
         private async void CheckUpdate()
         {
@@ -1178,7 +881,7 @@ namespace Mcv.MainViewPlugin
         {
             try
             {
-                System.Diagnostics.Process.Start("https://twitter.com/kv510k");
+                Process.Start("https://twitter.com/kv510k");
             }
             catch (Exception ex)
             {
@@ -1189,7 +892,7 @@ namespace Mcv.MainViewPlugin
         {
             try
             {
-                System.Diagnostics.Process.Start("https://ryu-s.github.io/app/multicommentviewer");
+                Process.Start("https://ryu-s.github.io/app/multicommentviewer");
             }
             catch (Exception ex)
             {

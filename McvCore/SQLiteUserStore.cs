@@ -7,7 +7,7 @@ using Mcv.PluginV2;
 
 namespace Mcv.Core.V1
 {
-    public class SQLiteUserStore : IUserStore
+    class SQLiteUserStore : IUserStore
     {
         //テーブルの項目をuser_id、json、更新日時の3つにしようか
         //名前にICONを使っている場合を考慮してIEnumerable<IMessagePart>をそのまま保存したい。

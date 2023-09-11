@@ -16,7 +16,7 @@ class PluginManagerActor : ReceiveActor
     private readonly ConcurrentDictionary<PluginId, IList<string>> _pluginRoleDict = new();
     public static Props Props()
     {
-        return Akka.Actor.Props.Create(() => new PluginManagerActor());
+        return Akka.Actor.Props.Create(() => new PluginManagerActor()).WithDispatcher("akka.actor.synchronized-dispatcher");
     }
     public PluginManagerActor()
     {

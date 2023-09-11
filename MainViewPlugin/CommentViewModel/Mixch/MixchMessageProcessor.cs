@@ -10,11 +10,7 @@ class MixchMessageProcessor : ILiveSiteMessageProcessor
         IMcvCommentViewModel? vm = null;
         if (message is IMixchMessage mixMessage)
         {
-            switch (mixMessage)
-            {
-                default:
-                    break;
-            }
+            return new MixchCommentViewModel(mixMessage, connName, options, user);
         }
         return vm;
     }

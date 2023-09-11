@@ -1,5 +1,4 @@
 ﻿using Akka.Actor;
-using Mcv.Core;
 using Mcv.Core.CoreActorMessages;
 using System;
 using System.Diagnostics;
@@ -10,7 +9,6 @@ using System.Windows;
 using System.Windows.Threading;
 
 namespace Mcv.Core;
-
 class Program
 {
     [STAThread]
@@ -50,13 +48,6 @@ class Program
         var t = actorSystem.WhenTerminated;
         Handle(t).ContinueWith(t => app.Shutdown());
         actor.Tell(new Initialize());
-
-        ////if (!core.Initialize())
-        ////{
-        ////    return;
-        ////}
-        //var task = a.RunAsync();
-        //Handle(task);
         app.Run();
     }
 

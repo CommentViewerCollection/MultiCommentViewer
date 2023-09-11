@@ -45,7 +45,7 @@ class McvBigoCommentViewModelBase : IMcvCommentViewModel
     private readonly IMainViewPluginOptions _options;
     private readonly MyUser? _user;
 
-    private void SetNickname(IUser user)
+    private void SetNickname(MyUser user)
     {
         if (!string.IsNullOrEmpty(user.Nickname))
         {

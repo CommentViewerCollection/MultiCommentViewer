@@ -188,7 +188,6 @@ namespace BigoSitePlugin
         CookieContainer _cc;
         private readonly BigoSiteOptions _siteOptions;
         private readonly ILogger _logger;
-        private readonly IUserStoreManager _userStoreManager;
 
         private void SendInfo(string comment, InfoType type)
         {

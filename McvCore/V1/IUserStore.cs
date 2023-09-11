@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Mcv.PluginV2;
+namespace Mcv.Core.V1;
 
-public interface IUserStore
+interface IUserStore
 {
     event EventHandler<McvUser> UserAdded;
     void Init();

@@ -42,7 +42,6 @@
     <PackageReference Include="NUnit" Version="3.12.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
-    <ProjectReference Include="..\SitePluginCommon\SitePluginCommon.csproj" />
+    <ProjectReference Include="..\Mcv.LineLiveSitePlugin\Mcv.LineLiveSitePlugin.csproj" />
   </ItemGroup>
 </Project>

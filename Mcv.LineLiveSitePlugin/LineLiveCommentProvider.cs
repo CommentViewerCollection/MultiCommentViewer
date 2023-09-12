@@ -1,15 +1,11 @@
-﻿using Common;
-using ryu_s.BrowserCookie;
-using SitePlugin;
+﻿using Mcv.PluginV2;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Threading;
-using SitePluginCommon;
+using System.Threading.Tasks;
 
 namespace LineLiveSitePlugin
 {
@@ -113,12 +109,11 @@ namespace LineLiveSitePlugin
             CanConnect = true;
             CanDisconnect = false;
         }
-        protected virtual CookieContainer GetCookieContainer(IBrowserProfile browserProfile)
+        protected virtual CookieContainer GetCookieContainer(List<Cookie> cookies)
         {
             var cc = new CookieContainer();
             try
             {
-                var cookies = browserProfile.GetCookieCollection("live.line.me");
                 foreach (var cookie in cookies)
                 {
                     cc.Add(cookie);
@@ -144,11 +139,11 @@ namespace LineLiveSitePlugin
             return Api.GetLiveInfoV4(_server, channelId, liveId);
         }
         FirstCommentDetector _first = new FirstCommentDetector();
-        public async Task ConnectAsync(string input, IBrowserProfile browserProfile)
+        public async Task ConnectAsync(string input, List<Cookie> cookies)
         {
             BeforeConnect();
             var autoReconnectMode = false;
-            var cc = GetCookieContainer(browserProfile);
+            var cc = GetCookieContainer(cookies);
 
             await InitLoveIconUrlDict();
 
@@ -325,14 +320,10 @@ namespace LineLiveSitePlugin
             var (nochange, added, removed) = Tools.Split(old, @new);
             foreach (var id in removed)
             {
-                var user = GetUser(id.ToString());
-                //TODO:コメビュだけNGにしたい場合に対応できない。手動でNGに入れていたとしても解除されてしまう。
-                user.IsNgUser = false;
+
             }
             foreach (var id in added)
             {
-                var user = GetUser(id.ToString());
-                user.IsNgUser = true;
             }
         }
 
@@ -360,7 +351,7 @@ namespace LineLiveSitePlugin
                 Text = message,
                 SiteType = SiteType.LineLive,
                 Type = type,
-            }, _options);
+            });
             MessageReceived?.Invoke(this, context);
         }
         private string UnixTime2PostTime(long unixTime)
@@ -369,74 +360,53 @@ namespace LineLiveSitePlugin
         }
         private LineLiveMessageContext CreateMessageContext(ParseMessage.IMessage message, ParseMessage.IUser sender, string raw, bool isInitialComment)
         {
+            var userId = sender.Id.ToString();
             LineLiveMessageContext messageContext;
             if (message is ParseMessage.IMessageData comment)
             {
-                var user = GetUser(sender.Id.ToString());
-                var isFirstComment = _first.IsFirstComment(user.UserId);
+                var isFirstComment = _first.IsFirstComment(userId);
                 var m = new LineLiveComment(raw)
                 {
                     Text = comment.Message,
                     IsNgMessage = comment.IsNgMessage,
-                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(comment.SentAt),
+                    PostedAt = Utils.UnixtimeToDateTime(comment.SentAt),
                     UserIconUrl = sender.IconUrl,
                     UserId = sender.Id,
                     DisplayName = sender.DisplayName,
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
-                {
-                    IsInitialComment = isInitialComment,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new LineLiveMessageMethods();
-                messageContext = new LineLiveMessageContext(m, metadata, methods);
+                messageContext = new LineLiveMessageContext(m, isInitialComment);
             }
             else if (message is ParseMessage.ILove love)
             {
-                var user = GetUser(sender.Id.ToString());
-                var isFirstComment = _first.IsFirstComment(user.UserId);
+                var isFirstComment = _first.IsFirstComment(userId);
                 var str = sender.DisplayName + "さんがハートを送りました！";
                 var m = new LineLiveItem(raw)
                 {
-                    CommentItems = Common.MessagePartFactory.CreateMessageItems(str),
-                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(love.SentAt),
+                    CommentItems = MessagePartFactory.CreateMessageItems(str),
+                    PostedAt = Utils.UnixtimeToDateTime(love.SentAt),
                     UserIconUrl = sender.IconUrl,
                     UserId = sender.Id,
                     DisplayName = sender.DisplayName,
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
-                {
-                    IsInitialComment = isInitialComment,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new LineLiveMessageMethods();
-                messageContext = new LineLiveMessageContext(m, metadata, methods);
+                messageContext = new LineLiveMessageContext(m, isInitialComment);
             }
             else if (message is ParseMessage.IFollowStartData follow)
             {
-                var user = GetUser(sender.Id.ToString());
-                var isFirstComment = _first.IsFirstComment(user.UserId);
+                var isFirstComment = _first.IsFirstComment(userId);
                 var msg = sender.DisplayName + "さんがフォローしました！";
                 var m = new LineLiveItem(raw)
                 {
-                    CommentItems = Common.MessagePartFactory.CreateMessageItems(msg),
-                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(follow.FollowedAt),
+                    CommentItems = MessagePartFactory.CreateMessageItems(msg),
+                    PostedAt = Utils.UnixtimeToDateTime(follow.FollowedAt),
                     UserIconUrl = sender.IconUrl,
                     UserId = sender.Id,
                     DisplayName = sender.DisplayName,
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
-                {
-                    IsInitialComment = isInitialComment,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new LineLiveMessageMethods();
-                messageContext = new LineLiveMessageContext(m, metadata, methods);
+                messageContext = new LineLiveMessageContext(m, isInitialComment);
             }
             else if (message is ParseMessage.IGiftMessage gift)
             {
-                var user = GetUser(sender.Id.ToString());
-                var isFirstComment = _first.IsFirstComment(user.UserId);
+                var isFirstComment = _first.IsFirstComment(userId);
                 if (_loveIconUrlDict.ContainsKey(gift.ItemId))
                 {
                     gift.Url = _loveIconUrlDict[gift.ItemId];
@@ -461,18 +431,12 @@ namespace LineLiveSitePlugin
                 var m = new LineLiveItem(raw)
                 {
                     CommentItems = messageItems,
-                    PostedAt = SitePluginCommon.Utils.UnixtimeToDateTime(gift.SentAt),
+                    PostedAt = Utils.UnixtimeToDateTime(gift.SentAt),
                     UserIconUrl = sender.IconUrl,
                     UserId = sender.Id,
                     DisplayName = sender.DisplayName,
                 };
-                var metadata = new MessageMetadata(m, _options, _siteOptions, user, this, isFirstComment)
-                {
-                    IsInitialComment = isInitialComment,
-                    SiteContextGuid = SiteContextGuid,
-                };
-                var methods = new LineLiveMessageMethods();
-                messageContext = new LineLiveMessageContext(m, metadata, methods);
+                messageContext = new LineLiveMessageContext(m, isInitialComment);
             }
             else
             {
@@ -538,26 +502,13 @@ namespace LineLiveSitePlugin
             _cts?.Cancel();
         }
 
-        public IEnumerable<ICommentViewModel> GetUserComments(IUser user)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task PostCommentAsync(string text)
         {
             var s = $"PRIVMSG {_channelName} :{text}";
             await Task.FromResult<object>(null);
         }
-
-        public IUser GetUser(string userId)
+        public async Task<ICurrentUserInfo> GetCurrentUserInfo(List<Cookie> cookies)
         {
-            return _userStoreManager.GetUser(SiteType.LineLive, userId);
-        }
-
-        public async Task<ICurrentUserInfo> GetCurrentUserInfo(IBrowserProfile browserProfile)
-        {
-            var cc = GetCookieContainer(browserProfile);
-            var cookies = Tools.ExtractCookies(cc);
             var me = await Api.GetMyAsync(_server, cookies);
             var info = new CurrentUserInfo
             {
@@ -576,17 +527,13 @@ namespace LineLiveSitePlugin
         public Guid SiteContextGuid { get; set; }
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        private readonly ICommentOptions _options;
         private readonly LineLiveSiteOptions _siteOptions;
-        private readonly IUserStoreManager _userStoreManager;
 
-        public LineLiveCommentProvider(IDataServer server, ILogger logger, ICommentOptions options, LineLiveSiteOptions siteOptions, IUserStoreManager userStoreManager)
+        public LineLiveCommentProvider(IDataServer server, ILogger logger, LineLiveSiteOptions siteOptions)
         {
             _server = server;
             _logger = logger;
-            _options = options;
             _siteOptions = siteOptions;
-            _userStoreManager = userStoreManager;
             CanConnect = true;
             CanDisconnect = false;
         }

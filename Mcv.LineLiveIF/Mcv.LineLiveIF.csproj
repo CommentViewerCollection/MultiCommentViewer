@@ -38,6 +38,6 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ISitePlugin\SitePlugin.csproj" />
+    <ProjectReference Include="..\McvPlugin\McvPlugin.csproj" />
   </ItemGroup>
 </Project>

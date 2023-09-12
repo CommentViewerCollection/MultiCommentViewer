@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Mcv.BigoIF\Mcv.BigoIF.csproj" />
+    <ProjectReference Include="..\Mcv.LineLiveIF\Mcv.LineLiveIF.csproj" />
     <ProjectReference Include="..\Mcv.MildomIF\Mcv.MildomIF.csproj" />
     <ProjectReference Include="..\Mcv.MirrativIF\Mcv.MirrativIF.csproj" />
     <ProjectReference Include="..\Mcv.NicoLiveIF\Mcv.NicoLiveIF.csproj" />

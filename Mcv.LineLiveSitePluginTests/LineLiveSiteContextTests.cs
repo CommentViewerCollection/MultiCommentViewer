@@ -1,14 +1,7 @@
-﻿using Common;
-using LineLiveSitePlugin;
+﻿using LineLiveSitePlugin;
+using Mcv.PluginV2;
 using Moq;
 using NUnit.Framework;
-using SitePlugin;
-using SitePluginCommon;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LineLiveSitePluginTests
 {
@@ -17,11 +10,9 @@ namespace LineLiveSitePluginTests
     {
         private LineLiveSitePlugin.LineLiveSiteContext CreateSiteContext()
         {
-            var optionsMock = new Mock<ICommentOptions>();
             var serverMock = new Mock<IDataServer>();
             var loggerMock = new Mock<ILogger>();
-            var userStoreManagerMock = new Mock<IUserStoreManager>();
-            var context = new LineLiveSitePlugin.LineLiveSiteContext(optionsMock.Object, serverMock.Object, loggerMock.Object, userStoreManagerMock.Object);
+            var context = new LineLiveSitePlugin.LineLiveSiteContext(serverMock.Object, loggerMock.Object);
             return context;
         }
         [Test]

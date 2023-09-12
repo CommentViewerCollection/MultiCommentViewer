@@ -1,6 +1,4 @@
-﻿using Common;
-using SitePlugin;
-using SitePluginCommon;
+﻿using Mcv.PluginV2;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -10,8 +8,6 @@ namespace LineLiveSitePlugin
 {
     public class LineLiveSiteContext : SiteContextBase
     {
-        public override Guid Guid => new Guid("36F139CA-EAB9-45B1-8CDC-AD47A4051BD3");
-
         public override string DisplayName => "LINELIVE";
         protected override SiteType SiteType => SiteType.LineLive;
         public override IOptionsTabPage TabPanel
@@ -26,10 +22,7 @@ namespace LineLiveSitePlugin
 
         public override ICommentProvider CreateCommentProvider()
         {
-            return new LineLiveCommentProvider(_server, _logger, _options, _siteOptions, _userStoreManager)
-            {
-                SiteContextGuid = Guid,
-            };
+            return new LineLiveCommentProvider(_server, _logger, _siteOptions);
         }
         private LineLiveSiteOptions _siteOptions;
         public override void LoadOptions(string path, IIo io)
@@ -61,6 +54,23 @@ namespace LineLiveSitePlugin
                 _logger.LogException(ex, "", $"path={path}");
             }
         }
+        public override void LoadOptions(string rawOptions)
+        {
+            _siteOptions = new LineLiveSiteOptions();
+            try
+            {
+                _siteOptions.Deserialize(rawOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                _logger.LogException(ex, "", "");
+            }
+        }
+        public override string GetSiteOptions()
+        {
+            return _siteOptions.Serialize();
+        }
         public override bool IsValidInput(string input)
         {
             if (string.IsNullOrEmpty(input)) return false;
@@ -74,15 +84,12 @@ namespace LineLiveSitePlugin
         {
             return null;
         }
-        private readonly ICommentOptions _options;
         private readonly IDataServer _server;
         private readonly ILogger _logger;
-        public LineLiveSiteContext(ICommentOptions options, IDataServer server, ILogger logger, IUserStoreManager userStoreManager)
-            : base(options, userStoreManager, logger)
+        public LineLiveSiteContext(IDataServer server, ILogger logger)
+            : base(logger)
         {
-            _options = options;
             _server = server;
-            _logger = logger;
         }
     }
 }

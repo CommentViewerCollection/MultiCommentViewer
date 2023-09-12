@@ -779,6 +779,7 @@ namespace Mcv.MainViewPlugin
             new ShowRoomMessageProcessor(),
             new TwicasMessageProcessor(),
             new WhowatchMessageProcessor(),
+            new LineLiveMessageProcessor(),
         };
         private void OnMessageReceived(ConnectionId connectionId, ISiteMessage message, MyUser? user)
         {

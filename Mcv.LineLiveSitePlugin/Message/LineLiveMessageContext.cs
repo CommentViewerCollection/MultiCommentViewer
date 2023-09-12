@@ -1,19 +1,18 @@
-﻿using SitePlugin;
+﻿using Mcv.PluginV2;
 
 namespace LineLiveSitePlugin
 {
     internal class LineLiveMessageContext : IMessageContext
     {
-        public SitePlugin.ISiteMessage Message { get; }
+        public ISiteMessage Message { get; }
+        public string? UserId { get; }
+        public string? NewNickname { get; }
+        public bool IsInitialComment { get; }
 
-        public IMessageMetadata Metadata { get; }
-
-        public IMessageMethods Methods { get; }
-        public LineLiveMessageContext(ILineLiveMessage message, MessageMetadata metadata, IMessageMethods methods)
+        public LineLiveMessageContext(ILineLiveMessage message, bool isInitialComment)
         {
             Message = message;
-            Metadata = metadata;
-            Methods = methods;
+            IsInitialComment = isInitialComment;
         }
     }
 }

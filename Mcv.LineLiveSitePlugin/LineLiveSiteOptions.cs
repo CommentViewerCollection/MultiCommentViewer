@@ -1,4 +1,4 @@
-﻿using Common;
+﻿using Mcv.PluginV2;
 using System;
 using System.Linq;
 using System.Windows;
@@ -35,7 +35,7 @@ namespace LineLiveSitePlugin
         }
         public void Set(ILineLiveSiteOptions t)
         {
-            if(t is LineLiveSiteOptions other)
+            if (t is LineLiveSiteOptions other)
             {
                 this.Set(other);
             }

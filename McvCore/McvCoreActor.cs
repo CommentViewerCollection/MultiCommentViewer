@@ -18,7 +18,6 @@ namespace Mcv.Core;
 
 class McvCoreActor : ReceiveActor
 {
-    public event EventHandler? ExitRequested;
     private readonly ConnectionManager _connManager;
     private readonly IActorRef _pluginManager;
     private readonly V1.IUserStoreManager _userStoreManager;
@@ -68,10 +67,13 @@ class McvCoreActor : ReceiveActor
 
         _userStoreManager.Save();
 
-        ExitRequested?.Invoke(this, EventArgs.Empty);
+        //ここで直接Context.System.Terminate()したいけど、できないから自分にメッセージを送る
+        _self.Tell(new SystemShutDown());
     }
+    private readonly IActorRef _self;
     public McvCoreActor()
     {
+        _self = Self;
         var io = new IOTest();
         _pluginManager = Context.ActorOf(PluginManagerActor.Props());
 
@@ -86,6 +88,10 @@ class McvCoreActor : ReceiveActor
         Receive<Initialize>(_ =>
         {
             Initialize();
+        });
+        Receive<SystemShutDown>(_ =>
+        {
+            Context.System.Terminate();
         });
     }
 

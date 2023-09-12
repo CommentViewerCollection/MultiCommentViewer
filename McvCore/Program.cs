@@ -46,7 +46,14 @@ class Program
 
 
         var t = actorSystem.WhenTerminated;
-        Handle(t).ContinueWith(t => app.Shutdown());
+        var dispatcher = Dispatcher.CurrentDispatcher;
+        Handle(t).ContinueWith(t =>
+        {
+            dispatcher.Invoke(() =>
+            {
+                app.Shutdown();
+            });
+        });
         actor.Tell(new Initialize());
         app.Run();
     }

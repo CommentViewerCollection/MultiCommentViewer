@@ -195,7 +195,7 @@ namespace MildomSitePlugin
                         newNickname = nick;
                     }
                 }
-                return new MildomMessageContext(comment, userId, newNickname);
+                return new MildomMessageContext(comment, userId, newNickname, _isBeeingSentInitialComments);
             }
             else if (message is OnGiftMessage internalGift)
             {
@@ -208,7 +208,7 @@ namespace MildomSitePlugin
                 }
                 var gift = new MildomGift(internalGift, item);
 
-                return new MildomMessageContext(gift, userId, null);
+                return new MildomMessageContext(gift, userId, null, _isBeeingSentInitialComments);
             }
             //if (message is IMildomComment comment)
             //{
@@ -237,7 +237,7 @@ namespace MildomSitePlugin
             {
                 var userId = add.UserId.ToString();
                 var join = new MildomJoinRoom(add);
-                return new MildomMessageContext(join, userId, null);
+                return new MildomMessageContext(join, userId, null, false);
             }
             ////else if (message is IMildomItem item)
             ////{

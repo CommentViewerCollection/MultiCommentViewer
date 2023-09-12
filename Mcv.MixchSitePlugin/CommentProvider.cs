@@ -198,8 +198,6 @@ namespace MixchSitePlugin
             {
                 messageItems.Add(MessagePartFactory.CreateMessageText(messageBody));
             }
-
-            MixchMessageContext messageContext = null;
             IMixchMessage message;
             message = new MixchMessage("")
             {
@@ -210,7 +208,7 @@ namespace MixchSitePlugin
                 PostTime = DateTimeOffset.FromUnixTimeSeconds(p.Created).LocalDateTime,
                 UserId = p.UserId.ToString(),
             };
-            messageContext = new MixchMessageContext(message, userId, null);
+            var messageContext = new MixchMessageContext(message, userId, null, isInitialComment);
             return messageContext;
         }
 

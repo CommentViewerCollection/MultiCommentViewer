@@ -109,7 +109,7 @@ namespace ShowRoomSitePlugin
             var userId = message.UserId;
             var isFirstComment = _first.IsFirstComment(userId);
             var name = MessagePartFactory.CreateMessageItems(message.UserName);
-            RaiseMessageReceived(new MessageContext(message, userId, null));
+            RaiseMessageReceived(new MessageContext(message, userId, null, isInitialComment));
         }
         private void ProcessInternalMessage(IInternalMessage e)
         {

@@ -305,7 +305,7 @@ Reconnect:
                 };
 
             }
-            messageContext = new OpenrecMessageContext(message, userId, null);
+            messageContext = new OpenrecMessageContext(message, userId, null, isInitialComment);
             return messageContext;
         }
 

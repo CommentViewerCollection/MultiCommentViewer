@@ -148,7 +148,7 @@ namespace MirrativSitePlugin
                     newNickname = nick;
                 }
             }
-            return new MirrativMessageContext(comment, userId, newNickname);
+            return new MirrativMessageContext(comment, userId, newNickname, false);
         }
         private MirrativMessageContext CreateMessageContext(IMirrativMessage message)
         {
@@ -165,12 +165,12 @@ namespace MirrativSitePlugin
                         newNickname = nick;
                     }
                 }
-                return new MirrativMessageContext(comment, userId, newNickname);
+                return new MirrativMessageContext(comment, userId, newNickname, false);
             }
             else if (message is IMirrativJoinRoom join && _siteOptions.IsShowJoinMessage)
             {
                 var userId = join.UserId;
-                return new MirrativMessageContext(join, userId, null); ;
+                return new MirrativMessageContext(join, userId, null, false); ;
             }
             else if (message is IMirrativItem item)
             {
@@ -184,15 +184,15 @@ namespace MirrativSitePlugin
                         newNickname = nick;
                     }
                 }
-                return new MirrativMessageContext(item, userId, newNickname);
+                return new MirrativMessageContext(item, userId, newNickname, false);
             }
             else if (message is IMirrativConnected connected)
             {
-                return new MirrativMessageContext(connected, null, null);
+                return new MirrativMessageContext(connected, null, null, false);
             }
             else if (message is IMirrativDisconnected disconnected)
             {
-                return new MirrativMessageContext(disconnected, null, null);
+                return new MirrativMessageContext(disconnected, null, null, false);
             }
             else
             {

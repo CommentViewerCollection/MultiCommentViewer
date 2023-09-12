@@ -68,7 +68,7 @@ reload:
                 goto reload;
             }
             var m = new NicoDisconnected("");
-            var c = new NicoMessageContext(m, null, null);
+            var c = new NicoMessageContext(m, null, null, false);
             RaiseMessageReceived(c);
             AfterDisconnected();
         }
@@ -403,7 +403,7 @@ check:
                         }
 
 
-                        var context = new NicoMessageContext(comment, userId, newNickname);
+                        var context = new NicoMessageContext(comment, userId, newNickname, _isInitialCommentsReceiving);
                         RaiseMessageReceived(context);
                     }
                     break;

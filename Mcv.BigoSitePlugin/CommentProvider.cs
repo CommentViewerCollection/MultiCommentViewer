@@ -386,7 +386,7 @@ reload:
                             PostedAt = DateTime.Now,
                             UserId = null,
                         };
-                        var context = new BigoMessageContext(m);
+                        var context = new BigoMessageContext(m, false);
                         MessageReceived?.Invoke(this, context);
                     }
                     break;
@@ -403,7 +403,7 @@ reload:
                             GiftCount = 1,
                             GiftImgUrl = heart.ImgUrl,
                         };
-                        var context = new BigoMessageContext(m);
+                        var context = new BigoMessageContext(m, false);
                         MessageReceived?.Invoke(this, context);
                     }
                     break;
@@ -421,7 +421,7 @@ reload:
                             GiftCount = int.Parse(giftText.C),
                             GiftImgUrl = gift.ImgUrl,
                         };
-                        var context = new BigoMessageContext(m);
+                        var context = new BigoMessageContext(m, false);
                         MessageReceived?.Invoke(this, context);
                     }
                     break;

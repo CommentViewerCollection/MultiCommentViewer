@@ -157,7 +157,7 @@ namespace TwicasSitePlugin
                 UserId = item.UserId,
                 UserName = item.ScreenName,
             };
-            var context = new TwicasMessageContext(itemMessage, item.UserId, null);
+            var context = new TwicasMessageContext(itemMessage, item.UserId, null, isInitialComment);
             return context;
         }
         private void P1_MessageReceived(object sender, IInternalMessage e)
@@ -191,7 +191,7 @@ namespace TwicasSitePlugin
                     Width = 40,//commentData.ThumbnailWidth,
                 },
             };
-            var messageContext = new TwicasMessageContext(message, comment.UserId, null);
+            var messageContext = new TwicasMessageContext(message, comment.UserId, null, isInitialComment);
             return messageContext;
         }
         public override void Disconnect()

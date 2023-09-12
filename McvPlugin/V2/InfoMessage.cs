@@ -27,16 +27,18 @@ public class InfoMessageContext : IMessageContext
     public ISiteMessage Message { get; }
     public string? UserId { get; }
     public string? NewNickname { get; }
+    public bool IsInitialComment { get; }
 
-    public InfoMessageContext(IInfoMessage message, string? userId, string? newNickname)
+    public InfoMessageContext(IInfoMessage message, string? userId, string? newNickname, bool isInitialComment)
     {
         Message = message;
         UserId = userId;
         NewNickname = newNickname;
+        IsInitialComment = isInitialComment;
     }
     public static InfoMessageContext Create(InfoMessage message)
     {
-        var context = new InfoMessageContext(message, null, null);
+        var context = new InfoMessageContext(message, null, null, false);
         return context;
 
     }

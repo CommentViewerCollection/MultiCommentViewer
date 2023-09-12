@@ -6,12 +6,14 @@ namespace NicoSitePlugin
     {
         public ISiteMessage Message { get; }
         public string? NewNickname { get; }
+        public bool IsInitialComment { get; }
         public string? UserId { get; }
 
-        public NicoMessageContext(INicoMessage message, string? userId, string? newNickname)
+        public NicoMessageContext(INicoMessage message, string? userId, string? newNickname, bool isInitialComment)
         {
             Message = message;
             NewNickname = newNickname;
+            IsInitialComment = isInitialComment;
         }
     }
 }

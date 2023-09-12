@@ -289,7 +289,7 @@ Retry:
             {
                 userId = item.UserId.ToString();
             }
-            return new WhowatchMessageContext(message, userId, newNickname);
+            return new WhowatchMessageContext(message, userId, newNickname, isInitialComment);
         }
 
         InternalCommentProvider _internalCommentProvider;

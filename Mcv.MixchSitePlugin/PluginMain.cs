@@ -20,9 +20,9 @@ namespace MixchSitePlugin.V2
             _host.SetMessageAsync(new SetMetadata(_connId, _pluginId, e));
         }
 
-        internal void NotifyMessageReceived(ISiteMessage message, string userId, string? newNickname)
+        internal void NotifyMessageReceived(ISiteMessage message, string userId, string? newNickname, bool isInitialComment)
         {
-            _host.SetMessageAsync(new SetMessage(_connId, _pluginId, message, userId, newNickname));
+            _host.SetMessageAsync(new SetMessage(_connId, _pluginId, message, userId, newNickname, isInitialComment));
         }
         public CommentProviderHost(IPluginHost host, ConnectionId connId, PluginId pluginId)
         {
@@ -55,7 +55,7 @@ namespace MixchSitePlugin.V2
 
         private void CommentProvider_MessageReceived(object sender, IMessageContext e)
         {
-            _host.NotifyMessageReceived(e.Message, e.UserId, e.NewNickname);
+            _host.NotifyMessageReceived(e.Message, e.UserId, e.NewNickname, e.IsInitialComment);
         }
 
         internal Task ConnectAsync(string input, List<Cookie> cookies)

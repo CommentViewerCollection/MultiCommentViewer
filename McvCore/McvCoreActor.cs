@@ -171,13 +171,13 @@ class McvCoreActor : ReceiveActor
                         IEnumerable<IMessagePart>? username = user.Name;// Common.MessagePartFactory.CreateMessageItems("");
                         var nickname = user.Nickname;
                         var isNgUser = user.IsNgUser;
-                        SetMessageToPluginManager(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, userId, username, nickname, isNgUser));
+                        SetMessageToPluginManager(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, userId, username, nickname, isNgUser, setMessage.IsInitialComment));
                     }
                     else
                     {
                         //InfoMessageとかがUserId==nullになるからこれが必要。
                         //他にも配信サイトのメッセージでもUserIdが無いものもある。
-                        SetMessageToPluginManager(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, null, null, null, false));
+                        SetMessageToPluginManager(new NotifyMessageReceived(setMessage.ConnId, setMessage.SiteId, setMessage.Message, null, null, null, false, setMessage.IsInitialComment));
                     }
                 }
                 break;

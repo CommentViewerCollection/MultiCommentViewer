@@ -5,4 +5,5 @@ public interface IMessageContext
     ISiteMessage Message { get; }
     string? UserId { get; }
     string? NewNickname { get; }
+    bool IsInitialComment { get; }
 }

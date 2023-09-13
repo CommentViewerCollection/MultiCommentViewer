@@ -1,4 +1,5 @@
 ﻿using Mcv.PluginV2;
+using System.Collections.Generic;
 
 namespace WhowatchSitePlugin
 {
@@ -8,6 +9,7 @@ namespace WhowatchSitePlugin
         public string? UserId { get; }
         public string? NewNickname { get; }
         public bool IsInitialComment { get; }
+        public IEnumerable<IMessagePart>? UsernameItems { get; }
 
         public WhowatchMessageContext(IWhowatchMessage message, string? userId, string? newNickname, bool isInitialComment)
         {

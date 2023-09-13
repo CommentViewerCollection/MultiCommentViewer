@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using Mcv.PluginV2;
+using MultiCommentViewer.ViewModels;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,12 +12,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace Mcv.MainViewPlugin
 {
+    static class DesignModeUtils
+    {
+        public static bool IsDesignMode { get; } = (bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue);
+    }
     interface ILiveSiteMessageProcessor
     {
         bool IsValidMessage(ISiteMessage message);
@@ -82,21 +88,94 @@ namespace Mcv.MainViewPlugin
 
         public UserInfoViewModel UserInfoVm { get; }
     }
-    class UserViewModel : ViewModelBase, INotifyPropertyChanged
+    internal class ShowUserListViewMessage : RequestMessage<string>
     {
+        public ShowUserListViewMessage(UserListViewModel userListVm)
+        {
+            UserListVm = userListVm;
+        }
 
+        public UserListViewModel UserListVm { get; }
+    }
+    class DesignTimeComment : IMcvCommentViewModel
+    {
+        public string UserId { get; }
+        public IEnumerable<IMessagePart> MessageItems { get; set; }
+        public bool IsTranslated { get; set; }
+        public MyUser? User { get; }
+
+        public DesignTimeComment(string userId, IEnumerable<IMessagePart> message)
+        {
+            UserId = userId;
+            MessageItems = message;
+        }
     }
     class UserInfoViewModel : ViewModelBase, INotifyPropertyChanged
     {
-        public UserInfoViewModel(ICollectionView comments, UserViewModel userVm, IAdapter adapter)
-        {
-            CommentVm = new CommentDataGridViewModel(adapter, comments);
-            Comments = comments;
-        }
+        private readonly IMainViewPluginOptions _options;
         public CommentDataGridViewModel CommentVm { get; }
-        public ICollectionView Comments { get; }
+        public UserInfoViewModel(ICollectionView comments, UserViewModel userVm, IMainViewPluginOptions options)
+        {
+            UserVm = userVm;
+            _options = options;
+            CommentVm = new CommentDataGridViewModel(options, comments);
+        }
+        public UserInfoViewModel()
+        {
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue))
+            {
+                _options = default!;//TODO:nullではなくてclassを作る
+                var TestList = new ObservableCollection<IMcvCommentViewModel>
+                {
+                    new DesignTimeComment("abc", MessagePartFactory.CreateMessageItems("k1")),
+                    new DesignTimeComment("abc", MessagePartFactory.CreateMessageItems("k2")),
+                    new DesignTimeComment("abc", MessagePartFactory.CreateMessageItems("k3")),
+                };
+                var comments = CollectionViewSource.GetDefaultView(TestList);
+                CommentVm = new CommentDataGridViewModel(_options, comments);
+                UserVm = new UserViewModel(new MyUser("abc")
+                {
+                    Name = MessagePartFactory.CreateMessageItems("USERNAME"),
+                    Nickname = "NICKNAME",
+                    IsNgUser = true,
+                    IsSiteNgUser = true,
+                    BackColorArgb = "#FF0000",
+                    ForeColorArgb = "#00FF00",
+                }, _options);
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
+        }
+        public UserViewModel UserVm { get; }
+        public bool Topmost
+        {
+            get { return _options.IsTopmost; }
+            set { _options.IsTopmost = value; }
+        }
+        public double UserInfoViewHeight
+        {
+            get { return _options.UserInfoViewHeight; }
+            set { _options.UserInfoViewHeight = value; }
+        }
+        public double UserInfoViewWidth
+        {
+            get { return _options.UserInfoViewWidth; }
+            set { _options.UserInfoViewWidth = value; }
+        }
+        public double UserInfoViewLeft
+        {
+            get { return _options.UserInfoViewLeft; }
+            set { _options.UserInfoViewLeft = value; }
+        }
+        public double UserInfoViewTop
+        {
+            get { return _options.UserInfoViewTop; }
+            set { _options.UserInfoViewTop = value; }
+        }
     }
-    class MainViewModel : /*CommentDataGridViewModelBase,*/ ViewModelBase, INotifyPropertyChanged
+    class MainViewModel : ViewModelBase, INotifyPropertyChanged, IUserViewModelProvider
     {
         public Brush MenuBackground => new SolidColorBrush(_adapter.Options.MenuBackColor);
         public Brush MenuForeground => new SolidColorBrush(_adapter.Options.MenuForeColor);
@@ -265,8 +344,7 @@ namespace Mcv.MainViewPlugin
         public ICommand RemoveSelectedConnectionCommand { get; }
         public ICommand AddNewConnectionCommand { get; }
         public ICommand ClearAllCommentsCommand { get; }
-        public ICommand CommentCopyCommand { get; }
-        public ICommand OpenUrlCommand { get; }
+
 
         #endregion //Commands
 
@@ -558,37 +636,14 @@ namespace Mcv.MainViewPlugin
                 return _title;
             }
         }
-        private void OpenUrl()
-        {
-            //var url = GetUrlFromSelectedComment();
-            //Process.Start(url);
-            //SetSystemInfo("open: " + url, InfoType.Debug);
-        }
-        private void CopyComment()
-        {
-            //var message = SelectedComment.MessageItems.ToText();
-            //try
-            //{
-            //    System.Windows.Clipboard.SetText(message);
-            //}
-            //catch (System.Runtime.InteropServices.COMException) { }
-            //SetSystemInfo("copy: " + message, InfoType.Debug);
-        }
+
 
         private readonly Color _myColor = new Color { A = 0xFF, R = 45, G = 45, B = 48 };
         private readonly IAdapter _adapter;
         #endregion //Properties
-        private static bool IsDesignMode
-        {
-            get
-            {
-                return (bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(System.Windows.DependencyObject)).DefaultValue);
-            }
-        }
-
         public MainViewModel()
         {
-            if (!IsDesignMode)
+            if (!DesignModeUtils.IsDesignMode)
             {
                 throw new NotSupportedException();
             }
@@ -603,7 +658,7 @@ namespace Mcv.MainViewPlugin
         public MainViewModel(IAdapter adapter)
         {
             var collectionView = CollectionViewSource.GetDefaultView(_comments);
-            CommentVm = new CommentDataGridViewModel(adapter, collectionView);
+            CommentVm = new CommentDataGridViewModel(adapter.Options, collectionView);
             ConnectionsVm = new ConnectionsViewModel(adapter);
             //_io = io;
             //_logger = logger;
@@ -734,6 +789,19 @@ namespace Mcv.MainViewPlugin
             {
                 OnSelectedSiteChanged(e.ConnId, e.SiteId);
             };
+            _adapter.UserAdded += (s, e) =>
+            {
+                var user = new UserViewModel(e.User, _adapter.Options);
+                _users.Add(user);
+            };
+            _adapter.UserRemoved += (s, e) =>
+            {
+                var user = _users.SingleOrDefault(u => u.UserId == e.UserId);
+                if (user is not null)
+                {
+                    _users.Remove(user);
+                }
+            };
             //_settingsContext = settingsContext;
             //settingsContext.Applied += (s, e) =>
             //{
@@ -750,8 +818,6 @@ namespace Mcv.MainViewPlugin
             ClearAllCommentsCommand = new RelayCommand(ClearAllComments);
             ShowUserInfoCommand = new RelayCommand(ShowUserInfo);
             ShowUserListCommand = new RelayCommand(ShowUserList);
-            CommentCopyCommand = new RelayCommand(CopyComment);
-            OpenUrlCommand = new RelayCommand(OpenUrl);
         }
 
         private void OnSelectedSiteChanged(ConnectionId connId, PluginId selectedSite)
@@ -837,9 +903,6 @@ namespace Mcv.MainViewPlugin
             _siteDict.TryAdd(sitePluginId, site);
             Sites.Add(site);
         }
-        public void ShowUserInfo(string userId)
-        {
-        }
         private void ShowUserInfo()
         {
 
@@ -851,8 +914,18 @@ namespace Mcv.MainViewPlugin
                 Debug.WriteLine("UserIdがnull");
                 return;
             }
-            var userVm = new UserViewModel();
-            var view = new CollectionViewSource { Source = _comments }.View;
+            ShowUserInfo(userId, _comments, _adapter.Options, _adapter, this);
+        }
+        public UserViewModel GetUserVm(string userId)
+        {
+            return _userVmDict[userId];
+        }
+        private readonly Dictionary<string, UserViewModel> _userVmDict = new();
+        public static void ShowUserInfo(string userId, ObservableCollection<IMcvCommentViewModel> comments, IMainViewPluginOptions options, IAdapter adapter, IUserViewModelProvider userProvider)
+        {
+            var user = adapter.GetUser(userId);
+            var userVm = userProvider.GetUserVm(userId);
+            var view = new CollectionViewSource { Source = comments }.View;
             view.Filter = obj =>
             {
                 if (obj is not IMcvCommentViewModel cvm)
@@ -861,12 +934,15 @@ namespace Mcv.MainViewPlugin
                 }
                 return cvm.UserId == userId;
             };
-            var userInfoVm = new UserInfoViewModel(view, userVm, _adapter);
+            var userInfoVm = new UserInfoViewModel(view, userVm, options);
             WeakReferenceMessenger.Default.Send(new ShowUserInfoViewMessage(userInfoVm));
         }
         private void ShowUserList()
         {
+            WeakReferenceMessenger.Default.Send(new ShowUserListViewMessage(new UserListViewModel(_users, _comments, _adapter.Options, _adapter, this)));
         }
+        private readonly ObservableCollection<UserViewModel> _users = new();
+
         private async void CheckUpdate()
         {
             try
@@ -904,5 +980,9 @@ namespace Mcv.MainViewPlugin
         {
             RequestClose();
         }
+    }
+    interface IUserViewModelProvider
+    {
+        UserViewModel GetUserVm(string userId);
     }
 }

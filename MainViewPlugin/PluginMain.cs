@@ -57,8 +57,10 @@ public class MainViewPlugin : IPlugin
                     MyUser? user = null;
                     if (messageReceived.UserId is not null)
                     {
-                        user = _userStore.GetUser(messageReceived.UserId);
+                        user = _adapter.GetUser(messageReceived.UserId);
+                        user.Name = messageReceived.Username;
                         user.Nickname = messageReceived.Nickname;
+                        user.IsNgUser = messageReceived.IsNgUser;
                     }
                     _adapter.OnMessageReceived(messageReceived, user);
                 }
@@ -122,6 +124,7 @@ public class MainViewPlugin : IPlugin
                 break;
             case SetLoaded _:
                 {
+                    await _adapter.LoadUserStoreAsync();
                     _v = new MainWindow
                     {
                         DataContext = _vm
@@ -131,9 +134,10 @@ public class MainViewPlugin : IPlugin
                 break;
             case SetClosing _:
                 {
-                    await Host.SetMessageAsync(new RequestSavePluginOptions(Name, _options.Serialize()));
                     _vm.IsClose = true;
                     _v.Visibility = System.Windows.Visibility.Hidden;
+                    await Host.SetMessageAsync(new RequestSavePluginOptions(Name, _options.Serialize()));
+                    await _adapter.SaveUserStoreAsync();
                 }
                 break;
             case RequestShowSettingsPanelToPlugin _:
@@ -152,5 +156,5 @@ public class MainViewPlugin : IPlugin
     {
         _options = new DynamicOptionsTest();
     }
-    private readonly UserStore _userStore = new();
+
 }

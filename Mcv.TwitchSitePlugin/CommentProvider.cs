@@ -359,7 +359,7 @@ namespace TwitchSitePlugin
                 IsDisplayNameSame = commentData.Username == commentData.DisplayName,
                 DisplayName = commentData.DisplayName,
             };
-            var messageContext = new TwitchMessageContext(message, userId, newNickname, false);
+            var messageContext = new TwitchMessageContext(message, userId, MessagePartFactory.CreateMessageItems(commentData.Username), newNickname, false);
             MessageReceived?.Invoke(this, messageContext);
         }
         private void OnNoticeReceived(Result result)
@@ -369,7 +369,7 @@ namespace TwitchSitePlugin
             {
                 Message = message,
             };
-            var messageContext = new TwitchMessageContext(notice, null, null, false);
+            var messageContext = new TwitchMessageContext(notice, null, null, null, false);
             MessageReceived?.Invoke(this, messageContext);
         }
 

@@ -220,5 +220,9 @@ namespace Mcv.MainViewPlugin
         double ConnectionsViewConnectionBackgroundWidth { get; set; }
         int ConnectionsViewConnectionForegroundDisplayIndex { get; set; }
         double ConnectionsViewConnectionForegroundWidth { get; set; }
+        double UserInfoViewHeight { get; set; }
+        double UserInfoViewWidth { get; set; }
+        double UserInfoViewLeft { get; set; }
+        double UserInfoViewTop { get; set; }
     }
 }

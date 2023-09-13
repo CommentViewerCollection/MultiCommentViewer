@@ -4,12 +4,13 @@ namespace Mcv.PluginV2.Messages;
 
 public class SetMessage : ISetMessageToCoreV2
 {
-    public SetMessage(ConnectionId connId, PluginId siteId, ISiteMessage message, string? userId, string? newNickname, bool isInitialComment)
+    public SetMessage(ConnectionId connId, PluginId siteId, ISiteMessage message, string? userId, IEnumerable<IMessagePart>? username, string? newNickname, bool isInitialComment)
     {
         ConnId = connId;
         SiteId = siteId;
         Message = message;
         UserId = userId;
+        Username = username;
         NewNickname = newNickname;
         IsInitialComment = isInitialComment;
     }
@@ -18,6 +19,7 @@ public class SetMessage : ISetMessageToCoreV2
     public PluginId SiteId { get; }
     public ISiteMessage Message { get; }
     public string? UserId { get; }
+    public IEnumerable<IMessagePart>? Username { get; }
     public string? NewNickname { get; }
     public bool IsInitialComment { get; }
 }

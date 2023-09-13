@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using Mcv.PluginV2;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
@@ -174,9 +175,16 @@ class ConnectionViewModel : ViewModelBase, INotifyPropertyChanged
         _canDisconnect = canDisconnect;
         RaisePropertyChanged(nameof(CanDisconnect));
     }
-    private void Connect()
+    private async void Connect()
     {
-        _adapter.SetConnectSite(SelectedSite.Id, Id, Input, _selectedBrowser.Id);
+        try
+        {
+            await _adapter.SetConnectSite(SelectedSite.Id, Id, Input, _selectedBrowser.Id);
+        }
+        catch (Exception)
+        {
+
+        }
     }
     private void Disconnect()
     {

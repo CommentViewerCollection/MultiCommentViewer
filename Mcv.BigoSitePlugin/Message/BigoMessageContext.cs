@@ -1,4 +1,5 @@
 ﻿using Mcv.PluginV2;
+using System.Collections.Generic;
 
 namespace BigoSitePlugin
 {
@@ -8,6 +9,7 @@ namespace BigoSitePlugin
         public string? UserId { get; }
         public string? NewNickname { get; }
         public bool IsInitialComment { get; }
+        public IEnumerable<IMessagePart>? UsernameItems { get; }
 
         public BigoMessageContext(IBigoMessage message, bool isInitialComment)
         {

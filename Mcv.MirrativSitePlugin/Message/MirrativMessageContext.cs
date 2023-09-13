@@ -1,4 +1,5 @@
 ﻿using Mcv.PluginV2;
+using System.Collections.Generic;
 
 namespace MirrativSitePlugin
 {
@@ -8,6 +9,7 @@ namespace MirrativSitePlugin
         public string? UserId { get; }
         public string? NewNickname { get; }
         public bool IsInitialComment { get; }
+        public IEnumerable<IMessagePart>? UsernameItems { get; }
 
         public MirrativMessageContext(IMirrativMessage message, string? userId, string? newNickname, bool isInitialComment)
         {

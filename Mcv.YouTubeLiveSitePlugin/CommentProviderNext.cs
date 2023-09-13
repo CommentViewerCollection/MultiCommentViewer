@@ -840,7 +840,7 @@ reload:
                     newNickname = nick;
                 }
             }
-            return new YouTubeLiveMessageContext(message, a.UserId, newNickname, isInitialComment);
+            return new YouTubeLiveMessageContext(message, a.UserId, nameItems, newNickname, isInitialComment);
         }
         private YouTubeLiveMessageContext CreateMessageContext2(SuperChat text, bool isInitialComment)
         {
@@ -863,7 +863,7 @@ reload:
                     newNickname = nick;
                 }
             }
-            return new YouTubeLiveMessageContext(message, a.UserId, newNickname, isInitialComment);
+            return new YouTubeLiveMessageContext(message, a.UserId, nameItems, newNickname, isInitialComment);
         }
         private YouTubeLiveMessageContext CreateMessageContext2(PaidSticker text, bool isInitialComment)
         {
@@ -872,7 +872,7 @@ reload:
             var message = new YouTubeLivePaidSticker(text);
             //message = a;
 
-            return new YouTubeLiveMessageContext(message, message.UserId, null, isInitialComment);
+            return new YouTubeLiveMessageContext(message, message.UserId, null, null, isInitialComment);
         }
         private YouTubeLiveMessageContext CreateMessageContext2(SponsorshipsGiftPurchaseAnnouncement text, bool isInitialComment)
         {
@@ -888,7 +888,7 @@ reload:
                     newNickname = nick;
                 }
             }
-            return new YouTubeLiveMessageContext(message, message.UserId, newNickname, isInitialComment);
+            return new YouTubeLiveMessageContext(message, message.UserId, MessagePartFactory.CreateMessageItems(text.AuthorName), newNickname, isInitialComment);
         }
         private YouTubeLiveMessageContext CreateMessageContext2(MemberShip text, bool isInitialComment)
         {
@@ -904,7 +904,12 @@ reload:
                     newNickname = nick;
                 }
             }
-            return new YouTubeLiveMessageContext(message, message.UserId, newNickname, isInitialComment);
+            IEnumerable<PluginV2.IMessagePart>? nameItems = null;
+            if (text.AuthorName is not null)
+            {
+                nameItems = MessagePartFactory.CreateMessageItems(text.AuthorName);
+            }
+            return new YouTubeLiveMessageContext(message, message.UserId, nameItems, newNickname, isInitialComment);
         }
         //private void OnMessageReceived(IInternalMessage e, bool isInitialComment)
         //{

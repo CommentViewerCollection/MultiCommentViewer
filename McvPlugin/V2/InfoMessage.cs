@@ -28,17 +28,19 @@ public class InfoMessageContext : IMessageContext
     public string? UserId { get; }
     public string? NewNickname { get; }
     public bool IsInitialComment { get; }
+    public IEnumerable<IMessagePart>? UsernameItems { get; }
 
-    public InfoMessageContext(IInfoMessage message, string? userId, string? newNickname, bool isInitialComment)
+    public InfoMessageContext(IInfoMessage message, string? userId, IEnumerable<IMessagePart>? usernameItems, string? newNickname, bool isInitialComment)
     {
         Message = message;
         UserId = userId;
+        UsernameItems = usernameItems;
         NewNickname = newNickname;
         IsInitialComment = isInitialComment;
     }
     public static InfoMessageContext Create(InfoMessage message)
     {
-        var context = new InfoMessageContext(message, null, null, false);
+        var context = new InfoMessageContext(message, null, null, null, false);
         return context;
 
     }

@@ -11,7 +11,7 @@ class TwicasCommentViewModel : IMcvCommentViewModel
 {
     private readonly ITwicasMessage _message;
     private readonly IMainViewPluginOptions _options;
-    private readonly MyUser? _user;
+    public MyUser? User { get; }
     private void SetNickname(MyUser user)
     {
         if (!string.IsNullOrEmpty(user.Nickname))
@@ -167,7 +167,7 @@ class TwicasCommentViewModel : IMcvCommentViewModel
 
     public IMessageImage Thumbnail { get; private set; }
 
-    public string UserId => _user?.UserId;
+    public string UserId => User?.UserId;
 
     public TextWrapping UserNameWrapping
     {

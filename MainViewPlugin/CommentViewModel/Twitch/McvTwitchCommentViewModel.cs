@@ -12,7 +12,7 @@ class McvTwitchCommentViewModel : IMcvCommentViewModel
     private readonly ITwitchMessage _message;
 
     private readonly IMainViewPluginOptions _options;
-    private readonly MyUser? _user;
+    public MyUser? User { get; }
 
     private void SetNickname(MyUser user)
     {
@@ -29,7 +29,7 @@ class McvTwitchCommentViewModel : IMcvCommentViewModel
     {
         ConnectionName = connectionStatus;
         _options = options;
-        _user = user;
+        User = user;
         ConnectionName.PropertyChanged += (s, e) =>
         {
             switch (e.PropertyName)
@@ -80,9 +80,9 @@ class McvTwitchCommentViewModel : IMcvCommentViewModel
                     //    break;
             }
         };
-        if (_user != null)
+        if (User != null)
         {
-            _user.PropertyChanged += (s, e) =>
+            User.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
                 {
@@ -225,7 +225,7 @@ class McvTwitchCommentViewModel : IMcvCommentViewModel
 
     public IMessageImage Thumbnail { get; private set; }
 
-    public string? UserId => _user?.UserId;
+    public string? UserId => User?.UserId;
 
     public TextWrapping UserNameWrapping
     {

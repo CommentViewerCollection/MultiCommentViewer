@@ -1,4 +1,5 @@
 ﻿using Mcv.PluginV2;
+using System.Collections.Generic;
 
 namespace OpenrecSitePlugin
 {
@@ -8,6 +9,7 @@ namespace OpenrecSitePlugin
         public string? UserId { get; }
         public string? NewNickname { get; }
         public bool IsInitialComment { get; }
+        public IEnumerable<IMessagePart>? UsernameItems { get; }
 
         public OpenrecMessageContext(IOpenrecMessage message, string? userId, string? newNickname, bool isInitialComment)
         {

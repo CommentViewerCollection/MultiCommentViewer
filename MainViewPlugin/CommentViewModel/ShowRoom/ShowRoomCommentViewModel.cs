@@ -12,7 +12,7 @@ class ShowRoomCommentViewModel : IMcvCommentViewModel
 {
     private readonly IShowRoomMessage _message;
     private readonly IMainViewPluginOptions _options;
-    private readonly MyUser? _user;
+    public MyUser? User { get; }
 
     private void SetNickname(MyUser user)
     {
@@ -248,7 +248,7 @@ class ShowRoomCommentViewModel : IMcvCommentViewModel
 
     public IMessageImage Thumbnail { get; private set; }
 
-    public string UserId => _user?.UserId;
+    public string UserId => User?.UserId;
 
     public TextWrapping UserNameWrapping
     {

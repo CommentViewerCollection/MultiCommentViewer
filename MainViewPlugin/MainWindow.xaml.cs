@@ -67,20 +67,34 @@ namespace Mcv.MainViewPlugin
             //    v.Owner = this;
             //    v.ShowDialog();
             //});
-            //WeakReferenceMessenger.Default.Register<ShowUserInfoViewMessage>(this, (r, m) =>
-            //{
-            //    try
-            //    {
-            //        var v = new UserView();
-            //        v.DataContext = m.UserInfoVm;
-            //        //v.Owner = this;
-            //        v.Show();
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Debug.WriteLine(ex.Message);
-            //    }
-            //});
+            WeakReferenceMessenger.Default.Register<ShowUserInfoViewMessage>(this, (r, m) =>
+            {
+                try
+                {
+                    var v = new UserInfoView();
+                    v.DataContext = m.UserInfoVm;
+                    //v.Owner = this;
+                    v.Show();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            });
+            WeakReferenceMessenger.Default.Register<ShowUserListViewMessage>(this, (r, m) =>
+            {
+                try
+                {
+                    var v = new UserListView();
+                    v.DataContext = m.UserListVm;
+                    //v.Owner = this;
+                    v.Show();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            });
         }
 
         /// <summary>

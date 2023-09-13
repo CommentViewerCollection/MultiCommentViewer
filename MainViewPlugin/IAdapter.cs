@@ -106,6 +106,24 @@ namespace Mcv.MainViewPlugin
         public ConnectionId ConnId { get; }
         public PluginId SiteId { get; }
     }
+    class UserAddedEventArgs : EventArgs
+    {
+        public UserAddedEventArgs(MyUser user)
+        {
+            User = user;
+        }
+
+        public MyUser User { get; }
+    }
+    class UserRemovedEventArgs : EventArgs
+    {
+        public UserRemovedEventArgs(string userId)
+        {
+            UserId = userId;
+        }
+
+        public string UserId { get; }
+    }
     class IAdapter : IConnectionNameHost
     {
         public event EventHandler<ConnectionAddedEventArgs> ConnectionAdded;
@@ -118,9 +136,38 @@ namespace Mcv.MainViewPlugin
         public event EventHandler<MetadataUpdatedEventArgs> MetadataUpdated;
         public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<SelectedSiteChangedEventArgs> SelectedSiteChanged;
+        public event EventHandler<UserAddedEventArgs> UserAdded;
+        public event EventHandler<UserRemovedEventArgs> UserRemoved;
 
         private readonly BrowserProfileId _emptyBrowserProfileId = new(Guid.NewGuid());
-
+        private readonly UserStore _userStore = new();
+        internal MyUser GetUser(string userId)
+        {
+            return _userStore.GetUser(userId);
+        }
+        internal List<MyUser> GetAllUsers()
+        {
+            return _userStore.GetAllUsers();
+        }
+        static readonly string _userDataDbPath = "MainViewPlugin_Users.db";
+        internal async Task LoadUserStoreAsync()
+        {
+            var res = await _host.RequestMessageAsync(new GetPluginSettingsDirPath(_userDataDbPath)) as ReplyPluginSettingsDirPath;
+            if (res is null)
+            {
+                throw new NotImplementedException();
+            }
+            _userStore.Load(res.PluginSettingsDirPath);
+        }
+        internal async Task SaveUserStoreAsync()
+        {
+            var res = await _host.RequestMessageAsync(new GetPluginSettingsDirPath(_userDataDbPath)) as ReplyPluginSettingsDirPath;
+            if (res is null)
+            {
+                throw new NotImplementedException();
+            }
+            _userStore.Save(res.PluginSettingsDirPath);
+        }
         internal void OnConnectionRemoved(ConnectionId connId)
         {
             ConnectionRemoved?.Invoke(this, new ConnectionRemovedEventArgs(connId));
@@ -591,13 +638,13 @@ namespace Mcv.MainViewPlugin
                 if (reply.IsValid)
                 {
                     //SelectedSiteChanged?.Invoke(this, new SelectedSiteChangedEventArgs(connId, site));
-                    _host.SetMessageAsync(new RequestChangeConnectionStatus(new ConnectionStatusDiff(connId) { SelectedSite = site }));
+                    await _host.SetMessageAsync(new RequestChangeConnectionStatus(new ConnectionStatusDiff(connId) { SelectedSite = site }));
                     break;
                 }
             }
         }
 
-        internal async void SetConnectSite(PluginId selectedSite, ConnectionId connId, string input, BrowserProfileId browserProfileId)
+        internal async Task SetConnectSite(PluginId selectedSite, ConnectionId connId, string input, BrowserProfileId browserProfileId)
         {
             var resDomain = await _host.RequestMessageAsync(new GetDirectMessage(selectedSite, new GetSiteDomain(connId))) as ReplySiteDomain;
             if (resDomain is null)
@@ -610,7 +657,7 @@ namespace Mcv.MainViewPlugin
             {
                 throw new Exception("bug");
             }
-            _host.SetMessageAsync(new SetDirectMessage(selectedSite, new SetConnectSite(connId, input, res.Cookies)));
+            await _host.SetMessageAsync(new SetDirectMessage(selectedSite, new SetConnectSite(connId, input, res.Cookies)));
         }
         internal void SetDisconectSite(PluginId selectedSite, ConnectionId connId)
         {
@@ -649,7 +696,12 @@ namespace Mcv.MainViewPlugin
             Options = options;
             _host = host;
             _emptyBrowserProfileInfo = new ProfileInfo(new PluginId(Guid.NewGuid()), "(未選択)", null, _emptyBrowserProfileId);
+            _userStore.UserAdded += UserStore_UserAdded;
         }
         private readonly ProfileInfo _emptyBrowserProfileInfo;
+        private void UserStore_UserAdded(object? sender, UserAddedEventArgs e)
+        {
+            UserAdded?.Invoke(this, e);
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using Mcv.PluginV2;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -29,7 +31,10 @@ namespace Mcv.MainViewPlugin
     //}
     interface IMcvCommentViewModel
     {
-        string UserId { get; }
+        string? UserId { get; }
+        IEnumerable<IMessagePart> MessageItems { get; set; }
+        bool IsTranslated { get; set; }
+        MyUser? User { get; }
     }
 
     //public interface IMessageMetadata : INotifyPropertyChanged

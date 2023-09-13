@@ -21,9 +21,9 @@ namespace TwicasSitePlugin.V2
             _host.SetMessageAsync(new SetMetadata(_connId, _pluginId, e));
         }
 
-        internal void NotifyMessageReceived(ISiteMessage message, string userId, string? newNickname, bool isInitialComment)
+        internal void NotifyMessageReceived(ISiteMessage message, string? userId, IEnumerable<IMessagePart>? usernameItems, string? newNickname, bool isInitialComment)
         {
-            _host.SetMessageAsync(new SetMessage(_connId, _pluginId, message, userId, newNickname, isInitialComment));
+            _host.SetMessageAsync(new SetMessage(_connId, _pluginId, message, userId, usernameItems, newNickname, isInitialComment));
         }
         public CommentProviderHost(IPluginHost host, ConnectionId connId, PluginId pluginId)
         {
@@ -56,7 +56,7 @@ namespace TwicasSitePlugin.V2
 
         private void CommentProvider_MessageReceived(object sender, IMessageContext e)
         {
-            _host.NotifyMessageReceived(e.Message, e.UserId, e.NewNickname, e.IsInitialComment);
+            _host.NotifyMessageReceived(e.Message, e.UserId, e.UsernameItems, e.NewNickname, e.IsInitialComment);
         }
 
         internal Task ConnectAsync(string input, List<Cookie> cookies)

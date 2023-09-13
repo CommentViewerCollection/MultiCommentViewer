@@ -160,6 +160,10 @@ class McvCoreActor : ReceiveActor
                     if (userId is not null)
                     {
                         var user = _userStoreManager.GetUser(setMessage.SiteId, userId);
+                        if (setMessage.Username is not null)
+                        {
+                            user.Name = setMessage.Username;
+                        }
                         if (setMessage.NewNickname is not null)
                         {
                             user.Nickname = setMessage.NewNickname;
@@ -264,6 +268,10 @@ class McvCoreActor : ReceiveActor
                 {
                     return await GetMessageToPluginManagerAsync(directMsg.Target, directMsg.Message);
                 }
+            case GetPluginSettingsDirPath pluginSettingsDirPath:
+                {
+                    return new ReplyPluginSettingsDirPath(GetSettingsFilePath(pluginSettingsDirPath.FilePath));
+                }
         }
         throw new Exception("bug");
     }
@@ -363,7 +371,6 @@ class McvCoreActor : ReceiveActor
     }
     private void UserStoreManager_UserAdded(object? sender, McvUser e)
     {
-        throw new NotImplementedException();
     }
 
     private static IMcvCoreOptions LoadOptions(string optionsPath, ILogger logger)

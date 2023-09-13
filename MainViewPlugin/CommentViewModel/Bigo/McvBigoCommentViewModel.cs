@@ -43,7 +43,7 @@ class McvBigoCommentViewModelBase : IMcvCommentViewModel
 {
     private readonly IBigoMessage _message;
     private readonly IMainViewPluginOptions _options;
-    private readonly MyUser? _user;
+    public MyUser? User { get; }
 
     private void SetNickname(MyUser user)
     {
@@ -106,7 +106,7 @@ class McvBigoCommentViewModelBase : IMcvCommentViewModel
         }
     }
 
-    public IEnumerable<IMessagePart> MessageItems { get; protected set; }
+    public IEnumerable<IMessagePart> MessageItems { get; set; }
 
     public SolidColorBrush Background
     {
@@ -164,7 +164,7 @@ class McvBigoCommentViewModelBase : IMcvCommentViewModel
 
     public IMessageImage Thumbnail { get; private set; }
 
-    public string UserId => _user?.UserId;
+    public string UserId => User?.UserId;
 
     public TextWrapping UserNameWrapping
     {

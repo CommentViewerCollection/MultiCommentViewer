@@ -12,7 +12,7 @@ namespace Mcv.MainViewPlugin
     {
         private readonly INicoMessage _message;
         private readonly IMainViewPluginOptions _options;
-        private readonly MyUser? _user;
+        public MyUser? User { get; }
         private void SetNickname(MyUser user)
         {
             if (!string.IsNullOrEmpty(user.Nickname))
@@ -28,7 +28,7 @@ namespace Mcv.MainViewPlugin
         {
             ConnectionName = connectionStatus;
             _options = options;
-            _user = user;
+            User = user;
             ConnectionName.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -251,7 +251,7 @@ namespace Mcv.MainViewPlugin
 
         public IMessageImage Thumbnail { get; private set; }
 
-        public string UserId => _user?.UserId;
+        public string UserId => User?.UserId;
 
         public TextWrapping UserNameWrapping
         {

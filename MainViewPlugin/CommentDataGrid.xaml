@@ -5,9 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Mcv.MainViewPlugin"
              xmlns:w="clr-namespace:Common"
-             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
-             d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}"
+             d:DataContext="{d:DesignInstance local:CommentDataGridViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="300" d:DesignWidth="370">
     <UserControl.Resources>
         <w:NotConverter x:Key="notConverter" />

@@ -120,7 +120,9 @@ class McvCoreActor : ReceiveActor
                         SetPluginRole(pluginHello.PluginId, pluginHello.PluginRole);
                         if (PluginTypeChecker.IsSitePlugin(pluginHello.PluginRole))
                         {
-                            _userStoreManager.SetUserStore(pluginHello.PluginId, new V1.SQLiteUserStore(GetSettingsFilePath("users_" + pluginHello.PluginName + ".db"), _logger));
+                            var store = new V1.SQLiteUserStore(GetSettingsFilePath("users_" + pluginHello.PluginName + ".db"), _logger);
+                            store.Load();
+                            _userStoreManager.SetUserStore(pluginHello.PluginId, store);
                         }
                         else if (PluginTypeChecker.IsBrowserPlugin(pluginHello.PluginRole))
                         {

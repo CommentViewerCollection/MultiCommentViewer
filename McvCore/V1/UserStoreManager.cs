@@ -37,18 +37,13 @@ class UserStoreManager : IUserStoreManager
     {
         try
         {
+            userStore.UserAdded += (s, e) => UserAdded?.Invoke(s, e);
             _dict.Add(siteType, userStore);
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
         }
-    }
-    public void Init(PluginId siteType)
-    {
-        var userStore = _dict[siteType];
-        userStore.UserAdded += (s, e) => UserAdded?.Invoke(s, e);
-        userStore.Init();
     }
     readonly Dictionary<PluginId, IUserStore> _dict = new();
 }

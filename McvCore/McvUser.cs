@@ -10,8 +10,6 @@ class McvUser
     public string? Nickname { get; set; }
     public bool IsNgUser { get; set; }
     public bool IsSiteNgUser { get; set; }
-    public string? BackColorArgb { get; set; }
-    public string? ForeColorArgb { get; set; }
     public McvUser(string userId)
     {
         UserId = userId;

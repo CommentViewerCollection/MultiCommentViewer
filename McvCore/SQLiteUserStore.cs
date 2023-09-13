@@ -14,16 +14,15 @@ namespace Mcv.Core.V1
         //
         private readonly string _dbPath;
         private readonly ILogger _logger;
-        //private readonly Dictionary<string, IUser> _cacheDict = new Dictionary<string, IUser>();
         private readonly ConcurrentDictionary<string, McvUser> _cacheDict = new();
         private static readonly object _createTableLockObject = new object();
         public event EventHandler<McvUser> UserAdded;
-        public void Init()
+        public void Load()
         {
-            //foreach (var user in LoadAllUserInfo())
-            //{
-            //    _cacheDict.TryAdd(user.UserId, user);
-            //}
+            foreach (var user in LoadAllUserInfo())
+            {
+                _cacheDict.TryAdd(user.UserId, user);
+            }
         }
         public void ClearCache()
         {
@@ -139,7 +138,7 @@ namespace Mcv.Core.V1
         {
             return Newtonsoft.Json.JsonConvert.ToString(s);
         }
-        private static string ToJson(IEnumerable<IMessagePart> items)
+        private static string ToJson(IEnumerable<IMessagePart>? items)
         {
             if (items == null) return "null";
             var list = new List<string>();
@@ -163,19 +162,19 @@ namespace Mcv.Core.V1
                 + $"\"userid\":\"{user.UserId}\","
                 + $"\"name\":{ToJson(user.Name)},"
                 + $"\"nickname\":{ToJson(user.Nickname)},"
-                + $"\"backcolor\":{ToJson(user.BackColorArgb)},"
-                + $"\"forecolor\":{ToJson(user.ForeColorArgb)},"
                 + $"\"is_ng\":\"{user.IsNgUser}\""
                 + "}";
             return json;
         }
-        public static McvUser FromJson(string json)
+        public static McvUser? FromJson(string json)
         {
             dynamic? d = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+            if (d is null)
+            {
+                return null;
+            }
             var userId = d.userid.Value;
             var nick = d.nickname.Value;
-            var backColor = d.backcolor.Value;
-            var foreColor = d.forecolor.Value;
             var isNg = d.is_ng.Value.ToLower() == "true";
             var name = d.name;
             var nameItems = new List<IMessagePart>();
@@ -190,7 +189,7 @@ namespace Mcv.Core.V1
                     }
                 }
             }
-            var user = new McvUser(userId) { Name = nameItems, Nickname = nick, BackColorArgb = backColor, ForeColorArgb = foreColor, IsNgUser = isNg };
+            var user = new McvUser(userId) { Name = nameItems, Nickname = nick, IsNgUser = isNg };
             return user;
         }
         /// <summary>
@@ -373,7 +372,7 @@ namespace Mcv.Core.V1
         /// <returns></returns>
         private bool IsModified(McvUser user)
         {
-            return !string.IsNullOrEmpty(user.Nickname) || !string.IsNullOrEmpty(user.ForeColorArgb) || !string.IsNullOrEmpty(user.BackColorArgb) || user.IsNgUser;
+            return !string.IsNullOrEmpty(user.Nickname) || user.IsNgUser || user.IsSiteNgUser;
         }
 
         private bool Exists(string userId)

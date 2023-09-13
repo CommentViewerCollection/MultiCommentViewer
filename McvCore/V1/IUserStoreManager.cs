@@ -11,7 +11,7 @@ interface IUserStoreManager
     McvUser GetUser(PluginId siteType, string userId);
     IEnumerable<McvUser> GetAllUsers(PluginId siteType);
     void SetUserStore(PluginId siteType, IUserStore userStore);
-    void Init(PluginId siteType);
+    //void Init(PluginId siteType);
     void Save();
     void Save(PluginId siteType);
 }

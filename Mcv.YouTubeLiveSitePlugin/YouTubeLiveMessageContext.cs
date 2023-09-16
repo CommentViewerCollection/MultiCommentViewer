@@ -12,6 +12,7 @@ namespace Mcv.YouTubeLiveSitePlugin
         public YouTubeLiveMessageContext(IYouTubeLiveMessage message, string? userId, string? newNickname, bool isInitialComment)
         {
             Message = message;
+            UserId = userId;
             NewNickname = newNickname;
             IsInitialComment = isInitialComment;
         }

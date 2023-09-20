@@ -569,15 +569,9 @@ namespace Mcv.MainViewPlugin
             await Task.CompletedTask;
         }
         #endregion //Methods
-        public event EventHandler<EventArgs>? CloseRequested;
         public void RequestClose()
         {
-            OnCloseRequested(EventArgs.Empty);
-        }
-
-        protected virtual void OnCloseRequested(EventArgs e)
-        {
-            CloseRequested?.Invoke(this, e);
+            _adapter.RequestCloseApp();
         }
         #region Properties
         public ObservableCollection<MetadataViewModel> MetaCollection { get; } = new();

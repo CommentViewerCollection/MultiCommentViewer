@@ -50,6 +50,49 @@ namespace BouyomiPlugin
             }
             return s;
         }
+        public static string ToTextWithImageAlt(this IEnumerable<IMessagePart> parts, int maxImages, bool skipSameImage)
+        {
+            int n = 0;
+            string s = "";
+            string previousImage = "";
+            if (parts != null)
+            {
+                foreach (var part in parts)
+                {
+                    if (part is IMessageText text)
+                    {
+                        if (!string.IsNullOrWhiteSpace(text.Text))
+                        {
+                            previousImage = "";
+                        }
+                        s += text;
+                    }
+                    else if (part is IMessageImage image)
+                    {
+                        if ((n < maxImages) && (!skipSameImage || !string.Equals(previousImage, image.Alt)))
+                        {
+                            s += image.Alt;
+                            n++;
+                        }
+                        previousImage = image.Alt;
+                    }
+                    else if(part is IMessageRemoteSvg remoteSvg)
+                    {
+                        if ((n < maxImages) && (!skipSameImage || !string.Equals(previousImage, remoteSvg.Alt)))
+                        {
+                            s += remoteSvg.Alt;
+                            n++;
+                        }
+                        previousImage = remoteSvg.Alt;
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+            return s;
+        }
     }
     interface ITalker : IDisposable
     {
@@ -307,7 +350,14 @@ namespace BouyomiPlugin
                             {
                                 name = (twitchMessage as ITwitchComment).DisplayName;
                             }
-                            comment = (twitchMessage as ITwitchComment).CommentItems.ToText();
+                            if (options.IsTwitchCommentEmoteId)
+                            {
+                                comment = (twitchMessage as ITwitchComment).CommentItems.ToTextWithImageAlt(options.TwitchMaxEmotes, options.IsTwitchSkipSameEmote);
+                            }
+                            else
+                            {
+                                comment = (twitchMessage as ITwitchComment).CommentItems.ToText();
+                            }
                         }
                         break;
                 }

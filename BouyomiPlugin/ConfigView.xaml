@@ -8,6 +8,9 @@
         d:DesignHeight="1500"
         d:DataContext="{d:DesignInstance local:ConfigViewModel, IsDesignTimeCreatable=True}"
         Title="棒読みちゃん連携プラグイン"  Width="439" Background="#F0F0F0">
+    <Window.Resources>
+        <local:AndConverter x:Key="AndConverter"/>
+    </Window.Resources>
     <Grid>
         <CheckBox x:Name="checkBox" Content="棒読みちゃんにコメントを読んでもらう" IsChecked="{Binding IsEnabled}" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
         <TabControl HorizontalAlignment="Stretch" Margin="5,30,5,5" VerticalAlignment="Stretch">
@@ -61,8 +64,8 @@
                 <ScrollViewer Background="#FFE5E5E5">
                     <Grid HorizontalAlignment="Stretch" Height="Auto" VerticalAlignment="Stretch" Width="Auto">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition />
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -106,6 +109,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckYouTubeLiveComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveCommentNickname}" Content="コテハン" />
@@ -121,6 +126,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckYouTubeLiveSuperchat" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsYouTubeLiveSuperchat}" Content="super chat" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckYouTubeLiveSuperchat}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsYouTubeLiveSuperchatNickname}" Content="コテハン" />
@@ -131,6 +138,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -164,6 +173,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckOpenrecComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsOpenrecComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckOpenrecComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsOpenrecCommentNickname}" Content="コテハン" />
@@ -187,8 +198,13 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition />
                                         <RowDefinition />
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                        <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -196,6 +212,24 @@
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckTwitchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwitchComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentNickname}" Content="コテハン" />
+                                    <CheckBox x:Name="CheckTwitchCommentEmoteId" IsEnabled="{Binding IsChecked, ElementName=CheckTwitchComment}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwitchCommentEmoteId}" Content="エモートID" />
+                                    <TextBox x:Name="TwitchMaxEmotes" Grid.Row="3" Grid.Column="2" MaxLength="3" Text="{Binding TwitchMaxEmotes}" PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged">
+                                        <TextBox.IsEnabled>
+                                            <MultiBinding Converter="{StaticResource AndConverter}">
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchComment"/>
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchCommentEmoteId"/>
+                                            </MultiBinding>
+                                        </TextBox.IsEnabled>
+                                    </TextBox>
+                                    <Label Content="個まで" Grid.Row="3" Grid.Column="3"/>
+                                    <CheckBox Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="4" IsChecked="{Binding IsTwitchSkipSameEmote}" Content="連続する同一エモートを省略">
+                                        <CheckBox.IsEnabled>
+                                            <MultiBinding Converter="{StaticResource AndConverter}">
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchComment"/>
+                                                <Binding Path="IsChecked" ElementName="CheckTwitchCommentEmoteId"/>
+                                            </MultiBinding>
+                                        </CheckBox.IsEnabled>
+                                    </CheckBox>
                                 </Grid>
                             </Grid>
                         </Border>
@@ -226,6 +260,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckNicoComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsNicoComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckNicoComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsNicoCommentNickname}" Content="コテハン" />
@@ -236,6 +272,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -273,6 +311,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckTwicasComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsTwicasComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckTwicasComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsTwicasCommentNickname}" Content="コテハン" />
@@ -283,6 +323,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -312,6 +354,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -346,6 +390,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckWhowatchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsWhowatchComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckWhowatchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsWhowatchCommentNickname}" Content="コテハン" />
@@ -356,6 +402,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -387,6 +435,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -424,6 +474,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckPeriscopeComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsPeriscopeComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckPeriscopeComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsPeriscopeCommentNickname}" Content="コテハン" />
@@ -453,6 +505,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -492,6 +546,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckMildomComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMildomComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMildomComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMildomCommentNickname}" Content="コテハン" />
@@ -505,6 +561,8 @@
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -542,6 +600,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckShowRoomComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsShowRoomComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckShowRoomComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsShowRoomCommentNickname}" Content="コテハン" />
@@ -575,6 +635,8 @@
                                         <ColumnDefinition />
                                         <ColumnDefinition />
                                         <ColumnDefinition />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <CheckBox x:Name="CheckBigoLiveComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsBigoLiveComment}" Content="コメント" />
                                     <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckBigoLiveComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsBigoLiveCommentNickname}" Content="コテハン" />
@@ -602,6 +664,8 @@
                                     <ColumnDefinition />
                                     <ColumnDefinition />
                                     <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <CheckBox x:Name="CheckMixchComment" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" IsChecked="{Binding IsMixchComment}" Content="コメント" />
                                 <CheckBox IsEnabled="{Binding IsChecked, ElementName=CheckMixchComment}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" IsChecked="{Binding IsMixchCommentNickname}" Content="コテハン" />
@@ -622,6 +686,8 @@
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
                                     <ColumnDefinition />
                                     <ColumnDefinition />
                                     <ColumnDefinition />

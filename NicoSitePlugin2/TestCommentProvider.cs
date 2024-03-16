@@ -427,6 +427,9 @@ check:
                             {
                                 _chatProvider?.Disconnect();
                             }
+                            if (chat.Name != null) {
+                                user.Name = Common.MessagePartFactory.CreateMessageItems(chat.Name);
+                            }
                             if (_siteOptions.IsAutoSetNickname)
                             {
                                 var nick = SitePluginCommon.Utils.ExtractNickname(chat.Content);

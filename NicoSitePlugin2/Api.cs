@@ -16,12 +16,6 @@ namespace NicoSitePlugin
         }
     }
     class NotLoggedInException : Exception { }
-    class UserInfo
-    {
-        public string Nickname { get; set; }
-        public string UserIconUrl { get; set; }
-
-    }
     static class Api
     {
         public static async Task<CommunityLiveInfo[]> GetCommunityLives(IDataSource server, CookieContainer cc, string communityId)

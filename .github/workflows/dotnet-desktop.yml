@@ -1,0 +1,71 @@
+name: .NET Desktop App Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tagname:
+        description: 'tagname'
+        required: true
+        default: '0.6.35'
+      createRelease:
+        description: 'If "yes", create the release.'
+        required: true
+        default: 'yes'
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      Solution_Name: MultiCommentViewer.sln
+      Configuration: Release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        recursive: true
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'  # 使用する .NET のバージョンを指定
+
+    - name: Restore dependencies
+      run: dotnet restore $env:Solution_Name
+
+    - name: Build solution
+      run: |
+        dotnet build ./MultiCommentViewer/MultiCommentViewer.csproj --configuration $env:Configuration
+        dotnet build ./BouyomiPlugin/BouyomiPlugin.csproj --configuration $env:Configuration
+        dotnet build ./CommentGeneratorPlugin/CommentGeneratorPlugin.csproj  --configuration $env:Configuration
+        dotnet build ./YoyakuPlugin/YoyakuPlugin.csproj --configuration $env:Configuration
+
+    - name: copy files
+      run: |
+        copy ".\BouyomiPlugin\bin\$env:Configuration\*" ".\Output\$env:Configuration\plugins\Bouyomi"
+        copy ".\CommentGeneratorPlugin\bin\$env:Configuration\*" ".\Output\$env:Configuration\plugins\CommentGenerator"
+        copy ".\YoyakuPlugin\bin\$env:Configuration\*" ".\Output\$env:Configuration\plugins\Yoyaku"
+
+    - name:  zipping
+      run: Compress-Archive -Path "./Output/$env:Configuration/*" -Destination 'MultiCommentViewer_v${{ github.event.inputs.tagname }}_stable.zip'
+
+    - name: echo SHA256
+      run: Get-FileHash -Algorithm SHA256 -Path 'MultiCommentViewer_v${{ github.event.inputs.tagname }}_stable.zip'
+
+    - name: echo SHA1
+      run: Get-FileHash -Algorithm SHA1 -Path 'MultiCommentViewer_v${{ github.event.inputs.tagname }}_stable.zip'
+
+    - name: Upload Release
+      if: ${{ github.event.inputs.createRelease == 'yes'}}
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        artifacts: 'MultiCommentViewer_v${{ github.event.inputs.tagname }}_stable.zip'
+        tag: ${{ github.event.inputs.tagname }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: DesktopApp
+        path: 'MultiCommentViewer_v${{ github.event.inputs.tagname }}_stable.zip'

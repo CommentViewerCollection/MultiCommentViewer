@@ -498,6 +498,16 @@ namespace MultiCommentViewer
             get { return ChangedOptions.OpenrecForeColor; }
             set { ChangedOptions.OpenrecForeColor = value; }
         }
+        public Color BLiveBackColor
+        {
+            get { return ChangedOptions.BLiveBackColor; }
+            set { ChangedOptions.BLiveBackColor = value; }
+        }
+        public Color BLiveForeColor
+        {
+            get { return ChangedOptions.BLiveForeColor; }
+            set { ChangedOptions.BLiveForeColor = value; }
+        }
         public Color MixchBackColor
         {
             get { return ChangedOptions.MixchBackColor; }

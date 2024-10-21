@@ -4,6 +4,7 @@ using MildomSitePlugin;
 using MirrativSitePlugin;
 using NicoSitePlugin;
 using OpenrecSitePlugin;
+using BLiveSitePlugin;
 using MixchSitePlugin;
 using PeriscopeSitePlugin;
 using Plugin;
@@ -238,6 +239,36 @@ namespace BouyomiPlugin
                                 name = (openrecMessage as IOpenrecComment).NameItems.ToText();
                             }
                             comment = (openrecMessage as IOpenrecComment).MessageItems.ToText();
+                        }
+                        break;
+                }
+            }
+            else if (message is IBLiveMessage bliveMessage)
+            {
+                switch (bliveMessage.BLiveMessageType)
+                {
+                    case BLiveMessageType.Connected:
+                        if (options.IsBLiveConnect)
+                        {
+                            name = null;
+                            comment = (bliveMessage as IBLiveConnected).Text;
+                        }
+                        break;
+                    case BLiveMessageType.Disconnected:
+                        if (options.IsBLiveDisconnect)
+                        {
+                            name = null;
+                            comment = (bliveMessage as IBLiveDisconnected).Text;
+                        }
+                        break;
+                    case BLiveMessageType.Comment:
+                        if (options.IsBLiveComment)
+                        {
+                            if (options.IsBLiveCommentNickname)
+                            {
+                                name = (bliveMessage as IBLiveComment).NameItems.ToText();
+                            }
+                            comment = (bliveMessage as IBLiveComment).MessageItems.ToText();
                         }
                         break;
                 }

@@ -11,6 +11,7 @@
         NicoLive,
         YouTubeLive,
         Openrec,
+        BLive,
         Mixch,
         /// <summary>
         /// ふわっち

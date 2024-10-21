@@ -126,6 +126,18 @@ namespace PluginCommonTests
                 Assert.AreEqual(commentExpected, commentActual);
             }
             {
+                var m = new Mock<BLiveSitePlugin.IBLiveComment>();
+
+                m.Setup(x => x.NameItems).Returns(Common.MessagePartFactory.CreateMessageItems(nameExpected));
+                m.Setup(x => x.MessageItems).Returns(Common.MessagePartFactory.CreateMessageItems(commentExpected));
+                var obj = m.Object;
+
+
+                var (nameActual, commentActual) = Tools.GetData(obj);
+                Assert.AreEqual(nameExpected, nameActual);
+                Assert.AreEqual(commentExpected, commentActual);
+            }
+            {
                 var m = new Mock<MixchSitePlugin.IMixchMessage>();
 
                 m.Setup(x => x.NameItems).Returns(Common.MessagePartFactory.CreateMessageItems(nameExpected));

@@ -24,6 +24,7 @@ using System.Windows;
 using System.Windows.Controls;
 using NicoSitePlugin;
 using MixchSitePlugin;
+using BLiveSitePlugin;
 
 namespace MultiCommentViewer
 {
@@ -787,6 +788,29 @@ namespace MultiCommentViewer
                 else if (openrecMessage is OpenrecSitePlugin.IOpenrecDisconnected disconnected)
                 {
                     mcvCvm = new OpenrecCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+            }
+            else if (messageContext.Message is BLiveSitePlugin.IBLiveMessage bliveMessage)
+            {
+                if (bliveMessage is BLiveSitePlugin.IBLiveComment comment)
+                {
+                    mcvCvm = new BLiveCommentViewModel(comment, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (bliveMessage is BLiveSitePlugin.IBLiveStamp stamp)
+                {
+                    mcvCvm = new BLiveCommentViewModel(stamp, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (bliveMessage is BLiveSitePlugin.IBLiveYell yell)
+                {
+                    mcvCvm = new BLiveCommentViewModel(yell, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (bliveMessage is BLiveSitePlugin.IBLiveConnected connected)
+                {
+                    mcvCvm = new BLiveCommentViewModel(connected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
+                }
+                else if (bliveMessage is BLiveSitePlugin.IBLiveDisconnected disconnected)
+                {
+                    mcvCvm = new BLiveCommentViewModel(disconnected, messageContext.Metadata, messageContext.Methods, connectionName, _options);
                 }
             }
             else if (messageContext.Message is MixchSitePlugin.IMixchMessage mixchMessage)

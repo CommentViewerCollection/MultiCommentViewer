@@ -40,6 +40,12 @@ namespace BouyomiPlugin
         public bool IsOpenrecComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsOpenrecCommentNickname { get { return GetValue(); } set { SetValue(value); } }
 
+        //B-LIVE
+        public bool IsBLiveConnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsBLiveDisconnect { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsBLiveComment { get { return GetValue(); } set { SetValue(value); } }
+        public bool IsBLiveCommentNickname { get { return GetValue(); } set { SetValue(value); } }
+
         //ミクチャ
         public bool IsMixchComment { get { return GetValue(); } set { SetValue(value); } }
         public bool IsMixchCommentNickname { get { return GetValue(); } set { SetValue(value); } }
@@ -164,6 +170,12 @@ namespace BouyomiPlugin
             Dict.Add(nameof(IsOpenrecDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsOpenrecComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
             Dict.Add(nameof(IsOpenrecCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+
+            //B-LIVE
+            Dict.Add(nameof(IsBLiveConnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsBLiveDisconnect), new Item { DefaultValue = false, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsBLiveComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
+            Dict.Add(nameof(IsBLiveCommentNickname), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });
 
             //ミクチャ
             Dict.Add(nameof(IsMixchComment), new Item { DefaultValue = true, Predicate = b => true, Serializer = b => b.ToString(), Deserializer = s => bool.Parse(s) });

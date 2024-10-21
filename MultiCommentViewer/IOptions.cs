@@ -142,6 +142,8 @@ namespace MultiCommentViewer
         Color YouTubeLiveForeColor { get; set; }
         Color OpenrecBackColor { get; set; }
         Color OpenrecForeColor { get; set; }
+        Color BLiveBackColor { get; set; }
+        Color BLiveForeColor { get; set; }
         Color MixchBackColor { get; set; }
         Color MixchForeColor { get; set; }
         Color TwitchBackColor { get; set; }

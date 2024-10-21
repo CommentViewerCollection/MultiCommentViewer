@@ -124,6 +124,14 @@ namespace PluginCommon
                 name = opComment.NameItems.ToText();
             }
             //}
+            //else if (message is BLiveSitePlugin.IBLiveMessage opMessage)
+            //{
+            else if (message is BLiveSitePlugin.IBLiveComment blComment)
+            {
+                comment = blComment.MessageItems.ToText();
+                name = blComment.NameItems.ToText();
+            }
+            //}
             //else if (message is MixchSitePlugin.IMixchMessage opMessage)
             //{
             else if (message is MixchSitePlugin.IMixchMessage mxMessage)

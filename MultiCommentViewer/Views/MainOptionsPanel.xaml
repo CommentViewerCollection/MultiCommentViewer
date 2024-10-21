@@ -102,6 +102,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -140,6 +141,9 @@
                             <Label Grid.Row="10" Grid.Column="0" Content="ミクチャ" />
                             <xctk:ColorPicker Grid.Row="10" Grid.Column="1" SelectedColor="{Binding MixchBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
                             <xctk:ColorPicker Grid.Row="10" Grid.Column="2" SelectedColor="{Binding MixchForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <Label Grid.Row="10" Grid.Column="0" Content="B-LIVE" />
+                            <xctk:ColorPicker Grid.Row="10" Grid.Column="1" SelectedColor="{Binding BLiveBackColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
+                            <xctk:ColorPicker Grid.Row="10" Grid.Column="2" SelectedColor="{Binding BLiveForeColor}" Margin="5,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" />
                         </Grid>
                     </ScrollViewer>
                     <RadioButton IsEnabled="{Binding IsChecked, ElementName=SiteConnectionColorCheck}" IsChecked="{Binding SiteConnectionColorType, Converter={StaticResource SiteConnectionColorTypeConverter}, Mode=TwoWay, ConverterParameter=Connection}" GroupName="ColorType" Content="接続毎" Grid.Row="3" VerticalAlignment="Center" />

@@ -45,6 +45,7 @@
     <ProjectReference Include="..\MirrativIF\MirrativIF.csproj" />
     <ProjectReference Include="..\NicoLiveIF\NicoLiveIF.csproj" />
     <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
+    <ProjectReference Include="..\BLiveIF\BLiveIF.csproj" />
     <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
     <ProjectReference Include="..\TwicasIF\TwicasIF.csproj" />
     <ProjectReference Include="..\TwitchIF\TwitchIF.csproj" />

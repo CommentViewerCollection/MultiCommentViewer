@@ -73,6 +73,8 @@
     <ProjectReference Include="..\NicoSitePlugin2\NicoSitePlugin2.csproj" />
     <ProjectReference Include="..\OpenrecIF\OpenrecIF.csproj" />
     <ProjectReference Include="..\OpenrecSitePlugin\OpenrecSitePlugin.csproj" />
+    <ProjectReference Include="..\BLiveIF\BLiveIF.csproj" />
+    <ProjectReference Include="..\BLiveSitePlugin\BLiveSitePlugin.csproj" />
     <ProjectReference Include="..\MixchIF\MixchIF.csproj" />
     <ProjectReference Include="..\MixchSitePlugin\MixchSitePlugin.csproj" />
     <ProjectReference Include="..\PeriscopeIF\PeriscopeIF.csproj" />

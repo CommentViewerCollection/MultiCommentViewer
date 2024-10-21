@@ -213,6 +213,41 @@ namespace BouyomiPlugin
         //}
         #endregion //OPENREC
 
+        #region B-LIVE
+        /// <summary>
+        /// B-LIVEの接続メッセージを読み上げるか
+        /// </summary>
+        public bool IsBLiveConnect
+        {
+            get => _options.IsBLiveConnect;
+            set => _options.IsBLiveConnect = value;
+        }
+        /// <summary>
+        /// B-LIVEの切断メッセージを読み上げるか
+        /// </summary>
+        public bool IsBLiveDisconnect
+        {
+            get => _options.IsBLiveDisconnect;
+            set => _options.IsBLiveDisconnect = value;
+        }
+        /// <summary>
+        /// B-LIVEのコメントを読み上げるか
+        /// </summary>
+        public bool IsBLiveComment
+        {
+            get => _options.IsBLiveComment;
+            set => _options.IsBLiveComment = value;
+        }
+        /// <summary>
+        /// B-LIVEのコメントのコテハンを読み上げるか
+        /// </summary>
+        public bool IsBLiveCommentNickname
+        {
+            get => _options.IsBLiveCommentNickname;
+            set => _options.IsBLiveCommentNickname = value;
+        }
+        #endregion //B-LIVE
+
         #region ミクチャ
         /// <summary>
         /// MIXCHのコメントを読み上げるか

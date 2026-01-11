@@ -1,0 +1,21 @@
+[workspace]
+members = [
+    "crates/mcv-common",
+    "crates/mcv-messages",
+    "crates/mcv-plugin-interface",
+    "crates/mcv-core",
+    "apps/mcv/src-tauri",
+    "packages/plugin-dummy",
+]
+resolver = "2"
+
+[workspace.dependencies]
+actix = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+thiserror = "1.0"
+tauri = { version = "2.1", features = [] }

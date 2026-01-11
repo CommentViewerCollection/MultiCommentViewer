@@ -1,0 +1,9 @@
+[package]
+name = "mcv-plugin-interface"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mcv-messages = { path = "../mcv-messages" }
+async-trait = { workspace = true }
+thiserror = { workspace = true }

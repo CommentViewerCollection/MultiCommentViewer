@@ -1,0 +1,326 @@
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+/// メッセージヘッダー
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Message {
+    #[serde(rename = "type")]
+    pub message_type: MessageType,
+    pub src: MessageSource,
+    pub dst: MessageDestination,
+    pub request_id: Option<Uuid>,
+    pub timestamp: i64,
+    pub payload: serde_json::Value,
+}
+
+/// メッセージの送信元
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum MessageSource {
+    Core,
+    Plugin { plugin_id: Uuid },
+}
+
+impl MessageSource {
+    /// MessageSourceをMessageDestinationに変換
+    pub fn to_destination(&self) -> MessageDestination {
+        match self {
+            MessageSource::Core => MessageDestination::Core,
+            MessageSource::Plugin { plugin_id } => MessageDestination::Plugin {
+                plugin_id: *plugin_id,
+            },
+        }
+    }
+}
+
+/// メッセージの宛先
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum MessageDestination {
+    Core,
+    Plugin { plugin_id: Uuid },
+}
+
+impl MessageDestination {
+    /// MessageDestinationをMessageSourceに変換
+    pub fn to_source(&self) -> MessageSource {
+        match self {
+            MessageDestination::Core => MessageSource::Core,
+            MessageDestination::Plugin { plugin_id } => MessageSource::Plugin {
+                plugin_id: *plugin_id,
+            },
+        }
+    }
+}
+
+/// メッセージ種別（kebab-case）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum MessageType {
+    // Plugin関連
+    PluginHello,
+    PluginAdded,
+    PluginRemoved,
+    PluginError,
+
+    // Connection関連
+    AddConnection,
+    ConnectionAdded,
+    ConnectionAddFailed,
+    RemoveConnection,
+    ConnectionRemoved,
+    ConnectionRemoveFailed,
+    Connect,
+    Connected,
+    ConnectFailed,
+    Disconnect,
+    Disconnected,
+    DisconnectFailed,
+    GetConnectionStatus,
+
+    // Comment関連
+    CommentReceived,
+
+    // その他
+    GetAppName,
+    GetAppVersion,
+}
+
+// ============================================================================
+// Payload型定義
+// ============================================================================
+
+/// plugin-helloのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginHelloPayload {
+    pub name: String,
+    pub plugin_id: Uuid,
+    pub role: Vec<String>,
+    pub api_version: String,
+}
+
+/// plugin-addedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginAddedPayload {
+    pub name: String,
+    pub plugin_id: Uuid,
+    pub role: Vec<String>,
+    pub api_version: String,
+}
+
+/// connection-addedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionAddedPayload {
+    pub connection_id: Uuid,
+}
+
+/// connection-add-failedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionAddFailedPayload {
+    pub reason: String,
+}
+
+/// connection-removedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionRemovedPayload {
+    pub connection_id: Uuid,
+}
+
+/// connection-remove-failedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionRemoveFailedPayload {
+    pub connection_id: Uuid,
+    pub reason: String,
+}
+
+/// connectのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectPayload {
+    pub connection_id: Uuid,
+    pub site: SiteInfo,
+    pub input: InputInfo,
+    pub browser: BrowserInfo,
+}
+
+/// 配信サイト情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SiteInfo {
+    pub name: String,
+    pub id: Uuid,
+}
+
+/// 入力情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InputInfo {
+    pub input_type: String,
+    #[serde(flatten)]
+    pub extra: serde_json::Value,
+}
+
+/// ブラウザ情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BrowserInfo {
+    pub name: String,
+    pub id: Uuid,
+}
+
+/// connectedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectedPayload {
+    pub connection_id: Uuid,
+}
+
+/// connect-failedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectFailedPayload {
+    pub connection_id: Uuid,
+    pub reason: String,
+}
+
+/// disconnectのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisconnectPayload {
+    pub connection_id: Uuid,
+}
+
+/// disconnectedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisconnectedPayload {
+    pub connection_id: Uuid,
+}
+
+/// disconnect-failedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisconnectFailedPayload {
+    pub connection_id: Uuid,
+    pub reason: String,
+}
+
+/// get-connection-statusのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetConnectionStatusPayload {
+    pub connection_id: Uuid,
+}
+
+/// comment-receivedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommentReceivedPayload {
+    pub connection_id: Uuid,
+    pub comment: Comment,
+}
+
+/// コメント情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Comment {
+    pub id: String,
+    pub user_name: String,
+    pub user_id: String,
+    pub text: String,
+    pub timestamp: i64,
+}
+
+// ============================================================================
+// ヘルパー関数
+// ============================================================================
+
+impl Message {
+    /// 新しいメッセージを作成
+    pub fn new(
+        message_type: MessageType,
+        src: MessageSource,
+        dst: MessageDestination,
+        payload: serde_json::Value,
+    ) -> Self {
+        Self {
+            message_type,
+            src,
+            dst,
+            request_id: Some(Uuid::new_v4()),
+            timestamp: chrono::Utc::now().timestamp(),
+            payload,
+        }
+    }
+
+    /// request_idなしのメッセージを作成（通知用）
+    pub fn new_notification(
+        message_type: MessageType,
+        src: MessageSource,
+        dst: MessageDestination,
+        payload: serde_json::Value,
+    ) -> Self {
+        Self {
+            message_type,
+            src,
+            dst,
+            request_id: None,
+            timestamp: chrono::Utc::now().timestamp(),
+            payload,
+        }
+    }
+
+    /// レスポンスメッセージを作成
+    pub fn create_response(
+        &self,
+        message_type: MessageType,
+        payload: serde_json::Value,
+    ) -> Self {
+        Self {
+            message_type,
+            src: self.dst.to_source(),
+            dst: self.src.to_destination(),
+            request_id: self.request_id,
+            timestamp: chrono::Utc::now().timestamp(),
+            payload,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_message_serialization() {
+        let plugin_id = Uuid::new_v4();
+        let message = Message::new(
+            MessageType::PluginHello,
+            MessageSource::Plugin { plugin_id },
+            MessageDestination::Core,
+            serde_json::json!({
+                "name": "Test Plugin",
+                "plugin_id": plugin_id,
+                "role": ["test"],
+                "api_version": "v2"
+            }),
+        );
+
+        let json = serde_json::to_string(&message).unwrap();
+        let deserialized: Message = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(message.message_type, deserialized.message_type);
+        assert_eq!(message.src, deserialized.src);
+        assert_eq!(message.dst, deserialized.dst);
+    }
+
+    #[test]
+    fn test_comment_payload() {
+        let comment = Comment {
+            id: "test-id".to_string(),
+            user_name: "太郎".to_string(),
+            user_id: "user_1234".to_string(),
+            text: "こんにちは!".to_string(),
+            timestamp: chrono::Utc::now().timestamp(),
+        };
+
+        let payload = CommentReceivedPayload {
+            connection_id: Uuid::new_v4(),
+            comment,
+        };
+
+        let json = serde_json::to_value(&payload).unwrap();
+        let deserialized: CommentReceivedPayload = serde_json::from_value(json).unwrap();
+
+        assert_eq!(payload.comment.user_name, deserialized.comment.user_name);
+        assert_eq!(payload.comment.text, deserialized.comment.text);
+    }
+}

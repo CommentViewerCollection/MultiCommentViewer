@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use crate::connection_manager::{ConnectionManager, ConnectionStatus};
+use crate::connection_manager::{ConnectionManager, ConnectionStatus, ConnectionInfo};
 use crate::plugin_host_actor::{PluginHostActor, SendMessageToPlugin};
 
 /// プラグイン情報

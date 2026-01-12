@@ -23,14 +23,30 @@ async fn add_connection(
     println!("=== add_connection called ===");
     let plugin_id = state.dummy_plugin_id;
 
-    // 現在の接続数を取得してデフォルト名を生成
+    // 現在の接続を取得してデフォルト名を生成
     let connections = state
         .core_addr
         .send(GetConnections)
         .await
         .map_err(|e| e.to_string())?;
 
-    let default_name = format!("#{}", connections.len() + 1);
+    // 既存の接続名から#N形式の番号を抽出
+    let mut used_numbers = std::collections::HashSet::new();
+    for conn in &connections {
+        if let Some(stripped) = conn.name.strip_prefix('#') {
+            if let Ok(num) = stripped.parse::<u32>() {
+                used_numbers.insert(num);
+            }
+        }
+    }
+
+    // #1から順に空いている番号を探す
+    let mut next_number = 1;
+    while used_numbers.contains(&next_number) {
+        next_number += 1;
+    }
+
+    let default_name = format!("#{}", next_number);
     println!("Generated default name: {}", default_name);
 
     // 接続を作成

@@ -31,6 +31,7 @@ function App() {
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null)
   const dataGridRef = useRef<DataGridRef>(null)
   const [atBottom, setAtBottom] = useState(true)
+  const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
 
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
@@ -45,6 +46,14 @@ function App() {
     try {
       const conns = await invoke<ConnectionInfo[]>('get_connections')
       setConnections(conns)
+      // 編集中の名前を初期化（既に編集中のものは保持）
+      setEditingNames((prev) => {
+        const newEditingNames: { [key: string]: string } = {}
+        conns.forEach((conn) => {
+          newEditingNames[conn.connection_id] = prev[conn.connection_id] ?? conn.name
+        })
+        return newEditingNames
+      })
     } catch (error) {
       console.error('Failed to load connections:', error)
     }
@@ -112,10 +121,27 @@ function App() {
 
   const handleRenameConnection = async (connectionId: string, newName: string) => {
     try {
+      // 空欄も許容
       await invoke('rename_connection', { connectionId, newName })
       await loadConnections()
     } catch (error) {
       console.error('Failed to rename connection:', error)
+    }
+  }
+
+  const handleNameChange = (connectionId: string, newName: string) => {
+    // ローカルステートのみ更新（IME入力中でも即座に反映）
+    setEditingNames((prev) => ({ ...prev, [connectionId]: newName }))
+  }
+
+  const handleNameBlur = (connectionId: string) => {
+    // 確定時にバックエンドに送信
+    const newName = editingNames[connectionId]
+    if (newName !== undefined) {
+      const connection = connections.find((c) => c.connection_id === connectionId)
+      if (connection && newName !== connection.name) {
+        handleRenameConnection(connectionId, newName)
+      }
     }
   }
 
@@ -159,9 +185,9 @@ function App() {
       return <span>{formatTime(item.timestamp)}</span>
     }
     if (column.key === 'connection_name') {
-      // 接続名を動的に取得（名前変更に連動）
+      // 接続名を動的に取得（名前変更に連動、空欄も許容）
       const conn = connections.find(c => c.connection_id === item.connection_id)
-      return <span>{conn?.name || '不明'}</span>
+      return <span>{conn?.name ?? ''}</span>
     }
     return <span>{String(item[column.key])}</span>
   }
@@ -237,8 +263,9 @@ function App() {
                 <div className="flex items-center justify-between mb-2">
                   <input
                     type="text"
-                    value={conn.name}
-                    onChange={(e) => handleRenameConnection(conn.connection_id, e.target.value)}
+                    value={editingNames[conn.connection_id] ?? conn.name}
+                    onChange={(e) => handleNameChange(conn.connection_id, e.target.value)}
+                    onBlur={() => handleNameBlur(conn.connection_id)}
                     onClick={(e) => e.stopPropagation()}
                     className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 focus:outline-none flex-1 mr-2"
                   />

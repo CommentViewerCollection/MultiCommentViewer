@@ -471,10 +471,154 @@ impl Plugin for DummyPlugin {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
 
     #[test]
     fn test_dummy_plugin_creation() {
         let plugin = DummyPlugin::new();
         assert!(plugin.connections.is_empty());
+    }
+
+    #[test]
+    fn test_get_help() {
+        let help = DummyPlugin::get_help();
+        assert!(help.contains("help"));
+        assert!(help.contains("disconnect"));
+        assert!(help.contains("pause"));
+        assert!(help.contains("resume"));
+        assert!(help.contains("rate"));
+        assert!(help.contains("comment"));
+    }
+
+    #[test]
+    fn test_get_status_no_connection() {
+        let plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+        let status = plugin.get_status(connection_id);
+        assert!(status.contains("Connected=false"));
+        assert!(status.contains("Paused=false"));
+    }
+
+    #[test]
+    fn test_get_status_with_connection() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        plugin.connections.insert(connection_id, Arc::new(AtomicBool::new(true)));
+        plugin.paused.insert(connection_id, Arc::new(AtomicBool::new(false)));
+
+        let status = plugin.get_status(connection_id);
+        assert!(status.contains("Connected=true"));
+        assert!(status.contains("Paused=false"));
+    }
+
+    #[test]
+    fn test_command_pause() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        plugin.paused.insert(connection_id, Arc::new(AtomicBool::new(false)));
+
+        let result = plugin.command_pause(connection_id);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Paused");
+
+        // pausedフラグが設定されていることを確認
+        let is_paused = plugin.paused.get(&connection_id).unwrap();
+        assert!(is_paused.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_command_resume() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加（paused状態で）
+        plugin.paused.insert(connection_id, Arc::new(AtomicBool::new(true)));
+
+        let result = plugin.command_resume(connection_id);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Resumed");
+
+        // pausedフラグが解除されていることを確認
+        let is_paused = plugin.paused.get(&connection_id).unwrap();
+        assert!(!is_paused.load(Ordering::SeqCst));
+    }
+
+    #[tokio::test]
+    async fn test_command_rate_valid() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        let rate_lock = Arc::new(tokio::sync::RwLock::new(0));
+        plugin.comment_rates.insert(connection_id, rate_lock.clone());
+
+        let result = plugin.command_rate(connection_id, &["5"]);
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Rate set to 5s"));
+
+        // 少し待機してtokio::spawnが完了するのを待つ
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        // レートが設定されたことを確認
+        let rate_value = *rate_lock.read().await;
+        assert_eq!(rate_value, 5);
+    }
+
+    #[test]
+    fn test_command_rate_invalid() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        plugin.comment_rates.insert(connection_id, Arc::new(tokio::sync::RwLock::new(0)));
+
+        let result = plugin.command_rate(connection_id, &["invalid"]);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid number");
+    }
+
+    #[test]
+    fn test_command_rate_no_args() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        let result = plugin.command_rate(connection_id, &[]);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Usage: rate <seconds>"));
+    }
+
+    #[test]
+    fn test_command_pause_no_connection() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        let result = plugin.command_pause(connection_id);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Connection not found");
+    }
+
+    #[test]
+    fn test_multiple_connections() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id1 = Uuid::new_v4();
+        let connection_id2 = Uuid::new_v4();
+
+        // 2つの接続を追加
+        plugin.connections.insert(connection_id1, Arc::new(AtomicBool::new(true)));
+        plugin.connections.insert(connection_id2, Arc::new(AtomicBool::new(true)));
+        plugin.paused.insert(connection_id1, Arc::new(AtomicBool::new(false)));
+        plugin.paused.insert(connection_id2, Arc::new(AtomicBool::new(false)));
+
+        // connection1をpause
+        let result1 = plugin.command_pause(connection_id1);
+        assert!(result1.is_ok());
+
+        // connection1がpausedでconnection2がpausedでないことを確認
+        assert!(plugin.paused.get(&connection_id1).unwrap().load(Ordering::SeqCst));
+        assert!(!plugin.paused.get(&connection_id2).unwrap().load(Ordering::SeqCst));
     }
 }

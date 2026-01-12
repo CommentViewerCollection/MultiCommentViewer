@@ -348,4 +348,59 @@ mod tests {
         assert_eq!(payload.comment.user_name, deserialized.comment.user_name);
         assert_eq!(payload.comment.text, deserialized.comment.text);
     }
+
+    #[test]
+    fn test_send_command_payload() {
+        let connection_id = Uuid::new_v4();
+        let payload = SendCommandPayload {
+            connection_id,
+            command: "disconnect".to_string(),
+        };
+
+        let json = serde_json::to_value(&payload).unwrap();
+        let deserialized: SendCommandPayload = serde_json::from_value(json).unwrap();
+
+        assert_eq!(payload.connection_id, deserialized.connection_id);
+        assert_eq!(payload.command, deserialized.command);
+    }
+
+    #[test]
+    fn test_command_result_payload() {
+        let connection_id = Uuid::new_v4();
+        let payload = CommandResultPayload {
+            connection_id,
+            success: true,
+            message: "Command executed successfully".to_string(),
+        };
+
+        let json = serde_json::to_value(&payload).unwrap();
+        let deserialized: CommandResultPayload = serde_json::from_value(json).unwrap();
+
+        assert_eq!(payload.connection_id, deserialized.connection_id);
+        assert_eq!(payload.success, deserialized.success);
+        assert_eq!(payload.message, deserialized.message);
+    }
+
+    #[test]
+    fn test_send_command_message_type() {
+        let plugin_id = Uuid::new_v4();
+        let connection_id = Uuid::new_v4();
+
+        let message = Message::new(
+            MessageType::SendCommand,
+            MessageSource::Core,
+            MessageDestination::Plugin { plugin_id },
+            serde_json::to_value(SendCommandPayload {
+                connection_id,
+                command: "pause".to_string(),
+            })
+            .unwrap(),
+        );
+
+        let json = serde_json::to_string(&message).unwrap();
+        let deserialized: Message = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(message.message_type, deserialized.message_type);
+        assert_eq!(message.message_type, MessageType::SendCommand);
+    }
 }

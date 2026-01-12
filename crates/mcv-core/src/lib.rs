@@ -83,7 +83,13 @@ mod tests {
         let conn_id = Uuid::new_v4();
         let plugin_id = Uuid::new_v4();
 
-        manager.add_connection(conn_id, plugin_id);
+        manager.add_connection(
+            conn_id,
+            plugin_id,
+            "Test Site".to_string(),
+            "Test Input".to_string(),
+            "#1".to_string(),
+        );
         assert_eq!(
             manager.get_status(&conn_id),
             Some(ConnectionStatus::Created)

@@ -32,9 +32,6 @@ function App() {
   const dataGridRef = useRef<DataGridRef>(null)
   const [atBottom, setAtBottom] = useState(true)
 
-  const [showAddDialog, setShowAddDialog] = useState(false)
-  const [newConnectionName, setNewConnectionName] = useState('')
-
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
     { key: 'connection_name', label: '接続', width: 150, visible: true, resizable: true },
@@ -95,15 +92,9 @@ function App() {
   }, [atBottom, connections])
 
   const handleAddConnection = async () => {
-    if (!newConnectionName.trim()) {
-      alert('接続名を入力してください')
-      return
-    }
     try {
-      await invoke<string>('add_connection', { name: newConnectionName })
+      await invoke<string>('add_connection')
       await loadConnections()
-      setShowAddDialog(false)
-      setNewConnectionName('')
     } catch (error) {
       console.error('Failed to add connection:', error)
     }
@@ -116,6 +107,15 @@ function App() {
     } catch (error) {
       console.error('Failed to remove connection:', error)
       alert('接続の削除に失敗しました。接続中の場合は削除できません。')
+    }
+  }
+
+  const handleRenameConnection = async (connectionId: string, newName: string) => {
+    try {
+      await invoke('rename_connection', { connectionId, newName })
+      await loadConnections()
+    } catch (error) {
+      console.error('Failed to rename connection:', error)
     }
   }
 
@@ -157,6 +157,11 @@ function App() {
   const renderCell = (item: Comment, column: Column<Comment>) => {
     if (column.key === 'timestamp') {
       return <span>{formatTime(item.timestamp)}</span>
+    }
+    if (column.key === 'connection_name') {
+      // 接続名を動的に取得（名前変更に連動）
+      const conn = connections.find(c => c.connection_id === item.connection_id)
+      return <span>{conn?.name || '不明'}</span>
     }
     return <span>{String(item[column.key])}</span>
   }
@@ -205,7 +210,7 @@ function App() {
         <div className="p-4 border-b border-gray-700">
           <h1 className="text-2xl font-bold mb-2">MultiCommentViewer</h1>
           <button
-            onClick={() => setShowAddDialog(true)}
+            onClick={handleAddConnection}
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
           >
             + 接続を追加
@@ -230,7 +235,13 @@ function App() {
                 onClick={() => setSelectedConnectionId(conn.connection_id)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-sm truncate">{conn.name}</span>
+                  <input
+                    type="text"
+                    value={conn.name}
+                    onChange={(e) => handleRenameConnection(conn.connection_id, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 focus:outline-none flex-1 mr-2"
+                  />
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
@@ -325,48 +336,6 @@ function App() {
           />
         </div>
       </div>
-
-      {/* 接続追加ダイアログ */}
-      {showAddDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 w-96 border border-gray-700">
-            <h2 className="text-xl font-semibold mb-4">接続を追加</h2>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">接続名</label>
-              <input
-                type="text"
-                value={newConnectionName}
-                onChange={(e) => setNewConnectionName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleAddConnection()
-                  }
-                }}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="例: メイン配信"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => {
-                  setShowAddDialog(false)
-                  setNewConnectionName('')
-                }}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleAddConnection}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-              >
-                追加
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

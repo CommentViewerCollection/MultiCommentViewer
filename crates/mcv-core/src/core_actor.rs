@@ -421,3 +421,27 @@ impl Handler<RemoveConnection> for CoreActor {
         Box::pin(fut.into_actor(self))
     }
 }
+
+/// 接続名を変更
+#[derive(Message)]
+#[rtype(result = "Result<(), String>")]
+pub struct RenameConnection {
+    pub connection_id: Uuid,
+    pub new_name: String,
+}
+
+impl Handler<RenameConnection> for CoreActor {
+    type Result = ResponseActFuture<Self, Result<(), String>>;
+
+    fn handle(&mut self, msg: RenameConnection, _ctx: &mut Self::Context) -> Self::Result {
+        let connection_manager = self.connection_manager.clone();
+
+        let fut = async move {
+            let mut manager = connection_manager.write().await;
+            manager.rename_connection(&msg.connection_id, msg.new_name);
+            Ok(())
+        };
+
+        Box::pin(fut.into_actor(self))
+    }
+}

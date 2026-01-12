@@ -5,7 +5,7 @@ use mcv_core::*;
 use mcv_messages::{self, Message as McvMessage, MessageSource, MessageDestination, MessageType, *};
 use plugin_dummy::DummyPlugin;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, State};
 use uuid::Uuid;
 
 /// アプリケーションの状態
@@ -18,11 +18,20 @@ struct AppState {
 /// 接続を追加
 #[tauri::command]
 async fn add_connection(
-    state: tauri::State<'_, AppState>,
-    name: String,
+    state: State<'_, AppState>,
 ) -> Result<String, String> {
-    println!("=== add_connection called, name: {} ===", name);
+    println!("=== add_connection called ===");
     let plugin_id = state.dummy_plugin_id;
+
+    // 現在の接続数を取得してデフォルト名を生成
+    let connections = state
+        .core_addr
+        .send(GetConnections)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let default_name = format!("#{}", connections.len() + 1);
+    println!("Generated default name: {}", default_name);
 
     // 接続を作成
     let connection_id = state
@@ -31,7 +40,7 @@ async fn add_connection(
             plugin_id,
             site_name: "Dummy Plugin".to_string(),
             input_info: "ダミー接続".to_string(),
-            name,
+            name: default_name,
         })
         .await
         .map_err(|e| e.to_string())?;
@@ -51,6 +60,25 @@ async fn remove_connection(
     state
         .core_addr
         .send(RemoveConnection { connection_id: conn_id })
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// 接続名を変更
+#[tauri::command]
+async fn rename_connection(
+    state: State<'_, AppState>,
+    connection_id: String,
+    new_name: String,
+) -> Result<(), String> {
+    let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
+
+    state
+        .core_addr
+        .send(RenameConnection {
+            connection_id: conn_id,
+            new_name,
+        })
         .await
         .map_err(|e| e.to_string())?
 }
@@ -276,6 +304,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             add_connection,
             remove_connection,
+            rename_connection,
             connect,
             disconnect,
             get_connections

@@ -85,6 +85,13 @@ impl ConnectionManager {
     pub fn list_connections(&self) -> Vec<&ConnectionInfo> {
         self.connections.values().collect()
     }
+
+    /// 接続名を変更
+    pub fn rename_connection(&mut self, connection_id: &Uuid, new_name: String) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            info.name = new_name;
+        }
+    }
 }
 
 impl Default for ConnectionManager {

@@ -3,6 +3,9 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, DataGridRef, Column } from 'my-dataview'
 
+// @ts-ignore - Type compatibility issue with React versions
+const DataGridComponent = DataGrid as any
+
 interface Comment {
   id: string
   user_name: string
@@ -10,6 +13,7 @@ interface Comment {
   text: string
   timestamp: number
   connection_id?: string
+  connection_name?: string
 }
 
 interface ConnectionInfo {
@@ -18,6 +22,7 @@ interface ConnectionInfo {
   status: { type: string; message?: string }
   site_name: string
   input_info: string
+  name: string
 }
 
 function App() {
@@ -27,8 +32,12 @@ function App() {
   const dataGridRef = useRef<DataGridRef>(null)
   const [atBottom, setAtBottom] = useState(true)
 
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [newConnectionName, setNewConnectionName] = useState('')
+
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
+    { key: 'connection_name', label: '接続', width: 150, visible: true, resizable: true },
     { key: 'user_name', label: 'ユーザー名', width: 150, visible: true, resizable: true },
     { key: 'text', label: 'コメント', width: 400, visible: true, resizable: true, wrap: true },
     { key: 'timestamp', label: '時刻', width: 150, visible: true, resizable: true },
@@ -53,7 +62,12 @@ function App() {
 
     // コメント受信イベントをリッスン
     const unlistenComment = listen<Comment>('comment-received', (event) => {
-      setComments((prev) => [...prev, event.payload])
+      // 接続名を付与
+      const commentWithName = {
+        ...event.payload,
+        connection_name: connections.find(c => c.connection_id === event.payload.connection_id)?.name || '不明',
+      }
+      setComments((prev) => [...prev, commentWithName])
       // 最下部にいる場合は自動スクロール
       if (atBottom) {
         setTimeout(() => {
@@ -78,14 +92,30 @@ function App() {
       unlistenConnected.then((fn) => fn())
       unlistenDisconnected.then((fn) => fn())
     }
-  }, [atBottom])
+  }, [atBottom, connections])
 
   const handleAddConnection = async () => {
+    if (!newConnectionName.trim()) {
+      alert('接続名を入力してください')
+      return
+    }
     try {
-      const connId = await invoke<string>('add_connection')
+      await invoke<string>('add_connection', { name: newConnectionName })
       await loadConnections()
+      setShowAddDialog(false)
+      setNewConnectionName('')
     } catch (error) {
       console.error('Failed to add connection:', error)
+    }
+  }
+
+  const handleRemoveConnection = async (connectionId: string) => {
+    try {
+      await invoke('remove_connection', { connectionId })
+      await loadConnections()
+    } catch (error) {
+      console.error('Failed to remove connection:', error)
+      alert('接続の削除に失敗しました。接続中の場合は削除できません。')
     }
   }
 
@@ -112,13 +142,13 @@ function App() {
     return date.toLocaleTimeString('ja-JP')
   }
 
-  const handleColumnResize = (columnKey: keyof Comment, width: number) => {
+  const handleColumnResize = (columnKey: string, width: number) => {
     setColumns((prev) =>
       prev.map((col) => (col.key === columnKey ? { ...col, width } : col))
     )
   }
 
-  const handleColumnVisibilityChange = (columnKey: keyof Comment, visible: boolean) => {
+  const handleColumnVisibilityChange = (columnKey: string, visible: boolean) => {
     setColumns((prev) =>
       prev.map((col) => (col.key === columnKey ? { ...col, visible } : col))
     )
@@ -175,7 +205,7 @@ function App() {
         <div className="p-4 border-b border-gray-700">
           <h1 className="text-2xl font-bold mb-2">MultiCommentViewer</h1>
           <button
-            onClick={handleAddConnection}
+            onClick={() => setShowAddDialog(true)}
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
           >
             + 接続を追加
@@ -200,7 +230,7 @@ function App() {
                 onClick={() => setSelectedConnectionId(conn.connection_id)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-sm truncate">{conn.site_name}</span>
+                  <span className="font-semibold text-sm truncate">{conn.name}</span>
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
@@ -211,10 +241,10 @@ function App() {
                   </div>
                 </div>
                 <div className="text-xs text-gray-400 mb-2 truncate">
-                  {conn.input_info}
+                  {conn.site_name} - {conn.input_info}
                 </div>
                 <div className="flex gap-2">
-                  {conn.status.type === 'Created' && (
+                  {(conn.status.type === 'Created' || conn.status.type === 'Disconnected') && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
@@ -234,6 +264,17 @@ function App() {
                       className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors"
                     >
                       切断
+                    </button>
+                  )}
+                  {(conn.status.type === 'Created' || conn.status.type === 'Disconnected') && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveConnection(conn.connection_id)
+                      }}
+                      className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+                    >
+                      削除
                     </button>
                   )}
                 </div>
@@ -262,39 +303,70 @@ function App() {
             コメント
             {selectedConnectionId && (
               <span className="ml-2 text-sm text-gray-400">
-                ({connections.find((c) => c.connection_id === selectedConnectionId)?.site_name})
+                ({connections.find((c) => c.connection_id === selectedConnectionId)?.name})
               </span>
             )}
           </h2>
         </div>
 
         <div className="flex-1 p-4">
-          {filteredComments.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-gray-400">
-              <div className="text-center">
-                <p className="text-lg">コメントがまだありません</p>
-                <p className="text-sm mt-2">
-                  接続を追加してコメント受信を開始してください
-                </p>
-              </div>
-            </div>
-          ) : (
-            <DataGrid
-              ref={dataGridRef}
-              data={filteredComments}
-              columns={columns}
-              renderCell={renderCell}
-              height="100%"
-              backgroundColor="#1f2937"
-              border="1px solid #374151"
-              onAtBottomChange={setAtBottom}
-              onColumnResize={handleColumnResize}
-              onColumnVisibilityChange={handleColumnVisibilityChange}
-              defaultItemHeight={60}
-            />
-          )}
+          <DataGridComponent
+            ref={dataGridRef}
+            data={filteredComments}
+            columns={columns}
+            renderCell={renderCell}
+            height="100%"
+            backgroundColor="#1f2937"
+            border="1px solid #374151"
+            onAtBottomChange={setAtBottom}
+            onColumnResize={handleColumnResize}
+            onColumnVisibilityChange={handleColumnVisibilityChange}
+            defaultItemHeight={60}
+          />
         </div>
       </div>
+
+      {/* 接続追加ダイアログ */}
+      {showAddDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-96 border border-gray-700">
+            <h2 className="text-xl font-semibold mb-4">接続を追加</h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">接続名</label>
+              <input
+                type="text"
+                value={newConnectionName}
+                onChange={(e) => setNewConnectionName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddConnection()
+                  }
+                }}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="例: メイン配信"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowAddDialog(false)
+                  setNewConnectionName('')
+                }}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleAddConnection}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+              >
+                追加
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

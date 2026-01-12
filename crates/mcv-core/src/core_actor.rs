@@ -116,7 +116,7 @@ impl CoreActor {
 
         actix::spawn(async move {
             let mut manager = connection_manager.write().await;
-            manager.add_connection(connection_id, plugin_id, site_name, input_info);
+            manager.add_connection(connection_id, plugin_id, site_name, input_info, format!("Connection {}", connection_id));
         });
 
         // connection-addedを返信
@@ -365,6 +365,7 @@ pub struct CreateConnection {
     pub plugin_id: Uuid,
     pub site_name: String,
     pub input_info: String,
+    pub name: String,
 }
 
 impl Handler<CreateConnection> for CoreActor {
@@ -381,8 +382,40 @@ impl Handler<CreateConnection> for CoreActor {
                 msg.plugin_id,
                 msg.site_name,
                 msg.input_info,
+                msg.name,
             );
             connection_id
+        };
+
+        Box::pin(fut.into_actor(self))
+    }
+}
+
+/// 接続を削除
+#[derive(Message)]
+#[rtype(result = "Result<(), String>")]
+pub struct RemoveConnection {
+    pub connection_id: Uuid,
+}
+
+impl Handler<RemoveConnection> for CoreActor {
+    type Result = ResponseActFuture<Self, Result<(), String>>;
+
+    fn handle(&mut self, msg: RemoveConnection, _ctx: &mut Self::Context) -> Self::Result {
+        let connection_manager = self.connection_manager.clone();
+
+        let fut = async move {
+            let mut manager = connection_manager.write().await;
+
+            // 接続のステータスを確認
+            if let Some(status) = manager.get_status(&msg.connection_id) {
+                if status == ConnectionStatus::Connected || status == ConnectionStatus::Connecting {
+                    return Err("Cannot remove connected connection".to_string());
+                }
+            }
+
+            manager.remove_connection(&msg.connection_id);
+            Ok(())
         };
 
         Box::pin(fut.into_actor(self))

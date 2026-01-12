@@ -19,8 +19,9 @@ struct AppState {
 #[tauri::command]
 async fn add_connection(
     state: tauri::State<'_, AppState>,
+    name: String,
 ) -> Result<String, String> {
-    println!("=== add_connection called ===");
+    println!("=== add_connection called, name: {} ===", name);
     let plugin_id = state.dummy_plugin_id;
 
     // 接続を作成
@@ -30,12 +31,28 @@ async fn add_connection(
             plugin_id,
             site_name: "Dummy Plugin".to_string(),
             input_info: "ダミー接続".to_string(),
+            name,
         })
         .await
         .map_err(|e| e.to_string())?;
 
     println!("Connection created: {}", connection_id);
     Ok(connection_id.to_string())
+}
+
+/// 接続を削除
+#[tauri::command]
+async fn remove_connection(
+    state: tauri::State<'_, AppState>,
+    connection_id: String,
+) -> Result<(), String> {
+    let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
+
+    state
+        .core_addr
+        .send(RemoveConnection { connection_id: conn_id })
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 /// 接続を開始
@@ -258,6 +275,7 @@ fn main() {
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             add_connection,
+            remove_connection,
             connect,
             disconnect,
             get_connections

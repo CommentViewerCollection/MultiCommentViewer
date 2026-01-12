@@ -26,6 +26,7 @@ pub struct ConnectionInfo {
     pub status: ConnectionStatus,
     pub site_name: String,
     pub input_info: String,
+    pub name: String,
 }
 
 /// Connection Manager
@@ -44,13 +45,14 @@ impl ConnectionManager {
     }
 
     /// 接続を追加
-    pub fn add_connection(&mut self, connection_id: Uuid, plugin_id: Uuid, site_name: String, input_info: String) {
+    pub fn add_connection(&mut self, connection_id: Uuid, plugin_id: Uuid, site_name: String, input_info: String, name: String) {
         let info = ConnectionInfo {
             connection_id,
             plugin_id,
             status: ConnectionStatus::Created,
             site_name,
             input_info,
+            name,
         };
         self.connections.insert(connection_id, info);
     }
@@ -102,7 +104,7 @@ mod tests {
         let plugin_id = Uuid::new_v4();
 
         // 接続を追加
-        manager.add_connection(conn_id, plugin_id, "Test Site".to_string(), "test input".to_string());
+        manager.add_connection(conn_id, plugin_id, "Test Site".to_string(), "test input".to_string(), "Test Connection".to_string());
         assert_eq!(
             manager.get_status(&conn_id),
             Some(ConnectionStatus::Created)

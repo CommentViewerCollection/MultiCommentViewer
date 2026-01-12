@@ -161,26 +161,26 @@ function App() {
     }
   }
 
-  const handleSendCommand = async () => {
+  const handleSendComment = async () => {
     if (!selectedConnectionForCommand) {
       alert('接続を選択してください')
       return
     }
     if (!commandInput.trim()) {
-      alert('コマンドを入力してください')
+      alert('コメントを入力してください')
       return
     }
 
     try {
-      const result = await invoke<string>('send_command', {
+      const result = await invoke<string>('send_comment', {
         connectionId: selectedConnectionForCommand,
-        command: commandInput.trim(),
+        text: commandInput.trim(),
       })
-      console.log('Command result:', result)
+      console.log('Comment result:', result)
       setCommandInput('')
     } catch (error) {
-      console.error('Failed to send command:', error)
-      alert(`コマンド送信失敗: ${error}`)
+      console.error('Failed to send comment:', error)
+      alert(`コメント送信失敗: ${error}`)
     }
   }
 
@@ -359,7 +359,7 @@ function App() {
           />
         </div>
 
-        {/* コマンド入力セクション */}
+        {/* コメント投稿セクション */}
         <div className="p-4 bg-gray-800 border-t border-gray-700">
           <div className="flex gap-2 items-end">
             <div className="flex-shrink-0">
@@ -379,14 +379,14 @@ function App() {
             </div>
 
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1 text-gray-300">コマンド</label>
+              <label className="block text-sm font-medium mb-1 text-gray-300">コメント</label>
               <input
                 type="text"
                 value={commandInput}
                 onChange={(e) => setCommandInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    handleSendCommand()
+                    handleSendComment()
                   }
                 }}
                 placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
@@ -395,7 +395,7 @@ function App() {
             </div>
 
             <button
-              onClick={handleSendCommand}
+              onClick={handleSendComment}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
             >
               送信

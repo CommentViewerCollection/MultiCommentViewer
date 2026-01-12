@@ -254,17 +254,17 @@ impl CoreActor {
         }
     }
 
-    /// send-commandを処理
-    fn handle_send_command(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        let payload: SendCommandPayload = match serde_json::from_value(message.payload.clone()) {
+    /// send-commentを処理
+    fn handle_send_comment(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: SendCommentPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse send-command payload: {}", e);
+                eprintln!("Failed to parse send-comment payload: {}", e);
                 return;
             }
         };
 
-        // 該当する接続のプラグインへコマンドを転送
+        // 該当する接続のプラグインへコメントを転送
         let connection_id = payload.connection_id;
         let connection_manager = self.connection_manager.clone();
         let plugins = self.plugins.clone();
@@ -317,7 +317,7 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::Disconnect => self.handle_disconnect(message, ctx),
             MessageType::Disconnected => self.handle_disconnected(message, ctx),
             MessageType::CommentReceived => self.handle_comment_received(message, ctx),
-            MessageType::SendCommand => self.handle_send_command(message, ctx),
+            MessageType::SendComment => self.handle_send_comment(message, ctx),
             _ => {
                 eprintln!("Unhandled message type: {:?}", message.message_type);
             }

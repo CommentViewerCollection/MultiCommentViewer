@@ -1,15 +1,15 @@
 use actix::prelude::*;
 use mcv_core::*;
-use mcv_messages::{Message, MessageDestination, MessageSource, MessageType, SendCommandPayload};
+use mcv_messages::{Message, MessageDestination, MessageSource, MessageType, SendCommentPayload};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-/// コマンドシステムの統合テスト
+/// コメント投稿システムの統合テスト
 
 #[actix::test]
-async fn test_send_command_message_routing() {
+async fn test_send_comment_message_routing() {
     // Core Actorを起動
     let mut core_actor = CoreActor::new();
 
@@ -30,14 +30,14 @@ async fn test_send_command_message_routing() {
     let plugin_id = Uuid::new_v4();
     let connection_id = Uuid::new_v4();
 
-    // send-commandメッセージを送信
+    // send-commentメッセージを送信
     let message = Message::new(
-        MessageType::SendCommand,
+        MessageType::SendComment,
         MessageSource::Core,
         MessageDestination::Plugin { plugin_id },
-        serde_json::to_value(SendCommandPayload {
+        serde_json::to_value(SendCommentPayload {
             connection_id,
-            command: "pause".to_string(),
+            text: "pause".to_string(),
         })
         .unwrap(),
     );

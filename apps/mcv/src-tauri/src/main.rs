@@ -182,24 +182,24 @@ async fn get_connections(
     Ok(connections)
 }
 
-/// コマンドを送信
+/// コメントを送信
 #[tauri::command]
-async fn send_command(
+async fn send_comment(
     state: State<'_, AppState>,
     connection_id: String,
-    command: String,
+    text: String,
 ) -> Result<String, String> {
     let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
     let plugin_id = state.dummy_plugin_id;
 
-    // send-commandメッセージを送信
+    // send-commentメッセージを送信
     let message = McvMessage::new(
-        MessageType::SendCommand,
+        MessageType::SendComment,
         MessageSource::Core,
         MessageDestination::Plugin { plugin_id },
-        serde_json::to_value(SendCommandPayload {
+        serde_json::to_value(SendCommentPayload {
             connection_id: conn_id,
-            command,
+            text,
         })
         .unwrap(),
     );
@@ -210,7 +210,7 @@ async fn send_command(
         .await
         .map_err(|e| e.to_string())?;
 
-    Ok("Command sent".to_string())
+    Ok("Comment sent".to_string())
 }
 
 fn main() {
@@ -355,7 +355,7 @@ fn main() {
             connect,
             disconnect,
             get_connections,
-            send_command
+            send_comment
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

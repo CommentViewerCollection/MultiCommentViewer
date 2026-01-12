@@ -80,10 +80,7 @@ pub enum MessageType {
 
     // Comment関連
     CommentReceived,
-
-    // Command関連
-    SendCommand,
-    CommandResult,
+    SendComment,
 
     // その他
     GetAppName,
@@ -229,19 +226,11 @@ pub struct Comment {
     pub timestamp: i64,
 }
 
-/// send-commandのpayload
+/// send-commentのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SendCommandPayload {
+pub struct SendCommentPayload {
     pub connection_id: Uuid,
-    pub command: String,
-}
-
-/// command-resultのpayload
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CommandResultPayload {
-    pub connection_id: Uuid,
-    pub success: bool,
-    pub message: String,
+    pub text: String,
 }
 
 // ============================================================================
@@ -350,49 +339,32 @@ mod tests {
     }
 
     #[test]
-    fn test_send_command_payload() {
+    fn test_send_comment_payload() {
         let connection_id = Uuid::new_v4();
-        let payload = SendCommandPayload {
+        let payload = SendCommentPayload {
             connection_id,
-            command: "disconnect".to_string(),
+            text: "テストコメント".to_string(),
         };
 
         let json = serde_json::to_value(&payload).unwrap();
-        let deserialized: SendCommandPayload = serde_json::from_value(json).unwrap();
+        let deserialized: SendCommentPayload = serde_json::from_value(json).unwrap();
 
         assert_eq!(payload.connection_id, deserialized.connection_id);
-        assert_eq!(payload.command, deserialized.command);
+        assert_eq!(payload.text, deserialized.text);
     }
 
     #[test]
-    fn test_command_result_payload() {
-        let connection_id = Uuid::new_v4();
-        let payload = CommandResultPayload {
-            connection_id,
-            success: true,
-            message: "Command executed successfully".to_string(),
-        };
-
-        let json = serde_json::to_value(&payload).unwrap();
-        let deserialized: CommandResultPayload = serde_json::from_value(json).unwrap();
-
-        assert_eq!(payload.connection_id, deserialized.connection_id);
-        assert_eq!(payload.success, deserialized.success);
-        assert_eq!(payload.message, deserialized.message);
-    }
-
-    #[test]
-    fn test_send_command_message_type() {
+    fn test_send_comment_message_type() {
         let plugin_id = Uuid::new_v4();
         let connection_id = Uuid::new_v4();
 
         let message = Message::new(
-            MessageType::SendCommand,
+            MessageType::SendComment,
             MessageSource::Core,
             MessageDestination::Plugin { plugin_id },
-            serde_json::to_value(SendCommandPayload {
+            serde_json::to_value(SendCommentPayload {
                 connection_id,
-                command: "pause".to_string(),
+                text: "pause".to_string(),
             })
             .unwrap(),
         );
@@ -401,6 +373,6 @@ mod tests {
         let deserialized: Message = serde_json::from_str(&json).unwrap();
 
         assert_eq!(message.message_type, deserialized.message_type);
-        assert_eq!(message.message_type, MessageType::SendCommand);
+        assert_eq!(message.message_type, MessageType::SendComment);
     }
 }

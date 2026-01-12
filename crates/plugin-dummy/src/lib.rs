@@ -419,32 +419,22 @@ impl Plugin for DummyPlugin {
                     host.send_message(response.clone()).await?;
                 }
             }
-            MessageType::SendCommand => {
-                // send-commandメッセージからpayloadを取得
-                let payload: SendCommandPayload = serde_json::from_value(message.payload.clone())
-                    .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to parse send-command payload: {}", e)))?;
+            MessageType::SendComment => {
+                // send-commentメッセージからpayloadを取得
+                let payload: SendCommentPayload = serde_json::from_value(message.payload.clone())
+                    .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to parse send-comment payload: {}", e)))?;
 
                 let conn_id = payload.connection_id;
-                let command = payload.command.trim();
+                let command = payload.text.trim();
 
                 println!("Received command for connection {}: {}", conn_id, command);
 
-                // コマンドをパースして実行
+                // コマンドをパースして実行（結果は既存のメッセージタイプで通知される）
                 let result = self.handle_command(conn_id, command, host.clone()).await;
 
-                // 結果を返信
-                let response = Message::create_response(
-                    &message,
-                    MessageType::CommandResult,
-                    serde_json::to_value(CommandResultPayload {
-                        connection_id: conn_id,
-                        success: result.is_ok(),
-                        message: result.unwrap_or_else(|e| e),
-                    })
-                    .unwrap(),
-                );
-
-                host.send_message(response).await?;
+                if let Err(e) = result {
+                    eprintln!("Command execution failed: {}", e);
+                }
             }
             _ => {
                 println!("Unhandled message type: {:?}", message.message_type);

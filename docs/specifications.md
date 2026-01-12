@@ -112,13 +112,7 @@ mcvではこのような多様なサイトの仕様に対応できるような�
 | メッセージ名                                | 説明（用途など） | 方向  |
 | ------------------------------------- | -------- | --- |
 | [comment-received](#comment-received) | コメント受信通知 | plugin->core |
-
-### コマンド
-
-| メッセージ名                                | 説明（用途など） | 方向  |
-| ------------------------------------- | -------- | --- |
-| [send-command](#send-command) | プラグインへのコマンド送信 | core->plugin |
-| [command-result](#command-result) | コマンド実行結果の通知 | plugin->core |
+| [send-comment](#send-comment) | コメント投稿 | core->plugin |
 
 ### plugin
 
@@ -263,15 +257,17 @@ input_type: "twicas_private"
 }
 ```
 
-## send-command
+## send-comment
 ```
 {
   "connection_id": "{uuid}",
-  "command": "{command-string}"
+  "text": "{comment-text}"
 }
 ```
 
-コマンド文字列の例：
+コメント投稿機能。配信サイトプラグインではコメントを配信サイトに投稿する。
+DummyPluginではこれをコマンドとして利用し、以下のようなコマンドを実行できる：
+
 - `disconnect` - 配信サイト側からの切断をシミュレート
 - `connect` - 再接続（UIから接続する必要がある）
 - `pause` - コメント生成を一時停止
@@ -281,14 +277,7 @@ input_type: "twicas_private"
 - `help` - ヘルプメッセージを表示
 - `status` - 接続ステータスを表示
 
-## command-result
-```
-{
-  "connection_id": "{uuid}",
-  "success": true | false,
-  "message": "{result-message}"
-}
-```
+実行結果は既存のメッセージタイプ（`disconnected`, `connected`等）で通知される。
 
 ## plugin-hello
 ```

@@ -60,7 +60,7 @@ The system uses actix's actor model for core-plugin communication:
 2. **Connection Lifecycle**: `add-connection` → `connection-added` → `connect` → `connected`
 3. **Comment Streaming**: Plugins send `comment-received` messages to core
 4. **Disconnection**: `disconnect` → `disconnected`
-5. **Command System**: `send-command` → command execution → `command-result`
+5. **Comment Posting**: `send-comment` → post to platform → result via existing messages
 
 All messages follow kebab-case naming convention and include:
 - `type`: Message type (e.g., "add-connection")
@@ -81,15 +81,18 @@ crates/
 └── plugin-dummy/         # Dummy plugin for testing and development
 ```
 
-### Command System
+### Comment Posting System
 
-The command system allows the UI to send commands to plugins for testing and debugging purposes. This is particularly useful for simulating server-side events (e.g., disconnection from the streaming platform).
+The comment posting system uses the `send-comment` message type for posting comments to streaming platforms.
 
-**Message Types:**
-- `send-command`: Core → Plugin with command string
-- `command-result`: Plugin → Core with execution result
+**Message Type:**
+- `send-comment`: Core → Plugin with comment text
 
-**Available Commands (in plugin-dummy):**
+**Behavior:**
+- **Real streaming plugins**: Post the comment to the streaming platform, results via existing messages (`connected`, `disconnected`, etc.)
+- **DummyPlugin**: Reuses this for command execution to simulate various scenarios
+
+**DummyPlugin Commands (via send-comment):**
 - `disconnect` - Simulate server-side disconnection
 - `connect` - Request reconnection (requires UI action)
 - `pause` - Pause comment generation
@@ -100,9 +103,9 @@ The command system allows the UI to send commands to plugins for testing and deb
 - `status` - Show connection status
 
 **UI Implementation:**
-The main UI includes a command input section below the DataGrid with:
+The main UI includes a comment posting section below the DataGrid with:
 - Connection selector (combobox)
-- Command input field
+- Comment/command input field
 - Send button
 
 ### Multiple Connection Management
@@ -139,7 +142,7 @@ pub trait Plugin: Send + Sync {
 ### Tauri Integration
 
 - `apps/mcv/src-tauri/src/main.rs`: Initializes actix system, CoreActor, and registers plugins
-- Tauri commands: `add_connection`, `remove_connection`, `rename_connection`, `connect`, `disconnect`, `get_connections`, `send_command`
+- Tauri commands: `add_connection`, `remove_connection`, `rename_connection`, `connect`, `disconnect`, `get_connections`, `send_comment`
 - Events emitted to frontend: `comment-received`, `connected`, `disconnected`
 - Core actor events are forwarded to React UI via Tauri's event system
 
@@ -150,7 +153,7 @@ React + TypeScript + Tailwind CSS:
 - Uses `@tauri-apps/api` for backend communication
 - Listens to Tauri events for real-time comment updates
 - Uses `my-dataview` package (in `packages/`) for high-performance comment display with virtual scrolling
-- Command input section for sending commands to plugins
+- Comment posting section for posting comments (DummyPlugin uses this for commands)
 
 ## Important Implementation Details
 
@@ -199,12 +202,12 @@ The application uses an event-driven architecture to avoid polling:
 The project includes comprehensive tests for core functionality:
 
 ### Unit Tests
-- **mcv-messages** (5 tests): Message serialization, payload validation, message type tests
+- **mcv-messages** (4 tests): Message serialization, payload validation, send-comment tests
 - **plugin-dummy** (11 tests): Command handling, connection management, pause/resume/rate control
 - **mcv-core** (3 tests): Plugin manager, connection manager, basic lifecycle tests
 
 ### Integration Tests
-- **mcv-core/tests** (5 tests): Message routing, connection lifecycle, multiple connections, rename/delete operations
+- **mcv-core/tests** (5 tests): Comment posting routing, connection lifecycle, multiple connections, rename/delete operations
 
 Run tests with:
 ```bash

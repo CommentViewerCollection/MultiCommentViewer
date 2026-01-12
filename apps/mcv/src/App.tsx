@@ -30,6 +30,7 @@ function App() {
   const [connections, setConnections] = useState<ConnectionInfo[]>([])
   const dataGridRef = useRef<DataGridRef>(null)
   const [atBottom, setAtBottom] = useState(true)
+  const atBottomRef = useRef(true)
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
 
   // DataGridのカラム定義
@@ -58,23 +59,20 @@ function App() {
     }
   }
 
+  // atBottomの変更をrefに反映
+  useEffect(() => {
+    atBottomRef.current = atBottom
+  }, [atBottom])
+
   useEffect(() => {
     // 初回読み込み
     loadConnections()
 
-    // 定期的に接続一覧を更新
-    const interval = setInterval(loadConnections, 1000)
-
     // コメント受信イベントをリッスン
     const unlistenComment = listen<Comment>('comment-received', (event) => {
-      // 接続名を付与
-      const commentWithName = {
-        ...event.payload,
-        connection_name: connections.find(c => c.connection_id === event.payload.connection_id)?.name || '不明',
-      }
-      setComments((prev) => [...prev, commentWithName])
+      setComments((prev) => [...prev, event.payload])
       // 最下部にいる場合は自動スクロール
-      if (atBottom) {
+      if (atBottomRef.current) {
         setTimeout(() => {
           dataGridRef.current?.scrollToBottom()
         }, 50)
@@ -92,12 +90,11 @@ function App() {
     })
 
     return () => {
-      clearInterval(interval)
       unlistenComment.then((fn) => fn())
       unlistenConnected.then((fn) => fn())
       unlistenDisconnected.then((fn) => fn())
     }
-  }, [atBottom, connections])
+  }, [])
 
   const handleAddConnection = async () => {
     try {
@@ -147,7 +144,7 @@ function App() {
   const handleConnect = async (connectionId: string) => {
     try {
       await invoke('connect', { connectionId })
-      await loadConnections()
+      // loadConnections()はconnectedイベントで自動実行される
     } catch (error) {
       console.error('Failed to connect:', error)
     }
@@ -156,7 +153,7 @@ function App() {
   const handleDisconnect = async (connectionId: string) => {
     try {
       await invoke('disconnect', { connectionId })
-      await loadConnections()
+      // loadConnections()はdisconnectedイベントで自動実行される
     } catch (error) {
       console.error('Failed to disconnect:', error)
     }

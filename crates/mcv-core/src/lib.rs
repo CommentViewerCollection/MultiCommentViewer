@@ -4,7 +4,7 @@ pub mod plugin_host_actor;
 
 // 公開エクスポート
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
-pub use core_actor::{CoreActor, PluginInfo, RegisterPlugin, SendMessageToCore, SendRequest};
+pub use core_actor::{CoreActor, PluginInfo, RegisterPlugin, SendMessageToCore, SendRequest, GetConnections};
 pub use plugin_host_actor::{PluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 
 use actix::prelude::*;

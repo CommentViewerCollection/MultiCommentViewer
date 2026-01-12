@@ -9,13 +9,21 @@ interface Comment {
   user_id: string
   text: string
   timestamp: number
+  connection_id?: string
+}
+
+interface ConnectionInfo {
+  connection_id: string
+  plugin_id: string
+  status: { type: string; message?: string }
+  site_name: string
+  input_info: string
 }
 
 function App() {
   const [comments, setComments] = useState<Comment[]>([])
-  const [connectionId, setConnectionId] = useState<string | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [connections, setConnections] = useState<ConnectionInfo[]>([])
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null)
   const dataGridRef = useRef<DataGridRef>(null)
   const [atBottom, setAtBottom] = useState(true)
 
@@ -26,7 +34,23 @@ function App() {
     { key: 'timestamp', label: '時刻', width: 150, visible: true, resizable: true },
   ])
 
+  // 接続一覧を読み込む
+  const loadConnections = async () => {
+    try {
+      const conns = await invoke<ConnectionInfo[]>('get_connections')
+      setConnections(conns)
+    } catch (error) {
+      console.error('Failed to load connections:', error)
+    }
+  }
+
   useEffect(() => {
+    // 初回読み込み
+    loadConnections()
+
+    // 定期的に接続一覧を更新
+    const interval = setInterval(loadConnections, 1000)
+
     // コメント受信イベントをリッスン
     const unlistenComment = listen<Comment>('comment-received', (event) => {
       setComments((prev) => [...prev, event.payload])
@@ -40,45 +64,37 @@ function App() {
 
     // 接続完了イベントをリッスン
     const unlistenConnected = listen('connected', () => {
-      setIsConnected(true)
-      setIsLoading(false)
+      loadConnections()
     })
 
     // 切断完了イベントをリッスン
     const unlistenDisconnected = listen('disconnected', () => {
-      setIsConnected(false)
-      setIsLoading(false)
+      loadConnections()
     })
 
     return () => {
+      clearInterval(interval)
       unlistenComment.then((fn) => fn())
       unlistenConnected.then((fn) => fn())
       unlistenDisconnected.then((fn) => fn())
     }
-  }, [])
+  }, [atBottom])
 
-  const handleConnect = async () => {
+  const handleAddConnection = async () => {
     try {
-      setIsLoading(true)
-
-      // 接続を開始（add_connection + connect）
       const connId = await invoke<string>('start_connection')
-      setConnectionId(connId)
+      await loadConnections()
     } catch (error) {
-      console.error('Failed to connect:', error)
-      setIsLoading(false)
+      console.error('Failed to add connection:', error)
     }
   }
 
-  const handleDisconnect = async () => {
-    if (!connectionId) return
-
+  const handleDisconnect = async (connectionId: string) => {
     try {
-      setIsLoading(true)
       await invoke('disconnect', { connectionId })
+      await loadConnections()
     } catch (error) {
       console.error('Failed to disconnect:', error)
-      setIsLoading(false)
     }
   }
 
@@ -106,64 +122,149 @@ function App() {
     return <span>{String(item[column.key])}</span>
   }
 
+  const getStatusColor = (status: { type: string }) => {
+    switch (status.type) {
+      case 'Connected':
+        return 'bg-green-500'
+      case 'Connecting':
+        return 'bg-yellow-500'
+      case 'Disconnected':
+        return 'bg-gray-500'
+      case 'Error':
+        return 'bg-red-500'
+      default:
+        return 'bg-gray-500'
+    }
+  }
+
+  const getStatusText = (status: { type: string }) => {
+    switch (status.type) {
+      case 'Connected':
+        return '接続中'
+      case 'Connecting':
+        return '接続中...'
+      case 'Disconnected':
+        return '切断'
+      case 'Created':
+        return '作成済み'
+      case 'Error':
+        return 'エラー'
+      default:
+        return '不明'
+    }
+  }
+
+  // フィルタされたコメント（選択された接続のみ）
+  const filteredComments = selectedConnectionId
+    ? comments.filter((c) => c.connection_id === selectedConnectionId)
+    : comments
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="max-w-4xl mx-auto p-4">
-        {/* ヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">MultiCommentViewer</h1>
-          <p className="text-gray-400 text-sm">動作確認用ダミープラグイン</p>
+    <div className="min-h-screen bg-gray-900 text-white flex">
+      {/* サイドバー: 接続一覧 */}
+      <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+        <div className="p-4 border-b border-gray-700">
+          <h1 className="text-2xl font-bold mb-2">MultiCommentViewer</h1>
+          <button
+            onClick={handleAddConnection}
+            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+          >
+            + 接続を追加
+          </button>
         </div>
 
-        {/* 接続コントロール */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleConnect}
-              disabled={isConnected || isLoading}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-semibold transition-colors"
-            >
-              {isLoading && !isConnected ? '接続中...' : '接続'}
-            </button>
-            <button
-              onClick={handleDisconnect}
-              disabled={!isConnected || isLoading}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-semibold transition-colors"
-            >
-              {isLoading && isConnected ? '切断中...' : '切断'}
-            </button>
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  isConnected ? 'bg-green-500' : 'bg-gray-500'
-                }`}
-              />
-              <span className="text-sm text-gray-300">
-                {isConnected ? '接続中' : '未接続'}
-              </span>
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <h2 className="text-sm font-semibold text-gray-400 mb-2">接続一覧</h2>
+          {connections.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 text-sm">
+              接続がありません
             </div>
+          ) : (
+            connections.map((conn) => (
+              <div
+                key={conn.connection_id}
+                className={`p-3 bg-gray-700 rounded cursor-pointer transition-colors ${
+                  selectedConnectionId === conn.connection_id
+                    ? 'ring-2 ring-blue-500'
+                    : 'hover:bg-gray-650'
+                }`}
+                onClick={() => setSelectedConnectionId(conn.connection_id)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-sm truncate">{conn.site_name}</span>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
+                    />
+                    <span className="text-xs text-gray-400">
+                      {getStatusText(conn.status)}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-400 mb-2 truncate">
+                  {conn.input_info}
+                </div>
+                <div className="flex gap-2">
+                  {conn.status.type === 'Connected' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDisconnect(conn.connection_id)
+                      }}
+                      className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors"
+                    >
+                      切断
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="p-4 border-t border-gray-700 text-xs text-gray-500">
+          <div className="flex items-center justify-between">
+            <span>接続数: {connections.length}</span>
+            <button
+              onClick={() => setSelectedConnectionId(null)}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              すべて表示
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* コメント表示エリア */}
-        <div className="bg-gray-800 rounded-lg p-4">
-          <h2 className="text-xl font-semibold mb-4">コメント</h2>
-          {comments.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <p className="text-lg">コメントがまだありません</p>
-              <p className="text-sm mt-2">
-                {isConnected
-                  ? 'コメントが表示されるまでお待ちください...'
-                  : '接続ボタンをクリックしてコメント受信を開始してください'}
-              </p>
+      {/* メインエリア: コメント表示 */}
+      <div className="flex-1 flex flex-col">
+        <div className="p-4 bg-gray-800 border-b border-gray-700">
+          <h2 className="text-xl font-semibold">
+            コメント
+            {selectedConnectionId && (
+              <span className="ml-2 text-sm text-gray-400">
+                ({connections.find((c) => c.connection_id === selectedConnectionId)?.site_name})
+              </span>
+            )}
+          </h2>
+        </div>
+
+        <div className="flex-1 p-4">
+          {filteredComments.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <p className="text-lg">コメントがまだありません</p>
+                <p className="text-sm mt-2">
+                  接続を追加してコメント受信を開始してください
+                </p>
+              </div>
             </div>
           ) : (
             <DataGrid
               ref={dataGridRef}
-              data={comments}
+              data={filteredComments}
               columns={columns}
               renderCell={renderCell}
-              height="600px"
+              height="100%"
               backgroundColor="#1f2937"
               border="1px solid #374151"
               onAtBottomChange={setAtBottom}
@@ -172,13 +273,6 @@ function App() {
               defaultItemHeight={60}
             />
           )}
-        </div>
-
-        {/* フッター */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
-            ダミープラグインが1-5秒間隔でランダムにコメントを生成します
-          </p>
         </div>
       </div>
     </div>

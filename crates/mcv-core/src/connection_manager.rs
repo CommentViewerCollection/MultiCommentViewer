@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
 /// 接続ステータス
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "message")]
 pub enum ConnectionStatus {
     /// 接続が作成された
     Created,
@@ -17,11 +19,13 @@ pub enum ConnectionStatus {
 }
 
 /// 接続情報
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionInfo {
     pub connection_id: Uuid,
     pub plugin_id: Uuid,
     pub status: ConnectionStatus,
+    pub site_name: String,
+    pub input_info: String,
 }
 
 /// Connection Manager
@@ -40,11 +44,13 @@ impl ConnectionManager {
     }
 
     /// 接続を追加
-    pub fn add_connection(&mut self, connection_id: Uuid, plugin_id: Uuid) {
+    pub fn add_connection(&mut self, connection_id: Uuid, plugin_id: Uuid, site_name: String, input_info: String) {
         let info = ConnectionInfo {
             connection_id,
             plugin_id,
             status: ConnectionStatus::Created,
+            site_name,
+            input_info,
         };
         self.connections.insert(connection_id, info);
     }
@@ -96,7 +102,7 @@ mod tests {
         let plugin_id = Uuid::new_v4();
 
         // 接続を追加
-        manager.add_connection(conn_id, plugin_id);
+        manager.add_connection(conn_id, plugin_id, "Test Site".to_string(), "test input".to_string());
         assert_eq!(
             manager.get_status(&conn_id),
             Some(ConnectionStatus::Created)

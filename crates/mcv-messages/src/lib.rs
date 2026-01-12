@@ -108,6 +108,12 @@ pub struct PluginAddedPayload {
     pub api_version: String,
 }
 
+/// add-connectionのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddConnectionPayload {
+    pub site: SiteInfo,
+}
+
 /// connection-addedのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionAddedPayload {

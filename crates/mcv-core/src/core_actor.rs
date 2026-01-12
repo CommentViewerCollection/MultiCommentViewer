@@ -84,6 +84,14 @@ impl CoreActor {
 
     /// add-connectionを処理
     fn handle_add_connection(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: AddConnectionPayload = match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Failed to parse add-connection payload: {}", e);
+                return;
+            }
+        };
+
         let connection_id = Uuid::new_v4();
 
         // プラグインIDを取得
@@ -95,13 +103,20 @@ impl CoreActor {
             }
         };
 
+        // プラグイン名を取得
+        let site_name = self.plugins.get(&plugin_id)
+            .map(|p| p.name.clone())
+            .unwrap_or_else(|| "Unknown".to_string());
+
+        let input_info = format!("{:?}", payload.site);
+
         // Connection Managerに登録
         let connection_manager = self.connection_manager.clone();
         let response_message = message.clone();
 
         actix::spawn(async move {
             let mut manager = connection_manager.write().await;
-            manager.add_connection(connection_id, plugin_id);
+            manager.add_connection(connection_id, plugin_id, site_name, input_info);
         });
 
         // connection-addedを返信
@@ -320,5 +335,25 @@ impl Handler<RegisterPlugin> for CoreActor {
 
     fn handle(&mut self, msg: RegisterPlugin, _ctx: &mut Self::Context) {
         self.plugins.insert(msg.plugin_id, msg.plugin_info);
+    }
+}
+
+/// 接続一覧を取得
+#[derive(Message)]
+#[rtype(result = "Vec<ConnectionInfo>")]
+pub struct GetConnections;
+
+impl Handler<GetConnections> for CoreActor {
+    type Result = ResponseActFuture<Self, Vec<ConnectionInfo>>;
+
+    fn handle(&mut self, _msg: GetConnections, _ctx: &mut Self::Context) -> Self::Result {
+        let connection_manager = self.connection_manager.clone();
+
+        let fut = async move {
+            let manager = connection_manager.read().await;
+            manager.list_connections().into_iter().cloned().collect()
+        };
+
+        Box::pin(fut.into_actor(self))
     }
 }

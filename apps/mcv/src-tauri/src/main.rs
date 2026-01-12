@@ -30,7 +30,13 @@ async fn start_connection(
         MessageType::AddConnection,
         MessageSource::Core,
         MessageDestination::Plugin { plugin_id },
-        serde_json::json!({}),
+        serde_json::to_value(AddConnectionPayload {
+            site: SiteInfo {
+                name: "Dummy".to_string(),
+                id: plugin_id,
+            },
+        })
+        .unwrap(),
     );
 
     state
@@ -88,7 +94,13 @@ async fn add_connection(
         MessageType::AddConnection,
         MessageSource::Core,
         MessageDestination::Plugin { plugin_id },
-        serde_json::json!({}),
+        serde_json::to_value(AddConnectionPayload {
+            site: SiteInfo {
+                name: "Dummy".to_string(),
+                id: plugin_id,
+            },
+        })
+        .unwrap(),
     );
 
     state
@@ -169,6 +181,20 @@ async fn disconnect(
     Ok(())
 }
 
+/// 接続一覧を取得
+#[tauri::command]
+async fn get_connections(
+    state: tauri::State<'_, AppState>,
+) -> Result<Vec<ConnectionInfo>, String> {
+    let connections = state
+        .core_addr
+        .send(GetConnections)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(connections)
+}
+
 fn main() {
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
@@ -201,7 +227,12 @@ fn main() {
                                 let payload: CommentReceivedPayload =
                                     serde_json::from_value(message.payload).unwrap();
                                 println!("Emitting comment-received event: {:?}", payload.comment);
-                                if let Err(e) = app_handle.emit("comment-received", payload.comment) {
+                                // connection_idを含めたコメントオブジェクトを作成
+                                let mut comment_with_conn = serde_json::to_value(&payload.comment).unwrap();
+                                if let Some(obj) = comment_with_conn.as_object_mut() {
+                                    obj.insert("connection_id".to_string(), serde_json::Value::String(payload.connection_id.to_string()));
+                                }
+                                if let Err(e) = app_handle.emit("comment-received", comment_with_conn) {
                                     eprintln!("Failed to emit comment-received event: {}", e);
                                 }
                             }
@@ -299,7 +330,13 @@ fn main() {
             Ok(())
         })
         .manage(app_state)
-        .invoke_handler(tauri::generate_handler![start_connection, add_connection, connect, disconnect])
+        .invoke_handler(tauri::generate_handler![
+            start_connection,
+            add_connection,
+            connect,
+            disconnect,
+            get_connections
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

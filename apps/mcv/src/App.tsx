@@ -25,6 +25,15 @@ interface ConnectionInfo {
   name: string
 }
 
+interface UpdateInfo {
+  version: string
+  download_url: string
+  sha256: string
+  release_notes: string
+  released_at: string
+  min_installer_version: string
+}
+
 function App() {
   const [comments, setComments] = useState<Comment[]>([])
   const [connections, setConnections] = useState<ConnectionInfo[]>([])
@@ -34,6 +43,9 @@ function App() {
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
   const [selectedConnectionForCommand, setSelectedConnectionForCommand] = useState<string>('')
   const [commandInput, setCommandInput] = useState('')
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
@@ -181,6 +193,34 @@ function App() {
     } catch (error) {
       console.error('Failed to send comment:', error)
       alert(`コメント送信失敗: ${error}`)
+    }
+  }
+
+  const handleCheckForUpdates = async () => {
+    setCheckingUpdate(true)
+    try {
+      const update = await invoke<UpdateInfo | null>('check_for_updates')
+      if (update) {
+        setUpdateInfo(update)
+        setShowUpdateDialog(true)
+      } else {
+        alert('最新バージョンです')
+      }
+    } catch (error) {
+      console.error('Failed to check for updates:', error)
+      alert(`更新確認失敗: ${error}`)
+    } finally {
+      setCheckingUpdate(false)
+    }
+  }
+
+  const handleUpdateNow = async () => {
+    try {
+      await invoke('launch_installer')
+      // インストーラが起動してmcvが終了する
+    } catch (error) {
+      console.error('Failed to launch installer:', error)
+      alert(`インストーラ起動失敗: ${error}`)
     }
   }
 
@@ -332,8 +372,17 @@ function App() {
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-700 text-xs text-gray-500">
-          <span>接続数: {connections.length}</span>
+        <div className="p-4 border-t border-gray-700 space-y-2">
+          <div className="text-xs text-gray-500">
+            <span>接続数: {connections.length}</span>
+          </div>
+          <button
+            onClick={handleCheckForUpdates}
+            disabled={checkingUpdate}
+            className="w-full px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {checkingUpdate ? '確認中...' : '更新を確認'}
+          </button>
         </div>
       </div>
 
@@ -403,6 +452,45 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* 更新ダイアログ */}
+      {showUpdateDialog && updateInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
+            <h3 className="text-xl font-bold mb-4">新しいバージョンが利用可能です</h3>
+            <div className="space-y-3 mb-6">
+              <div>
+                <span className="text-gray-400">バージョン: </span>
+                <span className="font-semibold">{updateInfo.version}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">リリース日: </span>
+                <span>{new Date(updateInfo.released_at).toLocaleDateString('ja-JP')}</span>
+              </div>
+              <div>
+                <span className="text-gray-400 block mb-1">リリースノート:</span>
+                <div className="bg-gray-700 p-3 rounded text-sm whitespace-pre-wrap">
+                  {updateInfo.release_notes}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleUpdateNow}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+              >
+                今すぐ更新
+              </button>
+              <button
+                onClick={() => setShowUpdateDialog(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+              >
+                後で
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

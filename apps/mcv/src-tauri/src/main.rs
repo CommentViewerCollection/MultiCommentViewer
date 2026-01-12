@@ -3,6 +3,7 @@
 use actix::prelude::*;
 use mcv_core::*;
 use mcv_messages::{self, Message as McvMessage, MessageSource, MessageDestination, MessageType, *};
+use mcv_updater::{UpdateChecker, McvUpdateInfo};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
@@ -213,6 +214,67 @@ async fn send_comment(
     Ok("Comment sent".to_string())
 }
 
+/// mcv本体の更新をチェック
+#[tauri::command]
+async fn check_for_updates() -> Result<Option<McvUpdateInfo>, String> {
+    const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
+    const API_BASE_URL: &str = "https://api.example.com"; // TODO: 実際のAPIエンドポイントに変更
+
+    println!("Checking for updates... Current version: {}", CURRENT_VERSION);
+
+    let updater = UpdateChecker::new(API_BASE_URL);
+
+    match updater.check_mcv_update(CURRENT_VERSION).await {
+        Ok(update_info) => {
+            if let Some(ref info) = update_info {
+                println!("Update available: {} -> {}", CURRENT_VERSION, info.version);
+            } else {
+                println!("No update available");
+            }
+            Ok(update_info)
+        }
+        Err(e) => {
+            eprintln!("Failed to check for updates: {}", e);
+            Err(format!("Failed to check for updates: {}", e))
+        }
+    }
+}
+
+/// インストーラを起動してmcvを終了
+#[tauri::command]
+async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
+    println!("Launching installer...");
+
+    // インストーラのパスを構築
+    let installer_path = std::env::current_exe()
+        .map_err(|e| format!("Failed to get current exe path: {}", e))?
+        .parent()
+        .ok_or_else(|| "Failed to get parent directory".to_string())?
+        .join("installer.exe");
+
+    println!("Installer path: {:?}", installer_path);
+
+    // インストーラが存在するか確認
+    if !installer_path.exists() {
+        return Err(format!(
+            "Installer not found at {:?}. Please download the installer manually.",
+            installer_path
+        ));
+    }
+
+    // インストーラを起動（--update-mcv フラグ付き）
+    std::process::Command::new(&installer_path)
+        .arg("--update-mcv")
+        .spawn()
+        .map_err(|e| format!("Failed to launch installer: {}", e))?;
+
+    // mcvを終了
+    println!("Exiting mcv...");
+    app_handle.exit(0);
+
+    Ok(())
+}
+
 fn main() {
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
@@ -368,7 +430,9 @@ fn main() {
             connect,
             disconnect,
             get_connections,
-            send_comment
+            send_comment,
+            check_for_updates,
+            launch_installer
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

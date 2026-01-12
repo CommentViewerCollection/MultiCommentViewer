@@ -9,7 +9,7 @@ tauri-build = { version = "2.0", features = [] }
 [dependencies]
 mcv-core = { path = "../../../crates/mcv-core" }
 mcv-messages = { path = "../../../crates/mcv-messages" }
-plugin-dummy = { path = "../../../packages/plugin-dummy" }
+plugin-dummy = { path = "../../../crates/plugin-dummy" }
 tauri = { workspace = true, features = ["devtools"] }
 tauri-plugin-opener = "2.0"
 serde = { workspace = true }

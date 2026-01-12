@@ -4,8 +4,8 @@ members = [
     "crates/mcv-messages",
     "crates/mcv-plugin-interface",
     "crates/mcv-core",
+    "crates/plugin-dummy",
     "apps/mcv/src-tauri",
-    "packages/plugin-dummy",
 ]
 resolver = "2"
 

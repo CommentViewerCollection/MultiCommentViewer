@@ -28,7 +28,6 @@ interface ConnectionInfo {
 function App() {
   const [comments, setComments] = useState<Comment[]>([])
   const [connections, setConnections] = useState<ConnectionInfo[]>([])
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null)
   const dataGridRef = useRef<DataGridRef>(null)
   const [atBottom, setAtBottom] = useState(true)
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
@@ -224,11 +223,6 @@ function App() {
     }
   }
 
-  // フィルタされたコメント（選択された接続のみ）
-  const filteredComments = selectedConnectionId
-    ? comments.filter((c) => c.connection_id === selectedConnectionId)
-    : comments
-
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
       {/* サイドバー: 接続一覧 */}
@@ -253,12 +247,7 @@ function App() {
             connections.map((conn) => (
               <div
                 key={conn.connection_id}
-                className={`p-3 bg-gray-700 rounded cursor-pointer transition-colors ${
-                  selectedConnectionId === conn.connection_id
-                    ? 'ring-2 ring-blue-500'
-                    : 'hover:bg-gray-650'
-                }`}
-                onClick={() => setSelectedConnectionId(conn.connection_id)}
+                className="p-3 bg-gray-700 rounded transition-colors"
               >
                 <div className="flex items-center justify-between mb-2">
                   <input
@@ -322,35 +311,20 @@ function App() {
         </div>
 
         <div className="p-4 border-t border-gray-700 text-xs text-gray-500">
-          <div className="flex items-center justify-between">
-            <span>接続数: {connections.length}</span>
-            <button
-              onClick={() => setSelectedConnectionId(null)}
-              className="text-blue-400 hover:text-blue-300"
-            >
-              すべて表示
-            </button>
-          </div>
+          <span>接続数: {connections.length}</span>
         </div>
       </div>
 
       {/* メインエリア: コメント表示 */}
       <div className="flex-1 flex flex-col">
         <div className="p-4 bg-gray-800 border-b border-gray-700">
-          <h2 className="text-xl font-semibold">
-            コメント
-            {selectedConnectionId && (
-              <span className="ml-2 text-sm text-gray-400">
-                ({connections.find((c) => c.connection_id === selectedConnectionId)?.name})
-              </span>
-            )}
-          </h2>
+          <h2 className="text-xl font-semibold">コメント</h2>
         </div>
 
         <div className="flex-1 p-4">
           <DataGridComponent
             ref={dataGridRef}
-            data={filteredComments}
+            data={comments}
             columns={columns}
             renderCell={renderCell}
             height="100%"

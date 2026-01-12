@@ -32,6 +32,8 @@ function App() {
   const [atBottom, setAtBottom] = useState(true)
   const atBottomRef = useRef(true)
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
+  const [selectedConnectionForCommand, setSelectedConnectionForCommand] = useState<string>('')
+  const [commandInput, setCommandInput] = useState('')
 
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
@@ -156,6 +158,29 @@ function App() {
       // loadConnections()はdisconnectedイベントで自動実行される
     } catch (error) {
       console.error('Failed to disconnect:', error)
+    }
+  }
+
+  const handleSendCommand = async () => {
+    if (!selectedConnectionForCommand) {
+      alert('接続を選択してください')
+      return
+    }
+    if (!commandInput.trim()) {
+      alert('コマンドを入力してください')
+      return
+    }
+
+    try {
+      const result = await invoke<string>('send_command', {
+        connectionId: selectedConnectionForCommand,
+        command: commandInput.trim(),
+      })
+      console.log('Command result:', result)
+      setCommandInput('')
+    } catch (error) {
+      console.error('Failed to send command:', error)
+      alert(`コマンド送信失敗: ${error}`)
     }
   }
 
@@ -332,6 +357,50 @@ function App() {
             onColumnVisibilityChange={handleColumnVisibilityChange}
             defaultItemHeight={60}
           />
+        </div>
+
+        {/* コマンド入力セクション */}
+        <div className="p-4 bg-gray-800 border-t border-gray-700">
+          <div className="flex gap-2 items-end">
+            <div className="flex-shrink-0">
+              <label className="block text-sm font-medium mb-1 text-gray-300">接続選択</label>
+              <select
+                value={selectedConnectionForCommand}
+                onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
+                className="px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white"
+              >
+                <option value="">選択してください</option>
+                {connections.map((conn) => (
+                  <option key={conn.connection_id} value={conn.connection_id}>
+                    {conn.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-1 text-gray-300">コマンド</label>
+              <input
+                type="text"
+                value={commandInput}
+                onChange={(e) => setCommandInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSendCommand()
+                  }
+                }}
+                placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white placeholder-gray-500"
+              />
+            </div>
+
+            <button
+              onClick={handleSendCommand}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+            >
+              送信
+            </button>
+          </div>
         </div>
       </div>
     </div>

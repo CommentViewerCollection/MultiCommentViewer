@@ -16,6 +16,10 @@ pub struct DummyPlugin {
     plugin_id: Uuid,
     // 複数の接続を管理するためのHashMap
     connections: HashMap<Uuid, Arc<AtomicBool>>,
+    // コメント生成間隔（connection_id -> 秒数）
+    comment_rates: HashMap<Uuid, Arc<tokio::sync::RwLock<u64>>>,
+    // 一時停止フラグ（connection_id -> paused）
+    paused: HashMap<Uuid, Arc<AtomicBool>>,
 }
 
 impl DummyPlugin {
@@ -24,6 +28,8 @@ impl DummyPlugin {
         Self {
             plugin_id: Uuid::new_v4(),
             connections: HashMap::new(),
+            comment_rates: HashMap::new(),
+            paused: HashMap::new(),
         }
     }
 
@@ -32,6 +38,8 @@ impl DummyPlugin {
         plugin_id: Uuid,
         connection_id: Uuid,
         is_running: Arc<AtomicBool>,
+        is_paused: Arc<AtomicBool>,
+        rate: Arc<tokio::sync::RwLock<u64>>,
         sender: tokio::sync::mpsc::UnboundedSender<Message>,
     ) {
         tokio::spawn(async move {
@@ -51,12 +59,22 @@ impl DummyPlugin {
             println!("Comment generation started for connection: {}", connection_id);
 
             while is_running.load(Ordering::SeqCst) {
-                // 1-5秒のランダム間隔
-                let interval = rng.gen_range(1..=5);
+                // rateに基づいた間隔（デフォルトは1-5秒のランダム）
+                let rate_value = *rate.read().await;
+                let interval = if rate_value > 0 {
+                    rate_value
+                } else {
+                    rng.gen_range(1..=5)
+                };
                 sleep(Duration::from_secs(interval)).await;
 
                 if !is_running.load(Ordering::SeqCst) {
                     break;
+                }
+
+                // pausedの場合はスキップ
+                if is_paused.load(Ordering::SeqCst) {
+                    continue;
                 }
 
                 // ランダムなコメントを生成
@@ -95,6 +113,187 @@ impl DummyPlugin {
 impl Default for DummyPlugin {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl DummyPlugin {
+    /// コマンドを処理
+    async fn handle_command(
+        &mut self,
+        connection_id: Uuid,
+        command: &str,
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        let parts: Vec<&str> = command.split_whitespace().collect();
+        if parts.is_empty() {
+            return Err("Empty command".to_string());
+        }
+
+        match parts[0] {
+            "help" => Ok(Self::get_help()),
+            "status" => Ok(self.get_status(connection_id)),
+            "disconnect" => self.command_disconnect(connection_id, host).await,
+            "connect" => self.command_connect(connection_id, host).await,
+            "pause" => self.command_pause(connection_id),
+            "resume" => self.command_resume(connection_id),
+            "rate" => self.command_rate(connection_id, &parts[1..]),
+            "comment" => self.command_comment(connection_id, &parts[1..], host).await,
+            _ => Err(format!("Unknown command: {}", parts[0])),
+        }
+    }
+
+    fn get_help() -> String {
+        r#"Available commands:
+- help: Show this help message
+- status: Show connection status
+- disconnect: Simulate disconnection from site
+- connect: Simulate reconnection to site
+- pause: Pause comment generation
+- resume: Resume comment generation
+- rate <seconds>: Set comment interval (0 = random)
+- comment <user> <text>: Generate a manual comment"#
+            .to_string()
+    }
+
+    fn get_status(&self, connection_id: Uuid) -> String {
+        let is_connected = self.connections.contains_key(&connection_id);
+        let is_paused = self
+            .paused
+            .get(&connection_id)
+            .map(|p| p.load(Ordering::SeqCst))
+            .unwrap_or(false);
+
+        format!(
+            "Connection {}: Connected={}, Paused={}",
+            connection_id, is_connected, is_paused
+        )
+    }
+
+    async fn command_disconnect(
+        &mut self,
+        connection_id: Uuid,
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if !self.connections.contains_key(&connection_id) {
+            return Err("Connection not found".to_string());
+        }
+
+        // disconnectedメッセージを送信（配信サイト側からの切断をシミュレート）
+        let message = Message::new_notification(
+            MessageType::Disconnected,
+            MessageSource::Plugin {
+                plugin_id: self.plugin_id,
+            },
+            MessageDestination::Core,
+            serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
+        );
+
+        host.send_message(message)
+            .await
+            .map_err(|e| format!("Failed to send disconnect: {}", e))?;
+
+        // ローカルで停止
+        if let Some(is_running) = self.connections.get(&connection_id) {
+            is_running.store(false, Ordering::SeqCst);
+            self.connections.remove(&connection_id);
+            self.paused.remove(&connection_id);
+            self.comment_rates.remove(&connection_id);
+        }
+
+        Ok("Disconnected".to_string())
+    }
+
+    async fn command_connect(
+        &mut self,
+        connection_id: Uuid,
+        _host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        // 既に接続されている場合はエラー
+        if self.connections.contains_key(&connection_id) {
+            return Err("Already connected".to_string());
+        }
+
+        // 再接続は手動でUIから行う必要がある
+        Ok("Use UI to reconnect".to_string())
+    }
+
+    fn command_pause(&mut self, connection_id: Uuid) -> Result<String, String> {
+        if let Some(is_paused) = self.paused.get(&connection_id) {
+            is_paused.store(true, Ordering::SeqCst);
+            Ok("Paused".to_string())
+        } else {
+            Err("Connection not found".to_string())
+        }
+    }
+
+    fn command_resume(&mut self, connection_id: Uuid) -> Result<String, String> {
+        if let Some(is_paused) = self.paused.get(&connection_id) {
+            is_paused.store(false, Ordering::SeqCst);
+            Ok("Resumed".to_string())
+        } else {
+            Err("Connection not found".to_string())
+        }
+    }
+
+    fn command_rate(&mut self, connection_id: Uuid, args: &[&str]) -> Result<String, String> {
+        if args.is_empty() {
+            return Err("Usage: rate <seconds>".to_string());
+        }
+
+        let new_rate: u64 = args[0]
+            .parse()
+            .map_err(|_| "Invalid number".to_string())?;
+
+        if let Some(rate_lock) = self.comment_rates.get(&connection_id) {
+            let rate_lock_clone = rate_lock.clone();
+            tokio::spawn(async move {
+                *rate_lock_clone.write().await = new_rate;
+            });
+            Ok(format!("Rate set to {}s", new_rate))
+        } else {
+            Err("Connection not found".to_string())
+        }
+    }
+
+    async fn command_comment(
+        &mut self,
+        connection_id: Uuid,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.len() < 2 {
+            return Err("Usage: comment <user> <text>".to_string());
+        }
+
+        let user_name = args[0];
+        let text = args[1..].join(" ");
+
+        let comment = Comment {
+            id: Uuid::new_v4().to_string(),
+            user_name: user_name.to_string(),
+            user_id: format!("user_{}", rand::thread_rng().gen_range(1000..9999)),
+            text,
+            timestamp: chrono::Utc::now().timestamp(),
+        };
+
+        let message = Message::new_notification(
+            MessageType::CommentReceived,
+            MessageSource::Plugin {
+                plugin_id: self.plugin_id,
+            },
+            MessageDestination::Core,
+            serde_json::to_value(CommentReceivedPayload {
+                connection_id,
+                comment,
+            })
+            .unwrap(),
+        );
+
+        host.send_message(message)
+            .await
+            .map_err(|e| format!("Failed to send comment: {}", e))?;
+
+        Ok("Comment sent".to_string())
     }
 }
 
@@ -146,9 +345,14 @@ impl Plugin for DummyPlugin {
 
                 println!("Starting comment generation for connection: {}", conn_id);
 
-                // この接続用のis_runningフラグを作成
+                // この接続用のフラグを作成
                 let is_running = Arc::new(AtomicBool::new(true));
+                let is_paused = Arc::new(AtomicBool::new(false));
+                let rate = Arc::new(tokio::sync::RwLock::new(0u64)); // 0 = ランダム
+
                 self.connections.insert(conn_id, is_running.clone());
+                self.paused.insert(conn_id, is_paused.clone());
+                self.comment_rates.insert(conn_id, rate.clone());
 
                 // connectedを返信
                 let response = Message::create_response(
@@ -170,6 +374,8 @@ impl Plugin for DummyPlugin {
                     self.plugin_id,
                     conn_id,
                     is_running,
+                    is_paused,
+                    rate,
                     tx,
                 );
 
@@ -197,6 +403,8 @@ impl Plugin for DummyPlugin {
                     println!("Stopping comment generation for connection: {}", conn_id);
                     is_running.store(false, Ordering::SeqCst);
                     self.connections.remove(&conn_id);
+                    self.paused.remove(&conn_id);
+                    self.comment_rates.remove(&conn_id);
 
                     // disconnectedを返信
                     let response = Message::create_response(
@@ -210,6 +418,33 @@ impl Plugin for DummyPlugin {
 
                     host.send_message(response.clone()).await?;
                 }
+            }
+            MessageType::SendCommand => {
+                // send-commandメッセージからpayloadを取得
+                let payload: SendCommandPayload = serde_json::from_value(message.payload.clone())
+                    .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to parse send-command payload: {}", e)))?;
+
+                let conn_id = payload.connection_id;
+                let command = payload.command.trim();
+
+                println!("Received command for connection {}: {}", conn_id, command);
+
+                // コマンドをパースして実行
+                let result = self.handle_command(conn_id, command, host.clone()).await;
+
+                // 結果を返信
+                let response = Message::create_response(
+                    &message,
+                    MessageType::CommandResult,
+                    serde_json::to_value(CommandResultPayload {
+                        connection_id: conn_id,
+                        success: result.is_ok(),
+                        message: result.unwrap_or_else(|e| e),
+                    })
+                    .unwrap(),
+                );
+
+                host.send_message(response).await?;
             }
             _ => {
                 println!("Unhandled message type: {:?}", message.message_type);
@@ -227,6 +462,8 @@ impl Plugin for DummyPlugin {
             is_running.store(false, Ordering::SeqCst);
         }
         self.connections.clear();
+        self.paused.clear();
+        self.comment_rates.clear();
         Ok(())
     }
 }

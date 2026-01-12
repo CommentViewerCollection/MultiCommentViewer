@@ -81,6 +81,10 @@ pub enum MessageType {
     // Comment関連
     CommentReceived,
 
+    // Command関連
+    SendCommand,
+    CommandResult,
+
     // その他
     GetAppName,
     GetAppVersion,
@@ -223,6 +227,21 @@ pub struct Comment {
     pub user_id: String,
     pub text: String,
     pub timestamp: i64,
+}
+
+/// send-commandのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SendCommandPayload {
+    pub connection_id: Uuid,
+    pub command: String,
+}
+
+/// command-resultのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommandResultPayload {
+    pub connection_id: Uuid,
+    pub success: bool,
+    pub message: String,
 }
 
 // ============================================================================

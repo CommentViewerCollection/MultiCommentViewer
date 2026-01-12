@@ -253,6 +253,32 @@ impl CoreActor {
             callback(message);
         }
     }
+
+    /// send-commandを処理
+    fn handle_send_command(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: SendCommandPayload = match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Failed to parse send-command payload: {}", e);
+                return;
+            }
+        };
+
+        // 該当する接続のプラグインへコマンドを転送
+        let connection_id = payload.connection_id;
+        let connection_manager = self.connection_manager.clone();
+        let plugins = self.plugins.clone();
+        let msg = message.clone();
+
+        actix::spawn(async move {
+            let manager = connection_manager.read().await;
+            if let Some(conn_info) = manager.get_connection(&connection_id) {
+                if let Some(plugin_info) = plugins.get(&conn_info.plugin_id) {
+                    plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                }
+            }
+        });
+    }
 }
 
 impl Actor for CoreActor {
@@ -291,6 +317,7 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::Disconnect => self.handle_disconnect(message, ctx),
             MessageType::Disconnected => self.handle_disconnected(message, ctx),
             MessageType::CommentReceived => self.handle_comment_received(message, ctx),
+            MessageType::SendCommand => self.handle_send_command(message, ctx),
             _ => {
                 eprintln!("Unhandled message type: {:?}", message.message_type);
             }

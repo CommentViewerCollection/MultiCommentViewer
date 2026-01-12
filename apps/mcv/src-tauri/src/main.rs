@@ -182,6 +182,37 @@ async fn get_connections(
     Ok(connections)
 }
 
+/// コマンドを送信
+#[tauri::command]
+async fn send_command(
+    state: State<'_, AppState>,
+    connection_id: String,
+    command: String,
+) -> Result<String, String> {
+    let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
+    let plugin_id = state.dummy_plugin_id;
+
+    // send-commandメッセージを送信
+    let message = McvMessage::new(
+        MessageType::SendCommand,
+        MessageSource::Core,
+        MessageDestination::Plugin { plugin_id },
+        serde_json::to_value(SendCommandPayload {
+            connection_id: conn_id,
+            command,
+        })
+        .unwrap(),
+    );
+
+    state
+        .core_addr
+        .send(SendMessageToCore { message })
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok("Command sent".to_string())
+}
+
 fn main() {
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
@@ -323,7 +354,8 @@ fn main() {
             rename_connection,
             connect,
             disconnect,
-            get_connections
+            get_connections,
+            send_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

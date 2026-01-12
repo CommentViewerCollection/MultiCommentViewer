@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { DataGrid, DataGridRef, Column } from 'my-dataview'
 
 interface Comment {
   id: string
@@ -15,11 +16,26 @@ function App() {
   const [connectionId, setConnectionId] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const dataGridRef = useRef<DataGridRef>(null)
+  const [atBottom, setAtBottom] = useState(true)
+
+  // DataGridのカラム定義
+  const [columns, setColumns] = useState<Column<Comment>[]>([
+    { key: 'user_name', label: 'ユーザー名', width: 150, visible: true, resizable: true },
+    { key: 'text', label: 'コメント', width: 400, visible: true, resizable: true, wrap: true },
+    { key: 'timestamp', label: '時刻', width: 150, visible: true, resizable: true },
+  ])
 
   useEffect(() => {
     // コメント受信イベントをリッスン
     const unlistenComment = listen<Comment>('comment-received', (event) => {
       setComments((prev) => [...prev, event.payload])
+      // 最下部にいる場合は自動スクロール
+      if (atBottom) {
+        setTimeout(() => {
+          dataGridRef.current?.scrollToBottom()
+        }, 50)
+      }
     })
 
     // 接続完了イベントをリッスン
@@ -71,6 +87,25 @@ function App() {
     return date.toLocaleTimeString('ja-JP')
   }
 
+  const handleColumnResize = (columnKey: keyof Comment, width: number) => {
+    setColumns((prev) =>
+      prev.map((col) => (col.key === columnKey ? { ...col, width } : col))
+    )
+  }
+
+  const handleColumnVisibilityChange = (columnKey: keyof Comment, visible: boolean) => {
+    setColumns((prev) =>
+      prev.map((col) => (col.key === columnKey ? { ...col, visible } : col))
+    )
+  }
+
+  const renderCell = (item: Comment, column: Column<Comment>) => {
+    if (column.key === 'timestamp') {
+      return <span>{formatTime(item.timestamp)}</span>
+    }
+    return <span>{String(item[column.key])}</span>
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="max-w-4xl mx-auto p-4">
@@ -113,37 +148,30 @@ function App() {
         {/* コメント表示エリア */}
         <div className="bg-gray-800 rounded-lg p-4">
           <h2 className="text-xl font-semibold mb-4">コメント</h2>
-          <div className="space-y-2 max-h-[600px] overflow-y-auto">
-            {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="bg-gray-700 rounded p-3 hover:bg-gray-650 transition-colors"
-              >
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="font-semibold text-blue-400">
-                    {comment.user_name}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    @{comment.user_id}
-                  </span>
-                  <span className="text-xs text-gray-500 ml-auto">
-                    {formatTime(comment.timestamp)}
-                  </span>
-                </div>
-                <p className="text-gray-100">{comment.text}</p>
-              </div>
-            ))}
-            {comments.length === 0 && (
-              <div className="text-center py-12 text-gray-400">
-                <p className="text-lg">コメントがまだありません</p>
-                <p className="text-sm mt-2">
-                  {isConnected
-                    ? 'コメントが表示されるまでお待ちください...'
-                    : '接続ボタンをクリックしてコメント受信を開始してください'}
-                </p>
-              </div>
-            )}
-          </div>
+          {comments.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <p className="text-lg">コメントがまだありません</p>
+              <p className="text-sm mt-2">
+                {isConnected
+                  ? 'コメントが表示されるまでお待ちください...'
+                  : '接続ボタンをクリックしてコメント受信を開始してください'}
+              </p>
+            </div>
+          ) : (
+            <DataGrid
+              ref={dataGridRef}
+              data={comments}
+              columns={columns}
+              renderCell={renderCell}
+              height="600px"
+              backgroundColor="#1f2937"
+              border="1px solid #374151"
+              onAtBottomChange={setAtBottom}
+              onColumnResize={handleColumnResize}
+              onColumnVisibilityChange={handleColumnVisibilityChange}
+              defaultItemHeight={60}
+            />
+          )}
         </div>
 
         {/* フッター */}

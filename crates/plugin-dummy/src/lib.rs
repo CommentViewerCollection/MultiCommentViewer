@@ -3,6 +3,7 @@ use mcv_messages::*;
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
@@ -13,8 +14,8 @@ use uuid::Uuid;
 /// ランダムにコメントを生成するテスト用プラグイン
 pub struct DummyPlugin {
     plugin_id: Uuid,
-    connection_id: Option<Uuid>,
-    is_running: Arc<AtomicBool>,
+    // 複数の接続を管理するためのHashMap
+    connections: HashMap<Uuid, Arc<AtomicBool>>,
 }
 
 impl DummyPlugin {
@@ -22,8 +23,7 @@ impl DummyPlugin {
     pub fn new() -> Self {
         Self {
             plugin_id: Uuid::new_v4(),
-            connection_id: None,
-            is_running: Arc::new(AtomicBool::new(false)),
+            connections: HashMap::new(),
         }
     }
 
@@ -143,11 +143,12 @@ impl Plugin for DummyPlugin {
                     .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to parse connect payload: {}", e)))?;
 
                 let conn_id = payload.connection_id;
-                self.connection_id = Some(conn_id);
 
                 println!("Starting comment generation for connection: {}", conn_id);
 
-                self.is_running.store(true, Ordering::SeqCst);
+                // この接続用のis_runningフラグを作成
+                let is_running = Arc::new(AtomicBool::new(true));
+                self.connections.insert(conn_id, is_running.clone());
 
                 // connectedを返信
                 let response = Message::create_response(
@@ -168,7 +169,7 @@ impl Plugin for DummyPlugin {
                 Self::spawn_comment_generator(
                     self.plugin_id,
                     conn_id,
-                    self.is_running.clone(),
+                    is_running,
                     tx,
                 );
 
@@ -185,11 +186,17 @@ impl Plugin for DummyPlugin {
                 });
             }
             MessageType::Disconnect => {
-                // コメント生成を停止
-                if let Some(conn_id) = self.connection_id {
-                    println!("Stopping comment generation for connection: {}", conn_id);
+                // disconnectメッセージからconnection_idを取得
+                let payload: DisconnectPayload = serde_json::from_value(message.payload.clone())
+                    .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to parse disconnect payload: {}", e)))?;
 
-                    self.is_running.store(false, Ordering::SeqCst);
+                let conn_id = payload.connection_id;
+
+                // この接続のis_runningフラグを停止
+                if let Some(is_running) = self.connections.get(&conn_id) {
+                    println!("Stopping comment generation for connection: {}", conn_id);
+                    is_running.store(false, Ordering::SeqCst);
+                    self.connections.remove(&conn_id);
 
                     // disconnectedを返信
                     let response = Message::create_response(
@@ -214,7 +221,12 @@ impl Plugin for DummyPlugin {
 
     async fn on_shutdown(&mut self) -> Result<(), PluginError> {
         println!("Shutting down dummy plugin");
-        self.is_running.store(false, Ordering::SeqCst);
+        // 全ての接続を停止
+        for (conn_id, is_running) in &self.connections {
+            println!("Stopping connection: {}", conn_id);
+            is_running.store(false, Ordering::SeqCst);
+        }
+        self.connections.clear();
         Ok(())
     }
 }
@@ -226,7 +238,6 @@ mod tests {
     #[test]
     fn test_dummy_plugin_creation() {
         let plugin = DummyPlugin::new();
-        assert!(!plugin.is_running.load(Ordering::SeqCst));
-        assert!(plugin.connection_id.is_none());
+        assert!(plugin.connections.is_empty());
     }
 }

@@ -357,3 +357,34 @@ impl Handler<GetConnections> for CoreActor {
         Box::pin(fut.into_actor(self))
     }
 }
+
+/// 接続を作成（UI主導）
+#[derive(Message)]
+#[rtype(result = "Uuid")]
+pub struct CreateConnection {
+    pub plugin_id: Uuid,
+    pub site_name: String,
+    pub input_info: String,
+}
+
+impl Handler<CreateConnection> for CoreActor {
+    type Result = ResponseActFuture<Self, Uuid>;
+
+    fn handle(&mut self, msg: CreateConnection, _ctx: &mut Self::Context) -> Self::Result {
+        let connection_id = Uuid::new_v4();
+        let connection_manager = self.connection_manager.clone();
+
+        let fut = async move {
+            let mut manager = connection_manager.write().await;
+            manager.add_connection(
+                connection_id,
+                msg.plugin_id,
+                msg.site_name,
+                msg.input_info,
+            );
+            connection_id
+        };
+
+        Box::pin(fut.into_actor(self))
+    }
+}

@@ -15,101 +15,27 @@ struct AppState {
     dummy_plugin_id: Uuid,
 }
 
-/// 接続を開始（簡易版: add_connection + connect）
-#[tauri::command]
-async fn start_connection(
-    state: tauri::State<'_, AppState>,
-) -> Result<String, String> {
-    println!("=== start_connection called ===");
-    let plugin_id = state.dummy_plugin_id;
-    let connection_id = Uuid::new_v4();
-
-    println!("Sending add-connection message, plugin_id: {}", plugin_id);
-    // add-connectionメッセージを送信
-    let add_message = McvMessage::new(
-        MessageType::AddConnection,
-        MessageSource::Core,
-        MessageDestination::Plugin { plugin_id },
-        serde_json::to_value(AddConnectionPayload {
-            site: SiteInfo {
-                name: "Dummy".to_string(),
-                id: plugin_id,
-            },
-        })
-        .unwrap(),
-    );
-
-    state
-        .core_addr
-        .send(SendMessageToCore { message: add_message })
-        .await
-        .map_err(|e| e.to_string())?;
-
-    // 少し待つ
-    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-
-    println!("Sending connect message, connection_id: {}", connection_id);
-    // connectメッセージを送信
-    let connect_message = McvMessage::new(
-        MessageType::Connect,
-        MessageSource::Core,
-        MessageDestination::Plugin { plugin_id },
-        serde_json::to_value(ConnectPayload {
-            connection_id,
-            site: SiteInfo {
-                name: "Dummy".to_string(),
-                id: plugin_id,
-            },
-            input: InputInfo {
-                input_type: "dummy".to_string(),
-                extra: serde_json::json!({}),
-            },
-            browser: BrowserInfo {
-                name: "None".to_string(),
-                id: Uuid::nil(),
-            },
-        })
-        .unwrap(),
-    );
-
-    state
-        .core_addr
-        .send(SendMessageToCore { message: connect_message })
-        .await
-        .map_err(|e| e.to_string())?;
-
-    println!("start_connection completed, returning connection_id: {}", connection_id);
-    Ok(connection_id.to_string())
-}
-
 /// 接続を追加
 #[tauri::command]
 async fn add_connection(
     state: tauri::State<'_, AppState>,
 ) -> Result<String, String> {
+    println!("=== add_connection called ===");
     let plugin_id = state.dummy_plugin_id;
 
-    // add-connectionメッセージを送信
-    let message = McvMessage::new(
-        MessageType::AddConnection,
-        MessageSource::Core,
-        MessageDestination::Plugin { plugin_id },
-        serde_json::to_value(AddConnectionPayload {
-            site: SiteInfo {
-                name: "Dummy".to_string(),
-                id: plugin_id,
-            },
-        })
-        .unwrap(),
-    );
-
-    state
+    // 接続を作成
+    let connection_id = state
         .core_addr
-        .send(SendMessageToCore { message })
+        .send(CreateConnection {
+            plugin_id,
+            site_name: "Dummy Plugin".to_string(),
+            input_info: "ダミー接続".to_string(),
+        })
         .await
         .map_err(|e| e.to_string())?;
 
-    Ok("Connection add request sent".to_string())
+    println!("Connection created: {}", connection_id);
+    Ok(connection_id.to_string())
 }
 
 /// 接続を開始
@@ -331,7 +257,6 @@ fn main() {
         })
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            start_connection,
             add_connection,
             connect,
             disconnect,

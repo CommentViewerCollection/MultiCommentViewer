@@ -82,10 +82,19 @@ function App() {
 
   const handleAddConnection = async () => {
     try {
-      const connId = await invoke<string>('start_connection')
+      const connId = await invoke<string>('add_connection')
       await loadConnections()
     } catch (error) {
       console.error('Failed to add connection:', error)
+    }
+  }
+
+  const handleConnect = async (connectionId: string) => {
+    try {
+      await invoke('connect', { connectionId })
+      await loadConnections()
+    } catch (error) {
+      console.error('Failed to connect:', error)
     }
   }
 
@@ -205,6 +214,17 @@ function App() {
                   {conn.input_info}
                 </div>
                 <div className="flex gap-2">
+                  {conn.status.type === 'Created' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleConnect(conn.connection_id)
+                      }}
+                      className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors"
+                    >
+                      接続
+                    </button>
+                  )}
                   {conn.status.type === 'Connected' && (
                     <button
                       onClick={(e) => {

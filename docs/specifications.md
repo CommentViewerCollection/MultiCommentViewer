@@ -111,7 +111,14 @@ mcvではこのような多様なサイトの仕様に対応できるような�
 
 | メッセージ名                                | 説明（用途など） | 方向  |
 | ------------------------------------- | -------- | --- |
-| [comment-received](#comment-received) |          |     |
+| [comment-received](#comment-received) | コメント受信通知 | plugin->core |
+
+### コマンド
+
+| メッセージ名                                | 説明（用途など） | 方向  |
+| ------------------------------------- | -------- | --- |
+| [send-command](#send-command) | プラグインへのコマンド送信 | core->plugin |
+| [command-result](#command-result) | コマンド実行結果の通知 | plugin->core |
 
 ### plugin
 
@@ -243,7 +250,45 @@ input_type: "twicas_private"
 }
 ```
 ## comment-received
+```
+{
+  "connection_id": "{uuid}",
+  "comment": {
+    "id": "{comment-id}",
+    "user_name": "{user-name}",
+    "user_id": "{user-id}",
+    "text": "{comment-text}",
+    "timestamp": 1700000000
+  }
+}
+```
 
+## send-command
+```
+{
+  "connection_id": "{uuid}",
+  "command": "{command-string}"
+}
+```
+
+コマンド文字列の例：
+- `disconnect` - 配信サイト側からの切断をシミュレート
+- `connect` - 再接続（UIから接続する必要がある）
+- `pause` - コメント生成を一時停止
+- `resume` - コメント生成を再開
+- `rate <seconds>` - コメント生成間隔を設定（0でランダム）
+- `comment <user> <text>` - 手動でコメントを生成
+- `help` - ヘルプメッセージを表示
+- `status` - 接続ステータスを表示
+
+## command-result
+```
+{
+  "connection_id": "{uuid}",
+  "success": true | false,
+  "message": "{result-message}"
+}
+```
 
 ## plugin-hello
 ```

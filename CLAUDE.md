@@ -60,6 +60,7 @@ The system uses actix's actor model for core-plugin communication:
 2. **Connection Lifecycle**: `add-connection` → `connection-added` → `connect` → `connected`
 3. **Comment Streaming**: Plugins send `comment-received` messages to core
 4. **Disconnection**: `disconnect` → `disconnected`
+5. **Command System**: `send-command` → command execution → `command-result`
 
 All messages follow kebab-case naming convention and include:
 - `type`: Message type (e.g., "add-connection")
@@ -76,8 +77,48 @@ crates/
 ├── mcv-messages/          # Message type definitions (MessageType, payloads)
 ├── mcv-common/            # Shared utilities and constants
 ├── mcv-plugin-interface/  # Plugin trait definitions (Plugin, PluginHost)
-└── mcv-core/             # Core logic (CoreActor, PluginManager, ConnectionManager)
+├── mcv-core/             # Core logic (CoreActor, PluginManager, ConnectionManager)
+└── plugin-dummy/         # Dummy plugin for testing and development
 ```
+
+### Command System
+
+The command system allows the UI to send commands to plugins for testing and debugging purposes. This is particularly useful for simulating server-side events (e.g., disconnection from the streaming platform).
+
+**Message Types:**
+- `send-command`: Core → Plugin with command string
+- `command-result`: Plugin → Core with execution result
+
+**Available Commands (in plugin-dummy):**
+- `disconnect` - Simulate server-side disconnection
+- `connect` - Request reconnection (requires UI action)
+- `pause` - Pause comment generation
+- `resume` - Resume comment generation
+- `rate <seconds>` - Set comment generation interval (0 = random)
+- `comment <user> <text>` - Generate manual comment
+- `help` - Show available commands
+- `status` - Show connection status
+
+**UI Implementation:**
+The main UI includes a command input section below the DataGrid with:
+- Connection selector (combobox)
+- Command input field
+- Send button
+
+### Multiple Connection Management
+
+Plugins manage multiple connections independently using `HashMap<Uuid, Arc<AtomicBool>>`:
+
+```rust
+pub struct DummyPlugin {
+    plugin_id: Uuid,
+    connections: HashMap<Uuid, Arc<AtomicBool>>,      // connection_id → running flag
+    comment_rates: HashMap<Uuid, Arc<RwLock<u64>>>,   // connection_id → rate
+    paused: HashMap<Uuid, Arc<AtomicBool>>,           // connection_id → paused flag
+}
+```
+
+This ensures that operations on one connection (pause, disconnect, rate change) do not affect other connections.
 
 ### Plugin Implementation
 
@@ -98,7 +139,7 @@ pub trait Plugin: Send + Sync {
 ### Tauri Integration
 
 - `apps/mcv/src-tauri/src/main.rs`: Initializes actix system, CoreActor, and registers plugins
-- Tauri commands: `start_connection`, `add_connection`, `connect`, `disconnect`
+- Tauri commands: `add_connection`, `remove_connection`, `rename_connection`, `connect`, `disconnect`, `get_connections`, `send_command`
 - Events emitted to frontend: `comment-received`, `connected`, `disconnected`
 - Core actor events are forwarded to React UI via Tauri's event system
 
@@ -108,6 +149,8 @@ React + TypeScript + Tailwind CSS:
 - `src/App.tsx`: Main component with connection controls and comment display
 - Uses `@tauri-apps/api` for backend communication
 - Listens to Tauri events for real-time comment updates
+- Uses `my-dataview` package (in `packages/`) for high-performance comment display with virtual scrolling
+- Command input section for sending commands to plugins
 
 ## Important Implementation Details
 
@@ -130,7 +173,18 @@ use mcv_messages::{Message as McvMessage, MessageSource, MessageDestination, Mes
 
 ### Connection Flow
 
-MVP simplification: `start_connection` command combines `add-connection` + `connect` for easier UI interaction.
+1. User clicks "接続を追加" → `add_connection` command → Creates connection with default name (#1, #2, etc.)
+2. User clicks "接続" button → `connect` command → Plugin starts comment generation
+3. User clicks "切断" button → `disconnect` command → Plugin stops comment generation
+4. User can rename connections, and the name persists in the connection manager
+5. User can delete connections (only when disconnected)
+
+### Event-Driven Architecture
+
+The application uses an event-driven architecture to avoid polling:
+- Backend emits `connected`, `disconnected`, and `comment-received` events
+- Frontend listens to these events and updates UI accordingly
+- No polling intervals or timers are used for connection state synchronization
 
 ## Current Limitations (MVP)
 
@@ -139,6 +193,32 @@ MVP simplification: `start_connection` command combines `add-connection` + `conn
 - No complex input UI (URL/password fields)
 - Single dummy plugin for testing
 - No persistent storage or configuration
+
+## Test Coverage
+
+The project includes comprehensive tests for core functionality:
+
+### Unit Tests
+- **mcv-messages** (5 tests): Message serialization, payload validation, message type tests
+- **plugin-dummy** (11 tests): Command handling, connection management, pause/resume/rate control
+- **mcv-core** (3 tests): Plugin manager, connection manager, basic lifecycle tests
+
+### Integration Tests
+- **mcv-core/tests** (5 tests): Message routing, connection lifecycle, multiple connections, rename/delete operations
+
+Run tests with:
+```bash
+# All tests
+cargo test --workspace
+
+# Specific package
+cargo test --package mcv-messages
+cargo test --package plugin-dummy
+cargo test --package mcv-core
+
+# Integration tests only
+cargo test --test command_system_test
+```
 
 ## Future Extension Points
 

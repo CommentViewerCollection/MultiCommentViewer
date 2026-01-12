@@ -3,6 +3,9 @@ name = "plugin-dummy"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib", "rlib"]  # DLL + 通常のライブラリ
+
 [dependencies]
 mcv-messages = { path = "../../crates/mcv-messages" }
 mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
@@ -13,3 +16,4 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 tokio = { workspace = true }
 rand = "0.8"
+once_cell = "1.20"

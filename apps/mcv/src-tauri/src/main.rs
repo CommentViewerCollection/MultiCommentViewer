@@ -3,7 +3,7 @@
 use actix::prelude::*;
 use mcv_core::*;
 use mcv_messages::{self, Message as McvMessage, MessageSource, MessageDestination, MessageType, *};
-use plugin_dummy::DummyPlugin;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use uuid::Uuid;
@@ -282,15 +282,28 @@ fn main() {
             plugin_manager.set_core_addr(core_addr.clone());
             println!("core_addr set to PluginManager");
 
-            // ダミープラグインを登録
-            println!("Creating DummyPlugin...");
-            let dummy_plugin = Box::new(DummyPlugin::new());
-            println!("Calling plugin_manager.register_plugin...");
+            // ダミープラグインをDLLから登録
+            println!("Loading DummyPlugin from DLL...");
+
+            // DLLパスを構築（開発環境ではtarget/debug/plugin_dummy.dll）
+            let dll_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .join("target")
+                .join("debug")
+                .join("plugin_dummy.dll");
+
+            println!("DLL path: {:?}", dll_path);
+
             let (plugin_id, plugin_host_addr) = plugin_manager
-                .register_plugin(dummy_plugin)
+                .register_plugin_from_dll(&dll_path)
                 .await
-                .expect("Failed to register dummy plugin");
-            println!("plugin_manager.register_plugin returned successfully");
+                .expect("Failed to register dummy plugin from DLL");
+            println!("plugin_manager.register_plugin_from_dll returned successfully");
 
             // Core ActorにPluginInfoを登録
             let plugin_info = PluginInfo {

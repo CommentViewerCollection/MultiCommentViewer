@@ -3,6 +3,8 @@ members = [
     "crates/mcv-common",
     "crates/mcv-messages",
     "crates/mcv-plugin-interface",
+    "crates/mcv-plugin-loader",
+    "crates/mcv-updater",
     "crates/mcv-core",
     "crates/plugin-dummy",
     "apps/mcv/src-tauri",

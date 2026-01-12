@@ -612,3 +612,162 @@ mod tests {
         assert!(!plugin.paused.get(&connection_id2).unwrap().load(Ordering::SeqCst));
     }
 }
+
+// ============================================================================
+// C ABI エクスポート関数（DLL化用）
+// ============================================================================
+
+use once_cell::sync::Lazy;
+use std::ffi::{c_char, c_void, CStr, CString};
+use std::sync::Mutex;
+
+// グローバルステート
+static PLUGIN_INSTANCE: Lazy<Mutex<Option<DummyPlugin>>> = Lazy::new(|| Mutex::new(None));
+static MESSAGE_CALLBACK: Lazy<Mutex<Option<extern "C" fn(*const c_char)>>> = Lazy::new(|| Mutex::new(None));
+static RUNTIME: Lazy<tokio::runtime::Runtime> = Lazy::new(|| {
+    tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime")
+});
+
+/// PluginHost実装（コールバック経由でmcvにメッセージ送信）
+struct CApiPluginHost;
+
+#[async_trait]
+impl PluginHost for CApiPluginHost {
+    async fn send_message(&self, message: Message) -> Result<(), PluginError> {
+        let message_json = serde_json::to_string(&message)
+            .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to serialize message: {}", e)))?;
+
+        let message_cstr = CString::new(message_json)
+            .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to create CString: {}", e)))?;
+
+        let callback_guard = MESSAGE_CALLBACK.lock().unwrap();
+        if let Some(cb) = *callback_guard {
+            cb(message_cstr.as_ptr());
+        }
+
+        Ok(())
+    }
+}
+
+/// プラグインメタデータ取得
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_get_metadata() -> *const c_char {
+    let metadata = r#"{
+  "id": "plugin-dummy",
+  "name": "Dummy Plugin",
+  "version": "0.1.0",
+  "api_version": "v2",
+  "roles": ["dummy"]
+}"#;
+
+    CString::new(metadata).unwrap().into_raw()
+}
+
+/// プラグイン初期化
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_init(_host_context: *mut c_void) -> i32 {
+    println!("=== C ABI: plugin_init called ===");
+
+    let mut instance = PLUGIN_INSTANCE.lock().unwrap();
+    let mut plugin = DummyPlugin::new();
+
+    // on_loadedを呼び出し
+    let host = Arc::new(CApiPluginHost);
+    let result = RUNTIME.block_on(plugin.on_loaded(host));
+
+    if let Err(e) = result {
+        eprintln!("plugin_init failed: {}", e);
+        return -1;
+    }
+
+    *instance = Some(plugin);
+    println!("=== C ABI: plugin_init completed successfully ===");
+    0 // 成功
+}
+
+/// メッセージ送信（mcv→プラグイン）
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
+    if message_json.is_null() {
+        eprintln!("plugin_send_message: null message_json");
+        return -1;
+    }
+
+    let message_json_cstr = unsafe { CStr::from_ptr(message_json) };
+    let message_json_str = match message_json_cstr.to_str() {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("plugin_send_message: Invalid UTF-8: {}", e);
+            return -1;
+        }
+    };
+
+    // JSONをパース
+    let message: Message = match serde_json::from_str(message_json_str) {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("plugin_send_message: Failed to parse JSON: {}", e);
+            return -1;
+        }
+    };
+
+    // プラグインインスタンスを取得
+    let mut instance_guard = PLUGIN_INSTANCE.lock().unwrap();
+    if let Some(ref mut plugin) = *instance_guard {
+        let host = Arc::new(CApiPluginHost);
+        let result = RUNTIME.block_on(plugin.on_message(message, host));
+
+        if let Err(e) = result {
+            eprintln!("plugin_send_message: on_message failed: {}", e);
+            return -1;
+        }
+    } else {
+        eprintln!("plugin_send_message: Plugin not initialized");
+        return -1;
+    }
+
+    0 // 成功
+}
+
+/// メッセージ受信コールバック設定（プラグイン→mcv）
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_set_callback(callback: extern "C" fn(*const c_char)) -> i32 {
+    println!("=== C ABI: plugin_set_callback called ===");
+    let mut cb = MESSAGE_CALLBACK.lock().unwrap();
+    *cb = Some(callback);
+    0 // 成功
+}
+
+/// プラグイン終了
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_shutdown() -> i32 {
+    println!("=== C ABI: plugin_shutdown called ===");
+
+    let mut instance = PLUGIN_INSTANCE.lock().unwrap();
+    if let Some(ref mut plugin) = *instance {
+        let result = RUNTIME.block_on(plugin.on_shutdown());
+
+        if let Err(e) = result {
+            eprintln!("plugin_shutdown: on_shutdown failed: {}", e);
+            return -1;
+        }
+    }
+
+    *instance = None;
+    0 // 成功
+}

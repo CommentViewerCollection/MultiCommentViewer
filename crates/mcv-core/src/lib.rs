@@ -9,6 +9,8 @@ pub use plugin_host_actor::{PluginHostActor, SendMessageToPlugin, ShutdownPlugin
 
 use actix::prelude::*;
 use mcv_plugin_interface::Plugin;
+use mcv_plugin_loader::PluginLoader;
+use std::path::Path;
 use uuid::Uuid;
 
 /// プラグインマネージャー
@@ -29,7 +31,48 @@ impl PluginManager {
         self.core_addr = Some(addr);
     }
 
-    /// プラグインを登録
+    /// プラグインを登録（DLLから）
+    ///
+    /// # Arguments
+    /// * `dll_path` - プラグインDLLのパス
+    ///
+    /// # Returns
+    /// (plugin_id, plugin_host_addr)
+    pub async fn register_plugin_from_dll<P: AsRef<Path>>(
+        &self,
+        dll_path: P,
+    ) -> Result<(Uuid, Addr<PluginHostActor>), String> {
+        println!("PluginManager::register_plugin_from_dll called");
+
+        // DLLをロード
+        let plugin_loader = PluginLoader::load(&dll_path).map_err(|e| {
+            format!("Failed to load plugin DLL from {:?}: {}", dll_path.as_ref(), e)
+        })?;
+
+        let plugin_id = Uuid::new_v4();
+        println!("Generated plugin_id: {}", plugin_id);
+        println!("Loaded plugin: {} ({})", plugin_loader.metadata().name, plugin_loader.metadata().id);
+
+        // Plugin-Host Actorを起動
+        let mut plugin_host = PluginHostActor::new_from_dll(plugin_id, plugin_loader);
+        println!("PluginHostActor created from DLL");
+
+        if let Some(core_addr) = &self.core_addr {
+            println!("Setting core_addr to PluginHostActor");
+            plugin_host.set_core_addr(core_addr.clone());
+        } else {
+            eprintln!("ERROR: Core actor not set in PluginManager");
+            return Err("Core actor not set".to_string());
+        }
+
+        println!("Starting PluginHostActor...");
+        let plugin_host_addr = plugin_host.start();
+        println!("PluginHostActor started, addr: {:?}", plugin_host_addr);
+
+        Ok((plugin_id, plugin_host_addr))
+    }
+
+    /// プラグインを登録（旧形式、静的リンク用）
     ///
     /// # Returns
     /// (plugin_id, plugin_host_addr)

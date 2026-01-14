@@ -20,4 +20,6 @@ dist/
 *.log
 
 # Tauri
-apps/mcv/src-tauri/target
+apps/*/src-tauri/target
+
+output/

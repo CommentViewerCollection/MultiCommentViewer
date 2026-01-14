@@ -20,11 +20,23 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "installer-capability",
+          "description": "Installer app capability",
+          "windows": ["main"],
+          "permissions": [
+            "core:default",
+            "core:event:allow-listen",
+            "core:event:allow-emit",
+            "core:window:allow-close"
+          ]
+        }
+      ]
     }
   },
   "bundle": {
-    "active": false,
-    "targets": "all"
+    "active": false
   }
 }

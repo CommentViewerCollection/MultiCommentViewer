@@ -47,7 +47,7 @@ GET /installer/version
 #### ヘッダー
 
 ```http
-GET /installer/version HTTP/1.1
+GET /api/mcv-installer/version/latest HTTP/1.1
 Host: api.example.com
 User-Agent: McvInstaller/1.0.0
 Accept: application/json
@@ -67,8 +67,6 @@ Accept: application/json
   "required": true,
   "download_url": "https://cdn.example.com/installer/installer-1.2.0.exe",
   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "release_notes": "バグ修正とパフォーマンス改善\n- プラグインインストール時のクラッシュを修正\n- ダウンロード速度の向上",
-  "released_at": "2026-01-10T00:00:00Z"
 }
 ```
 

@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use mcv_updater::{UpdateChecker, InstallerUpdateInfo, McvUpdateInfo, PluginInfo};
+use mcv_updater::{UpdateChecker, InstallerUpdateInfo, McvUpdateInfo, PluginListItem};
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter, State};
 
@@ -63,7 +63,7 @@ async fn check_mcv_update(
 
 /// プラグイン一覧を取得
 #[tauri::command]
-async fn list_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfo>, String> {
+async fn list_plugins(state: State<'_, AppState>) -> Result<Vec<PluginListItem>, String> {
     println!("Fetching plugin list...");
 
     match state.update_checker.list_plugins().await {
@@ -185,6 +185,11 @@ async fn install_mcv(zip_path: String, dest_dir: String) -> Result<(), String> {
     }
 
     println!("Mcv installation completed");
+
+    // ZIPファイルを削除
+    std::fs::remove_file(&zip_path)
+        .unwrap_or_else(|e| eprintln!("Failed to delete temp file: {}", e));
+
     Ok(())
 }
 
@@ -213,6 +218,11 @@ async fn install_plugin(dll_path: String, dest_dir: String) -> Result<(), String
         .map_err(|e| format!("Failed to copy plugin DLL: {}", e))?;
 
     println!("Plugin installation completed: {:?}", dest_file);
+
+    // DLLファイルを削除
+    std::fs::remove_file(&src_path)
+        .unwrap_or_else(|e| eprintln!("Failed to delete temp file: {}", e));
+
     Ok(())
 }
 
@@ -236,8 +246,69 @@ async fn check_existing_installation() -> Result<Option<String>, String> {
     }
 }
 
+/// LOCALAPPDATAパスを取得
+#[tauri::command]
+async fn get_local_app_data() -> Result<String, String> {
+    std::env::var("LOCALAPPDATA")
+        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())
+}
+
+/// mcvを起動
+#[tauri::command]
+async fn launch_mcv() -> Result<(), String> {
+    let local_app_data = std::env::var("LOCALAPPDATA")
+        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+
+    let mcv_path = PathBuf::from(local_app_data)
+        .join("MultiCommentViewer")
+        .join("mcv.exe");
+
+    println!("Launching mcv from: {:?}", mcv_path);
+
+    if !mcv_path.exists() {
+        return Err(format!("mcv.exe not found at: {:?}", mcv_path));
+    }
+
+    // mcv.exeを起動（バックグラウンドで実行）
+    std::process::Command::new(&mcv_path)
+        .spawn()
+        .map_err(|e| format!("Failed to launch mcv: {}", e))?;
+
+    Ok(())
+}
+
+/// mcvのダウンロードURLを取得
+#[tauri::command]
+async fn get_mcv_download_url(
+    state: State<'_, AppState>,
+    version: String,
+    channel: String,
+) -> Result<String, String> {
+    Ok(state.update_checker.build_mcv_download_url(&version, &channel))
+}
+
+/// プラグインのダウンロードURLを取得
+#[tauri::command]
+async fn get_plugin_download_url(
+    state: State<'_, AppState>,
+    plugin_id: String,
+    version: String,
+    channel: String,
+) -> Result<String, String> {
+    Ok(state.update_checker.build_plugin_download_url(&plugin_id, &version, &channel))
+}
+
+/// 一時ディレクトリのパスを取得
+#[tauri::command]
+async fn get_temp_dir() -> Result<String, String> {
+    std::env::temp_dir()
+        .to_str()
+        .ok_or_else(|| "Failed to get temp directory".to_string())
+        .map(|s| s.to_string())
+}
+
 fn main() {
-    const API_BASE_URL: &str = "https://api.example.com"; // TODO: 実際のAPIエンドポイントに変更
+    const API_BASE_URL: &str = "http://localhost"; // TODO: 実際のAPIエンドポイントに変更
 
     let update_checker = UpdateChecker::new(API_BASE_URL);
 
@@ -257,6 +328,11 @@ fn main() {
             install_mcv,
             install_plugin,
             check_existing_installation,
+            get_local_app_data,
+            launch_mcv,
+            get_mcv_download_url,
+            get_plugin_download_url,
+            get_temp_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

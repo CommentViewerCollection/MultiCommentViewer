@@ -20,14 +20,30 @@ pub struct UpdateInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstallerUpdateInfo {
     pub version: String,
-    pub required: bool,
-    pub download_url: String,
+    pub channel: String,
+    #[serde(rename = "fileName")]
+    pub file_name: String,
     pub sha256: String,
-    pub release_notes: String,
-    pub released_at: String,
 }
 
-/// プラグイン情報
+/// プラグインのチャンネル情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginChannels {
+    pub stable: Option<String>,
+    pub beta: Option<String>,
+    pub alpha: Option<String>,
+}
+
+/// プラグイン一覧の各アイテム
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginListItem {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub channels: PluginChannels,
+}
+
+/// プラグイン詳細情報（将来の拡張用）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
     pub id: String,
@@ -43,21 +59,17 @@ pub struct PluginInfo {
     pub min_mcv_version: String,
 }
 
-/// プラグイン一覧レスポンス
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PluginListResponse {
-    pub plugins: Vec<PluginInfo>,
-}
-
 /// mcv本体アップデート情報（拡張版）
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct McvUpdateInfo {
     pub version: String,
-    pub download_url: String,
+    pub channel: String,
+    pub file_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_size: Option<u64>,
     pub sha256: String,
-    pub release_notes: String,
-    pub released_at: String,
-    pub min_installer_version: String,
+    pub uploaded_at: String,
 }
 
 /// アップデートエラー
@@ -117,7 +129,7 @@ impl UpdateChecker {
         &self,
         current_version: &str,
     ) -> Result<Option<InstallerUpdateInfo>, UpdateError> {
-        let url = format!("{}/installer/version", self.api_base_url);
+        let url = format!("{}/api/mcv/installer/latest/stable", self.api_base_url);
         let response = self.client.get(&url).send().await?;
 
         if !response.status().is_success() {
@@ -125,7 +137,6 @@ impl UpdateChecker {
                 response.error_for_status().unwrap_err(),
             ));
         }
-
         let info: InstallerUpdateInfo = response.json().await?;
 
         let current = Version::parse(current_version)?;
@@ -137,7 +148,17 @@ impl UpdateChecker {
             Ok(None)
         }
     }
+    fn get_mcv_update_endpoint(&self, api_base_url: impl Into<String>) -> String {
+        #[cfg(debug_assertions)]
+        {
+            format!("{}/api/mcv/core/latest/beta", api_base_url.into())
+        }
 
+        #[cfg(not(debug_assertions))]
+        {
+            format!("{}/api/mcv/core/latest/stable", api_base_url.into())
+        }
+    }
     /// mcv本体の更新をチェック
     ///
     /// # Arguments
@@ -149,7 +170,7 @@ impl UpdateChecker {
         &self,
         current_version: &str,
     ) -> Result<Option<McvUpdateInfo>, UpdateError> {
-        let url = format!("{}/mcv/version", self.api_base_url);
+        let url = self.get_mcv_update_endpoint(&self.api_base_url);
         let response = self
             .client
             .get(&url)
@@ -179,8 +200,8 @@ impl UpdateChecker {
     ///
     /// # Returns
     /// 利用可能なプラグイン一覧
-    pub async fn list_plugins(&self) -> Result<Vec<PluginInfo>, UpdateError> {
-        let url = format!("{}/plugins/list", self.api_base_url);
+    pub async fn list_plugins(&self) -> Result<Vec<PluginListItem>, UpdateError> {
+        let url = format!("{}/api/mcv/plugins", self.api_base_url);
         let response = self.client.get(&url).send().await?;
 
         if !response.status().is_success() {
@@ -189,8 +210,33 @@ impl UpdateChecker {
             ));
         }
 
-        let list_response: PluginListResponse = response.json().await?;
-        Ok(list_response.plugins)
+        let plugins: Vec<PluginListItem> = response.json().await?;
+        Ok(plugins)
+    }
+
+    /// mcvのダウンロードURLを構築
+    ///
+    /// # Arguments
+    /// * `version` - mcvのバージョン（例: "7.77.7777"）
+    /// * `channel` - リリースチャンネル（"stable", "beta", "alpha"）
+    ///
+    /// # Returns
+    /// ダウンロードURL
+    pub fn build_mcv_download_url(&self, version: &str, channel: &str) -> String {
+        format!("{}/api/mcv/core/{}/{}/download", self.api_base_url, version, channel)
+    }
+
+    /// プラグインのダウンロードURLを構築
+    ///
+    /// # Arguments
+    /// * `plugin_id` - プラグインID（例: "plugin-youtube"）
+    /// * `version` - プラグインのバージョン
+    /// * `channel` - リリースチャンネル（"stable", "beta", "alpha"）
+    ///
+    /// # Returns
+    /// ダウンロードURL
+    pub fn build_plugin_download_url(&self, plugin_id: &str, version: &str, channel: &str) -> String {
+        format!("{}/api/mcv/plugins/{}/{}/{}/download", self.api_base_url, plugin_id, version, channel)
     }
 
     /// ファイルをダウンロード
@@ -315,6 +361,42 @@ mod tests {
 
         assert_eq!(deserialized.version, "1.0.0");
         assert_eq!(deserialized.download_url, "https://example.com/download");
+    }
+
+    #[test]
+    fn test_plugin_list_item_serialization() {
+        let plugin = PluginListItem {
+            id: "test-plugin1".to_string(),
+            name: "一番最初のテストプラグイン".to_string(),
+            description: "ここに説明を記述".to_string(),
+            channels: PluginChannels {
+                stable: Some("0.1.0".to_string()),
+                beta: None,
+                alpha: None,
+            },
+        };
+
+        let json = serde_json::to_string(&plugin).unwrap();
+        let deserialized: PluginListItem = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.id, "test-plugin1");
+        assert_eq!(deserialized.name, "一番最初のテストプラグイン");
+        assert_eq!(deserialized.channels.stable, Some("0.1.0".to_string()));
+        assert_eq!(deserialized.channels.beta, None);
+    }
+
+    #[test]
+    fn test_plugin_list_api_format() {
+        let json = r#"[{"id":"test-plugin1","name":"一番最初のテストプラグイン","description":"ここに説明を記述","channels":{"stable":"0.1.0","beta":null,"alpha":null}}]"#;
+        let plugins: Vec<PluginListItem> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(plugins.len(), 1);
+        assert_eq!(plugins[0].id, "test-plugin1");
+        assert_eq!(plugins[0].name, "一番最初のテストプラグイン");
+        assert_eq!(plugins[0].description, "ここに説明を記述");
+        assert_eq!(plugins[0].channels.stable, Some("0.1.0".to_string()));
+        assert_eq!(plugins[0].channels.beta, None);
+        assert_eq!(plugins[0].channels.alpha, None);
     }
 
     #[test]

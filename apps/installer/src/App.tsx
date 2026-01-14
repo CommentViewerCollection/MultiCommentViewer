@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { getCurrentWindow } from '@tauri-apps/api/window'
+import { listen } from '@tauri-apps/api/event'
 
 // 画面タイプ
 type ScreenType =
@@ -24,26 +26,32 @@ interface InstallerUpdateInfo {
 // mcv更新情報
 interface McvUpdateInfo {
   version: string
-  download_url: string
+  channel: string
+  fileName: string
+  fileSize?: number
   sha256: string
-  release_notes: string
-  released_at: string
-  min_installer_version: string
+  uploadedAt: string
 }
 
-// プラグイン情報
-interface PluginInfo {
+// プラグインのチャンネル情報
+interface PluginChannels {
+  stable: string | null
+  beta: string | null
+  alpha: string | null
+}
+
+// プラグイン一覧の各アイテム
+interface PluginListItem {
   id: string
   name: string
   description: string
-  version: string
-  download_url: string
-  sha256: string
-  file_size: number
-  author: string
-  license: string
-  released_at: string
-  min_mcv_version: string
+  channels: PluginChannels
+}
+
+// ダウンロード進捗
+interface DownloadProgress {
+  mcv: { status: 'pending' | 'downloading' | 'completed' | 'error'; progress: number }
+  plugins: { status: 'pending' | 'downloading' | 'completed' | 'error'; progress: number }
 }
 
 function App() {
@@ -51,8 +59,12 @@ function App() {
   const [installerUpdate, setInstallerUpdate] = useState<InstallerUpdateInfo | null>(null)
   const [existingVersion, setExistingVersion] = useState<string | null>(null)
   const [mcvUpdate, setMcvUpdate] = useState<McvUpdateInfo | null>(null)
-  const [availablePlugins, setAvailablePlugins] = useState<PluginInfo[]>([])
+  const [availablePlugins, setAvailablePlugins] = useState<PluginListItem[]>([])
   const [selectedPlugins, setSelectedPlugins] = useState<Set<string>>(new Set())
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({
+    mcv: { status: 'pending', progress: 0 },
+    plugins: { status: 'pending', progress: 0 },
+  })
 
   // スプラッシュ画面の初期化
   useEffect(() => {
@@ -99,7 +111,7 @@ function App() {
   const handleNewInstall = async () => {
     // プラグイン一覧を取得
     try {
-      const plugins = await invoke<PluginInfo[]>('list_plugins')
+      const plugins = await invoke<PluginListItem[]>('list_plugins')
       setAvailablePlugins(plugins)
       setScreen('plugin-select')
     } catch (error) {
@@ -118,7 +130,7 @@ function App() {
       })
       setMcvUpdate(mcvUpdate)
 
-      const plugins = await invoke<PluginInfo[]>('list_plugins')
+      const plugins = await invoke<PluginListItem[]>('list_plugins')
       setAvailablePlugins(plugins)
 
       setScreen('update-check')
@@ -140,9 +152,221 @@ function App() {
     })
   }
 
-  const handleStartInstall = () => {
+  const installMcv = async () => {
+    console.log('Starting mcv installation...')
+
+    // 1. mcv更新情報を取得
+    console.log('Fetching mcv update info...')
+    const mcvInfo = await invoke<McvUpdateInfo>('check_mcv_update', {
+      currentVersion: existingVersion || '0.0.0'
+    })
+
+    console.log('mcvInfo:', mcvInfo)
+
+    if (!mcvInfo) {
+      throw new Error('No mcv update available')
+    }
+
+    // 2. ダウンロードURLを構築
+    console.log('Building download URL...')
+    const downloadUrl = await invoke<string>('get_mcv_download_url', {
+      version: mcvInfo.version,
+      channel: mcvInfo.channel
+    })
+
+    console.log('Download URL:', downloadUrl)
+
+    // 3. 一時ディレクトリにダウンロード
+    const tempDir = await invoke<string>('get_temp_dir')
+    const tempZipPath = `${tempDir}\\mcv_${mcvInfo.version}.zip`
+
+    console.log('Downloading to:', tempZipPath)
+
+    await invoke('download_file', {
+      url: downloadUrl,
+      dest: tempZipPath
+    })
+
+    console.log('Download completed')
+
+    // 4. チェックサム検証
+    const isValid = await invoke<boolean>('verify_checksum', {
+      filePath: tempZipPath,
+      expected: mcvInfo.sha256
+    })
+
+    if (!isValid) {
+      throw new Error('Checksum verification failed')
+    }
+
+    // 5. インストール（ZIP展開）
+    const localAppData = await invoke<string>('get_local_app_data')
+    const installDir = `${localAppData}\\MultiCommentViewer`
+
+    await invoke('install_mcv', {
+      zipPath: tempZipPath,
+      destDir: installDir
+    })
+
+    setDownloadProgress(prev => ({
+      ...prev,
+      mcv: { status: 'completed', progress: 100 }
+    }))
+  }
+
+  const installPlugins = async () => {
+    if (selectedPlugins.size === 0) {
+      setDownloadProgress(prev => ({
+        ...prev,
+        plugins: { status: 'completed', progress: 100 }
+      }))
+      return
+    }
+
+    const tempDir = await invoke<string>('get_temp_dir')
+    const localAppData = await invoke<string>('get_local_app_data')
+    const pluginDir = `${localAppData}\\MultiCommentViewer\\plugins`
+
+    let completedCount = 0
+    const totalPlugins = selectedPlugins.size
+
+    for (const pluginId of selectedPlugins) {
+      const plugin = availablePlugins.find(p => p.id === pluginId)
+      if (!plugin) continue
+
+      // チャンネルとバージョンを取得
+      const channel = plugin.channels.stable ? 'stable'
+                    : plugin.channels.beta ? 'beta'
+                    : 'alpha'
+      const version = plugin.channels[channel]
+
+      if (!version) continue
+
+      // ダウンロードURLを構築
+      const downloadUrl = await invoke<string>('get_plugin_download_url', {
+        pluginId: pluginId,
+        version: version,
+        channel: channel
+      })
+
+      // ダウンロード
+      const tempDllPath = `${tempDir}\\${pluginId}_${version}.dll`
+      await invoke('download_file', {
+        url: downloadUrl,
+        dest: tempDllPath
+      })
+
+      // インストール（DLLコピー）
+      // 注意: プラグインのチェックサム検証はスキップ（APIがsha256を返さないため）
+      await invoke('install_plugin', {
+        dllPath: tempDllPath,
+        destDir: pluginDir
+      })
+
+      completedCount++
+      const progress = Math.round((completedCount / totalPlugins) * 100)
+      setDownloadProgress(prev => ({
+        ...prev,
+        plugins: { status: 'downloading', progress }
+      }))
+    }
+
+    setDownloadProgress(prev => ({
+      ...prev,
+      plugins: { status: 'completed', progress: 100 }
+    }))
+  }
+
+  const handleStartInstall = async () => {
+    console.log('=== handleStartInstall called ===')
+
     setScreen('download')
-    // TODO: ダウンロード・インストール処理
+
+    // 進捗状態をリセット
+    setDownloadProgress({
+      mcv: { status: 'pending', progress: 0 },
+      plugins: { status: 'pending', progress: 0 },
+    })
+
+    console.log('Setting up progress listener...')
+
+    // 進捗イベントリスナーを設定
+    const unlisten = await listen('download-progress', (event: any) => {
+      const { url, progress } = event.payload
+
+      if (url.includes('/mcv/core/')) {
+        setDownloadProgress(prev => ({
+          ...prev,
+          mcv: { status: 'downloading', progress: Math.round(progress) }
+        }))
+      } else if (url.includes('/plugins/')) {
+        setDownloadProgress(prev => ({
+          ...prev,
+          plugins: { status: 'downloading', progress: Math.round(progress) }
+        }))
+      }
+    })
+
+    try {
+      // mcv本体をインストール
+      setDownloadProgress((prev) => ({
+        ...prev,
+        mcv: { status: 'downloading', progress: 0 },
+      }))
+
+      await installMcv()
+
+      // プラグインをインストール（選択されている場合）
+      if (selectedPlugins.size > 0) {
+        setDownloadProgress((prev) => ({
+          ...prev,
+          plugins: { status: 'downloading', progress: 0 },
+        }))
+
+        await installPlugins()
+      } else {
+        // プラグインが選択されていない場合はスキップ
+        setDownloadProgress((prev) => ({
+          ...prev,
+          plugins: { status: 'completed', progress: 100 },
+        }))
+      }
+
+      // インストール完了
+      setScreen('complete')
+    } catch (error) {
+      console.error('Installation failed:', error)
+      alert(`インストール失敗: ${error}`)
+
+      // エラー状態を設定
+      setDownloadProgress((prev) => ({
+        mcv: prev.mcv.status === 'completed' ? prev.mcv : { status: 'error', progress: prev.mcv.progress },
+        plugins: prev.plugins.status === 'completed' ? prev.plugins : { status: 'error', progress: prev.plugins.progress },
+      }))
+    } finally {
+      unlisten()
+    }
+  }
+
+  const handleLaunchMcv = async () => {
+    try {
+      // mcvを起動
+      await invoke('launch_mcv')
+
+      // インストーラを閉じる
+      await getCurrentWindow().close()
+    } catch (error) {
+      console.error('Failed to launch mcv:', error)
+      alert(`mcvの起動に失敗しました: ${error}`)
+    }
+  }
+
+  const handleClose = async () => {
+    try {
+      await getCurrentWindow().close()
+    } catch (error) {
+      console.error('Failed to close window:', error)
+    }
   }
 
   return (
@@ -273,14 +497,11 @@ function App() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold text-lg">{plugin.name}</span>
-                      <span className="text-sm text-gray-400">v{plugin.version}</span>
+                      <span className="text-sm text-gray-400">
+                        {plugin.channels.stable ? `v${plugin.channels.stable}` : '(beta/alpha)'}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-300">{plugin.description}</p>
-                    <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                      <span>サイズ: {(plugin.file_size / 1024 / 1024).toFixed(2)} MB</span>
-                      <span>作者: {plugin.author}</span>
-                      <span>ライセンス: {plugin.license}</span>
-                    </div>
                   </div>
                 </label>
               ))}
@@ -311,12 +532,12 @@ function App() {
                       <span className="text-gray-400">最新:</span>{' '}
                       <span className="font-semibold text-green-400">{mcvUpdate.version}</span>
                     </p>
-                    <div>
-                      <span className="text-gray-400 block mb-1">リリースノート:</span>
-                      <div className="bg-gray-800 p-3 rounded text-sm whitespace-pre-wrap">
-                        {mcvUpdate.release_notes}
-                      </div>
-                    </div>
+                    <p className="text-sm text-gray-400">
+                      チャンネル: {mcvUpdate.channel}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      アップロード日時: {new Date(mcvUpdate.uploadedAt).toLocaleString('ja-JP')}
+                    </p>
                   </div>
                 </div>
               )}
@@ -337,7 +558,9 @@ function App() {
                       />
                       <div className="flex-1">
                         <span className="font-semibold">{plugin.name}</span>
-                        <span className="ml-2 text-sm text-gray-400">v{plugin.version}</span>
+                        <span className="ml-2 text-sm text-gray-400">
+                          {plugin.channels.stable ? `v${plugin.channels.stable}` : '(beta/alpha)'}
+                        </span>
                       </div>
                     </label>
                   ))}
@@ -362,20 +585,71 @@ function App() {
               <div className="bg-gray-700 p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span>全体進捗</span>
-                  <span className="font-semibold">60%</span>
+                  <span className="font-semibold">
+                    {Math.round((downloadProgress.mcv.progress + downloadProgress.plugins.progress) / 2)}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-600 rounded-full h-4">
-                  <div className="bg-blue-600 h-4 rounded-full" style={{ width: '60%' }}></div>
+                  <div
+                    className="bg-blue-600 h-4 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.round((downloadProgress.mcv.progress + downloadProgress.plugins.progress) / 2)}%`,
+                    }}
+                  ></div>
                 </div>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-green-400">✓</span>
-                  <span>mcv本体 - 完了</span>
+                  {downloadProgress.mcv.status === 'completed' && (
+                    <>
+                      <span className="text-green-400">✓</span>
+                      <span>mcv本体 - 完了</span>
+                    </>
+                  )}
+                  {downloadProgress.mcv.status === 'downloading' && (
+                    <>
+                      <span className="text-blue-400">→</span>
+                      <span>mcv本体 - ダウンロード中 {downloadProgress.mcv.progress}%</span>
+                    </>
+                  )}
+                  {downloadProgress.mcv.status === 'pending' && (
+                    <>
+                      <span className="text-gray-500">○</span>
+                      <span>mcv本体 - 待機中</span>
+                    </>
+                  )}
+                  {downloadProgress.mcv.status === 'error' && (
+                    <>
+                      <span className="text-red-400">✗</span>
+                      <span>mcv本体 - エラー</span>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-400">→</span>
-                  <span>プラグイン - ダウンロード中 40%</span>
+                  {downloadProgress.plugins.status === 'completed' && (
+                    <>
+                      <span className="text-green-400">✓</span>
+                      <span>プラグイン - {selectedPlugins.size > 0 ? '完了' : 'スキップ'}</span>
+                    </>
+                  )}
+                  {downloadProgress.plugins.status === 'downloading' && (
+                    <>
+                      <span className="text-blue-400">→</span>
+                      <span>プラグイン - ダウンロード中 {downloadProgress.plugins.progress}%</span>
+                    </>
+                  )}
+                  {downloadProgress.plugins.status === 'pending' && (
+                    <>
+                      <span className="text-gray-500">○</span>
+                      <span>プラグイン - 待機中</span>
+                    </>
+                  )}
+                  {downloadProgress.plugins.status === 'error' && (
+                    <>
+                      <span className="text-red-400">✗</span>
+                      <span>プラグイン - エラー</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -393,17 +667,13 @@ function App() {
             </p>
             <div className="flex gap-4">
               <button
-                onClick={() => {
-                  // TODO: mcvを起動
-                }}
+                onClick={handleLaunchMcv}
                 className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors"
               >
                 mcvを起動
               </button>
               <button
-                onClick={() => {
-                  // TODO: 閉じる
-                }}
+                onClick={handleClose}
                 className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors"
               >
                 閉じる

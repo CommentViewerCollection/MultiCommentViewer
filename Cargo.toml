@@ -8,7 +8,7 @@ members = [
     "crates/mcv-core",
     "crates/plugin-dummy",
     "apps/mcv/src-tauri",
-    "apps/installer/src-tauri",
+    "apps/installer/src-tauri", "apps/package_release",
 ]
 resolver = "2"
 

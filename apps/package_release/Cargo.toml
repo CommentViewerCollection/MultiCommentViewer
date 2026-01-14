@@ -1,0 +1,13 @@
+[package]
+name = "package_release"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+zip = "7.0.0"
+crc = "=3.3.0" # To match the version used by zip crate
+lzma-rust2 = "=0.15.7" # To match the version used by zip crate
+clap = { version = "4.5", features = ["derive"] }

@@ -11,6 +11,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "MultiCommentViewer",
         "width": 1200,
         "height": 800,

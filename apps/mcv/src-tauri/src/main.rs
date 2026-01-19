@@ -6,7 +6,7 @@ use mcv_messages::{self, Message as McvMessage, MessageSource, MessageDestinatio
 use mcv_updater::{UpdateChecker, McvUpdateInfo};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
 
 /// アプリケーションの状態
@@ -464,6 +464,14 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(move |app| {
+            // ウィンドウタイトルにバージョン番号を設定
+            if let Some(window) = app.get_webview_window("main") {
+                let version = env!("CARGO_PKG_VERSION");
+                let title = format!("MultiCommentViewer v{}", version);
+                let _ = window.set_title(&title);
+                tracing::debug!(title = %title, "Window title set");
+            }
+
             // AppHandleを保存（ブロッキング操作）
             let handle = app.handle().clone();
             let app_handle_clone = app_handle.clone();

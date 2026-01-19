@@ -37,7 +37,7 @@ export default function LogTable({
       <Virtuoso
         style={{ height: "100%" }}
         data={logs}
-        itemContent={(index, log) => (
+        itemContent={(_index, log) => (
           <div
             key={log.id}
             className={`flex items-center gap-3 px-4 py-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${

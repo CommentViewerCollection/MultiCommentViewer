@@ -21,7 +21,7 @@ struct AppState {
 async fn add_connection(
     state: State<'_, AppState>,
 ) -> Result<String, String> {
-    println!("=== add_connection called ===");
+    tracing::debug!("add_connection called");
     let plugin_id = state.dummy_plugin_id;
 
     // 現在の接続を取得してデフォルト名を生成
@@ -48,7 +48,7 @@ async fn add_connection(
     }
 
     let default_name = format!("#{}", next_number);
-    println!("Generated default name: {}", default_name);
+    tracing::debug!(name = %default_name, "Generated default connection name");
 
     // 接続を作成
     let connection_id = state
@@ -62,7 +62,7 @@ async fn add_connection(
         .await
         .map_err(|e| e.to_string())?;
 
-    println!("Connection created: {}", connection_id);
+    tracing::info!(connection_id = %connection_id, "Connection created");
     Ok(connection_id.to_string())
 }
 
@@ -220,21 +220,28 @@ async fn check_for_updates() -> Result<Option<McvUpdateInfo>, String> {
     const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
     const API_BASE_URL: &str = "https://api.example.com"; // TODO: 実際のAPIエンドポイントに変更
 
-    println!("Checking for updates... Current version: {}", CURRENT_VERSION);
+    tracing::info!(current_version = CURRENT_VERSION, "Checking for updates");
 
     let updater = UpdateChecker::new(API_BASE_URL);
 
     match updater.check_mcv_update(CURRENT_VERSION).await {
         Ok(update_info) => {
             if let Some(ref info) = update_info {
-                println!("Update available: {} -> {}", CURRENT_VERSION, info.version);
+                tracing::info!(
+                    current_version = CURRENT_VERSION,
+                    new_version = %info.version,
+                    "Update available"
+                );
             } else {
-                println!("No update available");
+                tracing::info!("No update available");
             }
             Ok(update_info)
         }
         Err(e) => {
-            eprintln!("Failed to check for updates: {}", e);
+            tracing::error!(
+                error = %e,
+                "Failed to check for updates"
+            );
             Err(format!("Failed to check for updates: {}", e))
         }
     }
@@ -243,7 +250,7 @@ async fn check_for_updates() -> Result<Option<McvUpdateInfo>, String> {
 /// インストーラを起動してmcvを終了
 #[tauri::command]
 async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
-    println!("Launching installer...");
+    tracing::info!("Launching installer");
 
     // インストーラのパスを構築
     let installer_path = std::env::current_exe()
@@ -252,7 +259,7 @@ async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
         .ok_or_else(|| "Failed to get parent directory".to_string())?
         .join("installer.exe");
 
-    println!("Installer path: {:?}", installer_path);
+    tracing::debug!(installer_path = ?installer_path, "Installer path");
 
     // インストーラが存在するか確認
     if !installer_path.exists() {
@@ -269,7 +276,7 @@ async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
         .map_err(|e| format!("Failed to launch installer: {}", e))?;
 
     // mcvを終了
-    println!("Exiting mcv...");
+    tracing::info!("Exiting mcv for update");
     app_handle.exit(0);
 
     Ok(())
@@ -299,6 +306,9 @@ fn main() {
         "mcv started"
     );
 
+    // LogSenderActorを起動するためのストレージを取得
+    let log_storage = mcv_logger::get_storage();
+
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
 
@@ -307,7 +317,15 @@ fn main() {
         let actix_system = System::new();
 
         actix_system.block_on(async {
-            println!("Actix system thread started");
+            tracing::info!("Actix system thread started");
+
+            // LogSenderActorを起動
+            const API_BASE_URL: &str = "https://api.example.com"; // TODO: 実際のAPIエンドポイントに変更
+            let _log_sender_addr = mcv_logger::LogSenderActor::new(
+                log_storage,
+                API_BASE_URL.to_string(),
+            ).start();
+            tracing::info!(api_base_url = API_BASE_URL, "LogSenderActor started");
 
             // Core Actorを起動
             let mut core_actor = CoreActor::new();
@@ -329,26 +347,39 @@ fn main() {
                             MessageType::CommentReceived => {
                                 let payload: CommentReceivedPayload =
                                     serde_json::from_value(message.payload).unwrap();
-                                println!("Emitting comment-received event: {:?}", payload.comment);
+                                tracing::debug!(
+                                    comment_id = %payload.comment.id,
+                                    connection_id = %payload.connection_id,
+                                    "Emitting comment-received event"
+                                );
                                 // connection_idを含めたコメントオブジェクトを作成
                                 let mut comment_with_conn = serde_json::to_value(&payload.comment).unwrap();
                                 if let Some(obj) = comment_with_conn.as_object_mut() {
                                     obj.insert("connection_id".to_string(), serde_json::Value::String(payload.connection_id.to_string()));
                                 }
                                 if let Err(e) = app_handle.emit("comment-received", comment_with_conn) {
-                                    eprintln!("Failed to emit comment-received event: {}", e);
+                                    tracing::error!(
+                                        error = %e,
+                                        "Failed to emit comment-received event"
+                                    );
                                 }
                             }
                             MessageType::Connected => {
-                                println!("Emitting connected event");
+                                tracing::debug!("Emitting connected event");
                                 if let Err(e) = app_handle.emit("connected", message.payload) {
-                                    eprintln!("Failed to emit connected event: {}", e);
+                                    tracing::error!(
+                                        error = %e,
+                                        "Failed to emit connected event"
+                                    );
                                 }
                             }
                             MessageType::Disconnected => {
-                                println!("Emitting disconnected event");
+                                tracing::debug!("Emitting disconnected event");
                                 if let Err(e) = app_handle.emit("disconnected", message.payload) {
-                                    eprintln!("Failed to emit disconnected event: {}", e);
+                                    tracing::error!(
+                                        error = %e,
+                                        "Failed to emit disconnected event"
+                                    );
                                 }
                             }
                             _ => {}
@@ -359,16 +390,16 @@ fn main() {
 
             core_actor.set_event_callback(event_callback);
 
-            println!("Starting CoreActor...");
+            tracing::debug!("Starting CoreActor");
             let core_addr = core_actor.start();
-            println!("CoreActor started");
+            tracing::info!("CoreActor started");
 
-            println!("Setting core_addr to PluginManager...");
+            tracing::debug!("Setting core_addr to PluginManager");
             plugin_manager.set_core_addr(core_addr.clone());
-            println!("core_addr set to PluginManager");
+            tracing::debug!("core_addr set to PluginManager");
 
             // ダミープラグインをDLLから登録
-            println!("Loading DummyPlugin from DLL...");
+            tracing::info!("Loading DummyPlugin from DLL");
 
             // DLLパスを構築（開発環境ではtarget/debug/plugin_dummy.dll）
             let dll_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -382,13 +413,13 @@ fn main() {
                 .join("debug")
                 .join("plugin_dummy.dll");
 
-            println!("DLL path: {:?}", dll_path);
+            tracing::debug!(dll_path = ?dll_path, "DLL path");
 
             let (plugin_id, plugin_host_addr) = plugin_manager
                 .register_plugin_from_dll(&dll_path)
                 .await
                 .expect("Failed to register dummy plugin from DLL");
-            println!("plugin_manager.register_plugin_from_dll returned successfully");
+            tracing::debug!("register_plugin_from_dll returned successfully");
 
             // Core ActorにPluginInfoを登録
             let plugin_info = PluginInfo {
@@ -399,13 +430,13 @@ fn main() {
                 host_addr: plugin_host_addr,
             };
 
-            println!("Sending RegisterPlugin to CoreActor...");
+            tracing::debug!("Sending RegisterPlugin to CoreActor");
             core_addr.do_send(mcv_core::core_actor::RegisterPlugin {
                 plugin_id,
                 plugin_info,
             });
 
-            println!("Dummy plugin registered: {}", plugin_id);
+            tracing::info!(plugin_id = %plugin_id, "Dummy plugin registered");
 
             // AppStateを作成してメインスレッドに送信
             let app_state = AppState {
@@ -414,10 +445,10 @@ fn main() {
                 dummy_plugin_id: plugin_id,
             };
 
-            println!("Sending AppState to main thread...");
+            tracing::debug!("Sending AppState to main thread");
             tx.send((app_state, app_handle)).expect("Failed to send AppState");
 
-            println!("Actix system setup complete, keeping system alive...");
+            tracing::info!("Actix system setup complete, keeping system alive");
         });
 
         // actixシステムを実行し続ける
@@ -425,9 +456,9 @@ fn main() {
     });
 
     // メインスレッドでAppStateを受信
-    println!("Waiting for AppState from actix thread...");
+    tracing::debug!("Waiting for AppState from actix thread");
     let (app_state, app_handle) = rx.recv().expect("Failed to receive AppState");
-    println!("Received AppState, starting Tauri...");
+    tracing::info!("Received AppState, starting Tauri");
 
     // Tauriアプリを起動
     tauri::Builder::default()
@@ -440,7 +471,7 @@ fn main() {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 rt.block_on(async move {
                     *app_handle_clone.lock().await = Some(handle);
-                    println!("AppHandle set successfully");
+                    tracing::debug!("AppHandle set successfully");
                 });
             });
             Ok(())

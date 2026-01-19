@@ -27,7 +27,10 @@ impl Actor for LogSenderActor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        println!("LogSenderActor started");
+        tracing::info!(
+            api_base_url = %self.api_base_url,
+            "LogSenderActor started"
+        );
 
         // 起動時に未送信ログを送信
         ctx.notify(SendUnsentLogs);
@@ -58,7 +61,10 @@ impl Handler<SendUnsentLogs> for LogSenderActor {
                 let storage_guard = match storage.lock() {
                     Ok(guard) => guard,
                     Err(e) => {
-                        eprintln!("Failed to lock storage: {}", e);
+                        tracing::error!(
+                            error = %e,
+                            "Failed to lock storage"
+                        );
                         return;
                     }
                 };
@@ -66,7 +72,10 @@ impl Handler<SendUnsentLogs> for LogSenderActor {
                 match storage_guard.get_unsent(100) {
                     Ok(logs) => logs,
                     Err(e) => {
-                        eprintln!("Failed to get unsent logs: {}", e);
+                        tracing::error!(
+                            error = %e,
+                            "Failed to get unsent logs"
+                        );
                         return;
                     }
                 }
@@ -76,13 +85,20 @@ impl Handler<SendUnsentLogs> for LogSenderActor {
                 return;
             }
 
-            println!("Sending {} unsent logs to {}", unsent_logs.len(), url);
+            tracing::debug!(
+                count = unsent_logs.len(),
+                url = %url,
+                "Sending unsent logs"
+            );
 
             // バッチ送信
             match client.post(&url).json(&unsent_logs).send().await {
                 Ok(response) => {
                     if response.status().is_success() {
-                        println!("Successfully sent {} logs", unsent_logs.len());
+                        tracing::info!(
+                            count = unsent_logs.len(),
+                            "Successfully sent logs"
+                        );
 
                         // 送信成功、フラグ更新
                         let ids: Vec<String> = unsent_logs.iter().map(|e| e.id.clone()).collect();
@@ -90,29 +106,43 @@ impl Handler<SendUnsentLogs> for LogSenderActor {
                         let storage_guard = match storage.lock() {
                             Ok(guard) => guard,
                             Err(e) => {
-                                eprintln!("Failed to lock storage: {}", e);
+                                tracing::error!(
+                                    error = %e,
+                                    "Failed to lock storage"
+                                );
                                 return;
                             }
                         };
 
                         if let Err(e) = storage_guard.mark_as_sent(&ids) {
-                            eprintln!("Failed to mark logs as sent: {}", e);
+                            tracing::error!(
+                                error = %e,
+                                "Failed to mark logs as sent"
+                            );
                         }
 
                         // 古いログのクリーンアップ（1000件超過分）
                         if let Err(e) = storage_guard.cleanup_old_logs(1000) {
-                            eprintln!("Failed to cleanup old logs: {}", e);
+                            tracing::error!(
+                                error = %e,
+                                "Failed to cleanup old logs"
+                            );
                         }
                     } else {
-                        eprintln!(
-                            "Failed to send logs: HTTP {} - {}",
-                            response.status(),
-                            response.text().await.unwrap_or_else(|_| "Unable to read response".to_string())
+                        let status = response.status();
+                        let body = response.text().await.unwrap_or_else(|_| "Unable to read response".to_string());
+                        tracing::error!(
+                            status = %status,
+                            body = %body,
+                            "Failed to send logs: HTTP error"
                         );
                     }
                 }
                 Err(e) => {
-                    eprintln!("Failed to send logs: {}", e);
+                    tracing::error!(
+                        error = %e,
+                        "Failed to send logs"
+                    );
                     // 送信失敗時はローカルに保持（次回リトライ）
                 }
             }
@@ -140,13 +170,20 @@ impl Handler<SendImmediately> for LogSenderActor {
             let storage_guard = match storage.lock() {
                 Ok(guard) => guard,
                 Err(e) => {
-                    eprintln!("Failed to lock storage: {}", e);
+                    tracing::error!(
+                        error = %e,
+                        "Failed to lock storage"
+                    );
                     return;
                 }
             };
 
             if let Err(e) = storage_guard.insert(&msg.entry) {
-                eprintln!("Failed to insert log entry: {}", e);
+                tracing::error!(
+                    error = %e,
+                    log_id = %msg.entry.id,
+                    "Failed to insert log entry"
+                );
             }
         };
 

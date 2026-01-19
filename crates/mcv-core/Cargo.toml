@@ -16,3 +16,4 @@ tokio = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 tracing = "0.1"
+once_cell = "1.20"

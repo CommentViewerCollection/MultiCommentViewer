@@ -2,11 +2,15 @@ use actix::prelude::*;
 use mcv_messages::Message as McvMessage;
 use mcv_plugin_interface::{Plugin, PluginHost};
 use mcv_plugin_loader::{PluginLoader, MessageCallback};
+use once_cell::sync::OnceCell;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+
+/// グローバルなCoreActorアドレス（DLLプラグインのコールバック用）
+static CORE_ADDR_FOR_CALLBACK: OnceCell<Addr<crate::core_actor::CoreActor>> = OnceCell::new();
 
 /// Plugin-Host Actor
 ///
@@ -100,12 +104,14 @@ impl Actor for PluginHostActor {
             // DLLプラグインの場合
             tracing::debug!("Initializing DLL plugin");
 
+            // グローバルなcore_addrを設定
+            if let Some(core_addr) = &self.core_addr {
+                let _ = CORE_ADDR_FOR_CALLBACK.set(core_addr.clone());
+            }
+
             // コールバックを設定
-            let _core_addr = self.core_addr.clone();
             let callback: MessageCallback = {
                 extern "C" fn callback_fn(message_json: *const c_char) {
-                    // グローバルなコンテキストからcore_addrを取得する必要がある
-                    // ここでは単純化のため、ログ出力のみ
                     unsafe {
                         if !message_json.is_null() {
                             let message_cstr = CStr::from_ptr(message_json);
@@ -114,7 +120,27 @@ impl Actor for PluginHostActor {
                                     message = %message_str,
                                     "Received message from DLL plugin"
                                 );
-                                // TODO: JSONをパースしてCoreActorに転送
+
+                                // JSONをパースしてCoreActorに転送
+                                match serde_json::from_str::<McvMessage>(message_str) {
+                                    Ok(message) => {
+                                        if let Some(core_addr) = CORE_ADDR_FOR_CALLBACK.get() {
+                                            core_addr.do_send(crate::core_actor::SendMessageToCore {
+                                                message,
+                                            });
+                                            tracing::debug!("Message forwarded to CoreActor");
+                                        } else {
+                                            tracing::error!("CORE_ADDR_FOR_CALLBACK not set");
+                                        }
+                                    }
+                                    Err(e) => {
+                                        tracing::error!(
+                                            error = %e,
+                                            message_json = %message_str,
+                                            "Failed to parse message from DLL plugin"
+                                        );
+                                    }
+                                }
                             }
                         }
                     }

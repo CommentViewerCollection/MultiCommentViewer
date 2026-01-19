@@ -10,6 +10,7 @@ tauri-build = { version = "2.0", features = [] }
 mcv-core = { path = "../../../crates/mcv-core" }
 mcv-messages = { path = "../../../crates/mcv-messages" }
 mcv-updater = { path = "../../../crates/mcv-updater" }
+mcv-logger = { path = "../../../crates/mcv-logger" }
 tauri = { workspace = true, features = ["devtools"] }
 tauri-plugin-opener = "2.0"
 serde = { workspace = true }
@@ -17,7 +18,11 @@ serde_json = { workspace = true }
 actix = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
+tracing = "0.1"
 
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+alpha = ["mcv-logger/alpha"]
+beta = ["mcv-logger/beta"]
+stable = ["mcv-logger/stable"]

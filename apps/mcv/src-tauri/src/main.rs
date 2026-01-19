@@ -276,6 +276,29 @@ async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
 }
 
 fn main() {
+    // ロガーを初期化
+    let local_app_data = std::env::var("LOCALAPPDATA")
+        .expect("Failed to get LOCALAPPDATA");
+    let log_db_path = PathBuf::from(local_app_data)
+        .join("MultiCommentViewer")
+        .join("logs.db");
+
+    // ログディレクトリを作成
+    if let Some(parent) = log_db_path.parent() {
+        std::fs::create_dir_all(parent).expect("Failed to create log directory");
+    }
+
+    mcv_logger::init_logger(
+        &log_db_path,
+        env!("CARGO_PKG_VERSION"),
+    ).expect("Failed to initialize logger");
+
+    tracing::info!(
+        version = env!("CARGO_PKG_VERSION"),
+        log_db_path = %log_db_path.display(),
+        "mcv started"
+    );
+
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
 

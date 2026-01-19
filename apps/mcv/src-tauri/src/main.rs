@@ -464,10 +464,19 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(move |app| {
-            // ウィンドウタイトルにバージョン番号を設定
+            // ウィンドウタイトルにバージョン番号とチャンネルを設定
             if let Some(window) = app.get_webview_window("main") {
                 let version = env!("CARGO_PKG_VERSION");
+
+                #[cfg(feature = "alpha")]
+                let title = format!("MultiCommentViewer v{} (アルファ版)", version);
+
+                #[cfg(all(feature = "beta", not(feature = "alpha")))]
+                let title = format!("MultiCommentViewer v{} (ベータ版)", version);
+
+                #[cfg(all(not(feature = "alpha"), not(feature = "beta")))]
                 let title = format!("MultiCommentViewer v{}", version);
+
                 let _ = window.set_title(&title);
                 tracing::debug!(title = %title, "Window title set");
             }

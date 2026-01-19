@@ -5,6 +5,7 @@ members = [
     "crates/mcv-plugin-interface",
     "crates/mcv-plugin-loader",
     "crates/mcv-updater",
+    "crates/mcv-logger",
     "crates/mcv-core",
     "crates/plugin-dummy",
     "apps/mcv/src-tauri",

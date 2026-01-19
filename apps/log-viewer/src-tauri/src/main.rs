@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use mcv_logger::schema::LogEntry;
-use rusqlite::{params, Connection, Result as SqliteResult};
+use rusqlite::{Connection, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -185,7 +185,16 @@ async fn get_server_logs(
 
     // Convert server logs to LogEntry
     let logs: Vec<LogEntry> = server_response.logs.into_iter()
-        .filter_map(|log| serde_json::from_value(log).ok())
+        .filter_map(|log| {
+            match serde_json::from_value(log.clone()) {
+                Ok(entry) => Some(entry),
+                Err(e) => {
+                    eprintln!("Failed to deserialize log entry: {}", e);
+                    eprintln!("Log data: {}", serde_json::to_string_pretty(&log).unwrap_or_default());
+                    None
+                }
+            }
+        })
         .collect();
 
     Ok(LogQueryResult {

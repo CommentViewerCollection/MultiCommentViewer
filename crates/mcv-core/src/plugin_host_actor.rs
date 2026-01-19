@@ -67,35 +67,38 @@ impl Actor for PluginHostActor {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        println!("PluginHostActor started");
+        tracing::debug!("PluginHostActor started");
 
         if let Some(plugin) = &self.plugin {
             // 静的リンクプラグインの場合
-            println!("Initializing static plugin...");
+            tracing::debug!("Initializing static plugin");
             let plugin = plugin.clone();
             let host = self.host.clone() as Arc<dyn PluginHost>;
 
             let fut = async move {
-                println!("About to call plugin.on_loaded()");
+                tracing::debug!("Calling plugin.on_loaded()");
                 let mut plugin_guard = plugin.lock().await;
                 let result = plugin_guard.on_loaded(host).await;
-                println!("plugin.on_loaded() returned: {:?}", result);
+                tracing::debug!(result = ?result, "plugin.on_loaded() returned");
                 result
             };
 
             ctx.spawn(
                 fut.into_actor(self).map(|result, _act, ctx| {
                     if let Err(e) = result {
-                        eprintln!("Plugin on_loaded failed: {}", e);
+                        tracing::error!(
+                            error = %e,
+                            "Plugin on_loaded failed"
+                        );
                         ctx.stop();
                     } else {
-                        println!("Plugin on_loaded completed successfully");
+                        tracing::info!("Plugin on_loaded completed successfully");
                     }
                 }),
             );
         } else if let Some(plugin_loader) = &self.plugin_loader {
             // DLLプラグインの場合
-            println!("Initializing DLL plugin...");
+            tracing::debug!("Initializing DLL plugin");
 
             // コールバックを設定
             let _core_addr = self.core_addr.clone();
@@ -107,7 +110,10 @@ impl Actor for PluginHostActor {
                         if !message_json.is_null() {
                             let message_cstr = CStr::from_ptr(message_json);
                             if let Ok(message_str) = message_cstr.to_str() {
-                                println!("Received message from DLL plugin: {}", message_str);
+                                tracing::debug!(
+                                    message = %message_str,
+                                    "Received message from DLL plugin"
+                                );
                                 // TODO: JSONをパースしてCoreActorに転送
                             }
                         }
@@ -117,20 +123,26 @@ impl Actor for PluginHostActor {
             };
 
             if let Err(e) = plugin_loader.set_callback(callback) {
-                eprintln!("Failed to set callback: {}", e);
+                tracing::error!(
+                    error = %e,
+                    "Failed to set callback"
+                );
                 ctx.stop();
                 return;
             }
 
             // プラグインを初期化
             if let Err(e) = plugin_loader.init(std::ptr::null_mut()) {
-                eprintln!("Plugin init failed: {}", e);
+                tracing::error!(
+                    error = %e,
+                    "Plugin init failed"
+                );
                 ctx.stop();
             } else {
-                println!("DLL plugin initialized successfully");
+                tracing::info!("DLL plugin initialized successfully");
             }
         } else {
-            eprintln!("ERROR: Neither plugin nor plugin_loader is set");
+            tracing::error!("Neither plugin nor plugin_loader is set");
             ctx.stop();
         }
     }
@@ -166,7 +178,10 @@ impl Handler<SendMessageToPlugin> for PluginHostActor {
             ctx.spawn(
                 fut.into_actor(self).map(|result, _act, _ctx| {
                     if let Err(e) = result {
-                        eprintln!("Plugin on_message failed: {}", e);
+                        tracing::error!(
+                            error = %e,
+                            "Plugin on_message failed"
+                        );
                     }
                 }),
             );
@@ -175,16 +190,22 @@ impl Handler<SendMessageToPlugin> for PluginHostActor {
             let message_json = match serde_json::to_string(&message) {
                 Ok(json) => json,
                 Err(e) => {
-                    eprintln!("Failed to serialize message: {}", e);
+                    tracing::error!(
+                        error = %e,
+                        "Failed to serialize message"
+                    );
                     return;
                 }
             };
 
             if let Err(e) = plugin_loader.send_message(&message_json) {
-                eprintln!("Failed to send message to DLL plugin: {}", e);
+                tracing::error!(
+                    error = %e,
+                    "Failed to send message to DLL plugin"
+                );
             }
         } else {
-            eprintln!("ERROR: Neither plugin nor plugin_loader is set");
+            tracing::error!("Neither plugin nor plugin_loader is set");
         }
     }
 }
@@ -210,7 +231,10 @@ impl Handler<ShutdownPlugin> for PluginHostActor {
             Box::pin(
                 fut.into_actor(self).map(|result, _act, ctx| {
                     if let Err(e) = result {
-                        eprintln!("Plugin on_shutdown failed: {}", e);
+                        tracing::error!(
+                            error = %e,
+                            "Plugin on_shutdown failed"
+                        );
                     }
                     ctx.stop();
                 }),
@@ -226,13 +250,16 @@ impl Handler<ShutdownPlugin> for PluginHostActor {
             Box::pin(
                 fut.into_actor(self).map(|result, _act, ctx| {
                     if let Err(e) = result {
-                        eprintln!("DLL plugin shutdown failed: {}", e);
+                        tracing::error!(
+                            error = %e,
+                            "DLL plugin shutdown failed"
+                        );
                     }
                     ctx.stop();
                 }),
             )
         } else {
-            eprintln!("ERROR: Neither plugin nor plugin_loader is set");
+            tracing::error!("Neither plugin nor plugin_loader is set");
             Box::pin(actix::fut::ready(()).into_actor(self).map(|_, _, ctx| {
                 ctx.stop();
             }))
@@ -255,15 +282,21 @@ impl PluginHost for PluginHostImpl {
         &self,
         message: McvMessage,
     ) -> Result<(), mcv_plugin_interface::PluginError> {
-        println!("PluginHostImpl::send_message called, message_type: {:?}", message.message_type);
+        tracing::debug!(
+            message_type = ?message.message_type,
+            "PluginHostImpl::send_message called"
+        );
         let core_addr_guard = self.core_addr.lock().await;
         if let Some(core_addr) = core_addr_guard.as_ref() {
-            println!("Sending message to CoreActor: {:?}", message.message_type);
+            tracing::debug!(
+                message_type = ?message.message_type,
+                "Sending message to CoreActor"
+            );
             core_addr.do_send(crate::core_actor::SendMessageToCore { message });
-            println!("Message sent to CoreActor");
+            tracing::debug!("Message sent to CoreActor");
             Ok(())
         } else {
-            eprintln!("ERROR: Core actor not set in PluginHostImpl");
+            tracing::error!("Core actor not set in PluginHostImpl");
             Err(mcv_plugin_interface::PluginError::ConnectionError(
                 "Core actor not set".to_string(),
             ))

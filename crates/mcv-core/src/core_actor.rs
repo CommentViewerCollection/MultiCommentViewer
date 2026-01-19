@@ -54,12 +54,20 @@ impl CoreActor {
         let payload: PluginHelloPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse plugin-hello payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "plugin-hello",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
 
-        println!("Plugin registered: {} ({})", payload.name, payload.plugin_id);
+        tracing::info!(
+            plugin_name = %payload.name,
+            plugin_id = %payload.plugin_id,
+            "Plugin registered"
+        );
 
         // plugin-addedを返信
         let response = McvMessage::create_response(
@@ -87,7 +95,11 @@ impl CoreActor {
         let payload: AddConnectionPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse add-connection payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "add-connection",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
@@ -98,7 +110,11 @@ impl CoreActor {
         let plugin_id = match &message.src {
             MessageSource::Plugin { plugin_id } => *plugin_id,
             _ => {
-                eprintln!("add-connection must come from a plugin");
+                tracing::error!(
+                    message_type = "add-connection",
+                    message_source = ?message.src,
+                    "Message must come from a plugin"
+                );
                 return;
             }
         };
@@ -141,7 +157,11 @@ impl CoreActor {
         let payload: ConnectPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse connect payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "connect",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
@@ -160,7 +180,10 @@ impl CoreActor {
         if let Some(plugin_info) = self.plugins.get(&plugin_id) {
             plugin_info.host_addr.do_send(SendMessageToPlugin { message });
         } else {
-            eprintln!("Plugin not found: {}", plugin_id);
+            tracing::error!(
+                plugin_id = %plugin_id,
+                "Plugin not found"
+            );
         }
     }
 
@@ -169,12 +192,19 @@ impl CoreActor {
         let payload: ConnectedPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse connected payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "connected",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
 
-        println!("Connection established: {}", payload.connection_id);
+        tracing::info!(
+            connection_id = %payload.connection_id,
+            "Connection established"
+        );
 
         // Connection Managerのステータスを更新
         let connection_manager = self.connection_manager.clone();
@@ -195,7 +225,11 @@ impl CoreActor {
         let payload: DisconnectPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse disconnect payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "disconnect",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
@@ -225,12 +259,19 @@ impl CoreActor {
         {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse disconnected payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "disconnected",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
 
-        println!("Connection disconnected: {}", payload.connection_id);
+        tracing::info!(
+            connection_id = %payload.connection_id,
+            "Connection disconnected"
+        );
 
         // Connection Managerのステータスを更新
         let connection_manager = self.connection_manager.clone();
@@ -259,7 +300,11 @@ impl CoreActor {
         let payload: SendCommentPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse send-comment payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "send-comment",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
@@ -285,7 +330,11 @@ impl CoreActor {
         let payload: LogEntryPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("Failed to parse log-entry payload: {}", e);
+                tracing::error!(
+                    error = %e,
+                    message_type = "log-entry",
+                    "Failed to parse message payload"
+                );
                 return;
             }
         };
@@ -294,7 +343,11 @@ impl CoreActor {
         let plugin_id = match message.src {
             MessageSource::Plugin { plugin_id } => plugin_id,
             _ => {
-                eprintln!("Received log-entry from non-plugin source");
+                tracing::warn!(
+                    message_type = "log-entry",
+                    message_source = ?message.src,
+                    "Received log-entry from non-plugin source"
+                );
                 return;
             }
         };
@@ -385,7 +438,10 @@ impl Handler<SendMessageToCore> for CoreActor {
 
     fn handle(&mut self, msg: SendMessageToCore, ctx: &mut Self::Context) {
         let message = msg.message;
-        println!("CoreActor received message: {:?}", message.message_type);
+        tracing::debug!(
+            message_type = ?message.message_type,
+            "CoreActor received message"
+        );
 
         match message.message_type {
             MessageType::PluginHello => self.handle_plugin_hello(message, ctx),
@@ -398,7 +454,10 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::SendComment => self.handle_send_comment(message, ctx),
             MessageType::LogEntry => self.handle_log_entry(message, ctx),
             _ => {
-                eprintln!("Unhandled message type: {:?}", message.message_type);
+                tracing::warn!(
+                    message_type = ?message.message_type,
+                    "Unhandled message type"
+                );
             }
         }
     }

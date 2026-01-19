@@ -53,7 +53,7 @@ impl Handler<SendUnsentLogs> for LogSenderActor {
     fn handle(&mut self, _msg: SendUnsentLogs, _ctx: &mut Self::Context) -> Self::Result {
         let storage = self.storage.clone();
         let client = self.client.clone();
-        let url = format!("{}/api/logs", self.api_base_url);
+        let url = format!("{}/api/mcv/logs", self.api_base_url);
 
         let fut = async move {
             // 未送信ログを取得

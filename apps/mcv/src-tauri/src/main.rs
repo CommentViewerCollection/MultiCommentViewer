@@ -218,7 +218,7 @@ async fn send_comment(
 #[tauri::command]
 async fn check_for_updates() -> Result<Option<McvUpdateInfo>, String> {
     const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
-    const API_BASE_URL: &str = "https://api.example.com"; // TODO: 実際のAPIエンドポイントに変更
+    const API_BASE_URL: &str = "http://localhost:3000"; // TODO: 運用環境では実際のAPIサーバーURLに変更
 
     tracing::info!(current_version = CURRENT_VERSION, "Checking for updates");
 
@@ -320,7 +320,7 @@ fn main() {
             tracing::info!("Actix system thread started");
 
             // LogSenderActorを起動
-            const API_BASE_URL: &str = "https://api.example.com"; // TODO: 実際のAPIエンドポイントに変更
+            const API_BASE_URL: &str = "http://localhost:3000"; // TODO: 運用環境では実際のAPIサーバーURLに変更
             let _log_sender_addr = mcv_logger::LogSenderActor::new(
                 log_storage,
                 API_BASE_URL.to_string(),

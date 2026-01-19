@@ -138,6 +138,10 @@ impl DummyPlugin {
             "resume" => self.command_resume(connection_id),
             "rate" => self.command_rate(connection_id, &parts[1..]),
             "comment" => self.command_comment(connection_id, &parts[1..], host).await,
+            "log-error" => self.command_log(connection_id, "error", &parts[1..], host).await,
+            "log-warn" => self.command_log(connection_id, "warn", &parts[1..], host).await,
+            "log-info" => self.command_log(connection_id, "info", &parts[1..], host).await,
+            "log-debug" => self.command_log(connection_id, "debug", &parts[1..], host).await,
             _ => Err(format!("Unknown command: {}", parts[0])),
         }
     }
@@ -151,7 +155,11 @@ impl DummyPlugin {
 - pause: Pause comment generation
 - resume: Resume comment generation
 - rate <seconds>: Set comment interval (0 = random)
-- comment <user> <text>: Generate a manual comment"#
+- comment <user> <text>: Generate a manual comment
+- log-error <message>: Send error log to mcv
+- log-warn <message>: Send warning log to mcv
+- log-info <message>: Send info log to mcv
+- log-debug <message>: Send debug log to mcv"#
             .to_string()
     }
 
@@ -294,6 +302,68 @@ impl DummyPlugin {
             .map_err(|e| format!("Failed to send comment: {}", e))?;
 
         Ok("Comment sent".to_string())
+    }
+
+    async fn command_log(
+        &mut self,
+        connection_id: Uuid,
+        level: &str,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.is_empty() {
+            return Err(format!("Usage: log-{} <message>", level));
+        }
+
+        let message_text = args.join(" ");
+
+        let message = Message::new_notification(
+            MessageType::LogEntry,
+            MessageSource::Plugin {
+                plugin_id: self.plugin_id,
+            },
+            MessageDestination::Core,
+            serde_json::to_value(LogEntryPayload {
+                level: level.to_string(),
+                message: message_text.clone(),
+                context: Some(serde_json::json!({
+                    "test_command": true,
+                    "connection_id": connection_id.to_string(),
+                })),
+                connection_id: Some(connection_id),
+                plugin_version: Some(env!("CARGO_PKG_VERSION").to_string()),
+                plugin_build_profile: Self::get_build_profile(),
+            })
+            .unwrap(),
+        );
+
+        host.send_message(message)
+            .await
+            .map_err(|e| format!("Failed to send log: {}", e))?;
+
+        Ok(format!(
+            "Log sent: [{}] {}",
+            level.to_uppercase(),
+            message_text
+        ))
+    }
+
+    fn get_build_profile() -> Option<String> {
+        #[cfg(feature = "alpha")]
+        return Some("alpha".to_string());
+
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        return Some("beta".to_string());
+
+        #[cfg(all(
+            not(feature = "alpha"),
+            not(feature = "beta"),
+            feature = "stable"
+        ))]
+        return Some("stable".to_string());
+
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
+        None
     }
 }
 

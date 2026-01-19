@@ -6,6 +6,11 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]  # DLL + 通常のライブラリ
 
+[features]
+alpha = []
+beta = []
+stable = []
+
 [dependencies]
 mcv-messages = { path = "../../crates/mcv-messages" }
 mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }

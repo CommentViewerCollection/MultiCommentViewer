@@ -279,6 +279,84 @@ impl CoreActor {
             }
         });
     }
+
+    /// log-entryを処理（プラグインからのログメッセージ）
+    fn handle_log_entry(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: LogEntryPayload = match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Failed to parse log-entry payload: {}", e);
+                return;
+            }
+        };
+
+        // プラグインIDを取得
+        let plugin_id = match message.src {
+            MessageSource::Plugin { plugin_id } => plugin_id,
+            _ => {
+                eprintln!("Received log-entry from non-plugin source");
+                return;
+            }
+        };
+
+        // ログレベルに応じてトレース（mcv-loggerが自動記録）
+        // 注: Core側のログレベル設定（mcvのfeature フラグ）に従ってフィルタリングされる
+        match payload.level.as_str() {
+            "error" => {
+                tracing::error!(
+                    plugin_id = %plugin_id,
+                    plugin_version = ?payload.plugin_version,
+                    plugin_build_profile = ?payload.plugin_build_profile,
+                    connection_id = ?payload.connection_id,
+                    context = ?payload.context,
+                    "Plugin error: {}",
+                    payload.message
+                );
+            }
+            "warn" => {
+                tracing::warn!(
+                    plugin_id = %plugin_id,
+                    plugin_version = ?payload.plugin_version,
+                    plugin_build_profile = ?payload.plugin_build_profile,
+                    connection_id = ?payload.connection_id,
+                    context = ?payload.context,
+                    "Plugin warning: {}",
+                    payload.message
+                );
+            }
+            "info" => {
+                tracing::info!(
+                    plugin_id = %plugin_id,
+                    plugin_version = ?payload.plugin_version,
+                    plugin_build_profile = ?payload.plugin_build_profile,
+                    connection_id = ?payload.connection_id,
+                    context = ?payload.context,
+                    "Plugin info: {}",
+                    payload.message
+                );
+            }
+            "debug" => {
+                tracing::debug!(
+                    plugin_id = %plugin_id,
+                    plugin_version = ?payload.plugin_version,
+                    plugin_build_profile = ?payload.plugin_build_profile,
+                    connection_id = ?payload.connection_id,
+                    context = ?payload.context,
+                    "Plugin debug: {}",
+                    payload.message
+                );
+            }
+            _ => {
+                tracing::trace!(
+                    plugin_id = %plugin_id,
+                    plugin_version = ?payload.plugin_version,
+                    plugin_build_profile = ?payload.plugin_build_profile,
+                    "Plugin log: {}",
+                    payload.message
+                );
+            }
+        }
+    }
 }
 
 impl Actor for CoreActor {
@@ -318,6 +396,7 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::Disconnected => self.handle_disconnected(message, ctx),
             MessageType::CommentReceived => self.handle_comment_received(message, ctx),
             MessageType::SendComment => self.handle_send_comment(message, ctx),
+            MessageType::LogEntry => self.handle_log_entry(message, ctx),
             _ => {
                 eprintln!("Unhandled message type: {:?}", message.message_type);
             }

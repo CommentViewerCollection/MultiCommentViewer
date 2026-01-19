@@ -82,6 +82,9 @@ pub enum MessageType {
     CommentReceived,
     SendComment,
 
+    // Logging関連
+    LogEntry,
+
     // その他
     GetAppName,
     GetAppVersion,
@@ -231,6 +234,32 @@ pub struct Comment {
 pub struct SendCommentPayload {
     pub connection_id: Uuid,
     pub text: String,
+}
+
+/// log-entryのpayload（プラグインからCoreへログ送信）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogEntryPayload {
+    /// ログレベル（"trace", "debug", "info", "warn", "error"）
+    pub level: String,
+
+    /// ログメッセージ
+    pub message: String,
+
+    /// コンテキスト情報（任意の構造化データ）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<serde_json::Value>,
+
+    /// 関連する接続ID（オプション）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connection_id: Option<Uuid>,
+
+    /// プラグインのバージョン（オプション）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugin_version: Option<String>,
+
+    /// プラグインのビルドプロファイル（"alpha", "beta", "stable"、オプション）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugin_build_profile: Option<String>,
 }
 
 // ============================================================================

@@ -12,7 +12,7 @@ members = [
     "apps/mcv/src-tauri",
     "apps/log-viewer/src-tauri",
     "apps/installer/src-tauri", "crates/twitch-lib",
-    "xtask",
+    "xtask", "crates/youtube-live-lib",
 ]
 resolver = "2"
 

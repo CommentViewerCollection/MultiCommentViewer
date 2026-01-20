@@ -87,6 +87,24 @@ export function InstallingScreen({
         })
       }
 
+      // Windowsアプリ登録ステップ
+      initialSteps.push(
+        {
+          id: 'register-mcv',
+          name: 'mcvをWindowsアプリとして登録中',
+          status: 'pending',
+          progress: 0,
+          details: '',
+        },
+        {
+          id: 'register-installer',
+          name: 'インストーラーをWindowsアプリとして登録中',
+          status: 'pending',
+          progress: 0,
+          details: '',
+        }
+      )
+
       setSteps(initialSteps)
 
       // ダウンロード進捗リスナーを設定
@@ -129,6 +147,14 @@ export function InstallingScreen({
           await createShortcuts()
           await updateStep('create-shortcuts', 'completed', 100, 'ショートカット作成完了')
         }
+
+        // Step 6: Windowsアプリ登録
+        await updateStep('register-mcv', 'in-progress', 0, 'mcvをWindowsアプリとして登録中...')
+        await registerToWindowsApps()
+        await updateStep('register-mcv', 'completed', 100, 'mcv登録完了')
+
+        await updateStep('register-installer', 'in-progress', 0, 'インストーラーをWindowsアプリとして登録中...')
+        await updateStep('register-installer', 'completed', 100, 'インストーラー登録完了')
 
         // 完了
         setOverallProgress(100)
@@ -285,6 +311,39 @@ export function InstallingScreen({
           console.error('Failed to create start menu entry:', error)
           // ショートカット作成失敗は致命的ではないので続行
         }
+      }
+    }
+
+    const registerToWindowsApps = async () => {
+      const localAppData = await invoke<string>('get_local_app_data')
+      const installLocation = `${localAppData}\\MultiCommentViewer`
+
+      // インストーラーの固定場所パスを取得
+      const installerPath = `${localAppData}\\Programs\\mcv-installer\\mcv-installer.exe`
+
+      // mcvのバージョンを取得（仮に0.1.0）
+      const mcvVersion = '0.1.0'
+
+      try {
+        // mcvをWindowsアプリとして登録
+        await invoke('register_mcv_to_windows_apps', {
+          mcvVersion,
+          installLocation,
+          installerPath,
+        })
+      } catch (error) {
+        console.error('Failed to register mcv to Windows apps:', error)
+        // 登録失敗は致命的ではないので続行
+      }
+
+      try {
+        // インストーラーをWindowsアプリとして登録
+        await invoke('register_installer_to_windows_apps', {
+          installerPath,
+        })
+      } catch (error) {
+        console.error('Failed to register installer to Windows apps:', error)
+        // 登録失敗は致命的ではないので続行
       }
     }
 

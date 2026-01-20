@@ -6,9 +6,6 @@ edition = "2021"
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
 
-[target.'cfg(windows)'.build-dependencies]
-embed-resource = "2.4"
-
 [dependencies]
 mcv-updater = { path = "../../../crates/mcv-updater" }
 tauri = { workspace = true, features = ["devtools"] }

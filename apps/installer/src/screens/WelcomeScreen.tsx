@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-
-interface InstallerUpdateInfo {
-  version: string
-  required: boolean
-  download_url: string
-  sha256: string
-  release_notes: string
-  released_at: string
-}
+import type { InstallerUpdateInfo } from '../types'
 
 interface WelcomeScreenProps {
   onInstallerUpdateDetected: (update: InstallerUpdateInfo | null) => void

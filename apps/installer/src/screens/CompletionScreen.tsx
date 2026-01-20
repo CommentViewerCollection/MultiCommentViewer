@@ -1,23 +1,12 @@
-import { useState } from 'react'
-
-interface PluginChannels {
-  stable: string | null
-  beta: string | null
-  alpha: string | null
-}
-
-interface PluginListItem {
-  id: string
-  name: string
-  description: string
-  channels: PluginChannels
-}
+import type { PluginListItem } from '../types'
 
 interface CompletionScreenProps {
   selectedPlugins: Set<string>
   availablePlugins: PluginListItem[]
   createDesktopShortcut: boolean
   createStartMenuShortcut: boolean
+  launchNow: boolean
+  onLaunchNowChange: (value: boolean) => void
 }
 
 export function CompletionScreen({
@@ -25,8 +14,9 @@ export function CompletionScreen({
   availablePlugins,
   createDesktopShortcut,
   createStartMenuShortcut,
+  launchNow,
+  onLaunchNowChange,
 }: CompletionScreenProps) {
-  const [launchNow, setLaunchNow] = useState(true)
 
   // 選択されたプラグインの情報を取得
   const selectedPluginList = availablePlugins.filter((p) => selectedPlugins.has(p.id))
@@ -100,7 +90,7 @@ export function CompletionScreen({
           <input
             type="checkbox"
             checked={launchNow}
-            onChange={(e) => setLaunchNow(e.target.checked)}
+            onChange={(e) => onLaunchNowChange(e.target.checked)}
             className="w-5 h-5"
           />
           <span className="text-blue-200">MultiCommentViewerを今すぐ起動する</span>

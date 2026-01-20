@@ -1,27 +1,6 @@
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-
-interface PluginChannels {
-  stable: string | null
-  beta: string | null
-  alpha: string | null
-}
-
-interface PluginListItem {
-  id: string
-  name: string
-  description: string
-  channels: PluginChannels
-}
-
-interface McvUpdateInfo {
-  version: string
-  channel: string
-  fileName: string
-  fileSize?: number
-  sha256: string
-  uploadedAt: string
-}
+import type { PluginListItem, McvUpdateInfo } from '../types'
 
 interface OptionsScreenProps {
   isNewInstall: boolean

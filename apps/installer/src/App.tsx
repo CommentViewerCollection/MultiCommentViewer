@@ -3,48 +3,19 @@ import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { Sidebar } from './components/Sidebar'
 import { ButtonBar } from './components/ButtonBar'
+import { ErrorDialog } from './components/ErrorDialog'
 import { WelcomeScreen } from './screens/WelcomeScreen'
 import { OptionsScreen } from './screens/OptionsScreen'
 import { ReadyScreen } from './screens/ReadyScreen'
 import { InstallingScreen } from './screens/InstallingScreen'
 import { CompletionScreen } from './screens/CompletionScreen'
+import type {
+  InstallerUpdateInfo,
+  McvUpdateInfo,
+  PluginListItem,
+} from './types'
 
 type ScreenType = 'welcome' | 'options' | 'ready' | 'installing' | 'complete'
-
-// インストーラ更新情報
-interface InstallerUpdateInfo {
-  version: string
-  required: boolean
-  download_url: string
-  sha256: string
-  release_notes: string
-  released_at: string
-}
-
-// mcv更新情報
-interface McvUpdateInfo {
-  version: string
-  channel: string
-  fileName: string
-  fileSize?: number
-  sha256: string
-  uploadedAt: string
-}
-
-// プラグインのチャンネル情報
-interface PluginChannels {
-  stable: string | null
-  beta: string | null
-  alpha: string | null
-}
-
-// プラグイン一覧の各アイテム
-interface PluginListItem {
-  id: string
-  name: string
-  description: string
-  channels: PluginChannels
-}
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('welcome')
@@ -59,6 +30,8 @@ function App() {
   const [selectedPlugins, setSelectedPlugins] = useState<Set<string>>(new Set())
   const [createDesktopShortcut, setCreateDesktopShortcut] = useState(true)
   const [createStartMenuShortcut, setCreateStartMenuShortcut] = useState(true)
+  const [launchNow, setLaunchNow] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Screen to step number mapping
   const screenToStep: Record<ScreenType, number> = {
@@ -118,6 +91,15 @@ function App() {
   }
 
   const handleClose = async () => {
+    // 完了画面から閉じる場合、launchNowがtrueならmcvを起動
+    if (currentScreen === 'complete' && launchNow) {
+      try {
+        await invoke('launch_mcv')
+      } catch (error) {
+        console.error('Failed to launch mcv:', error)
+        // 起動失敗してもインストーラーは閉じる
+      }
+    }
     await getCurrentWindow().close()
   }
 
@@ -167,10 +149,9 @@ function App() {
     setCurrentScreen('complete')
   }
 
-  const handleInstallError = (error: string) => {
-    console.error('Installation failed:', error)
-    // TODO: Show error dialog or error screen
-    alert(`インストールエラー: ${error}`)
+  const handleInstallError = (errorMessage: string) => {
+    console.error('Installation failed:', errorMessage)
+    setError(errorMessage)
   }
 
   // Button state logic
@@ -201,6 +182,9 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-900 text-white">
+      {/* Error Dialog */}
+      <ErrorDialog error={error} onClose={() => setError(null)} />
+
       {/* Sidebar */}
       <Sidebar currentStep={screenToStep[currentScreen]} completedSteps={completedStepNumbers} />
 
@@ -256,6 +240,8 @@ function App() {
               availablePlugins={availablePlugins}
               createDesktopShortcut={createDesktopShortcut}
               createStartMenuShortcut={createStartMenuShortcut}
+              launchNow={launchNow}
+              onLaunchNowChange={setLaunchNow}
             />
           )}
         </div>

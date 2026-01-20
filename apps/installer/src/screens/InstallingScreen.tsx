@@ -1,19 +1,7 @@
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
-
-interface PluginChannels {
-  stable: string | null
-  beta: string | null
-  alpha: string | null
-}
-
-interface PluginListItem {
-  id: string
-  name: string
-  description: string
-  channels: PluginChannels
-}
+import type { PluginListItem } from '../types'
 
 type StepStatus = 'pending' | 'in-progress' | 'completed' | 'error'
 

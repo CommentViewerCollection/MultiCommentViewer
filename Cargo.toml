@@ -8,6 +8,7 @@ members = [
     "crates/mcv-logger",
     "crates/mcv-core",
     "crates/plugin-dummy",
+    "crates/plugin-youtube-live",
     "apps/mcv/src-tauri",
     "apps/log-viewer/src-tauri",
     "apps/installer/src-tauri", "apps/package_release", "crates/twitch-lib",

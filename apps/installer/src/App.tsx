@@ -162,6 +162,17 @@ function App() {
     })
   }
 
+  // Handlers for InstallingScreen
+  const handleInstallComplete = () => {
+    setCurrentScreen('complete')
+  }
+
+  const handleInstallError = (error: string) => {
+    console.error('Installation failed:', error)
+    // TODO: Show error dialog or error screen
+    alert(`インストールエラー: ${error}`)
+  }
+
   // Button state logic
   const canGoBack = currentScreen === 'options' || currentScreen === 'ready'
   const canGoNext = () => {
@@ -171,6 +182,7 @@ function App() {
     }
     return true
   }
+  const showButtonBar = currentScreen !== 'installing'
 
   // Get Next button text
   const getNextButtonText = (): string => {
@@ -217,20 +229,48 @@ function App() {
               onStartMenuShortcutChange={setCreateStartMenuShortcut}
             />
           )}
-          {currentScreen === 'ready' && <ReadyScreen />}
-          {currentScreen === 'installing' && <InstallingScreen />}
-          {currentScreen === 'complete' && <CompletionScreen />}
+          {currentScreen === 'ready' && (
+            <ReadyScreen
+              isNewInstall={isNewInstall}
+              existingVersion={existingVersion}
+              selectedPlugins={selectedPlugins}
+              availablePlugins={availablePlugins}
+              createDesktopShortcut={createDesktopShortcut}
+              createStartMenuShortcut={createStartMenuShortcut}
+            />
+          )}
+          {currentScreen === 'installing' && (
+            <InstallingScreen
+              existingVersion={existingVersion}
+              selectedPlugins={selectedPlugins}
+              availablePlugins={availablePlugins}
+              createDesktopShortcut={createDesktopShortcut}
+              createStartMenuShortcut={createStartMenuShortcut}
+              onInstallComplete={handleInstallComplete}
+              onInstallError={handleInstallError}
+            />
+          )}
+          {currentScreen === 'complete' && (
+            <CompletionScreen
+              selectedPlugins={selectedPlugins}
+              availablePlugins={availablePlugins}
+              createDesktopShortcut={createDesktopShortcut}
+              createStartMenuShortcut={createStartMenuShortcut}
+            />
+          )}
         </div>
 
         {/* Button bar */}
-        <ButtonBar
-          onBack={handleBack}
-          onNext={handleNext}
-          onCancel={handleCancel}
-          canGoBack={canGoBack}
-          canGoNext={canGoNext()}
-          nextButtonText={getNextButtonText()}
-        />
+        {showButtonBar && (
+          <ButtonBar
+            onBack={handleBack}
+            onNext={handleNext}
+            onCancel={handleCancel}
+            canGoBack={canGoBack}
+            canGoNext={canGoNext()}
+            nextButtonText={getNextButtonText()}
+          />
+        )}
       </div>
     </div>
   )

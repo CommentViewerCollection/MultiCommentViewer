@@ -238,9 +238,27 @@ async fn check_existing_installation() -> Result<Option<String>, String> {
         .join("mcv.exe");
 
     if mcv_path.exists() {
-        // TODO: mcv.exeのバージョンを取得
-        // 現時点では簡易的に存在チェックのみ
-        Ok(Some("0.1.0".to_string()))
+        // PowerShellでファイルバージョンを取得
+        let version_cmd = format!(
+            "(Get-Item '{}').VersionInfo.FileVersion",
+            mcv_path.display()
+        );
+
+        let output = std::process::Command::new("powershell")
+            .args(&["-Command", &version_cmd])
+            .output()
+            .map_err(|e| format!("Failed to get version: {}", e))?;
+
+        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+
+        // バージョン取得に成功した場合はそれを返す、失敗した場合は "Unknown"
+        if version.is_empty() || !output.status.success() {
+            println!("Could not determine mcv.exe version, using 'Unknown'");
+            Ok(Some("Unknown".to_string()))
+        } else {
+            println!("Found existing mcv installation: version {}", version);
+            Ok(Some(version))
+        }
     } else {
         Ok(None)
     }
@@ -307,6 +325,81 @@ async fn get_temp_dir() -> Result<String, String> {
         .map(|s| s.to_string())
 }
 
+/// デスクトップショートカットを作成
+#[tauri::command]
+async fn create_desktop_shortcut(
+    target_path: String,
+    shortcut_name: String,
+) -> Result<(), String> {
+    println!("Creating desktop shortcut for: {}", target_path);
+
+    let desktop = std::env::var("USERPROFILE")
+        .map_err(|_| "Failed to get user profile".to_string())?;
+    let desktop_path = format!("{}\\Desktop", desktop);
+
+    let ps_command = format!(
+        "$ws = New-Object -ComObject WScript.Shell; \
+         $s = $ws.CreateShortcut('{}\\{}.lnk'); \
+         $s.TargetPath = '{}'; \
+         $s.Save()",
+        desktop_path, shortcut_name, target_path
+    );
+
+    let output = std::process::Command::new("powershell")
+        .args(&["-Command", &ps_command])
+        .output()
+        .map_err(|e| format!("Failed to execute PowerShell command: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Failed to create desktop shortcut: {}", stderr));
+    }
+
+    println!("Desktop shortcut created successfully");
+    Ok(())
+}
+
+/// スタートメニューエントリを作成
+#[tauri::command]
+async fn create_start_menu_entry(
+    target_path: String,
+    app_name: String,
+) -> Result<(), String> {
+    println!("Creating Start Menu entry for: {}", target_path);
+
+    let start_menu = std::env::var("APPDATA")
+        .map_err(|_| "Failed to get APPDATA".to_string())?;
+    let programs_path = format!("{}\\Microsoft\\Windows\\Start Menu\\Programs", start_menu);
+    let app_folder = format!("{}\\{}", programs_path, app_name);
+
+    // アプリフォルダ作成
+    std::fs::create_dir_all(&app_folder)
+        .map_err(|e| format!("Failed to create Start Menu folder: {}", e))?;
+
+    let shortcut_path = format!("{}\\{}.lnk", app_folder, app_name);
+
+    let ps_command = format!(
+        "$ws = New-Object -ComObject WScript.Shell; \
+         $s = $ws.CreateShortcut('{}'); \
+         $s.TargetPath = '{}'; \
+         $s.Save()",
+        shortcut_path, target_path
+    );
+
+    let output = std::process::Command::new("powershell")
+        .args(&["-Command", &ps_command])
+        .output()
+        .map_err(|e| format!("Failed to execute PowerShell command: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Failed to create Start Menu entry: {}", stderr));
+    }
+
+    println!("Start Menu entry created successfully");
+    Ok(())
+}
+
 fn main() {
     const API_BASE_URL: &str = "http://localhost"; // TODO: 実際のAPIエンドポイントに変更
 
@@ -333,6 +426,8 @@ fn main() {
             get_mcv_download_url,
             get_plugin_download_url,
             get_temp_dir,
+            create_desktop_shortcut,
+            create_start_menu_entry,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,7 +2,13 @@
 
 use mcv_updater::{UpdateChecker, InstallerUpdateInfo, McvUpdateInfo, PluginListItem};
 use std::path::PathBuf;
-use tauri::{AppHandle, Emitter, State};
+use sysinfo::System;
+use tauri::{AppHandle, Emitter, Manager, State};
+
+#[cfg(windows)]
+use winreg::enums::*;
+#[cfg(windows)]
+use winreg::RegKey;
 
 /// アプリケーションの状態
 struct AppState {
@@ -400,15 +406,516 @@ async fn create_start_menu_entry(
     Ok(())
 }
 
+/// mcvをWindowsアプリとして登録
+#[cfg(windows)]
+#[tauri::command]
+async fn register_mcv_to_windows_apps(
+    mcv_version: String,
+    install_location: String,
+    installer_path: String,
+) -> Result<(), String> {
+    println!("Registering mcv to Windows apps...");
+
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\MultiCommentViewer";
+
+    let (key, _) = hklm.create_subkey(path)
+        .map_err(|e| format!("Failed to create registry key: {}. Administrator privileges may be required.", e))?;
+
+    key.set_value("DisplayName", &"MultiCommentViewer")
+        .map_err(|e| format!("Failed to set DisplayName: {}", e))?;
+
+    key.set_value("DisplayVersion", &mcv_version)
+        .map_err(|e| format!("Failed to set DisplayVersion: {}", e))?;
+
+    key.set_value("Publisher", &"ryu-s")
+        .map_err(|e| format!("Failed to set Publisher: {}", e))?;
+
+    key.set_value("InstallLocation", &install_location)
+        .map_err(|e| format!("Failed to set InstallLocation: {}", e))?;
+
+    let uninstall_string = format!("\"{}\" --uninstall mcv", installer_path);
+    key.set_value("UninstallString", &uninstall_string)
+        .map_err(|e| format!("Failed to set UninstallString: {}", e))?;
+
+    let display_icon = format!("{}\\mcv.exe", install_location);
+    key.set_value("DisplayIcon", &display_icon)
+        .map_err(|e| format!("Failed to set DisplayIcon: {}", e))?;
+
+    key.set_value("NoModify", &1u32)
+        .map_err(|e| format!("Failed to set NoModify: {}", e))?;
+
+    key.set_value("NoRepair", &1u32)
+        .map_err(|e| format!("Failed to set NoRepair: {}", e))?;
+
+    // ファイルサイズを計算（KB単位）
+    let install_path = PathBuf::from(&install_location);
+    if let Ok(size) = calculate_install_size(&install_path) {
+        key.set_value("EstimatedSize", &(size as u32))
+            .unwrap_or_else(|e| eprintln!("Failed to set EstimatedSize: {}", e));
+    }
+
+    println!("mcv successfully registered to Windows apps");
+    Ok(())
+}
+
+/// インストーラーをWindowsアプリとして登録
+#[cfg(windows)]
+#[tauri::command]
+async fn register_installer_to_windows_apps(
+    installer_path: String,
+) -> Result<(), String> {
+    println!("Registering installer to Windows apps...");
+
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\MultiCommentViewerInstaller";
+
+    let (key, _) = hklm.create_subkey(path)
+        .map_err(|e| format!("Failed to create registry key: {}. Administrator privileges may be required.", e))?;
+
+    key.set_value("DisplayName", &"MultiCommentViewer Installer & Updater")
+        .map_err(|e| format!("Failed to set DisplayName: {}", e))?;
+
+    let installer_version = env!("CARGO_PKG_VERSION");
+    key.set_value("DisplayVersion", &installer_version)
+        .map_err(|e| format!("Failed to set DisplayVersion: {}", e))?;
+
+    key.set_value("Publisher", &"ryu-s")
+        .map_err(|e| format!("Failed to set Publisher: {}", e))?;
+
+    let install_location = PathBuf::from(&installer_path)
+        .parent()
+        .and_then(|p| p.to_str())
+        .ok_or_else(|| "Invalid installer path".to_string())?
+        .to_string();
+
+    key.set_value("InstallLocation", &install_location)
+        .map_err(|e| format!("Failed to set InstallLocation: {}", e))?;
+
+    let uninstall_string = format!("\"{}\" --uninstall self", installer_path);
+    key.set_value("UninstallString", &uninstall_string)
+        .map_err(|e| format!("Failed to set UninstallString: {}", e))?;
+
+    key.set_value("DisplayIcon", &installer_path)
+        .map_err(|e| format!("Failed to set DisplayIcon: {}", e))?;
+
+    key.set_value("NoModify", &1u32)
+        .map_err(|e| format!("Failed to set NoModify: {}", e))?;
+
+    key.set_value("NoRepair", &1u32)
+        .map_err(|e| format!("Failed to set NoRepair: {}", e))?;
+
+    println!("Installer successfully registered to Windows apps");
+    Ok(())
+}
+
+/// Windowsアプリ登録を解除
+#[cfg(windows)]
+#[tauri::command]
+async fn unregister_from_windows_apps(
+    app_name: String, // "MultiCommentViewer" or "MultiCommentViewerInstaller"
+) -> Result<(), String> {
+    println!("Unregistering {} from Windows apps...", app_name);
+
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let uninstall_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+    let uninstall_key = hklm.open_subkey_with_flags(uninstall_path, KEY_WRITE)
+        .map_err(|e| format!("Failed to open Uninstall registry key: {}. Administrator privileges may be required.", e))?;
+
+    uninstall_key.delete_subkey(&app_name)
+        .map_err(|e| format!("Failed to delete registry key {}: {}", app_name, e))?;
+
+    println!("{} successfully unregistered from Windows apps", app_name);
+    Ok(())
+}
+
+/// インストールディレクトリのサイズを計算（KB単位）
+#[cfg(windows)]
+fn calculate_install_size(path: &PathBuf) -> Result<u64, std::io::Error> {
+    let mut total_size = 0u64;
+
+    if path.is_dir() {
+        for entry in std::fs::read_dir(path)? {
+            let entry = entry?;
+            let metadata = entry.metadata()?;
+
+            if metadata.is_file() {
+                total_size += metadata.len();
+            } else if metadata.is_dir() {
+                if let Ok(size) = calculate_install_size(&entry.path()) {
+                    total_size += size;
+                }
+            }
+        }
+    }
+
+    // バイトからKBに変換
+    Ok(total_size / 1024)
+}
+
+/// 管理者権限で実行されているかチェック
+#[cfg(windows)]
+#[tauri::command]
+async fn is_elevated() -> Result<bool, String> {
+    // Windowsで管理者権限チェック
+    // 簡易実装: HKEY_LOCAL_MACHINEへの書き込みテストで確認
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let test_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+    match hklm.open_subkey_with_flags(test_path, KEY_WRITE) {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
+}
+
+/// インストーラーを固定場所にコピー
+#[tauri::command]
+async fn copy_installer_to_persistent_location() -> Result<String, String> {
+    println!("Copying installer to persistent location...");
+
+    // 現在の実行ファイルパスを取得
+    let current_exe = std::env::current_exe()
+        .map_err(|e| format!("Failed to get current exe path: {}", e))?;
+
+    // 固定場所のパスを構築
+    let local_app_data = std::env::var("LOCALAPPDATA")
+        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+
+    let dest_dir = PathBuf::from(local_app_data)
+        .join("Programs")
+        .join("mcv-installer");
+
+    let dest_path = dest_dir.join("mcv-installer.exe");
+
+    // 既に固定場所にある場合はスキップ
+    if current_exe == dest_path {
+        println!("Already running from persistent location");
+        return Ok(dest_path.to_string_lossy().to_string());
+    }
+
+    // ディレクトリを作成
+    std::fs::create_dir_all(&dest_dir)
+        .map_err(|e| format!("Failed to create installer directory: {}", e))?;
+
+    // ファイルをコピー
+    std::fs::copy(&current_exe, &dest_path)
+        .map_err(|e| format!("Failed to copy installer: {}", e))?;
+
+    println!("Installer copied to: {:?}", dest_path);
+
+    Ok(dest_path.to_string_lossy().to_string())
+}
+
+/// インストーラーが固定場所にあるか確認
+#[tauri::command]
+async fn is_installer_in_persistent_location() -> Result<bool, String> {
+    // 現在の実行ファイルパスを取得
+    let current_exe = std::env::current_exe()
+        .map_err(|e| format!("Failed to get current exe path: {}", e))?;
+
+    // 固定場所のパスを構築
+    let local_app_data = std::env::var("LOCALAPPDATA")
+        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+
+    let persistent_path = PathBuf::from(local_app_data)
+        .join("Programs")
+        .join("mcv-installer")
+        .join("mcv-installer.exe");
+
+    Ok(current_exe == persistent_path)
+}
+
+/// mcv.exeが実行中かチェック
+#[tauri::command]
+async fn is_mcv_running() -> Result<bool, String> {
+    let mut system = System::new_all();
+    system.refresh_processes();
+
+    let is_running = system.processes().values().any(|process| {
+        process.name().eq_ignore_ascii_case("mcv.exe")
+    });
+
+    Ok(is_running)
+}
+
+/// ユーザーデータ識別用のパターン
+const USER_DATA_PATTERNS: &[&str] = &[
+    "config.json",
+    "logs.db",
+    "user_data",
+    "settings",
+];
+
+/// パスがユーザーデータかどうか判定
+fn is_user_data(path: &std::path::Path) -> bool {
+    let file_name = path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+
+    USER_DATA_PATTERNS.iter().any(|pattern| {
+        file_name.contains(pattern)
+    })
+}
+
+/// mcvをアンインストール
+#[tauri::command]
+async fn uninstall_mcv(
+    keep_user_data: bool,
+) -> Result<(), String> {
+    println!("Uninstalling mcv... (keep_user_data: {})", keep_user_data);
+
+    // mcvインストールディレクトリを取得
+    let local_app_data = std::env::var("LOCALAPPDATA")
+        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+
+    let mcv_dir = PathBuf::from(&local_app_data).join("MultiCommentViewer");
+
+    if !mcv_dir.exists() {
+        return Err("mcv is not installed".to_string());
+    }
+
+    // 1. ファイル削除
+    if keep_user_data {
+        // ユーザーデータを保持する場合、選択的に削除
+        println!("Deleting mcv files (keeping user data)...");
+
+        for entry in std::fs::read_dir(&mcv_dir)
+            .map_err(|e| format!("Failed to read mcv directory: {}", e))?
+        {
+            let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
+            let path = entry.path();
+
+            // ユーザーデータはスキップ
+            if is_user_data(&path) {
+                println!("Keeping user data: {:?}", path);
+                continue;
+            }
+
+            // それ以外を削除
+            if path.is_file() {
+                std::fs::remove_file(&path)
+                    .unwrap_or_else(|e| eprintln!("Failed to delete file {:?}: {}", path, e));
+                println!("Deleted file: {:?}", path);
+            } else if path.is_dir() {
+                std::fs::remove_dir_all(&path)
+                    .unwrap_or_else(|e| eprintln!("Failed to delete directory {:?}: {}", path, e));
+                println!("Deleted directory: {:?}", path);
+            }
+        }
+    } else {
+        // 全削除
+        println!("Deleting mcv directory completely...");
+        std::fs::remove_dir_all(&mcv_dir)
+            .map_err(|e| format!("Failed to delete mcv directory: {}", e))?;
+    }
+
+    // 2. デスクトップショートカット削除
+    let desktop = std::env::var("USERPROFILE")
+        .map_err(|_| "Failed to get USERPROFILE".to_string())?;
+    let desktop_shortcut = PathBuf::from(desktop)
+        .join("Desktop")
+        .join("MultiCommentViewer.lnk");
+
+    if desktop_shortcut.exists() {
+        std::fs::remove_file(&desktop_shortcut)
+            .unwrap_or_else(|e| eprintln!("Failed to delete desktop shortcut: {}", e));
+        println!("Deleted desktop shortcut");
+    }
+
+    // 3. スタートメニューエントリ削除
+    let start_menu = std::env::var("APPDATA")
+        .map_err(|_| "Failed to get APPDATA".to_string())?;
+    let start_menu_entry = PathBuf::from(start_menu)
+        .join("Microsoft")
+        .join("Windows")
+        .join("Start Menu")
+        .join("Programs")
+        .join("MultiCommentViewer");
+
+    if start_menu_entry.exists() {
+        std::fs::remove_dir_all(&start_menu_entry)
+            .unwrap_or_else(|e| eprintln!("Failed to delete start menu entry: {}", e));
+        println!("Deleted start menu entry");
+    }
+
+    // 4. レジストリエントリ削除
+    #[cfg(windows)]
+    {
+        unregister_from_windows_apps("MultiCommentViewer".to_string())
+            .await
+            .unwrap_or_else(|e| eprintln!("Failed to unregister from Windows apps: {}", e));
+    }
+
+    println!("mcv uninstallation completed");
+    Ok(())
+}
+
+/// mcv-installerをアンインストール
+#[tauri::command]
+async fn uninstall_installer() -> Result<(), String> {
+    println!("Uninstalling mcv-installer...");
+
+    // インストーラーディレクトリを取得
+    let local_app_data = std::env::var("LOCALAPPDATA")
+        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+
+    let installer_dir = PathBuf::from(&local_app_data)
+        .join("Programs")
+        .join("mcv-installer");
+
+    if !installer_dir.exists() {
+        return Err("Installer is not installed".to_string());
+    }
+
+    // 1. レジストリエントリ削除（先に実行）
+    #[cfg(windows)]
+    {
+        unregister_from_windows_apps("MultiCommentViewerInstaller".to_string())
+            .await
+            .unwrap_or_else(|e| eprintln!("Failed to unregister installer from Windows apps: {}", e));
+    }
+
+    // 2. PowerShellで遅延削除を実行
+    // 実行中のEXEは自身を削除できないため、PowerShellで遅延削除
+    let installer_dir_str = installer_dir.to_string_lossy().to_string();
+
+    let ps_command = format!(
+        "Start-Sleep -Seconds 2; Remove-Item -Path '{}' -Recurse -Force",
+        installer_dir_str
+    );
+
+    println!("Scheduling installer directory deletion: {}", installer_dir_str);
+
+    std::process::Command::new("powershell")
+        .args(&["-WindowStyle", "Hidden", "-Command", &ps_command])
+        .spawn()
+        .map_err(|e| format!("Failed to schedule installer deletion: {}", e))?;
+
+    println!("Installer uninstallation scheduled (will complete after exit)");
+    Ok(())
+}
+
+// Windows以外のプラットフォームでのスタブ実装
+#[cfg(not(windows))]
+#[tauri::command]
+async fn register_mcv_to_windows_apps(
+    _mcv_version: String,
+    _install_location: String,
+    _installer_path: String,
+) -> Result<(), String> {
+    Err("This command is only available on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+async fn register_installer_to_windows_apps(
+    _installer_path: String,
+) -> Result<(), String> {
+    Err("This command is only available on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+async fn unregister_from_windows_apps(
+    _app_name: String,
+) -> Result<(), String> {
+    Err("This command is only available on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+async fn is_elevated() -> Result<bool, String> {
+    Err("This command is only available on Windows".to_string())
+}
+
 fn main() {
     const API_BASE_URL: &str = "http://localhost"; // TODO: 実際のAPIエンドポイントに変更
 
     let update_checker = UpdateChecker::new(API_BASE_URL);
 
+    // コマンドライン引数をパース
+    let args: Vec<String> = std::env::args().collect();
+    let uninstall_target = if args.len() > 2 && args[1] == "--uninstall" {
+        match args[2].as_str() {
+            "mcv" => Some("mcv".to_string()),
+            "self" => Some("installer".to_string()),
+            _ => None,
+        }
+    } else {
+        None
+    };
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .setup(|_app| {
+        .setup(move |app| {
             println!("Installer started");
+
+            // アンインストールモードの場合、イベントを発行
+            if let Some(ref target) = uninstall_target {
+                println!("Uninstall mode detected: {}", target);
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.emit("uninstall-mode", target);
+                }
+            }
+
+            // インストーラー自己コピー（初回起動時）
+            {
+                let current_exe = std::env::current_exe()
+                    .expect("Failed to get current exe path");
+
+                let local_app_data = std::env::var("LOCALAPPDATA")
+                    .expect("Failed to get LOCALAPPDATA");
+
+                let persistent_path = PathBuf::from(local_app_data)
+                    .join("Programs")
+                    .join("mcv-installer")
+                    .join("mcv-installer.exe");
+
+                // 固定場所にない場合、コピーを実行
+                if current_exe != persistent_path {
+                    println!("Installer is not in persistent location. Copying...");
+
+                    let dest_dir = persistent_path.parent().unwrap();
+
+                    match std::fs::create_dir_all(dest_dir) {
+                        Ok(_) => {
+                            match std::fs::copy(&current_exe, &persistent_path) {
+                                Ok(_) => {
+                                    println!("Installer copied to: {:?}", persistent_path);
+                                }
+                                Err(e) => {
+                                    eprintln!("Warning: Failed to copy installer to persistent location: {}", e);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Warning: Failed to create installer directory: {}", e);
+                        }
+                    }
+                } else {
+                    println!("Installer is already in persistent location");
+                }
+            }
+
+            // 管理者権限チェック（Windows）
+            #[cfg(windows)]
+            {
+                let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+                let test_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+                match hklm.open_subkey_with_flags(test_path, KEY_WRITE) {
+                    Ok(_) => {
+                        println!("Running with administrator privileges");
+                    }
+                    Err(_) => {
+                        eprintln!("Warning: Running without administrator privileges.");
+                        eprintln!("Some operations (Windows app registration) may fail.");
+                        eprintln!("Please run the installer as administrator if you encounter issues.");
+                    }
+                }
+            }
+
             Ok(())
         })
         .manage(AppState { update_checker })
@@ -428,6 +935,15 @@ fn main() {
             get_temp_dir,
             create_desktop_shortcut,
             create_start_menu_entry,
+            register_mcv_to_windows_apps,
+            register_installer_to_windows_apps,
+            unregister_from_windows_apps,
+            is_elevated,
+            copy_installer_to_persistent_location,
+            is_installer_in_persistent_location,
+            is_mcv_running,
+            uninstall_mcv,
+            uninstall_installer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -6,12 +6,14 @@ interface WelcomeScreenProps {
   onInstallerUpdateDetected: (update: InstallerUpdateInfo | null) => void
   onExistingInstallationDetected: (version: string | null) => void
   onInitComplete: () => void
+  onStartUninstall: () => void
 }
 
 export function WelcomeScreen({
   onInstallerUpdateDetected,
   onExistingInstallationDetected,
   onInitComplete,
+  onStartUninstall,
 }: WelcomeScreenProps) {
   const [loading, setLoading] = useState(true)
   const [installerUpdate, setInstallerUpdate] = useState<InstallerUpdateInfo | null>(null)
@@ -140,6 +142,14 @@ export function WelcomeScreen({
           <p className="text-gray-300">
             このウィザードがMultiCommentViewerの更新プロセスをガイドします。
           </p>
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={onStartUninstall}
+              className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors"
+            >
+              アンインストール
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

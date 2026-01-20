@@ -32,3 +32,20 @@ export interface PluginListItem {
   description: string
   channels: PluginChannels
 }
+
+// アンインストール対象
+export type UninstallTarget = 'mcv' | 'installer' | 'both'
+
+// 画面タイプ（アンインストール画面を含む）
+export type ScreenType =
+  | 'welcome'
+  | 'options'
+  | 'ready'
+  | 'installing'
+  | 'complete'
+  | 'uninstall-options'
+  | 'uninstalling'
+  | 'uninstall-complete'
+
+// モード
+export type Mode = 'install' | 'uninstall'

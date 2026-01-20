@@ -1,1 +1,1 @@
-cargo run -p package_release -- --bin mcv --output output --channel beta
+cargo run -p xtask -- --crate-name MultiCommentViewer --plugin plugin-dummy --target x86_64-pc-windows-msvc --channel beta

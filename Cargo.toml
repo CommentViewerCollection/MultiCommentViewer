@@ -11,7 +11,8 @@ members = [
     "crates/plugin-youtube-live",
     "apps/mcv/src-tauri",
     "apps/log-viewer/src-tauri",
-    "apps/installer/src-tauri", "apps/package_release", "crates/twitch-lib",
+    "apps/installer/src-tauri", "crates/twitch-lib",
+    "xtask",
 ]
 resolver = "2"
 

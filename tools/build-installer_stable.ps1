@@ -1,2 +1,1 @@
-cargo build --release
-cargo run -p package_release --release -- --bin installer --output output --channel stable
+cargo run -p xtask -- --crate-name mcv-installer --target x86_64-pc-windows-msvc --channel stable

@@ -10,6 +10,12 @@ use winreg::enums::*;
 #[cfg(windows)]
 use winreg::RegKey;
 
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+
+/// グローバル変数: アンインストール対象を保持
+static UNINSTALL_TARGET: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
+
 /// アプリケーションの状態
 struct AppState {
     update_checker: UpdateChecker,
@@ -235,11 +241,12 @@ async fn install_plugin(dll_path: String, dest_dir: String) -> Result<(), String
 /// mcvが既にインストールされているかチェック
 #[tauri::command]
 async fn check_existing_installation() -> Result<Option<String>, String> {
-    // %LOCALAPPDATA%\MultiCommentViewer\mcv.exe の存在をチェック
+    // %LOCALAPPDATA%\Programs\MultiCommentViewer\mcv.exe の存在をチェック
     let local_app_data = std::env::var("LOCALAPPDATA")
         .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let mcv_path = PathBuf::from(local_app_data)
+        .join("Programs")
         .join("MultiCommentViewer")
         .join("mcv.exe");
 
@@ -284,6 +291,7 @@ async fn launch_mcv() -> Result<(), String> {
         .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let mcv_path = PathBuf::from(local_app_data)
+        .join("Programs")
         .join("MultiCommentViewer")
         .join("mcv.exe");
 
@@ -623,7 +631,28 @@ async fn is_installer_in_persistent_location() -> Result<bool, String> {
         .join("mcv-installer")
         .join("mcv-installer.exe");
 
-    Ok(current_exe == persistent_path)
+    let is_installed = current_exe == persistent_path;
+
+    println!("=== Installer Location Check ===");
+    println!("Current exe: {:?}", current_exe);
+    println!("Persistent path: {:?}", persistent_path);
+    println!("Is installed: {}", is_installed);
+    println!("================================");
+
+    Ok(is_installed)
+}
+
+/// インストーラーのデフォルトインストール先パスを取得
+#[tauri::command]
+async fn get_installer_default_install_path() -> Result<String, String> {
+    let local_app_data = std::env::var("LOCALAPPDATA")
+        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+
+    let path = PathBuf::from(local_app_data)
+        .join("Programs")
+        .join("mcv-installer");
+
+    Ok(path.to_string_lossy().to_string())
 }
 
 /// mcv.exeが実行中かチェック
@@ -637,6 +666,12 @@ async fn is_mcv_running() -> Result<bool, String> {
     });
 
     Ok(is_running)
+}
+
+/// アンインストールモードを取得
+#[tauri::command]
+async fn get_uninstall_mode() -> Result<Option<String>, String> {
+    Ok(UNINSTALL_TARGET.lock().unwrap().clone())
 }
 
 /// ユーザーデータ識別用のパターン
@@ -669,7 +704,9 @@ async fn uninstall_mcv(
     let local_app_data = std::env::var("LOCALAPPDATA")
         .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
-    let mcv_dir = PathBuf::from(&local_app_data).join("MultiCommentViewer");
+    let mcv_dir = PathBuf::from(&local_app_data)
+        .join("Programs")
+        .join("MultiCommentViewer");
 
     if !mcv_dir.exists() {
         return Err("mcv is not installed".to_string());
@@ -776,12 +813,13 @@ async fn uninstall_installer() -> Result<(), String> {
             .unwrap_or_else(|e| eprintln!("Failed to unregister installer from Windows apps: {}", e));
     }
 
-    // 2. PowerShellで遅延削除を実行
+    // 2. PowerShellで遅延削除を実行（リトライロジック付き）
     // 実行中のEXEは自身を削除できないため、PowerShellで遅延削除
     let installer_dir_str = installer_dir.to_string_lossy().to_string();
 
+    // リトライロジック付きの削除スクリプト
     let ps_command = format!(
-        "Start-Sleep -Seconds 2; Remove-Item -Path '{}' -Recurse -Force",
+        r#"Start-Sleep -Seconds 5; $maxRetries = 10; $retryCount = 0; while ($retryCount -lt $maxRetries) {{ try {{ Remove-Item -Path '{}' -Recurse -Force -ErrorAction Stop; exit 0 }} catch {{ $retryCount++; if ($retryCount -lt $maxRetries) {{ Start-Sleep -Seconds 1 }} }} }}"#,
         installer_dir_str
     );
 
@@ -846,6 +884,9 @@ fn main() {
         None
     };
 
+    // グローバル変数に保存
+    *UNINSTALL_TARGET.lock().unwrap() = uninstall_target.clone();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(move |app| {
@@ -859,44 +900,6 @@ fn main() {
                 }
             }
 
-            // インストーラー自己コピー（初回起動時）
-            {
-                let current_exe = std::env::current_exe()
-                    .expect("Failed to get current exe path");
-
-                let local_app_data = std::env::var("LOCALAPPDATA")
-                    .expect("Failed to get LOCALAPPDATA");
-
-                let persistent_path = PathBuf::from(local_app_data)
-                    .join("Programs")
-                    .join("mcv-installer")
-                    .join("mcv-installer.exe");
-
-                // 固定場所にない場合、コピーを実行
-                if current_exe != persistent_path {
-                    println!("Installer is not in persistent location. Copying...");
-
-                    let dest_dir = persistent_path.parent().unwrap();
-
-                    match std::fs::create_dir_all(dest_dir) {
-                        Ok(_) => {
-                            match std::fs::copy(&current_exe, &persistent_path) {
-                                Ok(_) => {
-                                    println!("Installer copied to: {:?}", persistent_path);
-                                }
-                                Err(e) => {
-                                    eprintln!("Warning: Failed to copy installer to persistent location: {}", e);
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("Warning: Failed to create installer directory: {}", e);
-                        }
-                    }
-                } else {
-                    println!("Installer is already in persistent location");
-                }
-            }
 
             // 管理者権限チェック（Windows）
             #[cfg(windows)]
@@ -941,9 +944,11 @@ fn main() {
             is_elevated,
             copy_installer_to_persistent_location,
             is_installer_in_persistent_location,
+            get_installer_default_install_path,
             is_mcv_running,
             uninstall_mcv,
             uninstall_installer,
+            get_uninstall_mode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

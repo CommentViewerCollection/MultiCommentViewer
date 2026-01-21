@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { listen } from '@tauri-apps/api/event'
 import { Sidebar } from './components/Sidebar'
 import { ButtonBar } from './components/ButtonBar'
 import { ErrorDialog } from './components/ErrorDialog'
+import { InstallerSetupScreen } from './screens/InstallerSetupScreen'
 import { WelcomeScreen } from './screens/WelcomeScreen'
 import { OptionsScreen } from './screens/OptionsScreen'
 import { ReadyScreen } from './screens/ReadyScreen'
@@ -23,7 +23,7 @@ import type {
 } from './types'
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('welcome')
+  const [currentScreen, setCurrentScreen] = useState<ScreenType | null>(null)
   const [completedScreens, setCompletedScreens] = useState<ScreenType[]>([])
   const [mode, setMode] = useState<Mode>('install')
 
@@ -40,11 +40,12 @@ function App() {
   const [error, setError] = useState<string | null>(null)
 
   // アンインストール状態
-  const [uninstallTarget] = useState<UninstallTarget>('mcv')
+  const [uninstallTarget, setUninstallTarget] = useState<UninstallTarget>('mcv')
   const [keepUserData, setKeepUserData] = useState(true)
 
   // Screen to step number mapping
   const screenToStep: Record<ScreenType, number> = {
+    'installer-setup': 0,
     welcome: 1,
     options: 2,
     ready: 3,
@@ -55,10 +56,23 @@ function App() {
     'uninstall-complete': 4,
   }
 
+  // Handlers for InstallerSetupScreen
+  const handleInstallerSetupComplete = () => {
+    if (currentScreen) {
+      setCompletedScreens([...completedScreens, currentScreen])
+    }
+    setCurrentScreen('welcome')
+  }
+
   // Navigation handlers
   const handleNext = () => {
+    // InstallerSetupScreenからの遷移はhandleInstallerSetupCompleteで処理
+    if (currentScreen === 'installer-setup') {
+      return
+    }
+
     // Mark current screen as completed
-    if (!completedScreens.includes(currentScreen)) {
+    if (currentScreen && !completedScreens.includes(currentScreen)) {
       setCompletedScreens([...completedScreens, currentScreen])
     }
 
@@ -213,17 +227,32 @@ function App() {
     setCurrentScreen('uninstall-options')
   }
 
-  // コマンドライン引数からのアンインストールモード検出
+  // 初期画面の判定
   useEffect(() => {
-    const unlisten = listen<string>('uninstall-mode', (event) => {
-      console.log('Uninstall mode event received:', event.payload)
-      setMode('uninstall')
-      setCurrentScreen('uninstall-options')
-    })
+    const determineInitialScreen = async () => {
+      try {
+        // 1. アンインストールモードを確認
+        const uninstallMode = await invoke<string | null>('get_uninstall_mode')
 
-    return () => {
-      unlisten.then((fn) => fn())
+        if (uninstallMode) {
+          // アンインストールモード
+          console.log('Uninstall mode detected:', uninstallMode)
+          setMode('uninstall')
+          setUninstallTarget(uninstallMode as UninstallTarget)
+          setCurrentScreen('uninstall-options')
+          return
+        }
+
+        // 2. 通常の初期化
+        const isInstalled = await invoke<boolean>('is_installer_in_persistent_location')
+        setCurrentScreen(isInstalled ? 'welcome' : 'installer-setup')
+      } catch (error) {
+        console.error('Failed to determine initial screen:', error)
+        // エラーの場合はwelcomeにフォールバック
+        setCurrentScreen('welcome')
+      }
     }
+    determineInitialScreen()
   }, [])
 
   // Button state logic
@@ -238,7 +267,8 @@ function App() {
     }
     return true
   }
-  const showButtonBar = currentScreen !== 'installing' && currentScreen !== 'uninstalling'
+  const showButtonBar = currentScreen !== 'installing' && currentScreen !== 'uninstalling' && currentScreen !== 'installer-setup'
+  const showSidebar = currentScreen !== 'installer-setup'
 
   // Get Next button text
   const getNextButtonText = (): string => {
@@ -266,18 +296,35 @@ function App() {
   // Map completed screens to step numbers
   const completedStepNumbers = completedScreens.map((screen) => screenToStep[screen])
 
+  // Loading state
+  if (!currentScreen) {
+    return (
+      <div className="flex h-screen bg-gray-900 text-white items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-screen bg-gray-900 text-white">
       {/* Error Dialog */}
       <ErrorDialog error={error} onClose={() => setError(null)} />
 
       {/* Sidebar */}
-      <Sidebar currentStep={screenToStep[currentScreen]} completedSteps={completedStepNumbers} />
+      {showSidebar && (
+        <Sidebar currentStep={screenToStep[currentScreen]} completedSteps={completedStepNumbers} />
+      )}
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
         {/* Screen content */}
         <div className="flex-1 overflow-auto">
+          {currentScreen === 'installer-setup' && (
+            <InstallerSetupScreen
+              onInstallComplete={handleInstallerSetupComplete}
+              onInstallError={handleInstallError}
+            />
+          )}
           {currentScreen === 'welcome' && (
             <WelcomeScreen
               onInstallerUpdateDetected={handleInstallerUpdateDetected}
@@ -333,6 +380,7 @@ function App() {
           )}
           {currentScreen === 'uninstall-options' && (
             <UninstallOptionsScreen
+              target={uninstallTarget}
               keepUserData={keepUserData}
               onKeepUserDataChange={setKeepUserData}
             />

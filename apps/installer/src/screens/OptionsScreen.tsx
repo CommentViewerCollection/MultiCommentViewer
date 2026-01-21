@@ -33,7 +33,7 @@ export function OptionsScreen({
     const getInstallPath = async () => {
       try {
         const localAppData = await invoke<string>('get_local_app_data')
-        setInstallPath(`${localAppData}\\MultiCommentViewer`)
+        setInstallPath(`${localAppData}\\Programs\\MultiCommentViewer`)
       } catch (e) {
         console.error('Failed to get install path:', e)
       }

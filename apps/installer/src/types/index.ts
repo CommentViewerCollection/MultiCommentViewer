@@ -38,6 +38,7 @@ export type UninstallTarget = 'mcv' | 'installer' | 'both'
 
 // 画面タイプ（アンインストール画面を含む）
 export type ScreenType =
+  | 'installer-setup'
   | 'welcome'
   | 'options'
   | 'ready'

@@ -13,7 +13,7 @@ $releaseFlag = if ($Release) { " --release" } else { "" }
 Write-Host "Building mcv-installer ($buildType)..."
 
 # Move to project root
-Set-Location (Join-Path $PSScriptRoot "..\..")
+Set-Location (Join-Path $PSScriptRoot "..")
 
 # Build
 $buildCmd = "cargo build -p mcv-installer$releaseFlag"
@@ -29,9 +29,13 @@ Write-Host ""
 Write-Host "[OK] Build completed"
 Write-Host ""
 
+# Wait a moment for file handles to be released
+Start-Sleep -Seconds 2
+
 # Embed manifest
-$exePath = "target\$buildType\mcv-installer.exe"
-$manifestPath = "apps\installer\src-tauri\mcv-installer.exe.manifest"
+$projectRoot = (Get-Location).Path
+$exePath = Join-Path $projectRoot "target\$buildType\mcv-installer.exe"
+$manifestPath = Join-Path $projectRoot "apps\installer\src-tauri\mcv-installer.exe.manifest"
 
 # Find mt.exe
 $mtPaths = @(
@@ -63,14 +67,32 @@ if (-not $mtExe) {
 Write-Host "Using mt.exe: $mtExe"
 Write-Host "Embedding manifest..."
 
-& $mtExe -manifest $manifestPath -outputresource:"$exePath;#1"
+# Retry logic for manifest embedding (in case file is locked)
+$maxRetries = 3
+$retryCount = 0
+$success = $false
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to embed manifest"
+while (-not $success -and $retryCount -lt $maxRetries) {
+    if ($retryCount -gt 0) {
+        Write-Host "Retrying... (attempt $($retryCount + 1)/$maxRetries)"
+        Start-Sleep -Seconds 2
+    }
+
+    & $mtExe -manifest $manifestPath -outputresource:"$exePath;#1" 2>&1 | Out-Null
+
+    if ($LASTEXITCODE -eq 0) {
+        $success = $true
+    } else {
+        $retryCount++
+    }
+}
+
+if (-not $success) {
+    Write-Error "Failed to embed manifest after $maxRetries attempts. Please close any running instances of mcv-installer.exe and try again."
     exit 1
 }
 
 Write-Host ""
 Write-Host "[OK] Manifest embedded"
 Write-Host ""
-Write-Host "Executable: target\$buildType\mcv-installer.exe"
+Write-Host "Executable: $exePath"

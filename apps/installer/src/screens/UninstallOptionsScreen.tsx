@@ -1,21 +1,34 @@
+import type { UninstallTarget } from '../types'
+
 interface UninstallOptionsScreenProps {
+  target: UninstallTarget
   keepUserData: boolean
   onKeepUserDataChange: (value: boolean) => void
 }
 
 export function UninstallOptionsScreen({
+  target,
   keepUserData,
   onKeepUserDataChange,
 }: UninstallOptionsScreenProps) {
+  const targetName =
+    target === 'installer'
+      ? 'インストーラー'
+      : target === 'both'
+        ? 'MultiCommentViewerとインストーラー'
+        : 'MultiCommentViewer'
+
   return (
     <div className="p-8">
       <h2 className="text-3xl font-bold mb-4">アンインストールオプション</h2>
       <p className="text-gray-300 mb-6">
-        MultiCommentViewerをアンインストールします。ユーザーデータの取り扱いを選択してください。
+        {targetName}をアンインストールします。
+        {(target === 'mcv' || target === 'both') && 'ユーザーデータの取り扱いを選択してください。'}
       </p>
 
-      <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 space-y-4">
-        <h3 className="text-xl font-semibold mb-4">ユーザーデータの取り扱い</h3>
+      {(target === 'mcv' || target === 'both') && (
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 space-y-4">
+          <h3 className="text-xl font-semibold mb-4">ユーザーデータの取り扱い</h3>
 
         {/* ユーザーデータを保持 */}
         <label className="flex items-start gap-3 p-4 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 transition-colors">
@@ -60,13 +73,32 @@ export function UninstallOptionsScreen({
             </div>
           </div>
         </label>
-      </div>
+        </div>
+      )}
 
-      <div className="mt-6 bg-yellow-900 border border-yellow-700 p-4 rounded">
-        <p className="text-yellow-200">
-          アンインストールを実行する前に、MultiCommentViewerが終了していることを確認してください。
-        </p>
-      </div>
+      {(target === 'mcv' || target === 'both') && (
+        <div className="mt-6 bg-yellow-900 border border-yellow-700 p-4 rounded">
+          <p className="text-yellow-200">
+            アンインストールを実行する前に、MultiCommentViewerが終了していることを確認してください。
+          </p>
+        </div>
+      )}
+
+      {target === 'installer' && (
+        <div className="mt-6 bg-blue-900 border border-blue-700 p-4 rounded">
+          <p className="text-blue-200">
+            インストーラー自身をアンインストールします。mcv本体は削除されません。
+          </p>
+        </div>
+      )}
+
+      {target === 'both' && (
+        <div className="mt-6 bg-blue-900 border border-blue-700 p-4 rounded">
+          <p className="text-blue-200">
+            mcv本体とインストーラーの両方をアンインストールします。
+          </p>
+        </div>
+      )}
     </div>
   )
 }

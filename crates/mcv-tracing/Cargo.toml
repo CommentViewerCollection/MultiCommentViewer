@@ -31,7 +31,9 @@ tokio = { workspace = true }
 # Stacktrace
 backtrace = "0.3"
 
+mcv-logger = { path = "../mcv-logger" }
+
 [features]
-alpha = []
-beta = []
-stable = []
+alpha = ["mcv-logger/alpha"]
+beta = ["mcv-logger/beta"]
+stable = ["mcv-logger/stable"]

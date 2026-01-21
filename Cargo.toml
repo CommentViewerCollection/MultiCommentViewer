@@ -6,6 +6,7 @@ members = [
     "crates/mcv-plugin-loader",
     "crates/mcv-updater",
     "crates/mcv-logger",
+    "crates/mcv-tracing",
     "crates/mcv-core",
     "crates/plugin-dummy",
     "crates/plugin-youtube-live",

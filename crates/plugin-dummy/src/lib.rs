@@ -56,7 +56,7 @@ impl DummyPlugin {
             ];
 
             let mut rng = StdRng::from_entropy();
-            println!("Comment generation started for connection: {}", connection_id);
+            tracing::info!(connection_id = %connection_id, "Comment generation started");
 
             while is_running.load(Ordering::SeqCst) {
                 // rateに基づいた間隔（デフォルトは1-5秒のランダム）
@@ -86,7 +86,12 @@ impl DummyPlugin {
                     timestamp: chrono::Utc::now().timestamp(),
                 };
 
-                println!("Generated comment: {} - {}", comment.user_name, comment.text);
+                tracing::debug!(
+                    connection_id = %connection_id,
+                    user_name = %comment.user_name,
+                    text = %comment.text,
+                    "Generated comment"
+                );
 
                 let message = Message::new_notification(
                     MessageType::CommentReceived,
@@ -100,12 +105,12 @@ impl DummyPlugin {
                 );
 
                 if sender.send(message).is_err() {
-                    eprintln!("Failed to send comment - receiver dropped");
+                    tracing::error!(connection_id = %connection_id, "Failed to send comment - receiver dropped");
                     break;
                 }
             }
 
-            println!("Comment generation stopped for connection: {}", connection_id);
+            tracing::info!(connection_id = %connection_id, "Comment generation stopped");
         });
     }
 }
@@ -372,6 +377,17 @@ impl Plugin for DummyPlugin {
     async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
         println!("=== DummyPlugin::on_loaded called, plugin_id: {} ===", self.plugin_id);
 
+        // プラグイン tracing を初期化
+        mcv_tracing::init_tracing(
+            self.plugin_id,
+            Arc::clone(&host),
+            env!("CARGO_PKG_VERSION"),
+            "info",
+        )
+        .map_err(|e| PluginError::InitializationFailed(format!("Failed to init tracing: {}", e)))?;
+
+        tracing::info!("Dummy plugin loaded");
+
         // plugin-helloを送信
         let message = Message::new(
             MessageType::PluginHello,
@@ -388,9 +404,9 @@ impl Plugin for DummyPlugin {
             .unwrap(),
         );
 
-        println!("Sending plugin-hello message...");
+        tracing::debug!("Sending plugin-hello message");
         host.send_message(message).await?;
-        println!("plugin-hello message sent successfully");
+        tracing::info!("Plugin-hello message sent successfully");
 
         Ok(())
     }
@@ -400,11 +416,11 @@ impl Plugin for DummyPlugin {
         message: Message,
         host: Arc<dyn PluginHost>,
     ) -> Result<(), PluginError> {
-        println!("Dummy plugin received message: {:?}", message.message_type);
+        tracing::debug!(message_type = ?message.message_type, "Received message");
 
         match message.message_type {
             MessageType::PluginAdded => {
-                println!("Dummy plugin added successfully");
+                tracing::info!("Plugin added successfully");
             }
             MessageType::Connect => {
                 // connectメッセージからconnection_idを取得
@@ -515,10 +531,10 @@ impl Plugin for DummyPlugin {
     }
 
     async fn on_shutdown(&mut self) -> Result<(), PluginError> {
-        println!("Shutting down dummy plugin");
+        tracing::info!("Shutting down dummy plugin");
         // 全ての接続を停止
         for (conn_id, is_running) in &self.connections {
-            println!("Stopping connection: {}", conn_id);
+            tracing::info!(connection_id = %conn_id, "Stopping connection");
             is_running.store(false, Ordering::SeqCst);
         }
         self.connections.clear();

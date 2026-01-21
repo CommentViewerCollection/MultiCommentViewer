@@ -77,6 +77,8 @@ crates/
 ├── mcv-messages/          # Message type definitions (MessageType, payloads)
 ├── mcv-common/            # Shared utilities and constants
 ├── mcv-plugin-interface/  # Plugin trait definitions (Plugin, PluginHost)
+├── mcv-tracing/          # Plugin tracing integration (auto log forwarding to Core)
+├── mcv-logger/           # Core logging system (SQLite + remote sending)
 ├── mcv-core/             # Core logic (CoreActor, PluginManager, ConnectionManager)
 └── plugin-dummy/         # Dummy plugin for testing and development
 ```
@@ -122,6 +124,53 @@ pub struct DummyPlugin {
 ```
 
 This ensures that operations on one connection (pause, disconnect, rate change) do not affect other connections.
+
+### Plugin Logging System (mcv-tracing)
+
+Plugins can use standard tracing macros (`tracing::error!()`, `tracing::warn!()`, etc.) for logging, which are automatically forwarded to Core via LogEntry messages and integrated with mcv-logger.
+
+**Setup in plugin:**
+```rust
+use mcv_tracing;
+
+impl Plugin for MyPlugin {
+    async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
+        // Initialize tracing
+        mcv_tracing::init_tracing(
+            self.plugin_id,
+            Arc::clone(&host),
+            env!("CARGO_PKG_VERSION"),
+            "info", // or "debug", "trace", etc.
+        )?;
+
+        // Now you can use tracing macros
+        tracing::info!("Plugin loaded successfully");
+
+        // ... rest of initialization
+    }
+}
+```
+
+**Usage in plugin code:**
+```rust
+// Structured logging with fields
+tracing::debug!(connection_id = %conn_id, "Processing message");
+tracing::info!(user = %username, "User connected");
+tracing::warn!(count = connections.len(), "High connection count");
+tracing::error!(error = %e, "Failed to process request");
+```
+
+**Features:**
+- Automatic forwarding to Core via LogEntry messages
+- Structured logging support (fields, spans)
+- Works in plugin dependencies (any crate used by the plugin)
+- Error-level logs automatically capture stack traces
+- Integration with mcv-logger (SQLite storage + remote sending)
+
+**Log-error/log-warn commands:**
+- The DummyPlugin's `log-error`, `log-warn`, `log-info`, `log-debug` commands are separate test features
+- They manually construct LogEntry messages for testing purposes
+- mcv-tracing provides automatic logging for production use
 
 ### Plugin Implementation
 

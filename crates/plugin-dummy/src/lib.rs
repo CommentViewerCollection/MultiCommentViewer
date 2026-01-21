@@ -147,6 +147,7 @@ impl DummyPlugin {
             "log-warn" => self.command_log(connection_id, "warn", &parts[1..], host).await,
             "log-info" => self.command_log(connection_id, "info", &parts[1..], host).await,
             "log-debug" => self.command_log(connection_id, "debug", &parts[1..], host).await,
+            "error-context-test" => self.command_error_context_test(connection_id, &parts[1..], host).await,
             _ => Err(format!("Unknown command: {}", parts[0])),
         }
     }
@@ -164,7 +165,8 @@ impl DummyPlugin {
 - log-error <message>: Send error log to mcv
 - log-warn <message>: Send warning log to mcv
 - log-info <message>: Send info log to mcv
-- log-debug <message>: Send debug log to mcv"#
+- log-debug <message>: Send debug log to mcv
+- error-context-test <value>: Test error context capture (use 0 to trigger error)"#
             .to_string()
     }
 
@@ -351,6 +353,85 @@ impl DummyPlugin {
             level.to_uppercase(),
             message_text
         ))
+    }
+
+    /// error-context-test コマンド: ErrorContext の使用例を示す
+    ///
+    /// この関数は capture_context! マクロの使用方法と、
+    /// ErrorContext から LogEntry への変換、送信までの流れを示します。
+    async fn command_error_context_test(
+        &mut self,
+        connection_id: Uuid,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.is_empty() {
+            return Err("Usage: error-context-test <value>".to_string());
+        }
+
+        let value: i32 = args[0]
+            .parse()
+            .map_err(|_| "Invalid value: must be a number".to_string())?;
+
+        // ヘルパー関数を呼び出してエラーを発生させる
+        match Self::process_value(value, connection_id).await {
+            Ok(result) => Ok(format!("Success: {}", result)),
+            Err(tracing_error) => {
+                // TracingError から ErrorContext を取得
+                let error_context = tracing_error.context();
+
+                // ErrorContext から LogEntryPayload を作成
+                let mut payload = error_context.to_log_entry_payload();
+                payload.connection_id = Some(connection_id);
+                payload.plugin_version = Some(env!("CARGO_PKG_VERSION").to_string());
+                payload.plugin_build_profile = Self::get_build_profile();
+
+                // LogEntry メッセージを送信
+                let message = Message::new_notification(
+                    MessageType::LogEntry,
+                    MessageSource::Plugin {
+                        plugin_id: self.plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+
+                host.send_message(message)
+                    .await
+                    .map_err(|e| format!("Failed to send log entry: {}", e))?;
+
+                // エラーを PluginError に変換して返す（From trait でサポート）
+                // 注: この例では String を返すため手動で変換
+                Err(format!("Error captured and logged: {}", tracing_error))
+            }
+        }
+    }
+
+    /// 値を処理するヘルパー関数（capture_context! の使用例）
+    async fn process_value(
+        value: i32,
+        connection_id: Uuid,
+    ) -> Result<String, mcv_tracing::TracingError> {
+        if value == 0 {
+            // エラーコンテキストをキャプチャ（構造化フィールド付き）
+            let ctx = mcv_tracing::capture_context!(
+                "Invalid value: cannot be zero",
+                value = value,
+                connection_id = connection_id.to_string(),
+                operation = "process_value",
+            );
+
+            // TracingError に変換して返す
+            return Err(ctx.into());
+        }
+
+        if value < 0 {
+            // シンプルなエラーコンテキスト
+            let ctx = mcv_tracing::capture_context!("Invalid value: must be positive");
+            return Err(ctx.into());
+        }
+
+        Ok(format!("Processed value: {}", value * 2))
     }
 
     fn get_build_profile() -> Option<String> {

@@ -19,6 +19,12 @@ serde_json = { workspace = true }
 # UUID
 uuid = { workspace = true }
 
+# Time
+chrono = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
 # Async runtime
 tokio = { workspace = true }
 

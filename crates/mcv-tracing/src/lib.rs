@@ -95,6 +95,20 @@ impl ErrorContext {
         self.fields.insert(key.to_string(), value.into());
     }
 
+    /// 内部エラーコンテキストを追加（InnerException パターン）
+    ///
+    /// # 例
+    /// ```rust,ignore
+    /// let inner_ctx = capture_context!("Inner error");
+    /// let mut outer_ctx = capture_context!("Outer error");
+    /// outer_ctx.add_inner_error(inner_ctx);
+    /// ```
+    pub fn add_inner_error(&mut self, inner: ErrorContext) {
+        if let Ok(json_value) = serde_json::to_value(&inner) {
+            self.fields.insert("inner_error".to_string(), json_value);
+        }
+    }
+
     /// スタックトレースをキャプチャ
     fn capture_stacktrace() -> Vec<StackFrame> {
         let bt = backtrace::Backtrace::new();
@@ -514,5 +528,54 @@ mod tests {
         assert!(json.get("stacktrace").is_some());
         assert!(json.get("fields").is_some());
         assert!(json.get("timestamp").is_some());
+    }
+
+    #[test]
+    fn test_error_context_with_inner_error() {
+        let inner_ctx = capture_context!("Inner error", inner_field = "inner_value");
+        let mut outer_ctx = capture_context!("Outer error", outer_field = "outer_value");
+        outer_ctx.add_inner_error(inner_ctx);
+
+        assert_eq!(outer_ctx.message, "Outer error");
+        assert_eq!(outer_ctx.fields.len(), 2); // outer_field + inner_error
+
+        // inner_error が正しく保存されているか確認
+        let inner_error = outer_ctx.fields.get("inner_error").unwrap();
+        assert!(inner_error.is_object());
+        assert_eq!(
+            inner_error.get("message").unwrap().as_str().unwrap(),
+            "Inner error"
+        );
+
+        // inner_error の fields も確認
+        let inner_fields = inner_error.get("fields").unwrap();
+        assert_eq!(
+            inner_fields.get("inner_field").unwrap().as_str().unwrap(),
+            "inner_value"
+        );
+    }
+
+    #[test]
+    fn test_nested_inner_errors() {
+        // 3段階の入れ子エラー
+        let innermost_ctx = capture_context!("Innermost error", level = 3);
+        let mut middle_ctx = capture_context!("Middle error", level = 2);
+        middle_ctx.add_inner_error(innermost_ctx);
+        let mut outer_ctx = capture_context!("Outer error", level = 1);
+        outer_ctx.add_inner_error(middle_ctx);
+
+        // outer_ctx の確認
+        assert_eq!(outer_ctx.message, "Outer error");
+
+        // middle_ctx (inner_error) の確認
+        let middle = outer_ctx.fields.get("inner_error").unwrap();
+        assert_eq!(middle.get("message").unwrap().as_str().unwrap(), "Middle error");
+
+        // innermost_ctx (inner_error.inner_error) の確認
+        let innermost = middle.get("fields").unwrap().get("inner_error").unwrap();
+        assert_eq!(
+            innermost.get("message").unwrap().as_str().unwrap(),
+            "Innermost error"
+        );
     }
 }

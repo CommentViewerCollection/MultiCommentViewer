@@ -148,6 +148,7 @@ impl DummyPlugin {
             "log-info" => self.command_log(connection_id, "info", &parts[1..], host).await,
             "log-debug" => self.command_log(connection_id, "debug", &parts[1..], host).await,
             "error-context-test" => self.command_error_context_test(connection_id, &parts[1..], host).await,
+            "error-context-nested" => self.command_error_context_nested(connection_id, &parts[1..], host).await,
             _ => Err(format!("Unknown command: {}", parts[0])),
         }
     }
@@ -166,7 +167,8 @@ impl DummyPlugin {
 - log-warn <message>: Send warning log to mcv
 - log-info <message>: Send info log to mcv
 - log-debug <message>: Send debug log to mcv
-- error-context-test <value>: Test error context capture (use 0 to trigger error)"#
+- error-context-test <value>: Test error context capture (use 0 to trigger error)
+- error-context-nested <operation>: Test nested error contexts (operations: fetch, parse, process)"#
             .to_string()
     }
 
@@ -432,6 +434,149 @@ impl DummyPlugin {
         }
 
         Ok(format!("Processed value: {}", value * 2))
+    }
+
+    /// error-context-nested コマンド: 入れ子エラーコンテキストの使用例
+    ///
+    /// この関数は複数のレイヤーでエラーが発生した場合の
+    /// InnerException パターンの使用方法を示します。
+    async fn command_error_context_nested(
+        &mut self,
+        connection_id: Uuid,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.is_empty() {
+            return Err("Usage: error-context-nested <operation> (fetch|parse|process)".to_string());
+        }
+
+        let operation = args[0];
+
+        // 実際のアプリケーションの階層構造をシミュレート
+        match Self::simulate_nested_operation(operation, connection_id).await {
+            Ok(result) => Ok(format!("Success: {}", result)),
+            Err(tracing_error) => {
+                // TracingError から ErrorContext を取得
+                let error_context = tracing_error.context();
+
+                // ErrorContext から LogEntryPayload を作成
+                let mut payload = error_context.to_log_entry_payload();
+                payload.connection_id = Some(connection_id);
+                payload.plugin_version = Some(env!("CARGO_PKG_VERSION").to_string());
+                payload.plugin_build_profile = Self::get_build_profile();
+
+                // LogEntry メッセージを送信
+                let message = Message::new_notification(
+                    MessageType::LogEntry,
+                    MessageSource::Plugin {
+                        plugin_id: self.plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+
+                host.send_message(message)
+                    .await
+                    .map_err(|e| format!("Failed to send log entry: {}", e))?;
+
+                Err(format!("Nested error logged: {}", tracing_error))
+            }
+        }
+    }
+
+    /// 入れ子のエラーをシミュレート
+    ///
+    /// この関数は実際のアプリケーションでよくある
+    /// 階層的なエラー処理パターンを示します：
+    /// - データ取得 (fetch)
+    /// - データ解析 (parse)
+    /// - ビジネスロジック処理 (process)
+    async fn simulate_nested_operation(
+        operation: &str,
+        connection_id: Uuid,
+    ) -> Result<String, mcv_tracing::TracingError> {
+        match operation {
+            "fetch" => Self::layer_fetch(connection_id).await,
+            "parse" => Self::layer_parse(connection_id).await,
+            "process" => Self::layer_process(connection_id).await,
+            _ => {
+                let ctx = mcv_tracing::capture_context!(
+                    "Unknown operation",
+                    operation = operation,
+                    connection_id = connection_id.to_string(),
+                );
+                Err(ctx.into())
+            }
+        }
+    }
+
+    /// レイヤー1: データ取得（最下層でのエラー）
+    async fn layer_fetch(connection_id: Uuid) -> Result<String, mcv_tracing::TracingError> {
+        // ネットワークエラーをシミュレート
+        let network_ctx = mcv_tracing::capture_context!(
+            "Network connection failed",
+            error_code = "ETIMEDOUT",
+            host = "api.example.com",
+            port = 443,
+        );
+
+        // API層でのエラー
+        let mut api_ctx = mcv_tracing::capture_context!(
+            "Failed to fetch data from API",
+            endpoint = "/api/v1/comments",
+            connection_id = connection_id.to_string(),
+        );
+        api_ctx.add_inner_error(network_ctx.clone());
+
+        Err(api_ctx.into())
+    }
+
+    /// レイヤー2: データ解析（中間層でのエラー）
+    async fn layer_parse(connection_id: Uuid) -> Result<String, mcv_tracing::TracingError> {
+        // まず fetch を試みる
+        match Self::layer_fetch(connection_id).await {
+            Ok(_) => {
+                // 仮にデータが取得できたとして、パースエラーをシミュレート
+                let parse_ctx = mcv_tracing::capture_context!(
+                    "JSON parse error",
+                    position = 42,
+                    expected = "closing brace",
+                    found = "EOF",
+                );
+                Err(parse_ctx.into())
+            }
+            Err(fetch_error) => {
+                // fetch エラーをinner errorとして含める
+                let mut parse_ctx = mcv_tracing::capture_context!(
+                    "Failed to parse API response",
+                    connection_id = connection_id.to_string(),
+                    parser = "serde_json",
+                );
+                parse_ctx.add_inner_error(fetch_error.context().clone());
+
+                Err(parse_ctx.into())
+            }
+        }
+    }
+
+    /// レイヤー3: ビジネスロジック処理（最上層でのエラー）
+    async fn layer_process(connection_id: Uuid) -> Result<String, mcv_tracing::TracingError> {
+        // parse を試みる
+        match Self::layer_parse(connection_id).await {
+            Ok(data) => Ok(data),
+            Err(parse_error) => {
+                // parse エラーをinner errorとして含める
+                let mut process_ctx = mcv_tracing::capture_context!(
+                    "Failed to process comments",
+                    connection_id = connection_id.to_string(),
+                    operation = "process_comments",
+                    retry_count = 3,
+                );
+                process_ctx.add_inner_error(parse_error.context().clone());
+
+                Err(process_ctx.into())
+            }
+        }
     }
 
     fn get_build_profile() -> Option<String> {

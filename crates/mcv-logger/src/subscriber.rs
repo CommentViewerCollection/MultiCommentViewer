@@ -28,8 +28,8 @@ pub fn init_subscriber(
     };
 
     // EnvFilterを作成（ログレベルフィルタリング）
-    let filter = EnvFilter::try_new(log_level)
-        .unwrap_or_else(|_| EnvFilter::new("error"));
+    let filter = EnvFilter::try_new(format!("mcv={}", log_level))
+        .unwrap_or_else(|_| EnvFilter::new("mcv=error"));
 
     // サブスクライバーを構築
     tracing_subscriber::registry()

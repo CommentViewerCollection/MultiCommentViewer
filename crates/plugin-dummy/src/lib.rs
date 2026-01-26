@@ -1051,41 +1051,16 @@ pub extern "C" fn plugin_get_metadata() -> *const c_char {
 /// # Safety
 /// この関数はCから呼び出されることを想定しています。
 #[no_mangle]
-pub extern "C" fn plugin_init(host_context: *mut c_void) -> i32 {
+pub extern "C" fn plugin_init(_host_context: *mut c_void) -> i32 {
     println!("=== C ABI: plugin_init called ===");
 
-    // host_contextからplugin_idを取得
-    let plugin_id = if !host_context.is_null() {
-        unsafe {
-            let plugin_id_cstr = CStr::from_ptr(host_context as *const c_char);
-            match plugin_id_cstr.to_str() {
-                Ok(id_str) => {
-                    match Uuid::parse_str(id_str) {
-                        Ok(id) => {
-                            println!("=== C ABI: Received plugin_id from host: {} ===", id);
-                            id
-                        }
-                        Err(e) => {
-                            eprintln!("plugin_init: Failed to parse plugin_id UUID: {}", e);
-                            return -1;
-                        }
-                    }
-                }
-                Err(e) => {
-                    eprintln!("plugin_init: Invalid UTF-8 in plugin_id: {}", e);
-                    return -1;
-                }
-            }
-        }
-    } else {
-        eprintln!("plugin_init: Warning: host_context is null, generating new plugin_id");
-        Uuid::new_v4()
-    };
-
+    // プラグイン側でplugin_idを生成（host_contextは使用しない）
     let mut instance = PLUGIN_INSTANCE.lock().unwrap();
-    let mut plugin = DummyPlugin::with_plugin_id(plugin_id);
+    let mut plugin = DummyPlugin::new();
 
-    // on_loadedを呼び出し
+    println!("=== C ABI: Generated plugin_id: {} ===", plugin.plugin_id);
+
+    // on_loadedを呼び出し（plugin-helloでplugin_idをCoreに送信する）
     let host = Arc::new(CApiPluginHost);
     let result = RUNTIME.block_on(plugin.on_loaded(host));
 
@@ -1095,7 +1070,7 @@ pub extern "C" fn plugin_init(host_context: *mut c_void) -> i32 {
     }
 
     *instance = Some(plugin);
-    println!("=== C ABI: plugin_init completed successfully with plugin_id: {} ===", plugin_id);
+    println!("=== C ABI: plugin_init completed successfully ===");
     0 // 成功
 }
 

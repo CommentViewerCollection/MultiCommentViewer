@@ -18,11 +18,31 @@ interface Comment {
 
 interface ConnectionInfo {
   connection_id: string
-  plugin_id: string
+  plugin_id?: string
   status: { type: string; message?: string }
+  site_id?: string
   site_name: string
+  url?: string
+  browser_id?: string
+  browser_name?: string
+  advanced_settings?: any
   input_info: string
   name: string
+}
+
+interface SiteInfo {
+  site_id: string
+  site_name: string
+  display_name: string
+  plugin_id: string
+  options_schema: any
+}
+
+interface BrowserInfo {
+  browser_id: string
+  browser_name: string
+  display_name: string
+  plugin_id: string
 }
 
 interface UpdateInfo {
@@ -37,6 +57,8 @@ interface UpdateInfo {
 function App() {
   const [comments, setComments] = useState<Comment[]>([])
   const [connections, setConnections] = useState<ConnectionInfo[]>([])
+  const [sites, setSites] = useState<SiteInfo[]>([])
+  const [browsers, setBrowsers] = useState<BrowserInfo[]>([])
   const dataGridRef = useRef<DataGridRef>(null)
   const [atBottom, setAtBottom] = useState(true)
   const atBottomRef = useRef(true)
@@ -73,6 +95,20 @@ function App() {
     }
   }
 
+  // サイト/ブラウザ情報を読み込む
+  const loadSitesAndBrowsers = async () => {
+    try {
+      const [sitesData, browsersData] = await Promise.all([
+        invoke<SiteInfo[]>('get_sites'),
+        invoke<BrowserInfo[]>('get_browsers'),
+      ])
+      setSites(sitesData)
+      setBrowsers(browsersData)
+    } catch (error) {
+      console.error('Failed to load sites and browsers:', error)
+    }
+  }
+
   // atBottomの変更をrefに反映
   useEffect(() => {
     atBottomRef.current = atBottom
@@ -81,6 +117,7 @@ function App() {
   useEffect(() => {
     // 初回読み込み
     loadConnections()
+    loadSitesAndBrowsers()
 
     // コメント受信イベントをリッスン
     const unlistenComment = listen<Comment>('comment-received', (event) => {
@@ -103,10 +140,24 @@ function App() {
       loadConnections()
     })
 
+    // サイト追加イベントをリッスン
+    const unlistenSiteAdded = listen<SiteInfo>('site-added', (event) => {
+      console.log('[Site] Site added:', event.payload)
+      setSites((prev) => [...prev, event.payload])
+    })
+
+    // ブラウザ追加イベントをリッスン
+    const unlistenBrowserAdded = listen<BrowserInfo>('browser-added', (event) => {
+      console.log('[Browser] Browser added:', event.payload)
+      setBrowsers((prev) => [...prev, event.payload])
+    })
+
     return () => {
       unlistenComment.then((fn) => fn())
       unlistenConnected.then((fn) => fn())
       unlistenDisconnected.then((fn) => fn())
+      unlistenSiteAdded.then((fn) => fn())
+      unlistenBrowserAdded.then((fn) => fn())
     }
   }, [])
 
@@ -170,6 +221,58 @@ function App() {
       // loadConnections()はdisconnectedイベントで自動実行される
     } catch (error) {
       console.error('Failed to disconnect:', error)
+    }
+  }
+
+  const handleSiteChange = async (connectionId: string, siteId: string) => {
+    if (!siteId) return
+    try {
+      console.log('[Connection] Setting site:', { connectionId, siteId })
+      await invoke('set_connection_site', { connectionId, siteId })
+      await loadConnections()
+    } catch (error) {
+      console.error('[Connection] Failed to set site:', error)
+      alert('サイトの設定に失敗しました')
+    }
+  }
+
+  const handleUrlChange = (connectionId: string, url: string) => {
+    // ローカルステートのみ更新
+    setConnections((prev) =>
+      prev.map((conn) =>
+        conn.connection_id === connectionId ? { ...conn, url } : conn
+      )
+    )
+  }
+
+  const handleUrlBlur = async (connectionId: string) => {
+    const conn = connections.find((c) => c.connection_id === connectionId)
+    if (!conn) return
+    try {
+      await invoke('update_connection_settings', {
+        connectionId,
+        url: conn.url || null,
+        browserId: null,
+        advancedSettings: null,
+      })
+    } catch (error) {
+      console.error('[Connection] Failed to update URL:', error)
+    }
+  }
+
+  const handleBrowserChange = async (connectionId: string, browserId: string) => {
+    if (!browserId) return
+    try {
+      await invoke('update_connection_settings', {
+        connectionId,
+        url: null,
+        browserId,
+        advancedSettings: null,
+      })
+      await loadConnections()
+    } catch (error) {
+      console.error('[Connection] Failed to set browser:', error)
+      alert('ブラウザの設定に失敗しました')
     }
   }
 
@@ -306,69 +409,127 @@ function App() {
               接続がありません
             </div>
           ) : (
-            connections.map((conn) => (
-              <div
-                key={conn.connection_id}
-                className="p-3 bg-gray-700 rounded transition-colors"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <input
-                    type="text"
-                    value={editingNames[conn.connection_id] ?? conn.name}
-                    onChange={(e) => handleNameChange(conn.connection_id, e.target.value)}
-                    onBlur={() => handleNameBlur(conn.connection_id)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 focus:outline-none flex-1 mr-2"
-                  />
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
+            connections.map((conn) => {
+              const isConnected = conn.status.type === 'Connected'
+              const isDisconnected = conn.status.type === 'Disconnected' || conn.status.type === 'Created'
+              const canModify = isDisconnected
+              const canConnect = conn.site_id && conn.url
+
+              return (
+                <div
+                  key={conn.connection_id}
+                  className="p-3 bg-gray-700 rounded transition-colors space-y-2"
+                >
+                  {/* 接続名 */}
+                  <div className="flex items-center justify-between">
+                    <input
+                      type="text"
+                      value={editingNames[conn.connection_id] ?? conn.name}
+                      onChange={(e) => handleNameChange(conn.connection_id, e.target.value)}
+                      onBlur={() => handleNameBlur(conn.connection_id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 focus:outline-none flex-1 mr-2"
                     />
-                    <span className="text-xs text-gray-400">
-                      {getStatusText(conn.status)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
+                      />
+                      <span className="text-xs text-gray-400">
+                        {getStatusText(conn.status)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* サイト選択 */}
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">配信サイト</label>
+                    <select
+                      value={conn.site_id || ''}
+                      onChange={(e) => handleSiteChange(conn.connection_id, e.target.value)}
+                      disabled={!canModify}
+                      className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">選択してください</option>
+                      {sites.map((site) => (
+                        <option key={site.site_id} value={site.site_id}>
+                          {site.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* URL入力 */}
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">URL</label>
+                    <input
+                      type="text"
+                      value={conn.url || ''}
+                      onChange={(e) => handleUrlChange(conn.connection_id, e.target.value)}
+                      onBlur={() => handleUrlBlur(conn.connection_id)}
+                      disabled={!canModify}
+                      placeholder="https://..."
+                      className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* ブラウザ選択 */}
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">ブラウザ</label>
+                    <select
+                      value={conn.browser_id || ''}
+                      onChange={(e) => handleBrowserChange(conn.connection_id, e.target.value)}
+                      disabled={!canModify}
+                      className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">選択してください</option>
+                      {browsers.map((browser) => (
+                        <option key={browser.browser_id} value={browser.browser_id}>
+                          {browser.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* アクションボタン */}
+                  <div className="flex gap-2 pt-1">
+                    {isDisconnected && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleConnect(conn.connection_id)
+                        }}
+                        disabled={!canConnect}
+                        className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        接続
+                      </button>
+                    )}
+                    {isConnected && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDisconnect(conn.connection_id)
+                        }}
+                        className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors"
+                      >
+                        切断
+                      </button>
+                    )}
+                    {isDisconnected && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveConnection(conn.connection_id)
+                        }}
+                        className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+                      >
+                        削除
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="text-xs text-gray-400 mb-2 truncate">
-                  {conn.site_name} - {conn.input_info}
-                </div>
-                <div className="flex gap-2">
-                  {(conn.status.type === 'Created' || conn.status.type === 'Disconnected') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleConnect(conn.connection_id)
-                      }}
-                      className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors"
-                    >
-                      接続
-                    </button>
-                  )}
-                  {conn.status.type === 'Connected' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDisconnect(conn.connection_id)
-                      }}
-                      className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors"
-                    >
-                      切断
-                    </button>
-                  )}
-                  {(conn.status.type === 'Created' || conn.status.type === 'Disconnected') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleRemoveConnection(conn.connection_id)
-                      }}
-                      className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-                    >
-                      削除
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
 

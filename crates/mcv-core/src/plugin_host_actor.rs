@@ -157,15 +157,36 @@ impl Actor for PluginHostActor {
                 return;
             }
 
-            // プラグインを初期化
-            if let Err(e) = plugin_loader.init(std::ptr::null_mut()) {
+            // プラグインを初期化（plugin_idをC文字列として渡す）
+            let plugin_id_str = self.plugin_id.to_string();
+            let plugin_id_cstr = match std::ffi::CString::new(plugin_id_str) {
+                Ok(cstr) => cstr,
+                Err(e) => {
+                    tracing::error!(
+                        error = %e,
+                        "Failed to create CString for plugin_id"
+                    );
+                    ctx.stop();
+                    return;
+                }
+            };
+
+            tracing::debug!(
+                plugin_id = %self.plugin_id,
+                "Initializing DLL plugin with plugin_id"
+            );
+
+            if let Err(e) = plugin_loader.init(plugin_id_cstr.as_ptr() as *mut std::ffi::c_void) {
                 tracing::error!(
                     error = %e,
                     "Plugin init failed"
                 );
                 ctx.stop();
             } else {
-                tracing::info!("DLL plugin initialized successfully");
+                tracing::info!(
+                    plugin_id = %self.plugin_id,
+                    "DLL plugin initialized successfully with plugin_id"
+                );
             }
         } else {
             tracing::error!("Neither plugin nor plugin_loader is set");

@@ -185,14 +185,30 @@ impl CoreActor {
                 if let Some(plugin_id) = conn_info.plugin_id {
                     drop(manager); // ロックを解放
 
+                    // デバッグ: 登録されている全plugin_idをログ出力
+                    let registered_plugin_ids: Vec<String> = plugins.keys().map(|id| id.to_string()).collect();
+                    tracing::debug!(
+                        connection_id = %connection_id,
+                        plugin_id_from_connection = %plugin_id,
+                        registered_plugin_ids = ?registered_plugin_ids,
+                        "Attempting to find plugin for connection"
+                    );
+
                     // プラグインへconnectメッセージを転送
                     if let Some(plugin_info) = plugins.get(&plugin_id) {
+                        tracing::debug!(
+                            plugin_id = %plugin_id,
+                            plugin_name = %plugin_info.name,
+                            connection_id = %connection_id,
+                            "Found plugin, forwarding connect message"
+                        );
                         plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
                     } else {
                         tracing::error!(
                             plugin_id = %plugin_id,
                             connection_id = %connection_id,
-                            "Plugin not found"
+                            registered_plugin_count = plugins.len(),
+                            "Plugin not found - plugin_id mismatch detected"
                         );
                     }
                 } else {
@@ -463,6 +479,13 @@ impl CoreActor {
             plugin_id,
             options_schema: payload.options_schema,
         };
+
+        tracing::info!(
+            site_id = %payload.site_id,
+            site_name = %payload.site_name,
+            plugin_id_from_message_src = %plugin_id,
+            "Registering site (plugin_id is from message.src)"
+        );
 
         let manager = self.site_browser_manager.clone();
         let site_info_clone = site_info.clone();
@@ -754,6 +777,11 @@ impl Handler<RegisterPlugin> for CoreActor {
     type Result = ();
 
     fn handle(&mut self, msg: RegisterPlugin, _ctx: &mut Self::Context) {
+        tracing::info!(
+            plugin_id = %msg.plugin_id,
+            plugin_name = %msg.plugin_info.name,
+            "Registering plugin in CoreActor"
+        );
         self.plugins.insert(msg.plugin_id, msg.plugin_info);
     }
 }

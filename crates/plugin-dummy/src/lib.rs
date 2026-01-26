@@ -25,8 +25,13 @@ pub struct DummyPlugin {
 impl DummyPlugin {
     /// 新しいダミープラグインを作成
     pub fn new() -> Self {
+        Self::with_plugin_id(Uuid::new_v4())
+    }
+
+    /// plugin_idを指定してダミープラグインを作成
+    pub fn with_plugin_id(plugin_id: Uuid) -> Self {
         Self {
-            plugin_id: Uuid::new_v4(),
+            plugin_id,
             connections: HashMap::new(),
             comment_rates: HashMap::new(),
             paused: HashMap::new(),
@@ -1046,11 +1051,39 @@ pub extern "C" fn plugin_get_metadata() -> *const c_char {
 /// # Safety
 /// この関数はCから呼び出されることを想定しています。
 #[no_mangle]
-pub extern "C" fn plugin_init(_host_context: *mut c_void) -> i32 {
+pub extern "C" fn plugin_init(host_context: *mut c_void) -> i32 {
     println!("=== C ABI: plugin_init called ===");
 
+    // host_contextからplugin_idを取得
+    let plugin_id = if !host_context.is_null() {
+        unsafe {
+            let plugin_id_cstr = CStr::from_ptr(host_context as *const c_char);
+            match plugin_id_cstr.to_str() {
+                Ok(id_str) => {
+                    match Uuid::parse_str(id_str) {
+                        Ok(id) => {
+                            println!("=== C ABI: Received plugin_id from host: {} ===", id);
+                            id
+                        }
+                        Err(e) => {
+                            eprintln!("plugin_init: Failed to parse plugin_id UUID: {}", e);
+                            return -1;
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("plugin_init: Invalid UTF-8 in plugin_id: {}", e);
+                    return -1;
+                }
+            }
+        }
+    } else {
+        eprintln!("plugin_init: Warning: host_context is null, generating new plugin_id");
+        Uuid::new_v4()
+    };
+
     let mut instance = PLUGIN_INSTANCE.lock().unwrap();
-    let mut plugin = DummyPlugin::new();
+    let mut plugin = DummyPlugin::with_plugin_id(plugin_id);
 
     // on_loadedを呼び出し
     let host = Arc::new(CApiPluginHost);
@@ -1062,7 +1095,7 @@ pub extern "C" fn plugin_init(_host_context: *mut c_void) -> i32 {
     }
 
     *instance = Some(plugin);
-    println!("=== C ABI: plugin_init completed successfully ===");
+    println!("=== C ABI: plugin_init completed successfully with plugin_id: {} ===", plugin_id);
     0 // 成功
 }
 

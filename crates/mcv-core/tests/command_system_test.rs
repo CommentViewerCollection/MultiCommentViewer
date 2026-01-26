@@ -68,7 +68,7 @@ async fn test_connection_manager_integration() {
     // 接続を作成
     let connection_id = core_addr
         .send(CreateConnection {
-            plugin_id,
+            plugin_id: Some(plugin_id),
             site_name: "Test Site".to_string(),
             input_info: "Test Input".to_string(),
             name: "#1".to_string(),
@@ -96,7 +96,7 @@ async fn test_rename_connection() {
     // 接続を作成
     let connection_id = core_addr
         .send(CreateConnection {
-            plugin_id,
+            plugin_id: Some(plugin_id),
             site_name: "Test Site".to_string(),
             input_info: "Test Input".to_string(),
             name: "#1".to_string(),
@@ -131,7 +131,7 @@ async fn test_remove_disconnected_connection() {
     // 接続を作成
     let connection_id = core_addr
         .send(CreateConnection {
-            plugin_id,
+            plugin_id: Some(plugin_id),
             site_name: "Test Site".to_string(),
             input_info: "Test Input".to_string(),
             name: "#1".to_string(),
@@ -163,7 +163,7 @@ async fn test_multiple_connections() {
     // 3つの接続を作成
     let connection_id1 = core_addr
         .send(CreateConnection {
-            plugin_id,
+            plugin_id: Some(plugin_id),
             site_name: "Site 1".to_string(),
             input_info: "Input 1".to_string(),
             name: "#1".to_string(),
@@ -173,7 +173,7 @@ async fn test_multiple_connections() {
 
     let connection_id2 = core_addr
         .send(CreateConnection {
-            plugin_id,
+            plugin_id: Some(plugin_id),
             site_name: "Site 2".to_string(),
             input_info: "Input 2".to_string(),
             name: "#2".to_string(),
@@ -183,7 +183,7 @@ async fn test_multiple_connections() {
 
     let connection_id3 = core_addr
         .send(CreateConnection {
-            plugin_id,
+            plugin_id: Some(plugin_id),
             site_name: "Site 3".to_string(),
             input_info: "Input 3".to_string(),
             name: "#3".to_string(),

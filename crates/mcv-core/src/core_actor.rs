@@ -132,7 +132,7 @@ impl CoreActor {
 
         actix::spawn(async move {
             let mut manager = connection_manager.write().await;
-            manager.add_connection(connection_id, plugin_id, site_name, input_info, format!("Connection {}", connection_id));
+            manager.add_connection(connection_id, Some(plugin_id), site_name, input_info, format!("Connection {}", connection_id));
         });
 
         // connection-addedを返信
@@ -245,8 +245,10 @@ impl CoreActor {
             actix::spawn(async move {
                 let manager = connection_manager.read().await;
                 if let Some(conn_info) = manager.get_connection(&connection_id) {
-                    if let Some(plugin_info) = plugins.get(&conn_info.plugin_id) {
-                        plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                    if let Some(plugin_id) = conn_info.plugin_id {
+                        if let Some(plugin_info) = plugins.get(&plugin_id) {
+                            plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                        }
                     }
                 }
             });
@@ -318,8 +320,10 @@ impl CoreActor {
         actix::spawn(async move {
             let manager = connection_manager.read().await;
             if let Some(conn_info) = manager.get_connection(&connection_id) {
-                if let Some(plugin_info) = plugins.get(&conn_info.plugin_id) {
-                    plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                if let Some(plugin_id) = conn_info.plugin_id {
+                    if let Some(plugin_info) = plugins.get(&plugin_id) {
+                        plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                    }
                 }
             }
         });
@@ -527,7 +531,7 @@ impl Handler<GetConnections> for CoreActor {
 #[derive(Message)]
 #[rtype(result = "Uuid")]
 pub struct CreateConnection {
-    pub plugin_id: Uuid,
+    pub plugin_id: Option<Uuid>,  // 変更: Option<Uuid>に
     pub site_name: String,
     pub input_info: String,
     pub name: String,

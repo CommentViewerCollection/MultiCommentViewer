@@ -130,7 +130,7 @@ mod tests {
 
         manager.add_connection(
             conn_id,
-            plugin_id,
+            Some(plugin_id),  // 変更: Optionで渡す
             "Test Site".to_string(),
             "Test Input".to_string(),
             "#1".to_string(),

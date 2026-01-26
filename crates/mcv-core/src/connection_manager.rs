@@ -22,9 +22,14 @@ pub enum ConnectionStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionInfo {
     pub connection_id: Uuid,
-    pub plugin_id: Uuid,
+    pub plugin_id: Option<Uuid>,      // 変更: Option<Uuid>に
     pub status: ConnectionStatus,
+    pub site_id: Option<Uuid>,        // 新規
     pub site_name: String,
+    pub url: Option<String>,          // 新規
+    pub browser_id: Option<Uuid>,     // 新規
+    pub browser_name: Option<String>, // 新規
+    pub advanced_settings: Option<serde_json::Value>, // 新規
     pub input_info: String,
     pub name: String,
 }
@@ -45,12 +50,25 @@ impl ConnectionManager {
     }
 
     /// 接続を追加
-    pub fn add_connection(&mut self, connection_id: Uuid, plugin_id: Uuid, site_name: String, input_info: String, name: String) {
+    pub fn add_connection(&mut self, connection_id: Uuid, plugin_id: Option<Uuid>, site_name: String, input_info: String, name: String) {
+        tracing::debug!(
+            connection_id = %connection_id,
+            plugin_id = ?plugin_id,
+            site_name = %site_name,
+            name = %name,
+            "Adding connection"
+        );
+
         let info = ConnectionInfo {
             connection_id,
             plugin_id,
             status: ConnectionStatus::Created,
+            site_id: None,
             site_name,
+            url: None,
+            browser_id: None,
+            browser_name: None,
+            advanced_settings: None,
             input_info,
             name,
         };
@@ -92,6 +110,75 @@ impl ConnectionManager {
             info.name = new_name;
         }
     }
+
+    /// サイトを設定
+    pub fn set_site(
+        &mut self,
+        connection_id: &Uuid,
+        site_id: Uuid,
+        site_name: String,
+        plugin_id: Uuid,
+    ) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            tracing::debug!(
+                connection_id = %connection_id,
+                site_id = %site_id,
+                site_name = %site_name,
+                plugin_id = %plugin_id,
+                "Connection site updated"
+            );
+            info.site_id = Some(site_id);
+            info.site_name = site_name;
+            info.plugin_id = Some(plugin_id);
+        }
+    }
+
+    /// URLを更新
+    pub fn update_url(&mut self, connection_id: &Uuid, url: Option<String>) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            tracing::debug!(
+                connection_id = %connection_id,
+                url = ?url,
+                "Connection URL updated"
+            );
+            info.url = url;
+        }
+    }
+
+    /// ブラウザを更新
+    pub fn update_browser(
+        &mut self,
+        connection_id: &Uuid,
+        browser_id: Option<Uuid>,
+        browser_name: Option<String>,
+    ) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            tracing::debug!(
+                connection_id = %connection_id,
+                browser_id = ?browser_id,
+                browser_name = ?browser_name,
+                "Connection browser updated"
+            );
+            info.browser_id = browser_id;
+            info.browser_name = browser_name;
+        }
+    }
+
+    /// 詳細設定を更新
+    pub fn update_advanced_settings(
+        &mut self,
+        connection_id: &Uuid,
+        settings: Option<serde_json::Value>,
+    ) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            tracing::debug!(
+                connection_id = %connection_id,
+                has_settings = settings.is_some(),
+                "Connection advanced settings updated"
+            );
+            info.advanced_settings = settings;
+        }
+    }
 }
 
 impl Default for ConnectionManager {
@@ -110,8 +197,8 @@ mod tests {
         let conn_id = Uuid::new_v4();
         let plugin_id = Uuid::new_v4();
 
-        // 接続を追加
-        manager.add_connection(conn_id, plugin_id, "Test Site".to_string(), "test input".to_string(), "Test Connection".to_string());
+        // 接続を追加（plugin_idはOptionに変更）
+        manager.add_connection(conn_id, Some(plugin_id), "Test Site".to_string(), "test input".to_string(), "Test Connection".to_string());
         assert_eq!(
             manager.get_status(&conn_id),
             Some(ConnectionStatus::Created)
@@ -128,5 +215,55 @@ mod tests {
         let removed = manager.remove_connection(&conn_id);
         assert!(removed.is_some());
         assert_eq!(manager.get_status(&conn_id), None);
+    }
+
+    #[test]
+    fn test_site_management() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+        let site_id = Uuid::new_v4();
+        let plugin_id = Uuid::new_v4();
+
+        // 接続を追加（サイト未選択）
+        manager.add_connection(conn_id, None, "未選択".to_string(), "{}".to_string(), "#1".to_string());
+
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.plugin_id, None);
+        assert_eq!(conn.site_id, None);
+
+        // サイトを設定
+        manager.set_site(&conn_id, site_id, "Test Site".to_string(), plugin_id);
+
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.plugin_id, Some(plugin_id));
+        assert_eq!(conn.site_id, Some(site_id));
+        assert_eq!(conn.site_name, "Test Site");
+    }
+
+    #[test]
+    fn test_connection_settings() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+        let browser_id = Uuid::new_v4();
+
+        // 接続を追加
+        manager.add_connection(conn_id, None, "未選択".to_string(), "{}".to_string(), "#1".to_string());
+
+        // URL更新
+        manager.update_url(&conn_id, Some("https://example.com".to_string()));
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.url, Some("https://example.com".to_string()));
+
+        // ブラウザ更新
+        manager.update_browser(&conn_id, Some(browser_id), Some("Chrome".to_string()));
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.browser_id, Some(browser_id));
+        assert_eq!(conn.browser_name, Some("Chrome".to_string()));
+
+        // 詳細設定更新
+        let settings = serde_json::json!({"key": "value"});
+        manager.update_advanced_settings(&conn_id, Some(settings.clone()));
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.advanced_settings, Some(settings));
     }
 }

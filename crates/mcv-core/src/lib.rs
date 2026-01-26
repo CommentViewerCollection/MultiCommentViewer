@@ -5,7 +5,7 @@ pub mod site_browser_manager;
 
 // 公開エクスポート
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
-pub use core_actor::{CoreActor, PluginInfo, RegisterPlugin, SendMessageToCore, SendRequest, GetConnections, CreateConnection, RemoveConnection, RenameConnection};
+pub use core_actor::{CoreActor, PluginInfo, RegisterPlugin, SendMessageToCore, SendRequest, GetConnections, CreateConnection, RemoveConnection, RenameConnection, GetSites, GetBrowsers, SetConnectionSite, UpdateConnectionSettings};
 pub use plugin_host_actor::{PluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 pub use site_browser_manager::{SiteAndBrowserManager, SiteInfo, BrowserInfo};
 

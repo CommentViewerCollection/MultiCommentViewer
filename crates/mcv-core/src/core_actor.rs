@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::connection_manager::{ConnectionManager, ConnectionStatus, ConnectionInfo};
 use crate::plugin_host_actor::{PluginHostActor, SendMessageToPlugin};
+use crate::site_browser_manager::{SiteAndBrowserManager, SiteInfo, BrowserInfo};
 
 /// プラグイン情報
 #[derive(Debug, Clone)]
@@ -24,6 +25,7 @@ pub struct PluginInfo {
 /// メッセージルーティングとビジネスロジックを担当
 pub struct CoreActor {
     connection_manager: Arc<RwLock<ConnectionManager>>,
+    site_browser_manager: Arc<RwLock<SiteAndBrowserManager>>,  // 新規
     plugins: HashMap<Uuid, PluginInfo>,
     /// UIへのイベント送信用コールバック
     event_callback: Option<Arc<dyn Fn(McvMessage) + Send + Sync>>,
@@ -34,6 +36,7 @@ impl CoreActor {
     pub fn new() -> Self {
         Self {
             connection_manager: Arc::new(RwLock::new(ConnectionManager::new())),
+            site_browser_manager: Arc::new(RwLock::new(SiteAndBrowserManager::new())),  // 新規
             plugins: HashMap::new(),
             event_callback: None,
         }
@@ -414,6 +417,230 @@ impl CoreActor {
             }
         }
     }
+
+    /// add-siteを処理
+    fn handle_add_site(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: AddSitePayload = match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to parse AddSitePayload");
+                return;
+            }
+        };
+
+        let plugin_id = match &message.src {
+            MessageSource::Plugin { plugin_id } => *plugin_id,
+            _ => {
+                tracing::error!("AddSite must come from a plugin");
+                return;
+            }
+        };
+
+        let site_info = SiteInfo {
+            site_id: payload.site_id,
+            site_name: payload.site_name.clone(),
+            display_name: payload.display_name.clone(),
+            plugin_id,
+            options_schema: payload.options_schema,
+        };
+
+        let manager = self.site_browser_manager.clone();
+        let site_info_clone = site_info.clone();
+        actix::spawn(async move {
+            let mut mgr = manager.write().await;
+            mgr.add_site(site_info_clone);
+        });
+
+        // UIにイベント通知
+        if let Some(callback) = &self.event_callback {
+            let event = McvMessage::new_notification(
+                MessageType::AddSite,
+                MessageSource::Core,
+                MessageDestination::Core,
+                serde_json::to_value(&site_info).unwrap(),
+            );
+            callback(event);
+        }
+
+        tracing::info!(
+            site_name = %payload.site_name,
+            plugin_id = %plugin_id,
+            "Site registered"
+        );
+    }
+
+    /// add-browserを処理
+    fn handle_add_browser(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: AddBrowserPayload = match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to parse AddBrowserPayload");
+                return;
+            }
+        };
+
+        let plugin_id = match &message.src {
+            MessageSource::Plugin { plugin_id } => *plugin_id,
+            _ => {
+                tracing::error!("AddBrowser must come from a plugin");
+                return;
+            }
+        };
+
+        let browser_info = BrowserInfo {
+            browser_id: payload.browser_id,
+            browser_name: payload.browser_name.clone(),
+            display_name: payload.display_name.clone(),
+            plugin_id,
+        };
+
+        let manager = self.site_browser_manager.clone();
+        let browser_info_clone = browser_info.clone();
+        actix::spawn(async move {
+            let mut mgr = manager.write().await;
+            mgr.add_browser(browser_info_clone);
+        });
+
+        // UIにイベント通知
+        if let Some(callback) = &self.event_callback {
+            let event = McvMessage::new_notification(
+                MessageType::AddBrowser,
+                MessageSource::Core,
+                MessageDestination::Core,
+                serde_json::to_value(&browser_info).unwrap(),
+            );
+            callback(event);
+        }
+
+        tracing::info!(
+            browser_name = %payload.browser_name,
+            plugin_id = %plugin_id,
+            "Browser registered"
+        );
+    }
+
+    /// set-connection-siteを処理（UIから呼ばれる）
+    fn handle_set_connection_site(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: SetConnectionSitePayload = match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to parse SetConnectionSitePayload");
+                return;
+            }
+        };
+
+        let connection_id = payload.connection_id;
+        let site_id = payload.site_id;
+
+        tracing::debug!(
+            connection_id = %connection_id,
+            site_id = %site_id,
+            "Setting connection site"
+        );
+
+        // 前のサイトを取得してDiscardConnectionSiteを送信
+        let conn_mgr = self.connection_manager.clone();
+        let site_mgr = self.site_browser_manager.clone();
+        let plugins = self.plugins.clone();
+
+        actix::spawn(async move {
+            let mut conn_manager = conn_mgr.write().await;
+            let site_manager = site_mgr.read().await;
+
+            // 前のplugin_idを取得
+            let old_plugin_id = conn_manager
+                .get_connection(&connection_id)
+                .and_then(|c| c.plugin_id);
+
+            // 新しいサイト情報を取得
+            if let Some(site_info) = site_manager.get_site(&site_id) {
+                conn_manager.set_site(
+                    &connection_id,
+                    site_id,
+                    site_info.display_name.clone(),
+                    site_info.plugin_id,
+                );
+
+                // 前のプラグインにDiscardConnectionSiteを送信
+                if let Some(old_pid) = old_plugin_id {
+                    if old_pid != site_info.plugin_id {
+                        if let Some(old_plugin) = plugins.get(&old_pid) {
+                            let discard_msg = McvMessage::new(
+                                MessageType::DiscardConnectionSite,
+                                MessageSource::Core,
+                                MessageDestination::Plugin { plugin_id: old_pid },
+                                serde_json::to_value(DiscardConnectionSitePayload {
+                                    connection_id,
+                                    site_id,
+                                }).unwrap(),
+                            );
+                            old_plugin.host_addr.do_send(SendMessageToPlugin {
+                                message: discard_msg,
+                            });
+                        }
+                    }
+                }
+
+                // 新しいプラグインにSetConnectionSiteを送信
+                if let Some(new_plugin) = plugins.get(&site_info.plugin_id) {
+                    let set_msg = McvMessage::new(
+                        MessageType::SetConnectionSite,
+                        MessageSource::Core,
+                        MessageDestination::Plugin { plugin_id: site_info.plugin_id },
+                        serde_json::to_value(SetConnectionSitePayload {
+                            connection_id,
+                            site_id,
+                        }).unwrap(),
+                    );
+                    new_plugin.host_addr.do_send(SendMessageToPlugin {
+                        message: set_msg,
+                    });
+                }
+            }
+        });
+    }
+
+    /// update-connection-settingsを処理
+    fn handle_update_connection_settings(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        let payload: UpdateConnectionSettingsPayload = match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to parse UpdateConnectionSettingsPayload");
+                return;
+            }
+        };
+
+        tracing::debug!(
+            connection_id = %payload.connection_id,
+            has_url = payload.url.is_some(),
+            has_browser = payload.browser_id.is_some(),
+            has_settings = payload.advanced_settings.is_some(),
+            "Updating connection settings"
+        );
+
+        let conn_mgr = self.connection_manager.clone();
+        let site_mgr = self.site_browser_manager.clone();
+
+        actix::spawn(async move {
+            let mut manager = conn_mgr.write().await;
+            let site_manager = site_mgr.read().await;
+
+            if let Some(url) = payload.url {
+                manager.update_url(&payload.connection_id, Some(url));
+            }
+
+            if let Some(browser_id) = payload.browser_id {
+                let browser_name = site_manager
+                    .get_browser(&browser_id)
+                    .map(|b| b.display_name.clone());
+                manager.update_browser(&payload.connection_id, Some(browser_id), browser_name);
+            }
+
+            if let Some(settings) = payload.advanced_settings {
+                manager.update_advanced_settings(&payload.connection_id, Some(settings));
+            }
+        });
+    }
 }
 
 impl Actor for CoreActor {
@@ -457,6 +684,10 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::CommentReceived => self.handle_comment_received(message, ctx),
             MessageType::SendComment => self.handle_send_comment(message, ctx),
             MessageType::LogEntry => self.handle_log_entry(message, ctx),
+            MessageType::AddSite => self.handle_add_site(message, ctx),
+            MessageType::AddBrowser => self.handle_add_browser(message, ctx),
+            MessageType::SetConnectionSite => self.handle_set_connection_site(message, ctx),
+            MessageType::UpdateConnectionSettings => self.handle_update_connection_settings(message, ctx),
             _ => {
                 tracing::warn!(
                     message_type = ?message.message_type,
@@ -612,5 +843,101 @@ impl Handler<RenameConnection> for CoreActor {
         };
 
         Box::pin(fut.into_actor(self))
+    }
+}
+
+/// サイト一覧を取得
+#[derive(Message)]
+#[rtype(result = "Vec<SiteInfo>")]
+pub struct GetSites;
+
+impl Handler<GetSites> for CoreActor {
+    type Result = ResponseActFuture<Self, Vec<SiteInfo>>;
+
+    fn handle(&mut self, _msg: GetSites, _ctx: &mut Context<Self>) -> Self::Result {
+        let manager = self.site_browser_manager.clone();
+        Box::pin(
+            async move {
+                let mgr = manager.read().await;
+                mgr.list_sites()
+            }
+            .into_actor(self),
+        )
+    }
+}
+
+/// ブラウザ一覧を取得
+#[derive(Message)]
+#[rtype(result = "Vec<BrowserInfo>")]
+pub struct GetBrowsers;
+
+impl Handler<GetBrowsers> for CoreActor {
+    type Result = ResponseActFuture<Self, Vec<BrowserInfo>>;
+
+    fn handle(&mut self, _msg: GetBrowsers, _ctx: &mut Context<Self>) -> Self::Result {
+        let manager = self.site_browser_manager.clone();
+        Box::pin(
+            async move {
+                let mgr = manager.read().await;
+                mgr.list_browsers()
+            }
+            .into_actor(self),
+        )
+    }
+}
+
+/// 接続にサイトを設定
+#[derive(Message)]
+#[rtype(result = "Result<(), String>")]
+pub struct SetConnectionSite {
+    pub connection_id: Uuid,
+    pub site_id: Uuid,
+}
+
+impl Handler<SetConnectionSite> for CoreActor {
+    type Result = ResponseActFuture<Self, Result<(), String>>;
+
+    fn handle(&mut self, msg: SetConnectionSite, ctx: &mut Context<Self>) -> Self::Result {
+        let message = McvMessage::new(
+            MessageType::SetConnectionSite,
+            MessageSource::Core,
+            MessageDestination::Core,
+            serde_json::to_value(SetConnectionSitePayload {
+                connection_id: msg.connection_id,
+                site_id: msg.site_id,
+            }).unwrap(),
+        );
+        self.handle_set_connection_site(message, ctx);
+        Box::pin(async { Ok(()) }.into_actor(self))
+    }
+}
+
+/// 接続設定を更新
+#[derive(Message)]
+#[rtype(result = "Result<(), String>")]
+pub struct UpdateConnectionSettings {
+    pub connection_id: Uuid,
+    pub url: Option<String>,
+    pub browser_id: Option<Uuid>,
+    pub advanced_settings: Option<serde_json::Value>,
+}
+
+impl Handler<UpdateConnectionSettings> for CoreActor {
+    type Result = ResponseActFuture<Self, Result<(), String>>;
+
+    fn handle(&mut self, msg: UpdateConnectionSettings, ctx: &mut Context<Self>) -> Self::Result {
+        let message = McvMessage::new(
+            MessageType::UpdateConnectionSettings,
+            MessageSource::Core,
+            MessageDestination::Core,
+            serde_json::to_value(UpdateConnectionSettingsPayload {
+                connection_id: msg.connection_id,
+                url: msg.url,
+                browser_id: msg.browser_id,
+                advanced_settings: msg.advanced_settings,
+            }).unwrap(),
+        );
+        self.handle_update_connection_settings(message, ctx);
+        Box::pin(async { Ok(()) }.into_actor(self))
     }
 }

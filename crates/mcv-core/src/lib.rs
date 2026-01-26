@@ -1,11 +1,13 @@
 pub mod connection_manager;
 pub mod core_actor;
 pub mod plugin_host_actor;
+pub mod site_browser_manager;
 
 // 公開エクスポート
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
 pub use core_actor::{CoreActor, PluginInfo, RegisterPlugin, SendMessageToCore, SendRequest, GetConnections, CreateConnection, RemoveConnection, RenameConnection};
 pub use plugin_host_actor::{PluginHostActor, SendMessageToPlugin, ShutdownPlugin};
+pub use site_browser_manager::{SiteAndBrowserManager, SiteInfo, BrowserInfo};
 
 use actix::prelude::*;
 use mcv_plugin_interface::Plugin;

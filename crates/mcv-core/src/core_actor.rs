@@ -171,23 +171,43 @@ impl CoreActor {
 
         let connection_id = payload.connection_id;
 
-        // Connection Managerのステータスを更新
+        // Connection Managerから接続情報を取得してplugin_idを取得
         let connection_manager = self.connection_manager.clone();
+        let plugins = self.plugins.clone();
+        let msg = message.clone();
+
         actix::spawn(async move {
             let mut manager = connection_manager.write().await;
             manager.update_status(&connection_id, ConnectionStatus::Connecting);
-        });
 
-        // プラグインへconnectメッセージを転送
-        let plugin_id = payload.site.id;
-        if let Some(plugin_info) = self.plugins.get(&plugin_id) {
-            plugin_info.host_addr.do_send(SendMessageToPlugin { message });
-        } else {
-            tracing::error!(
-                plugin_id = %plugin_id,
-                "Plugin not found"
-            );
-        }
+            // plugin_idを取得
+            if let Some(conn_info) = manager.get_connection(&connection_id) {
+                if let Some(plugin_id) = conn_info.plugin_id {
+                    drop(manager); // ロックを解放
+
+                    // プラグインへconnectメッセージを転送
+                    if let Some(plugin_info) = plugins.get(&plugin_id) {
+                        plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                    } else {
+                        tracing::error!(
+                            plugin_id = %plugin_id,
+                            connection_id = %connection_id,
+                            "Plugin not found"
+                        );
+                    }
+                } else {
+                    tracing::error!(
+                        connection_id = %connection_id,
+                        "Connection has no plugin_id set"
+                    );
+                }
+            } else {
+                tracing::error!(
+                    connection_id = %connection_id,
+                    "Connection not found"
+                );
+            }
+        });
     }
 
     /// connectedを処理

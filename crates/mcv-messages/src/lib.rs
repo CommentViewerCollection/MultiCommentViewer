@@ -88,6 +88,13 @@ pub enum MessageType {
     // その他
     GetAppName,
     GetAppVersion,
+
+    // Site/Browser管理関連
+    AddSite,
+    AddBrowser,
+    SetConnectionSite,
+    DiscardConnectionSite,
+    UpdateConnectionSettings,
 }
 
 // ============================================================================
@@ -260,6 +267,46 @@ pub struct LogEntryPayload {
     /// プラグインのビルドプロファイル（"alpha", "beta", "stable"、オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plugin_build_profile: Option<String>,
+}
+
+/// add-siteのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddSitePayload {
+    pub site_id: Uuid,
+    pub site_name: String,
+    pub display_name: String,
+    pub options_schema: serde_json::Value,
+}
+
+/// add-browserのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddBrowserPayload {
+    pub browser_id: Uuid,
+    pub browser_name: String,
+    pub display_name: String,
+}
+
+/// set-connection-siteのpayload (Core → Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetConnectionSitePayload {
+    pub connection_id: Uuid,
+    pub site_id: Uuid,
+}
+
+/// discard-connection-siteのpayload (Core → Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiscardConnectionSitePayload {
+    pub connection_id: Uuid,
+    pub site_id: Uuid,
+}
+
+/// update-connection-settingsのpayload (UI → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateConnectionSettingsPayload {
+    pub connection_id: Uuid,
+    pub url: Option<String>,
+    pub browser_id: Option<Uuid>,
+    pub advanced_settings: Option<serde_json::Value>,
 }
 
 // ============================================================================

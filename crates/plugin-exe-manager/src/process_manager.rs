@@ -1,7 +1,7 @@
 use crate::manifest::{PluginManifest, ManifestError};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::process::Child;
+use std::process::{Child, Command};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -83,6 +83,7 @@ impl ProcessManager {
                     Ok(manifest) => {
                         tracing::info!(
                             plugin_name = %manifest.plugin.name,
+                            plugin_id = %manifest.plugin.id,
                             manifest_path = %manifest_path.display(),
                             "Found plugin manifest"
                         );
@@ -112,16 +113,22 @@ impl ProcessManager {
         for (manifest_dir, manifest) in manifests_clone {
             tracing::info!(
                 plugin_name = %manifest.plugin.name,
+                plugin_id = %manifest.plugin.id,
                 "Starting auto plugin"
             );
 
             match self.start_plugin(&manifest_dir, &manifest, true).await {
                 Ok(_) => {
-                    tracing::info!(plugin_name = %manifest.plugin.name, "Plugin started");
+                    tracing::info!(
+                        plugin_name = %manifest.plugin.name,
+                        plugin_id = %manifest.plugin.id,
+                        "Plugin started"
+                    );
                 }
                 Err(e) => {
                     tracing::error!(
                         plugin_name = %manifest.plugin.name,
+                        plugin_id = %manifest.plugin.id,
                         error = %e,
                         "Failed to start plugin"
                     );
@@ -142,28 +149,90 @@ impl ProcessManager {
         let exe_path = manifest.get_executable_path(manifest_dir);
         let working_dir = manifest.get_working_directory(manifest_dir);
 
+        // 実行ファイルの存在チェック
+        if !exe_path.exists() {
+            return Err(ProcessManagerError::SpawnError(format!(
+                "Executable not found: {}",
+                exe_path.display()
+            )));
+        }
+
         tracing::debug!(
             exe_path = %exe_path.display(),
             working_dir = %working_dir.display(),
             "Starting plugin process"
         );
 
-        // TODO: 実際にプロセスを起動
-        // let child = std::process::Command::new(&exe_path)
-        //     .current_dir(&working_dir)
-        //     .args(&manifest.executable.args)
-        //     .env("MCV_WEBSOCKET_PORT", self.websocket_port.to_string())
-        //     .spawn()?;
+        // プロセスを起動
+        let mut cmd = Command::new(&exe_path);
+        cmd.current_dir(&working_dir);
+        cmd.args(&manifest.executable.args);
+        cmd.env("MCV_WEBSOCKET_PORT", self.websocket_port.to_string());
+        cmd.env("MCV_WEBSOCKET_URL", format!("ws://127.0.0.1:{}", self.websocket_port));
+
+        let child = cmd.spawn()
+            .map_err(|e| ProcessManagerError::SpawnError(format!(
+                "Failed to spawn process: {}",
+                e
+            )))?;
+
+        tracing::info!(
+            plugin_id = %manifest.plugin.id,
+            pid = child.id(),
+            "Plugin process started"
+        );
 
         let plugin_process = PluginProcess {
             manifest: manifest.clone(),
             manifest_dir: manifest_dir.to_path_buf(),
-            child: None,  // TODO: 実際のChildを設定
+            child: Some(child),
             restart_count: 0,
             auto_started,
         };
 
         self.processes.insert(manifest.plugin.id.clone(), plugin_process);
+
+        Ok(())
+    }
+
+    /// プラグインを再起動
+    #[allow(dead_code)]
+    async fn restart_plugin(&mut self, plugin_id: &str) -> Result<(), ProcessManagerError> {
+        tracing::info!(plugin_id = %plugin_id, "Restarting plugin");
+
+        // プロセスを取得
+        let process = self.processes.get_mut(plugin_id)
+            .ok_or_else(|| ProcessManagerError::SpawnError(
+                format!("Plugin not found: {}", plugin_id)
+            ))?;
+
+        // 既存のプロセスを終了
+        if let Some(mut child) = process.child.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+
+        // 再起動カウントをインクリメント
+        process.restart_count += 1;
+
+        // 最大再起動回数チェック（3回まで）
+        if process.restart_count > 3 {
+            tracing::error!(
+                plugin_id = %plugin_id,
+                restart_count = process.restart_count,
+                "Maximum restart count exceeded"
+            );
+            return Err(ProcessManagerError::SpawnError(
+                "Maximum restart count exceeded".to_string()
+            ));
+        }
+
+        // 再起動
+        let manifest = process.manifest.clone();
+        let manifest_dir = process.manifest_dir.clone();
+        let auto_started = process.auto_started;
+
+        self.start_plugin(&manifest_dir, &manifest, auto_started).await?;
 
         Ok(())
     }
@@ -177,10 +246,34 @@ impl ProcessManager {
             tracing::info!(plugin_id = %plugin_id, "Stopping plugin process");
 
             if let Some(mut child) = process.child.take() {
-                // TODO: グレースフルシャットダウン
+                // グレースフルシャットダウン（TODO: シグナル送信）
                 match child.kill() {
-                    Ok(_) => tracing::info!(plugin_id = %plugin_id, "Plugin process killed"),
-                    Err(e) => tracing::error!(plugin_id = %plugin_id, error = %e, "Failed to kill plugin process"),
+                    Ok(_) => {
+                        // プロセスの終了を待つ
+                        match child.wait() {
+                            Ok(status) => {
+                                tracing::info!(
+                                    plugin_id = %plugin_id,
+                                    exit_code = ?status.code(),
+                                    "Plugin process stopped"
+                                );
+                            }
+                            Err(e) => {
+                                tracing::error!(
+                                    plugin_id = %plugin_id,
+                                    error = %e,
+                                    "Failed to wait for plugin process"
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            plugin_id = %plugin_id,
+                            error = %e,
+                            "Failed to kill plugin process"
+                        );
+                    }
                 }
             }
         }
@@ -212,6 +305,9 @@ mod tests {
         // APPDATA環境変数が設定されている場合のみ成功
         if std::env::var("APPDATA").is_ok() {
             assert!(result.is_ok());
+            let path = result.unwrap();
+            assert!(path.to_string_lossy().contains("MultiCommentViewer"));
+            assert!(path.to_string_lossy().contains("plugins"));
         }
     }
 }

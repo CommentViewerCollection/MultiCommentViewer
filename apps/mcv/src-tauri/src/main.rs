@@ -1,8 +1,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use actix::prelude::*;
-use mcv_core::*;
-use mcv_messages::{self, Message as McvMessage, MessageSource, MessageDestination, MessageType, *};
+use mcv_core::{
+    CoreActor, PluginManager, PluginInfo, SendMessageToCore,
+    GetConnections, CreateConnection, RemoveConnection, RenameConnection,
+    GetSites, GetBrowsers, SetConnectionSite, UpdateConnectionSettings,
+    ConnectionInfo,
+    SiteInfo as CoreSiteInfo, BrowserInfo as CoreBrowserInfo,  // mcv-coreから明示的にインポート
+};
+use mcv_messages::{
+    self, Message as McvMessage, MessageSource, MessageDestination, MessageType,
+    ConnectPayload, DisconnectPayload, SendCommentPayload, CommentReceivedPayload,
+    SiteInfo as MsgSiteInfo, BrowserInfo as MsgBrowserInfo, InputInfo,  // mcv-messagesから明示的にインポート
+};
 use mcv_updater::{UpdateChecker, McvUpdateInfo};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -22,7 +32,6 @@ async fn add_connection(
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     tracing::debug!("add_connection called");
-    let plugin_id = state.dummy_plugin_id;
 
     // 現在の接続を取得してデフォルト名を生成
     let connections = state
@@ -50,13 +59,13 @@ async fn add_connection(
     let default_name = format!("#{}", next_number);
     tracing::debug!(name = %default_name, "Generated default connection name");
 
-    // 接続を作成
+    // 接続を作成（plugin_idはNone、サイト未選択状態）
     let connection_id = state
         .core_addr
         .send(CreateConnection {
-            plugin_id,
-            site_name: "Dummy Plugin".to_string(),
-            input_info: "ダミー接続".to_string(),
+            plugin_id: None,  // 変更: サイト未選択状態で作成
+            site_name: "未選択".to_string(),
+            input_info: "{}".to_string(),
             name: default_name,
         })
         .await
@@ -107,7 +116,30 @@ async fn connect(
     connection_id: String,
 ) -> Result<(), String> {
     let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
-    let plugin_id = state.dummy_plugin_id;
+
+    // 接続情報を取得
+    let connections = state
+        .core_addr
+        .send(GetConnections)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let conn_info = connections
+        .iter()
+        .find(|c| c.connection_id == conn_id)
+        .ok_or("Connection not found")?;
+
+    // サイトが選択されていない場合はエラー
+    let plugin_id = conn_info.plugin_id.ok_or("サイトが選択されていません")?;
+    let site_id = conn_info.site_id.ok_or("サイトが選択されていません")?;
+    let url = conn_info.url.clone().ok_or("URLが入力されていません")?;
+
+    tracing::debug!(
+        connection_id = %conn_id,
+        plugin_id = %plugin_id,
+        site_id = %site_id,
+        "Connecting to site"
+    );
 
     // connectメッセージを送信
     let message = McvMessage::new(
@@ -116,17 +148,20 @@ async fn connect(
         MessageDestination::Plugin { plugin_id },
         serde_json::to_value(ConnectPayload {
             connection_id: conn_id,
-            site: SiteInfo {
-                name: "Dummy".to_string(),
-                id: plugin_id,
+            site: MsgSiteInfo {
+                name: conn_info.site_name.clone(),
+                id: site_id,
             },
             input: InputInfo {
-                input_type: "dummy".to_string(),
-                extra: serde_json::json!({}),
+                input_type: conn_info.site_name.clone(),
+                extra: serde_json::json!({
+                    "url": url,
+                    "advanced_settings": conn_info.advanced_settings,
+                }),
             },
-            browser: BrowserInfo {
-                name: "None".to_string(),
-                id: Uuid::nil(),
+            browser: MsgBrowserInfo {
+                name: conn_info.browser_name.clone().unwrap_or("None".to_string()),
+                id: conn_info.browser_id.unwrap_or(Uuid::nil()),
             },
         })
         .unwrap(),
@@ -181,6 +216,107 @@ async fn get_connections(
         .map_err(|e| e.to_string())?;
 
     Ok(connections)
+}
+
+/// サイト一覧を取得
+#[tauri::command]
+async fn get_sites(
+    state: tauri::State<'_, AppState>,
+) -> Result<Vec<CoreSiteInfo>, String> {
+    let sites = state
+        .core_addr
+        .send(GetSites)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(sites)
+}
+
+/// ブラウザ一覧を取得
+#[tauri::command]
+async fn get_browsers(
+    state: tauri::State<'_, AppState>,
+) -> Result<Vec<CoreBrowserInfo>, String> {
+    let browsers = state
+        .core_addr
+        .send(GetBrowsers)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(browsers)
+}
+
+/// 接続にサイトを設定
+#[tauri::command]
+async fn set_connection_site(
+    state: tauri::State<'_, AppState>,
+    connection_id: String,
+    site_id: String,
+) -> Result<(), String> {
+    let conn_id = Uuid::parse_str(&connection_id)
+        .map_err(|e| format!("Invalid connection_id: {}", e))?;
+    let s_id = Uuid::parse_str(&site_id)
+        .map_err(|e| format!("Invalid site_id: {}", e))?;
+
+    tracing::debug!(
+        connection_id = %conn_id,
+        site_id = %s_id,
+        "Setting connection site"
+    );
+
+    state
+        .core_addr
+        .send(SetConnectionSite {
+            connection_id: conn_id,
+            site_id: s_id,
+        })
+        .await
+        .map_err(|e| format!("Failed to set connection site: {}", e))?
+        .map_err(|e| e)?;
+
+    Ok(())
+}
+
+/// 接続設定を更新
+#[tauri::command]
+async fn update_connection_settings(
+    state: tauri::State<'_, AppState>,
+    connection_id: String,
+    url: Option<String>,
+    browser_id: Option<String>,
+    advanced_settings: Option<serde_json::Value>,
+) -> Result<(), String> {
+    let conn_id = Uuid::parse_str(&connection_id)
+        .map_err(|e| format!("Invalid connection_id: {}", e))?;
+
+    let b_id = if let Some(bid) = browser_id {
+        Some(Uuid::parse_str(&bid)
+            .map_err(|e| format!("Invalid browser_id: {}", e))?)
+    } else {
+        None
+    };
+
+    tracing::debug!(
+        connection_id = %conn_id,
+        has_url = url.is_some(),
+        has_browser = b_id.is_some(),
+        has_settings = advanced_settings.is_some(),
+        "Updating connection settings"
+    );
+
+    state
+        .core_addr
+        .send(UpdateConnectionSettings {
+            connection_id: conn_id,
+            url,
+            browser_id: b_id,
+            advanced_settings,
+        })
+        .await
+        .map_err(|e| format!("Failed to update connection settings: {}", e))?
+        .map_err(|e| e)?;
+
+    Ok(())
 }
 
 /// コメントを送信
@@ -382,6 +518,24 @@ fn main() {
                                     );
                                 }
                             }
+                            MessageType::AddSite => {
+                                tracing::debug!("Emitting site-added event");
+                                if let Err(e) = app_handle.emit("site-added", message.payload) {
+                                    tracing::error!(
+                                        error = %e,
+                                        "Failed to emit site-added event"
+                                    );
+                                }
+                            }
+                            MessageType::AddBrowser => {
+                                tracing::debug!("Emitting browser-added event");
+                                if let Err(e) = app_handle.emit("browser-added", message.payload) {
+                                    tracing::error!(
+                                        error = %e,
+                                        "Failed to emit browser-added event"
+                                    );
+                                }
+                            }
                             _ => {}
                         }
                     }
@@ -501,6 +655,10 @@ fn main() {
             connect,
             disconnect,
             get_connections,
+            get_sites,
+            get_browsers,
+            set_connection_site,
+            update_connection_settings,
             send_comment,
             check_for_updates,
             launch_installer

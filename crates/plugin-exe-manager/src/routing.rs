@@ -1,43 +1,292 @@
-use mcv_messages::Message as McvMessage;
+use mcv_messages::{Message as McvMessage, MessageDestination};
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::{mpsc, RwLock};
 use uuid::Uuid;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum RoutingError {
+    #[error("Plugin not found: {0}")]
+    PluginNotFound(Uuid),
+
+    #[error("Send error: {0}")]
+    SendError(String),
+
+    #[error("Broadcast error: {0}")]
+    BroadcastError(String),
+}
+
+/// WebSocketクライアント情報（routing用）
+pub struct ClientInfo {
+    pub plugin_id: Uuid,
+    pub sender: mpsc::UnboundedSender<McvMessage>,
+    pub roles: Vec<String>,
+}
 
 /// メッセージルーティング
 ///
 /// Core ↔ EXEプラグイン間のメッセージをルーティングする
 pub struct MessageRouter {
-    // TODO: ルーティングテーブルを保持
+    clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
 }
 
 impl MessageRouter {
-    pub fn new() -> Self {
-        Self {}
+    /// 新しいメッセージルーターを作成
+    pub fn new(clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>) -> Self {
+        Self { clients }
     }
 
-    /// Coreから受信したメッセージを適切なEXEプラグインへルーティング
-    pub async fn route_from_core(&self, _message: McvMessage) -> Result<(), String> {
-        // TODO: 実装
+    /// 特定のEXEプラグインへメッセージを送信（ユニキャスト）
+    pub async fn route_to_plugin(&self, plugin_id: Uuid, message: McvMessage) -> Result<(), RoutingError> {
+        tracing::debug!(
+            plugin_id = %plugin_id,
+            message_type = ?message.message_type,
+            "Routing message to specific plugin"
+        );
+
+        let clients = self.clients.read().await;
+        let client = clients.get(&plugin_id)
+            .ok_or(RoutingError::PluginNotFound(plugin_id))?;
+
+        client.sender.send(message)
+            .map_err(|e| RoutingError::SendError(e.to_string()))?;
+
         Ok(())
     }
 
-    /// EXEプラグインから受信したメッセージをCoreへルーティング
-    pub async fn route_from_plugin(&self, _plugin_id: Uuid, _message: McvMessage) -> Result<(), String> {
-        // TODO: 実装
+    /// すべてのEXEプラグインへメッセージをブロードキャスト
+    pub async fn broadcast(&self, message: McvMessage) -> Result<(), RoutingError> {
+        tracing::debug!(
+            message_type = ?message.message_type,
+            "Broadcasting message to all EXE plugins"
+        );
+
+        let clients = self.clients.read().await;
+        let mut errors = Vec::new();
+
+        for (plugin_id, client) in clients.iter() {
+            if let Err(e) = client.sender.send(message.clone()) {
+                tracing::error!(
+                    plugin_id = %plugin_id,
+                    error = %e.to_string(),
+                    "Failed to broadcast message to plugin"
+                );
+                errors.push(format!("{}: {}", plugin_id, e));
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(RoutingError::BroadcastError(
+                format!("Failed to send to {} plugins: {}", errors.len(), errors.join(", "))
+            ));
+        }
+
+        tracing::debug!(count = clients.len(), "Broadcast completed");
+
         Ok(())
     }
-}
 
-impl Default for MessageRouter {
-    fn default() -> Self {
-        Self::new()
+    /// 特定のroleを持つEXEプラグインへメッセージをブロードキャスト
+    pub async fn broadcast_to_role(&self, role: &str, message: McvMessage) -> Result<(), RoutingError> {
+        tracing::debug!(
+            role = %role,
+            message_type = ?message.message_type,
+            "Broadcasting message to plugins with specific role"
+        );
+
+        let clients = self.clients.read().await;
+        let mut sent_count = 0;
+        let mut errors = Vec::new();
+
+        for (plugin_id, client) in clients.iter() {
+            if client.roles.contains(&role.to_string()) {
+                if let Err(e) = client.sender.send(message.clone()) {
+                    tracing::error!(
+                        plugin_id = %plugin_id,
+                        error = %e.to_string(),
+                        "Failed to broadcast message to plugin"
+                    );
+                    errors.push(format!("{}: {}", plugin_id, e));
+                } else {
+                    sent_count += 1;
+                }
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(RoutingError::BroadcastError(
+                format!("Failed to send to {} plugins: {}", errors.len(), errors.join(", "))
+            ));
+        }
+
+        tracing::debug!(
+            role = %role,
+            count = sent_count,
+            "Role-based broadcast completed"
+        );
+
+        Ok(())
+    }
+
+    /// メッセージの宛先に基づいて適切にルーティング
+    pub async fn route(&self, message: McvMessage) -> Result<(), RoutingError> {
+        match &message.dst {
+            MessageDestination::Plugin { plugin_id } => {
+                // 特定のプラグインへユニキャスト
+                self.route_to_plugin(*plugin_id, message).await
+            }
+            MessageDestination::Core => {
+                // Coreへのメッセージはここではルーティングしない
+                tracing::warn!("Message to Core should not be routed through MessageRouter");
+                Ok(())
+            }
+        }
+    }
+
+    /// 接続中のクライアント数を取得
+    pub async fn client_count(&self) -> usize {
+        let clients = self.clients.read().await;
+        clients.len()
+    }
+
+    /// 特定のプラグインが接続しているか確認
+    pub async fn is_connected(&self, plugin_id: Uuid) -> bool {
+        let clients = self.clients.read().await;
+        clients.contains_key(&plugin_id)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mcv_messages::{MessageSource, MessageType};
 
-    #[test]
-    fn test_router_creation() {
-        let _router = MessageRouter::new();
+    #[tokio::test]
+    async fn test_router_creation() {
+        let clients = Arc::new(RwLock::new(HashMap::new()));
+        let _router = MessageRouter::new(clients);
+    }
+
+    #[tokio::test]
+    async fn test_client_count() {
+        let clients = Arc::new(RwLock::new(HashMap::new()));
+        let router = MessageRouter::new(Arc::clone(&clients));
+
+        assert_eq!(router.client_count().await, 0);
+
+        // クライアントを追加
+        let plugin_id = Uuid::new_v4();
+        let (tx, _rx) = mpsc::unbounded_channel();
+        clients.write().await.insert(
+            plugin_id,
+            ClientInfo {
+                plugin_id,
+                sender: tx,
+                roles: vec!["test".to_string()],
+            },
+        );
+
+        assert_eq!(router.client_count().await, 1);
+    }
+
+    #[tokio::test]
+    async fn test_is_connected() {
+        let clients = Arc::new(RwLock::new(HashMap::new()));
+        let router = MessageRouter::new(Arc::clone(&clients));
+
+        let plugin_id = Uuid::new_v4();
+        assert!(!router.is_connected(plugin_id).await);
+
+        // クライアントを追加
+        let (tx, _rx) = mpsc::unbounded_channel();
+        clients.write().await.insert(
+            plugin_id,
+            ClientInfo {
+                plugin_id,
+                sender: tx,
+                roles: vec!["test".to_string()],
+            },
+        );
+
+        assert!(router.is_connected(plugin_id).await);
+    }
+
+    #[tokio::test]
+    async fn test_route_to_plugin() {
+        let clients = Arc::new(RwLock::new(HashMap::new()));
+        let router = MessageRouter::new(Arc::clone(&clients));
+
+        let plugin_id = Uuid::new_v4();
+        let (tx, mut rx) = mpsc::unbounded_channel();
+
+        clients.write().await.insert(
+            plugin_id,
+            ClientInfo {
+                plugin_id,
+                sender: tx,
+                roles: vec!["test".to_string()],
+            },
+        );
+
+        let message = McvMessage::new(
+            MessageType::Connected,
+            MessageSource::Core,
+            MessageDestination::Plugin { plugin_id },
+            serde_json::json!({}),
+        );
+
+        router.route_to_plugin(plugin_id, message.clone()).await.unwrap();
+
+        // メッセージが受信されることを確認
+        let received = rx.recv().await.unwrap();
+        assert_eq!(received.message_type, MessageType::Connected);
+    }
+
+    #[tokio::test]
+    async fn test_broadcast() {
+        let clients = Arc::new(RwLock::new(HashMap::new()));
+        let router = MessageRouter::new(Arc::clone(&clients));
+
+        // 2つのクライアントを追加
+        let plugin_id_1 = Uuid::new_v4();
+        let plugin_id_2 = Uuid::new_v4();
+
+        let (tx1, mut rx1) = mpsc::unbounded_channel();
+        let (tx2, mut rx2) = mpsc::unbounded_channel();
+
+        clients.write().await.insert(
+            plugin_id_1,
+            ClientInfo {
+                plugin_id: plugin_id_1,
+                sender: tx1,
+                roles: vec!["test".to_string()],
+            },
+        );
+
+        clients.write().await.insert(
+            plugin_id_2,
+            ClientInfo {
+                plugin_id: plugin_id_2,
+                sender: tx2,
+                roles: vec!["test".to_string()],
+            },
+        );
+
+        let message = McvMessage::new_notification(
+            MessageType::ConnectionAdded,
+            MessageSource::Core,
+            MessageDestination::Core,  // ブロードキャストなので宛先は任意
+            serde_json::json!({}),
+        );
+
+        router.broadcast(message.clone()).await.unwrap();
+
+        // 両方のクライアントがメッセージを受信
+        let received1 = rx1.recv().await.unwrap();
+        let received2 = rx2.recv().await.unwrap();
+
+        assert_eq!(received1.message_type, MessageType::ConnectionAdded);
+        assert_eq!(received2.message_type, MessageType::ConnectionAdded);
     }
 }

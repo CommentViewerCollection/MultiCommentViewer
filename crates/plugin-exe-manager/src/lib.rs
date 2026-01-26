@@ -63,6 +63,20 @@ impl ExePluginManager {
 
         Ok(())
     }
+
+    /// メッセージタイプがブロードキャストすべきかどうかを判定
+    fn should_broadcast(message_type: &MessageType) -> bool {
+        matches!(
+            message_type,
+            MessageType::PluginAdded
+                | MessageType::PluginRemoved
+                | MessageType::ConnectionAdded
+                | MessageType::ConnectionRemoved
+                | MessageType::Connected
+                | MessageType::Disconnected
+                | MessageType::CommentReceived
+        )
+    }
 }
 
 impl Default for ExePluginManager {
@@ -109,10 +123,33 @@ impl Plugin for ExePluginManager {
 
         // EXEプラグインへメッセージをルーティング
         if let Some(websocket_server) = &self.websocket_server {
-            if let MessageDestination::Plugin { plugin_id } = message.dst {
-                // 該当するEXEプラグインへ送信
-                websocket_server.send_to_plugin(plugin_id, message).await
+            let router = websocket_server.get_router();
+
+            // ブロードキャストが必要なメッセージタイプかチェック
+            if Self::should_broadcast(&message.message_type) {
+                tracing::debug!(
+                    message_type = ?message.message_type,
+                    "Broadcasting message to all EXE plugins"
+                );
+                router.broadcast(message).await
                     .map_err(|e| PluginError::ConnectionError(e.to_string()))?;
+            } else {
+                // ユニキャスト: 特定のプラグインへ送信
+                match &message.dst {
+                    MessageDestination::Plugin { plugin_id } => {
+                        tracing::debug!(
+                            plugin_id = %plugin_id,
+                            message_type = ?message.message_type,
+                            "Routing message to specific EXE plugin"
+                        );
+                        router.route_to_plugin(*plugin_id, message).await
+                            .map_err(|e| PluginError::ConnectionError(e.to_string()))?;
+                    }
+                    MessageDestination::Core => {
+                        // Coreへのメッセージはルーティングしない
+                        tracing::debug!("Message to Core, not routing to EXE plugins");
+                    }
+                }
             }
         }
 

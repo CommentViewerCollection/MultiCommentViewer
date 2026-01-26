@@ -1,3 +1,4 @@
+use crate::routing::{ClientInfo, MessageRouter};
 use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload};
 use mcv_plugin_interface::PluginHost;
 use std::collections::HashMap;
@@ -28,15 +29,11 @@ pub enum WebSocketError {
 /// WebSocketサーバー
 pub struct WebSocketServer {
     port: u16,
-    clients: Arc<RwLock<HashMap<Uuid, WebSocketClient>>>,
+    clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+    router: Arc<MessageRouter>,
+    #[allow(dead_code)]
     host: Arc<dyn PluginHost>,
     shutdown_tx: Option<mpsc::Sender<()>>,
-}
-
-/// WebSocketクライアント（EXEプラグイン）
-struct WebSocketClient {
-    plugin_id: Uuid,
-    sender: mpsc::UnboundedSender<McvMessage>,
 }
 
 impl WebSocketServer {
@@ -55,6 +52,7 @@ impl WebSocketServer {
         tracing::info!(port = port, "WebSocket server listening");
 
         let clients = Arc::new(RwLock::new(HashMap::new()));
+        let router = Arc::new(MessageRouter::new(Arc::clone(&clients)));
         let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
 
         // サーバーループを起動
@@ -67,6 +65,7 @@ impl WebSocketServer {
         Ok(Self {
             port,
             clients,
+            router,
             host,
             shutdown_tx: Some(shutdown_tx),
         })
@@ -75,7 +74,7 @@ impl WebSocketServer {
     /// サーバーループ
     async fn server_loop(
         listener: TcpListener,
-        clients: Arc<RwLock<HashMap<Uuid, WebSocketClient>>>,
+        clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
         mut shutdown_rx: mpsc::Receiver<()>,
     ) {
@@ -109,7 +108,7 @@ impl WebSocketServer {
     /// クライアント接続を処理
     async fn handle_connection(
         stream: TcpStream,
-        clients: Arc<RwLock<HashMap<Uuid, WebSocketClient>>>,
+        clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
     ) -> Result<(), WebSocketError> {
         let ws_stream = tokio_tungstenite::accept_async(stream)
@@ -154,9 +153,10 @@ impl WebSocketServer {
                                 if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(mcv_message.payload.clone()) {
                                     plugin_id = Some(payload.plugin_id);
 
-                                    let client = WebSocketClient {
+                                    let client = ClientInfo {
                                         plugin_id: payload.plugin_id,
                                         sender: tx.clone(),
+                                        roles: payload.role.clone(),
                                     };
 
                                     clients.write().await.insert(payload.plugin_id, client);
@@ -164,6 +164,7 @@ impl WebSocketServer {
                                     tracing::info!(
                                         plugin_id = %payload.plugin_id,
                                         plugin_name = %payload.name,
+                                        roles = ?payload.role,
                                         "EXE plugin registered"
                                     );
                                 }
@@ -221,18 +222,15 @@ impl WebSocketServer {
         self.port
     }
 
-    /// EXEプラグインへメッセージを送信
+    /// MessageRouterへの参照を取得
+    pub fn get_router(&self) -> &MessageRouter {
+        &self.router
+    }
+
+    /// EXEプラグインへメッセージを送信（レガシー互換性のため残す）
     pub async fn send_to_plugin(&self, plugin_id: Uuid, message: McvMessage) -> Result<(), WebSocketError> {
-        tracing::debug!(plugin_id = %plugin_id, message_type = ?message.message_type, "Sending message to EXE plugin");
-
-        let clients = self.clients.read().await;
-        let client = clients.get(&plugin_id)
-            .ok_or(WebSocketError::PluginNotFound(plugin_id))?;
-
-        client.sender.send(message)
-            .map_err(|e| WebSocketError::SendError(e.to_string()))?;
-
-        Ok(())
+        self.router.route_to_plugin(plugin_id, message).await
+            .map_err(|e| WebSocketError::SendError(e.to_string()))
     }
 
     /// WebSocketサーバーをシャットダウン
@@ -259,9 +257,10 @@ mod tests {
     #[test]
     fn test_websocket_client_creation() {
         let (tx, _rx) = mpsc::unbounded_channel();
-        let client = WebSocketClient {
+        let client = ClientInfo {
             plugin_id: Uuid::new_v4(),
             sender: tx,
+            roles: vec!["test".to_string()],
         };
 
         assert!(!client.plugin_id.is_nil());

@@ -634,6 +634,53 @@ impl Plugin for DummyPlugin {
         host.send_message(message).await?;
         tracing::info!("Plugin-hello message sent successfully");
 
+        // ダミーサイトを登録
+        tracing::info!("Registering dummy site and browser");
+        let dummy_site_message = Message::new_notification(
+            MessageType::AddSite,
+            MessageSource::Plugin {
+                plugin_id: self.plugin_id,
+            },
+            MessageDestination::Core,
+            serde_json::to_value(AddSitePayload {
+                site_id: self.plugin_id,
+                site_name: "dummy".to_string(),
+                display_name: "ダミーサイト".to_string(),
+                options_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "interval": {
+                            "type": "integer",
+                            "title": "コメント生成間隔（秒）",
+                            "description": "コメント生成間隔を秒単位で指定します。0の場合はランダム",
+                            "default": 0,
+                            "minimum": 0
+                        }
+                    }
+                }),
+            })
+            .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to serialize AddSitePayload: {}", e)))?,
+        );
+        host.send_message(dummy_site_message).await?;
+
+        // ダミーブラウザを登録（「なし」オプション）
+        let dummy_browser_message = Message::new_notification(
+            MessageType::AddBrowser,
+            MessageSource::Plugin {
+                plugin_id: self.plugin_id,
+            },
+            MessageDestination::Core,
+            serde_json::to_value(AddBrowserPayload {
+                browser_id: Uuid::nil(),
+                browser_name: "none".to_string(),
+                display_name: "なし".to_string(),
+            })
+            .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to serialize AddBrowserPayload: {}", e)))?,
+        );
+        host.send_message(dummy_browser_message).await?;
+
+        tracing::info!("Dummy site and browser registered successfully");
+
         Ok(())
     }
 
@@ -747,6 +794,22 @@ impl Plugin for DummyPlugin {
                 if let Err(e) = result {
                     eprintln!("Command execution failed: {}", e);
                 }
+            }
+            MessageType::SetConnectionSite => {
+                tracing::debug!(
+                    connection_id = ?message.payload.get("connection_id"),
+                    site_id = ?message.payload.get("site_id"),
+                    "SetConnectionSite received"
+                );
+                // DummyPluginは特に準備処理不要
+            }
+            MessageType::DiscardConnectionSite => {
+                tracing::debug!(
+                    connection_id = ?message.payload.get("connection_id"),
+                    site_id = ?message.payload.get("site_id"),
+                    "DiscardConnectionSite received"
+                );
+                // DummyPluginは特にクリーンアップ不要
             }
             _ => {
                 println!("Unhandled message type: {:?}", message.message_type);

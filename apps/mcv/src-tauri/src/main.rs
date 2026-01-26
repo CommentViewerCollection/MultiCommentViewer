@@ -592,6 +592,45 @@ fn main() {
 
             tracing::info!(plugin_id = %plugin_id, "Dummy plugin registered");
 
+            // EXE Plugin Managerを登録
+            tracing::info!("Loading ExePluginManager from DLL");
+
+            let exe_plugin_manager_dll_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .join("target")
+                .join("debug")
+                .join("plugin_exe_manager.dll");
+
+            tracing::debug!(dll_path = ?exe_plugin_manager_dll_path, "EXE Plugin Manager DLL path");
+
+            let (exe_manager_plugin_id, exe_manager_plugin_host_addr) = plugin_manager
+                .register_plugin_from_dll(&exe_plugin_manager_dll_path)
+                .await
+                .expect("Failed to register EXE plugin manager from DLL");
+            tracing::debug!("EXE Plugin Manager register_plugin_from_dll returned successfully");
+
+            // Core ActorにPluginInfoを登録
+            let exe_manager_plugin_info = PluginInfo {
+                name: "EXE Plugin Manager".to_string(),
+                plugin_id: exe_manager_plugin_id,
+                role: vec!["exe-plugin-manager".to_string()],
+                api_version: "v2".to_string(),
+                host_addr: exe_manager_plugin_host_addr,
+            };
+
+            tracing::debug!("Sending RegisterPlugin to CoreActor for EXE Plugin Manager");
+            core_addr.do_send(mcv_core::core_actor::RegisterPlugin {
+                plugin_id: exe_manager_plugin_id,
+                plugin_info: exe_manager_plugin_info,
+            });
+
+            tracing::info!(plugin_id = %exe_manager_plugin_id, "EXE Plugin Manager registered");
+
             // AppStateを作成してメインスレッドに送信
             let app_state = AppState {
                 core_addr,

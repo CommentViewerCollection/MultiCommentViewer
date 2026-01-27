@@ -74,15 +74,36 @@ impl CoreActor {
             .iter()
             .position(|(name, _)| name == &payload.name)
         {
+            // DLLプラグインの場合
             let (_, addr) = self.pending_plugin_hosts.remove(index);
             addr
         } else {
-            tracing::error!(
+            // EXEプラグインの場合、plugin-exe-managerのPluginHostActorを使用
+            tracing::debug!(
                 plugin_name = %payload.name,
                 plugin_id = %payload.plugin_id,
-                "No pending plugin host found for plugin-hello"
+                "No pending plugin host found, looking for exe-plugin-manager"
             );
-            return;
+
+            let exe_manager_plugin = self.plugins.iter()
+                .find(|(_, info)| info.role.contains(&"exe-plugin-manager".to_string()));
+
+            if let Some((_, info)) = exe_manager_plugin {
+                tracing::debug!(
+                    plugin_name = %payload.name,
+                    plugin_id = %payload.plugin_id,
+                    exe_manager_id = %info.plugin_id,
+                    "Using exe-plugin-manager's PluginHostActor for EXE plugin"
+                );
+                info.host_addr.clone()
+            } else {
+                tracing::error!(
+                    plugin_name = %payload.name,
+                    plugin_id = %payload.plugin_id,
+                    "No pending plugin host found and no exe-plugin-manager found for plugin-hello"
+                );
+                return;
+            }
         };
 
         tracing::info!(

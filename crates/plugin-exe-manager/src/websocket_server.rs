@@ -39,6 +39,7 @@ pub struct WebSocketServer {
 impl WebSocketServer {
     /// 新しいWebSocketサーバーを作成し、起動する
     pub async fn new(addr: &str, host: Arc<dyn PluginHost>) -> Result<Self, WebSocketError> {
+        println!("=== WebSocketServer: Starting WebSocket server on {} ===", addr);
         tracing::info!(addr = %addr, "Starting WebSocket server");
 
         // アドレスをパース
@@ -49,6 +50,7 @@ impl WebSocketServer {
         let actual_addr = listener.local_addr()?;
         let port = actual_addr.port();
 
+        println!("=== WebSocketServer: Listening on port {} ===", port);
         tracing::info!(port = port, "WebSocket server listening");
 
         let clients = Arc::new(RwLock::new(HashMap::new()));
@@ -83,16 +85,19 @@ impl WebSocketServer {
                 result = listener.accept() => {
                     match result {
                         Ok((stream, addr)) => {
+                            println!("=== WebSocketServer: New connection from {} ===", addr);
                             tracing::info!(addr = %addr, "New WebSocket connection");
                             let clients_clone = Arc::clone(&clients);
                             let host_clone = Arc::clone(&host);
                             tokio::spawn(async move {
                                 if let Err(e) = Self::handle_connection(stream, clients_clone, host_clone).await {
+                                    println!("=== WebSocketServer: Connection handler error: {} ===", e);
                                     tracing::error!(error = %e, "Connection handler error");
                                 }
                             });
                         }
                         Err(e) => {
+                            println!("=== WebSocketServer: Failed to accept connection: {} ===", e);
                             tracing::error!(error = %e, "Failed to accept connection");
                         }
                     }
@@ -148,6 +153,8 @@ impl WebSocketServer {
 
                     match serde_json::from_str::<McvMessage>(&text) {
                         Ok(mcv_message) => {
+                            println!("=== WebSocketServer: Received message, type: {:?} ===", mcv_message.message_type);
+
                             // plugin-helloの場合は登録
                             if mcv_message.message_type == MessageType::PluginHello {
                                 if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(mcv_message.payload.clone()) {
@@ -161,6 +168,7 @@ impl WebSocketServer {
 
                                     clients.write().await.insert(payload.plugin_id, client);
 
+                                    println!("=== WebSocketServer: EXE plugin registered, id: {}, name: {} ===", payload.plugin_id, payload.name);
                                     tracing::info!(
                                         plugin_id = %payload.plugin_id,
                                         plugin_name = %payload.name,
@@ -171,8 +179,12 @@ impl WebSocketServer {
                             }
 
                             // Coreにメッセージをフォワード
+                            println!("=== WebSocketServer: Forwarding message to Core ===");
                             if let Err(e) = host.send_message(mcv_message).await {
+                                println!("=== WebSocketServer: Failed to forward message to Core: {} ===", e);
                                 tracing::error!(error = %e, "Failed to forward message to Core");
+                            } else {
+                                println!("=== WebSocketServer: Message forwarded to Core successfully ===");
                             }
                         }
                         Err(e) => {

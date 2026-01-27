@@ -57,6 +57,7 @@ impl CoreActor {
 
     /// plugin-helloを処理
     fn handle_plugin_hello(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        println!("=== CoreActor: handle_plugin_hello called ===");
         let payload: PluginHelloPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -69,16 +70,25 @@ impl CoreActor {
             }
         };
 
-        // pending_plugin_hostsから該当するPluginHostActorを探す
-        let plugin_host_addr = if let Some(index) = self.pending_plugin_hosts
+        // plugin_idで既に登録されているか確認（RegisterPluginで事前登録されたDLLプラグインの場合）
+        let plugin_host_addr = if let Some(existing_plugin) = self.plugins.get(&payload.plugin_id) {
+            println!("=== CoreActor: Plugin {} already registered, using existing PluginHostActor ===", payload.name);
+            tracing::debug!(
+                plugin_name = %payload.name,
+                plugin_id = %payload.plugin_id,
+                "Plugin already registered with RegisterPlugin, using existing PluginHostActor"
+            );
+            existing_plugin.host_addr.clone()
+        } else if let Some(index) = self.pending_plugin_hosts
             .iter()
             .position(|(name, _)| name == &payload.name)
         {
-            // DLLプラグインの場合
+            // pending_plugin_hostsから見つかった場合（通常のDLLプラグイン）
             let (_, addr) = self.pending_plugin_hosts.remove(index);
             addr
         } else {
             // EXEプラグインの場合、plugin-exe-managerのPluginHostActorを使用
+            println!("=== CoreActor: No pending plugin host found for {}, looking for exe-plugin-manager ===", payload.name);
             tracing::debug!(
                 plugin_name = %payload.name,
                 plugin_id = %payload.plugin_id,
@@ -89,6 +99,7 @@ impl CoreActor {
                 .find(|(_, info)| info.role.contains(&"exe-plugin-manager".to_string()));
 
             if let Some((_, info)) = exe_manager_plugin {
+                println!("=== CoreActor: Found exe-plugin-manager, using its PluginHostActor for {} ===", payload.name);
                 tracing::debug!(
                     plugin_name = %payload.name,
                     plugin_id = %payload.plugin_id,
@@ -97,6 +108,7 @@ impl CoreActor {
                 );
                 info.host_addr.clone()
             } else {
+                println!("=== CoreActor: ERROR - exe-plugin-manager not found for {} ===", payload.name);
                 tracing::error!(
                     plugin_name = %payload.name,
                     plugin_id = %payload.plugin_id,
@@ -137,12 +149,15 @@ impl CoreActor {
         );
 
         // 全プラグインにブロードキャスト
-        for (_plugin_id, plugin_info) in &self.plugins {
+        println!("=== CoreActor: Broadcasting plugin-added to {} plugins ===", self.plugins.len());
+        for (pid, plugin_info) in &self.plugins {
+            println!("=== CoreActor: Sending plugin-added to plugin {} ===", pid);
             plugin_info.host_addr.do_send(SendMessageToPlugin {
                 message: response.clone(),
             });
         }
 
+        println!("=== CoreActor: Plugin {} registered and broadcasted ===", payload.plugin_id);
         tracing::info!(
             plugin_id = %payload.plugin_id,
             plugin_name = %payload.name,
@@ -153,10 +168,15 @@ impl CoreActor {
 
     /// get-pluginsを処理
     fn handle_get_plugins(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        println!("=== CoreActor: handle_get_plugins called ===");
         // メッセージ送信元を取得
         let requester_plugin_id = match message.src {
-            MessageSource::Plugin { plugin_id } => plugin_id,
+            MessageSource::Plugin { plugin_id } => {
+                println!("=== CoreActor: get-plugins from plugin {} ===", plugin_id);
+                plugin_id
+            }
             MessageSource::Core => {
+                println!("=== CoreActor: ERROR - get-plugins from Core, ignoring ===");
                 tracing::warn!("Received get-plugins from Core, ignoring");
                 return;
             }

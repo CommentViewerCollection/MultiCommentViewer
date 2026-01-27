@@ -9,7 +9,6 @@ use mcv_core::{
     GetBrowsers,
     GetConnections,
     GetSites,
-    PluginInfo,
     PluginManager,
     RemoveConnection,
     RenameConnection,
@@ -601,27 +600,16 @@ fn main() {
 
             tracing::info!(count = loaded_plugins.len(), "Loaded DLL plugins");
 
-            // ロードされたプラグインをCoreActorに登録
-            for (plugin_id, plugin_host_addr, plugin_name) in loaded_plugins {
-                let role = vec![];
-
-                let plugin_info = PluginInfo {
-                    name: plugin_name.clone(),
-                    plugin_id,
-                    role,
-                    api_version: "v2".to_string(),
-                    host_addr: plugin_host_addr,
-                };
-
+            // ロードされた物理プラグインをCoreActorに登録
+            for (physical_plugin_id, plugin_host_addr, _plugin_name) in loaded_plugins {
                 tracing::debug!(
-                    plugin_id = %plugin_id,
-                    plugin_name = %plugin_name,
-                    "Registering plugin with CoreActor"
+                    physical_plugin_id = %physical_plugin_id,
+                    "Registering physical plugin with CoreActor"
                 );
 
-                core_addr.do_send(mcv_core::core_actor::RegisterPlugin {
-                    plugin_id,
-                    plugin_info,
+                core_addr.do_send(mcv_core::core_actor::RegisterPhysicalPlugin {
+                    physical_plugin_id,
+                    host_addr: plugin_host_addr,
                 });
             }
 

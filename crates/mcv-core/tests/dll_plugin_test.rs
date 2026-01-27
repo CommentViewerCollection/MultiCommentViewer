@@ -41,8 +41,8 @@ async fn test_register_plugin_from_dll() {
         result.err()
     );
 
-    let (plugin_id, _plugin_host_addr) = result.unwrap();
-    println!("Plugin registered successfully with ID: {}", plugin_id);
+    let (plugin_id, _plugin_host_addr, plugin_name) = result.unwrap();
+    println!("Plugin registered successfully with ID: {} ({})", plugin_id, plugin_name);
 
     // 少し待ってプラグインが初期化されるのを待つ
     tokio::time::sleep(Duration::from_millis(500)).await;

@@ -6,9 +6,9 @@ pub mod site_browser_manager;
 // 公開エクスポート
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
 pub use core_actor::{
-    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetSites, PluginInfo, RegisterPlugin,
-    RemoveConnection, RenameConnection, SendMessageToCore, SendRequest, SetConnectionSite,
-    UpdateConnectionSettings,
+    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetSites, LogicalPluginInfo,
+    PluginInfo, RegisterPhysicalPlugin, RemoveConnection, RenameConnection, SendMessageToCore,
+    SendRequest, SetConnectionSite, UpdateConnectionSettings,
 };
 pub use plugin_host_actor::{PluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
@@ -201,10 +201,7 @@ impl PluginManager {
         loaded_plugins
     }
 
-    struct PluginManifest{
-
-    }
-    /// 指定ディレクトリ内のDLLプラグインをスキャンして登録
+    /// 指定ディレクトリ内のDLLプラグインをスキャンして登録（新形式）
     ///
     /// # Arguments
     /// * `plugins_dir` - プラグインディレクトリのパス
@@ -274,8 +271,8 @@ impl PluginManager {
                 tracing::warn!(target: "mcv::core", dir_path = %path.display(), "No manifest.json found in plugin directory, skipping");
                 continue;
             }
-            // manifest.jsonを読み込む
-            let manifest_content = match std::fs::read_to_string(&manifest_path) {
+            // manifest.jsonを読み込む（将来使用予定）
+            let _manifest_content = match std::fs::read_to_string(&manifest_path) {
                 Ok(content) => content,
                 Err(e) => {
                     tracing::warn!(target: "mcv::core", error = %e, "Failed to read manifest.json in plugin directory: {}", path.display());

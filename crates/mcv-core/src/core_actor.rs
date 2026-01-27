@@ -9,15 +9,19 @@ use crate::connection_manager::{ConnectionManager, ConnectionStatus, ConnectionI
 use crate::plugin_host_actor::{PluginHostActor, SendMessageToPlugin};
 use crate::site_browser_manager::{SiteAndBrowserManager, SiteInfo, BrowserInfo};
 
-/// プラグイン情報
+/// 論理プラグイン情報（ユーザーから見えるプラグイン単位）
 #[derive(Debug, Clone)]
-pub struct PluginInfo {
+pub struct LogicalPluginInfo {
+    pub logical_plugin_id: Uuid,
+    pub physical_plugin_id: Uuid,
     pub name: String,
-    pub plugin_id: Uuid,
     pub role: Vec<String>,
     pub api_version: String,
     pub host_addr: Addr<PluginHostActor>,
 }
+
+/// 後方互換性のため
+pub type PluginInfo = LogicalPluginInfo;
 
 /// Core Actor
 ///
@@ -26,9 +30,10 @@ pub struct PluginInfo {
 pub struct CoreActor {
     connection_manager: Arc<RwLock<ConnectionManager>>,
     site_browser_manager: Arc<RwLock<SiteAndBrowserManager>>,
-    plugins: HashMap<Uuid, PluginInfo>,
-    /// plugin-helloを待っているPluginHostActorのリスト
-    pending_plugin_hosts: Vec<(String, Addr<PluginHostActor>)>,  // (name, addr)
+    /// 論理プラグイン（ユーザーから見えるプラグイン）
+    logical_plugins: HashMap<Uuid, LogicalPluginInfo>,
+    /// 物理プラグイン（DLLファイル）
+    physical_plugin_hosts: HashMap<Uuid, Addr<PluginHostActor>>,
     /// UIへのイベント送信用コールバック
     event_callback: Option<Arc<dyn Fn(McvMessage) + Send + Sync>>,
 }
@@ -39,8 +44,8 @@ impl CoreActor {
         Self {
             connection_manager: Arc::new(RwLock::new(ConnectionManager::new())),
             site_browser_manager: Arc::new(RwLock::new(SiteAndBrowserManager::new())),
-            plugins: HashMap::new(),
-            pending_plugin_hosts: Vec::new(),
+            logical_plugins: HashMap::new(),
+            physical_plugin_hosts: HashMap::new(),
             event_callback: None,
         }
     }
@@ -50,10 +55,6 @@ impl CoreActor {
         self.event_callback = Some(callback);
     }
 
-    /// プラグインを登録
-    pub fn register_plugin(&mut self, plugin_id: Uuid, plugin_info: PluginInfo) {
-        self.plugins.insert(plugin_id, plugin_info);
-    }
 
     /// plugin-helloを処理
     fn handle_plugin_hello(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
@@ -70,32 +71,26 @@ impl CoreActor {
             }
         };
 
-        // plugin_idで既に登録されているか確認（RegisterPluginで事前登録されたDLLプラグインの場合）
-        let plugin_host_addr = if let Some(existing_plugin) = self.plugins.get(&payload.plugin_id) {
+        // TODO (Commit 3): 完全な実装に書き換える
+        // 暫定実装: 既に登録されている論理プラグインか、exe-plugin-managerを探す
+        let plugin_host_addr = if let Some(existing_plugin) = self.logical_plugins.get(&payload.plugin_id) {
             println!("=== CoreActor: Plugin {} already registered, using existing PluginHostActor ===", payload.name);
             tracing::debug!(
                 plugin_name = %payload.name,
                 plugin_id = %payload.plugin_id,
-                "Plugin already registered with RegisterPlugin, using existing PluginHostActor"
+                "Logical plugin already registered, using existing PluginHostActor"
             );
             existing_plugin.host_addr.clone()
-        } else if let Some(index) = self.pending_plugin_hosts
-            .iter()
-            .position(|(name, _)| name == &payload.name)
-        {
-            // pending_plugin_hostsから見つかった場合（通常のDLLプラグイン）
-            let (_, addr) = self.pending_plugin_hosts.remove(index);
-            addr
         } else {
             // EXEプラグインの場合、plugin-exe-managerのPluginHostActorを使用
-            println!("=== CoreActor: No pending plugin host found for {}, looking for exe-plugin-manager ===", payload.name);
+            println!("=== CoreActor: Looking for exe-plugin-manager for {} ===", payload.name);
             tracing::debug!(
                 plugin_name = %payload.name,
                 plugin_id = %payload.plugin_id,
-                "No pending plugin host found, looking for exe-plugin-manager"
+                "Looking for exe-plugin-manager"
             );
 
-            let exe_manager_plugin = self.plugins.iter()
+            let exe_manager_plugin = self.logical_plugins.iter()
                 .find(|(_, info)| info.role.contains(&"exe-plugin-manager".to_string()));
 
             if let Some((_, info)) = exe_manager_plugin {
@@ -103,7 +98,7 @@ impl CoreActor {
                 tracing::debug!(
                     plugin_name = %payload.name,
                     plugin_id = %payload.plugin_id,
-                    exe_manager_id = %info.plugin_id,
+                    exe_manager_id = %info.logical_plugin_id,
                     "Using exe-plugin-manager's PluginHostActor for EXE plugin"
                 );
                 info.host_addr.clone()
@@ -112,7 +107,7 @@ impl CoreActor {
                 tracing::error!(
                     plugin_name = %payload.name,
                     plugin_id = %payload.plugin_id,
-                    "No pending plugin host found and no exe-plugin-manager found for plugin-hello"
+                    "exe-plugin-manager not found for plugin-hello"
                 );
                 return;
             }
@@ -125,14 +120,16 @@ impl CoreActor {
         );
 
         // プラグイン情報を登録（plugin-helloのplugin_idを使用）
-        let plugin_info = PluginInfo {
+        // TODO (Commit 3): physical_plugin_idをmessage.srcから取得する
+        let plugin_info = LogicalPluginInfo {
+            logical_plugin_id: payload.plugin_id,
+            physical_plugin_id: payload.plugin_id, // 暫定: 論理IDと同じにする（Commit 3で修正）
             name: payload.name.clone(),
-            plugin_id: payload.plugin_id,
             role: payload.role.clone(),
             api_version: payload.api_version.clone(),
             host_addr: plugin_host_addr.clone(),
         };
-        self.plugins.insert(payload.plugin_id, plugin_info);
+        self.logical_plugins.insert(payload.plugin_id, plugin_info);
 
         // plugin-addedをブロードキャスト
         let response = McvMessage::new(
@@ -149,8 +146,8 @@ impl CoreActor {
         );
 
         // 全プラグインにブロードキャスト
-        println!("=== CoreActor: Broadcasting plugin-added to {} plugins ===", self.plugins.len());
-        for (pid, plugin_info) in &self.plugins {
+        println!("=== CoreActor: Broadcasting plugin-added to {} plugins ===", self.logical_plugins.len());
+        for (pid, plugin_info) in &self.logical_plugins {
             println!("=== CoreActor: Sending plugin-added to plugin {} ===", pid);
             plugin_info.host_addr.do_send(SendMessageToPlugin {
                 message: response.clone(),
@@ -161,7 +158,7 @@ impl CoreActor {
         tracing::info!(
             plugin_id = %payload.plugin_id,
             plugin_name = %payload.name,
-            plugins_count = self.plugins.len(),
+            plugins_count = self.logical_plugins.len(),
             "Plugin registered and broadcasted to all plugins"
         );
     }
@@ -183,7 +180,7 @@ impl CoreActor {
         };
 
         // リクエスト元のPluginHostActorを取得
-        let plugin_host_addr = match self.plugins.get(&requester_plugin_id) {
+        let plugin_host_addr = match self.logical_plugins.get(&requester_plugin_id) {
             Some(info) => info.host_addr.clone(),
             None => {
                 tracing::error!(
@@ -196,12 +193,12 @@ impl CoreActor {
 
         tracing::info!(
             plugin_id = %requester_plugin_id,
-            plugins_count = self.plugins.len(),
+            plugins_count = self.logical_plugins.len(),
             "Processing get-plugins request"
         );
 
         // 全プラグインの情報をplugin-addedメッセージとして送信
-        for (plugin_id, plugin_info) in &self.plugins {
+        for (plugin_id, plugin_info) in &self.logical_plugins {
             let plugin_added_message = McvMessage::new(
                 MessageType::PluginAdded,
                 MessageSource::Core,
@@ -260,7 +257,7 @@ impl CoreActor {
         };
 
         // プラグイン名を取得
-        let site_name = self.plugins.get(&plugin_id)
+        let site_name = self.logical_plugins.get(&plugin_id)
             .map(|p| p.name.clone())
             .unwrap_or_else(|| "Unknown".to_string());
 
@@ -284,7 +281,7 @@ impl CoreActor {
 
         // プラグインへ返信
         if let MessageSource::Plugin { plugin_id } = message.src {
-            if let Some(plugin_info) = self.plugins.get(&plugin_id) {
+            if let Some(plugin_info) = self.logical_plugins.get(&plugin_id) {
                 plugin_info.host_addr.do_send(SendMessageToPlugin {
                     message: response,
                 });
@@ -310,7 +307,7 @@ impl CoreActor {
 
         // Connection Managerから接続情報を取得してplugin_idを取得
         let connection_manager = self.connection_manager.clone();
-        let plugins = self.plugins.clone();
+        let plugins = self.logical_plugins.clone();
         let msg = message.clone();
 
         actix::spawn(async move {
@@ -415,7 +412,7 @@ impl CoreActor {
             // UIからのリクエストの場合、該当するプラグインへ転送
             let connection_id = payload.connection_id;
             let connection_manager = self.connection_manager.clone();
-            let plugins = self.plugins.clone();
+            let plugins = self.logical_plugins.clone();
             let msg = message.clone();
 
             actix::spawn(async move {
@@ -490,7 +487,7 @@ impl CoreActor {
         // 該当する接続のプラグインへコメントを転送
         let connection_id = payload.connection_id;
         let connection_manager = self.connection_manager.clone();
-        let plugins = self.plugins.clone();
+        let plugins = self.logical_plugins.clone();
         let msg = message.clone();
 
         actix::spawn(async move {
@@ -721,7 +718,7 @@ impl CoreActor {
         // 前のサイトを取得してDiscardConnectionSiteを送信
         let conn_mgr = self.connection_manager.clone();
         let site_mgr = self.site_browser_manager.clone();
-        let plugins = self.plugins.clone();
+        let plugins = self.logical_plugins.clone();
 
         actix::spawn(async move {
             let mut conn_manager = conn_mgr.write().await;
@@ -903,27 +900,30 @@ impl Handler<SendRequest> for CoreActor {
     }
 }
 
-/// プラグインを登録
+/// 物理プラグイン（DLL）を登録
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct RegisterPlugin {
-    pub plugin_id: Uuid,
-    pub plugin_info: PluginInfo,
+pub struct RegisterPhysicalPlugin {
+    pub physical_plugin_id: Uuid,
+    pub host_addr: Addr<PluginHostActor>,
 }
 
-impl Handler<RegisterPlugin> for CoreActor {
+impl Handler<RegisterPhysicalPlugin> for CoreActor {
     type Result = ();
 
-    fn handle(&mut self, msg: RegisterPlugin, _ctx: &mut Self::Context) {
-        println!("=== CoreActor: RegisterPlugin called for {} ===", msg.plugin_info.name);
+    fn handle(&mut self, msg: RegisterPhysicalPlugin, _ctx: &mut Self::Context) {
         tracing::info!(
-            plugin_name = %msg.plugin_info.name,
-            "Registering plugin host (waiting for plugin-hello with actual plugin_id)"
+            physical_plugin_id = %msg.physical_plugin_id,
+            "Registering physical plugin"
         );
-        // plugin-helloを待つため、pending_plugin_hostsに追加
-        // plugin-helloを受け取ったら、実際のplugin_idでpluginsに登録される
-        self.pending_plugin_hosts.push((msg.plugin_info.name.clone(), msg.plugin_info.host_addr));
-        println!("=== CoreActor: {} added to pending_plugin_hosts, count: {} ===", msg.plugin_info.name, self.pending_plugin_hosts.len());
+
+        self.physical_plugin_hosts.insert(msg.physical_plugin_id, msg.host_addr);
+
+        tracing::debug!(
+            physical_plugin_id = %msg.physical_plugin_id,
+            physical_plugins_count = self.physical_plugin_hosts.len(),
+            "Physical plugin registered"
+        );
     }
 }
 

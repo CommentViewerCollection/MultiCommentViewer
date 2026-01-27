@@ -32,6 +32,7 @@ impl PluginHostActor {
             plugin_loader: None,
             core_addr: None,
             host: Arc::new(PluginHostImpl {
+                physical_plugin_id: plugin_id,
                 core_addr: Arc::new(Mutex::new(None)),
             }),
         }
@@ -45,6 +46,7 @@ impl PluginHostActor {
             plugin_loader: Some(Arc::new(plugin_loader)),
             core_addr: None,
             host: Arc::new(PluginHostImpl {
+                physical_plugin_id: plugin_id,
                 core_addr: Arc::new(Mutex::new(None)),
             }),
         }
@@ -314,6 +316,7 @@ impl Handler<ShutdownPlugin> for PluginHostActor {
 
 /// PluginHostインターフェースの実装
 pub struct PluginHostImpl {
+    physical_plugin_id: Uuid,
     core_addr: Arc<Mutex<Option<Addr<crate::core_actor::CoreActor>>>>,
 }
 
@@ -321,15 +324,24 @@ pub struct PluginHostImpl {
 impl PluginHost for PluginHostImpl {
     async fn send_message(
         &self,
-        message: McvMessage,
+        mut message: McvMessage,
     ) -> Result<(), mcv_plugin_interface::PluginError> {
+        // message.srcを物理plugin_idに書き換え
+        // プラグイン側は論理plugin_idを使うが、CoreActorは物理plugin_idで管理
+        message.src = mcv_messages::MessageSource::Plugin {
+            plugin_id: self.physical_plugin_id,
+        };
+
         tracing::debug!(
+            physical_plugin_id = %self.physical_plugin_id,
             message_type = ?message.message_type,
-            "PluginHostImpl::send_message called"
+            "PluginHostImpl: Rewriting message.src to physical_plugin_id"
         );
+
         let core_addr_guard = self.core_addr.lock().await;
         if let Some(core_addr) = core_addr_guard.as_ref() {
             tracing::debug!(
+                physical_plugin_id = %self.physical_plugin_id,
                 message_type = ?message.message_type,
                 "Sending message to CoreActor"
             );

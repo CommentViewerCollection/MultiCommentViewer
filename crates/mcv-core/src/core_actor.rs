@@ -175,66 +175,72 @@ impl CoreActor {
 
     /// get-pluginsを処理
     fn handle_get_plugins(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        println!("=== CoreActor: handle_get_plugins called ===");
-        // メッセージ送信元を取得
-        let requester_plugin_id = match message.src {
-            MessageSource::Plugin { plugin_id } => {
-                println!("=== CoreActor: get-plugins from plugin {} ===", plugin_id);
-                plugin_id
-            }
+        // message.srcは物理plugin_id（PluginHostImplが書き換え済み）
+        let requester_physical_plugin_id = match message.src {
+            MessageSource::Plugin { plugin_id } => plugin_id,
             MessageSource::Core => {
-                println!("=== CoreActor: ERROR - get-plugins from Core, ignoring ===");
-                tracing::warn!("Received get-plugins from Core, ignoring");
+                tracing::warn!("get-plugins from Core, ignoring");
                 return;
             }
         };
 
-        // リクエスト元のPluginHostActorを取得
-        let plugin_host_addr = match self.logical_plugins.get(&requester_plugin_id) {
-            Some(info) => info.host_addr.clone(),
+        // リクエスト元の論理プラグインを探す
+        // （物理plugin_idから論理plugin_idを特定）
+        let requester_logical_plugin_info = self.logical_plugins.values()
+            .find(|logical_plugin_info| {
+                logical_plugin_info.physical_plugin_id == requester_physical_plugin_id
+            });
+
+        let requester_logical_plugin_info = match requester_logical_plugin_info {
+            Some(info) => info,
             None => {
                 tracing::error!(
-                    plugin_id = %requester_plugin_id,
-                    "Plugin not found for get-plugins request"
+                    requester_physical_plugin_id = %requester_physical_plugin_id,
+                    "Logical plugin not found for get-plugins request (physical_plugin_id → logical_plugin_id mapping not found)"
                 );
                 return;
             }
         };
 
         tracing::info!(
-            plugin_id = %requester_plugin_id,
-            plugins_count = self.logical_plugins.len(),
-            "Processing get-plugins request"
+            requester_physical_plugin_id = %requester_physical_plugin_id,
+            requester_logical_plugin_id = %requester_logical_plugin_info.logical_plugin_id,
+            logical_plugins_count = self.logical_plugins.len(),
+            "Processing get-plugins request from logical plugin"
         );
 
-        // 全プラグインの情報をplugin-addedメッセージとして送信
-        for (plugin_id, plugin_info) in &self.logical_plugins {
+        // 全論理プラグインの情報をplugin-addedメッセージとして送信
+        for (logical_plugin_id, logical_plugin_info) in &self.logical_plugins {
             let plugin_added_message = McvMessage::new(
                 MessageType::PluginAdded,
                 MessageSource::Core,
                 MessageDestination::Plugin {
-                    plugin_id: requester_plugin_id,
+                    plugin_id: requester_logical_plugin_info.logical_plugin_id
                 },
                 serde_json::to_value(PluginAddedPayload {
-                    name: plugin_info.name.clone(),
-                    plugin_id: *plugin_id,
-                    role: plugin_info.role.clone(),
-                    api_version: plugin_info.api_version.clone(),
-                })
-                .unwrap(),
+                    name: logical_plugin_info.name.clone(),
+                    plugin_id: *logical_plugin_id,
+                    role: logical_plugin_info.role.clone(),
+                    api_version: logical_plugin_info.api_version.clone(),
+                }).unwrap(),
             );
 
-            plugin_host_addr.do_send(SendMessageToPlugin {
+            // リクエスト元の物理プラグインのPluginHostActorに送信
+            requester_logical_plugin_info.host_addr.do_send(SendMessageToPlugin {
                 message: plugin_added_message,
             });
 
             tracing::debug!(
-                requester_plugin_id = %requester_plugin_id,
-                plugin_id = %plugin_id,
-                plugin_name = %plugin_info.name,
-                "Sent plugin info in response to get-plugins"
+                logical_plugin_id = %logical_plugin_id,
+                logical_plugin_name = %logical_plugin_info.name,
+                "Sent plugin-added for logical plugin in response to get-plugins"
             );
         }
+
+        tracing::info!(
+            requester_logical_plugin_id = %requester_logical_plugin_info.logical_plugin_id,
+            "get-plugins request completed, sent all logical plugin info"
+        );
     }
 
     /// add-connectionを処理

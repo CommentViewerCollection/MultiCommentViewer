@@ -28,7 +28,7 @@ function App() {
     new Map()
   );
   const [sites, setSites] = useState<Map<string, SiteInfo>>(new Map());
-  const [browsers, setBrowsers] = useState<Map<string, BrowserInfo>>(new Map());
+  const [_browsers, setBrowsers] = useState<Map<string, BrowserInfo>>(new Map());
 
   useEffect(() => {
     // メッセージ受信リスナー

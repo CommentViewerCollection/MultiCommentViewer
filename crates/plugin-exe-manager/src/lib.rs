@@ -29,8 +29,10 @@ pub struct ExePluginManager {
 
 impl ExePluginManager {
     pub fn new() -> Self {
+        let plugin_id = Uuid::new_v4();
+        println!("ExePluginManager plugin_id: {plugin_id}");
         Self {
-            plugin_id: Uuid::new_v4(),
+            plugin_id,
             websocket_server: None,
             process_manager: None,
             host: None,
@@ -308,7 +310,7 @@ pub extern "C" fn plugin_init(_host_context: *mut libc::c_void) -> i32 {
 /// プラグインon_loaded呼び出し
 #[no_mangle]
 pub extern "C" fn plugin_on_loaded() -> i32 {
-    println!("=== C ABI: plugin_on_loaded called (ExePluginManager) ===");
+    tracing::trace!(target = "mcv::plugin_exe_manager", "=== C ABI: plugin_on_loaded called (ExePluginManager) ===");
 
     unsafe {
         if let Some(plugin) = PLUGIN_INSTANCE.get() {
@@ -320,18 +322,18 @@ pub extern "C" fn plugin_on_loaded() -> i32 {
                 });
 
                 if let Err(e) = result {
-                    eprintln!("plugin_on_loaded: on_loaded failed: {}", e);
+                    tracing::error!(target = "mcv::plugin_exe_manager", "plugin_on_loaded: on_loaded failed: {}", e);
                     return -1;
                 }
 
-                println!("=== C ABI: plugin_on_loaded completed successfully (ExePluginManager) ===");
+                tracing::trace!(target = "mcv::plugin_exe_manager", "=== C ABI: plugin_on_loaded completed successfully (ExePluginManager) ===");
                 return 0;
             } else {
-                eprintln!("plugin_on_loaded: Runtime not initialized");
+                tracing::error!(target = "mcv::plugin_exe_manager", "plugin_on_loaded: Runtime not initialized");
                 return -1;
             }
         } else {
-            eprintln!("plugin_on_loaded: Plugin not initialized");
+            tracing::error!(target = "mcv::plugin_exe_manager", "plugin_on_loaded: Plugin not initialized");
             return -1;
         }
     }
@@ -352,7 +354,7 @@ pub extern "C" fn plugin_set_callback(callback: extern "C" fn(*const c_char)) ->
 pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
     unsafe {
         if message_json.is_null() {
-            eprintln!("plugin_send_message: message_json is null");
+            tracing::error!(target = "mcv::plugin_exe_manager", "plugin_send_message: message_json is null");
             return -1;
         }
 
@@ -360,7 +362,7 @@ pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
         let message_str = match message_cstr.to_str() {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("plugin_send_message: Failed to convert CStr to str: {}", e);
+                tracing::error!(target = "mcv::plugin_exe_manager", "plugin_send_message: Failed to convert CStr to str: {}", e);
                 return -1;
             }
         };
@@ -369,7 +371,7 @@ pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
         let message: McvMessage = match serde_json::from_str(message_str) {
             Ok(m) => m,
             Err(e) => {
-                eprintln!("plugin_send_message: Failed to parse JSON: {}", e);
+                tracing::error!(target = "mcv::plugin_exe_manager", "plugin_send_message: Failed to parse JSON: {}", e);
                 return -1;
             }
         };

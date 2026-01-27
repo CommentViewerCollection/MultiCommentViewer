@@ -5,9 +5,9 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use crate::connection_manager::{ConnectionManager, ConnectionStatus, ConnectionInfo};
-use crate::plugin_host_actor::{PluginHostActor, SendMessageToPlugin};
-use crate::site_browser_manager::{SiteAndBrowserManager, SiteInfo, BrowserInfo};
+use crate::connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
+use crate::plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin};
+use crate::site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 /// 論理プラグイン情報（ユーザーから見えるプラグイン単位）
 #[derive(Debug, Clone)]
@@ -17,7 +17,7 @@ pub struct LogicalPluginInfo {
     pub name: String,
     pub role: Vec<String>,
     pub api_version: String,
-    pub host_addr: Addr<PluginHostActor>,
+    pub host_addr: Addr<PhysicalPluginHostActor>,
 }
 
 /// 後方互換性のため
@@ -33,7 +33,7 @@ pub struct CoreActor {
     /// 論理プラグイン（ユーザーから見えるプラグイン）
     logical_plugins: HashMap<Uuid, LogicalPluginInfo>,
     /// 物理プラグイン（DLLファイル）
-    physical_plugin_hosts: HashMap<Uuid, Addr<PluginHostActor>>,
+    physical_plugin_hosts: HashMap<Uuid, Addr<PhysicalPluginHostActor>>,
     /// UIへのイベント送信用コールバック
     event_callback: Option<Arc<dyn Fn(McvMessage) + Send + Sync>>,
 }
@@ -55,13 +55,13 @@ impl CoreActor {
         self.event_callback = Some(callback);
     }
 
-
     /// plugin-helloを処理
     fn handle_plugin_hello(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
         let payload: PluginHelloPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     error = %e,
                     "Failed to parse plugin-hello payload"
                 );
@@ -74,6 +74,7 @@ impl CoreActor {
         // 既に論理プラグインとして登録済みか確認
         if self.logical_plugins.contains_key(&logical_plugin_id) {
             tracing::debug!(
+                target: "mcv::core::CoreActor",
                 logical_plugin_id = %logical_plugin_id,
                 "Logical plugin already registered, ignoring duplicate plugin-hello"
             );
@@ -85,46 +86,26 @@ impl CoreActor {
         let physical_plugin_id = match message.src {
             MessageSource::Plugin { plugin_id } => plugin_id,
             MessageSource::Core => {
-                tracing::error!("plugin-hello from Core is invalid");
+                tracing::error!(target: "mcv::core::CoreActor", "plugin-hello from Core is invalid");
                 return;
             }
         };
 
         // 物理プラグインのPluginHostActorを取得
-        let physical_plugin_host_addr = if let Some(addr) = self.physical_plugin_hosts.get(&physical_plugin_id) {
-            // DLL物理プラグインの場合
-            tracing::debug!(
-                physical_plugin_id = %physical_plugin_id,
-                logical_plugin_id = %logical_plugin_id,
-                "Found physical plugin host for DLL logical plugin"
-            );
-            addr.clone()
-        } else {
-            // EXE論理プラグインの場合（plugin-exe-managerを経由）
-            tracing::debug!(
-                physical_plugin_id = %physical_plugin_id,
-                logical_plugin_id = %logical_plugin_id,
-                "Physical plugin host not found, looking for exe-plugin-manager logical plugin"
-            );
-
-            let exe_manager_logical_plugin = self.logical_plugins.iter()
-                .find(|(_, logical_plugin_info)| {
-                    logical_plugin_info.role.contains(&"exe-plugin-manager".to_string())
-                });
-
-            if let Some((_, exe_manager_logical_plugin_info)) = exe_manager_logical_plugin {
-                // exe-plugin-managerの物理plugin_idを使用
-                tracing::debug!(
-                    exe_manager_physical_plugin_id = %exe_manager_logical_plugin_info.physical_plugin_id,
+        let physical_plugin_host_addr =
+            if let Some(addr) = self.physical_plugin_hosts.get(&physical_plugin_id) {
+                // DLL物理プラグインの場合
+                tracing::trace!(
+                    target: "mcv::core::CoreActor",
+                    physical_plugin_id = %physical_plugin_id,
                     logical_plugin_id = %logical_plugin_id,
-                    "Using exe-plugin-manager's physical plugin host for EXE logical plugin"
+                    "Found physical plugin host for DLL logical plugin"
                 );
-                exe_manager_logical_plugin_info.host_addr.clone()
+                addr.clone()
             } else {
-                tracing::error!("exe-plugin-manager logical plugin not found");
+                tracing::error!(target: "mcv::core::CoreActor", "physical_plugin_id: {}に該当するPhysicalPluginHostActorが見つかりません", physical_plugin_id);
                 return;
-            }
-        };
+            };
 
         // LogicalPluginInfoを作成
         let logical_plugin_info = LogicalPluginInfo {
@@ -137,9 +118,11 @@ impl CoreActor {
         };
 
         // 論理プラグインとして登録
-        self.logical_plugins.insert(logical_plugin_id, logical_plugin_info);
+        self.logical_plugins
+            .insert(logical_plugin_id, logical_plugin_info);
 
         tracing::info!(
+            target: "mcv::core::CoreActor",
             physical_plugin_id = %physical_plugin_id,
             logical_plugin_id = %logical_plugin_id,
             logical_plugin_name = %payload.name,
@@ -156,7 +139,8 @@ impl CoreActor {
                 plugin_id: logical_plugin_id,
                 role: payload.role.clone(),
                 api_version: payload.api_version.clone(),
-            }).unwrap(),
+            })
+            .unwrap(),
         );
 
         // 全論理プラグインにブロードキャスト
@@ -167,6 +151,7 @@ impl CoreActor {
         }
 
         tracing::info!(
+            target: "mcv::core::CoreActor",
             logical_plugin_id = %logical_plugin_id,
             logical_plugins_count = self.logical_plugins.len(),
             "Logical plugin registered and plugin-added broadcasted to all logical plugins"
@@ -186,8 +171,8 @@ impl CoreActor {
 
         // リクエスト元の論理プラグインを探す
         // （物理plugin_idから論理plugin_idを特定）
-        let requester_logical_plugin_info = self.logical_plugins.values()
-            .find(|logical_plugin_info| {
+        let requester_logical_plugin_info =
+            self.logical_plugins.values().find(|logical_plugin_info| {
                 logical_plugin_info.physical_plugin_id == requester_physical_plugin_id
             });
 
@@ -195,6 +180,7 @@ impl CoreActor {
             Some(info) => info,
             None => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     requester_physical_plugin_id = %requester_physical_plugin_id,
                     "Logical plugin not found for get-plugins request (physical_plugin_id → logical_plugin_id mapping not found)"
                 );
@@ -203,6 +189,7 @@ impl CoreActor {
         };
 
         tracing::info!(
+            target: "mcv::core::CoreActor",
             requester_physical_plugin_id = %requester_physical_plugin_id,
             requester_logical_plugin_id = %requester_logical_plugin_info.logical_plugin_id,
             logical_plugins_count = self.logical_plugins.len(),
@@ -215,22 +202,26 @@ impl CoreActor {
                 MessageType::PluginAdded,
                 MessageSource::Core,
                 MessageDestination::Plugin {
-                    plugin_id: requester_logical_plugin_info.logical_plugin_id
+                    plugin_id: requester_logical_plugin_info.logical_plugin_id,
                 },
                 serde_json::to_value(PluginAddedPayload {
                     name: logical_plugin_info.name.clone(),
                     plugin_id: *logical_plugin_id,
                     role: logical_plugin_info.role.clone(),
                     api_version: logical_plugin_info.api_version.clone(),
-                }).unwrap(),
+                })
+                .unwrap(),
             );
 
             // リクエスト元の物理プラグインのPluginHostActorに送信
-            requester_logical_plugin_info.host_addr.do_send(SendMessageToPlugin {
-                message: plugin_added_message,
-            });
+            requester_logical_plugin_info
+                .host_addr
+                .do_send(SendMessageToPlugin {
+                    message: plugin_added_message,
+                });
 
             tracing::debug!(
+                target: "mcv::core::CoreActor",
                 logical_plugin_id = %logical_plugin_id,
                 logical_plugin_name = %logical_plugin_info.name,
                 "Sent plugin-added for logical plugin in response to get-plugins"
@@ -238,6 +229,7 @@ impl CoreActor {
         }
 
         tracing::info!(
+            target: "mcv::core::CoreActor",
             requester_logical_plugin_id = %requester_logical_plugin_info.logical_plugin_id,
             "get-plugins request completed, sent all logical plugin info"
         );
@@ -264,6 +256,7 @@ impl CoreActor {
             MessageSource::Plugin { plugin_id } => *plugin_id,
             _ => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     message_type = "add-connection",
                     message_source = ?message.src,
                     "Message must come from a plugin"
@@ -273,7 +266,9 @@ impl CoreActor {
         };
 
         // プラグイン名を取得
-        let site_name = self.logical_plugins.get(&plugin_id)
+        let site_name = self
+            .logical_plugins
+            .get(&plugin_id)
             .map(|p| p.name.clone())
             .unwrap_or_else(|| "Unknown".to_string());
 
@@ -285,7 +280,13 @@ impl CoreActor {
 
         actix::spawn(async move {
             let mut manager = connection_manager.write().await;
-            manager.add_connection(connection_id, Some(plugin_id), site_name, input_info, format!("Connection {}", connection_id));
+            manager.add_connection(
+                connection_id,
+                Some(plugin_id),
+                site_name,
+                input_info,
+                format!("Connection {}", connection_id),
+            );
         });
 
         // connection-addedを返信
@@ -298,9 +299,9 @@ impl CoreActor {
         // プラグインへ返信
         if let MessageSource::Plugin { plugin_id } = message.src {
             if let Some(plugin_info) = self.logical_plugins.get(&plugin_id) {
-                plugin_info.host_addr.do_send(SendMessageToPlugin {
-                    message: response,
-                });
+                plugin_info
+                    .host_addr
+                    .do_send(SendMessageToPlugin { message: response });
             }
         }
     }
@@ -311,6 +312,7 @@ impl CoreActor {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     error = %e,
                     message_type = "connect",
                     "Failed to parse message payload"
@@ -336,8 +338,10 @@ impl CoreActor {
                     drop(manager); // ロックを解放
 
                     // デバッグ: 登録されている全plugin_idをログ出力
-                    let registered_plugin_ids: Vec<String> = plugins.keys().map(|id| id.to_string()).collect();
+                    let registered_plugin_ids: Vec<String> =
+                        plugins.keys().map(|id| id.to_string()).collect();
                     tracing::debug!(
+                        target: "mcv::core::CoreActor",
                         connection_id = %connection_id,
                         plugin_id_from_connection = %plugin_id,
                         registered_plugin_ids = ?registered_plugin_ids,
@@ -347,14 +351,18 @@ impl CoreActor {
                     // プラグインへconnectメッセージを転送
                     if let Some(plugin_info) = plugins.get(&plugin_id) {
                         tracing::debug!(
+                            target: "mcv::core::CoreActor",
                             plugin_id = %plugin_id,
                             plugin_name = %plugin_info.name,
                             connection_id = %connection_id,
                             "Found plugin, forwarding connect message"
                         );
-                        plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                        plugin_info
+                            .host_addr
+                            .do_send(SendMessageToPlugin { message: msg });
                     } else {
                         tracing::error!(
+                            target: "mcv::core::CoreActor",
                             plugin_id = %plugin_id,
                             connection_id = %connection_id,
                             registered_plugin_count = plugins.len(),
@@ -363,12 +371,14 @@ impl CoreActor {
                     }
                 } else {
                     tracing::error!(
+                        target: "mcv::core::CoreActor",
                         connection_id = %connection_id,
                         "Connection has no plugin_id set"
                     );
                 }
             } else {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     connection_id = %connection_id,
                     "Connection not found"
                 );
@@ -382,6 +392,7 @@ impl CoreActor {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     error = %e,
                     message_type = "connected",
                     "Failed to parse message payload"
@@ -415,6 +426,7 @@ impl CoreActor {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     error = %e,
                     message_type = "disconnect",
                     "Failed to parse message payload"
@@ -436,7 +448,9 @@ impl CoreActor {
                 if let Some(conn_info) = manager.get_connection(&connection_id) {
                     if let Some(plugin_id) = conn_info.plugin_id {
                         if let Some(plugin_info) = plugins.get(&plugin_id) {
-                            plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                            plugin_info
+                                .host_addr
+                                .do_send(SendMessageToPlugin { message: msg });
                         }
                     }
                 }
@@ -446,11 +460,11 @@ impl CoreActor {
 
     /// disconnectedを処理
     fn handle_disconnected(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        let payload: DisconnectedPayload = match serde_json::from_value(message.payload.clone())
-        {
+        let payload: DisconnectedPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     error = %e,
                     message_type = "disconnected",
                     "Failed to parse message payload"
@@ -492,6 +506,7 @@ impl CoreActor {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     error = %e,
                     message_type = "send-comment",
                     "Failed to parse message payload"
@@ -511,7 +526,9 @@ impl CoreActor {
             if let Some(conn_info) = manager.get_connection(&connection_id) {
                 if let Some(plugin_id) = conn_info.plugin_id {
                     if let Some(plugin_info) = plugins.get(&plugin_id) {
-                        plugin_info.host_addr.do_send(SendMessageToPlugin { message: msg });
+                        plugin_info
+                            .host_addr
+                            .do_send(SendMessageToPlugin { message: msg });
                     }
                 }
             }
@@ -524,6 +541,7 @@ impl CoreActor {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     error = %e,
                     message_type = "log-entry",
                     "Failed to parse message payload"
@@ -537,6 +555,7 @@ impl CoreActor {
             MessageSource::Plugin { plugin_id } => plugin_id,
             _ => {
                 tracing::warn!(
+                    target: "mcv::core::CoreActor",
                     message_type = "log-entry",
                     message_source = ?message.src,
                     "Received log-entry from non-plugin source"
@@ -550,6 +569,7 @@ impl CoreActor {
         match payload.level.as_str() {
             "error" => {
                 tracing::error!(
+                    target: "mcv::core::CoreActor",
                     plugin_id = %plugin_id,
                     plugin_version = ?payload.plugin_version,
                     plugin_build_profile = ?payload.plugin_build_profile,
@@ -561,6 +581,7 @@ impl CoreActor {
             }
             "warn" => {
                 tracing::warn!(
+                    target: "mcv::core::CoreActor",
                     plugin_id = %plugin_id,
                     plugin_version = ?payload.plugin_version,
                     plugin_build_profile = ?payload.plugin_build_profile,
@@ -572,6 +593,7 @@ impl CoreActor {
             }
             "info" => {
                 tracing::info!(
+                    target: "mcv::core::CoreActor",
                     plugin_id = %plugin_id,
                     plugin_version = ?payload.plugin_version,
                     plugin_build_profile = ?payload.plugin_build_profile,
@@ -583,6 +605,7 @@ impl CoreActor {
             }
             "debug" => {
                 tracing::debug!(
+                    target: "mcv::core::CoreActor",
                     plugin_id = %plugin_id,
                     plugin_version = ?payload.plugin_version,
                     plugin_build_profile = ?payload.plugin_build_profile,
@@ -594,6 +617,7 @@ impl CoreActor {
             }
             _ => {
                 tracing::trace!(
+                    target: "mcv::core::CoreActor",
                     plugin_id = %plugin_id,
                     plugin_version = ?payload.plugin_version,
                     plugin_build_profile = ?payload.plugin_build_profile,
@@ -609,7 +633,7 @@ impl CoreActor {
         let payload: AddSitePayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                tracing::error!(error = %e, "Failed to parse AddSitePayload");
+                tracing::error!(target: "mcv::core::CoreActor",error = %e, "Failed to parse AddSitePayload");
                 return;
             }
         };
@@ -617,7 +641,7 @@ impl CoreActor {
         let plugin_id = match &message.src {
             MessageSource::Plugin { plugin_id } => *plugin_id,
             _ => {
-                tracing::error!("AddSite must come from a plugin");
+                tracing::error!(target: "mcv::core::CoreActor","AddSite must come from a plugin");
                 return;
             }
         };
@@ -631,6 +655,7 @@ impl CoreActor {
         };
 
         tracing::info!(
+            target: "mcv::core::CoreActor",
             site_id = %payload.site_id,
             site_name = %payload.site_name,
             plugin_id_from_message_src = %plugin_id,
@@ -656,6 +681,7 @@ impl CoreActor {
         }
 
         tracing::info!(
+            target: "mcv::core::CoreActor",
             site_name = %payload.site_name,
             plugin_id = %plugin_id,
             "Site registered"
@@ -667,7 +693,7 @@ impl CoreActor {
         let payload: AddBrowserPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
-                tracing::error!(error = %e, "Failed to parse AddBrowserPayload");
+                tracing::error!(target: "mcv::core::CoreActor",error = %e, "Failed to parse AddBrowserPayload");
                 return;
             }
         };
@@ -675,7 +701,7 @@ impl CoreActor {
         let plugin_id = match &message.src {
             MessageSource::Plugin { plugin_id } => *plugin_id,
             _ => {
-                tracing::error!("AddBrowser must come from a plugin");
+                tracing::error!(target: "mcv::core::CoreActor","AddBrowser must come from a plugin");
                 return;
             }
         };
@@ -706,6 +732,7 @@ impl CoreActor {
         }
 
         tracing::info!(
+            target: "mcv::core::CoreActor",
             browser_name = %payload.browser_name,
             plugin_id = %plugin_id,
             "Browser registered"
@@ -714,18 +741,20 @@ impl CoreActor {
 
     /// set-connection-siteを処理（UIから呼ばれる）
     fn handle_set_connection_site(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        let payload: SetConnectionSitePayload = match serde_json::from_value(message.payload.clone()) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!(error = %e, "Failed to parse SetConnectionSitePayload");
-                return;
-            }
-        };
+        let payload: SetConnectionSitePayload =
+            match serde_json::from_value(message.payload.clone()) {
+                Ok(p) => p,
+                Err(e) => {
+                    tracing::error!(target: "mcv::core::CoreActor",error = %e, "Failed to parse SetConnectionSitePayload");
+                    return;
+                }
+            };
 
         let connection_id = payload.connection_id;
         let site_id = payload.site_id;
 
         tracing::debug!(
+            target: "mcv::core::CoreActor",
             connection_id = %connection_id,
             site_id = %site_id,
             "Setting connection site"
@@ -765,7 +794,8 @@ impl CoreActor {
                                 serde_json::to_value(DiscardConnectionSitePayload {
                                     connection_id,
                                     site_id,
-                                }).unwrap(),
+                                })
+                                .unwrap(),
                             );
                             old_plugin.host_addr.do_send(SendMessageToPlugin {
                                 message: discard_msg,
@@ -779,15 +809,18 @@ impl CoreActor {
                     let set_msg = McvMessage::new(
                         MessageType::SetConnectionSite,
                         MessageSource::Core,
-                        MessageDestination::Plugin { plugin_id: site_info.plugin_id },
+                        MessageDestination::Plugin {
+                            plugin_id: site_info.plugin_id,
+                        },
                         serde_json::to_value(SetConnectionSitePayload {
                             connection_id,
                             site_id,
-                        }).unwrap(),
+                        })
+                        .unwrap(),
                     );
-                    new_plugin.host_addr.do_send(SendMessageToPlugin {
-                        message: set_msg,
-                    });
+                    new_plugin
+                        .host_addr
+                        .do_send(SendMessageToPlugin { message: set_msg });
                 }
             }
         });
@@ -795,15 +828,17 @@ impl CoreActor {
 
     /// update-connection-settingsを処理
     fn handle_update_connection_settings(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        let payload: UpdateConnectionSettingsPayload = match serde_json::from_value(message.payload.clone()) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!(error = %e, "Failed to parse UpdateConnectionSettingsPayload");
-                return;
-            }
-        };
+        let payload: UpdateConnectionSettingsPayload =
+            match serde_json::from_value(message.payload.clone()) {
+                Ok(p) => p,
+                Err(e) => {
+                    tracing::error!(error = %e, "Failed to parse UpdateConnectionSettingsPayload");
+                    return;
+                }
+            };
 
         tracing::debug!(
+            target: "mcv::core::CoreActor",
             connection_id = %payload.connection_id,
             has_url = payload.url.is_some(),
             has_browser = payload.browser_id.is_some(),
@@ -862,7 +897,8 @@ impl Handler<SendMessageToCore> for CoreActor {
 
     fn handle(&mut self, msg: SendMessageToCore, ctx: &mut Self::Context) {
         let message = msg.message;
-        tracing::debug!(
+        tracing::trace!(
+            target: "mcv::core::CoreActor",
             message_type = ?message.message_type,
             "CoreActor received message"
         );
@@ -881,9 +917,12 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::AddSite => self.handle_add_site(message, ctx),
             MessageType::AddBrowser => self.handle_add_browser(message, ctx),
             MessageType::SetConnectionSite => self.handle_set_connection_site(message, ctx),
-            MessageType::UpdateConnectionSettings => self.handle_update_connection_settings(message, ctx),
+            MessageType::UpdateConnectionSettings => {
+                self.handle_update_connection_settings(message, ctx)
+            }
             _ => {
                 tracing::warn!(
+                    target: "mcv::core::CoreActor",
                     message_type = ?message.message_type,
                     "Unhandled message type"
                 );
@@ -921,7 +960,7 @@ impl Handler<SendRequest> for CoreActor {
 #[rtype(result = "()")]
 pub struct RegisterPhysicalPlugin {
     pub physical_plugin_id: Uuid,
-    pub host_addr: Addr<PluginHostActor>,
+    pub host_addr: Addr<PhysicalPluginHostActor>,
 }
 
 impl Handler<RegisterPhysicalPlugin> for CoreActor {
@@ -929,13 +968,16 @@ impl Handler<RegisterPhysicalPlugin> for CoreActor {
 
     fn handle(&mut self, msg: RegisterPhysicalPlugin, _ctx: &mut Self::Context) {
         tracing::info!(
+            target: "mcv::core::CoreActor",
             physical_plugin_id = %msg.physical_plugin_id,
             "Registering physical plugin"
         );
 
-        self.physical_plugin_hosts.insert(msg.physical_plugin_id, msg.host_addr);
+        self.physical_plugin_hosts
+            .insert(msg.physical_plugin_id, msg.host_addr);
 
         tracing::debug!(
+            target: "mcv::core::CoreActor",
             physical_plugin_id = %msg.physical_plugin_id,
             physical_plugins_count = self.physical_plugin_hosts.len(),
             "Physical plugin registered"
@@ -967,7 +1009,7 @@ impl Handler<GetConnections> for CoreActor {
 #[derive(Message)]
 #[rtype(result = "Uuid")]
 pub struct CreateConnection {
-    pub plugin_id: Option<Uuid>,  // 変更: Option<Uuid>に
+    pub plugin_id: Option<Uuid>, // 変更: Option<Uuid>に
     pub site_name: String,
     pub input_info: String,
     pub name: String,
@@ -1110,7 +1152,8 @@ impl Handler<SetConnectionSite> for CoreActor {
             serde_json::to_value(SetConnectionSitePayload {
                 connection_id: msg.connection_id,
                 site_id: msg.site_id,
-            }).unwrap(),
+            })
+            .unwrap(),
         );
         self.handle_set_connection_site(message, ctx);
         Box::pin(async { Ok(()) }.into_actor(self))
@@ -1140,7 +1183,8 @@ impl Handler<UpdateConnectionSettings> for CoreActor {
                 url: msg.url,
                 browser_id: msg.browser_id,
                 advanced_settings: msg.advanced_settings,
-            }).unwrap(),
+            })
+            .unwrap(),
         );
         self.handle_update_connection_settings(message, ctx);
         Box::pin(async { Ok(()) }.into_actor(self))

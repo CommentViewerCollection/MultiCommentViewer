@@ -455,6 +455,7 @@ fn main() {
         .expect("Failed to initialize logger");
 
     tracing::info!(
+        target: "mcv::main",
         version = env!("CARGO_PKG_VERSION"),
         log_db_path = %log_db_path.display(),
         "mcv started"
@@ -471,7 +472,7 @@ fn main() {
         let actix_system = System::new();
 
         actix_system.block_on(async {
-            tracing::info!("Actix system thread started");
+            tracing::info!(target: "mcv::main","Actix system thread started");
 
             // LogSenderActorを起動
             const API_BASE_URL: &str = "http://localhost"; // TODO: 運用環境では実際のAPIサーバーURLに変更
@@ -479,7 +480,7 @@ fn main() {
                 log_storage,
                 API_BASE_URL.to_string(),
             ).start();
-            tracing::info!(api_base_url = API_BASE_URL, "LogSenderActor started");
+            tracing::info!(target: "mcv::main", api_base_url = API_BASE_URL, "LogSenderActor started");
 
             // Core Actorを起動
             let mut core_actor = CoreActor::new();
@@ -502,6 +503,7 @@ fn main() {
                                 let payload: CommentReceivedPayload =
                                     serde_json::from_value(message.payload).unwrap();
                                 tracing::debug!(
+                                    target: "mcv::main",
                                     comment_id = %payload.comment.id,
                                     connection_id = %payload.connection_id,
                                     "Emitting comment-received event"
@@ -513,42 +515,47 @@ fn main() {
                                 }
                                 if let Err(e) = app_handle.emit("comment-received", comment_with_conn) {
                                     tracing::error!(
+                                        target: "mcv::main",
                                         error = %e,
                                         "Failed to emit comment-received event"
                                     );
                                 }
                             }
                             MessageType::Connected => {
-                                tracing::debug!("Emitting connected event");
+                                tracing::debug!(target: "mcv::main","Emitting connected event");
                                 if let Err(e) = app_handle.emit("connected", message.payload) {
                                     tracing::error!(
+                                        target: "mcv::main",
                                         error = %e,
                                         "Failed to emit connected event"
                                     );
                                 }
                             }
                             MessageType::Disconnected => {
-                                tracing::debug!("Emitting disconnected event");
+                                tracing::debug!(target: "mcv::main","Emitting disconnected event");
                                 if let Err(e) = app_handle.emit("disconnected", message.payload) {
                                     tracing::error!(
+                                        target: "mcv::main",
                                         error = %e,
                                         "Failed to emit disconnected event"
                                     );
                                 }
                             }
                             MessageType::AddSite => {
-                                tracing::debug!("Emitting site-added event");
+                                tracing::trace!(target: "mcv::main", "Emitting site-added event");
                                 if let Err(e) = app_handle.emit("site-added", message.payload) {
                                     tracing::error!(
+                                        target: "mcv::main",
                                         error = %e,
                                         "Failed to emit site-added event"
                                     );
                                 }
                             }
                             MessageType::AddBrowser => {
-                                tracing::debug!("Emitting browser-added event");
+                                tracing::trace!(target: "mcv::main", "Emitting browser-added event");
                                 if let Err(e) = app_handle.emit("browser-added", message.payload) {
                                     tracing::error!(
+                                        target: "mcv::main",
                                         error = %e,
                                         "Failed to emit browser-added event"
                                     );
@@ -562,29 +569,17 @@ fn main() {
 
             core_actor.set_event_callback(event_callback);
 
-            tracing::debug!("Starting CoreActor");
+            tracing::debug!(target: "mcv::main","Starting CoreActor");
             let core_addr = core_actor.start();
-            tracing::info!("CoreActor started");
+            tracing::info!(target: "mcv::main","CoreActor started");
 
-            tracing::debug!("Setting core_addr to PluginManager");
+            tracing::debug!(target: "mcv::main","Setting core_addr to PluginManager");
             plugin_manager.set_core_addr(core_addr.clone());
-            tracing::debug!("core_addr set to PluginManager");
+            tracing::debug!(target: "mcv::main","core_addr set to PluginManager");
 
             // プラグインディレクトリを決定
-            // 開発環境: target/debug/
-            // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
-            let plugins_dir = if cfg!(debug_assertions) {
-                // 開発環境: target/debug/
-                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .parent()
-                    .unwrap()
-                    .parent()
-                    .unwrap()
-                    .parent()
-                    .unwrap()
-                    .join("target")
-                    .join("debug")
-            } else {
+            // %LOCALAPPDATA%\MultiCommentViewer\plugins\
+            let plugins_dir = {
                 // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
                 let local_app_data = std::env::var("LOCALAPPDATA")
                     .expect("Failed to get LOCALAPPDATA");
@@ -593,16 +588,17 @@ fn main() {
                     .join("plugins")
             };
 
-            tracing::info!(plugins_dir = %plugins_dir.display(), "Loading DLL plugins from directory");
+            tracing::info!(target: "mcv::main", plugins_dir = %plugins_dir.display(), "Loading DLL plugins from directory");
 
             // プラグインディレクトリをスキャンして自動ロード
             let loaded_plugins = plugin_manager.scan_and_load_plugins(&plugins_dir).await;
 
-            tracing::info!(count = loaded_plugins.len(), "Loaded DLL plugins");
+            tracing::info!(target: "mcv::main", count = loaded_plugins.len(), "Loaded DLL plugins");
 
             // ロードされた物理プラグインをCoreActorに登録
             for (physical_plugin_id, plugin_host_addr, _plugin_name) in loaded_plugins {
                 tracing::debug!(
+                    target: "mcv::main",
                     physical_plugin_id = %physical_plugin_id,
                     "Registering physical plugin with CoreActor"
                 );
@@ -619,10 +615,10 @@ fn main() {
                 plugin_manager: Arc::new(tokio::sync::Mutex::new(plugin_manager)),
             };
 
-            tracing::debug!("Sending AppState to main thread");
+            tracing::debug!(target: "mcv::main", "Sending AppState to main thread");
             tx.send((app_state, app_handle)).expect("Failed to send AppState");
 
-            tracing::info!("Actix system setup complete, keeping system alive");
+            tracing::info!(target: "mcv::main", "Actix system setup complete, keeping system alive");
         });
 
         // actixシステムを実行し続ける
@@ -630,9 +626,9 @@ fn main() {
     });
 
     // メインスレッドでAppStateを受信
-    tracing::debug!("Waiting for AppState from actix thread");
+    tracing::debug!(target: "mcv::main", "Waiting for AppState from actix thread");
     let (app_state, app_handle) = rx.recv().expect("Failed to receive AppState");
-    tracing::info!("Received AppState, starting Tauri");
+    tracing::info!(target: "mcv::main", "Received AppState, starting Tauri");
 
     // Tauriアプリを起動
     tauri::Builder::default()
@@ -643,7 +639,7 @@ fn main() {
                 let title = get_title();
 
                 let _ = window.set_title(&title);
-                tracing::debug!(title = %title, "Window title set");
+                tracing::debug!(target: "mcv::main", title = %title, "Window title set");
             }
 
             // AppHandleを保存（ブロッキング操作）
@@ -653,7 +649,7 @@ fn main() {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 rt.block_on(async move {
                     *app_handle_clone.lock().await = Some(handle);
-                    tracing::debug!("AppHandle set successfully");
+                    tracing::debug!(target: "mcv::main", "AppHandle set successfully");
                 });
             });
             Ok(())

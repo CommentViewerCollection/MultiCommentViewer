@@ -44,7 +44,6 @@ pub type MessageCallback = extern "C" fn(*const c_char);
 /// プラグインDLLを動的にロードし、C ABI関数を呼び出す
 pub struct PluginLoader {
     library: Library,
-    metadata: PluginMetadata,
 }
 
 impl PluginLoader {
@@ -67,36 +66,7 @@ impl PluginLoader {
             })?
         };
 
-        // plugin_get_metadata()を呼び出してメタデータ取得
-        let metadata = unsafe {
-            let get_metadata: Symbol<unsafe extern "C" fn() -> *const c_char> = library
-                .get(b"plugin_get_metadata\0")
-                .map_err(|e| PluginLoaderError::MetadataError(format!("Symbol not found: {}", e)))?;
-
-            let metadata_json_ptr = get_metadata();
-            if metadata_json_ptr.is_null() {
-                return Err(PluginLoaderError::MetadataError(
-                    "plugin_get_metadata returned null".to_string(),
-                ));
-            }
-
-            let metadata_json_cstr = CStr::from_ptr(metadata_json_ptr);
-            let metadata_json = metadata_json_cstr.to_str().map_err(|e| {
-                PluginLoaderError::MetadataError(format!("Invalid UTF-8 in metadata: {}", e))
-            })?;
-
-            // JSONをパース
-            serde_json::from_str::<PluginMetadata>(metadata_json).map_err(|e| {
-                PluginLoaderError::MetadataError(format!("Failed to parse metadata JSON: {}", e))
-            })?
-        };
-
-        Ok(Self { library, metadata })
-    }
-
-    /// プラグインメタデータを取得
-    pub fn metadata(&self) -> &PluginMetadata {
-        &self.metadata
+        Ok(Self { library })
     }
 
     /// プラグイン初期化

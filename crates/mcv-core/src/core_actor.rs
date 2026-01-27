@@ -915,6 +915,7 @@ impl Handler<RegisterPlugin> for CoreActor {
     type Result = ();
 
     fn handle(&mut self, msg: RegisterPlugin, _ctx: &mut Self::Context) {
+        println!("=== CoreActor: RegisterPlugin called for {} ===", msg.plugin_info.name);
         tracing::info!(
             plugin_name = %msg.plugin_info.name,
             "Registering plugin host (waiting for plugin-hello with actual plugin_id)"
@@ -922,6 +923,7 @@ impl Handler<RegisterPlugin> for CoreActor {
         // plugin-helloを待つため、pending_plugin_hostsに追加
         // plugin-helloを受け取ったら、実際のplugin_idでpluginsに登録される
         self.pending_plugin_hosts.push((msg.plugin_info.name.clone(), msg.plugin_info.host_addr));
+        println!("=== CoreActor: {} added to pending_plugin_hosts, count: {} ===", msg.plugin_info.name, self.pending_plugin_hosts.len());
     }
 }
 

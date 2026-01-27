@@ -2,18 +2,37 @@
 
 use actix::prelude::*;
 use mcv_core::{
-    CoreActor, PluginManager, PluginInfo, SendMessageToCore,
-    GetConnections, CreateConnection, RemoveConnection, RenameConnection,
-    GetSites, GetBrowsers, SetConnectionSite, UpdateConnectionSettings,
+    BrowserInfo as CoreBrowserInfo, // mcv-coreから明示的にインポート
     ConnectionInfo,
-    SiteInfo as CoreSiteInfo, BrowserInfo as CoreBrowserInfo,  // mcv-coreから明示的にインポート
+    CoreActor,
+    CreateConnection,
+    GetBrowsers,
+    GetConnections,
+    GetSites,
+    PluginInfo,
+    PluginManager,
+    RemoveConnection,
+    RenameConnection,
+    SendMessageToCore,
+    SetConnectionSite,
+    SiteInfo as CoreSiteInfo,
+    UpdateConnectionSettings,
 };
 use mcv_messages::{
-    self, Message as McvMessage, MessageSource, MessageDestination, MessageType,
-    ConnectPayload, DisconnectPayload, SendCommentPayload, CommentReceivedPayload,
-    SiteInfo as MsgSiteInfo, BrowserInfo as MsgBrowserInfo, InputInfo,  // mcv-messagesから明示的にインポート
+    self,
+    BrowserInfo as MsgBrowserInfo,
+    CommentReceivedPayload,
+    ConnectPayload,
+    DisconnectPayload,
+    InputInfo, // mcv-messagesから明示的にインポート
+    Message as McvMessage,
+    MessageDestination,
+    MessageSource,
+    MessageType,
+    SendCommentPayload,
+    SiteInfo as MsgSiteInfo,
 };
-use mcv_updater::{UpdateChecker, McvUpdateInfo};
+use mcv_updater::{McvUpdateInfo, UpdateChecker};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -27,9 +46,7 @@ struct AppState {
 
 /// 接続を追加
 #[tauri::command]
-async fn add_connection(
-    state: State<'_, AppState>,
-) -> Result<String, String> {
+async fn add_connection(state: State<'_, AppState>) -> Result<String, String> {
     tracing::debug!("add_connection called");
 
     // 現在の接続を取得してデフォルト名を生成
@@ -62,7 +79,7 @@ async fn add_connection(
     let connection_id = state
         .core_addr
         .send(CreateConnection {
-            plugin_id: None,  // 変更: サイト未選択状態で作成
+            plugin_id: None, // 変更: サイト未選択状態で作成
             site_name: "未選択".to_string(),
             input_info: "{}".to_string(),
             name: default_name,
@@ -84,7 +101,9 @@ async fn remove_connection(
 
     state
         .core_addr
-        .send(RemoveConnection { connection_id: conn_id })
+        .send(RemoveConnection {
+            connection_id: conn_id,
+        })
         .await
         .map_err(|e| e.to_string())?
 }
@@ -110,10 +129,7 @@ async fn rename_connection(
 
 /// 接続を開始
 #[tauri::command]
-async fn connect(
-    state: tauri::State<'_, AppState>,
-    connection_id: String,
-) -> Result<(), String> {
+async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Result<(), String> {
     let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
 
     // 接続情報を取得
@@ -205,9 +221,7 @@ async fn disconnect(
 
 /// 接続一覧を取得
 #[tauri::command]
-async fn get_connections(
-    state: tauri::State<'_, AppState>,
-) -> Result<Vec<ConnectionInfo>, String> {
+async fn get_connections(state: tauri::State<'_, AppState>) -> Result<Vec<ConnectionInfo>, String> {
     let connections = state
         .core_addr
         .send(GetConnections)
@@ -219,9 +233,7 @@ async fn get_connections(
 
 /// サイト一覧を取得
 #[tauri::command]
-async fn get_sites(
-    state: tauri::State<'_, AppState>,
-) -> Result<Vec<CoreSiteInfo>, String> {
+async fn get_sites(state: tauri::State<'_, AppState>) -> Result<Vec<CoreSiteInfo>, String> {
     let sites = state
         .core_addr
         .send(GetSites)
@@ -233,9 +245,7 @@ async fn get_sites(
 
 /// ブラウザ一覧を取得
 #[tauri::command]
-async fn get_browsers(
-    state: tauri::State<'_, AppState>,
-) -> Result<Vec<CoreBrowserInfo>, String> {
+async fn get_browsers(state: tauri::State<'_, AppState>) -> Result<Vec<CoreBrowserInfo>, String> {
     let browsers = state
         .core_addr
         .send(GetBrowsers)
@@ -252,10 +262,9 @@ async fn set_connection_site(
     connection_id: String,
     site_id: String,
 ) -> Result<(), String> {
-    let conn_id = Uuid::parse_str(&connection_id)
-        .map_err(|e| format!("Invalid connection_id: {}", e))?;
-    let s_id = Uuid::parse_str(&site_id)
-        .map_err(|e| format!("Invalid site_id: {}", e))?;
+    let conn_id =
+        Uuid::parse_str(&connection_id).map_err(|e| format!("Invalid connection_id: {}", e))?;
+    let s_id = Uuid::parse_str(&site_id).map_err(|e| format!("Invalid site_id: {}", e))?;
 
     tracing::debug!(
         connection_id = %conn_id,
@@ -285,12 +294,11 @@ async fn update_connection_settings(
     browser_id: Option<String>,
     advanced_settings: Option<serde_json::Value>,
 ) -> Result<(), String> {
-    let conn_id = Uuid::parse_str(&connection_id)
-        .map_err(|e| format!("Invalid connection_id: {}", e))?;
+    let conn_id =
+        Uuid::parse_str(&connection_id).map_err(|e| format!("Invalid connection_id: {}", e))?;
 
     let b_id = if let Some(bid) = browser_id {
-        Some(Uuid::parse_str(&bid)
-            .map_err(|e| format!("Invalid browser_id: {}", e))?)
+        Some(Uuid::parse_str(&bid).map_err(|e| format!("Invalid browser_id: {}", e))?)
     } else {
         None
     };
@@ -339,7 +347,9 @@ async fn send_comment(
         .find(|c| c.connection_id == conn_id)
         .ok_or("Connection not found")?;
 
-    let plugin_id = conn_info.plugin_id.ok_or("Plugin not assigned to this connection")?;
+    let plugin_id = conn_info
+        .plugin_id
+        .ok_or("Plugin not assigned to this connection")?;
 
     // send-commentメッセージを送信
     let message = McvMessage::new(
@@ -432,8 +442,7 @@ async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
 
 fn main() {
     // ロガーを初期化
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .expect("Failed to get LOCALAPPDATA");
+    let local_app_data = std::env::var("LOCALAPPDATA").expect("Failed to get LOCALAPPDATA");
     let log_db_path = PathBuf::from(local_app_data)
         .join("MultiCommentViewer")
         .join("logs.db");
@@ -443,10 +452,8 @@ fn main() {
         std::fs::create_dir_all(parent).expect("Failed to create log directory");
     }
 
-    mcv_logger::init_logger(
-        &log_db_path,
-        env!("CARGO_PKG_VERSION"),
-    ).expect("Failed to initialize logger");
+    mcv_logger::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
+        .expect("Failed to initialize logger");
 
     tracing::info!(
         version = env!("CARGO_PKG_VERSION"),
@@ -596,14 +603,7 @@ fn main() {
 
             // ロードされたプラグインをCoreActorに登録
             for (plugin_id, plugin_host_addr, plugin_name) in loaded_plugins {
-                // プラグイン名から役割を推測（簡易実装）
-                let role = if plugin_name.contains("dummy") {
-                    vec!["dummy".to_string()]
-                } else if plugin_name.contains("exe") || plugin_name.contains("manager") {
-                    vec!["exe-plugin-manager".to_string()]
-                } else {
-                    vec!["unknown".to_string()]
-                };
+                let role = vec![];
 
                 let plugin_info = PluginInfo {
                     name: plugin_name.clone(),
@@ -652,16 +652,7 @@ fn main() {
         .setup(move |app| {
             // ウィンドウタイトルにバージョン番号とチャンネルを設定
             if let Some(window) = app.get_webview_window("main") {
-                let version = env!("CARGO_PKG_VERSION");
-
-                #[cfg(feature = "alpha")]
-                let title = format!("MultiCommentViewer v{} (アルファ版)", version);
-
-                #[cfg(all(feature = "beta", not(feature = "alpha")))]
-                let title = format!("MultiCommentViewer v{} (ベータ版)", version);
-
-                #[cfg(all(not(feature = "alpha"), not(feature = "beta")))]
-                let title = format!("MultiCommentViewer v{}", version);
+                let title = get_title();
 
                 let _ = window.set_title(&title);
                 tracing::debug!(title = %title, "Window title set");
@@ -697,4 +688,17 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+fn get_title() -> String {
+    let version = env!("CARGO_PKG_VERSION");
+
+    #[cfg(feature = "alpha")]
+    let title = format!("MultiCommentViewer v{} (アルファ版)", version);
+
+    #[cfg(all(feature = "beta", not(feature = "alpha")))]
+    let title = format!("MultiCommentViewer v{} (ベータ版)", version);
+
+    #[cfg(all(not(feature = "alpha"), not(feature = "beta")))]
+    let title = format!("MultiCommentViewer v{}", version);
+    title
 }

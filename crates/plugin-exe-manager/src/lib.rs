@@ -41,12 +41,34 @@ impl ExePluginManager {
     async fn initialize(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
         self.host = Some(Arc::clone(&host));
 
-        // WebSocketサーバーを起動
-        let websocket_server = WebSocketServer::new("127.0.0.1:28901", Arc::clone(&host))
-            .await
-            .map_err(|e| PluginError::InitializationFailed(e.to_string()))?;
+        // WebSocketサーバーを起動（ポート競合時は自動的に次のポートを試行）
+        let mut websocket_server = None;
+        let mut last_error = None;
 
-        self.websocket_server = Some(Arc::new(websocket_server));
+        for port in 28901..28911 {
+            let addr = format!("127.0.0.1:{}", port);
+            match WebSocketServer::new(&addr, Arc::clone(&host)).await {
+                Ok(server) => {
+                    tracing::info!(port = port, "WebSocket server started successfully");
+                    websocket_server = Some(Arc::new(server));
+                    break;
+                }
+                Err(e) => {
+                    tracing::warn!(port = port, error = %e, "Failed to start WebSocket server on port, trying next");
+                    last_error = Some(e);
+                }
+            }
+        }
+
+        let websocket_server = websocket_server.ok_or_else(|| {
+            let err_msg = format!(
+                "Failed to start WebSocket server on any port (28901-28910): {}",
+                last_error.map(|e| e.to_string()).unwrap_or_else(|| "unknown error".to_string())
+            );
+            PluginError::InitializationFailed(err_msg)
+        })?;
+
+        self.websocket_server = Some(websocket_server);
 
         // プロセスマネージャーを初期化
         let process_manager = ProcessManager::new(self.websocket_server.as_ref().unwrap().get_port())

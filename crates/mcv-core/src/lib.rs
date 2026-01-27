@@ -1,5 +1,6 @@
 pub mod connection_manager;
 pub mod core_actor;
+pub mod internal_message;
 pub mod plugin_host_actor;
 pub mod site_browser_manager;
 
@@ -10,7 +11,7 @@ pub use core_actor::{
     PluginInfo, RegisterPhysicalPlugin, RemoveConnection, RenameConnection, SendMessageToCore,
     SendRequest, SetConnectionSite, UpdateConnectionSettings,
 };
-pub use plugin_host_actor::{PluginHostActor, SendMessageToPlugin, ShutdownPlugin};
+pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 use actix::prelude::*;
@@ -47,8 +48,8 @@ impl PluginManager {
     pub async fn register_plugin_from_dll<P: AsRef<Path>>(
         &self,
         dll_path: P,
-    ) -> Result<(Uuid, Addr<PluginHostActor>, String), String> {
-        tracing::trace!(target: "mcv::core", "PluginManager::register_plugin_from_dll called");
+    ) -> Result<(Uuid, Addr<PhysicalPluginHostActor>, String), String> {
+        tracing::trace!(target: "mcv::core::PluginManager", "PluginManager::register_plugin_from_dll called");
 
         // DLLをロード
         let plugin_loader = PluginLoader::load(&dll_path).map_err(|e| {
@@ -58,30 +59,35 @@ impl PluginManager {
                 e
             )
         })?;
-
+        // 物理プラグインの名称はdll名とする
+        let plugin_name = dll_path
+            .as_ref()
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown_plugin")
+            .to_string();
         //物理プラグインのIDを生成
         let physical_plugin_id = Uuid::new_v4();
-        tracing::trace!(target: "mcv::core", "Generated physical_plugin_id: {}", physical_plugin_id);
+        tracing::trace!(target: "mcv::core::PluginManager", "Generated physical_plugin_id: {} for {}", physical_plugin_id, plugin_name);
 
-        // metadata().nameを取得（plugin-helloで送られる名前と一致させる）
-        let plugin_name = plugin_loader.metadata().name.clone();
-        tracing::trace!(target: "mcv::core", "Loaded plugin: {} (id: {})", plugin_name, plugin_loader.metadata().id);
+        tracing::trace!(target: "mcv::core::PluginManager", "Loaded plugin: {} (id: {})", plugin_name, physical_plugin_id);
 
         // Plugin-Host Actorを起動
-        let mut plugin_host = PluginHostActor::new_from_dll(physical_plugin_id, plugin_loader);
-        println!("PluginHostActor created from DLL");
+        let mut plugin_host =
+            PhysicalPluginHostActor::new_from_dll(physical_plugin_id, plugin_loader);
+        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor created from DLL");
 
         if let Some(core_addr) = &self.core_addr {
-            println!("Setting core_addr to PluginHostActor");
+            tracing::trace!(target: "mcv::core::PluginManager", "Setting core_addr to PluginHostActor");
             plugin_host.set_core_addr(core_addr.clone());
         } else {
-            eprintln!("ERROR: Core actor not set in PluginManager");
+            tracing::error!(target: "mcv::core::PluginManager", "ERROR: Core actor not set in PluginManager");
             return Err("Core actor not set".to_string());
         }
 
-        println!("Starting PluginHostActor...");
+        tracing::trace!(target: "mcv::core::PluginManager", "Starting PluginHostActor...");
         let plugin_host_addr = plugin_host.start();
-        println!("PluginHostActor started, addr: {:?}", plugin_host_addr);
+        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor started, addr: {:?}", plugin_host_addr);
 
         Ok((physical_plugin_id, plugin_host_addr, plugin_name))
     }
@@ -93,26 +99,25 @@ impl PluginManager {
     pub async fn register_plugin(
         &self,
         plugin: Box<dyn Plugin>,
-    ) -> Result<(Uuid, Addr<PluginHostActor>), String> {
-        println!("PluginManager::register_plugin called");
+    ) -> Result<(Uuid, Addr<PhysicalPluginHostActor>), String> {
+        tracing::trace!(target: "mcv::core::PluginManager", "PluginManager::register_plugin called");
         let plugin_id = Uuid::new_v4();
-        println!("Generated plugin_id: {}", plugin_id);
+        tracing::trace!(target: "mcv::core::PluginManager", "Generated plugin_id: {}", plugin_id);
 
         // Plugin-Host Actorを起動
-        let mut plugin_host = PluginHostActor::new(plugin_id, plugin);
-        println!("PluginHostActor created");
-
+        let mut plugin_host = PhysicalPluginHostActor::new(plugin_id, plugin);
+        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor created");
         if let Some(core_addr) = &self.core_addr {
-            println!("Setting core_addr to PluginHostActor");
+            tracing::trace!(target: "mcv::core::PluginManager", "Setting core_addr to PluginHostActor");
             plugin_host.set_core_addr(core_addr.clone());
         } else {
-            eprintln!("ERROR: Core actor not set in PluginManager");
+            tracing::error!(target: "mcv::core::PluginManager", "ERROR: Core actor not set in PluginManager");
             return Err("Core actor not set".to_string());
         }
 
-        println!("Starting PluginHostActor...");
+        tracing::trace!(target: "mcv::core::PluginManager", "Starting PluginHostActor...");
         let plugin_host_addr = plugin_host.start();
-        println!("PluginHostActor started, addr: {:?}", plugin_host_addr);
+        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor started, addr: {:?}", plugin_host_addr);
 
         Ok((plugin_id, plugin_host_addr))
     }
@@ -127,7 +132,7 @@ impl PluginManager {
     pub async fn scan_and_load_plugins<P: AsRef<Path>>(
         &self,
         plugins_dir: P,
-    ) -> Vec<(Uuid, Addr<PluginHostActor>, String)> {
+    ) -> Vec<(Uuid, Addr<PhysicalPluginHostActor>, String)> {
         let plugins_dir = plugins_dir.as_ref();
         tracing::info!(plugins_dir = %plugins_dir.display(), "Scanning for DLL plugins");
 
@@ -136,11 +141,12 @@ impl PluginManager {
         // ディレクトリが存在しない場合は作成
         if !plugins_dir.exists() {
             tracing::warn!(
+                target: "mcv::core::PluginManager",
                 "Plugins directory does not exist, creating: {}",
                 plugins_dir.display()
             );
             if let Err(e) = std::fs::create_dir_all(plugins_dir) {
-                tracing::error!(error = %e, "Failed to create plugins directory");
+                tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to create plugins directory");
                 return loaded_plugins;
             }
         }
@@ -149,7 +155,7 @@ impl PluginManager {
         let entries = match std::fs::read_dir(plugins_dir) {
             Ok(entries) => entries,
             Err(e) => {
-                tracing::error!(target: "mcv::core", error = %e, "Failed to read plugins directory");
+                tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to read plugins directory");
                 return loaded_plugins;
             }
         };
@@ -158,7 +164,7 @@ impl PluginManager {
             let entry = match entry {
                 Ok(e) => e,
                 Err(e) => {
-                    tracing::warn!(target: "mcv::core", error = %e, "Failed to read directory entry");
+                    tracing::warn!(target: "mcv::core::PluginManager", error = %e, "Failed to read directory entry");
                     continue;
                 }
             };
@@ -170,14 +176,14 @@ impl PluginManager {
                 continue;
             }
 
-            tracing::info!(target: "mcv::core", dll_path = %path.display(), "Found DLL plugin");
+            tracing::info!(target: "mcv::core::PluginManager", dll_path = %path.display(), "Found DLL plugin");
 
             // DLLをロード
             match self.register_plugin_from_dll(&path).await {
                 Ok((physical_plugin_id, plugin_host_addr, plugin_name)) => {
                     // plugin_nameはregister_plugin_from_dllから取得（metadata().name）
                     tracing::info!(
-                        target: "mcv::core",
+                        target: "mcv::core::PluginManager",
                         plugin_id = %physical_plugin_id,
                         plugin_name = %plugin_name,
                         dll_path = %path.display(),
@@ -188,7 +194,7 @@ impl PluginManager {
                 }
                 Err(e) => {
                     tracing::error!(
-                        target: "mcv::core",
+                        target: "mcv::core::PluginManager",
                         dll_path = %path.display(),
                         error = %e,
                         "Failed to load DLL plugin"
@@ -197,7 +203,7 @@ impl PluginManager {
             }
         }
 
-        tracing::info!(target: "mcv::core", count = loaded_plugins.len(), "DLL plugins scan completed");
+        tracing::info!(target: "mcv::core::PluginManager", count = loaded_plugins.len(), "DLL plugins scan completed");
         loaded_plugins
     }
 
@@ -211,7 +217,7 @@ impl PluginManager {
     pub async fn scan_and_load_plugins_new<P: AsRef<Path>>(
         &self,
         plugins_dir: P,
-    ) -> Vec<(Uuid, Addr<PluginHostActor>, String)> {
+    ) -> Vec<(Uuid, Addr<PhysicalPluginHostActor>, String)> {
         //dllファイルでcoreが直接読み込むプラグインを物理プラグインと呼ぶ
         //物理プラグインは以下の3つの形状をしている
         //1. zip化されているプラグイン
@@ -219,24 +225,23 @@ impl PluginManager {
         //3. dllファイル単体で配置されているプラグイン
         //
         //1と2のプラグインは、プラグイン専用のディレクトリにmanifest.jsonが存在し、その中のpathでdllファイルのパスを指定する
-        
+
         //TODO: zip化されている場合は一時ディレクトリに展開してから読み込む処理が必要になる。
 
-
-
         let plugins_dir = plugins_dir.as_ref();
-        tracing::info!(plugins_dir = %plugins_dir.display(), "Scanning for DLL plugins");
+        tracing::info!(target: "mcv::core::PluginManager", plugins_dir = %plugins_dir.display(), "Scanning for DLL plugins");
 
         let mut loaded_plugins = Vec::new();
 
         // ディレクトリが存在しない場合は作成
         if !plugins_dir.exists() {
             tracing::warn!(
+                target: "mcv::core::PluginManager",
                 "Plugins directory does not exist, creating: {}",
                 plugins_dir.display()
             );
             if let Err(e) = std::fs::create_dir_all(plugins_dir) {
-                tracing::error!(error = %e, "Failed to create plugins directory");
+                tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to create plugins directory");
                 return loaded_plugins;
             }
         }
@@ -245,7 +250,7 @@ impl PluginManager {
         let entries = match std::fs::read_dir(plugins_dir) {
             Ok(entries) => entries,
             Err(e) => {
-                tracing::error!(target: "mcv::core", error = %e, "Failed to read plugins directory");
+                tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to read plugins directory");
                 return loaded_plugins;
             }
         };
@@ -254,34 +259,33 @@ impl PluginManager {
             let entry = match entry {
                 Ok(e) => e,
                 Err(e) => {
-                    tracing::warn!(target: "mcv::core", error = %e, "Failed to read directory entry");
+                    tracing::warn!(target: "mcv::core::PluginManager", error = %e, "Failed to read directory entry");
                     continue;
                 }
             };
 
             let path = entry.path();
-            if path.is_file(){
+            if path.is_file() {
                 // ファイルの場合はスキップ
                 continue;
             }
             //path中のmanifest.jsonを探す
             let manifest_path = path.join("manifest.json");
-            if !manifest_path.exists(){
+            if !manifest_path.exists() {
                 //manifest.jsonが存在しない場合はスキップ
-                tracing::warn!(target: "mcv::core", dir_path = %path.display(), "No manifest.json found in plugin directory, skipping");
+                tracing::warn!(target: "mcv::core::PluginManager", dir_path = %path.display(), "No manifest.json found in plugin directory, skipping");
                 continue;
             }
             // manifest.jsonを読み込む（将来使用予定）
             let _manifest_content = match std::fs::read_to_string(&manifest_path) {
                 Ok(content) => content,
                 Err(e) => {
-                    tracing::warn!(target: "mcv::core", error = %e, "Failed to read manifest.json in plugin directory: {}", path.display());
+                    tracing::warn!(target: "mcv::core::PluginManager", error = %e, "Failed to read manifest.json in plugin directory: {}", path.display());
                     continue;
                 }
             };
 
-
-            tracing::info!(target: "mcv::core", dll_path = %path.display(), "Found DLL plugin");
+            tracing::info!(target: "mcv::core::PluginManager", dll_path = %path.display(), "Found DLL plugin");
 
             // DLLをロード
             match self.register_plugin_from_dll(&path).await {
@@ -299,7 +303,7 @@ impl PluginManager {
                 }
                 Err(e) => {
                     tracing::error!(
-                        target: "mcv::core",
+                        target: "mcv::core::PluginManager",
                         dll_path = %path.display(),
                         error = %e,
                         "Failed to load DLL plugin"
@@ -308,7 +312,7 @@ impl PluginManager {
             }
         }
 
-        tracing::info!(target: "mcv::core", count = loaded_plugins.len(), "DLL plugins scan completed");
+        tracing::info!(target: "mcv::core::PluginManager", count = loaded_plugins.len(), "DLL plugins scan completed");
         loaded_plugins
     }
 }

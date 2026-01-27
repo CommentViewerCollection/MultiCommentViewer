@@ -6,6 +6,10 @@
 /// - エラーハンドリング
 /// - 共通型定義
 
+pub mod plugin_id;
+
+pub use plugin_id::{LogicalPluginId, PhysicalPluginId};
+
 pub const APP_NAME: &str = "MultiCommentViewer";
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 

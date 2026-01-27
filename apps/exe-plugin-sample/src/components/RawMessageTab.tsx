@@ -4,12 +4,12 @@ import { invoke } from "@tauri-apps/api/core";
 export default function RawMessageTab() {
   const [messageJson, setMessageJson] = useState(`{
   "type": "plugin-hello",
-  "src": { "Plugin": { "plugin_id": "00000000-0000-0000-0000-000000000000" } },
-  "dst": { "Core": null },
+  "src": "10000000-2000-3000-4000-500000000000",
+  "dst": "core",
   "timestamp": ${Date.now()},
   "payload": {
     "name": "Test Plugin",
-    "plugin_id": "00000000-0000-0000-0000-000000000000",
+    "plugin_id": "10000000-2000-3000-4000-500000000000",
     "role": ["debug-tool"],
     "api_version": "v2"
   }
@@ -118,16 +118,12 @@ export default function RawMessageTab() {
                 JSON.stringify(
                   {
                     type: "plugin-hello",
-                    src: {
-                      Plugin: {
-                        plugin_id: "00000000-0000-0000-0000-000000000000",
-                      },
-                    },
-                    dst: { Core: null },
+                    src: "10000000-2000-3000-4000-500000000000",
+                    dst: "core",
                     timestamp: Date.now(),
                     payload: {
                       name: "Test Plugin",
-                      plugin_id: "00000000-0000-0000-0000-000000000000",
+                      plugin_id: "10000000-2000-3000-4000-500000000000",
                       role: ["debug-tool"],
                       api_version: "v2",
                     },
@@ -147,12 +143,8 @@ export default function RawMessageTab() {
                 JSON.stringify(
                   {
                     type: "add-connection",
-                    src: {
-                      Plugin: {
-                        plugin_id: "00000000-0000-0000-0000-000000000000",
-                      },
-                    },
-                    dst: { Core: null },
+                    src: "10000000-2000-3000-4000-500000000000",
+                    dst: "core",
                     timestamp: Date.now(),
                     payload: {
                       site_id: "test-site",
@@ -173,12 +165,8 @@ export default function RawMessageTab() {
                 JSON.stringify(
                   {
                     type: "comment-received",
-                    src: {
-                      Plugin: {
-                        plugin_id: "00000000-0000-0000-0000-000000000000",
-                      },
-                    },
-                    dst: { Core: null },
+                    src: "10000000-2000-3000-4000-500000000000",
+                    dst: "core",
                     timestamp: Date.now(),
                     payload: {
                       connection_id: "00000000-0000-0000-0000-000000000000",
@@ -207,12 +195,8 @@ export default function RawMessageTab() {
                 JSON.stringify(
                   {
                     type: "send-comment",
-                    src: { Core: null },
-                    dst: {
-                      Plugin: {
-                        plugin_id: "00000000-0000-0000-0000-000000000000",
-                      },
-                    },
+                    src: "core",
+                    dst: "10000000-2000-3000-4000-500000000000",
                     timestamp: Date.now(),
                     payload: {
                       connection_id: "00000000-0000-0000-0000-000000000000",

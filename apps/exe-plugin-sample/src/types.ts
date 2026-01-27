@@ -8,13 +8,11 @@ export interface McvMessage {
   payload: any;
 }
 
-export type MessageSource =
-  | { Core: null }
-  | { Plugin: { plugin_id: string } };
+// MessageSource: "core" または UUID文字列
+export type MessageSource = string;
 
-export type MessageDestination =
-  | { Core: null }
-  | { Plugin: { plugin_id: string } };
+// MessageDestination: "core", "broadcast", または UUID文字列
+export type MessageDestination = string;
 
 // Plugin Info
 export interface PluginInfo {

@@ -1,16 +1,16 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use mcv_messages::{Message as McvMessage, MessageType};
+use mcv_messages::Message as McvMessage;
 use mcv_plugin_exe_interface::ExePluginClient;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, State};
 use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 
 /// アプリケーション状態
 struct AppState {
-    client: Arc<Mutex<Option<ExePluginClient>>>,
+    client: Arc<Mutex<Option<Arc<Mutex<ExePluginClient>>>>>,
     plugin_id: Arc<RwLock<Option<Uuid>>>,
     connected: Arc<RwLock<bool>>,
 }
@@ -67,7 +67,7 @@ async fn connect_to_mcv(
         }
     });
 
-    *state.client.lock().await = Some(Arc::try_unwrap(client_arc).unwrap().into_inner());
+    *state.client.lock().await = Some(client_arc);
     *state.connected.write().await = true;
 
     Ok(plugin_id.to_string())
@@ -96,11 +96,12 @@ async fn send_message(
     let message: McvMessage =
         serde_json::from_str(&message_json).map_err(|e| format!("Invalid JSON: {}", e))?;
 
-    let mut client_guard = state.client.lock().await;
-    let client = client_guard
-        .as_mut()
+    let client_option = state.client.lock().await;
+    let client_arc = client_option
+        .as_ref()
         .ok_or("Not connected to MCV")?;
 
+    let mut client = client_arc.lock().await;
     client
         .send_message(message)
         .await

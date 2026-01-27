@@ -33,7 +33,7 @@ impl PluginHostActor {
             core_addr: None,
             host: Arc::new(PluginHostImpl {
                 physical_plugin_id: plugin_id,
-                core_addr: Arc::new(Mutex::new(None)),
+                core_addr: Arc::new(std::sync::Mutex::new(None)),
             }),
         }
     }
@@ -47,7 +47,7 @@ impl PluginHostActor {
             core_addr: None,
             host: Arc::new(PluginHostImpl {
                 physical_plugin_id: plugin_id,
-                core_addr: Arc::new(Mutex::new(None)),
+                core_addr: Arc::new(std::sync::Mutex::new(None)),
             }),
         }
     }
@@ -55,12 +55,11 @@ impl PluginHostActor {
     /// Core Actorのアドレスを設定
     pub fn set_core_addr(&mut self, addr: Addr<crate::core_actor::CoreActor>) {
         self.core_addr = Some(addr.clone());
-        // Hostの共有インスタンスにも設定
+        // Hostの共有インスタンスにも同期的に設定
+        // IMPORTANT: on_loadedが呼ばれる前にcore_addrを設定する必要があるため、同期的に実行
         let core_addr_clone = addr.clone();
         let host = self.host.clone();
-        actix::spawn(async move {
-            *host.core_addr.lock().await = Some(core_addr_clone);
-        });
+        *host.core_addr.lock().unwrap() = Some(core_addr_clone);
     }
 
     /// Core Actorのアドレスを取得
@@ -317,7 +316,7 @@ impl Handler<ShutdownPlugin> for PluginHostActor {
 /// PluginHostインターフェースの実装
 pub struct PluginHostImpl {
     physical_plugin_id: Uuid,
-    core_addr: Arc<Mutex<Option<Addr<crate::core_actor::CoreActor>>>>,
+    core_addr: Arc<std::sync::Mutex<Option<Addr<crate::core_actor::CoreActor>>>>,
 }
 
 #[async_trait::async_trait]
@@ -338,7 +337,7 @@ impl PluginHost for PluginHostImpl {
             "PluginHostImpl: Rewriting message.src to physical_plugin_id"
         );
 
-        let core_addr_guard = self.core_addr.lock().await;
+        let core_addr_guard = self.core_addr.lock().unwrap();
         if let Some(core_addr) = core_addr_guard.as_ref() {
             tracing::debug!(
                 physical_plugin_id = %self.physical_plugin_id,

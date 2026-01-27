@@ -14,72 +14,10 @@ pub enum ManifestError {
     Invalid(String),
 }
 
-/// manifest.jsonのスキーマ
+/// manifest.jsonのシンプルなスキーマ
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginManifest {
-    pub schema_version: String,
-    pub plugin: PluginInfo,
-    pub executable: ExecutableInfo,
-    #[serde(default)]
-    pub websocket: WebSocketConfig,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PluginInfo {
-    pub id: String,
-    pub name: String,
-    pub version: String,
-    pub api_version: String,
-    #[serde(default)]
-    pub description: String,
-    #[serde(default)]
-    pub author: String,
-    pub roles: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExecutableInfo {
-    pub path: PathBuf,
-    #[serde(default)]
-    pub args: Vec<String>,
-    #[serde(default = "default_working_directory")]
-    pub working_directory: PathBuf,
-}
-
-fn default_working_directory() -> PathBuf {
-    PathBuf::from(".")
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebSocketConfig {
-    #[serde(default = "default_auto_reconnect")]
-    pub auto_reconnect: bool,
-    #[serde(default = "default_reconnect_interval_ms")]
-    pub reconnect_interval_ms: u64,
-    #[serde(default = "default_timeout_ms")]
-    pub timeout_ms: u64,
-}
-
-fn default_auto_reconnect() -> bool {
-    true
-}
-
-fn default_reconnect_interval_ms() -> u64 {
-    5000
-}
-
-fn default_timeout_ms() -> u64 {
-    30000
-}
-
-impl Default for WebSocketConfig {
-    fn default() -> Self {
-        Self {
-            auto_reconnect: default_auto_reconnect(),
-            reconnect_interval_ms: default_reconnect_interval_ms(),
-            timeout_ms: default_timeout_ms(),
-        }
-    }
+    pub path: String,
 }
 
 impl PluginManifest {
@@ -96,32 +34,8 @@ impl PluginManifest {
 
     /// manifest.jsonのバリデーション
     fn validate(&self) -> Result<(), ManifestError> {
-        if self.schema_version.is_empty() {
-            return Err(ManifestError::Invalid("schema_version is empty".to_string()));
-        }
-
-        if self.plugin.id.is_empty() {
-            return Err(ManifestError::Invalid("plugin.id is empty".to_string()));
-        }
-
-        if self.plugin.name.is_empty() {
-            return Err(ManifestError::Invalid("plugin.name is empty".to_string()));
-        }
-
-        if self.plugin.version.is_empty() {
-            return Err(ManifestError::Invalid("plugin.version is empty".to_string()));
-        }
-
-        if self.plugin.api_version.is_empty() {
-            return Err(ManifestError::Invalid("plugin.api_version is empty".to_string()));
-        }
-
-        if self.plugin.roles.is_empty() {
-            return Err(ManifestError::Invalid("plugin.roles is empty".to_string()));
-        }
-
-        if self.executable.path.as_os_str().is_empty() {
-            return Err(ManifestError::Invalid("executable.path is empty".to_string()));
+        if self.path.is_empty() {
+            return Err(ManifestError::Invalid("path is empty".to_string()));
         }
 
         Ok(())
@@ -133,16 +47,34 @@ impl PluginManifest {
     /// * `manifest_dir` - manifest.jsonが配置されているディレクトリ
     pub fn get_executable_path<P: AsRef<Path>>(&self, manifest_dir: P) -> PathBuf {
         let manifest_dir = manifest_dir.as_ref();
-        manifest_dir.join(&self.executable.path)
+        manifest_dir.join(&self.path)
     }
 
-    /// 作業ディレクトリの絶対パスを取得
+    /// 作業ディレクトリの絶対パスを取得（manifest.jsonと同じディレクトリ）
     ///
     /// # Arguments
     /// * `manifest_dir` - manifest.jsonが配置されているディレクトリ
     pub fn get_working_directory<P: AsRef<Path>>(&self, manifest_dir: P) -> PathBuf {
-        let manifest_dir = manifest_dir.as_ref();
-        manifest_dir.join(&self.executable.working_directory)
+        manifest_dir.as_ref().to_path_buf()
+    }
+
+    /// プラグインIDを生成（ディレクトリ名から）
+    pub fn get_plugin_id<P: AsRef<Path>>(&self, manifest_dir: P) -> String {
+        manifest_dir
+            .as_ref()
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown")
+            .to_string()
+    }
+
+    /// プラグイン名を生成（実行ファイル名から）
+    pub fn get_plugin_name(&self) -> String {
+        PathBuf::from(&self.path)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("Unknown Plugin")
+            .to_string()
     }
 }
 
@@ -156,49 +88,17 @@ mod tests {
     #[test]
     fn test_manifest_deserialization() {
         let json = r#"{
-            "schema_version": "1.0",
-            "plugin": {
-                "id": "com.example.test",
-                "name": "Test Plugin",
-                "version": "1.0.0",
-                "api_version": "v2",
-                "description": "Test",
-                "author": "Test Author",
-                "roles": ["comment-provider"]
-            },
-            "executable": {
-                "path": "bin/test.exe",
-                "args": [],
-                "working_directory": "."
-            },
-            "websocket": {
-                "auto_reconnect": true,
-                "reconnect_interval_ms": 5000,
-                "timeout_ms": 30000
-            }
+            "path": "exe-plugin-sample.exe"
         }"#;
 
         let manifest: PluginManifest = serde_json::from_str(json).unwrap();
-        assert_eq!(manifest.schema_version, "1.0");
-        assert_eq!(manifest.plugin.id, "com.example.test");
-        assert_eq!(manifest.plugin.name, "Test Plugin");
-        assert_eq!(manifest.executable.path, PathBuf::from("bin/test.exe"));
+        assert_eq!(manifest.path, "exe-plugin-sample.exe");
     }
 
     #[test]
     fn test_manifest_validation() {
         let json = r#"{
-            "schema_version": "1.0",
-            "plugin": {
-                "id": "",
-                "name": "Test Plugin",
-                "version": "1.0.0",
-                "api_version": "v2",
-                "roles": ["comment-provider"]
-            },
-            "executable": {
-                "path": "bin/test.exe"
-            }
+            "path": ""
         }"#;
 
         let manifest: PluginManifest = serde_json::from_str(json).unwrap();
@@ -211,23 +111,23 @@ mod tests {
         let manifest_path = temp_dir.path().join("manifest.json");
 
         let json = r#"{
-            "schema_version": "1.0",
-            "plugin": {
-                "id": "com.example.test",
-                "name": "Test Plugin",
-                "version": "1.0.0",
-                "api_version": "v2",
-                "roles": ["comment-provider"]
-            },
-            "executable": {
-                "path": "bin/test.exe"
-            }
+            "path": "test.exe"
         }"#;
 
         let mut file = fs::File::create(&manifest_path).unwrap();
         file.write_all(json.as_bytes()).unwrap();
 
         let manifest = PluginManifest::load(&manifest_path).unwrap();
-        assert_eq!(manifest.plugin.id, "com.example.test");
+        assert_eq!(manifest.path, "test.exe");
+    }
+
+    #[test]
+    fn test_get_plugin_name() {
+        let json = r#"{
+            "path": "exe-plugin-sample.exe"
+        }"#;
+
+        let manifest: PluginManifest = serde_json::from_str(json).unwrap();
+        assert_eq!(manifest.get_plugin_name(), "exe-plugin-sample");
     }
 }

@@ -188,6 +188,32 @@ impl PluginLoader {
         }
     }
 
+    /// プラグインon_loaded呼び出し
+    ///
+    /// # Returns
+    /// 成功時は `Ok(())`、失敗時はエラー
+    pub fn on_loaded(&self) -> Result<(), PluginLoaderError> {
+        unsafe {
+            let on_loaded_fn: Symbol<unsafe extern "C" fn() -> i32> = self
+                .library
+                .get(b"plugin_on_loaded\0")
+                .map_err(|e| {
+                    PluginLoaderError::InitFailed(format!("Symbol not found: {}", e))
+                })?;
+
+            let result = on_loaded_fn();
+
+            if result == 0 {
+                Ok(())
+            } else {
+                Err(PluginLoaderError::InitFailed(format!(
+                    "plugin_on_loaded returned error code: {}",
+                    result
+                )))
+            }
+        }
+    }
+
     /// プラグイン終了
     ///
     /// # Returns

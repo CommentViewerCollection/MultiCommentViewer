@@ -1056,22 +1056,38 @@ pub extern "C" fn plugin_init(_host_context: *mut c_void) -> i32 {
 
     // プラグイン側でplugin_idを生成（host_contextは使用しない）
     let mut instance = PLUGIN_INSTANCE.lock().unwrap();
-    let mut plugin = DummyPlugin::new();
+    let plugin = DummyPlugin::new();
 
     println!("=== C ABI: Generated plugin_id: {} ===", plugin.plugin_id);
-
-    // on_loadedを呼び出し（plugin-helloでplugin_idをCoreに送信する）
-    let host = Arc::new(CApiPluginHost);
-    let result = RUNTIME.block_on(plugin.on_loaded(host));
-
-    if let Err(e) = result {
-        eprintln!("plugin_init failed: {}", e);
-        return -1;
-    }
 
     *instance = Some(plugin);
     println!("=== C ABI: plugin_init completed successfully ===");
     0 // 成功
+}
+
+/// プラグインon_loaded呼び出し
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_on_loaded() -> i32 {
+    println!("=== C ABI: plugin_on_loaded called ===");
+
+    let mut instance_guard = PLUGIN_INSTANCE.lock().unwrap();
+    if let Some(ref mut plugin) = *instance_guard {
+        let host = Arc::new(CApiPluginHost);
+        let result = RUNTIME.block_on(plugin.on_loaded(host));
+
+        if let Err(e) = result {
+            eprintln!("plugin_on_loaded: on_loaded failed: {}", e);
+            return -1;
+        }
+        println!("=== C ABI: plugin_on_loaded completed successfully ===");
+        0
+    } else {
+        eprintln!("plugin_on_loaded: Plugin not initialized");
+        -1
+    }
 }
 
 /// メッセージ送信（mcv→プラグイン）

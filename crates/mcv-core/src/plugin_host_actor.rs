@@ -166,8 +166,21 @@ impl Actor for PluginHostActor {
                     "Plugin init failed"
                 );
                 ctx.stop();
+                return;
+            }
+
+            tracing::info!("DLL plugin initialized successfully");
+
+            // on_loadedを呼び出し
+            tracing::debug!("Calling DLL plugin on_loaded");
+            if let Err(e) = plugin_loader.on_loaded() {
+                tracing::error!(
+                    error = %e,
+                    "Plugin on_loaded failed"
+                );
+                ctx.stop();
             } else {
-                tracing::info!("DLL plugin initialized successfully (plugin_id will be received via plugin-hello)");
+                tracing::info!("DLL plugin on_loaded completed (plugin_id will be received via plugin-hello)");
             }
         } else {
             tracing::error!("Neither plugin nor plugin_loader is set");

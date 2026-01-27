@@ -81,9 +81,11 @@ impl ProcessManager {
             if manifest_path.exists() {
                 match PluginManifest::load(&manifest_path) {
                     Ok(manifest) => {
+                        let plugin_name = manifest.get_plugin_name();
+                        let plugin_id = manifest.get_plugin_id(&path);
                         tracing::info!(
-                            plugin_name = %manifest.plugin.name,
-                            plugin_id = %manifest.plugin.id,
+                            plugin_name = %plugin_name,
+                            plugin_id = %plugin_id,
                             manifest_path = %manifest_path.display(),
                             "Found plugin manifest"
                         );
@@ -111,24 +113,27 @@ impl ProcessManager {
         let manifests_clone = self.manifests.clone();
 
         for (manifest_dir, manifest) in manifests_clone {
+            let plugin_name = manifest.get_plugin_name();
+            let plugin_id = manifest.get_plugin_id(&manifest_dir);
+
             tracing::info!(
-                plugin_name = %manifest.plugin.name,
-                plugin_id = %manifest.plugin.id,
+                plugin_name = %plugin_name,
+                plugin_id = %plugin_id,
                 "Starting auto plugin"
             );
 
             match self.start_plugin(&manifest_dir, &manifest, true).await {
                 Ok(_) => {
                     tracing::info!(
-                        plugin_name = %manifest.plugin.name,
-                        plugin_id = %manifest.plugin.id,
+                        plugin_name = %plugin_name,
+                        plugin_id = %plugin_id,
                         "Plugin started"
                     );
                 }
                 Err(e) => {
                     tracing::error!(
-                        plugin_name = %manifest.plugin.name,
-                        plugin_id = %manifest.plugin.id,
+                        plugin_name = %plugin_name,
+                        plugin_id = %plugin_id,
                         error = %e,
                         "Failed to start plugin"
                     );
@@ -166,7 +171,6 @@ impl ProcessManager {
         // プロセスを起動
         let mut cmd = Command::new(&exe_path);
         cmd.current_dir(&working_dir);
-        cmd.args(&manifest.executable.args);
         cmd.env("MCV_WEBSOCKET_PORT", self.websocket_port.to_string());
         cmd.env("MCV_WEBSOCKET_URL", format!("ws://127.0.0.1:{}", self.websocket_port));
 
@@ -176,8 +180,10 @@ impl ProcessManager {
                 e
             )))?;
 
+        let plugin_id = manifest.get_plugin_id(manifest_dir);
+
         tracing::info!(
-            plugin_id = %manifest.plugin.id,
+            plugin_id = %plugin_id,
             pid = child.id(),
             "Plugin process started"
         );
@@ -190,7 +196,7 @@ impl ProcessManager {
             auto_started,
         };
 
-        self.processes.insert(manifest.plugin.id.clone(), plugin_process);
+        self.processes.insert(plugin_id, plugin_process);
 
         Ok(())
     }
@@ -283,8 +289,8 @@ impl ProcessManager {
 
     /// pluginsディレクトリのパスを取得
     fn get_plugins_directory() -> Result<PathBuf, ProcessManagerError> {
-        // %APPDATA%\MultiCommentViewer\plugins\
-        let appdata = std::env::var("APPDATA")
+        // %LOCALAPPDATA%\MultiCommentViewer\plugins\
+        let appdata = std::env::var("LOCALAPPDATA")
             .map_err(|_| ProcessManagerError::PluginDirectoryNotFound)?;
 
         let plugins_dir = PathBuf::from(appdata)
@@ -302,8 +308,8 @@ mod tests {
     #[test]
     fn test_get_plugins_directory() {
         let result = ProcessManager::get_plugins_directory();
-        // APPDATA環境変数が設定されている場合のみ成功
-        if std::env::var("APPDATA").is_ok() {
+        // LOCALAPPDATA環境変数が設定されている場合のみ成功
+        if std::env::var("LOCALAPPDATA").is_ok() {
             assert!(result.is_ok());
             let path = result.unwrap();
             assert!(path.to_string_lossy().contains("MultiCommentViewer"));

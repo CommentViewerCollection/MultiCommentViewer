@@ -88,10 +88,13 @@ impl Default for ExePluginManager {
 #[async_trait::async_trait]
 impl Plugin for ExePluginManager {
     async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
+        println!("=== ExePluginManager::on_loaded called, plugin_id: {} ===", self.plugin_id);
         tracing::info!("ExePluginManager::on_loaded called");
 
         // 初期化
+        println!("=== ExePluginManager: Starting initialization ===");
         self.initialize(Arc::clone(&host)).await?;
+        println!("=== ExePluginManager: Initialization completed ===");
 
         // plugin-helloを送信
         let hello_payload = PluginHelloPayload {
@@ -108,8 +111,10 @@ impl Plugin for ExePluginManager {
             serde_json::to_value(&hello_payload).unwrap(),
         );
 
+        println!("=== ExePluginManager: Sending plugin-hello message ===");
         host.send_message(message).await?;
 
+        println!("=== ExePluginManager: plugin-hello message sent successfully ===");
         tracing::info!("ExePluginManager plugin-hello sent");
 
         Ok(())
@@ -212,9 +217,33 @@ pub extern "C" fn plugin_get_metadata() -> *const c_char {
     }
 }
 
+/// PluginHost実装（コールバック経由でmcvにメッセージ送信）
+struct CApiPluginHost;
+
+#[async_trait::async_trait]
+impl PluginHost for CApiPluginHost {
+    async fn send_message(&self, message: McvMessage) -> Result<(), PluginError> {
+        let message_json = serde_json::to_string(&message)
+            .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to serialize message: {}", e)))?;
+
+        let message_cstr = CString::new(message_json)
+            .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to create CString: {}", e)))?;
+
+        unsafe {
+            if let Some(cb) = MESSAGE_CALLBACK {
+                cb(message_cstr.as_ptr());
+            }
+        }
+
+        Ok(())
+    }
+}
+
 /// プラグインを初期化
 #[no_mangle]
 pub extern "C" fn plugin_init(_host_context: *mut libc::c_void) -> i32 {
+    println!("=== C ABI: plugin_init called (ExePluginManager) ===");
+
     unsafe {
         // Tokioランタイムを初期化
         let runtime = match Runtime::new() {
@@ -233,19 +262,59 @@ pub extern "C" fn plugin_init(_host_context: *mut libc::c_void) -> i32 {
         // プラグインインスタンスを作成
         let plugin = Arc::new(tokio::sync::Mutex::new(ExePluginManager::new()));
 
+        let plugin_id = {
+            let plugin_guard = RUNTIME.get().unwrap().block_on(plugin.lock());
+            plugin_guard.plugin_id
+        };
+
+        println!("=== C ABI: Generated plugin_id: {} ===", plugin_id);
+
         if PLUGIN_INSTANCE.set(Arc::clone(&plugin)).is_err() {
             eprintln!("Failed to set PLUGIN_INSTANCE");
             return -1;
         }
 
-        // ここではまだon_loadedは呼ばない（PluginHostActorのstarted内で呼ばれる）
+        println!("=== C ABI: plugin_init completed successfully (ExePluginManager) ===");
         0
+    }
+}
+
+/// プラグインon_loaded呼び出し
+#[no_mangle]
+pub extern "C" fn plugin_on_loaded() -> i32 {
+    println!("=== C ABI: plugin_on_loaded called (ExePluginManager) ===");
+
+    unsafe {
+        if let Some(plugin) = PLUGIN_INSTANCE.get() {
+            if let Some(runtime) = RUNTIME.get() {
+                let host = Arc::new(CApiPluginHost);
+                let result = runtime.block_on(async {
+                    let mut plugin_guard = plugin.lock().await;
+                    plugin_guard.on_loaded(host).await
+                });
+
+                if let Err(e) = result {
+                    eprintln!("plugin_on_loaded: on_loaded failed: {}", e);
+                    return -1;
+                }
+
+                println!("=== C ABI: plugin_on_loaded completed successfully (ExePluginManager) ===");
+                return 0;
+            } else {
+                eprintln!("plugin_on_loaded: Runtime not initialized");
+                return -1;
+            }
+        } else {
+            eprintln!("plugin_on_loaded: Plugin not initialized");
+            return -1;
+        }
     }
 }
 
 /// コールバックを設定
 #[no_mangle]
 pub extern "C" fn plugin_set_callback(callback: extern "C" fn(*const c_char)) -> i32 {
+    println!("=== C ABI: plugin_set_callback called (ExePluginManager) ===");
     unsafe {
         MESSAGE_CALLBACK = Some(callback);
         0
@@ -270,9 +339,36 @@ pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
             }
         };
 
-        // TODO: メッセージをパースして処理
-        // 現在はログ出力のみ
-        tracing::debug!(message = %message_str, "Received message from Core");
+        // JSONをパース
+        let message: McvMessage = match serde_json::from_str(message_str) {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("plugin_send_message: Failed to parse JSON: {}", e);
+                return -1;
+            }
+        };
+
+        // プラグインインスタンスを取得
+        if let Some(plugin) = PLUGIN_INSTANCE.get() {
+            if let Some(runtime) = RUNTIME.get() {
+                let host = Arc::new(CApiPluginHost);
+                let result = runtime.block_on(async {
+                    let mut plugin_guard = plugin.lock().await;
+                    plugin_guard.on_message(message, host).await
+                });
+
+                if let Err(e) = result {
+                    eprintln!("plugin_send_message: on_message failed: {}", e);
+                    return -1;
+                }
+            } else {
+                eprintln!("plugin_send_message: Runtime not initialized");
+                return -1;
+            }
+        } else {
+            eprintln!("plugin_send_message: Plugin not initialized");
+            return -1;
+        }
 
         0
     }

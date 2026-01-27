@@ -1,0 +1,39 @@
+[package]
+name = "exe-plugin-sample"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "exe_plugin_sample_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# MCV dependencies
+mcv-plugin-exe-interface = { path = "../../../crates/mcv-plugin-exe-interface" }
+mcv-messages = { path = "../../../crates/mcv-messages" }
+
+# Async runtime
+tokio = { version = "1.42", features = ["full"] }
+
+# UUID
+uuid = { version = "1.11", features = ["v4", "serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0"
+
+[target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
+tauri-plugin-cli = "2"

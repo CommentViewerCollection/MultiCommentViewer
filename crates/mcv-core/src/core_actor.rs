@@ -58,108 +58,118 @@ impl CoreActor {
 
     /// plugin-helloを処理
     fn handle_plugin_hello(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        println!("=== CoreActor: handle_plugin_hello called ===");
         let payload: PluginHelloPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!(
                     error = %e,
-                    message_type = "plugin-hello",
-                    "Failed to parse message payload"
+                    "Failed to parse plugin-hello payload"
                 );
                 return;
             }
         };
 
-        // TODO (Commit 3): 完全な実装に書き換える
-        // 暫定実装: 既に登録されている論理プラグインか、exe-plugin-managerを探す
-        let plugin_host_addr = if let Some(existing_plugin) = self.logical_plugins.get(&payload.plugin_id) {
-            println!("=== CoreActor: Plugin {} already registered, using existing PluginHostActor ===", payload.name);
+        let logical_plugin_id = payload.plugin_id;
+
+        // 既に論理プラグインとして登録済みか確認
+        if self.logical_plugins.contains_key(&logical_plugin_id) {
             tracing::debug!(
-                plugin_name = %payload.name,
-                plugin_id = %payload.plugin_id,
-                "Logical plugin already registered, using existing PluginHostActor"
+                logical_plugin_id = %logical_plugin_id,
+                "Logical plugin already registered, ignoring duplicate plugin-hello"
             );
-            existing_plugin.host_addr.clone()
+            return;
+        }
+
+        // message.srcから物理plugin_idを取得
+        // PluginHostImpl::send_message()が書き換えた物理plugin_id
+        let physical_plugin_id = match message.src {
+            MessageSource::Plugin { plugin_id } => plugin_id,
+            MessageSource::Core => {
+                tracing::error!("plugin-hello from Core is invalid");
+                return;
+            }
+        };
+
+        // 物理プラグインのPluginHostActorを取得
+        let physical_plugin_host_addr = if let Some(addr) = self.physical_plugin_hosts.get(&physical_plugin_id) {
+            // DLL物理プラグインの場合
+            tracing::debug!(
+                physical_plugin_id = %physical_plugin_id,
+                logical_plugin_id = %logical_plugin_id,
+                "Found physical plugin host for DLL logical plugin"
+            );
+            addr.clone()
         } else {
-            // EXEプラグインの場合、plugin-exe-managerのPluginHostActorを使用
-            println!("=== CoreActor: Looking for exe-plugin-manager for {} ===", payload.name);
+            // EXE論理プラグインの場合（plugin-exe-managerを経由）
             tracing::debug!(
-                plugin_name = %payload.name,
-                plugin_id = %payload.plugin_id,
-                "Looking for exe-plugin-manager"
+                physical_plugin_id = %physical_plugin_id,
+                logical_plugin_id = %logical_plugin_id,
+                "Physical plugin host not found, looking for exe-plugin-manager logical plugin"
             );
 
-            let exe_manager_plugin = self.logical_plugins.iter()
-                .find(|(_, info)| info.role.contains(&"exe-plugin-manager".to_string()));
+            let exe_manager_logical_plugin = self.logical_plugins.iter()
+                .find(|(_, logical_plugin_info)| {
+                    logical_plugin_info.role.contains(&"exe-plugin-manager".to_string())
+                });
 
-            if let Some((_, info)) = exe_manager_plugin {
-                println!("=== CoreActor: Found exe-plugin-manager, using its PluginHostActor for {} ===", payload.name);
+            if let Some((_, exe_manager_logical_plugin_info)) = exe_manager_logical_plugin {
+                // exe-plugin-managerの物理plugin_idを使用
                 tracing::debug!(
-                    plugin_name = %payload.name,
-                    plugin_id = %payload.plugin_id,
-                    exe_manager_id = %info.logical_plugin_id,
-                    "Using exe-plugin-manager's PluginHostActor for EXE plugin"
+                    exe_manager_physical_plugin_id = %exe_manager_logical_plugin_info.physical_plugin_id,
+                    logical_plugin_id = %logical_plugin_id,
+                    "Using exe-plugin-manager's physical plugin host for EXE logical plugin"
                 );
-                info.host_addr.clone()
+                exe_manager_logical_plugin_info.host_addr.clone()
             } else {
-                println!("=== CoreActor: ERROR - exe-plugin-manager not found for {} ===", payload.name);
-                tracing::error!(
-                    plugin_name = %payload.name,
-                    plugin_id = %payload.plugin_id,
-                    "exe-plugin-manager not found for plugin-hello"
-                );
+                tracing::error!("exe-plugin-manager logical plugin not found");
                 return;
             }
         };
 
-        tracing::info!(
-            plugin_name = %payload.name,
-            plugin_id = %payload.plugin_id,
-            "Plugin registered via plugin-hello"
-        );
-
-        // プラグイン情報を登録（plugin-helloのplugin_idを使用）
-        // TODO (Commit 3): physical_plugin_idをmessage.srcから取得する
-        let plugin_info = LogicalPluginInfo {
-            logical_plugin_id: payload.plugin_id,
-            physical_plugin_id: payload.plugin_id, // 暫定: 論理IDと同じにする（Commit 3で修正）
+        // LogicalPluginInfoを作成
+        let logical_plugin_info = LogicalPluginInfo {
+            logical_plugin_id,
+            physical_plugin_id,
             name: payload.name.clone(),
             role: payload.role.clone(),
             api_version: payload.api_version.clone(),
-            host_addr: plugin_host_addr.clone(),
+            host_addr: physical_plugin_host_addr,
         };
-        self.logical_plugins.insert(payload.plugin_id, plugin_info);
 
-        // plugin-addedをブロードキャスト
+        // 論理プラグインとして登録
+        self.logical_plugins.insert(logical_plugin_id, logical_plugin_info);
+
+        tracing::info!(
+            physical_plugin_id = %physical_plugin_id,
+            logical_plugin_id = %logical_plugin_id,
+            logical_plugin_name = %payload.name,
+            "Logical plugin registered (physical_plugin_id → logical_plugin_id mapping created)"
+        );
+
+        // plugin-addedを全論理プラグインにブロードキャスト
         let response = McvMessage::new(
             MessageType::PluginAdded,
             MessageSource::Core,
             MessageDestination::Broadcast,
             serde_json::to_value(PluginAddedPayload {
                 name: payload.name.clone(),
-                plugin_id: payload.plugin_id,
+                plugin_id: logical_plugin_id,
                 role: payload.role.clone(),
                 api_version: payload.api_version.clone(),
-            })
-            .unwrap(),
+            }).unwrap(),
         );
 
-        // 全プラグインにブロードキャスト
-        println!("=== CoreActor: Broadcasting plugin-added to {} plugins ===", self.logical_plugins.len());
-        for (pid, plugin_info) in &self.logical_plugins {
-            println!("=== CoreActor: Sending plugin-added to plugin {} ===", pid);
-            plugin_info.host_addr.do_send(SendMessageToPlugin {
+        // 全論理プラグインにブロードキャスト
+        for (_, logical_plugin_info) in &self.logical_plugins {
+            logical_plugin_info.host_addr.do_send(SendMessageToPlugin {
                 message: response.clone(),
             });
         }
 
-        println!("=== CoreActor: Plugin {} registered and broadcasted ===", payload.plugin_id);
         tracing::info!(
-            plugin_id = %payload.plugin_id,
-            plugin_name = %payload.name,
-            plugins_count = self.logical_plugins.len(),
-            "Plugin registered and broadcasted to all plugins"
+            logical_plugin_id = %logical_plugin_id,
+            logical_plugins_count = self.logical_plugins.len(),
+            "Logical plugin registered and plugin-added broadcasted to all logical plugins"
         );
     }
 

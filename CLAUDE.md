@@ -74,13 +74,19 @@ All messages follow kebab-case naming convention and include:
 
 ```
 crates/
-├── mcv-messages/          # Message type definitions (MessageType, payloads)
-├── mcv-common/            # Shared utilities and constants
-├── mcv-plugin-interface/  # Plugin trait definitions (Plugin, PluginHost)
-├── mcv-tracing/          # Plugin tracing integration (auto log forwarding to Core)
-├── mcv-logger/           # Core logging system (SQLite + remote sending)
-├── mcv-core/             # Core logic (CoreActor, PluginManager, ConnectionManager)
-└── plugin-dummy/         # Dummy plugin for testing and development
+├── mcv-messages/              # Message type definitions (MessageType, payloads)
+├── mcv-common/                # Shared utilities and constants
+├── mcv-plugin-interface/      # Plugin trait definitions (Plugin, PluginHost)
+├── mcv-tracing/              # Plugin tracing integration (auto log forwarding to Core)
+├── mcv-logger/               # Core logging system (SQLite + remote sending)
+├── mcv-core/                 # Core logic (CoreActor, PluginManager, ConnectionManager)
+├── plugin-dummy/             # Dummy plugin for testing and development
+├── plugin-exe-manager/       # EXE plugin manager (DLL plugin, WebSocket server)
+└── mcv-plugin-exe-interface/ # EXE plugin client library (WebSocket client)
+
+apps/
+├── mcv/                      # Main Tauri application
+└── exe-plugin-sample/        # EXE plugin debug tool (Tauri-based GUI)
 ```
 
 ### Comment Posting System
@@ -172,6 +178,105 @@ tracing::error!(error = %e, "Failed to process request");
 - They manually construct LogEntry messages for testing purposes
 - mcv-tracing provides automatic logging for production use
 
+### EXE Plugin System
+
+MultiCommentViewer supports EXE plugins in addition to DLL plugins. EXE plugins run as independent processes and communicate with the core via WebSocket.
+
+**Architecture:**
+```
+Core (CoreActor)
+  ↕
+PluginHostActor (exe-plugin-manager)
+  ↕
+plugin-exe-manager (DLL plugin)
+  ↕ WebSocket (JSON, port 28901)
+EXE plugin (independent process)
+```
+
+**Components:**
+
+1. **plugin-exe-manager** (DLL plugin)
+   - WebSocket server on port 28901 (auto-selects 28902+ if unavailable)
+   - Scans `%APPDATA%\MultiCommentViewer\plugins\` for manifest.json
+   - Auto-starts EXE plugins on mcv startup
+   - Message routing (unicast, broadcast, role-based)
+   - Process management (spawn, monitor, restart up to 3 times)
+
+2. **mcv-plugin-exe-interface** (Library for EXE plugin development)
+   - WebSocket client (`ExePluginClient`)
+   - Auto-reconnect support
+   - Message send/receive helpers
+
+3. **manifest.json schema:**
+   ```json
+   {
+     "schema_version": "1.0",
+     "plugin": {
+       "id": "com.example.my-plugin",
+       "name": "My EXE Plugin",
+       "version": "1.0.0",
+       "api_version": "v2",
+       "roles": ["comment-provider"]
+     },
+     "executable": {
+       "path": "bin/my-plugin.exe",
+       "args": [],
+       "working_directory": "."
+     },
+     "websocket": {
+       "auto_reconnect": true,
+       "reconnect_interval_ms": 5000,
+       "timeout_ms": 30000
+     }
+   }
+   ```
+
+4. **Environment variables** (set by plugin-exe-manager):
+   - `MCV_WEBSOCKET_PORT`: WebSocket server port (e.g., "28901")
+   - `MCV_WEBSOCKET_URL`: Full WebSocket URL (e.g., "ws://127.0.0.1:28901")
+
+**EXE plugin example:**
+```rust
+use mcv_plugin_exe_interface::ExePluginClient;
+use mcv_messages::{Message, MessageType};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let url = std::env::var("MCV_WEBSOCKET_URL")?;
+    let mut client = ExePluginClient::connect(&url).await?;
+
+    // Send plugin-hello
+    client.send_plugin_hello("My Plugin", vec!["comment-provider"]).await?;
+
+    // Register message handler
+    client.on_message(|msg| {
+        match msg.message_type {
+            MessageType::Connect => { /* handle connect */ },
+            MessageType::Disconnect => { /* handle disconnect */ },
+            _ => {}
+        }
+    });
+
+    // Run message loop
+    client.run().await?;
+    Ok(())
+}
+```
+
+**Debug tool (exe-plugin-sample):**
+- Tauri-based GUI for testing EXE plugins
+- 5 tabs: Plugin, Connection, Comment, Raw Message, Log
+- Real-time message monitoring with filtering
+- Template-based message sending
+- Run with: `cd apps/exe-plugin-sample && npm run tauri dev`
+
+**Broadcast messages:**
+The following message types are automatically broadcast to all EXE plugins:
+- `plugin-added`, `plugin-removed`
+- `connection-added`, `connection-removed`
+- `connected`, `disconnected`
+- `comment-received`
+
 ### Plugin Implementation
 
 Plugins must implement the `Plugin` trait:
@@ -240,11 +345,10 @@ The application uses an event-driven architecture to avoid polling:
 
 ## Current Limitations (MVP)
 
-- No dynamic plugin loading (.dll/.so)
 - No browser management/cookie extraction
 - No complex input UI (URL/password fields)
-- Single dummy plugin for testing
 - No persistent storage or configuration
+- Limited real streaming platform plugins (only dummy plugin currently)
 
 ## Test Coverage
 

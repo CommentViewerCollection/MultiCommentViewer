@@ -104,6 +104,90 @@ impl PluginManager {
 
         Ok((plugin_id, plugin_host_addr))
     }
+
+    /// 指定ディレクトリ内のDLLプラグインをスキャンして登録
+    ///
+    /// # Arguments
+    /// * `plugins_dir` - プラグインディレクトリのパス
+    ///
+    /// # Returns
+    /// Vec<(plugin_id, plugin_host_addr, plugin_name)>
+    pub async fn scan_and_load_plugins<P: AsRef<Path>>(
+        &self,
+        plugins_dir: P,
+    ) -> Vec<(Uuid, Addr<PluginHostActor>, String)> {
+        let plugins_dir = plugins_dir.as_ref();
+        tracing::info!(plugins_dir = %plugins_dir.display(), "Scanning for DLL plugins");
+
+        let mut loaded_plugins = Vec::new();
+
+        // ディレクトリが存在しない場合は作成
+        if !plugins_dir.exists() {
+            tracing::warn!("Plugins directory does not exist, creating: {}", plugins_dir.display());
+            if let Err(e) = std::fs::create_dir_all(plugins_dir) {
+                tracing::error!(error = %e, "Failed to create plugins directory");
+                return loaded_plugins;
+            }
+        }
+
+        // ディレクトリ内の.dllファイルをスキャン
+        let entries = match std::fs::read_dir(plugins_dir) {
+            Ok(entries) => entries,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to read plugins directory");
+                return loaded_plugins;
+            }
+        };
+
+        for entry in entries {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(e) => {
+                    tracing::warn!(error = %e, "Failed to read directory entry");
+                    continue;
+                }
+            };
+
+            let path = entry.path();
+
+            // .dllファイルのみ処理
+            if path.extension().and_then(|s| s.to_str()) != Some("dll") {
+                continue;
+            }
+
+            tracing::info!(dll_path = %path.display(), "Found DLL plugin");
+
+            // DLLをロード
+            match self.register_plugin_from_dll(&path).await {
+                Ok((plugin_id, plugin_host_addr)) => {
+                    let plugin_name = path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+
+                    tracing::info!(
+                        plugin_id = %plugin_id,
+                        plugin_name = %plugin_name,
+                        dll_path = %path.display(),
+                        "Successfully loaded DLL plugin"
+                    );
+
+                    loaded_plugins.push((plugin_id, plugin_host_addr, plugin_name));
+                }
+                Err(e) => {
+                    tracing::error!(
+                        dll_path = %path.display(),
+                        error = %e,
+                        "Failed to load DLL plugin"
+                    );
+                }
+            }
+        }
+
+        tracing::info!(count = loaded_plugins.len(), "DLL plugins scan completed");
+        loaded_plugins
+    }
 }
 
 impl Default for PluginManager {

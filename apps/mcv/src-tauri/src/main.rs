@@ -23,7 +23,6 @@ use uuid::Uuid;
 struct AppState {
     core_addr: Addr<CoreActor>,
     plugin_manager: Arc<tokio::sync::Mutex<PluginManager>>,
-    dummy_plugin_id: Uuid,
 }
 
 /// 接続を追加
@@ -327,7 +326,20 @@ async fn send_comment(
     text: String,
 ) -> Result<String, String> {
     let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
-    let plugin_id = state.dummy_plugin_id;
+
+    // 接続情報を取得してplugin_idを取得
+    let connections = state
+        .core_addr
+        .send(GetConnections)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let conn_info = connections
+        .iter()
+        .find(|c| c.connection_id == conn_id)
+        .ok_or("Connection not found")?;
+
+    let plugin_id = conn_info.plugin_id.ok_or("Plugin not assigned to this connection")?;
 
     // send-commentメッセージを送信
     let message = McvMessage::new(
@@ -552,90 +564,71 @@ fn main() {
             plugin_manager.set_core_addr(core_addr.clone());
             tracing::debug!("core_addr set to PluginManager");
 
-            // ダミープラグインをDLLから登録
-            tracing::info!("Loading DummyPlugin from DLL");
-
-            // DLLパスを構築（開発環境ではtarget/debug/plugin_dummy.dll）
-            let dll_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .join("target")
-                .join("debug")
-                .join("plugin_dummy.dll");
-
-            tracing::debug!(dll_path = ?dll_path, "DLL path");
-
-            let (plugin_id, plugin_host_addr) = plugin_manager
-                .register_plugin_from_dll(&dll_path)
-                .await
-                .expect("Failed to register dummy plugin from DLL");
-            tracing::debug!("register_plugin_from_dll returned successfully");
-
-            // Core ActorにPluginInfoを登録
-            let plugin_info = PluginInfo {
-                name: "Dummy Plugin".to_string(),
-                plugin_id,
-                role: vec!["dummy".to_string()],
-                api_version: "v2".to_string(),
-                host_addr: plugin_host_addr,
+            // プラグインディレクトリを決定
+            // 開発環境: target/debug/
+            // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
+            let plugins_dir = if cfg!(debug_assertions) {
+                // 開発環境: target/debug/
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .parent()
+                    .unwrap()
+                    .parent()
+                    .unwrap()
+                    .parent()
+                    .unwrap()
+                    .join("target")
+                    .join("debug")
+            } else {
+                // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
+                let local_app_data = std::env::var("LOCALAPPDATA")
+                    .expect("Failed to get LOCALAPPDATA");
+                PathBuf::from(local_app_data)
+                    .join("MultiCommentViewer")
+                    .join("plugins")
             };
 
-            tracing::debug!("Sending RegisterPlugin to CoreActor");
-            core_addr.do_send(mcv_core::core_actor::RegisterPlugin {
-                plugin_id,
-                plugin_info,
-            });
+            tracing::info!(plugins_dir = %plugins_dir.display(), "Loading DLL plugins from directory");
 
-            tracing::info!(plugin_id = %plugin_id, "Dummy plugin registered");
+            // プラグインディレクトリをスキャンして自動ロード
+            let loaded_plugins = plugin_manager.scan_and_load_plugins(&plugins_dir).await;
 
-            // EXE Plugin Managerを登録
-            tracing::info!("Loading ExePluginManager from DLL");
+            tracing::info!(count = loaded_plugins.len(), "Loaded DLL plugins");
 
-            let exe_plugin_manager_dll_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .join("target")
-                .join("debug")
-                .join("plugin_exe_manager.dll");
+            // ロードされたプラグインをCoreActorに登録
+            for (plugin_id, plugin_host_addr, plugin_name) in loaded_plugins {
+                // プラグイン名から役割を推測（簡易実装）
+                let role = if plugin_name.contains("dummy") {
+                    vec!["dummy".to_string()]
+                } else if plugin_name.contains("exe") || plugin_name.contains("manager") {
+                    vec!["exe-plugin-manager".to_string()]
+                } else {
+                    vec!["unknown".to_string()]
+                };
 
-            tracing::debug!(dll_path = ?exe_plugin_manager_dll_path, "EXE Plugin Manager DLL path");
+                let plugin_info = PluginInfo {
+                    name: plugin_name.clone(),
+                    plugin_id,
+                    role,
+                    api_version: "v2".to_string(),
+                    host_addr: plugin_host_addr,
+                };
 
-            let (exe_manager_plugin_id, exe_manager_plugin_host_addr) = plugin_manager
-                .register_plugin_from_dll(&exe_plugin_manager_dll_path)
-                .await
-                .expect("Failed to register EXE plugin manager from DLL");
-            tracing::debug!("EXE Plugin Manager register_plugin_from_dll returned successfully");
+                tracing::debug!(
+                    plugin_id = %plugin_id,
+                    plugin_name = %plugin_name,
+                    "Registering plugin with CoreActor"
+                );
 
-            // Core ActorにPluginInfoを登録
-            let exe_manager_plugin_info = PluginInfo {
-                name: "EXE Plugin Manager".to_string(),
-                plugin_id: exe_manager_plugin_id,
-                role: vec!["exe-plugin-manager".to_string()],
-                api_version: "v2".to_string(),
-                host_addr: exe_manager_plugin_host_addr,
-            };
-
-            tracing::debug!("Sending RegisterPlugin to CoreActor for EXE Plugin Manager");
-            core_addr.do_send(mcv_core::core_actor::RegisterPlugin {
-                plugin_id: exe_manager_plugin_id,
-                plugin_info: exe_manager_plugin_info,
-            });
-
-            tracing::info!(plugin_id = %exe_manager_plugin_id, "EXE Plugin Manager registered");
+                core_addr.do_send(mcv_core::core_actor::RegisterPlugin {
+                    plugin_id,
+                    plugin_info,
+                });
+            }
 
             // AppStateを作成してメインスレッドに送信
             let app_state = AppState {
                 core_addr,
                 plugin_manager: Arc::new(tokio::sync::Mutex::new(plugin_manager)),
-                dummy_plugin_id: plugin_id,
             };
 
             tracing::debug!("Sending AppState to main thread");

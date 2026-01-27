@@ -70,6 +70,26 @@ impl ExePluginClient {
         Ok(())
     }
 
+    /// get-pluginsメッセージを送信
+    ///
+    /// 既存のプラグイン一覧を取得する
+    pub async fn send_get_plugins(&mut self) -> Result<(), ExePluginError> {
+        tracing::info!("Sending get-plugins");
+
+        let message = McvMessage::new(
+            MessageType::GetPlugins,
+            MessageSource::Plugin { plugin_id: self.plugin_id },
+            MessageDestination::Core,
+            serde_json::json!({}),
+        );
+
+        self.send_message(message).await?;
+
+        tracing::info!("get-plugins sent");
+
+        Ok(())
+    }
+
     /// メッセージを送信
     pub async fn send_message(&mut self, message: McvMessage) -> Result<(), ExePluginError> {
         let json = serde_json::to_string(&message)?;

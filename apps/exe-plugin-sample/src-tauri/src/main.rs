@@ -43,6 +43,14 @@ async fn connect_to_mcv(
 
     tracing::info!(plugin_id = %plugin_id, "Connected and sent plugin-hello");
 
+    // get-pluginsを送信して既存プラグイン情報を取得
+    client
+        .send_get_plugins()
+        .await
+        .map_err(|e| format!("Failed to send get-plugins: {}", e))?;
+
+    tracing::info!("Sent get-plugins request");
+
     // メッセージハンドラーを登録
     let app_clone = app.clone();
     client.on_message(move |message| {

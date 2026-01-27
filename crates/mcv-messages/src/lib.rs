@@ -14,11 +14,38 @@ pub struct Message {
 }
 
 /// メッセージの送信元
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MessageSource {
     Core,
     Plugin { plugin_id: Uuid },
+}
+
+impl Serialize for MessageSource {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            MessageSource::Core => serializer.serialize_str("core"),
+            MessageSource::Plugin { plugin_id } => serializer.serialize_str(&plugin_id.to_string()),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for MessageSource {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        if s == "core" {
+            Ok(MessageSource::Core)
+        } else {
+            let plugin_id = Uuid::parse_str(&s)
+                .map_err(|_| serde::de::Error::custom(format!("Invalid UUID: {}", s)))?;
+            Ok(MessageSource::Plugin { plugin_id })
+        }
+    }
 }
 
 impl MessageSource {
@@ -34,21 +61,54 @@ impl MessageSource {
 }
 
 /// メッセージの宛先
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MessageDestination {
     Core,
     Plugin { plugin_id: Uuid },
+    Broadcast,
+}
+
+impl Serialize for MessageDestination {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            MessageDestination::Core => serializer.serialize_str("core"),
+            MessageDestination::Plugin { plugin_id } => serializer.serialize_str(&plugin_id.to_string()),
+            MessageDestination::Broadcast => serializer.serialize_str("broadcast"),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for MessageDestination {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "core" => Ok(MessageDestination::Core),
+            "broadcast" => Ok(MessageDestination::Broadcast),
+            _ => {
+                let plugin_id = Uuid::parse_str(&s)
+                    .map_err(|_| serde::de::Error::custom(format!("Invalid UUID: {}", s)))?;
+                Ok(MessageDestination::Plugin { plugin_id })
+            }
+        }
+    }
 }
 
 impl MessageDestination {
     /// MessageDestinationをMessageSourceに変換
+    /// 注意: Broadcastの場合はCoreに変換されます（ブロードキャストメッセージへの直接的なレスポンスは想定されていません）
     pub fn to_source(&self) -> MessageSource {
         match self {
             MessageDestination::Core => MessageSource::Core,
             MessageDestination::Plugin { plugin_id } => MessageSource::Plugin {
                 plugin_id: *plugin_id,
             },
+            MessageDestination::Broadcast => MessageSource::Core,
         }
     }
 }
@@ -62,6 +122,7 @@ pub enum MessageType {
     PluginAdded,
     PluginRemoved,
     PluginError,
+    GetPlugins,
 
     // Connection関連
     AddConnection,
@@ -450,5 +511,81 @@ mod tests {
 
         assert_eq!(message.message_type, deserialized.message_type);
         assert_eq!(message.message_type, MessageType::SendComment);
+    }
+
+    #[test]
+    fn test_message_source_serialization() {
+        // Test Core serialization
+        let core = MessageSource::Core;
+        let json = serde_json::to_value(&core).unwrap();
+        assert_eq!(json, serde_json::Value::String("core".to_string()));
+
+        let deserialized: MessageSource = serde_json::from_value(json).unwrap();
+        assert_eq!(core, deserialized);
+
+        // Test Plugin serialization
+        let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
+        let plugin = MessageSource::Plugin { plugin_id };
+        let json = serde_json::to_value(&plugin).unwrap();
+        assert_eq!(json, serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string()));
+
+        let deserialized: MessageSource = serde_json::from_value(json).unwrap();
+        assert_eq!(plugin, deserialized);
+    }
+
+    #[test]
+    fn test_message_destination_serialization() {
+        // Test Core serialization
+        let core = MessageDestination::Core;
+        let json = serde_json::to_value(&core).unwrap();
+        assert_eq!(json, serde_json::Value::String("core".to_string()));
+
+        let deserialized: MessageDestination = serde_json::from_value(json).unwrap();
+        assert_eq!(core, deserialized);
+
+        // Test Plugin serialization
+        let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
+        let plugin = MessageDestination::Plugin { plugin_id };
+        let json = serde_json::to_value(&plugin).unwrap();
+        assert_eq!(json, serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string()));
+
+        let deserialized: MessageDestination = serde_json::from_value(json).unwrap();
+        assert_eq!(plugin, deserialized);
+
+        // Test Broadcast serialization
+        let broadcast = MessageDestination::Broadcast;
+        let json = serde_json::to_value(&broadcast).unwrap();
+        assert_eq!(json, serde_json::Value::String("broadcast".to_string()));
+
+        let deserialized: MessageDestination = serde_json::from_value(json).unwrap();
+        assert_eq!(broadcast, deserialized);
+    }
+
+    #[test]
+    fn test_message_serialization_new_format() {
+        let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
+        let message = Message::new(
+            MessageType::PluginHello,
+            MessageSource::Plugin { plugin_id },
+            MessageDestination::Core,
+            serde_json::json!({
+                "name": "Test Plugin",
+                "plugin_id": plugin_id,
+                "role": ["test"],
+                "api_version": "v2"
+            }),
+        );
+
+        let json = serde_json::to_string(&message).unwrap();
+
+        // 新しいフォーマットでは "src": "uuid", "dst": "core" となることを確認
+        assert!(json.contains(r#""src":"10000000-2000-3000-4000-500000000000""#));
+        assert!(json.contains(r#""dst":"core""#));
+
+        // デシリアライズが正常に動作することを確認
+        let deserialized: Message = serde_json::from_str(&json).unwrap();
+        assert_eq!(message.message_type, deserialized.message_type);
+        assert_eq!(message.src, deserialized.src);
+        assert_eq!(message.dst, deserialized.dst);
     }
 }

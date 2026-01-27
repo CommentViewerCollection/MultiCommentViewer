@@ -176,6 +176,10 @@ impl Plugin for ExePluginManager {
                         // Coreへのメッセージはルーティングしない
                         tracing::debug!("Message to Core, not routing to EXE plugins");
                     }
+                    MessageDestination::Broadcast => {
+                        // ブロードキャストは既に上でハンドリングされているはず
+                        tracing::warn!("Broadcast message reached unicast branch");
+                    }
                 }
             }
         }

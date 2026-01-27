@@ -101,10 +101,11 @@ impl CoreActor {
         };
         self.plugins.insert(payload.plugin_id, plugin_info);
 
-        // plugin-addedを返信
-        let response = McvMessage::create_response(
-            &message,
+        // plugin-addedをブロードキャスト
+        let response = McvMessage::new(
             MessageType::PluginAdded,
+            MessageSource::Core,
+            MessageDestination::Broadcast,
             serde_json::to_value(PluginAddedPayload {
                 name: payload.name.clone(),
                 plugin_id: payload.plugin_id,
@@ -114,10 +115,78 @@ impl CoreActor {
             .unwrap(),
         );
 
-        // プラグインへ返信
-        plugin_host_addr.do_send(SendMessageToPlugin {
-            message: response,
-        });
+        // 全プラグインにブロードキャスト
+        for (_plugin_id, plugin_info) in &self.plugins {
+            plugin_info.host_addr.do_send(SendMessageToPlugin {
+                message: response.clone(),
+            });
+        }
+
+        tracing::info!(
+            plugin_id = %payload.plugin_id,
+            plugin_name = %payload.name,
+            plugins_count = self.plugins.len(),
+            "Plugin registered and broadcasted to all plugins"
+        );
+    }
+
+    /// get-pluginsを処理
+    fn handle_get_plugins(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+        // メッセージ送信元を取得
+        let requester_plugin_id = match message.src {
+            MessageSource::Plugin { plugin_id } => plugin_id,
+            MessageSource::Core => {
+                tracing::warn!("Received get-plugins from Core, ignoring");
+                return;
+            }
+        };
+
+        // リクエスト元のPluginHostActorを取得
+        let plugin_host_addr = match self.plugins.get(&requester_plugin_id) {
+            Some(info) => info.host_addr.clone(),
+            None => {
+                tracing::error!(
+                    plugin_id = %requester_plugin_id,
+                    "Plugin not found for get-plugins request"
+                );
+                return;
+            }
+        };
+
+        tracing::info!(
+            plugin_id = %requester_plugin_id,
+            plugins_count = self.plugins.len(),
+            "Processing get-plugins request"
+        );
+
+        // 全プラグインの情報をplugin-addedメッセージとして送信
+        for (plugin_id, plugin_info) in &self.plugins {
+            let plugin_added_message = McvMessage::new(
+                MessageType::PluginAdded,
+                MessageSource::Core,
+                MessageDestination::Plugin {
+                    plugin_id: requester_plugin_id,
+                },
+                serde_json::to_value(PluginAddedPayload {
+                    name: plugin_info.name.clone(),
+                    plugin_id: *plugin_id,
+                    role: plugin_info.role.clone(),
+                    api_version: plugin_info.api_version.clone(),
+                })
+                .unwrap(),
+            );
+
+            plugin_host_addr.do_send(SendMessageToPlugin {
+                message: plugin_added_message,
+            });
+
+            tracing::debug!(
+                requester_plugin_id = %requester_plugin_id,
+                plugin_id = %plugin_id,
+                plugin_name = %plugin_info.name,
+                "Sent plugin info in response to get-plugins"
+            );
+        }
     }
 
     /// add-connectionを処理
@@ -746,6 +815,7 @@ impl Handler<SendMessageToCore> for CoreActor {
 
         match message.message_type {
             MessageType::PluginHello => self.handle_plugin_hello(message, ctx),
+            MessageType::GetPlugins => self.handle_get_plugins(message, ctx),
             MessageType::AddConnection => self.handle_add_connection(message, ctx),
             MessageType::Connect => self.handle_connect(message, ctx),
             MessageType::Connected => self.handle_connected(message, ctx),

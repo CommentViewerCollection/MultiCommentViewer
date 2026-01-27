@@ -141,6 +141,10 @@ impl MessageRouter {
                 tracing::warn!("Message to Core should not be routed through MessageRouter");
                 Ok(())
             }
+            MessageDestination::Broadcast => {
+                // 全プラグインへブロードキャスト
+                self.broadcast(message).await
+            }
         }
     }
 

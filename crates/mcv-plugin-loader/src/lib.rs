@@ -1,6 +1,6 @@
 use libloading::{Library, Symbol};
 use serde::{Deserialize, Serialize};
-use std::ffi::{c_char, c_void, CStr, CString};
+use std::ffi::{c_char, c_void, CString};
 use std::path::Path;
 use thiserror::Error;
 
@@ -36,8 +36,11 @@ pub enum PluginLoaderError {
     ShutdownFailed(String),
 }
 
-/// メッセージコールバック関数の型
+/// メッセージコールバック関数の型（旧形式、互換性のため残す）
 pub type MessageCallback = extern "C" fn(*const c_char);
+
+/// メッセージコールバック関数の型（userdata対応）
+pub type MessageCallbackWithUserdata = extern "C" fn(*const c_char, *mut c_void);
 
 /// プラグインローダー
 ///
@@ -129,13 +132,17 @@ impl PluginLoader {
         }
     }
 
-    /// コールバック設定（プラグイン→mcv）
+    /// コールバック設定（プラグイン→mcv、旧形式）
     ///
     /// # Arguments
     /// * `callback` - mcv側から呼ばれるコールバック関数
     ///
     /// # Returns
     /// 成功時は `Ok(())`、失敗時はエラー
+    ///
+    /// # Deprecated
+    /// Use `set_callback_with_userdata` instead
+    #[allow(dead_code)]
     pub fn set_callback(&self, callback: MessageCallback) -> Result<(), PluginLoaderError> {
         unsafe {
             let set_callback_fn: Symbol<unsafe extern "C" fn(MessageCallback) -> i32> = self
@@ -146,6 +153,42 @@ impl PluginLoader {
                 })?;
 
             let result = set_callback_fn(callback);
+
+            if result == 0 {
+                Ok(())
+            } else {
+                Err(PluginLoaderError::CallbackSetFailed(format!(
+                    "plugin_set_callback returned error code: {}",
+                    result
+                )))
+            }
+        }
+    }
+
+    /// コールバック設定（プラグイン→mcv、userdata対応）
+    ///
+    /// # Arguments
+    /// * `callback` - mcv側から呼ばれるコールバック関数
+    /// * `userdata` - コールバック時に渡されるユーザーデータポインタ
+    ///
+    /// # Returns
+    /// 成功時は `Ok(())`、失敗時はエラー
+    pub fn set_callback_with_userdata(
+        &self,
+        callback: MessageCallbackWithUserdata,
+        userdata: *mut c_void,
+    ) -> Result<(), PluginLoaderError> {
+        unsafe {
+            let set_callback_fn: Symbol<
+                unsafe extern "C" fn(MessageCallbackWithUserdata, *mut c_void) -> i32,
+            > = self
+                .library
+                .get(b"plugin_set_callback\0")
+                .map_err(|e| {
+                    PluginLoaderError::CallbackSetFailed(format!("Symbol not found: {}", e))
+                })?;
+
+            let result = set_callback_fn(callback, userdata);
 
             if result == 0 {
                 Ok(())

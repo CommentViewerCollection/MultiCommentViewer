@@ -225,6 +225,195 @@ async fn delete_local_logs(ids: Vec<String>) -> Result<usize, String> {
     Ok(deleted)
 }
 
+/// ローカルDBからログをJSON形式でエクスポート
+#[tauri::command]
+async fn export_local_logs(
+    app: tauri::AppHandle,
+    filters: LogQueryFilters,
+) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let today = chrono::Utc::now().format("%Y-%m-%d");
+    let default_filename = format!("mcv-logs-{}.json", today);
+
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.dialog()
+        .file()
+        .set_title("Export Logs")
+        .set_file_name(&default_filename)
+        .add_filter("JSON Files", &["json"])
+        .save_file(move |path| {
+            let _ = tx.send(path);
+        });
+
+    let path = rx.await.map_err(|e| format!("Dialog error: {}", e))?;
+
+    let save_path = match path {
+        Some(file_path) => file_path
+            .into_path()
+            .map_err(|_| "Invalid save path".to_string())?,
+        None => return Ok(None),
+    };
+
+    let log_db_path = get_log_db_path()?;
+    let conn = Connection::open(&log_db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
+
+    let mut where_clauses = Vec::new();
+    let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    if let Some(level) = &filters.level {
+        where_clauses.push("level = ?".to_string());
+        params_vec.push(Box::new(level.clone()));
+    }
+    if let Some(from) = filters.from {
+        where_clauses.push("timestamp >= ?".to_string());
+        params_vec.push(Box::new(from));
+    }
+    if let Some(to) = filters.to {
+        where_clauses.push("timestamp <= ?".to_string());
+        params_vec.push(Box::new(to));
+    }
+    if let Some(search) = &filters.search {
+        where_clauses.push("(message LIKE ? OR file LIKE ? OR module_path LIKE ?)".to_string());
+        let search_pattern = format!("%{}%", search);
+        params_vec.push(Box::new(search_pattern.clone()));
+        params_vec.push(Box::new(search_pattern.clone()));
+        params_vec.push(Box::new(search_pattern));
+    }
+
+    let where_clause = if where_clauses.is_empty() {
+        String::new()
+    } else {
+        format!("WHERE {}", where_clauses.join(" AND "))
+    };
+
+    let query = format!(
+        "SELECT id, level, timestamp, message, file, line, column, module_path, \
+         stacktrace, context, mcv_version, platform, arch, build_profile \
+         FROM logs {} ORDER BY timestamp DESC",
+        where_clause
+    );
+
+    let mut stmt = conn.prepare(&query)
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+
+    let logs = stmt.query_map(params_refs.as_slice(), |row| {
+        let stacktrace_json: Option<String> = row.get(8)?;
+        let stacktrace = stacktrace_json.and_then(|s| serde_json::from_str(&s).ok());
+
+        let context_json: Option<String> = row.get(9)?;
+        let context = context_json.and_then(|s| serde_json::from_str(&s).ok());
+
+        Ok(LogEntry {
+            id: row.get(0)?,
+            level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
+            timestamp: row.get(2)?,
+            message: row.get(3)?,
+            source: mcv_logger::schema::SourceLocation {
+                file: row.get(4)?,
+                line: row.get(5)?,
+                column: row.get(6)?,
+                module_path: row.get(7)?,
+            },
+            stacktrace,
+            context,
+            system_info: mcv_logger::schema::SystemInfo {
+                mcv_version: row.get(10)?,
+                platform: row.get(11)?,
+                arch: row.get(12)?,
+                build_profile: row.get(13)?,
+            },
+        })
+    })
+    .map_err(|e| format!("Failed to query logs: {}", e))?
+    .collect::<SqliteResult<Vec<_>>>()
+    .map_err(|e| format!("Failed to collect logs: {}", e))?;
+
+    let json = serde_json::to_string_pretty(&logs)
+        .map_err(|e| format!("Failed to serialize logs: {}", e))?;
+
+    std::fs::write(&save_path, json)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
+    Ok(Some(save_path.to_string_lossy().to_string()))
+}
+
+/// サーバーAPIからログをJSON形式でエクスポート
+#[tauri::command]
+async fn export_server_logs(
+    app: tauri::AppHandle,
+    api_url: String,
+    filters: LogQueryFilters,
+) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let today = chrono::Utc::now().format("%Y-%m-%d");
+    let default_filename = format!("mcv-logs-server-{}.json", today);
+
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.dialog()
+        .file()
+        .set_title("Export Logs")
+        .set_file_name(&default_filename)
+        .add_filter("JSON Files", &["json"])
+        .save_file(move |path| {
+            let _ = tx.send(path);
+        });
+
+    let path = rx.await.map_err(|e| format!("Dialog error: {}", e))?;
+
+    let save_path = match path {
+        Some(file_path) => file_path
+            .into_path()
+            .map_err(|_| "Invalid save path".to_string())?,
+        None => return Ok(None),
+    };
+
+    let client = reqwest::Client::new();
+    let mut url = format!("{}/api/mcv/logs?limit=1000000&offset=0", api_url);
+
+    if let Some(level) = &filters.level {
+        url.push_str(&format!("&level={}", level));
+    }
+    if let Some(from) = filters.from {
+        url.push_str(&format!("&from={}", from));
+    }
+    if let Some(to) = filters.to {
+        url.push_str(&format!("&to={}", to));
+    }
+    if let Some(search) = &filters.search {
+        url.push_str(&format!("&search={}", urlencoding::encode(search)));
+    }
+
+    let response = client.get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch logs from server: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Server returned error: {}", response.status()));
+    }
+
+    let logs: Vec<serde_json::Value> = response.json::<serde_json::Value>()
+        .await
+        .map_err(|e| format!("Failed to parse server response: {}", e))?
+        .get("logs")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+
+    let json = serde_json::to_string_pretty(&logs)
+        .map_err(|e| format!("Failed to serialize logs: {}", e))?;
+
+    std::fs::write(&save_path, json)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
+    Ok(Some(save_path.to_string_lossy().to_string()))
+}
+
 /// サーバーAPIでログを削除
 #[tauri::command]
 async fn delete_server_logs(api_url: String, ids: Vec<String>) -> Result<usize, String> {
@@ -261,12 +450,15 @@ async fn delete_server_logs(api_url: String, ids: Vec<String>) -> Result<usize, 
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             get_local_logs,
             get_log_db_path,
             get_server_logs,
             delete_local_logs,
             delete_server_logs,
+            export_local_logs,
+            export_server_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

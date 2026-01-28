@@ -2,7 +2,7 @@ import { useState } from "react";
 import FilterBar from "./components/FilterBar";
 import LogTable from "./components/LogTable";
 import LogDetail from "./components/LogDetail";
-import { useLogs, deleteLogs, type DataSource } from "./hooks/useLogs";
+import { useLogs, deleteLogs, exportLogs, type DataSource } from "./hooks/useLogs";
 import type { LogEntry, LogQueryFilters } from "./types/log";
 
 function App() {
@@ -13,6 +13,7 @@ function App() {
   const [limit] = useState(100);
   const [offset, setOffset] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const { logs, total, loading, error } = useLogs(
     dataSource,
@@ -38,6 +39,17 @@ function App() {
     } catch (err) {
       console.error("Failed to delete logs:", err);
       alert(`Failed to delete logs: ${err}`);
+    }
+  };
+
+  const handleExport = async () => {
+    setExportLoading(true);
+    try {
+      await exportLogs(dataSource, apiUrl, filters);
+    } catch (err) {
+      alert(`Failed to export logs: ${err}`);
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -103,7 +115,12 @@ function App() {
       </div>
 
       {/* Filter Bar */}
-      <FilterBar filters={filters} onFiltersChange={setFilters} />
+      <FilterBar
+        filters={filters}
+        onFiltersChange={setFilters}
+        onExport={handleExport}
+        exportLoading={exportLoading}
+      />
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">

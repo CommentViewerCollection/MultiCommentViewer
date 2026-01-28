@@ -24,7 +24,7 @@ async fn connect_to_mcv(
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<String, String> {
-    tracing::info!(url = %url, plugin_name = %plugin_name, "Connecting to MCV");
+    tracing::info!(target:"mcv::exe-plugin-sample",url = %url, plugin_name = %plugin_name, "Connecting to MCV");
 
     // WebSocket接続
     let mut client = ExePluginClient::connect(&url)
@@ -41,7 +41,7 @@ async fn connect_to_mcv(
         .await
         .map_err(|e| format!("Failed to send plugin-hello: {}", e))?;
 
-    tracing::info!(plugin_id = %plugin_id, "Connected and sent plugin-hello");
+    tracing::info!(target:"mcv::exe-plugin-sample", plugin_id = %plugin_id, "Connected and sent plugin-hello");
 
     // get-pluginsを送信して既存プラグイン情報を取得
     client
@@ -49,17 +49,18 @@ async fn connect_to_mcv(
         .await
         .map_err(|e| format!("Failed to send get-plugins: {}", e))?;
 
-    tracing::info!("Sent get-plugins request");
+    tracing::info!(target:"mcv::exe-plugin-sample","Sent get-plugins request");
 
     // メッセージハンドラーを登録
     let app_clone = app.clone();
     client.on_message(move |message| {
+        println!("Received message: {:?}", message);
         let app = app_clone.clone();
         // フロントエンドにメッセージを転送
         if let Err(e) = app.emit("message-received", &message) {
-            tracing::error!(error = %e, "Failed to emit message-received event");
+            tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "Failed to emit message-received event");
         }
-        tracing::debug!(message_type = ?message.message_type, "Message received and forwarded to frontend");
+        tracing::debug!(target:"mcv::exe-plugin-sample",message_type = ?message.message_type, "Message received and forwarded to frontend");
     });
 
     // メッセージ受信ループをバックグラウンドで実行
@@ -70,7 +71,7 @@ async fn connect_to_mcv(
     tokio::spawn(async move {
         let mut client = client_clone.lock().await;
         if let Err(e) = client.run().await {
-            tracing::error!(error = %e, "WebSocket connection error");
+            tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "WebSocket connection error");
             *connected_clone.write().await = false;
         }
     });
@@ -84,7 +85,7 @@ async fn connect_to_mcv(
 /// WebSocketから切断
 #[tauri::command]
 async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
-    tracing::info!("Disconnecting from MCV");
+    tracing::info!(target:"mcv::exe-plugin-sample","Disconnecting from MCV");
 
     *state.client.lock().await = None;
     *state.connected.write().await = false;
@@ -95,19 +96,14 @@ async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
 
 /// メッセージを送信
 #[tauri::command]
-async fn send_message(
-    message_json: String,
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    tracing::debug!(message_json = %message_json, "Sending message");
+async fn send_message(message_json: String, state: State<'_, AppState>) -> Result<(), String> {
+    tracing::debug!(target:"mcv::exe-plugin-sample",message_json = %message_json, "Sending message");
 
     let message: McvMessage =
         serde_json::from_str(&message_json).map_err(|e| format!("Invalid JSON: {}", e))?;
 
     let client_option = state.client.lock().await;
-    let client_arc = client_option
-        .as_ref()
-        .ok_or("Not connected to MCV")?;
+    let client_arc = client_option.as_ref().ok_or("Not connected to MCV")?;
 
     let mut client = client_arc.lock().await;
     client
@@ -139,7 +135,7 @@ fn main() {
         )
         .init();
 
-    tracing::info!("Starting MCV EXE Plugin Sample");
+    tracing::info!(target:"mcv::exe-plugin-sample","Starting MCV EXE Plugin Sample");
 
     let app_state = AppState {
         client: Arc::new(Mutex::new(None)),

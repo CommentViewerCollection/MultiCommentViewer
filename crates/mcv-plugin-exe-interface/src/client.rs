@@ -124,6 +124,7 @@ impl ExePluginClient {
     where
         F: Fn(McvMessage) + Send + Sync + 'static,
     {
+        println!("Registering message handler");
         self.message_handler = Some(Box::new(handler));
     }
 
@@ -140,15 +141,18 @@ impl ExePluginClient {
 
         let (_write, mut read) = ws.split();
 
+        println!("before while");
         while let Some(msg) = read.next().await {
+            println!("mcv::plugin_exe_interface anything received");
             match msg {
                 Ok(WsMessage::Text(text)) => {
                     tracing::debug!(target: "mcv::plugin_exe_interface",message_text = %text, "Received message");
-
+                    println!("mcv::plugin_exe_interface Received WebSocket text message: {}", text);
                     match serde_json::from_str::<McvMessage>(&text) {
                         Ok(mcv_message) => {
                             tracing::debug!(target: "mcv::plugin_exe_interface",message_type = ?mcv_message.message_type, "Parsed message");
                             if let Some(handler) = &self.message_handler {
+                                println!("mcv::plugin_exe_interface mcv_message received: {:?}", mcv_message);
                                 handler(mcv_message);
                             }
                         }

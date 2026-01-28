@@ -67,3 +67,15 @@ export async function deleteLogs(
     return await invoke<number>("delete_server_logs", { apiUrl, ids });
   }
 }
+
+export async function exportLogs(
+  dataSource: DataSource,
+  apiUrl: string,
+  filters: LogQueryFilters
+): Promise<string | null> {
+  if (dataSource === "local") {
+    return await invoke<string | null>("export_local_logs", { filters });
+  } else {
+    return await invoke<string | null>("export_server_logs", { apiUrl, filters });
+  }
+}

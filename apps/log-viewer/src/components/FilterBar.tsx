@@ -4,9 +4,11 @@ import type { LogQueryFilters } from "../types/log";
 interface FilterBarProps {
   filters: LogQueryFilters;
   onFiltersChange: (filters: LogQueryFilters) => void;
+  onExport?: () => void;
+  exportLoading?: boolean;
 }
 
-export default function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
+export default function FilterBar({ filters, onFiltersChange, onExport, exportLoading }: FilterBarProps) {
   const [level, setLevel] = useState(filters.level || "");
   const [search, setSearch] = useState(filters.search || "");
   const [fromDate, setFromDate] = useState("");
@@ -106,6 +108,19 @@ export default function FilterBar({ filters, onFiltersChange }: FilterBarProps) 
           >
             Reset
           </button>
+          {onExport && (
+            <button
+              onClick={onExport}
+              disabled={exportLoading}
+              className={`px-4 py-2 rounded-md text-sm ${
+                exportLoading
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-500 text-white hover:bg-green-600"
+              }`}
+            >
+              {exportLoading ? "Exporting..." : "Export JSON"}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -173,6 +173,15 @@ impl CoreActor {
         );
     }
 
+    /// 全論理プラグインにメッセージをブロードキャスト
+    fn broadcast_to_all_logical_plugins(&self, message: McvMessage) {
+        for (_, logical_plugin_info) in &self.logical_plugins {
+            logical_plugin_info.host_addr.do_send(SendMessageToPlugin {
+                message: message.clone(),
+            });
+        }
+    }
+
     /// get-pluginsを処理（InternalMessage対応）
     fn handle_get_plugins(
         &mut self,
@@ -317,6 +326,15 @@ impl CoreActor {
                     .do_send(SendMessageToPlugin { message: response });
             }
         }
+
+        // 全論理プラグインにConnectionAddedをブロードキャスト
+        let broadcast_msg = McvMessage::new_notification(
+            MessageType::ConnectionAdded,
+            MessageSource::Core,
+            MessageDestination::Broadcast,
+            serde_json::to_value(ConnectionAddedPayload { connection_id }).unwrap(),
+        );
+        self.broadcast_to_all_logical_plugins(broadcast_msg);
     }
 
     /// connectを処理
@@ -428,6 +446,15 @@ impl CoreActor {
             let mut manager = connection_manager.write().await;
             manager.update_status(&connection_id, ConnectionStatus::Connected);
         });
+
+        // 全論理プラグインにConnectedをブロードキャスト
+        let broadcast_msg = McvMessage::new_notification(
+            MessageType::Connected,
+            MessageSource::Core,
+            MessageDestination::Broadcast,
+            message.payload.clone(),
+        );
+        self.broadcast_to_all_logical_plugins(broadcast_msg);
 
         // UIへイベント通知
         if let Some(callback) = &self.event_callback {

@@ -1,8 +1,13 @@
 use actix::prelude::*;
 use mcv_common::{LogicalPluginId, PhysicalPluginId};
+use mcv_logger::{
+    LogEntry as LoggerEntry, LogLevel, LogStorage,
+    SourceLocation as LoggerSourceLocation, StackFrame as LoggerStackFrame,
+    SystemInfo as LoggerSystemInfo,
+};
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -38,6 +43,8 @@ pub struct CoreActor {
     physical_plugin_hosts: HashMap<PhysicalPluginId, Addr<PhysicalPluginHostActor>>,
     /// UIへのイベント送信用コールバック
     event_callback: Option<Arc<dyn Fn(McvMessage) + Send + Sync>>,
+    /// プラグインログの直接ストレージ保存用
+    log_storage: Option<Arc<Mutex<LogStorage>>>,
 }
 
 impl CoreActor {
@@ -49,12 +56,18 @@ impl CoreActor {
             logical_plugins: HashMap::new(),
             physical_plugin_hosts: HashMap::new(),
             event_callback: None,
+            log_storage: None,
         }
     }
 
     /// イベントコールバックを設定
     pub fn set_event_callback(&mut self, callback: Arc<dyn Fn(McvMessage) + Send + Sync>) {
         self.event_callback = Some(callback);
+    }
+
+    /// プラグインログの直接保存用ストレージを設定
+    pub fn set_log_storage(&mut self, storage: Arc<Mutex<LogStorage>>) {
+        self.log_storage = Some(storage);
     }
 
     /// plugin-helloを処理（InternalMessage対応）
@@ -568,66 +581,123 @@ impl CoreActor {
             }
         };
 
-        // ログレベルに応じてトレース（mcv-loggerが自動記録）
-        // 注: Core側のログレベル設定（mcvのfeature フラグ）に従ってフィルタリングされる
-        match payload.level.as_str() {
-            "error" => {
-                tracing::error!(
-                    target: "mcv::core::CoreActor",
-                    plugin_id = %plugin_id,
-                    plugin_version = ?payload.plugin_version,
-                    plugin_build_profile = ?payload.plugin_build_profile,
-                    connection_id = ?payload.connection_id,
-                    context = ?payload.context,
-                    "Plugin error: {}",
-                    payload.message
-                );
+        // ログレベルを変換
+        let level = match payload.level.as_str() {
+            "error" => LogLevel::Error,
+            "warn" => LogLevel::Warn,
+            "info" => LogLevel::Info,
+            "debug" => LogLevel::Debug,
+            _ => LogLevel::Trace,
+        };
+
+        // context から元のソース位置情報を抽出
+        let (source_file, source_line, source_module) = match &payload.context {
+            Some(ctx) => {
+                let file = ctx
+                    .get("source")
+                    .and_then(|s| s.get("file"))
+                    .and_then(|f| f.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+                let line = ctx
+                    .get("source")
+                    .and_then(|s| s.get("line"))
+                    .and_then(|l| l.as_u64())
+                    .unwrap_or(0) as u32;
+                let module = ctx
+                    .get("source")
+                    .and_then(|s| s.get("module_path"))
+                    .and_then(|m| m.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+                (file, line, module)
             }
-            "warn" => {
-                tracing::warn!(
-                    target: "mcv::core::CoreActor",
-                    plugin_id = %plugin_id,
-                    plugin_version = ?payload.plugin_version,
-                    plugin_build_profile = ?payload.plugin_build_profile,
-                    connection_id = ?payload.connection_id,
-                    context = ?payload.context,
-                    "Plugin warning: {}",
-                    payload.message
-                );
+            None => ("unknown".to_string(), 0, "unknown".to_string()),
+        };
+
+        // context から スタックトレースを抽出
+        let stacktrace = payload
+            .context
+            .as_ref()
+            .and_then(|ctx| ctx.get("stacktrace"))
+            .and_then(|st| st.as_array())
+            .map(|frames| {
+                frames
+                    .iter()
+                    .map(|f| LoggerStackFrame {
+                        symbol: f.get("symbol").and_then(|s| s.as_str()).map(|s| s.to_string()),
+                        filename: f
+                            .get("filename")
+                            .and_then(|s| s.as_str())
+                            .map(|s| s.to_string()),
+                        lineno: f.get("lineno").and_then(|n| n.as_u64()).map(|n| n as u32),
+                        addr: f
+                            .get("addr")
+                            .and_then(|s| s.as_str())
+                            .unwrap_or("0x0")
+                            .to_string(),
+                    })
+                    .collect()
+            });
+
+        // context から source・stacktrace を除いた残りを保持
+        let context = payload.context.as_ref().and_then(|ctx| {
+            if let Some(obj) = ctx.as_object() {
+                let filtered: serde_json::Map<String, serde_json::Value> = obj
+                    .iter()
+                    .filter(|(k, _)| k.as_str() != "source" && k.as_str() != "stacktrace")
+                    .map(|(k, v)| (k.clone(), v.clone()))
+                    .collect();
+                if filtered.is_empty() {
+                    None
+                } else {
+                    // plugin_id を構造化データとして追加
+                    let mut with_plugin = filtered;
+                    with_plugin.insert(
+                        "plugin_id".to_string(),
+                        serde_json::Value::String(plugin_id.to_string()),
+                    );
+                    Some(serde_json::Value::Object(with_plugin))
+                }
+            } else {
+                Some(ctx.clone())
             }
-            "info" => {
-                tracing::info!(
-                    target: "mcv::core::CoreActor",
-                    plugin_id = %plugin_id,
-                    plugin_version = ?payload.plugin_version,
-                    plugin_build_profile = ?payload.plugin_build_profile,
-                    connection_id = ?payload.connection_id,
-                    context = ?payload.context,
-                    "Plugin info: {}",
-                    payload.message
-                );
-            }
-            "debug" => {
-                tracing::debug!(
-                    target: "mcv::core::CoreActor",
-                    plugin_id = %plugin_id,
-                    plugin_version = ?payload.plugin_version,
-                    plugin_build_profile = ?payload.plugin_build_profile,
-                    connection_id = ?payload.connection_id,
-                    context = ?payload.context,
-                    "Plugin debug: {}",
-                    payload.message
-                );
-            }
-            _ => {
-                tracing::trace!(
-                    target: "mcv::core::CoreActor",
-                    plugin_id = %plugin_id,
-                    plugin_version = ?payload.plugin_version,
-                    plugin_build_profile = ?payload.plugin_build_profile,
-                    "Plugin log: {}",
-                    payload.message
-                );
+        });
+
+        // LogEntry を構築して直接ストレージに保存
+        let entry = LoggerEntry {
+            id: Uuid::new_v4().to_string(),
+            level,
+            timestamp: chrono::Utc::now().timestamp_millis(),
+            message: payload.message,
+            source: LoggerSourceLocation {
+                file: source_file,
+                line: source_line,
+                column: None,
+                module_path: source_module,
+            },
+            stacktrace,
+            context,
+            system_info: LoggerSystemInfo {
+                mcv_version: env!("CARGO_PKG_VERSION").to_string(),
+                platform: std::env::consts::OS.to_string(),
+                arch: std::env::consts::ARCH.to_string(),
+                build_profile: payload
+                    .plugin_build_profile
+                    .unwrap_or_else(|| "unknown".to_string()),
+            },
+        };
+
+        if let Some(ref storage) = self.log_storage {
+            if let Ok(storage) = storage.lock() {
+                if let Err(e) = storage.insert(&entry) {
+                    tracing::error!(
+                        target: "mcv::core::CoreActor",
+                        error = %e,
+                        plugin_id = %plugin_id,
+                        "Failed to insert plugin log entry into storage"
+                    );
+                }
             }
         }
     }

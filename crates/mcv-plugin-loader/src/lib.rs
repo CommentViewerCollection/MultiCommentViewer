@@ -107,6 +107,11 @@ impl PluginLoader {
     /// # Returns
     /// 成功時は `Ok(())`、失敗時はエラー
     pub fn send_message(&self, message: &str) -> Result<(), PluginLoaderError> {
+        tracing::trace!(
+            target: "mcv::plugin_loader::PluginLoader",
+            "Sending message to plugin: {}",
+            message
+        );
         unsafe {
             let send_fn: Symbol<unsafe extern "C" fn(*const c_char) -> i32> = self
                 .library

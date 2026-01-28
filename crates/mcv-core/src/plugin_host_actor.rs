@@ -11,8 +11,9 @@ use std::sync::{Arc, RwLock};
 use crate::internal_message::InternalMessage;
 
 /// グローバルなPhysicalPluginHostActorアドレスマップ（callback_fn用）
-static PLUGIN_HOST_ADDRS: OnceCell<RwLock<HashMap<PhysicalPluginId, Addr<PhysicalPluginHostActor>>>> =
-    OnceCell::new();
+static PLUGIN_HOST_ADDRS: OnceCell<
+    RwLock<HashMap<PhysicalPluginId, Addr<PhysicalPluginHostActor>>>,
+> = OnceCell::new();
 
 /// Physical Plugin-Host Actor
 ///
@@ -96,6 +97,10 @@ impl Actor for PhysicalPluginHostActor {
                             if let Some(addrs) = PLUGIN_HOST_ADDRS.get() {
                                 let addrs_guard = addrs.read().unwrap();
                                 if let Some(actor_addr) = addrs_guard.get(&physical_plugin_id) {
+                                    tracing::trace!(
+                                        target: "mcv::core::PluginHostActor",
+                                        "callbak_fn physical_plugin_id: {}, message_type: {:?}", physical_plugin_id, internal_message.message.message_type
+                                    );
                                     actor_addr.do_send(ReceiveMessageFromDll { internal_message });
                                     tracing::debug!(
                                         target: "mcv::core::PluginHostActor",

@@ -24,6 +24,8 @@ impl PluginManifest {
     /// manifest.jsonを読み込む
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, ManifestError> {
         let content = std::fs::read_to_string(&path)?;
+        //BOM付きの場合があるかもしれないので除去
+        let content = content.trim_start_matches('\u{feff}');
         let manifest: PluginManifest = serde_json::from_str(&content)?;
 
         // バリデーション

@@ -1,9 +1,9 @@
 use mcv_messages::{Message as McvMessage, MessageDestination};
 use std::collections::HashMap;
 use std::sync::Arc;
+use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use uuid::Uuid;
-use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum RoutingError {
@@ -38,18 +38,26 @@ impl MessageRouter {
     }
 
     /// 特定のEXEプラグインへメッセージを送信（ユニキャスト）
-    pub async fn route_to_plugin(&self, plugin_id: Uuid, message: McvMessage) -> Result<(), RoutingError> {
+    pub async fn route_to_plugin(
+        &self,
+        plugin_id: Uuid,
+        message: McvMessage,
+    ) -> Result<(), RoutingError> {
         tracing::debug!(
+            target: "mcv::plugin_exe_manager::MessageRouter",
             plugin_id = %plugin_id,
             message_type = ?message.message_type,
             "Routing message to specific plugin"
         );
 
         let clients = self.clients.read().await;
-        let client = clients.get(&plugin_id)
+        let client = clients
+            .get(&plugin_id)
             .ok_or(RoutingError::PluginNotFound(plugin_id))?;
 
-        client.sender.send(message)
+        client
+            .sender
+            .send(message)
             .map_err(|e| RoutingError::SendError(e.to_string()))?;
 
         Ok(())
@@ -58,6 +66,7 @@ impl MessageRouter {
     /// すべてのEXEプラグインへメッセージをブロードキャスト
     pub async fn broadcast(&self, message: McvMessage) -> Result<(), RoutingError> {
         tracing::debug!(
+            target: "mcv::plugin_exe_manager::MessageRouter",
             message_type = ?message.message_type,
             "Broadcasting message to all EXE plugins"
         );
@@ -68,6 +77,7 @@ impl MessageRouter {
         for (plugin_id, client) in clients.iter() {
             if let Err(e) = client.sender.send(message.clone()) {
                 tracing::error!(
+                    target: "mcv::plugin_exe_manager::MessageRouter",
                     plugin_id = %plugin_id,
                     error = %e.to_string(),
                     "Failed to broadcast message to plugin"
@@ -77,19 +87,26 @@ impl MessageRouter {
         }
 
         if !errors.is_empty() {
-            return Err(RoutingError::BroadcastError(
-                format!("Failed to send to {} plugins: {}", errors.len(), errors.join(", "))
-            ));
+            return Err(RoutingError::BroadcastError(format!(
+                "Failed to send to {} plugins: {}",
+                errors.len(),
+                errors.join(", ")
+            )));
         }
 
-        tracing::debug!(count = clients.len(), "Broadcast completed");
+        tracing::debug!(target: "mcv::plugin_exe_manager::MessageRouter",count = clients.len(), "Broadcast completed");
 
         Ok(())
     }
 
     /// 特定のroleを持つEXEプラグインへメッセージをブロードキャスト
-    pub async fn broadcast_to_role(&self, role: &str, message: McvMessage) -> Result<(), RoutingError> {
+    pub async fn broadcast_to_role(
+        &self,
+        role: &str,
+        message: McvMessage,
+    ) -> Result<(), RoutingError> {
         tracing::debug!(
+            target: "mcv::plugin_exe_manager::MessageRouter",
             role = %role,
             message_type = ?message.message_type,
             "Broadcasting message to plugins with specific role"
@@ -103,6 +120,7 @@ impl MessageRouter {
             if client.roles.contains(&role.to_string()) {
                 if let Err(e) = client.sender.send(message.clone()) {
                     tracing::error!(
+                        target: "mcv::plugin_exe_manager::MessageRouter",
                         plugin_id = %plugin_id,
                         error = %e.to_string(),
                         "Failed to broadcast message to plugin"
@@ -115,9 +133,11 @@ impl MessageRouter {
         }
 
         if !errors.is_empty() {
-            return Err(RoutingError::BroadcastError(
-                format!("Failed to send to {} plugins: {}", errors.len(), errors.join(", "))
-            ));
+            return Err(RoutingError::BroadcastError(format!(
+                "Failed to send to {} plugins: {}",
+                errors.len(),
+                errors.join(", ")
+            )));
         }
 
         tracing::debug!(
@@ -240,7 +260,10 @@ mod tests {
             serde_json::json!({}),
         );
 
-        router.route_to_plugin(plugin_id, message.clone()).await.unwrap();
+        router
+            .route_to_plugin(plugin_id, message.clone())
+            .await
+            .unwrap();
 
         // メッセージが受信されることを確認
         let received = rx.recv().await.unwrap();
@@ -280,7 +303,7 @@ mod tests {
         let message = McvMessage::new_notification(
             MessageType::ConnectionAdded,
             MessageSource::Core,
-            MessageDestination::Core,  // ブロードキャストなので宛先は任意
+            MessageDestination::Core, // ブロードキャストなので宛先は任意
             serde_json::json!({}),
         );
 

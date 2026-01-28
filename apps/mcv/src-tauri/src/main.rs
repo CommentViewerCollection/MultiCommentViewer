@@ -568,6 +568,7 @@ fn main() {
             });
 
             core_actor.set_event_callback(event_callback);
+            core_actor.set_log_storage(mcv_logger::get_storage());
 
             tracing::debug!(target: "mcv::main","Starting CoreActor");
             let core_addr = core_actor.start();

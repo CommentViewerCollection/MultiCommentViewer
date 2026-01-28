@@ -44,7 +44,7 @@ async fn test_send_comment_message_routing() {
 
     // メッセージを送信（プラグインがない場合はエラーにならないことを確認）
     let result = core_addr
-        .send(SendMessageToCore { message })
+        .send(SendRequest { message })
         .await;
 
     assert!(result.is_ok());

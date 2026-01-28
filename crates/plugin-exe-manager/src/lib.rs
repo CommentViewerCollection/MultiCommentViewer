@@ -8,8 +8,9 @@ use mcv_messages::{
     Message as McvMessage, MessageSource, MessageDestination, MessageType,
     PluginHelloPayload,
 };
-use std::ffi::{CStr, CString};
+use std::ffi::{c_void, CStr, CString};
 use std::os::raw::c_char;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -222,7 +223,10 @@ use tokio::runtime::Runtime;
 static mut PLUGIN_INSTANCE: OnceCell<Arc<tokio::sync::Mutex<ExePluginManager>>> = OnceCell::new();
 
 /// グローバルなメッセージコールバック
-static mut MESSAGE_CALLBACK: Option<extern "C" fn(*const c_char)> = None;
+static mut MESSAGE_CALLBACK: Option<extern "C" fn(*const c_char, *mut c_void)> = None;
+
+/// グローバルなuserdata
+static USERDATA: AtomicUsize = AtomicUsize::new(0);
 
 /// グローバルなTokioランタイム
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
@@ -259,7 +263,8 @@ impl PluginHost for CApiPluginHost {
 
         unsafe {
             if let Some(cb) = MESSAGE_CALLBACK {
-                cb(message_cstr.as_ptr());
+                let userdata = USERDATA.load(Ordering::SeqCst) as *mut c_void;
+                cb(message_cstr.as_ptr(), userdata);
             }
         }
 
@@ -341,10 +346,14 @@ pub extern "C" fn plugin_on_loaded() -> i32 {
 
 /// コールバックを設定
 #[no_mangle]
-pub extern "C" fn plugin_set_callback(callback: extern "C" fn(*const c_char)) -> i32 {
+pub extern "C" fn plugin_set_callback(
+    callback: extern "C" fn(*const c_char, *mut c_void),
+    userdata: *mut c_void,
+) -> i32 {
     println!("=== C ABI: plugin_set_callback called (ExePluginManager) ===");
     unsafe {
         MESSAGE_CALLBACK = Some(callback);
+        USERDATA.store(userdata as usize, Ordering::SeqCst);
         0
     }
 }

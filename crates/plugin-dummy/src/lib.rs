@@ -999,11 +999,14 @@ mod tests {
 
 use once_cell::sync::Lazy;
 use std::ffi::{c_char, c_void, CStr, CString};
+use std::sync::atomic::AtomicUsize;
 use std::sync::Mutex;
 
 // グローバルステート
 static PLUGIN_INSTANCE: Lazy<Mutex<Option<DummyPlugin>>> = Lazy::new(|| Mutex::new(None));
-static MESSAGE_CALLBACK: Lazy<Mutex<Option<extern "C" fn(*const c_char)>>> = Lazy::new(|| Mutex::new(None));
+static MESSAGE_CALLBACK: Lazy<Mutex<Option<extern "C" fn(*const c_char, *mut c_void)>>> =
+    Lazy::new(|| Mutex::new(None));
+static USERDATA: AtomicUsize = AtomicUsize::new(0);
 static RUNTIME: Lazy<tokio::runtime::Runtime> = Lazy::new(|| {
     tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime")
 });
@@ -1022,7 +1025,8 @@ impl PluginHost for CApiPluginHost {
 
         let callback_guard = MESSAGE_CALLBACK.lock().unwrap();
         if let Some(cb) = *callback_guard {
-            cb(message_cstr.as_ptr());
+            let userdata = USERDATA.load(Ordering::SeqCst) as *mut c_void;
+            cb(message_cstr.as_ptr(), userdata);
         }
 
         Ok(())
@@ -1142,10 +1146,14 @@ pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
 /// # Safety
 /// この関数はCから呼び出されることを想定しています。
 #[no_mangle]
-pub extern "C" fn plugin_set_callback(callback: extern "C" fn(*const c_char)) -> i32 {
+pub extern "C" fn plugin_set_callback(
+    callback: extern "C" fn(*const c_char, *mut c_void),
+    userdata: *mut c_void,
+) -> i32 {
     println!("=== C ABI: plugin_set_callback called ===");
     let mut cb = MESSAGE_CALLBACK.lock().unwrap();
     *cb = Some(callback);
+    USERDATA.store(userdata as usize, Ordering::SeqCst);
     0 // 成功
 }
 

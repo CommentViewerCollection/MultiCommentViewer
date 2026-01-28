@@ -1,4 +1,5 @@
 use actix::prelude::*;
+use mcv_common::{LogicalPluginId, PhysicalPluginId};
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -6,6 +7,7 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
+use crate::internal_message::InternalMessage;
 use crate::plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin};
 use crate::site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
@@ -885,22 +887,27 @@ impl Default for CoreActor {
 // メッセージハンドラ
 // ============================================================================
 
-/// プラグインからcoreへのメッセージ
+/// プラグインからcoreへのメッセージ（InternalMessage対応）
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct SendMessageToCore {
-    pub message: McvMessage,
+    pub internal_message: InternalMessage,
 }
 
 impl Handler<SendMessageToCore> for CoreActor {
     type Result = ();
 
     fn handle(&mut self, msg: SendMessageToCore, ctx: &mut Self::Context) {
-        let message = msg.message;
+        let InternalMessage {
+            physical_plugin_id,
+            message,
+        } = msg.internal_message;
+
         tracing::trace!(
             target: "mcv::core::CoreActor",
+            physical_plugin_id = %physical_plugin_id,
             message_type = ?message.message_type,
-            "CoreActor received message"
+            "CoreActor received message from plugin"
         );
 
         match message.message_type {
@@ -942,13 +949,28 @@ impl Handler<SendRequest> for CoreActor {
     type Result = Result<McvMessage, String>;
 
     fn handle(&mut self, msg: SendRequest, ctx: &mut Self::Context) -> Self::Result {
-        // UIからのリクエストをcoreで処理
-        self.handle(
-            SendMessageToCore {
-                message: msg.message.clone(),
-            },
-            ctx,
-        );
+        let message = msg.message.clone();
+
+        // UIからのリクエストを直接処理（physical_plugin_idは不要）
+        match message.message_type {
+            MessageType::AddConnection => self.handle_add_connection(message, ctx),
+            MessageType::Connect => self.handle_connect(message, ctx),
+            MessageType::Disconnect => self.handle_disconnect(message, ctx),
+            MessageType::SendComment => self.handle_send_comment(message, ctx),
+            MessageType::AddSite => self.handle_add_site(message, ctx),
+            MessageType::AddBrowser => self.handle_add_browser(message, ctx),
+            MessageType::SetConnectionSite => self.handle_set_connection_site(message, ctx),
+            MessageType::UpdateConnectionSettings => {
+                self.handle_update_connection_settings(message, ctx)
+            }
+            _ => {
+                tracing::warn!(
+                    target: "mcv::core::CoreActor",
+                    message_type = ?message.message_type,
+                    "Unhandled UI message type"
+                );
+            }
+        }
 
         // 簡易的な応答を返す
         Ok(msg.message)

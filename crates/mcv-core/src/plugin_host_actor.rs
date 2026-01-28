@@ -1,27 +1,31 @@
 use actix::prelude::*;
+use mcv_common::PhysicalPluginId;
 use mcv_messages::Message as McvMessage;
-use mcv_plugin_loader::{MessageCallback, PluginLoader};
+use mcv_plugin_loader::{MessageCallbackWithUserdata, PluginLoader};
 use once_cell::sync::OnceCell;
-use std::ffi::CStr;
+use std::collections::HashMap;
+use std::ffi::{c_void, CStr};
 use std::os::raw::c_char;
-use std::sync::Arc;
-use uuid::Uuid;
+use std::sync::{Arc, RwLock};
 
-/// グローバルなCoreActorアドレス（DLLプラグインのコールバック用）
-static CORE_ADDR_FOR_CALLBACK: OnceCell<Addr<crate::core_actor::CoreActor>> = OnceCell::new();
+use crate::internal_message::InternalMessage;
+
+/// グローバルなPhysicalPluginHostActorアドレスマップ（callback_fn用）
+static PLUGIN_HOST_ADDRS: OnceCell<RwLock<HashMap<PhysicalPluginId, Addr<PhysicalPluginHostActor>>>> =
+    OnceCell::new();
 
 /// Physical Plugin-Host Actor
 ///
 /// プラグインを隔離して実行するActor（DLLプラグイン専用）
 pub struct PhysicalPluginHostActor {
-    physical_plugin_id: Uuid,
+    physical_plugin_id: PhysicalPluginId,
     plugin_loader: Arc<PluginLoader>,
     core_addr: Option<Addr<crate::core_actor::CoreActor>>,
 }
 
 impl PhysicalPluginHostActor {
     /// 新しいPlugin-Host Actorを作成（DLLプラグイン用）
-    pub fn new_from_dll(physical_plugin_id: Uuid, plugin_loader: PluginLoader) -> Self {
+    pub fn new_from_dll(physical_plugin_id: PhysicalPluginId, plugin_loader: PluginLoader) -> Self {
         Self {
             physical_plugin_id,
             plugin_loader: Arc::new(plugin_loader),
@@ -46,58 +50,86 @@ impl Actor for PhysicalPluginHostActor {
     fn started(&mut self, ctx: &mut Self::Context) {
         tracing::debug!(target: "mcv::core::PluginHostActor", "PluginHostActor started");
 
-        // DLLプラグインの場合のみ
-        tracing::debug!(target: "mcv::core::PluginHostActor", "Initializing DLL plugin");
-
-        // グローバルなcore_addrを設定
-        if let Some(core_addr) = &self.core_addr {
-            let _ = CORE_ADDR_FOR_CALLBACK.set(core_addr.clone());
-        }
-
+        let physical_plugin_id = self.physical_plugin_id;
         let plugin_loader = self.plugin_loader.clone();
+        let self_addr = ctx.address();
 
-        // コールバックを設定
-        let callback: MessageCallback = {
-            extern "C" fn callback_fn(message_json: *const c_char) {
-                unsafe {
-                    if !message_json.is_null() {
-                        let message_cstr = CStr::from_ptr(message_json);
-                        if let Ok(message_str) = message_cstr.to_str() {
-                            tracing::debug!(
-                                target: "mcv::core::PluginHostActor",
-                                message = %message_str,
-                                "Received message from DLL plugin"
-                            );
+        // グローバルHashMapにPhysicalPluginHostActorのAddrを登録
+        PLUGIN_HOST_ADDRS
+            .get_or_init(|| RwLock::new(HashMap::new()))
+            .write()
+            .unwrap()
+            .insert(physical_plugin_id, self_addr);
 
-                            // JSONをパースしてCoreActorに転送
-                            match serde_json::from_str::<McvMessage>(message_str) {
-                                Ok(message) => {
-                                    if let Some(core_addr) = CORE_ADDR_FOR_CALLBACK.get() {
-                                        core_addr.do_send(
-                                            crate::core_actor::SendMessageToCore { message },
-                                        );
-                                        tracing::debug!(target: "mcv::core::PluginHostActor", "Message forwarded to CoreActor");
-                                    } else {
-                                        tracing::error!(target: "mcv::core::PluginHostActor", "CORE_ADDR_FOR_CALLBACK not set");
-                                    }
-                                }
-                                Err(e) => {
+        // userdataを作成（PhysicalPluginIdをヒープに確保）
+        let userdata = Box::into_raw(Box::new(physical_plugin_id)) as *mut c_void;
+
+        // コールバック関数を定義（userdata対応）
+        extern "C" fn callback_fn(message_json: *const c_char, userdata: *mut c_void) {
+            unsafe {
+                if message_json.is_null() || userdata.is_null() {
+                    return;
+                }
+
+                // userdataからphysical_plugin_idを取得
+                let physical_plugin_id = *(userdata as *const PhysicalPluginId);
+
+                let message_cstr = CStr::from_ptr(message_json);
+                if let Ok(message_str) = message_cstr.to_str() {
+                    tracing::debug!(
+                        target: "mcv::core::PluginHostActor",
+                        physical_plugin_id = %physical_plugin_id,
+                        message = %message_str,
+                        "Received message from DLL plugin"
+                    );
+
+                    // JSONをパース
+                    match serde_json::from_str::<McvMessage>(message_str) {
+                        Ok(message) => {
+                            // InternalMessageを作成
+                            let internal_message = InternalMessage {
+                                physical_plugin_id,
+                                message,
+                            };
+
+                            // グローバルHashMapからPhysicalPluginHostActorのAddrを取得
+                            if let Some(addrs) = PLUGIN_HOST_ADDRS.get() {
+                                let addrs_guard = addrs.read().unwrap();
+                                if let Some(actor_addr) = addrs_guard.get(&physical_plugin_id) {
+                                    actor_addr.do_send(ReceiveMessageFromDll { internal_message });
+                                    tracing::debug!(
+                                        target: "mcv::core::PluginHostActor",
+                                        "Message forwarded to PhysicalPluginHostActor"
+                                    );
+                                } else {
                                     tracing::error!(
                                         target: "mcv::core::PluginHostActor",
-                                        error = %e,
-                                        message_json = %message_str,
-                                        "Failed to parse message from DLL plugin"
+                                        physical_plugin_id = %physical_plugin_id,
+                                        "PhysicalPluginHostActor not found in global map"
                                     );
                                 }
+                            } else {
+                                tracing::error!(
+                                    target: "mcv::core::PluginHostActor",
+                                    "PLUGIN_HOST_ADDRS not initialized"
+                                );
                             }
+                        }
+                        Err(e) => {
+                            tracing::error!(
+                                target: "mcv::core::PluginHostActor",
+                                error = %e,
+                                message_json = %message_str,
+                                "Failed to parse message from DLL plugin"
+                            );
                         }
                     }
                 }
             }
-            callback_fn
-        };
+        }
 
-        if let Err(e) = plugin_loader.set_callback(callback) {
+        // コールバックを設定（userdata対応）
+        if let Err(e) = plugin_loader.set_callback_with_userdata(callback_fn, userdata) {
             tracing::error!(
                 target: "mcv::core::PluginHostActor",
                 error = %e,
@@ -107,23 +139,35 @@ impl Actor for PhysicalPluginHostActor {
             return;
         }
 
-        // プラグインを初期化（host_contextはnull、プラグイン側でplugin_idを生成）
-        tracing::debug!(target: "mcv::plugin_host_actor", "Initializing DLL plugin (plugin will generate its own plugin_id)");
+        // プラグインを初期化
+        tracing::debug!(
+            target: "mcv::plugin_host_actor",
+            physical_plugin_id = %physical_plugin_id,
+            "Initializing DLL plugin"
+        );
 
         if let Err(e) = plugin_loader.init(std::ptr::null_mut()) {
             tracing::error!(
-            target: "mcv::core::PluginHostActor",
-                 error = %e,
-                 "Plugin init failed"
-             );
+                target: "mcv::core::PluginHostActor",
+                error = %e,
+                "Plugin init failed"
+            );
             ctx.stop();
             return;
         }
 
-        tracing::info!("DLL plugin initialized successfully");
+        tracing::info!(
+            physical_plugin_id = %physical_plugin_id,
+            "DLL plugin initialized successfully"
+        );
 
         // on_loadedを呼び出し
-        tracing::debug!(target: "mcv::plugin_host_actor", "Calling DLL plugin on_loaded");
+        tracing::debug!(
+            target: "mcv::plugin_host_actor",
+            physical_plugin_id = %physical_plugin_id,
+            "Calling DLL plugin on_loaded"
+        );
+
         if let Err(e) = plugin_loader.on_loaded() {
             tracing::error!(
                 target: "mcv::core::PluginHostActor",
@@ -132,7 +176,11 @@ impl Actor for PhysicalPluginHostActor {
             );
             ctx.stop();
         } else {
-            tracing::info!(target: "mcv::core::PluginHostActor",  "DLL plugin on_loaded completed (plugin_id will be received via plugin-hello)");
+            tracing::info!(
+                target: "mcv::core::PluginHostActor",
+                physical_plugin_id = %physical_plugin_id,
+                "DLL plugin on_loaded completed"
+            );
         }
     }
 }
@@ -140,6 +188,31 @@ impl Actor for PhysicalPluginHostActor {
 // ============================================================================
 // メッセージハンドラ
 // ============================================================================
+
+/// DLLプラグインからメッセージを受信
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ReceiveMessageFromDll {
+    pub internal_message: InternalMessage,
+}
+
+impl Handler<ReceiveMessageFromDll> for PhysicalPluginHostActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: ReceiveMessageFromDll, _ctx: &mut Self::Context) {
+        // CoreActorに転送
+        if let Some(core_addr) = &self.core_addr {
+            core_addr.do_send(crate::core_actor::SendMessageToCore {
+                internal_message: msg.internal_message,
+            });
+        } else {
+            tracing::error!(
+                target: "mcv::core::PluginHostActor",
+                "CoreActor address not set"
+            );
+        }
+    }
+}
 
 /// プラグインへメッセージを送信
 #[derive(Message)]

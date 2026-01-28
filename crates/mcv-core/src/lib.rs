@@ -15,6 +15,7 @@ pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, Shutdo
 pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 use actix::prelude::*;
+use mcv_common::PhysicalPluginId;
 use mcv_plugin_loader::PluginLoader;
 use std::path::Path;
 use uuid::Uuid;
@@ -43,11 +44,11 @@ impl PluginManager {
     /// * `dll_path` - プラグインDLLのパス
     ///
     /// # Returns
-    /// (plugin_id, plugin_host_addr, plugin_name) - プラグイン名はmetadata().nameから取得
+    /// (physical_plugin_id, plugin_host_addr, plugin_name)
     pub async fn register_plugin_from_dll<P: AsRef<Path>>(
         &self,
         dll_path: P,
-    ) -> Result<(Uuid, Addr<PhysicalPluginHostActor>, String), String> {
+    ) -> Result<(PhysicalPluginId, Addr<PhysicalPluginHostActor>, String), String> {
         tracing::trace!(target: "mcv::core::PluginManager", "PluginManager::register_plugin_from_dll called");
 
         // DLLをロード
@@ -66,7 +67,7 @@ impl PluginManager {
             .unwrap_or("unknown_plugin")
             .to_string();
         //物理プラグインのIDを生成
-        let physical_plugin_id = Uuid::new_v4();
+        let physical_plugin_id = PhysicalPluginId::new();
         tracing::trace!(target: "mcv::core::PluginManager", "Generated physical_plugin_id: {} for {}", physical_plugin_id, plugin_name);
 
         tracing::trace!(target: "mcv::core::PluginManager", "Loaded plugin: {} (id: {})", plugin_name, physical_plugin_id);
@@ -97,11 +98,11 @@ impl PluginManager {
     /// * `plugins_dir` - プラグインディレクトリのパス
     ///
     /// # Returns
-    /// Vec<(plugin_id, plugin_host_addr, plugin_name)>
+    /// Vec<(physical_plugin_id, plugin_host_addr, plugin_name)>
     pub async fn scan_and_load_plugins<P: AsRef<Path>>(
         &self,
         plugins_dir: P,
-    ) -> Vec<(Uuid, Addr<PhysicalPluginHostActor>, String)> {
+    ) -> Vec<(PhysicalPluginId, Addr<PhysicalPluginHostActor>, String)> {
         let plugins_dir = plugins_dir.as_ref();
         tracing::info!(plugins_dir = %plugins_dir.display(), "Scanning for DLL plugins");
 
@@ -182,11 +183,11 @@ impl PluginManager {
     /// * `plugins_dir` - プラグインディレクトリのパス
     ///
     /// # Returns
-    /// Vec<(plugin_id, plugin_host_addr, plugin_name)>
+    /// Vec<(physical_plugin_id, plugin_host_addr, plugin_name)>
     pub async fn scan_and_load_plugins_new<P: AsRef<Path>>(
         &self,
         plugins_dir: P,
-    ) -> Vec<(Uuid, Addr<PhysicalPluginHostActor>, String)> {
+    ) -> Vec<(PhysicalPluginId, Addr<PhysicalPluginHostActor>, String)> {
         //dllファイルでcoreが直接読み込むプラグインを物理プラグインと呼ぶ
         //物理プラグインは以下の3つの形状をしている
         //1. zip化されているプラグイン

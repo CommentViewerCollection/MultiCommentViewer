@@ -12,7 +12,7 @@ use mcv_core::{
     PluginManager,
     RemoveConnection,
     RenameConnection,
-    SendMessageToCore,
+    SendRequest,
     SetConnectionSite,
     SiteInfo as CoreSiteInfo,
     UpdateConnectionSettings,
@@ -183,7 +183,7 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
 
     state
         .core_addr
-        .send(SendMessageToCore { message })
+        .send(SendRequest { message })
         .await
         .map_err(|e| e.to_string())?;
 
@@ -211,7 +211,7 @@ async fn disconnect(
 
     state
         .core_addr
-        .send(SendMessageToCore { message })
+        .send(SendRequest { message })
         .await
         .map_err(|e| e.to_string())?;
 
@@ -364,7 +364,7 @@ async fn send_comment(
 
     state
         .core_addr
-        .send(SendMessageToCore { message })
+        .send(SendRequest { message })
         .await
         .map_err(|e| e.to_string())?;
 

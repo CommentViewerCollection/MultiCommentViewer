@@ -15,7 +15,6 @@ pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, Shutdo
 pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 use actix::prelude::*;
-use mcv_plugin_interface::Plugin;
 use mcv_plugin_loader::PluginLoader;
 use std::path::Path;
 use uuid::Uuid;
@@ -90,36 +89,6 @@ impl PluginManager {
         tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor started, addr: {:?}", plugin_host_addr);
 
         Ok((physical_plugin_id, plugin_host_addr, plugin_name))
-    }
-
-    /// プラグインを登録（旧形式、静的リンク用）
-    ///
-    /// # Returns
-    /// (plugin_id, plugin_host_addr)
-    pub async fn register_plugin(
-        &self,
-        plugin: Box<dyn Plugin>,
-    ) -> Result<(Uuid, Addr<PhysicalPluginHostActor>), String> {
-        tracing::trace!(target: "mcv::core::PluginManager", "PluginManager::register_plugin called");
-        let plugin_id = Uuid::new_v4();
-        tracing::trace!(target: "mcv::core::PluginManager", "Generated plugin_id: {}", plugin_id);
-
-        // Plugin-Host Actorを起動
-        let mut plugin_host = PhysicalPluginHostActor::new(plugin_id, plugin);
-        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor created");
-        if let Some(core_addr) = &self.core_addr {
-            tracing::trace!(target: "mcv::core::PluginManager", "Setting core_addr to PluginHostActor");
-            plugin_host.set_core_addr(core_addr.clone());
-        } else {
-            tracing::error!(target: "mcv::core::PluginManager", "ERROR: Core actor not set in PluginManager");
-            return Err("Core actor not set".to_string());
-        }
-
-        tracing::trace!(target: "mcv::core::PluginManager", "Starting PluginHostActor...");
-        let plugin_host_addr = plugin_host.start();
-        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor started, addr: {:?}", plugin_host_addr);
-
-        Ok((plugin_id, plugin_host_addr))
     }
 
     /// 指定ディレクトリ内のDLLプラグインをスキャンして登録

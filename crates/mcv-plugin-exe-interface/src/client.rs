@@ -1,9 +1,17 @@
+use std::sync::Arc;
+
 use crate::{ExePluginError, MessageHandler};
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
 };
-use tokio::net::TcpStream;
+use tokio::{
+    net::TcpStream,
+    sync::{
+        mpsc::{self, UnboundedSender},
+        Mutex, RwLock,
+    },
+};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use tungstenite::Message as WsMessage;
 use uuid::Uuid;
@@ -13,8 +21,8 @@ use uuid::Uuid;
 /// WebSocket経由でmcvと通信するためのクライアント
 pub struct ExePluginClient {
     plugin_id: Uuid,
-    websocket: Option<WebSocketStream<MaybeTlsStream<TcpStream>>>,
-    message_handler: Option<MessageHandler>,
+    message_handler: RwLock<Option<Arc<Mutex<MessageHandler>>>>,
+    tx: UnboundedSender<WsMessage>,
 }
 
 impl ExePluginClient {
@@ -22,20 +30,93 @@ impl ExePluginClient {
     ///
     /// # Arguments
     /// * `url` - WebSocketサーバーのURL (例: "ws://localhost:28901")
-    pub async fn connect(url: &str) -> Result<Self, ExePluginError> {
-        tracing::info!(target: "mcv::plugin_exe_interface",url = %url, "Connecting to MCV WebSocket server");
-
-        let (ws_stream, _) = connect_async(url)
+    pub async fn connect(url: &str) -> Result<Arc<Self>, ExePluginError> {
+        let (ws, _) = connect_async(url)
             .await
             .map_err(|e| ExePluginError::Connection(e.to_string()))?;
 
-        tracing::info!(target: "mcv::plugin_exe_interface","Connected to MCV WebSocket server");
+        let (write, mut read) = ws.split();
+        let (tx, mut rx) = mpsc::unbounded_channel();
 
-        Ok(Self {
+        let client = Arc::new(Self {
             plugin_id: Uuid::new_v4(),
-            websocket: Some(ws_stream),
-            message_handler: None,
-        })
+            message_handler: RwLock::new(None),
+            tx,
+        });
+
+        /* write loop */
+        {
+            let mut write = write;
+            tokio::spawn(async move {
+                while let Some(msg) = rx.recv().await {
+                    println!("sending message: {}", msg);
+                    let _ = write.send(msg).await;
+                }
+            });
+        }
+
+        /* read loop */
+        {
+            let client_clone = Arc::clone(&client);
+            tokio::spawn(async move {
+                while let Some(msg) = read.next().await {
+                    println!("mcv::plugin_exe_interface anything received");
+                    match msg {
+                        Ok(WsMessage::Text(text)) => {
+                            tracing::debug!(target: "mcv::plugin_exe_interface",message_text = %text, "Received message");
+                            println!(
+                                "mcv::plugin_exe_interface Received WebSocket text message: {}",
+                                text
+                            );
+                            match serde_json::from_str::<McvMessage>(&text) {
+                                Ok(mcv_message) => {
+                                    tracing::debug!(target: "mcv::plugin_exe_interface",message_type = ?mcv_message.message_type, "Parsed message");
+                                    ////これだとmessage_handlerにアクセスできない
+                                    if let Some(handler_arc) =
+                                        client_clone.message_handler.read().await.as_ref()
+                                    {
+                                        let handler = handler_arc.lock().await;
+                                        println!(
+                                            "mcv::plugin_exe_interface mcv_message received: {:?}",
+                                            mcv_message
+                                        );
+                                        (handler)(mcv_message);
+                                    }
+                                }
+                                Err(e) => {
+                                    tracing::error!(target: "mcv::plugin_exe_interface",error = %e, text = %text, "Failed to parse message");
+                                }
+                            }
+                        }
+                        Ok(WsMessage::Close(_)) => {
+                            tracing::info!(target: "mcv::plugin_exe_interface","WebSocket closed");
+                            break;
+                        }
+                        Ok(WsMessage::Ping(data)) => {
+                            tracing::trace!(target: "mcv::plugin_exe_interface","Received ping");
+                            // Pongは自動的に送信される
+                            drop(data);
+                        }
+                        Ok(WsMessage::Pong(_)) => {
+                            tracing::trace!(target: "mcv::plugin_exe_interface","Received pong");
+                        }
+                        Ok(WsMessage::Binary(_)) => {
+                            tracing::warn!(target: "mcv::plugin_exe_interface","Received unexpected binary message");
+                        }
+                        Ok(WsMessage::Frame(_)) => {
+                            tracing::trace!(target: "mcv::plugin_exe_interface","Received frame");
+                        }
+                        Err(e) => {
+                            tracing::error!(target: "mcv::plugin_exe_interface",error = %e, "WebSocket error");
+                            return Err(ExePluginError::WebSocket(e.to_string()));
+                        }
+                    }
+                }
+                Ok(())
+            });
+        }
+
+        Ok(client)
     }
 
     /// plugin_idを取得
@@ -49,12 +130,10 @@ impl ExePluginClient {
     /// * `name` - プラグイン名
     /// * `roles` - プラグインのロール
     pub async fn send_plugin_hello(
-        &mut self,
+        &self,
         name: &str,
         roles: Vec<&str>,
     ) -> Result<(), ExePluginError> {
-        tracing::info!(target: "mcv::plugin_exe_interface", name = %name, "Sending plugin-hello");
-
         let payload = PluginHelloPayload {
             name: name.to_string(),
             plugin_id: self.plugin_id,
@@ -71,19 +150,13 @@ impl ExePluginClient {
             serde_json::to_value(&payload)?,
         );
 
-        self.send_message(message).await?;
-
-        tracing::info!(target: "mcv::plugin_exe_interface","plugin-hello sent");
-
-        Ok(())
+        self.send_message(message)
     }
 
     /// get-pluginsメッセージを送信
     ///
     /// 既存のプラグイン一覧を取得する
-    pub async fn send_get_plugins(&mut self) -> Result<(), ExePluginError> {
-        tracing::info!(target: "mcv::plugin_exe_interface", "Sending get-plugins");
-
+    pub async fn send_get_plugins(&self) -> Result<(), ExePluginError> {
         let message = McvMessage::new(
             MessageType::GetPlugins,
             MessageSource::Plugin {
@@ -93,102 +166,27 @@ impl ExePluginClient {
             serde_json::json!({}),
         );
 
-        self.send_message(message).await?;
-
-        tracing::info!(target: "mcv::plugin_exe_interface","get-plugins sent");
-
-        Ok(())
+        self.send_message(message)
     }
 
     /// メッセージを送信
-    pub async fn send_message(&mut self, message: McvMessage) -> Result<(), ExePluginError> {
+    pub fn send_message(&self, message: McvMessage) -> Result<(), ExePluginError> {
         let json = serde_json::to_string(&message)?;
-
-        tracing::debug!(target: "mcv::plugin_exe_interface",message_type = ?message.message_type, "Sending message");
-
-        if let Some(ws) = &mut self.websocket {
-            ws.send(WsMessage::Text(json.into()))
-                .await
-                .map_err(|e| ExePluginError::WebSocket(e.to_string()))?;
-        } else {
-            return Err(ExePluginError::Connection(
-                "WebSocket not connected".to_string(),
-            ));
-        }
-
+        let _ = self.tx.send(WsMessage::Text(json.into()));
         Ok(())
     }
 
     /// メッセージハンドラーを登録
-    pub fn on_message<F>(&mut self, handler: F)
+    pub async fn on_message<F>(&self, handler: F)
     where
         F: Fn(McvMessage) + Send + Sync + 'static,
     {
         println!("Registering message handler");
-        self.message_handler = Some(Box::new(handler));
-    }
 
-    /// メッセージループを実行
-    ///
-    /// WebSocketからメッセージを受信し、ハンドラーを呼び出す
-    pub async fn run(&mut self) -> Result<(), ExePluginError> {
-        tracing::info!(target: "mcv::plugin_exe_interface","Starting message loop");
+        let handler_arc = Arc::new(Mutex::new(Box::new(handler) as MessageHandler));
 
-        let ws = self
-            .websocket
-            .take()
-            .ok_or_else(|| ExePluginError::Connection("WebSocket not connected".to_string()))?;
-
-        let (_write, mut read) = ws.split();
-
-        println!("before while");
-        while let Some(msg) = read.next().await {
-            println!("mcv::plugin_exe_interface anything received");
-            match msg {
-                Ok(WsMessage::Text(text)) => {
-                    tracing::debug!(target: "mcv::plugin_exe_interface",message_text = %text, "Received message");
-                    println!("mcv::plugin_exe_interface Received WebSocket text message: {}", text);
-                    match serde_json::from_str::<McvMessage>(&text) {
-                        Ok(mcv_message) => {
-                            tracing::debug!(target: "mcv::plugin_exe_interface",message_type = ?mcv_message.message_type, "Parsed message");
-                            if let Some(handler) = &self.message_handler {
-                                println!("mcv::plugin_exe_interface mcv_message received: {:?}", mcv_message);
-                                handler(mcv_message);
-                            }
-                        }
-                        Err(e) => {
-                            tracing::error!(target: "mcv::plugin_exe_interface",error = %e, text = %text, "Failed to parse message");
-                        }
-                    }
-                }
-                Ok(WsMessage::Close(_)) => {
-                    tracing::info!(target: "mcv::plugin_exe_interface","WebSocket closed");
-                    break;
-                }
-                Ok(WsMessage::Ping(data)) => {
-                    tracing::trace!(target: "mcv::plugin_exe_interface","Received ping");
-                    // Pongは自動的に送信される
-                    drop(data);
-                }
-                Ok(WsMessage::Pong(_)) => {
-                    tracing::trace!(target: "mcv::plugin_exe_interface","Received pong");
-                }
-                Ok(WsMessage::Binary(_)) => {
-                    tracing::warn!(target: "mcv::plugin_exe_interface","Received unexpected binary message");
-                }
-                Ok(WsMessage::Frame(_)) => {
-                    tracing::trace!(target: "mcv::plugin_exe_interface","Received frame");
-                }
-                Err(e) => {
-                    tracing::error!(target: "mcv::plugin_exe_interface",error = %e, "WebSocket error");
-                    return Err(ExePluginError::WebSocket(e.to_string()));
-                }
-            }
-        }
-
-        tracing::info!(target: "mcv::plugin_exe_interface","Message loop ended");
-
-        Ok(())
+        let mut guard = self.message_handler.write().await;
+        *guard = Some(handler_arc);
     }
 }
 

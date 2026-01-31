@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 /// アプリケーション状態
 struct AppState {
-    client: Arc<Mutex<Option<Arc<Mutex<ExePluginClient>>>>>,
+    client: RwLock<Option<Arc<ExePluginClient>>>,
     plugin_id: Arc<RwLock<Option<Uuid>>>,
     connected: Arc<RwLock<bool>>,
 }
@@ -27,9 +27,10 @@ async fn connect_to_mcv(
     tracing::info!(target:"mcv::exe-plugin-sample",url = %url, plugin_name = %plugin_name, "Connecting to MCV");
 
     // WebSocket接続
-    let mut client = ExePluginClient::connect(&url)
+    let client = ExePluginClient::connect(&url)
         .await
         .map_err(|e| format!("Failed to connect: {}", e))?;
+    // let client = Arc::clone(&client);
 
     let plugin_id = client.plugin_id();
     *state.plugin_id.write().await = Some(plugin_id);
@@ -61,22 +62,18 @@ async fn connect_to_mcv(
             tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "Failed to emit message-received event");
         }
         tracing::debug!(target:"mcv::exe-plugin-sample",message_type = ?message.message_type, "Message received and forwarded to frontend");
-    });
+    }).await;
 
-    // メッセージ受信ループをバックグラウンドで実行
-    let client_arc = Arc::new(Mutex::new(client));
-    let client_clone = Arc::clone(&client_arc);
-    let connected_clone = Arc::clone(&state.connected);
 
-    tokio::spawn(async move {
-        let mut client = client_clone.lock().await;
-        if let Err(e) = client.run().await {
-            tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "WebSocket connection error");
-            *connected_clone.write().await = false;
-        }
-    });
+    // tokio::spawn(async move {
+    //     //let mut client = client_clone.lock().await;
+    //     if let Err(e) = client.run().await {
+    //         tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "WebSocket connection error");
+    //         *connected_clone.write().await = false;
+    //     }
+    // });
 
-    *state.client.lock().await = Some(client_arc);
+    *state.client.write().await = Some(client);
     *state.connected.write().await = true;
 
     Ok(plugin_id.to_string())
@@ -87,7 +84,7 @@ async fn connect_to_mcv(
 async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
     tracing::info!(target:"mcv::exe-plugin-sample","Disconnecting from MCV");
 
-    *state.client.lock().await = None;
+    *state.client.write().await = None;
     *state.connected.write().await = false;
     *state.plugin_id.write().await = None;
 
@@ -102,13 +99,14 @@ async fn send_message(message_json: String, state: State<'_, AppState>) -> Resul
     let message: McvMessage =
         serde_json::from_str(&message_json).map_err(|e| format!("Invalid JSON: {}", e))?;
 
-    let client_option = state.client.lock().await;
-    let client_arc = client_option.as_ref().ok_or("Not connected to MCV")?;
+    let client = {
+        let guard = state.client.read().await;
+        guard.clone().ok_or("Not connected to MCV")?
+    };
 
-    let mut client = client_arc.lock().await;
+    // ② lock の外で送信
     client
         .send_message(message)
-        .await
         .map_err(|e| format!("Failed to send message: {}", e))?;
 
     Ok(())
@@ -138,7 +136,7 @@ fn main() {
     tracing::info!(target:"mcv::exe-plugin-sample","Starting MCV EXE Plugin Sample");
 
     let app_state = AppState {
-        client: Arc::new(Mutex::new(None)),
+   client: RwLock::new(None),
         plugin_id: Arc::new(RwLock::new(None)),
         connected: Arc::new(RwLock::new(false)),
     };

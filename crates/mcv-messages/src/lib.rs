@@ -183,7 +183,6 @@ pub struct PluginAddedPayload {
 /// add-connectionのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddConnectionPayload {
-    pub site: SiteInfo,
 }
 
 /// connection-addedのpayload

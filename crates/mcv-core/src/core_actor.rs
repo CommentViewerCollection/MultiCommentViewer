@@ -1,12 +1,12 @@
 use actix::prelude::*;
 use mcv_common::{LogicalPluginId, PhysicalPluginId};
 use mcv_logger::{
-    LogEntry as LoggerEntry, LogLevel, LogStorage,
-    SourceLocation as LoggerSourceLocation, StackFrame as LoggerStackFrame,
-    SystemInfo as LoggerSystemInfo,
+    LogEntry as LoggerEntry, LogLevel, LogStorage, SourceLocation as LoggerSourceLocation,
+    StackFrame as LoggerStackFrame, SystemInfo as LoggerSystemInfo,
 };
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use std::collections::HashMap;
+use std::future;
 use std::sync::{Arc, Mutex};
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -35,8 +35,8 @@ pub type PluginInfo = LogicalPluginInfo;
 /// システムの中心となるActor
 /// メッセージルーティングとビジネスロジックを担当
 pub struct CoreActor {
-    connection_manager: Arc<RwLock<ConnectionManager>>,
-    site_browser_manager: Arc<RwLock<SiteAndBrowserManager>>,
+    connection_manager: ConnectionManager,
+    site_browser_manager: SiteAndBrowserManager,
     /// 論理プラグイン（ユーザーから見えるプラグイン）
     logical_plugins: HashMap<LogicalPluginId, LogicalPluginInfo>,
     /// 物理プラグイン（DLLファイル）
@@ -51,8 +51,8 @@ impl CoreActor {
     /// 新しいCore Actorを作成
     pub fn new() -> Self {
         Self {
-            connection_manager: Arc::new(RwLock::new(ConnectionManager::new())),
-            site_browser_manager: Arc::new(RwLock::new(SiteAndBrowserManager::new())),
+            connection_manager: ConnectionManager::new(),
+            site_browser_manager: SiteAndBrowserManager::new(),
             logical_plugins: HashMap::new(),
             physical_plugin_hosts: HashMap::new(),
             event_callback: None,
@@ -74,7 +74,7 @@ impl CoreActor {
     fn handle_plugin_hello(
         &mut self,
         physical_plugin_id: PhysicalPluginId,
-        message: McvMessage,
+        message: &McvMessage,
         _ctx: &mut Context<Self>,
     ) {
         let payload: PluginHelloPayload = match serde_json::from_value(message.payload.clone()) {
@@ -186,7 +186,7 @@ impl CoreActor {
     fn handle_get_plugins(
         &mut self,
         physical_plugin_id: PhysicalPluginId,
-        _message: McvMessage,
+        _message: &McvMessage,
         _ctx: &mut Context<Self>,
     ) {
         // リクエスト元の論理プラグインを探す
@@ -255,60 +255,75 @@ impl CoreActor {
         );
     }
 
-    /// add-connectionを処理
-    fn handle_add_connection(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        let payload: AddConnectionPayload = match serde_json::from_value(message.payload.clone()) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!(
-                    error = %e,
-                    message_type = "add-connection",
-                    "Failed to parse message payload"
-                );
-                return;
+    fn generate_connection_default_name(&self) -> String {
+        // 現在の接続を取得してデフォルト名を生成
+        let connections = self.connection_manager.get_connections();
+
+        // 既存の接続名から#N形式の番号を抽出
+        let mut used_numbers = std::collections::HashSet::new();
+        for conn in &connections {
+            if let Some(stripped) = conn.name.strip_prefix('#') {
+                if let Ok(num) = stripped.parse::<u32>() {
+                    used_numbers.insert(num);
+                }
             }
-        };
+        }
+
+        // #1から順に空いている番号を探す
+        let mut next_number = 1;
+        while used_numbers.contains(&next_number) {
+            next_number += 1;
+        }
+
+        let default_name = format!("#{}", next_number);
+        default_name
+    }
+    /// add-connectionを処理
+    fn handle_add_connection(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
+        tracing::trace!(
+            target: "mcv::core::CoreActor",
+            "handle_add_connection()"
+        );
+        println!("handle_add_connection()");
+        // let payload: AddConnectionPayload = match serde_json::from_value(message.payload.clone()) {
+        //     Ok(p) => p,
+        //     Err(e) => {
+        //         tracing::error!(
+        //             target: "mcv::core::CoreActor",
+        //             error = %e,
+        //             message_type = "add-connection",
+        //             "Failed to parse message payload"
+        //         );
+        //         return;
+        //     }
+        // };
 
         let connection_id = Uuid::new_v4();
 
         // プラグインIDを取得（Uuid）
-        let plugin_id_uuid = match &message.src {
-            MessageSource::Plugin { plugin_id } => *plugin_id,
-            _ => {
-                tracing::error!(
-                    target: "mcv::core::CoreActor",
-                    message_type = "add-connection",
-                    message_source = ?message.src,
-                    "Message must come from a plugin"
-                );
-                return;
-            }
-        };
+        // let plugin_id_uuid = match &message.src {
+        //     MessageSource::Plugin { plugin_id } => *plugin_id,
+        //     _ => {
+        //         tracing::error!(
+        //             target: "mcv::core::CoreActor",
+        //             message_type = "add-connection",
+        //             message_source = ?message.src,
+        //             "Message must come from a plugin"
+        //         );
+        //         return;
+        //     }
+        // };
 
-        // プラグイン名を取得（LogicalPluginIdに変換）
-        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-        let site_name = self
-            .logical_plugins
-            .get(&logical_plugin_id)
-            .map(|p| p.name.clone())
-            .unwrap_or_else(|| "Unknown".to_string());
-
-        let input_info = format!("{:?}", payload.site);
+        // // プラグイン名を取得（LogicalPluginIdに変換）
+        // let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
 
         // Connection Managerに登録
-        let connection_manager = self.connection_manager.clone();
         let response_message = message.clone();
+        let conn_name = self.generate_connection_default_name();
 
-        actix::spawn(async move {
-            let mut manager = connection_manager.write().await;
-            manager.add_connection(
-                connection_id,
-                Some(plugin_id_uuid),
-                site_name,
-                input_info,
-                format!("Connection {}", connection_id),
-            );
-        });
+        self.connection_manager
+            .add_connection(connection_id, conn_name.clone());
+        println!("connectionを追加 id={}, name={}", connection_id,&conn_name);
 
         // connection-addedを返信
         let response = McvMessage::create_response(
@@ -326,7 +341,7 @@ impl CoreActor {
                     .do_send(SendMessageToPlugin { message: response });
             }
         }
-
+        println!("ABCDEFEJLKFJLKFJDKFJ");
         // 全論理プラグインにConnectionAddedをブロードキャスト
         let broadcast_msg = McvMessage::new_notification(
             MessageType::ConnectionAdded,
@@ -335,10 +350,11 @@ impl CoreActor {
             serde_json::to_value(ConnectionAddedPayload { connection_id }).unwrap(),
         );
         self.broadcast_to_all_logical_plugins(broadcast_msg);
+        println!("mcv::core connection-addedをブロードキャストした");
     }
 
     /// connectを処理
-    fn handle_connect(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_connect(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: ConnectPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -355,72 +371,73 @@ impl CoreActor {
         let connection_id = payload.connection_id;
 
         // Connection Managerから接続情報を取得してplugin_idを取得
-        let connection_manager = self.connection_manager.clone();
+        // let connection_manager = self.connection_manager.clone();
         let plugins = self.logical_plugins.clone();
         let msg = message.clone();
 
-        actix::spawn(async move {
-            let mut manager = connection_manager.write().await;
-            manager.update_status(&connection_id, ConnectionStatus::Connecting);
+        // actix::spawn(async move {
+        //     let mut manager = connection_manager.write().await;
+        self.connection_manager
+            .update_status(&connection_id, ConnectionStatus::Connecting);
 
-            // plugin_idを取得
-            if let Some(conn_info) = manager.get_connection(&connection_id) {
-                if let Some(plugin_id_uuid) = conn_info.plugin_id {
-                    drop(manager); // ロックを解放
+        // plugin_idを取得
+        if let Some(conn_info) = self.connection_manager.get_connection(&connection_id) {
+            if let Some(plugin_id_uuid) = conn_info.plugin_id {
+                // drop(manager); // ロックを解放
 
-                    let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
+                let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
 
-                    // デバッグ: 登録されている全plugin_idをログ出力
-                    let registered_plugin_ids: Vec<String> =
-                        plugins.keys().map(|id| id.to_string()).collect();
+                // デバッグ: 登録されている全plugin_idをログ出力
+                let registered_plugin_ids: Vec<String> =
+                    plugins.keys().map(|id| id.to_string()).collect();
+                tracing::debug!(
+                    target: "mcv::core::CoreActor",
+                    connection_id = %connection_id,
+                    plugin_id_from_connection = %plugin_id_uuid,
+                    registered_plugin_ids = ?registered_plugin_ids,
+                    "Attempting to find plugin for connection"
+                );
+
+                // プラグインへconnectメッセージを転送
+                if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
                     tracing::debug!(
                         target: "mcv::core::CoreActor",
+                        plugin_id = %plugin_id_uuid,
+                        plugin_name = %plugin_info.name,
                         connection_id = %connection_id,
-                        plugin_id_from_connection = %plugin_id_uuid,
-                        registered_plugin_ids = ?registered_plugin_ids,
-                        "Attempting to find plugin for connection"
+                        "Found plugin, forwarding connect message"
                     );
-
-                    // プラグインへconnectメッセージを転送
-                    if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
-                        tracing::debug!(
-                            target: "mcv::core::CoreActor",
-                            plugin_id = %plugin_id_uuid,
-                            plugin_name = %plugin_info.name,
-                            connection_id = %connection_id,
-                            "Found plugin, forwarding connect message"
-                        );
-                        plugin_info
-                            .host_addr
-                            .do_send(SendMessageToPlugin { message: msg });
-                    } else {
-                        tracing::error!(
-                            target: "mcv::core::CoreActor",
-                            plugin_id = %plugin_id_uuid,
-                            connection_id = %connection_id,
-                            registered_plugin_count = plugins.len(),
-                            "Plugin not found - plugin_id mismatch detected"
-                        );
-                    }
+                    plugin_info
+                        .host_addr
+                        .do_send(SendMessageToPlugin { message: msg });
                 } else {
                     tracing::error!(
                         target: "mcv::core::CoreActor",
+                        plugin_id = %plugin_id_uuid,
                         connection_id = %connection_id,
-                        "Connection has no plugin_id set"
+                        registered_plugin_count = plugins.len(),
+                        "Plugin not found - plugin_id mismatch detected"
                     );
                 }
             } else {
                 tracing::error!(
                     target: "mcv::core::CoreActor",
                     connection_id = %connection_id,
-                    "Connection not found"
+                    "Connection has no plugin_id set"
                 );
             }
-        });
+        } else {
+            tracing::error!(
+                target: "mcv::core::CoreActor",
+                connection_id = %connection_id,
+                "Connection not found"
+            );
+        }
+        // });
     }
 
     /// connectedを処理
-    fn handle_connected(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_connected(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: ConnectedPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -440,12 +457,10 @@ impl CoreActor {
         );
 
         // Connection Managerのステータスを更新
-        let connection_manager = self.connection_manager.clone();
+        // let connection_manager = self.connection_manager.clone();
         let connection_id = payload.connection_id;
-        actix::spawn(async move {
-            let mut manager = connection_manager.write().await;
-            manager.update_status(&connection_id, ConnectionStatus::Connected);
-        });
+        self.connection_manager
+            .update_status(&connection_id, ConnectionStatus::Connected);
 
         // 全論理プラグインにConnectedをブロードキャスト
         let broadcast_msg = McvMessage::new_notification(
@@ -458,12 +473,12 @@ impl CoreActor {
 
         // UIへイベント通知
         if let Some(callback) = &self.event_callback {
-            callback(message);
+            callback(message.clone());
         }
     }
 
     /// disconnectを処理
-    fn handle_disconnect(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_disconnect(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: DisconnectPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -481,28 +496,25 @@ impl CoreActor {
         if let MessageSource::Core = message.src {
             // UIからのリクエストの場合、該当するプラグインへ転送
             let connection_id = payload.connection_id;
-            let connection_manager = self.connection_manager.clone();
+            // let connection_manager = self.connection_manager.clone();
             let plugins = self.logical_plugins.clone();
             let msg = message.clone();
 
-            actix::spawn(async move {
-                let manager = connection_manager.read().await;
-                if let Some(conn_info) = manager.get_connection(&connection_id) {
-                    if let Some(plugin_id_uuid) = conn_info.plugin_id {
-                        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-                        if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
-                            plugin_info
-                                .host_addr
-                                .do_send(SendMessageToPlugin { message: msg });
-                        }
+            if let Some(conn_info) = self.connection_manager.get_connection(&connection_id) {
+                if let Some(plugin_id_uuid) = conn_info.plugin_id {
+                    let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
+                    if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
+                        plugin_info
+                            .host_addr
+                            .do_send(SendMessageToPlugin { message: msg });
                     }
                 }
-            });
+            }
         }
     }
 
     /// disconnectedを処理
-    fn handle_disconnected(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_disconnected(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: DisconnectedPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -522,29 +534,26 @@ impl CoreActor {
         );
 
         // Connection Managerのステータスを更新
-        let connection_manager = self.connection_manager.clone();
         let connection_id = payload.connection_id;
-        actix::spawn(async move {
-            let mut manager = connection_manager.write().await;
-            manager.update_status(&connection_id, ConnectionStatus::Disconnected);
-        });
+        self.connection_manager
+            .update_status(&connection_id, ConnectionStatus::Disconnected);
 
         // UIへイベント通知
         if let Some(callback) = &self.event_callback {
-            callback(message);
+            callback(message.clone());
         }
     }
 
     /// comment-receivedを処理
-    fn handle_comment_received(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_comment_received(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         // UIへイベント通知
         if let Some(callback) = &self.event_callback {
-            callback(message);
+            callback(message.clone());
         }
     }
 
     /// send-commentを処理
-    fn handle_send_comment(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_send_comment(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: SendCommentPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -560,27 +569,24 @@ impl CoreActor {
 
         // 該当する接続のプラグインへコメントを転送
         let connection_id = payload.connection_id;
-        let connection_manager = self.connection_manager.clone();
+        //let connection_manager = self.connection_manager.clone();
         let plugins = self.logical_plugins.clone();
         let msg = message.clone();
 
-        actix::spawn(async move {
-            let manager = connection_manager.read().await;
-            if let Some(conn_info) = manager.get_connection(&connection_id) {
-                if let Some(plugin_id_uuid) = conn_info.plugin_id {
-                    let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-                    if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
-                        plugin_info
-                            .host_addr
-                            .do_send(SendMessageToPlugin { message: msg });
-                    }
+        if let Some(conn_info) = self.connection_manager.get_connection(&connection_id) {
+            if let Some(plugin_id_uuid) = conn_info.plugin_id {
+                let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
+                if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
+                    plugin_info
+                        .host_addr
+                        .do_send(SendMessageToPlugin { message: msg });
                 }
             }
-        });
+        }
     }
 
     /// log-entryを処理（プラグインからのログメッセージ）
-    fn handle_log_entry(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_log_entry(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: LogEntryPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -652,7 +658,10 @@ impl CoreActor {
                 frames
                     .iter()
                     .map(|f| LoggerStackFrame {
-                        symbol: f.get("symbol").and_then(|s| s.as_str()).map(|s| s.to_string()),
+                        symbol: f
+                            .get("symbol")
+                            .and_then(|s| s.as_str())
+                            .map(|s| s.to_string()),
                         filename: f
                             .get("filename")
                             .and_then(|s| s.as_str())
@@ -730,7 +739,7 @@ impl CoreActor {
     }
 
     /// add-siteを処理
-    fn handle_add_site(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_add_site(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: AddSitePayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -763,12 +772,9 @@ impl CoreActor {
             "Registering site (plugin_id is from message.src)"
         );
 
-        let manager = self.site_browser_manager.clone();
+        // let manager = self.site_browser_manager.clone();
         let site_info_clone = site_info.clone();
-        actix::spawn(async move {
-            let mut mgr = manager.write().await;
-            mgr.add_site(site_info_clone);
-        });
+        self.site_browser_manager.add_site(site_info_clone);
 
         // UIにイベント通知
         if let Some(callback) = &self.event_callback {
@@ -790,7 +796,7 @@ impl CoreActor {
     }
 
     /// add-browserを処理
-    fn handle_add_browser(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_add_browser(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: AddBrowserPayload = match serde_json::from_value(message.payload.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -814,12 +820,8 @@ impl CoreActor {
             plugin_id,
         };
 
-        let manager = self.site_browser_manager.clone();
         let browser_info_clone = browser_info.clone();
-        actix::spawn(async move {
-            let mut mgr = manager.write().await;
-            mgr.add_browser(browser_info_clone);
-        });
+        self.site_browser_manager.add_browser(browser_info_clone);
 
         // UIにイベント通知
         if let Some(callback) = &self.event_callback {
@@ -841,15 +843,16 @@ impl CoreActor {
     }
 
     /// set-connection-siteを処理（UIから呼ばれる）
-    fn handle_set_connection_site(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
-        let payload: SetConnectionSitePayload =
-            match serde_json::from_value(message.payload.clone()) {
-                Ok(p) => p,
-                Err(e) => {
-                    tracing::error!(target: "mcv::core::CoreActor",error = %e, "Failed to parse SetConnectionSitePayload");
-                    return;
-                }
-            };
+    fn handle_set_connection_site(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
+        let payload: SetConnectionSitePayload = match serde_json::from_value(
+            message.payload.clone(),
+        ) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(target: "mcv::core::CoreActor",error = %e, "Failed to parse SetConnectionSitePayload");
+                return;
+            }
+        };
 
         let connection_id = payload.connection_id;
         let site_id = payload.site_id;
@@ -862,75 +865,76 @@ impl CoreActor {
         );
 
         // 前のサイトを取得してDiscardConnectionSiteを送信
-        let conn_mgr = self.connection_manager.clone();
-        let site_mgr = self.site_browser_manager.clone();
+        // let conn_mgr = self.connection_manager.clone();
+        // let site_mgr = self.site_browser_manager.clone();
         let plugins = self.logical_plugins.clone();
 
-        actix::spawn(async move {
-            let mut conn_manager = conn_mgr.write().await;
-            let site_manager = site_mgr.read().await;
+        // actix::spawn(async move {
+        //     let mut conn_manager = conn_mgr.write().await;
+        //     let site_manager = site_mgr.read().await;
 
-            // 前のplugin_idを取得
-            let old_plugin_id = conn_manager
-                .get_connection(&connection_id)
-                .and_then(|c| c.plugin_id);
+        // 前のplugin_idを取得
+        let old_plugin_id = self
+            .connection_manager
+            .get_connection(&connection_id)
+            .and_then(|c| c.plugin_id);
 
-            // 新しいサイト情報を取得
-            if let Some(site_info) = site_manager.get_site(&site_id) {
-                conn_manager.set_site(
-                    &connection_id,
-                    site_id,
-                    site_info.display_name.clone(),
-                    site_info.plugin_id,
-                );
+        // 新しいサイト情報を取得
+        if let Some(site_info) = self.site_browser_manager.get_site(&site_id) {
+            self.connection_manager.set_site(
+                &connection_id,
+                site_id,
+                site_info.display_name.clone(),
+                site_info.plugin_id,
+            );
 
-                // 前のプラグインにDiscardConnectionSiteを送信
-                if let Some(old_pid) = old_plugin_id {
-                    if old_pid != site_info.plugin_id {
-                        let old_logical_plugin_id = LogicalPluginId::from_uuid(old_pid);
-                        if let Some(old_plugin) = plugins.get(&old_logical_plugin_id) {
-                            let discard_msg = McvMessage::new(
-                                MessageType::DiscardConnectionSite,
-                                MessageSource::Core,
-                                MessageDestination::Plugin { plugin_id: old_pid },
-                                serde_json::to_value(DiscardConnectionSitePayload {
-                                    connection_id,
-                                    site_id,
-                                })
-                                .unwrap(),
-                            );
-                            old_plugin.host_addr.do_send(SendMessageToPlugin {
-                                message: discard_msg,
-                            });
-                        }
+            // 前のプラグインにDiscardConnectionSiteを送信
+            if let Some(old_pid) = old_plugin_id {
+                if old_pid != site_info.plugin_id {
+                    let old_logical_plugin_id = LogicalPluginId::from_uuid(old_pid);
+                    if let Some(old_plugin) = plugins.get(&old_logical_plugin_id) {
+                        let discard_msg = McvMessage::new(
+                            MessageType::DiscardConnectionSite,
+                            MessageSource::Core,
+                            MessageDestination::Plugin { plugin_id: old_pid },
+                            serde_json::to_value(DiscardConnectionSitePayload {
+                                connection_id,
+                                site_id,
+                            })
+                            .unwrap(),
+                        );
+                        old_plugin.host_addr.do_send(SendMessageToPlugin {
+                            message: discard_msg,
+                        });
                     }
                 }
-
-                // 新しいプラグインにSetConnectionSiteを送信
-                let new_logical_plugin_id = LogicalPluginId::from_uuid(site_info.plugin_id);
-                if let Some(new_plugin) = plugins.get(&new_logical_plugin_id) {
-                    let set_msg = McvMessage::new(
-                        MessageType::SetConnectionSite,
-                        MessageSource::Core,
-                        MessageDestination::Plugin {
-                            plugin_id: site_info.plugin_id,
-                        },
-                        serde_json::to_value(SetConnectionSitePayload {
-                            connection_id,
-                            site_id,
-                        })
-                        .unwrap(),
-                    );
-                    new_plugin
-                        .host_addr
-                        .do_send(SendMessageToPlugin { message: set_msg });
-                }
             }
-        });
+
+            // 新しいプラグインにSetConnectionSiteを送信
+            let new_logical_plugin_id = LogicalPluginId::from_uuid(site_info.plugin_id);
+            if let Some(new_plugin) = plugins.get(&new_logical_plugin_id) {
+                let set_msg = McvMessage::new(
+                    MessageType::SetConnectionSite,
+                    MessageSource::Core,
+                    MessageDestination::Plugin {
+                        plugin_id: site_info.plugin_id,
+                    },
+                    serde_json::to_value(SetConnectionSitePayload {
+                        connection_id,
+                        site_id,
+                    })
+                    .unwrap(),
+                );
+                new_plugin
+                    .host_addr
+                    .do_send(SendMessageToPlugin { message: set_msg });
+            }
+        }
+        // });
     }
 
     /// update-connection-settingsを処理
-    fn handle_update_connection_settings(&mut self, message: McvMessage, _ctx: &mut Context<Self>) {
+    fn handle_update_connection_settings(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
         let payload: UpdateConnectionSettingsPayload =
             match serde_json::from_value(message.payload.clone()) {
                 Ok(p) => p,
@@ -949,28 +953,27 @@ impl CoreActor {
             "Updating connection settings"
         );
 
-        let conn_mgr = self.connection_manager.clone();
-        let site_mgr = self.site_browser_manager.clone();
+        if let Some(url) = payload.url {
+            self.connection_manager
+                .update_url(&payload.connection_id, Some(url));
+        }
 
-        actix::spawn(async move {
-            let mut manager = conn_mgr.write().await;
-            let site_manager = site_mgr.read().await;
+        if let Some(browser_id) = payload.browser_id {
+            let browser_name = self
+                .site_browser_manager
+                .get_browser(&browser_id)
+                .map(|b| b.display_name.clone());
+            self.connection_manager.update_browser(
+                &payload.connection_id,
+                Some(browser_id),
+                browser_name,
+            );
+        }
 
-            if let Some(url) = payload.url {
-                manager.update_url(&payload.connection_id, Some(url));
-            }
-
-            if let Some(browser_id) = payload.browser_id {
-                let browser_name = site_manager
-                    .get_browser(&browser_id)
-                    .map(|b| b.display_name.clone());
-                manager.update_browser(&payload.connection_id, Some(browser_id), browser_name);
-            }
-
-            if let Some(settings) = payload.advanced_settings {
-                manager.update_advanced_settings(&payload.connection_id, Some(settings));
-            }
-        });
+        if let Some(settings) = payload.advanced_settings {
+            self.connection_manager
+                .update_advanced_settings(&payload.connection_id, Some(settings));
+        }
     }
 }
 
@@ -1012,25 +1015,21 @@ impl Handler<SendMessageToCore> for CoreActor {
         );
 
         match message.message_type {
-            MessageType::PluginHello => {
-                self.handle_plugin_hello(physical_plugin_id, message, ctx)
-            }
-            MessageType::GetPlugins => {
-                self.handle_get_plugins(physical_plugin_id, message, ctx)
-            }
-            MessageType::AddConnection => self.handle_add_connection(message, ctx),
-            MessageType::Connect => self.handle_connect(message, ctx),
-            MessageType::Connected => self.handle_connected(message, ctx),
-            MessageType::Disconnect => self.handle_disconnect(message, ctx),
-            MessageType::Disconnected => self.handle_disconnected(message, ctx),
-            MessageType::CommentReceived => self.handle_comment_received(message, ctx),
-            MessageType::SendComment => self.handle_send_comment(message, ctx),
-            MessageType::LogEntry => self.handle_log_entry(message, ctx),
-            MessageType::AddSite => self.handle_add_site(message, ctx),
-            MessageType::AddBrowser => self.handle_add_browser(message, ctx),
-            MessageType::SetConnectionSite => self.handle_set_connection_site(message, ctx),
+            MessageType::PluginHello => self.handle_plugin_hello(physical_plugin_id, &message, ctx),
+            MessageType::GetPlugins => self.handle_get_plugins(physical_plugin_id, &message, ctx),
+            MessageType::AddConnection => self.handle_add_connection(&message, ctx),
+            MessageType::Connect => self.handle_connect(&message, ctx),
+            MessageType::Connected => self.handle_connected(&message, ctx),
+            MessageType::Disconnect => self.handle_disconnect(&message, ctx),
+            MessageType::Disconnected => self.handle_disconnected(&message, ctx),
+            MessageType::CommentReceived => self.handle_comment_received(&message, ctx),
+            MessageType::SendComment => self.handle_send_comment(&message, ctx),
+            MessageType::LogEntry => self.handle_log_entry(&message, ctx),
+            MessageType::AddSite => self.handle_add_site(&message, ctx),
+            MessageType::AddBrowser => self.handle_add_browser(&message, ctx),
+            MessageType::SetConnectionSite => self.handle_set_connection_site(&message, ctx),
             MessageType::UpdateConnectionSettings => {
-                self.handle_update_connection_settings(message, ctx)
+                self.handle_update_connection_settings(&message, ctx)
             }
             _ => {
                 tracing::warn!(
@@ -1044,29 +1043,28 @@ impl Handler<SendMessageToCore> for CoreActor {
 }
 
 /// UIからcoreへのメッセージ
-#[derive(Message)]
-#[rtype(result = "Result<McvMessage, String>")]
 pub struct SendRequest {
     pub message: McvMessage,
+}
+impl actix::Message for SendRequest {
+    type Result = Result<McvMessage, String>;
 }
 
 impl Handler<SendRequest> for CoreActor {
     type Result = Result<McvMessage, String>;
 
     fn handle(&mut self, msg: SendRequest, ctx: &mut Self::Context) -> Self::Result {
-        let message = msg.message.clone();
-
-        // UIからのリクエストを直接処理（physical_plugin_idは不要）
+        let message = msg.message;
         match message.message_type {
-            MessageType::AddConnection => self.handle_add_connection(message, ctx),
-            MessageType::Connect => self.handle_connect(message, ctx),
-            MessageType::Disconnect => self.handle_disconnect(message, ctx),
-            MessageType::SendComment => self.handle_send_comment(message, ctx),
-            MessageType::AddSite => self.handle_add_site(message, ctx),
-            MessageType::AddBrowser => self.handle_add_browser(message, ctx),
-            MessageType::SetConnectionSite => self.handle_set_connection_site(message, ctx),
+            MessageType::AddConnection => self.handle_add_connection(&message, ctx),
+            MessageType::Connect => self.handle_connect(&message, ctx),
+            MessageType::Disconnect => self.handle_disconnect(&message, ctx),
+            MessageType::SendComment => self.handle_send_comment(&message, ctx),
+            MessageType::AddSite => self.handle_add_site(&message, ctx),
+            MessageType::AddBrowser => self.handle_add_browser(&message, ctx),
+            MessageType::SetConnectionSite => self.handle_set_connection_site(&message, ctx),
             MessageType::UpdateConnectionSettings => {
-                self.handle_update_connection_settings(message, ctx)
+                self.handle_update_connection_settings(&message, ctx)
             }
             _ => {
                 tracing::warn!(
@@ -1076,9 +1074,7 @@ impl Handler<SendRequest> for CoreActor {
                 );
             }
         }
-
-        // 簡易的な応答を返す
-        Ok(msg.message)
+        Ok(message)
     }
 }
 
@@ -1118,17 +1114,14 @@ impl Handler<RegisterPhysicalPlugin> for CoreActor {
 pub struct GetConnections;
 
 impl Handler<GetConnections> for CoreActor {
-    type Result = ResponseActFuture<Self, Vec<ConnectionInfo>>;
+    type Result = Vec<ConnectionInfo>;
 
     fn handle(&mut self, _msg: GetConnections, _ctx: &mut Self::Context) -> Self::Result {
-        let connection_manager = self.connection_manager.clone();
-
-        let fut = async move {
-            let manager = connection_manager.read().await;
-            manager.list_connections().into_iter().cloned().collect()
-        };
-
-        Box::pin(fut.into_actor(self))
+        self.connection_manager
+            .list_connections()
+            .into_iter()
+            .cloned()
+            .collect()
     }
 }
 
@@ -1141,27 +1134,14 @@ pub struct CreateConnection {
     pub input_info: String,
     pub name: String,
 }
-
 impl Handler<CreateConnection> for CoreActor {
-    type Result = ResponseActFuture<Self, Uuid>;
+    type Result = MessageResult<CreateConnection>;
 
     fn handle(&mut self, msg: CreateConnection, _ctx: &mut Self::Context) -> Self::Result {
         let connection_id = Uuid::new_v4();
-        let connection_manager = self.connection_manager.clone();
-
-        let fut = async move {
-            let mut manager = connection_manager.write().await;
-            manager.add_connection(
-                connection_id,
-                msg.plugin_id,
-                msg.site_name,
-                msg.input_info,
-                msg.name,
-            );
-            connection_id
-        };
-
-        Box::pin(fut.into_actor(self))
+        self.connection_manager
+            .add_connection(connection_id, msg.name);
+        MessageResult(connection_id)
     }
 }
 
@@ -1173,26 +1153,18 @@ pub struct RemoveConnection {
 }
 
 impl Handler<RemoveConnection> for CoreActor {
-    type Result = ResponseActFuture<Self, Result<(), String>>;
+    type Result = Result<(), String>;
 
     fn handle(&mut self, msg: RemoveConnection, _ctx: &mut Self::Context) -> Self::Result {
-        let connection_manager = self.connection_manager.clone();
-
-        let fut = async move {
-            let mut manager = connection_manager.write().await;
-
-            // 接続のステータスを確認
-            if let Some(status) = manager.get_status(&msg.connection_id) {
-                if status == ConnectionStatus::Connected || status == ConnectionStatus::Connecting {
-                    return Err("Cannot remove connected connection".to_string());
-                }
+        if let Some(status) = self.connection_manager.get_status(&msg.connection_id) {
+            if status == ConnectionStatus::Connected || status == ConnectionStatus::Connecting {
+                return Err("Cannot remove connected connection".to_string());
             }
+        }
 
-            manager.remove_connection(&msg.connection_id);
-            Ok(())
-        };
-
-        Box::pin(fut.into_actor(self))
+        self.connection_manager
+            .remove_connection(&msg.connection_id);
+        Ok(())
     }
 }
 
@@ -1205,18 +1177,12 @@ pub struct RenameConnection {
 }
 
 impl Handler<RenameConnection> for CoreActor {
-    type Result = ResponseActFuture<Self, Result<(), String>>;
+    type Result = Result<(), String>;
 
     fn handle(&mut self, msg: RenameConnection, _ctx: &mut Self::Context) -> Self::Result {
-        let connection_manager = self.connection_manager.clone();
-
-        let fut = async move {
-            let mut manager = connection_manager.write().await;
-            manager.rename_connection(&msg.connection_id, msg.new_name);
-            Ok(())
-        };
-
-        Box::pin(fut.into_actor(self))
+        self.connection_manager
+            .rename_connection(&msg.connection_id, msg.new_name);
+        Ok(())
     }
 }
 
@@ -1226,17 +1192,10 @@ impl Handler<RenameConnection> for CoreActor {
 pub struct GetSites;
 
 impl Handler<GetSites> for CoreActor {
-    type Result = ResponseActFuture<Self, Vec<SiteInfo>>;
+    type Result = Vec<SiteInfo>;
 
     fn handle(&mut self, _msg: GetSites, _ctx: &mut Context<Self>) -> Self::Result {
-        let manager = self.site_browser_manager.clone();
-        Box::pin(
-            async move {
-                let mgr = manager.read().await;
-                mgr.list_sites()
-            }
-            .into_actor(self),
-        )
+        self.site_browser_manager.list_sites()
     }
 }
 
@@ -1246,17 +1205,10 @@ impl Handler<GetSites> for CoreActor {
 pub struct GetBrowsers;
 
 impl Handler<GetBrowsers> for CoreActor {
-    type Result = ResponseActFuture<Self, Vec<BrowserInfo>>;
+    type Result = Vec<BrowserInfo>;
 
     fn handle(&mut self, _msg: GetBrowsers, _ctx: &mut Context<Self>) -> Self::Result {
-        let manager = self.site_browser_manager.clone();
-        Box::pin(
-            async move {
-                let mgr = manager.read().await;
-                mgr.list_browsers()
-            }
-            .into_actor(self),
-        )
+        self.site_browser_manager.list_browsers()
     }
 }
 
@@ -1282,7 +1234,7 @@ impl Handler<SetConnectionSite> for CoreActor {
             })
             .unwrap(),
         );
-        self.handle_set_connection_site(message, ctx);
+        self.handle_set_connection_site(&message, ctx);
         Box::pin(async { Ok(()) }.into_actor(self))
     }
 }
@@ -1313,7 +1265,7 @@ impl Handler<UpdateConnectionSettings> for CoreActor {
             })
             .unwrap(),
         );
-        self.handle_update_connection_settings(message, ctx);
+        self.handle_update_connection_settings(&message, ctx);
         Box::pin(async { Ok(()) }.into_actor(self))
     }
 }

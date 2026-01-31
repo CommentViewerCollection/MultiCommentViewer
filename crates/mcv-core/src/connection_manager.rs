@@ -25,7 +25,7 @@ pub struct ConnectionInfo {
     pub plugin_id: Option<Uuid>,      // 変更: Option<Uuid>に
     pub status: ConnectionStatus,
     pub site_id: Option<Uuid>,        // 新規
-    pub site_name: String,
+    pub site_name: Option<String>,
     pub url: Option<String>,          // 新規
     pub browser_id: Option<Uuid>,     // 新規
     pub browser_name: Option<String>, // 新規
@@ -50,26 +50,24 @@ impl ConnectionManager {
     }
 
     /// 接続を追加
-    pub fn add_connection(&mut self, connection_id: Uuid, plugin_id: Option<Uuid>, site_name: String, input_info: String, name: String) {
+    pub fn add_connection(&mut self, connection_id: Uuid, name: String) {
         tracing::debug!(
             connection_id = %connection_id,
-            plugin_id = ?plugin_id,
-            site_name = %site_name,
             name = %name,
             "Adding connection"
         );
 
         let info = ConnectionInfo {
             connection_id,
-            plugin_id,
+            plugin_id: None,
             status: ConnectionStatus::Created,
             site_id: None,
-            site_name,
+            site_name:None,
             url: None,
             browser_id: None,
             browser_name: None,
             advanced_settings: None,
-            input_info,
+            input_info: "".to_string(),
             name,
         };
         self.connections.insert(connection_id, info);
@@ -97,6 +95,9 @@ impl ConnectionManager {
     /// 接続情報を取得
     pub fn get_connection(&self, connection_id: &Uuid) -> Option<&ConnectionInfo> {
         self.connections.get(connection_id)
+    }
+    pub fn get_connections(&self)->Vec<&ConnectionInfo>{
+        self.connections.iter().map(|a|a.1).collect()
     }
 
     /// 全接続のリストを取得
@@ -128,7 +129,7 @@ impl ConnectionManager {
                 "Connection site updated"
             );
             info.site_id = Some(site_id);
-            info.site_name = site_name;
+            info.site_name = Some(site_name);
             info.plugin_id = Some(plugin_id);
         }
     }
@@ -198,7 +199,7 @@ mod tests {
         let plugin_id = Uuid::new_v4();
 
         // 接続を追加（plugin_idはOptionに変更）
-        manager.add_connection(conn_id, Some(plugin_id), "Test Site".to_string(), "test input".to_string(), "Test Connection".to_string());
+        manager.add_connection(conn_id,  "Test Connection".to_string());
         assert_eq!(
             manager.get_status(&conn_id),
             Some(ConnectionStatus::Created)
@@ -225,7 +226,7 @@ mod tests {
         let plugin_id = Uuid::new_v4();
 
         // 接続を追加（サイト未選択）
-        manager.add_connection(conn_id, None, "未選択".to_string(), "{}".to_string(), "#1".to_string());
+        manager.add_connection(conn_id, "#1".to_string());
 
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.plugin_id, None);
@@ -237,7 +238,7 @@ mod tests {
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.plugin_id, Some(plugin_id));
         assert_eq!(conn.site_id, Some(site_id));
-        assert_eq!(conn.site_name, "Test Site");
+        assert_eq!(conn.site_name, Some("Test Site".to_owned()));
     }
 
     #[test]

@@ -18,18 +18,9 @@ use mcv_core::{
     UpdateConnectionSettings,
 };
 use mcv_messages::{
-    self,
-    BrowserInfo as MsgBrowserInfo,
-    CommentReceivedPayload,
-    ConnectPayload,
-    DisconnectPayload,
-    InputInfo, // mcv-messagesから明示的にインポート
-    Message as McvMessage,
-    MessageDestination,
-    MessageSource,
-    MessageType,
-    SendCommentPayload,
-    SiteInfo as MsgSiteInfo,
+    self, AddConnectionPayload, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload,
+    ConnectPayload, DisconnectPayload, InputInfo, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, SendCommentPayload, SiteInfo as MsgSiteInfo,
 };
 use mcv_updater::{McvUpdateInfo, UpdateChecker};
 use std::path::PathBuf;
@@ -46,48 +37,61 @@ struct AppState {
 /// 接続を追加
 #[tauri::command]
 async fn add_connection(state: State<'_, AppState>) -> Result<String, String> {
-    tracing::debug!("add_connection called");
+    tracing::debug!(target:"mcv::core","add_connection called");
 
+    let msg = mcv_core::SendRequest {
+        message: mcv_messages::Message {
+            message_type: MessageType::AddConnection,
+            src: MessageSource::Core,
+            dst: MessageDestination::Core,
+            request_id: None,
+            timestamp: 0,
+            payload: serde_json::json!({}),
+        },
+    };
+    let k = state.core_addr.send(msg).await;
+    let a = k.unwrap().unwrap();
+    println!("main.rs add_connection() {:?}", a);
     // 現在の接続を取得してデフォルト名を生成
-    let connections = state
-        .core_addr
-        .send(GetConnections)
-        .await
-        .map_err(|e| e.to_string())?;
+    // let connections = state
+    //     .core_addr
+    //     .send(GetConnections)
+    //     .await
+    //     .map_err(|e| e.to_string())?;
 
-    // 既存の接続名から#N形式の番号を抽出
-    let mut used_numbers = std::collections::HashSet::new();
-    for conn in &connections {
-        if let Some(stripped) = conn.name.strip_prefix('#') {
-            if let Ok(num) = stripped.parse::<u32>() {
-                used_numbers.insert(num);
-            }
-        }
-    }
+    // // 既存の接続名から#N形式の番号を抽出
+    // let mut used_numbers = std::collections::HashSet::new();
+    // for conn in &connections {
+    //     if let Some(stripped) = conn.name.strip_prefix('#') {
+    //         if let Ok(num) = stripped.parse::<u32>() {
+    //             used_numbers.insert(num);
+    //         }
+    //     }
+    // }
 
-    // #1から順に空いている番号を探す
-    let mut next_number = 1;
-    while used_numbers.contains(&next_number) {
-        next_number += 1;
-    }
+    // // #1から順に空いている番号を探す
+    // let mut next_number = 1;
+    // while used_numbers.contains(&next_number) {
+    //     next_number += 1;
+    // }
 
-    let default_name = format!("#{}", next_number);
-    tracing::debug!(name = %default_name, "Generated default connection name");
+    // let default_name = format!("#{}", next_number);
+    // tracing::debug!(target:"mcv::core",name = %default_name, "Generated default connection name");
 
-    // 接続を作成（plugin_idはNone、サイト未選択状態）
-    let connection_id = state
-        .core_addr
-        .send(CreateConnection {
-            plugin_id: None, // 変更: サイト未選択状態で作成
-            site_name: "未選択".to_string(),
-            input_info: "{}".to_string(),
-            name: default_name,
-        })
-        .await
-        .map_err(|e| e.to_string())?;
+    // // 接続を作成（plugin_idはNone、サイト未選択状態）
+    // let connection_id = state
+    //     .core_addr
+    //     .send(CreateConnection {
+    //         plugin_id: None, // 変更: サイト未選択状態で作成
+    //         site_name: "未選択".to_string(),
+    //         input_info: "{}".to_string(),
+    //         name: default_name,
+    //     })
+    //     .await
+    //     .map_err(|e| e.to_string())?;
 
-    tracing::info!(connection_id = %connection_id, "Connection created");
-    Ok(connection_id.to_string())
+    // tracing::info!(target:"mcv::core",connection_id = %connection_id, "Connection created");
+    Ok("".to_string())
 }
 
 /// 接続を削除
@@ -163,11 +167,11 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
         serde_json::to_value(ConnectPayload {
             connection_id: conn_id,
             site: MsgSiteInfo {
-                name: conn_info.site_name.clone(),
+                name: conn_info.site_name.as_ref().unwrap().clone(),
                 id: site_id,
             },
             input: InputInfo {
-                input_type: conn_info.site_name.clone(),
+                input_type: conn_info.site_name.as_ref().unwrap().clone(),
                 extra: serde_json::json!({
                     "url": url,
                     "advanced_settings": conn_info.advanced_settings,
@@ -181,7 +185,7 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
         .unwrap(),
     );
 
-    state
+    let _ = state
         .core_addr
         .send(SendRequest { message })
         .await

@@ -4,7 +4,7 @@
 mod ws_tracing;
 use mcv_messages::Message as McvMessage;
 use mcv_plugin_exe_interface::ExePluginClient;
-use std::{io::Write, sync::Arc};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::RwLock;
 use tracing::info_span;
@@ -68,38 +68,9 @@ async fn connect_to_mcv(
 
     tracing::info!(target:"mcv::exe-plugin-sample","Sent get-plugins request");
 
-    let now = chrono::Local::now();
-let line = format!(
-    "[{}] 1()\n",
-    now.format("%Y-%m-%d %H:%M:%S")
-);
-std::fs::OpenOptions::new()
-    .create(true)
-    .append(true)
-    .open("zzzzz.txt")
-    .unwrap()
-    .write_all(line.as_bytes())
-    .unwrap();
     // メッセージハンドラーを登録
     let app_clone = app.clone();
     client.on_message(move |message| {
-        println!("Received message: {:?}", message);
-
-        let now = chrono::Local::now();
-let line = format!(
-    "[{}] 2()\n",
-    now.format("%Y-%m-%d %H:%M:%S")
-);
-std::fs::OpenOptions::new()
-    .create(true)
-    .append(true)
-    .open("zzzzz.txt")
-    .unwrap()
-    .write_all(line.as_bytes())
-    .unwrap();
-        
-        // panic!();
-        
         let app = app_clone.clone();
         // フロントエンドにメッセージを転送
         if let Err(e) = app.emit("message-received", &message) {

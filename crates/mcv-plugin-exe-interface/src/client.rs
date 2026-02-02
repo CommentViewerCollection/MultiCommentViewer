@@ -1,4 +1,4 @@
-use std::{io::Write, sync::Arc};
+use std::sync::Arc;
 
 use crate::{ExePluginError, MessageHandler};
 use futures_util::{SinkExt, StreamExt};
@@ -56,41 +56,12 @@ impl ExePluginClient {
         {
             let client_clone = Arc::clone(&client);
             tokio::spawn(async move {
-                let now = chrono::Local::now();
-                let line = format!("[{}] spawn_1()\n", now.format("%Y-%m-%d %H:%M:%S"));
-                std::fs::OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open("zzzzz.txt")
-                    .unwrap()
-                    .write_all(line.as_bytes())
-                    .unwrap();
                 loop {
                     let msg = read.next().await;
                     if msg.is_none() {
-                        let now = chrono::Local::now();
-                        let line = format!("[{}] spawn_none()\n", now.format("%Y-%m-%d %H:%M:%S"));
-                        std::fs::OpenOptions::new()
-                            .create(true)
-                            .append(true)
-                            .open("zzzzz.txt")
-                            .unwrap()
-                            .write_all(line.as_bytes())
-                            .unwrap();
                         break;
                     }
                     let msg = msg.unwrap();
-
-                    let now = chrono::Local::now();
-                    let line = format!("[{}] spawn_2()\n", now.format("%Y-%m-%d %H:%M:%S"));
-                    std::fs::OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("zzzzz.txt")
-                        .unwrap()
-                        .write_all(line.as_bytes())
-                        .unwrap();
-                    println!("mcv::plugin_exe_interface anything received");
                     match msg {
                         Ok(WsMessage::Text(text)) => {
                             tracing::debug!(target: "mcv::plugin_exe_interface",message_text = %text, "Received message");
@@ -101,15 +72,10 @@ impl ExePluginClient {
                             match serde_json::from_str::<McvMessage>(&text) {
                                 Ok(mcv_message) => {
                                     tracing::debug!(target: "mcv::plugin_exe_interface",message_type = ?mcv_message.message_type, "Parsed message");
-                                    ////これだとmessage_handlerにアクセスできない
                                     if let Some(handler_arc) =
                                         client_clone.message_handler.read().await.as_ref()
                                     {
-                                        let handler = handler_arc;//.lock().await;
-                                        println!(
-                                            "mcv::plugin_exe_interface mcv_message received: {:?}",
-                                            mcv_message
-                                        );
+                                        let handler = handler_arc;
                                         (handler)(mcv_message);
                                     }
                                 }
@@ -211,21 +177,7 @@ impl ExePluginClient {
     where
         F: Fn(McvMessage) + Send + Sync + 'static,
     {
-        println!("Registering message handler");
-        eprintln!("Registering message handler");
-
-        let now = chrono::Local::now();
-        let line = format!(
-            "[{}] connect_to_mcv()ハンドラ登録\n",
-            now.format("%Y-%m-%d %H:%M:%S")
-        );
-        std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open("zzzzz.txt")
-            .unwrap()
-            .write_all(line.as_bytes())
-            .unwrap();
+        tracing::debug!(target: "mcv::plugin_exe_interface", "Registering message handler");
 
         let handler_arc = Arc::new(Box::new(handler) as MessageHandler);
 

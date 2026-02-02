@@ -102,8 +102,6 @@ where
             timestamp: 0,
             payload,
         };
-        let _ = std::fs::write("C:\\Users\\ryu\\Downloads\\akkdkd.txt", "=====????DIDS Log created");
-        println!("=====????DIDS Log created");
 
         let _ = client.send_message(log);
     }

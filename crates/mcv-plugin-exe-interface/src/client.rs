@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
+use crate::connection::setup_websocket_loops;
+use crate::message_sender::{build_get_plugins_message, build_plugin_hello_message};
 use crate::ExePluginError;
-use futures_util::{SinkExt, StreamExt};
-use mcv_messages::{
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
-};
+use mcv_messages::Message as McvMessage;
 use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio_tungstenite::connect_async;
 use tungstenite::Message as WsMessage;
@@ -29,88 +28,14 @@ impl ExePluginClient {
             .await
             .map_err(|e| ExePluginError::Connection(e.to_string()))?;
 
-        let (write, mut read) = ws.split();
-        let (tx, mut rx) = mpsc::unbounded_channel();
-        let (message_tx, message_rx) = mpsc::unbounded_channel();
+        // WebSocketのread/writeループをセットアップ
+        let (tx, message_rx) = setup_websocket_loops(ws);
 
         let client = Arc::new(Self {
             plugin_id: Uuid::new_v4(),
             tx,
             message_rx: Arc::new(tokio::sync::Mutex::new(Some(message_rx))),
         });
-
-        /* write loop */
-        {
-            let mut write = write;
-            tokio::spawn(async move {
-                while let Some(msg) = rx.recv().await {
-                    println!("sending message: {}", msg);
-                    let _ = write.send(msg).await;
-                }
-            });
-        }
-
-        /* read loop */
-        {
-            tracing::info!(target: "mcv::plugin_exe_interface", "Starting read loop task");
-            tokio::spawn(async move {
-                tracing::info!(target: "mcv::plugin_exe_interface", "Read loop task started");
-                loop {
-                    tracing::trace!(target: "mcv::plugin_exe_interface", "Waiting for next message...");
-                    let msg = read.next().await;
-                    if msg.is_none() {
-                        tracing::warn!(target: "mcv::plugin_exe_interface", "WebSocket connection closed");
-                        break;
-                    }
-                    let msg = msg.unwrap();
-                    match msg {
-                        Ok(WsMessage::Text(text)) => {
-                            tracing::info!(target: "mcv::plugin_exe_interface", message_text = %text, "Received WebSocket text message");
-                            match serde_json::from_str::<McvMessage>(&text) {
-                                Ok(mcv_message) => {
-                                    tracing::info!(target: "mcv::plugin_exe_interface", message_type = ?mcv_message.message_type, "Parsed message successfully");
-                                    // チャネル経由でメッセージを送信
-                                    match message_tx.send(mcv_message) {
-                                        Ok(_) => {
-                                            tracing::info!(target: "mcv::plugin_exe_interface", "Message sent to handler channel successfully");
-                                        }
-                                        Err(e) => {
-                                            tracing::error!(target: "mcv::plugin_exe_interface", error = %e, "Failed to send message to handler channel");
-                                        }
-                                    }
-                                }
-                                Err(e) => {
-                                    tracing::error!(target: "mcv::plugin_exe_interface", error = %e, text = %text, "Failed to parse message");
-                                }
-                            }
-                        }
-                        Ok(WsMessage::Close(_)) => {
-                            tracing::info!(target: "mcv::plugin_exe_interface","WebSocket closed");
-                            break;
-                        }
-                        Ok(WsMessage::Ping(data)) => {
-                            tracing::trace!(target: "mcv::plugin_exe_interface","Received ping");
-                            // Pongは自動的に送信される
-                            drop(data);
-                        }
-                        Ok(WsMessage::Pong(_)) => {
-                            tracing::trace!(target: "mcv::plugin_exe_interface","Received pong");
-                        }
-                        Ok(WsMessage::Binary(_)) => {
-                            tracing::warn!(target: "mcv::plugin_exe_interface","Received unexpected binary message");
-                        }
-                        Ok(WsMessage::Frame(_)) => {
-                            tracing::trace!(target: "mcv::plugin_exe_interface","Received frame");
-                        }
-                        Err(e) => {
-                            tracing::error!(target: "mcv::plugin_exe_interface",error = %e, "WebSocket error");
-                            return Err(ExePluginError::WebSocket(e.to_string()));
-                        }
-                    }
-                }
-                Ok(())
-            });
-        }
 
         Ok(client)
     }
@@ -130,22 +55,7 @@ impl ExePluginClient {
         name: &str,
         roles: Vec<&str>,
     ) -> Result<(), ExePluginError> {
-        let payload = PluginHelloPayload {
-            name: name.to_string(),
-            plugin_id: self.plugin_id,
-            role: roles.iter().map(|s| s.to_string()).collect(),
-            api_version: "v2".to_string(),
-        };
-
-        let message = McvMessage::new(
-            MessageType::PluginHello,
-            MessageSource::Plugin {
-                plugin_id: self.plugin_id,
-            },
-            MessageDestination::Core,
-            serde_json::to_value(&payload)?,
-        );
-
+        let message = build_plugin_hello_message(self.plugin_id, name, roles)?;
         self.send_message(message)
     }
 
@@ -153,15 +63,7 @@ impl ExePluginClient {
     ///
     /// 既存のプラグイン一覧を取得する
     pub async fn send_get_plugins(&self) -> Result<(), ExePluginError> {
-        let message = McvMessage::new(
-            MessageType::GetPlugins,
-            MessageSource::Plugin {
-                plugin_id: self.plugin_id,
-            },
-            MessageDestination::Core,
-            serde_json::json!({}),
-        );
-
+        let message = build_get_plugins_message(self.plugin_id);
         self.send_message(message)
     }
 

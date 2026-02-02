@@ -1,4 +1,6 @@
 pub mod client;
+mod connection;
+mod message_sender;
 
 pub use client::ExePluginClient;
 

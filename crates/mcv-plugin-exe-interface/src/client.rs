@@ -52,26 +52,35 @@ impl ExePluginClient {
 
         /* read loop */
         {
+            tracing::info!(target: "mcv::plugin_exe_interface", "Starting read loop task");
             tokio::spawn(async move {
+                tracing::info!(target: "mcv::plugin_exe_interface", "Read loop task started");
                 loop {
+                    tracing::trace!(target: "mcv::plugin_exe_interface", "Waiting for next message...");
                     let msg = read.next().await;
                     if msg.is_none() {
+                        tracing::warn!(target: "mcv::plugin_exe_interface", "WebSocket connection closed");
                         break;
                     }
                     let msg = msg.unwrap();
                     match msg {
                         Ok(WsMessage::Text(text)) => {
-                            tracing::debug!(target: "mcv::plugin_exe_interface",message_text = %text, "Received message");
+                            tracing::info!(target: "mcv::plugin_exe_interface", message_text = %text, "Received WebSocket text message");
                             match serde_json::from_str::<McvMessage>(&text) {
                                 Ok(mcv_message) => {
-                                    tracing::debug!(target: "mcv::plugin_exe_interface",message_type = ?mcv_message.message_type, "Parsed message");
+                                    tracing::info!(target: "mcv::plugin_exe_interface", message_type = ?mcv_message.message_type, "Parsed message successfully");
                                     // チャネル経由でメッセージを送信
-                                    if let Err(e) = message_tx.send(mcv_message) {
-                                        tracing::error!(target: "mcv::plugin_exe_interface",error = %e, "Failed to send message to handler");
+                                    match message_tx.send(mcv_message) {
+                                        Ok(_) => {
+                                            tracing::info!(target: "mcv::plugin_exe_interface", "Message sent to handler channel successfully");
+                                        }
+                                        Err(e) => {
+                                            tracing::error!(target: "mcv::plugin_exe_interface", error = %e, "Failed to send message to handler channel");
+                                        }
                                     }
                                 }
                                 Err(e) => {
-                                    tracing::error!(target: "mcv::plugin_exe_interface",error = %e, text = %text, "Failed to parse message");
+                                    tracing::error!(target: "mcv::plugin_exe_interface", error = %e, text = %text, "Failed to parse message");
                                 }
                             }
                         }
@@ -171,14 +180,17 @@ impl ExePluginClient {
     where
         F: Fn(McvMessage) + Send + Sync + 'static,
     {
-        tracing::debug!(target: "mcv::plugin_exe_interface", "Registering message handler");
+        tracing::info!(target: "mcv::plugin_exe_interface", "Registering message handler");
 
         let handler = Arc::new(handler);
         let mut rx_guard = self.message_rx.lock().await;
 
         // receiverの所有権を取得（一度のみ）
         let mut rx = match rx_guard.take() {
-            Some(rx) => rx,
+            Some(rx) => {
+                tracing::info!(target: "mcv::plugin_exe_interface", "Message receiver acquired successfully");
+                rx
+            }
             None => {
                 tracing::error!(target: "mcv::plugin_exe_interface", "Message handler already registered");
                 return;
@@ -186,15 +198,24 @@ impl ExePluginClient {
         };
 
         // ハンドラータスクをspawn
+        tracing::info!(target: "mcv::plugin_exe_interface", "Spawning handler task");
         tokio::spawn(async move {
+            tracing::info!(target: "mcv::plugin_exe_interface", "Handler task started, waiting for messages...");
+            let mut count = 0;
             while let Some(message) = rx.recv().await {
+                count += 1;
+                tracing::info!(target: "mcv::plugin_exe_interface", count = count, message_type = ?message.message_type, "Received message from channel, spawning handler");
                 let handler_clone = handler.clone();
                 // ハンドラーを別タスクで実行（ブロッキングを避ける）
                 tokio::spawn(async move {
+                    tracing::info!(target: "mcv::plugin_exe_interface", "Executing handler");
                     handler_clone(message);
+                    tracing::info!(target: "mcv::plugin_exe_interface", "Handler executed successfully");
                 });
             }
+            tracing::warn!(target: "mcv::plugin_exe_interface", "Handler task terminated (channel closed)");
         });
+        tracing::info!(target: "mcv::plugin_exe_interface", "Message handler registration complete");
     }
 }
 

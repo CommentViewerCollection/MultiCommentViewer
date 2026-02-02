@@ -96,22 +96,28 @@ where
             "release"
         };
 
-        // コンテキスト情報を構築（追加フィールドがあれば含める）
-        let mut context = serde_json::json!({
-            "file": metadata.file().unwrap_or("unknown"),
-            "line": metadata.line().unwrap_or(0),
-            "module_path": metadata.module_path().unwrap_or("unknown"),
-            "target": metadata.target(),
-        });
+        // コンテキスト情報を構築（coreが期待する構造に合わせる）
+        // coreは context.source.file, context.source.line, context.source.module_path を参照する
+        let mut context_obj = serde_json::Map::new();
 
-        // 追加フィールドがあればcontextに追加
+        // sourceオブジェクトをネスト構造で作成
+        context_obj.insert(
+            "source".to_string(),
+            serde_json::json!({
+                "file": metadata.file().unwrap_or("unknown"),
+                "line": metadata.line().unwrap_or(0),
+                "module_path": metadata.module_path().unwrap_or("unknown"),
+            }),
+        );
+
+        // 追加フィールドがあればcontextのトップレベルに追加
         if !visitor.fields.is_empty() {
-            if let Some(obj) = context.as_object_mut() {
-                for (key, value) in visitor.fields {
-                    obj.insert(key, serde_json::Value::String(value));
-                }
+            for (key, value) in visitor.fields {
+                context_obj.insert(key, serde_json::Value::String(value));
             }
         }
+
+        let context = serde_json::Value::Object(context_obj);
 
         let log_entry_payload = LogEntryPayload {
             level: level.to_owned(),

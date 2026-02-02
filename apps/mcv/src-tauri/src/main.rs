@@ -53,46 +53,7 @@ async fn add_connection(state: State<'_, AppState>) -> Result<String, String> {
     };
     let k = state.core_addr.send(msg).await;
     let a = k.unwrap().unwrap();
-    println!("main.rs add_connection() {:?}", a);
-    // 現在の接続を取得してデフォルト名を生成
-    // let connections = state
-    //     .core_addr
-    //     .send(GetConnections)
-    //     .await
-    //     .map_err(|e| e.to_string())?;
-
-    // // 既存の接続名から#N形式の番号を抽出
-    // let mut used_numbers = std::collections::HashSet::new();
-    // for conn in &connections {
-    //     if let Some(stripped) = conn.name.strip_prefix('#') {
-    //         if let Ok(num) = stripped.parse::<u32>() {
-    //             used_numbers.insert(num);
-    //         }
-    //     }
-    // }
-
-    // // #1から順に空いている番号を探す
-    // let mut next_number = 1;
-    // while used_numbers.contains(&next_number) {
-    //     next_number += 1;
-    // }
-
-    // let default_name = format!("#{}", next_number);
-    // tracing::debug!(target:"mcv::core",name = %default_name, "Generated default connection name");
-
-    // // 接続を作成（plugin_idはNone、サイト未選択状態）
-    // let connection_id = state
-    //     .core_addr
-    //     .send(CreateConnection {
-    //         plugin_id: None, // 変更: サイト未選択状態で作成
-    //         site_name: "未選択".to_string(),
-    //         input_info: "{}".to_string(),
-    //         name: default_name,
-    //     })
-    //     .await
-    //     .map_err(|e| e.to_string())?;
-
-    // tracing::info!(target:"mcv::core",connection_id = %connection_id, "Connection created");
+    tracing::debug!(target: "mcv::main", response = ?a, "add_connection response");
     Ok("".to_string())
 }
 

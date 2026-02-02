@@ -282,7 +282,6 @@ impl CoreActor {
             target: "mcv::core::CoreActor",
             "handle_add_connection()"
         );
-        println!("handle_add_connection()");
         // let payload: AddConnectionPayload = match serde_json::from_value(message.payload.clone()) {
         //     Ok(p) => p,
         //     Err(e) => {
@@ -321,7 +320,12 @@ impl CoreActor {
 
         self.connection_manager
             .add_connection(connection_id, conn_name.clone());
-        println!("connectionを追加 id={}, name={}", connection_id,&conn_name);
+        tracing::debug!(
+            target: "mcv::core::CoreActor",
+            connection_id = %connection_id,
+            name = %conn_name,
+            "Connection added"
+        );
 
         // connection-addedを返信
         let response = McvMessage::create_response(
@@ -339,7 +343,6 @@ impl CoreActor {
                     .do_send(SendMessageToPlugin { message: response });
             }
         }
-        println!("ABCDEFEJLKFJLKFJDKFJ");
         // 全論理プラグインにConnectionAddedをブロードキャスト
         let broadcast_msg = McvMessage::new_notification(
             MessageType::ConnectionAdded,
@@ -348,7 +351,10 @@ impl CoreActor {
             serde_json::to_value(ConnectionAddedPayload { connection_id }).unwrap(),
         );
         self.broadcast_to_all_logical_plugins(broadcast_msg);
-        println!("mcv::core connection-addedをブロードキャストした");
+        tracing::debug!(
+            target: "mcv::core::CoreActor",
+            "Broadcasted connection-added to all plugins"
+        );
     }
 
     /// connectを処理

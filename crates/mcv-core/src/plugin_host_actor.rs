@@ -62,7 +62,11 @@ impl Actor for PhysicalPluginHostActor {
         }
 
         let physical_plugin_id = self.physical_plugin_id;
-        println!("physical_plugin_id is {}", self.physical_plugin_id.inner());
+        tracing::debug!(
+            target: "mcv::core::PhysicalPluginHostActor",
+            physical_plugin_id = %self.physical_plugin_id.inner(),
+            "Plugin host actor started"
+        );
 
         let self_addr = ctx.address();
 
@@ -80,7 +84,13 @@ impl Actor for PhysicalPluginHostActor {
         extern "C" fn callback_fn(message_json: *const c_char, userdata: *mut c_void) {
             unsafe {
                 let jn = CStr::from_ptr(message_json);
-                println!("callback_fn message_json={}", jn.to_str().unwrap());
+                if let Ok(msg_str) = jn.to_str() {
+                    tracing::trace!(
+                        target: "mcv::core::PhysicalPluginHostActor",
+                        message_json = %msg_str,
+                        "Callback received message"
+                    );
+                }
             }
 
             if message_json.is_null() || userdata.is_null() {

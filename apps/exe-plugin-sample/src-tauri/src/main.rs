@@ -7,7 +7,6 @@ use mcv_plugin_exe_interface::ExePluginClient;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::RwLock;
-use tracing::info_span;
 use tracing_subscriber::prelude::*;
 use uuid::Uuid;
 
@@ -37,11 +36,8 @@ async fn connect_to_mcv(
 
     let plugin_id = client.plugin_id();
     *state.plugin_id.write().await = Some(plugin_id);
-    let span = info_span!(
-        "plugin",
-        plugin_id = %plugin_id
-    );
-    let _enter = span.enter();
+
+    // tracing_subscriberを初期化（一度だけ）
     let ws_layer = ws_tracing::WsLayer::new(Some(client.clone())).with_filter(
         tracing_subscriber::filter::filter_fn(|meta| meta.target().starts_with("mcv")),
     );
@@ -49,7 +45,7 @@ async fn connect_to_mcv(
     let _ = tracing_subscriber::registry()
         .with(ws_layer)
         .with(tracing_subscriber::fmt::layer())
-        .try_init(); //init()ではなくtry_init()なら複数回呼び出しても大丈夫
+        .try_init(); // try_init()なら複数回呼び出しても2回目以降は無視される
 
     // plugin-helloを送信
     let roles_str: Vec<&str> = roles.iter().map(|s| s.as_str()).collect();

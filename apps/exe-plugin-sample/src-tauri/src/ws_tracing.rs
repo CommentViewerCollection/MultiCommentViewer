@@ -1,29 +1,14 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use mcv_messages::{LogEntryPayload, Message};
 use mcv_plugin_exe_interface::ExePluginClient;
 use std::fmt::Write;
 use tracing::field::{Field, Visit};
 use tracing::{Event, Subscriber};
-use tracing_subscriber::layer::Context;
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::Layer;
 use uuid::Uuid;
 
-pub fn extract_plugin_id<S>(event: &Event<'_>, ctx: &Context<'_, S>) -> Option<Uuid>
-where
-    S: Subscriber + for<'a> LookupSpan<'a>,
-{
-    let scope = ctx.event_scope(event)?;
-
-    for span in scope.from_root() {
-        if let Some(plugin_id) = span.extensions().get::<Uuid>() {
-            return Some(plugin_id.clone());
-        }
-    }
-
-    None
-}
 struct StringVisitor {
     buf: String,
 }
@@ -44,13 +29,16 @@ impl Visit for StringVisitor {
     }
 }
 pub struct WsLayer {
-    sender: Arc<Mutex<Option<Arc<ExePluginClient>>>>,
+    client: Option<Arc<ExePluginClient>>,
+    plugin_id: Option<Uuid>,
 }
 
 impl WsLayer {
-    pub fn new(sender: Option<Arc<ExePluginClient>>) -> Self {
+    pub fn new(client: Option<Arc<ExePluginClient>>) -> Self {
+        let plugin_id = client.as_ref().map(|c| c.plugin_id());
         Self {
-            sender: Arc::new(Mutex::new(sender)),
+            client,
+            plugin_id,
         }
     }
 }
@@ -59,26 +47,21 @@ impl<S> Layer<S> for WsLayer
 where
     S: Subscriber + for<'a> LookupSpan<'a>,
 {
-    fn on_event(&self, event: &Event<'_>, ctx: tracing_subscriber::layer::Context<'_, S>) {
-
-        let client = {
-            let guard = self.sender.lock().unwrap();
-            guard.clone()
+    fn on_event(&self, event: &Event<'_>, _ctx: tracing_subscriber::layer::Context<'_, S>) {
+        // clientとplugin_idが設定されているか確認
+        let client = match &self.client {
+            Some(c) => c,
+            None => return,
         };
-        let client = match client{
-            Some(a)=>a,
-            None=>return,
+
+        let plugin_id = match self.plugin_id {
+            Some(id) => id,
+            None => return,
         };
 
         let mut visitor = StringVisitor::new();
         event.record(&mut visitor);
         let message = visitor.buf;
-
-        let plugin_id = extract_plugin_id(event, &ctx);
-        if plugin_id.is_none() {
-            return;
-        }
-        let plugin_id = plugin_id.unwrap();
 
         let metadata = event.metadata();
 

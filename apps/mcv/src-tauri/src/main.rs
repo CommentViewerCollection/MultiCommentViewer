@@ -23,6 +23,8 @@ use mcv_messages::{
     MessageSource, MessageType, SendCommentPayload, SiteInfo as MsgSiteInfo,
 };
 use mcv_updater::{McvUpdateInfo, UpdateChecker};
+#[cfg(debug_assertions)]
+use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -213,7 +215,7 @@ async fn disconnect(
         .unwrap(),
     );
 
-    state
+    let _ = state
         .core_addr
         .send(SendRequest { message })
         .await
@@ -366,7 +368,7 @@ async fn send_comment(
         .unwrap(),
     );
 
-    state
+    let _ = state
         .core_addr
         .send(SendRequest { message })
         .await
@@ -583,15 +585,7 @@ fn main() {
             tracing::debug!(target: "mcv::main","core_addr set to PluginManager");
 
             // プラグインディレクトリを決定
-            // %LOCALAPPDATA%\MultiCommentViewer\plugins\
-            let plugins_dir = {
-                // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
-                let local_app_data = std::env::var("LOCALAPPDATA")
-                    .expect("Failed to get LOCALAPPDATA");
-                PathBuf::from(local_app_data)
-                    .join("MultiCommentViewer")
-                    .join("plugins")
-            };
+            let plugins_dir =get_plugin_dir();            
 
             tracing::info!(target: "mcv::main", plugins_dir = %plugins_dir.display(), "Loading DLL plugins from directory");
 
@@ -690,4 +684,25 @@ fn get_title() -> String {
     #[cfg(all(not(feature = "alpha"), not(feature = "beta")))]
     let title = format!("MultiCommentViewer v{}", version);
     title
+}
+fn exe_dir() -> PathBuf {
+    std::env::current_exe()
+        .expect("failed to get current_exe")
+        .parent()
+        .expect("exe has no parent")
+        .to_path_buf()
+}
+#[cfg(debug_assertions)]
+fn get_plugin_dir() -> PathBuf {
+    // デバッグ環境
+    exe_dir()
+}
+
+#[cfg(not(debug_assertions))]
+fn get_plugin_dir() -> PathBuf {
+    // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
+    let local_app_data = std::env::var("LOCALAPPDATA").unwrap();
+    PathBuf::from(local_app_data)
+        .join("MultiCommentViewer")
+        .join("plugins")
 }

@@ -36,9 +36,6 @@ pub enum PluginLoaderError {
     ShutdownFailed(String),
 }
 
-/// メッセージコールバック関数の型（旧形式、互換性のため残す）
-pub type MessageCallback = extern "C" fn(*const c_char);
-
 /// メッセージコールバック関数の型（userdata対応）
 pub type MessageCallbackWithUserdata = extern "C" fn(*const c_char, *mut c_void);
 
@@ -113,10 +110,8 @@ impl PluginLoader {
             message
         );
         unsafe {
-            let send_fn: Symbol<unsafe extern "C" fn(*const c_char) -> i32> = self
-                .library
-                .get(b"plugin_send_message\0")
-                .map_err(|e| {
+            let send_fn: Symbol<unsafe extern "C" fn(*const c_char) -> i32> =
+                self.library.get(b"plugin_send_message\0").map_err(|e| {
                     PluginLoaderError::MessageSendFailed(format!("Symbol not found: {}", e))
                 })?;
 
@@ -136,40 +131,32 @@ impl PluginLoader {
             }
         }
     }
-
-    /// コールバック設定（プラグイン→mcv、旧形式）
-    ///
-    /// # Arguments
-    /// * `callback` - mcv側から呼ばれるコールバック関数
-    ///
-    /// # Returns
-    /// 成功時は `Ok(())`、失敗時はエラー
-    ///
-    /// # Deprecated
-    /// Use `set_callback_with_userdata` instead
-    #[allow(dead_code)]
-    pub fn set_callback(&self, callback: MessageCallback) -> Result<(), PluginLoaderError> {
+    /// プラグインdllとして適切な形式であるか
+    pub fn validate_plugin_exports(&self) -> Result<(), PluginLoaderError> {
         unsafe {
-            let set_callback_fn: Symbol<unsafe extern "C" fn(MessageCallback) -> i32> = self
-                .library
-                .get(b"plugin_set_callback\0")
-                .map_err(|e| {
+            let _: Symbol<unsafe extern "C" fn(MessageCallbackWithUserdata, *mut c_void) -> i32> =
+                self.library.get(b"plugin_set_callback\0").map_err(|e| {
                     PluginLoaderError::CallbackSetFailed(format!("Symbol not found: {}", e))
                 })?;
-
-            let result = set_callback_fn(callback);
-
-            if result == 0 {
-                Ok(())
-            } else {
-                Err(PluginLoaderError::CallbackSetFailed(format!(
-                    "plugin_set_callback returned error code: {}",
-                    result
-                )))
-            }
+            let _: Symbol<unsafe extern "C" fn() -> i32> = self
+                .library
+                .get(b"plugin_on_loaded\0")
+                .map_err(|e| PluginLoaderError::InitFailed(format!("Symbol not found: {}", e)))?;
+            let _: Symbol<unsafe extern "C" fn() -> i32> =
+                self.library.get(b"plugin_shutdown\0").map_err(|e| {
+                    PluginLoaderError::ShutdownFailed(format!("Symbol not found: {}", e))
+                })?;
+            let _: Symbol<unsafe extern "C" fn(*const c_char) -> i32> =
+                self.library.get(b"plugin_send_message\0").map_err(|e| {
+                    PluginLoaderError::MessageSendFailed(format!("Symbol not found: {}", e))
+                })?;
+            let _: Symbol<unsafe extern "C" fn(*mut c_void) -> i32> = self
+                .library
+                .get(b"plugin_init\0")
+                .map_err(|e| PluginLoaderError::InitFailed(format!("Symbol not found: {}", e)))?;
         }
+        Ok(())
     }
-
     /// コールバック設定（プラグイン→mcv、userdata対応）
     ///
     /// # Arguments
@@ -186,12 +173,9 @@ impl PluginLoader {
         unsafe {
             let set_callback_fn: Symbol<
                 unsafe extern "C" fn(MessageCallbackWithUserdata, *mut c_void) -> i32,
-            > = self
-                .library
-                .get(b"plugin_set_callback\0")
-                .map_err(|e| {
-                    PluginLoaderError::CallbackSetFailed(format!("Symbol not found: {}", e))
-                })?;
+            > = self.library.get(b"plugin_set_callback\0").map_err(|e| {
+                PluginLoaderError::CallbackSetFailed(format!("Symbol not found: {}", e))
+            })?;
 
             let result = set_callback_fn(callback, userdata);
 
@@ -215,9 +199,7 @@ impl PluginLoader {
             let on_loaded_fn: Symbol<unsafe extern "C" fn() -> i32> = self
                 .library
                 .get(b"plugin_on_loaded\0")
-                .map_err(|e| {
-                    PluginLoaderError::InitFailed(format!("Symbol not found: {}", e))
-                })?;
+                .map_err(|e| PluginLoaderError::InitFailed(format!("Symbol not found: {}", e)))?;
 
             let result = on_loaded_fn();
 
@@ -238,10 +220,8 @@ impl PluginLoader {
     /// 成功時は `Ok(())`、失敗時はエラー
     pub fn shutdown(&self) -> Result<(), PluginLoaderError> {
         unsafe {
-            let shutdown_fn: Symbol<unsafe extern "C" fn() -> i32> = self
-                .library
-                .get(b"plugin_shutdown\0")
-                .map_err(|e| {
+            let shutdown_fn: Symbol<unsafe extern "C" fn() -> i32> =
+                self.library.get(b"plugin_shutdown\0").map_err(|e| {
                     PluginLoaderError::ShutdownFailed(format!("Symbol not found: {}", e))
                 })?;
 
@@ -256,6 +236,9 @@ impl PluginLoader {
                 )))
             }
         }
+    }
+    pub fn clear_callback() -> Result<(), PluginLoaderError> {
+        Ok(())
     }
 }
 

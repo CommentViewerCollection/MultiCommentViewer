@@ -3,10 +3,6 @@ name = "exe-plugin-sample"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "exe_plugin_sample_lib"
-crate-type = ["lib", "cdylib", "staticlib"]
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
@@ -34,6 +30,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Error handling
 anyhow = "1.0"
 thiserror = "2.0"
+
+chrono = "0.4"
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-cli = "2"

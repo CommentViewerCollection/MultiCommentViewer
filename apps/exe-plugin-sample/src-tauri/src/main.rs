@@ -1,11 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod ws_tracing;
 use mcv_messages::Message as McvMessage;
 use mcv_plugin_exe_interface::ExePluginClient;
-use std::sync::Arc;
+use std::{io::Write, sync::Arc};
 use tauri::{AppHandle, Emitter, State};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
+use tracing::info_span;
+use tracing_subscriber::prelude::*;
 use uuid::Uuid;
 
 /// アプリケーション状態
@@ -34,6 +37,19 @@ async fn connect_to_mcv(
 
     let plugin_id = client.plugin_id();
     *state.plugin_id.write().await = Some(plugin_id);
+    let span = info_span!(
+        "plugin",
+        plugin_id = %plugin_id
+    );
+    let _enter = span.enter();
+    let ws_layer = ws_tracing::WsLayer::new(Some(client.clone())).with_filter(
+        tracing_subscriber::filter::filter_fn(|meta| meta.target().starts_with("mcv")),
+    );
+
+    let _ = tracing_subscriber::registry()
+        .with(ws_layer)
+        .with(tracing_subscriber::fmt::layer())
+        .try_init(); //init()ではなくtry_init()なら複数回呼び出しても大丈夫
 
     // plugin-helloを送信
     let roles_str: Vec<&str> = roles.iter().map(|s| s.as_str()).collect();
@@ -52,10 +68,38 @@ async fn connect_to_mcv(
 
     tracing::info!(target:"mcv::exe-plugin-sample","Sent get-plugins request");
 
+    let now = chrono::Local::now();
+let line = format!(
+    "[{}] 1()\n",
+    now.format("%Y-%m-%d %H:%M:%S")
+);
+std::fs::OpenOptions::new()
+    .create(true)
+    .append(true)
+    .open("zzzzz.txt")
+    .unwrap()
+    .write_all(line.as_bytes())
+    .unwrap();
     // メッセージハンドラーを登録
     let app_clone = app.clone();
     client.on_message(move |message| {
         println!("Received message: {:?}", message);
+
+        let now = chrono::Local::now();
+let line = format!(
+    "[{}] 2()\n",
+    now.format("%Y-%m-%d %H:%M:%S")
+);
+std::fs::OpenOptions::new()
+    .create(true)
+    .append(true)
+    .open("zzzzz.txt")
+    .unwrap()
+    .write_all(line.as_bytes())
+    .unwrap();
+        
+        // panic!();
+        
         let app = app_clone.clone();
         // フロントエンドにメッセージを転送
         if let Err(e) = app.emit("message-received", &message) {
@@ -63,7 +107,6 @@ async fn connect_to_mcv(
         }
         tracing::debug!(target:"mcv::exe-plugin-sample",message_type = ?message.message_type, "Message received and forwarded to frontend");
     }).await;
-
 
     // tokio::spawn(async move {
     //     //let mut client = client_clone.lock().await;
@@ -125,18 +168,18 @@ async fn get_plugin_id(state: State<'_, AppState>) -> Result<Option<String>, Str
 }
 
 fn main() {
-    // ロギング初期化
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
-        )
-        .init();
+    // // ロギング初期化
+    // tracing_subscriber::fmt()
+    //     .with_env_filter(
+    //         tracing_subscriber::EnvFilter::try_from_default_env()
+    //             .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+    //     )
+    //     .init();
 
     tracing::info!(target:"mcv::exe-plugin-sample","Starting MCV EXE Plugin Sample");
 
     let app_state = AppState {
-   client: RwLock::new(None),
+        client: RwLock::new(None),
         plugin_id: Arc::new(RwLock::new(None)),
         connected: Arc::new(RwLock::new(false)),
     };

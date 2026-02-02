@@ -48,7 +48,7 @@ function App() {
 
   const handleMessageReceived = (message: McvMessage) => {
     const { type, payload } = message;
-
+console.log("来たのは" + type);
     switch (type) {
       case "plugin-added":
         setPlugins((prev) => {

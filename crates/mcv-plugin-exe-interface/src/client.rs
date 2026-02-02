@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{io::Write, sync::Arc};
 
 use crate::{ExePluginError, MessageHandler};
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
@@ -21,7 +21,7 @@ use uuid::Uuid;
 /// WebSocket経由でmcvと通信するためのクライアント
 pub struct ExePluginClient {
     plugin_id: Uuid,
-    message_handler: RwLock<Option<Arc<Mutex<MessageHandler>>>>,
+    message_handler: RwLock<Option<Arc<MessageHandler>>>,
     tx: UnboundedSender<WsMessage>,
 }
 
@@ -59,7 +59,40 @@ impl ExePluginClient {
         {
             let client_clone = Arc::clone(&client);
             tokio::spawn(async move {
-                while let Some(msg) = read.next().await {
+                let now = chrono::Local::now();
+                let line = format!("[{}] spawn_1()\n", now.format("%Y-%m-%d %H:%M:%S"));
+                std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open("zzzzz.txt")
+                    .unwrap()
+                    .write_all(line.as_bytes())
+                    .unwrap();
+                loop {
+                    let msg = read.next().await;
+                    if msg.is_none() {
+                        let now = chrono::Local::now();
+                        let line = format!("[{}] spawn_none()\n", now.format("%Y-%m-%d %H:%M:%S"));
+                        std::fs::OpenOptions::new()
+                            .create(true)
+                            .append(true)
+                            .open("zzzzz.txt")
+                            .unwrap()
+                            .write_all(line.as_bytes())
+                            .unwrap();
+                        break;
+                    }
+                    let msg = msg.unwrap();
+
+                    let now = chrono::Local::now();
+                    let line = format!("[{}] spawn_2()\n", now.format("%Y-%m-%d %H:%M:%S"));
+                    std::fs::OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open("zzzzz.txt")
+                        .unwrap()
+                        .write_all(line.as_bytes())
+                        .unwrap();
                     println!("mcv::plugin_exe_interface anything received");
                     match msg {
                         Ok(WsMessage::Text(text)) => {
@@ -75,7 +108,7 @@ impl ExePluginClient {
                                     if let Some(handler_arc) =
                                         client_clone.message_handler.read().await.as_ref()
                                     {
-                                        let handler = handler_arc.lock().await;
+                                        let handler = handler_arc;//.lock().await;
                                         println!(
                                             "mcv::plugin_exe_interface mcv_message received: {:?}",
                                             mcv_message
@@ -182,8 +215,22 @@ impl ExePluginClient {
         F: Fn(McvMessage) + Send + Sync + 'static,
     {
         println!("Registering message handler");
+        eprintln!("Registering message handler");
 
-        let handler_arc = Arc::new(Mutex::new(Box::new(handler) as MessageHandler));
+        let now = chrono::Local::now();
+        let line = format!(
+            "[{}] connect_to_mcv()ハンドラ登録\n",
+            now.format("%Y-%m-%d %H:%M:%S")
+        );
+        std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("zzzzz.txt")
+            .unwrap()
+            .write_all(line.as_bytes())
+            .unwrap();
+
+        let handler_arc = Arc::new(Box::new(handler) as MessageHandler);
 
         let mut guard = self.message_handler.write().await;
         *guard = Some(handler_arc);

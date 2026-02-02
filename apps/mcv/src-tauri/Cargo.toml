@@ -19,6 +19,9 @@ actix = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt"] }
+tokio-tungstenite = "0.28.0"
+futures-util = "0.3"
 
 [features]
 default = ["custom-protocol"]

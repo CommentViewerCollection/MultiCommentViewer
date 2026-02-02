@@ -184,6 +184,10 @@ impl PluginManager {
     ///
     /// # Returns
     /// Vec<(physical_plugin_id, plugin_host_addr, plugin_name)>
+    ///
+    /// # Note
+    /// 現在未使用。manifest.json対応の将来実装用。
+    #[allow(dead_code)]
     pub async fn scan_and_load_plugins_new<P: AsRef<Path>>(
         &self,
         plugins_dir: P,

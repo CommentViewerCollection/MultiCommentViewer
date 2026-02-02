@@ -2,30 +2,41 @@ use std::sync::Arc;
 
 use mcv_messages::{LogEntryPayload, Message};
 use mcv_plugin_exe_interface::ExePluginClient;
-use std::fmt::Write;
 use tracing::field::{Field, Visit};
 use tracing::{Event, Subscriber};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::Layer;
 use uuid::Uuid;
 
-struct StringVisitor {
-    buf: String,
+struct MessageVisitor {
+    message: Option<String>,
+    fields: Vec<(String, String)>,
 }
 
-impl StringVisitor {
+impl MessageVisitor {
     fn new() -> Self {
-        Self { buf: String::new() }
+        Self {
+            message: None,
+            fields: Vec::new(),
+        }
     }
 }
 
-impl Visit for StringVisitor {
+impl Visit for MessageVisitor {
     fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
-        let _ = write!(self.buf, "{}={:?} ", field.name(), value);
+        if field.name() == "message" {
+            self.message = Some(format!("{:?}", value));
+        } else {
+            self.fields.push((field.name().to_string(), format!("{:?}", value)));
+        }
     }
 
     fn record_str(&mut self, field: &Field, value: &str) {
-        let _ = write!(self.buf, "{}={} ", field.name(), value);
+        if field.name() == "message" {
+            self.message = Some(value.to_string());
+        } else {
+            self.fields.push((field.name().to_string(), value.to_string()));
+        }
     }
 }
 pub struct WsLayer {
@@ -59,19 +70,23 @@ where
             None => return,
         };
 
-        let mut visitor = StringVisitor::new();
+        let mut visitor = MessageVisitor::new();
         event.record(&mut visitor);
-        let message = visitor.buf;
+
+        // メッセージを取得（messageフィールドがない場合はターゲットを使用）
+        let message = visitor.message.unwrap_or_else(|| {
+            event.metadata().target().to_string()
+        });
 
         let metadata = event.metadata();
 
-        // ログレベルを文字列に変換
+        // ログレベルを文字列に変換（小文字）
         let level = match *metadata.level() {
-            tracing::Level::ERROR => "ERROR",
-            tracing::Level::WARN => "WARN",
-            tracing::Level::INFO => "INFO",
-            tracing::Level::DEBUG => "DEBUG",
-            tracing::Level::TRACE => "TRACE",
+            tracing::Level::ERROR => "error",
+            tracing::Level::WARN => "warn",
+            tracing::Level::INFO => "info",
+            tracing::Level::DEBUG => "debug",
+            tracing::Level::TRACE => "trace",
         };
 
         // ビルドプロファイルを取得
@@ -81,14 +96,27 @@ where
             "release"
         };
 
+        // コンテキスト情報を構築（追加フィールドがあれば含める）
+        let mut context = serde_json::json!({
+            "file": metadata.file().unwrap_or("unknown"),
+            "line": metadata.line().unwrap_or(0),
+            "module_path": metadata.module_path().unwrap_or("unknown"),
+            "target": metadata.target(),
+        });
+
+        // 追加フィールドがあればcontextに追加
+        if !visitor.fields.is_empty() {
+            if let Some(obj) = context.as_object_mut() {
+                for (key, value) in visitor.fields {
+                    obj.insert(key, serde_json::Value::String(value));
+                }
+            }
+        }
+
         let log_entry_payload = LogEntryPayload {
             level: level.to_owned(),
             message,
-            context: Some(serde_json::json!({
-                "file": metadata.file().unwrap_or("unknown"),
-                "line": metadata.line().unwrap_or(0),
-                "target": metadata.target(),
-            })),
+            context: Some(context),
             connection_id: None,
             plugin_version: Some(env!("CARGO_PKG_VERSION").to_owned()),
             plugin_build_profile: Some(build_profile.to_owned()),

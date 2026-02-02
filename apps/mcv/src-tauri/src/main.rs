@@ -36,6 +36,30 @@ struct AppState {
     plugin_manager: Arc<tokio::sync::Mutex<PluginManager>>,
 }
 
+// ヘルパー関数
+
+/// UUID文字列をパースするヘルパー関数
+fn parse_uuid(id_str: &str, id_type: &str) -> Result<Uuid, String> {
+    Uuid::parse_str(id_str).map_err(|e| format!("Invalid {}: {}", id_type, e))
+}
+
+/// 接続情報を取得するヘルパー関数
+async fn get_connection_info(
+    state: &State<'_, AppState>,
+    connection_id: Uuid,
+) -> Result<ConnectionInfo, String> {
+    let connections = state
+        .core_addr
+        .send(GetConnections)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    connections
+        .into_iter()
+        .find(|c| c.connection_id == connection_id)
+        .ok_or_else(|| "Connection not found".to_string())
+}
+
 /// 接続を追加
 #[tauri::command]
 async fn add_connection(state: State<'_, AppState>) -> Result<String, String> {
@@ -63,7 +87,7 @@ async fn remove_connection(
     state: tauri::State<'_, AppState>,
     connection_id: String,
 ) -> Result<(), String> {
-    let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
 
     state
         .core_addr
@@ -81,7 +105,7 @@ async fn rename_connection(
     connection_id: String,
     new_name: String,
 ) -> Result<(), String> {
-    let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
 
     state
         .core_addr
@@ -96,19 +120,10 @@ async fn rename_connection(
 /// 接続を開始
 #[tauri::command]
 async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Result<(), String> {
-    let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
 
     // 接続情報を取得
-    let connections = state
-        .core_addr
-        .send(GetConnections)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let conn_info = connections
-        .iter()
-        .find(|c| c.connection_id == conn_id)
-        .ok_or("Connection not found")?;
+    let conn_info = get_connection_info(&state, conn_id).await?;
 
     // サイトが選択されていない場合はエラー
     let plugin_id = conn_info.plugin_id.ok_or("サイトが選択されていません")?;
@@ -228,9 +243,8 @@ async fn set_connection_site(
     connection_id: String,
     site_id: String,
 ) -> Result<(), String> {
-    let conn_id =
-        Uuid::parse_str(&connection_id).map_err(|e| format!("Invalid connection_id: {}", e))?;
-    let s_id = Uuid::parse_str(&site_id).map_err(|e| format!("Invalid site_id: {}", e))?;
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
+    let s_id = parse_uuid(&site_id, "site_id")?;
 
     tracing::debug!(
         connection_id = %conn_id,
@@ -260,11 +274,10 @@ async fn update_connection_settings(
     browser_id: Option<String>,
     advanced_settings: Option<serde_json::Value>,
 ) -> Result<(), String> {
-    let conn_id =
-        Uuid::parse_str(&connection_id).map_err(|e| format!("Invalid connection_id: {}", e))?;
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
 
     let b_id = if let Some(bid) = browser_id {
-        Some(Uuid::parse_str(&bid).map_err(|e| format!("Invalid browser_id: {}", e))?)
+        Some(parse_uuid(&bid, "browser_id")?)
     } else {
         None
     };
@@ -299,19 +312,10 @@ async fn send_comment(
     connection_id: String,
     text: String,
 ) -> Result<String, String> {
-    let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
 
     // 接続情報を取得してplugin_idを取得
-    let connections = state
-        .core_addr
-        .send(GetConnections)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let conn_info = connections
-        .iter()
-        .find(|c| c.connection_id == conn_id)
-        .ok_or("Connection not found")?;
+    let conn_info = get_connection_info(&state, conn_id).await?;
 
     let plugin_id = conn_info
         .plugin_id

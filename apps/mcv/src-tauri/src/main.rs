@@ -75,9 +75,13 @@ async fn add_connection(state: State<'_, AppState>) -> Result<String, String> {
             payload: serde_json::json!({}),
         },
     };
-    let k = state.core_addr.send(msg).await;
-    let a = k.unwrap().unwrap();
-    tracing::debug!(target: "mcv::main", response = ?a, "add_connection response");
+    let response = state
+        .core_addr
+        .send(msg)
+        .await
+        .map_err(|e| format!("Failed to send message to core: {}", e))?
+        .map_err(|e| format!("Core actor error: {}", e))?;
+    tracing::debug!(target: "mcv::main", response = ?response, "add_connection response");
     Ok("".to_string())
 }
 
@@ -128,6 +132,11 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
     // サイトが選択されていない場合はエラー
     let plugin_id = conn_info.plugin_id.ok_or("サイトが選択されていません")?;
     let site_id = conn_info.site_id.ok_or("サイトが選択されていません")?;
+    let site_name = conn_info
+        .site_name
+        .as_ref()
+        .ok_or("サイト名が設定されていません")?
+        .clone();
     let url = conn_info.url.clone().ok_or("URLが入力されていません")?;
 
     tracing::debug!(
@@ -145,11 +154,11 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
         serde_json::to_value(ConnectPayload {
             connection_id: conn_id,
             site: MsgSiteInfo {
-                name: conn_info.site_name.as_ref().unwrap().clone(),
+                name: site_name.clone(),
                 id: site_id,
             },
             input: InputInfo {
-                input_type: conn_info.site_name.as_ref().unwrap().clone(),
+                input_type: site_name,
                 extra: serde_json::json!({
                     "url": url,
                     "advanced_settings": conn_info.advanced_settings,
@@ -160,7 +169,7 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
                 id: conn_info.browser_id.unwrap_or(Uuid::nil()),
             },
         })
-        .unwrap(),
+        .map_err(|e| format!("Failed to serialize ConnectPayload: {}", e))?,
     );
 
     let _ = state
@@ -188,7 +197,7 @@ async fn disconnect(
         serde_json::to_value(DisconnectPayload {
             connection_id: conn_id,
         })
-        .unwrap(),
+        .map_err(|e| format!("Failed to serialize DisconnectPayload: {}", e))?,
     );
 
     let _ = state
@@ -330,7 +339,7 @@ async fn send_comment(
             connection_id: conn_id,
             text,
         })
-        .unwrap(),
+        .map_err(|e| format!("Failed to serialize SendCommentPayload: {}", e))?,
     );
 
     let _ = state
@@ -472,7 +481,17 @@ fn main() {
                         match message.message_type {
                             MessageType::CommentReceived => {
                                 let payload: CommentReceivedPayload =
-                                    serde_json::from_value(message.payload).unwrap();
+                                    match serde_json::from_value(message.payload) {
+                                        Ok(p) => p,
+                                        Err(e) => {
+                                            tracing::error!(
+                                                target: "mcv::main",
+                                                error = %e,
+                                                "Failed to parse CommentReceivedPayload"
+                                            );
+                                            return;
+                                        }
+                                    };
                                 tracing::debug!(
                                     target: "mcv::main",
                                     comment_id = %payload.comment.id,
@@ -480,7 +499,17 @@ fn main() {
                                     "Emitting comment-received event"
                                 );
                                 // connection_idを含めたコメントオブジェクトを作成
-                                let mut comment_with_conn = serde_json::to_value(&payload.comment).unwrap();
+                                let mut comment_with_conn = match serde_json::to_value(&payload.comment) {
+                                    Ok(v) => v,
+                                    Err(e) => {
+                                        tracing::error!(
+                                            target: "mcv::main",
+                                            error = %e,
+                                            "Failed to serialize comment"
+                                        );
+                                        return;
+                                    }
+                                };
                                 if let Some(obj) = comment_with_conn.as_object_mut() {
                                     obj.insert("connection_id".to_string(), serde_json::Value::String(payload.connection_id.to_string()));
                                 }
@@ -666,7 +695,13 @@ fn get_plugin_dir() -> PathBuf {
 #[cfg(not(debug_assertions))]
 fn get_plugin_dir() -> PathBuf {
     // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
-    let local_app_data = std::env::var("LOCALAPPDATA").unwrap();
+    let local_app_data = std::env::var("LOCALAPPDATA").unwrap_or_else(|_| {
+        tracing::warn!(
+            target: "mcv::main",
+            "LOCALAPPDATA not set, using fallback path"
+        );
+        String::from("C:\\Users\\Default\\AppData\\Local")
+    });
     PathBuf::from(local_app_data)
         .join("MultiCommentViewer")
         .join("plugins")

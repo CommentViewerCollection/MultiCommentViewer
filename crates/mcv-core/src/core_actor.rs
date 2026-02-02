@@ -196,6 +196,15 @@ impl Handler<SendRequest> for CoreActor {
             MessageType::UpdateConnectionSettings => {
                 message_handlers::site_browser::handle_update_connection_settings(self, &message, ctx)
             }
+            MessageType::CommentReceived => {
+                message_handlers::comment::handle_comment_received(self, &message, ctx)
+            }
+            MessageType::Connected => {
+                message_handlers::connection::handle_connected(self, &message, ctx)
+            }
+            MessageType::Disconnected => {
+                message_handlers::connection::handle_disconnected(self, &message, ctx)
+            }
             _ => {
                 tracing::warn!(
                     target: "mcv::core::CoreActor",

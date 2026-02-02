@@ -70,300 +70,6 @@ impl CoreActor {
     }
 
 
-    fn generate_connection_default_name(&self) -> String {
-        // 現在の接続を取得してデフォルト名を生成
-        let connections = self.connection_manager.get_connections();
-
-        // 既存の接続名から#N形式の番号を抽出
-        let mut used_numbers = std::collections::HashSet::new();
-        for conn in &connections {
-            if let Some(stripped) = conn.name.strip_prefix('#') {
-                if let Ok(num) = stripped.parse::<u32>() {
-                    used_numbers.insert(num);
-                }
-            }
-        }
-
-        // #1から順に空いている番号を探す
-        let mut next_number = 1;
-        while used_numbers.contains(&next_number) {
-            next_number += 1;
-        }
-
-        let default_name = format!("#{}", next_number);
-        default_name
-    }
-    /// add-connectionを処理
-    fn handle_add_connection(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
-        tracing::trace!(
-            target: "mcv::core::CoreActor",
-            "handle_add_connection()"
-        );
-        // let payload: AddConnectionPayload = match serde_json::from_value(message.payload.clone()) {
-        //     Ok(p) => p,
-        //     Err(e) => {
-        //         tracing::error!(
-        //             target: "mcv::core::CoreActor",
-        //             error = %e,
-        //             message_type = "add-connection",
-        //             "Failed to parse message payload"
-        //         );
-        //         return;
-        //     }
-        // };
-
-        let connection_id = Uuid::new_v4();
-
-        // プラグインIDを取得（Uuid）
-        // let plugin_id_uuid = match &message.src {
-        //     MessageSource::Plugin { plugin_id } => *plugin_id,
-        //     _ => {
-        //         tracing::error!(
-        //             target: "mcv::core::CoreActor",
-        //             message_type = "add-connection",
-        //             message_source = ?message.src,
-        //             "Message must come from a plugin"
-        //         );
-        //         return;
-        //     }
-        // };
-
-        // // プラグイン名を取得（LogicalPluginIdに変換）
-        // let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-
-        // Connection Managerに登録
-        let response_message = message.clone();
-        let conn_name = self.generate_connection_default_name();
-
-        self.connection_manager
-            .add_connection(connection_id, conn_name.clone());
-        tracing::debug!(
-            target: "mcv::core::CoreActor",
-            connection_id = %connection_id,
-            name = %conn_name,
-            "Connection added"
-        );
-
-        // connection-addedを返信
-        let response = McvMessage::create_response(
-            &response_message,
-            MessageType::ConnectionAdded,
-            serde_json::to_value(ConnectionAddedPayload { connection_id }).unwrap(),
-        );
-
-        // プラグインへ返信
-        if let MessageSource::Plugin { plugin_id } = message.src {
-            let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
-            if let Some(plugin_info) = self.logical_plugins.get(&logical_plugin_id) {
-                plugin_info
-                    .host_addr
-                    .do_send(SendMessageToPlugin { message: response });
-            }
-        }
-        // 全論理プラグインにConnectionAddedをブロードキャスト
-        let broadcast_msg = McvMessage::new_notification(
-            MessageType::ConnectionAdded,
-            MessageSource::Core,
-            MessageDestination::Broadcast,
-            serde_json::to_value(ConnectionAddedPayload { connection_id }).unwrap(),
-        );
-        message_handlers::plugin_hello::broadcast_to_all_logical_plugins(self, broadcast_msg);
-        tracing::debug!(
-            target: "mcv::core::CoreActor",
-            "Broadcasted connection-added to all plugins"
-        );
-    }
-
-    /// connectを処理
-    fn handle_connect(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
-        let payload: ConnectPayload = match serde_json::from_value(message.payload.clone()) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!(
-                    target: "mcv::core::CoreActor",
-                    error = %e,
-                    message_type = "connect",
-                    "Failed to parse message payload"
-                );
-                return;
-            }
-        };
-
-        let connection_id = payload.connection_id;
-
-        // Connection Managerから接続情報を取得してplugin_idを取得
-        // let connection_manager = self.connection_manager.clone();
-        let plugins = self.logical_plugins.clone();
-        let msg = message.clone();
-
-        // actix::spawn(async move {
-        //     let mut manager = connection_manager.write().await;
-        self.connection_manager
-            .update_status(&connection_id, ConnectionStatus::Connecting);
-
-        // plugin_idを取得
-        if let Some(conn_info) = self.connection_manager.get_connection(&connection_id) {
-            if let Some(plugin_id_uuid) = conn_info.plugin_id {
-                // drop(manager); // ロックを解放
-
-                let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-
-                // デバッグ: 登録されている全plugin_idをログ出力
-                let registered_plugin_ids: Vec<String> =
-                    plugins.keys().map(|id| id.to_string()).collect();
-                tracing::debug!(
-                    target: "mcv::core::CoreActor",
-                    connection_id = %connection_id,
-                    plugin_id_from_connection = %plugin_id_uuid,
-                    registered_plugin_ids = ?registered_plugin_ids,
-                    "Attempting to find plugin for connection"
-                );
-
-                // プラグインへconnectメッセージを転送
-                if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
-                    tracing::debug!(
-                        target: "mcv::core::CoreActor",
-                        plugin_id = %plugin_id_uuid,
-                        plugin_name = %plugin_info.name,
-                        connection_id = %connection_id,
-                        "Found plugin, forwarding connect message"
-                    );
-                    plugin_info
-                        .host_addr
-                        .do_send(SendMessageToPlugin { message: msg });
-                } else {
-                    tracing::error!(
-                        target: "mcv::core::CoreActor",
-                        plugin_id = %plugin_id_uuid,
-                        connection_id = %connection_id,
-                        registered_plugin_count = plugins.len(),
-                        "Plugin not found - plugin_id mismatch detected"
-                    );
-                }
-            } else {
-                tracing::error!(
-                    target: "mcv::core::CoreActor",
-                    connection_id = %connection_id,
-                    "Connection has no plugin_id set"
-                );
-            }
-        } else {
-            tracing::error!(
-                target: "mcv::core::CoreActor",
-                connection_id = %connection_id,
-                "Connection not found"
-            );
-        }
-        // });
-    }
-
-    /// connectedを処理
-    fn handle_connected(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
-        let payload: ConnectedPayload = match serde_json::from_value(message.payload.clone()) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!(
-                    target: "mcv::core::CoreActor",
-                    error = %e,
-                    message_type = "connected",
-                    "Failed to parse message payload"
-                );
-                return;
-            }
-        };
-
-        tracing::info!(
-            connection_id = %payload.connection_id,
-            "Connection established"
-        );
-
-        // Connection Managerのステータスを更新
-        // let connection_manager = self.connection_manager.clone();
-        let connection_id = payload.connection_id;
-        self.connection_manager
-            .update_status(&connection_id, ConnectionStatus::Connected);
-
-        // 全論理プラグインにConnectedをブロードキャスト
-        let broadcast_msg = McvMessage::new_notification(
-            MessageType::Connected,
-            MessageSource::Core,
-            MessageDestination::Broadcast,
-            message.payload.clone(),
-        );
-        message_handlers::plugin_hello::broadcast_to_all_logical_plugins(self, broadcast_msg);
-
-        // UIへイベント通知
-        if let Some(callback) = &self.event_callback {
-            callback(message.clone());
-        }
-    }
-
-    /// disconnectを処理
-    fn handle_disconnect(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
-        let payload: DisconnectPayload = match serde_json::from_value(message.payload.clone()) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!(
-                    target: "mcv::core::CoreActor",
-                    error = %e,
-                    message_type = "disconnect",
-                    "Failed to parse message payload"
-                );
-                return;
-            }
-        };
-
-        // プラグインへdisconnectメッセージを転送
-        if let MessageSource::Core = message.src {
-            // UIからのリクエストの場合、該当するプラグインへ転送
-            let connection_id = payload.connection_id;
-            // let connection_manager = self.connection_manager.clone();
-            let plugins = self.logical_plugins.clone();
-            let msg = message.clone();
-
-            if let Some(conn_info) = self.connection_manager.get_connection(&connection_id) {
-                if let Some(plugin_id_uuid) = conn_info.plugin_id {
-                    let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-                    if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
-                        plugin_info
-                            .host_addr
-                            .do_send(SendMessageToPlugin { message: msg });
-                    }
-                }
-            }
-        }
-    }
-
-    /// disconnectedを処理
-    fn handle_disconnected(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
-        let payload: DisconnectedPayload = match serde_json::from_value(message.payload.clone()) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!(
-                    target: "mcv::core::CoreActor",
-                    error = %e,
-                    message_type = "disconnected",
-                    "Failed to parse message payload"
-                );
-                return;
-            }
-        };
-
-        tracing::info!(
-            connection_id = %payload.connection_id,
-            "Connection disconnected"
-        );
-
-        // Connection Managerのステータスを更新
-        let connection_id = payload.connection_id;
-        self.connection_manager
-            .update_status(&connection_id, ConnectionStatus::Disconnected);
-
-        // UIへイベント通知
-        if let Some(callback) = &self.event_callback {
-            callback(message.clone());
-        }
-    }
 
     /// comment-receivedを処理
     fn handle_comment_received(&mut self, message: &McvMessage, _ctx: &mut Context<Self>) {
@@ -842,11 +548,19 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::GetPlugins => {
                 message_handlers::plugin_hello::handle_get_plugins(self, physical_plugin_id, &message, ctx)
             }
-            MessageType::AddConnection => self.handle_add_connection(&message, ctx),
-            MessageType::Connect => self.handle_connect(&message, ctx),
-            MessageType::Connected => self.handle_connected(&message, ctx),
-            MessageType::Disconnect => self.handle_disconnect(&message, ctx),
-            MessageType::Disconnected => self.handle_disconnected(&message, ctx),
+            MessageType::AddConnection => {
+                message_handlers::connection::handle_add_connection(self, &message, ctx)
+            }
+            MessageType::Connect => message_handlers::connection::handle_connect(self, &message, ctx),
+            MessageType::Connected => {
+                message_handlers::connection::handle_connected(self, &message, ctx)
+            }
+            MessageType::Disconnect => {
+                message_handlers::connection::handle_disconnect(self, &message, ctx)
+            }
+            MessageType::Disconnected => {
+                message_handlers::connection::handle_disconnected(self, &message, ctx)
+            }
             MessageType::CommentReceived => self.handle_comment_received(&message, ctx),
             MessageType::SendComment => self.handle_send_comment(&message, ctx),
             MessageType::LogEntry => self.handle_log_entry(&message, ctx),
@@ -881,9 +595,13 @@ impl Handler<SendRequest> for CoreActor {
     fn handle(&mut self, msg: SendRequest, ctx: &mut Self::Context) -> Self::Result {
         let message = msg.message;
         match message.message_type {
-            MessageType::AddConnection => self.handle_add_connection(&message, ctx),
-            MessageType::Connect => self.handle_connect(&message, ctx),
-            MessageType::Disconnect => self.handle_disconnect(&message, ctx),
+            MessageType::AddConnection => {
+                message_handlers::connection::handle_add_connection(self, &message, ctx)
+            }
+            MessageType::Connect => message_handlers::connection::handle_connect(self, &message, ctx),
+            MessageType::Disconnect => {
+                message_handlers::connection::handle_disconnect(self, &message, ctx)
+            }
             MessageType::SendComment => self.handle_send_comment(&message, ctx),
             MessageType::AddSite => self.handle_add_site(&message, ctx),
             MessageType::AddBrowser => self.handle_add_browser(&message, ctx),

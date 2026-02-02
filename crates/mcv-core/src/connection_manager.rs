@@ -248,7 +248,7 @@ mod tests {
         let browser_id = Uuid::new_v4();
 
         // 接続を追加
-        manager.add_connection(conn_id, None, "未選択".to_string(), "{}".to_string(), "#1".to_string());
+        manager.add_connection(conn_id, "#1".to_string());
 
         // URL更新
         manager.update_url(&conn_id, Some("https://example.com".to_string()));

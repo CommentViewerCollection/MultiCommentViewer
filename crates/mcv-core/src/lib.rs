@@ -307,15 +307,8 @@ mod tests {
     fn test_connection_manager() {
         let mut manager = ConnectionManager::new();
         let conn_id = Uuid::new_v4();
-        let plugin_id = Uuid::new_v4();
 
-        manager.add_connection(
-            conn_id,
-            Some(plugin_id), // 変更: Optionで渡す
-            "Test Site".to_string(),
-            "Test Input".to_string(),
-            "#1".to_string(),
-        );
+        manager.add_connection(conn_id, "#1".to_string());
         assert_eq!(
             manager.get_status(&conn_id),
             Some(ConnectionStatus::Created)

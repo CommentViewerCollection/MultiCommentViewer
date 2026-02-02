@@ -1267,3 +1267,101 @@ impl Handler<UpdateConnectionSettings> for CoreActor {
         Box::pin(async { Ok(()) }.into_actor(self))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[actix::test]
+    async fn test_core_actor_creation() {
+        let core = CoreActor::new();
+        assert!(core.event_callback.is_none());
+        assert_eq!(core.logical_plugins.len(), 0);
+        assert_eq!(core.physical_plugin_hosts.len(), 0);
+    }
+
+    #[actix::test]
+    async fn test_get_connections_empty() {
+        let core = CoreActor::new();
+        let addr = core.start();
+
+        let connections = addr.send(GetConnections).await.unwrap();
+        assert_eq!(connections.len(), 0);
+    }
+
+    #[actix::test]
+    async fn test_create_connection() {
+        let core = CoreActor::new();
+        let addr = core.start();
+
+        let conn_id = addr
+            .send(CreateConnection {
+                plugin_id: None,
+                site_name: "Test".to_string(),
+                input_info: "{}".to_string(),
+                name: "#1".to_string(),
+            })
+            .await
+            .unwrap();
+
+        assert!(!conn_id.is_nil());
+
+        let connections = addr.send(GetConnections).await.unwrap();
+        assert_eq!(connections.len(), 1);
+        assert_eq!(connections[0].name, "#1");
+    }
+
+    #[actix::test]
+    async fn test_remove_connection() {
+        let core = CoreActor::new();
+        let addr = core.start();
+
+        let conn_id = addr
+            .send(CreateConnection {
+                plugin_id: None,
+                site_name: "Test".to_string(),
+                input_info: "{}".to_string(),
+                name: "#1".to_string(),
+            })
+            .await
+            .unwrap();
+
+        let result = addr
+            .send(RemoveConnection {
+                connection_id: conn_id,
+            })
+            .await
+            .unwrap();
+        assert!(result.is_ok());
+
+        let connections = addr.send(GetConnections).await.unwrap();
+        assert_eq!(connections.len(), 0);
+    }
+
+    #[actix::test]
+    async fn test_rename_connection() {
+        let core = CoreActor::new();
+        let addr = core.start();
+
+        let conn_id = addr
+            .send(CreateConnection {
+                plugin_id: None,
+                site_name: "Test".to_string(),
+                input_info: "{}".to_string(),
+                name: "#1".to_string(),
+            })
+            .await
+            .unwrap();
+
+        addr.send(RenameConnection {
+            connection_id: conn_id,
+            new_name: "My Stream".to_string(),
+        })
+        .await
+        .unwrap()
+        .unwrap();
+
+        let connections = addr.send(GetConnections).await.unwrap();
+        assert_eq!(connections[0].name, "My Stream");
+    }
+}

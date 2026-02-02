@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 
 use mcv_messages::{LogEntryPayload, Message};
 use mcv_plugin_exe_interface::ExePluginClient;
@@ -6,7 +6,7 @@ use std::fmt::Write;
 use tracing::field::{Field, Visit};
 use tracing::{Event, Subscriber};
 use tracing_subscriber::layer::Context;
-use tracing_subscriber::registry::{LookupSpan, SpanRef};
+use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::Layer;
 use uuid::Uuid;
 
@@ -72,7 +72,7 @@ where
 
         let mut visitor = StringVisitor::new();
         event.record(&mut visitor);
-        let msg = visitor.buf;
+        let message = visitor.buf;
 
         let plugin_id = extract_plugin_id(event, &ctx);
         if plugin_id.is_none() {
@@ -82,13 +82,33 @@ where
 
         let metadata = event.metadata();
 
+        // ログレベルを文字列に変換
+        let level = match *metadata.level() {
+            tracing::Level::ERROR => "ERROR",
+            tracing::Level::WARN => "WARN",
+            tracing::Level::INFO => "INFO",
+            tracing::Level::DEBUG => "DEBUG",
+            tracing::Level::TRACE => "TRACE",
+        };
+
+        // ビルドプロファイルを取得
+        let build_profile = if cfg!(debug_assertions) {
+            "debug"
+        } else {
+            "release"
+        };
+
         let log_entry_payload = LogEntryPayload {
-            level: "".to_owned(),
-            message: "".to_owned(),
-            context: None,
+            level: level.to_owned(),
+            message,
+            context: Some(serde_json::json!({
+                "file": metadata.file().unwrap_or("unknown"),
+                "line": metadata.line().unwrap_or(0),
+                "target": metadata.target(),
+            })),
             connection_id: None,
-            plugin_version: None,
-            plugin_build_profile: None,
+            plugin_version: Some(env!("CARGO_PKG_VERSION").to_owned()),
+            plugin_build_profile: Some(build_profile.to_owned()),
         };
         let payload = match serde_json::to_value(log_entry_payload) {
             Ok(g) => g,
@@ -105,7 +125,4 @@ where
 
         let _ = client.send_message(log);
     }
-}
-fn get_log_level() -> String {
-    "debug".to_owned()
 }

@@ -5,5 +5,4 @@
 pub mod comment;
 pub mod connection;
 pub mod plugin_hello;
-// TODO: 以下のモジュールは順次実装予定
-// pub mod site_browser;
+pub mod site_browser;

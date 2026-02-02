@@ -1,6 +1,7 @@
 pub mod connection_manager;
 pub mod core_actor;
 pub mod internal_message;
+pub(crate) mod message_handlers;
 pub mod plugin_host_actor;
 pub mod site_browser_manager;
 
@@ -18,7 +19,6 @@ use actix::prelude::*;
 use mcv_common::PhysicalPluginId;
 use mcv_plugin_loader::PluginLoader;
 use std::path::Path;
-use uuid::Uuid;
 
 /// プラグインマネージャー
 ///
@@ -300,6 +300,7 @@ impl Default for PluginManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
     #[test]
     fn test_plugin_manager_creation() {

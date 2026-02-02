@@ -1,0 +1,21 @@
+[package]
+name = "plugin-sample"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+plugin-abi-helper-v2 = { path = "../plugin-abi-helper-v2" }
+mcv-plugin-interface = { path = "../mcv-plugin-interface" }
+mcv-messages = { path = "../mcv-messages" }
+async-trait = { workspace = true }
+uuid = { workspace = true }
+serde_json = { workspace = true }
+libc = "0.2.180"
+
+[features]
+alpha = []
+beta = []
+stable = []

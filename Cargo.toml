@@ -17,7 +17,10 @@ members = [
     "apps/installer/src-tauri",
     "apps/exe-plugin-sample/src-tauri",
     "crates/twitch-lib",
-    "xtask", "crates/youtube-live-lib",
+    "xtask",
+    "crates/youtube-live-lib",
+    "crates/plugin-abi-helper-v2",
+    "crates/plugin-sample",
 ]
 resolver = "2"
 
@@ -30,4 +33,4 @@ chrono = { version = "0.4", features = ["serde"] }
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"
 thiserror = "1.0"
-tauri = { version = "2.1", features = [] }
+tauri = { version = "2.9.1", features = [] }

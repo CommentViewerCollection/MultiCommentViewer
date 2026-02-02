@@ -2,18 +2,17 @@ use actix::prelude::*;
 use mcv_common::PhysicalPluginId;
 use mcv_messages::Message as McvMessage;
 use mcv_plugin_loader::PluginLoader;
-use once_cell::sync::OnceCell;
-use std::collections::HashMap;
 use std::ffi::{c_void, CStr};
 use std::os::raw::c_char;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crate::internal_message::InternalMessage;
 
-/// グローバルなPhysicalPluginHostActorアドレスマップ（callback_fn用）
-static PLUGIN_HOST_ADDRS: OnceCell<
-    RwLock<HashMap<PhysicalPluginId, Addr<PhysicalPluginHostActor>>>,
-> = OnceCell::new();
+/// Callback用のデータ（userdataに格納）
+struct CallbackData {
+    physical_plugin_id: PhysicalPluginId,
+    actor_addr: Addr<PhysicalPluginHostActor>,
+}
 
 /// Physical Plugin-Host Actor
 ///
@@ -70,15 +69,12 @@ impl Actor for PhysicalPluginHostActor {
 
         let self_addr = ctx.address();
 
-        // グローバルHashMapにPhysicalPluginHostActorのAddrを登録
-        PLUGIN_HOST_ADDRS
-            .get_or_init(|| RwLock::new(HashMap::new()))
-            .write()
-            .unwrap()
-            .insert(physical_plugin_id, self_addr);
-
-        // userdataを作成（PhysicalPluginIdをヒープに確保）
-        let userdata = Box::into_raw(Box::new(physical_plugin_id)) as *mut c_void;
+        // userdataを作成（CallbackDataをヒープに確保）
+        let callback_data = CallbackData {
+            physical_plugin_id,
+            actor_addr: self_addr,
+        };
+        let userdata = Box::into_raw(Box::new(callback_data)) as *mut c_void;
 
         // コールバック関数を定義（userdata対応）
         extern "C" fn callback_fn(message_json: *const c_char, userdata: *mut c_void) {
@@ -97,7 +93,9 @@ impl Actor for PhysicalPluginHostActor {
                 return;
             }
 
-            let physical_plugin_id = unsafe { &*(userdata as *const PhysicalPluginId) };
+            // userdataからCallbackDataを取得
+            let callback_data = unsafe { &*(userdata as *const CallbackData) };
+            let physical_plugin_id = callback_data.physical_plugin_id;
 
             let message_str = unsafe {
                 match CStr::from_ptr(message_json).to_str() {
@@ -125,38 +123,23 @@ impl Actor for PhysicalPluginHostActor {
                     return;
                 }
             };
+
             // InternalMessageを作成
             let internal_message = InternalMessage {
-                physical_plugin_id: *physical_plugin_id,
+                physical_plugin_id,
                 message,
             };
 
-            // グローバルHashMapからPhysicalPluginHostActorのAddrを取得
-            if let Some(addrs) = PLUGIN_HOST_ADDRS.get() {
-                let addrs_guard = addrs.read().unwrap();
-                if let Some(actor_addr) = addrs_guard.get(&physical_plugin_id) {
-                    tracing::trace!(
-                        target: "mcv::core::PluginHostActor",
-                        "callbak_fn physical_plugin_id: {}, message_type: {:?}", physical_plugin_id, internal_message.message.message_type
-                    );
-                    actor_addr.do_send(ReceiveMessageFromDll { internal_message });
-                    tracing::debug!(
-                        target: "mcv::core::PluginHostActor",
-                        "Message forwarded to PhysicalPluginHostActor"
-                    );
-                } else {
-                    tracing::error!(
-                        target: "mcv::core::PluginHostActor",
-                        physical_plugin_id = %physical_plugin_id,
-                        "PhysicalPluginHostActor not found in global map"
-                    );
-                }
-            } else {
-                tracing::error!(
-                    target: "mcv::core::PluginHostActor",
-                    "PLUGIN_HOST_ADDRS not initialized"
-                );
-            }
+            // CallbackDataから直接actor_addrを取得して送信
+            tracing::trace!(
+                target: "mcv::core::PluginHostActor",
+                "callback_fn physical_plugin_id: {}, message_type: {:?}", physical_plugin_id, internal_message.message.message_type
+            );
+            callback_data.actor_addr.do_send(ReceiveMessageFromDll { internal_message });
+            tracing::debug!(
+                target: "mcv::core::PluginHostActor",
+                "Message forwarded to PhysicalPluginHostActor"
+            );
         }
 
         // コールバックを設定（userdata対応）

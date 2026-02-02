@@ -4,17 +4,60 @@
 mod ws_tracing;
 use mcv_messages::Message as McvMessage;
 use mcv_plugin_exe_interface::ExePluginClient;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::RwLock;
 use tracing_subscriber::prelude::*;
 use uuid::Uuid;
 
+/// プラグイン情報
+#[derive(Clone, serde::Serialize, Debug)]
+struct PluginInfo {
+    plugin_id: Uuid,
+    name: String,
+    roles: Vec<String>,
+    api_version: String,
+}
+
+/// 接続情報
+#[derive(Clone, serde::Serialize, Debug)]
+struct ConnectionInfo {
+    connection_id: Uuid,
+    name: String,
+    site_id: Option<Uuid>,
+    url: Option<String>,
+    browser_id: Option<Uuid>,
+    status: String, // "disconnected", "connecting", "connected"
+}
+
+/// サイト情報
+#[derive(Clone, serde::Serialize, Debug)]
+struct SiteInfo {
+    site_id: Uuid,
+    name: String,
+    service_type: String,
+}
+
+/// ブラウザ情報
+#[derive(Clone, serde::Serialize, Debug)]
+struct BrowserInfo {
+    browser_id: Uuid,
+    name: String,
+    browser_type: String,
+}
+
 /// アプリケーション状態
 struct AppState {
     client: RwLock<Option<Arc<ExePluginClient>>>,
     plugin_id: Arc<RwLock<Option<Uuid>>>,
     connected: Arc<RwLock<bool>>,
+    // 状態管理用フィールド
+    plugins: Arc<RwLock<HashMap<Uuid, PluginInfo>>>,
+    connections: Arc<RwLock<HashMap<Uuid, ConnectionInfo>>>,
+    sites: Arc<RwLock<HashMap<Uuid, SiteInfo>>>,
+    browsers: Arc<RwLock<HashMap<Uuid, BrowserInfo>>>,
+    messages: Arc<RwLock<Vec<McvMessage>>>,
 }
 
 /// WebSocketサーバーに接続
@@ -149,6 +192,11 @@ fn main() {
         client: RwLock::new(None),
         plugin_id: Arc::new(RwLock::new(None)),
         connected: Arc::new(RwLock::new(false)),
+        plugins: Arc::new(RwLock::new(HashMap::new())),
+        connections: Arc::new(RwLock::new(HashMap::new())),
+        sites: Arc::new(RwLock::new(HashMap::new())),
+        browsers: Arc::new(RwLock::new(HashMap::new())),
+        messages: Arc::new(RwLock::new(Vec::new())),
     };
 
     tauri::Builder::default()

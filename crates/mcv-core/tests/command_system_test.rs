@@ -82,7 +82,7 @@ async fn test_connection_manager_integration() {
     assert_eq!(connections.len(), 1);
     assert_eq!(connections[0].connection_id, connection_id);
     assert_eq!(connections[0].name, "#1");
-    assert_eq!(connections[0].site_name, "Test Site");
+    assert_eq!(connections[0].site_name, None);
 }
 
 #[actix::test]

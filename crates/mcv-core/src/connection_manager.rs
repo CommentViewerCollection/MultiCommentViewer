@@ -267,4 +267,102 @@ mod tests {
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.advanced_settings, Some(settings));
     }
+
+    #[test]
+    fn test_multiple_connections() {
+        let mut manager = ConnectionManager::new();
+        let conn1 = Uuid::new_v4();
+        let conn2 = Uuid::new_v4();
+
+        manager.add_connection(conn1, "#1".to_string());
+        manager.add_connection(conn2, "#2".to_string());
+
+        let connections = manager.list_connections();
+        assert_eq!(connections.len(), 2);
+        assert!(connections.iter().any(|c| c.connection_id == conn1));
+        assert!(connections.iter().any(|c| c.connection_id == conn2));
+    }
+
+    #[test]
+    fn test_rename_connection() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+
+        manager.add_connection(conn_id, "#1".to_string());
+        manager.rename_connection(&conn_id, "My Stream".to_string());
+
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.name, "My Stream");
+    }
+
+    #[test]
+    fn test_connection_status_transitions() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+
+        manager.add_connection(conn_id, "#1".to_string());
+        assert_eq!(
+            manager.get_status(&conn_id),
+            Some(ConnectionStatus::Created)
+        );
+
+        manager.update_status(&conn_id, ConnectionStatus::Connecting);
+        assert_eq!(
+            manager.get_status(&conn_id),
+            Some(ConnectionStatus::Connecting)
+        );
+
+        manager.update_status(&conn_id, ConnectionStatus::Connected);
+        assert_eq!(
+            manager.get_status(&conn_id),
+            Some(ConnectionStatus::Connected)
+        );
+
+        manager.update_status(&conn_id, ConnectionStatus::Disconnected);
+        assert_eq!(
+            manager.get_status(&conn_id),
+            Some(ConnectionStatus::Disconnected)
+        );
+    }
+
+    #[test]
+    fn test_url_update() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+
+        manager.add_connection(conn_id, "#1".to_string());
+        manager.update_url(&conn_id, Some("https://youtube.com/watch?v=123".to_string()));
+
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(
+            conn.url,
+            Some("https://youtube.com/watch?v=123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_set_site_updates_plugin_id() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+        let site_id = Uuid::new_v4();
+        let plugin_id = Uuid::new_v4();
+
+        manager.add_connection(conn_id, "#1".to_string());
+        assert_eq!(manager.get_connection(&conn_id).unwrap().plugin_id, None);
+
+        manager.set_site(&conn_id, site_id, "YouTube".to_string(), plugin_id);
+        assert_eq!(
+            manager.get_connection(&conn_id).unwrap().plugin_id,
+            Some(plugin_id)
+        );
+    }
+
+    #[test]
+    fn test_remove_nonexistent_connection() {
+        let mut manager = ConnectionManager::new();
+        let non_existent_id = Uuid::new_v4();
+
+        let result = manager.remove_connection(&non_existent_id);
+        assert!(result.is_none());
+    }
 }

@@ -1,14 +1,11 @@
 use std::sync::Arc;
 
-use crate::{ExePluginError, MessageHandler};
+use crate::ExePluginError;
 use futures_util::{SinkExt, StreamExt};
 use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
 };
-use tokio::sync::{
-    mpsc::{self, UnboundedSender},
-    RwLock,
-};
+use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio_tungstenite::connect_async;
 use tungstenite::Message as WsMessage;
 use uuid::Uuid;
@@ -18,8 +15,8 @@ use uuid::Uuid;
 /// WebSocket経由でmcvと通信するためのクライアント
 pub struct ExePluginClient {
     plugin_id: Uuid,
-    message_handler: RwLock<Option<Arc<MessageHandler>>>,
     tx: UnboundedSender<WsMessage>,
+    message_rx: Arc<tokio::sync::Mutex<Option<mpsc::UnboundedReceiver<McvMessage>>>>,
 }
 
 impl ExePluginClient {
@@ -34,11 +31,12 @@ impl ExePluginClient {
 
         let (write, mut read) = ws.split();
         let (tx, mut rx) = mpsc::unbounded_channel();
+        let (message_tx, message_rx) = mpsc::unbounded_channel();
 
         let client = Arc::new(Self {
             plugin_id: Uuid::new_v4(),
-            message_handler: RwLock::new(None),
             tx,
+            message_rx: Arc::new(tokio::sync::Mutex::new(Some(message_rx))),
         });
 
         /* write loop */
@@ -54,7 +52,6 @@ impl ExePluginClient {
 
         /* read loop */
         {
-            let client_clone = Arc::clone(&client);
             tokio::spawn(async move {
                 loop {
                     let msg = read.next().await;
@@ -65,18 +62,12 @@ impl ExePluginClient {
                     match msg {
                         Ok(WsMessage::Text(text)) => {
                             tracing::debug!(target: "mcv::plugin_exe_interface",message_text = %text, "Received message");
-                            println!(
-                                "mcv::plugin_exe_interface Received WebSocket text message: {}",
-                                text
-                            );
                             match serde_json::from_str::<McvMessage>(&text) {
                                 Ok(mcv_message) => {
                                     tracing::debug!(target: "mcv::plugin_exe_interface",message_type = ?mcv_message.message_type, "Parsed message");
-                                    if let Some(handler_arc) =
-                                        client_clone.message_handler.read().await.as_ref()
-                                    {
-                                        let handler = handler_arc;
-                                        (handler)(mcv_message);
+                                    // チャネル経由でメッセージを送信
+                                    if let Err(e) = message_tx.send(mcv_message) {
+                                        tracing::error!(target: "mcv::plugin_exe_interface",error = %e, "Failed to send message to handler");
                                     }
                                 }
                                 Err(e) => {
@@ -173,16 +164,37 @@ impl ExePluginClient {
     }
 
     /// メッセージハンドラーを登録
+    ///
+    /// ハンドラーは別タスクで実行されるため、RwLockの競合問題を回避できます。
+    /// 注意: このメソッドは一度だけ呼ばれることを想定しています。
     pub async fn on_message<F>(&self, handler: F)
     where
         F: Fn(McvMessage) + Send + Sync + 'static,
     {
         tracing::debug!(target: "mcv::plugin_exe_interface", "Registering message handler");
 
-        let handler_arc = Arc::new(Box::new(handler) as MessageHandler);
+        let handler = Arc::new(handler);
+        let mut rx_guard = self.message_rx.lock().await;
 
-        let mut guard = self.message_handler.write().await;
-        *guard = Some(handler_arc);
+        // receiverの所有権を取得（一度のみ）
+        let mut rx = match rx_guard.take() {
+            Some(rx) => rx,
+            None => {
+                tracing::error!(target: "mcv::plugin_exe_interface", "Message handler already registered");
+                return;
+            }
+        };
+
+        // ハンドラータスクをspawn
+        tokio::spawn(async move {
+            while let Some(message) = rx.recv().await {
+                let handler_clone = handler.clone();
+                // ハンドラーを別タスクで実行（ブロッキングを避ける）
+                tokio::spawn(async move {
+                    handler_clone(message);
+                });
+            }
+        });
     }
 }
 

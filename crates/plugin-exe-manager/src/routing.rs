@@ -1,5 +1,5 @@
 use mcv_messages::{Message as McvMessage, MessageDestination};
-use std::{collections::HashMap, io::Write};
+use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};

@@ -1,7 +1,7 @@
 use actix::prelude::*;
 use mcv_common::PhysicalPluginId;
 use mcv_messages::Message as McvMessage;
-use mcv_plugin_loader::{MessageCallbackWithUserdata, PluginLoader};
+use mcv_plugin_loader::PluginLoader;
 use once_cell::sync::OnceCell;
 use std::collections::HashMap;
 use std::ffi::{c_void, CStr};

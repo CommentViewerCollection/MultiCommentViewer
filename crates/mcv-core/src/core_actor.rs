@@ -6,9 +6,7 @@ use mcv_logger::{
 };
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use std::collections::HashMap;
-use std::future;
 use std::sync::{Arc, Mutex};
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};

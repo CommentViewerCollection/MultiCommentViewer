@@ -267,6 +267,21 @@ async fn get_plugin(plugin_id: String, state: State<'_, AppState>) -> Result<Opt
     Ok(plugins.get(&uuid).cloned())
 }
 
+/// 接続一覧を取得
+#[tauri::command]
+async fn get_connections(state: State<'_, AppState>) -> Result<Vec<ConnectionInfo>, String> {
+    let connections = state.connections.read().await;
+    Ok(connections.values().cloned().collect())
+}
+
+/// 特定の接続情報を取得
+#[tauri::command]
+async fn get_connection(connection_id: String, state: State<'_, AppState>) -> Result<Option<ConnectionInfo>, String> {
+    let uuid = Uuid::parse_str(&connection_id).map_err(|e| format!("Invalid UUID: {}", e))?;
+    let connections = state.connections.read().await;
+    Ok(connections.get(&uuid).cloned())
+}
+
 /// WebSocketから切断
 #[tauri::command]
 async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
@@ -344,6 +359,8 @@ fn main() {
             get_connection_status,
             get_plugins,
             get_plugin,
+            get_connections,
+            get_connection,
             get_plugin_id
         ])
         .run(tauri::generate_context!())

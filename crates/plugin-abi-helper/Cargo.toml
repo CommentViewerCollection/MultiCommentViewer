@@ -9,6 +9,7 @@ mcv-messages = { path = "../mcv-messages" }
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-plugin-loader = { path = "../mcv-plugin-loader" }
 mcv-logger = { path = "../mcv-logger" }
+export-plugin-v3-macros = {path = "../export-plugin-v3-macros"}
 actix = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

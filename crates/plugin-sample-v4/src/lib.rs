@@ -3,7 +3,6 @@
 //! async/awaitを使用した非同期プラグインの実装例
 
 use plugin_abi_helper::v4::prelude::*;
-
 #[derive(Default)]
 struct SamplePlugin {
     message_count: u32,

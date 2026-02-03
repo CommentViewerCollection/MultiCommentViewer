@@ -52,11 +52,11 @@ pub mod trampoline;
 /// v4の主要な型を一括インポートするためのprelude
 pub mod prelude {
     pub use crate::abi::v4::PluginV4;
-    pub use crate::export_plugin_v4_async;
+    pub use export_plugin_v3_macros::export_plugin_v4_async;
     pub use crate::v4::context::PluginContext;
     pub use crate::v4::host::Host;
     pub use crate::v4::plugin_async::PluginImplV4Async;
-    pub use async_trait::async_trait;
+    pub use async_trait::async_trait;    
 }
 
 pub fn validate_plugin_v4(p: *const PluginV4) -> Result<(), AbiError> {

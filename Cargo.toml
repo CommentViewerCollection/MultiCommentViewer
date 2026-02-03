@@ -21,7 +21,9 @@ members = [
     "crates/youtube-live-lib",
     "crates/plugin-sample-v2",
     "crates/plugin-abi-helper",
-    "crates/plugin-sample-v3", "crates/plugin-sample-v4",
+    "crates/plugin-sample-v3",
+    "crates/plugin-sample-v4",
+    "crates/export-plugin-v3-macros",    
 ]
 resolver = "2"
 

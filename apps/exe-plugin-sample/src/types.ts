@@ -25,10 +25,13 @@ export interface PluginInfo {
 // Connection Info
 export interface ConnectionInfo {
   connection_id: string;
-  plugin_id: string;
+  plugin_id: string | null;
   name: string;
-  status: "disconnected" | "connecting" | "connected";
+  status: "disconnected" | "connecting" | "connected" | "created" | "error";
+  site_id?: string;
   site_name?: string;
+  url?: string;
+  browser_id?: string;
 }
 
 // Site Info

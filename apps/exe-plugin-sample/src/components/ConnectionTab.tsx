@@ -204,7 +204,7 @@ export default function ConnectionTab({
                   </td>
                   <td className="px-4 py-2 border">{conn.name}</td>
                   <td className="px-4 py-2 border font-mono text-sm">
-                    {conn.plugin_id}
+                    {conn.plugin_id || "-"}
                   </td>
                   <td className="px-4 py-2 border">
                     <span

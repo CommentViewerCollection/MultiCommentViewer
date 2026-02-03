@@ -24,8 +24,10 @@ struct PluginInfo {
 #[derive(Clone, serde::Serialize, Debug)]
 struct ConnectionInfo {
     connection_id: Uuid,
+    plugin_id: Option<Uuid>,
     name: String,
     site_id: Option<Uuid>,
+    site_name: Option<String>,
     url: Option<String>,
     browser_id: Option<Uuid>,
     status: String, // "disconnected", "connecting", "connected"
@@ -99,8 +101,10 @@ async fn handle_message_state_update(
                 ) {
                     let connection_info = ConnectionInfo {
                         connection_id,
+                        plugin_id: payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
                         name: name.to_string(),
                         site_id: payload.get("site_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
+                        site_name: payload.get("site_name").and_then(|v| v.as_str()).map(|s| s.to_string()),
                         url: payload.get("url").and_then(|v| v.as_str()).map(|s| s.to_string()),
                         browser_id: payload.get("browser_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
                         status: "disconnected".to_string(),

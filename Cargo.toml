@@ -11,6 +11,7 @@ members = [
     "crates/mcv-core",
     "crates/plugin-dummy",
     "crates/plugin-exe-manager",
+    "crates/plugin-exe-manager-v3",
     "crates/plugin-youtube-live",
     "apps/mcv/src-tauri",
     "apps/log-viewer/src-tauri",

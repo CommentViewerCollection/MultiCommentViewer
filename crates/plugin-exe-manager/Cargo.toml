@@ -1,7 +1,7 @@
 [package]
 name = "plugin-exe-manager"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib"]
@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-messages = { path = "../mcv-messages" }
 mcv-tracing = { path = "../mcv-tracing" }
+plugin-abi-helper-v2 = { path = "../plugin-abi-helper-v2" }
 
 # Async runtime
 tokio = { version = "1.42", features = ["full"] }
@@ -33,9 +34,6 @@ tracing = "0.1"
 
 # Async trait
 async-trait = "0.1"
-
-# Once cell
-once_cell = "1.20"
 
 # File watching (optional for now)
 # notify = "7.0"

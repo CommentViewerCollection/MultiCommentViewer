@@ -128,5 +128,13 @@ pub fn set_callback(
 }
 
 pub fn shutdown() {
-    // 明示的 drop が必要ならここで
+    // プラグインのシャットダウンを実行
+    if let Some(plugin) = PLUGIN_INSTANCE.get() {
+        if let Some(runtime) = RUNTIME.get() {
+            runtime.block_on(async {
+                let mut p = plugin.lock().await;
+                let _ = p.on_shutdown().await;
+            });
+        }
+    }
 }

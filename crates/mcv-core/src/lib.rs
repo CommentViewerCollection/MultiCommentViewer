@@ -3,6 +3,7 @@ pub mod core_actor;
 pub mod internal_message;
 pub(crate) mod message_handlers;
 pub mod plugin_host_actor;
+pub mod plugin_loader_strategy;
 pub mod site_browser_manager;
 
 // 公開エクスポート
@@ -13,6 +14,9 @@ pub use core_actor::{
     SendRequest, SetConnectionSite, UpdateConnectionSettings,
 };
 pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, ShutdownPlugin};
+pub use plugin_loader_strategy::{
+    LoadedPluginInfo, PluginLoaderRegistry, PluginLoaderStrategy, V2LoaderStrategy,
+};
 pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 use actix::prelude::*;

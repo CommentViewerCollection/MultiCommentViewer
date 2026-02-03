@@ -34,6 +34,9 @@ pub enum PluginLoaderError {
 
     #[error("Failed to shutdown plugin: {0}")]
     ShutdownFailed(String),
+
+    #[error("Unsupported ABI version")]
+    UnsupportedAbiVersion,
 }
 
 /// メッセージコールバック関数の型（userdata対応）

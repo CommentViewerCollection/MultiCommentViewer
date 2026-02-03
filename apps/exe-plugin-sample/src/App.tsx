@@ -30,6 +30,30 @@ function App() {
   const [sites, setSites] = useState<Map<string, SiteInfo>>(new Map());
   const [_browsers, setBrowsers] = useState<Map<string, BrowserInfo>>(new Map());
 
+  // プラグイン一覧を再取得
+  const refreshPlugins = async () => {
+    try {
+      const pluginList = await invoke<PluginInfo[]>("get_plugins");
+      const newPlugins = new Map(pluginList.map((p) => [p.plugin_id, p]));
+      setPlugins(newPlugins);
+    } catch (error) {
+      console.error("Failed to get plugins:", error);
+    }
+  };
+
+  // 接続一覧を再取得
+  const refreshConnections = async () => {
+    try {
+      const connList = await invoke<ConnectionInfo[]>("get_connections");
+      const newConnections = new Map(
+        connList.map((c) => [c.connection_id, c])
+      );
+      setConnections(newConnections);
+    } catch (error) {
+      console.error("Failed to get connections:", error);
+    }
+  };
+
   useEffect(() => {
     // メッセージ受信リスナー
     const unlisten = listen<McvMessage>("message-received", (event) => {
@@ -37,7 +61,7 @@ function App() {
       console.log("Received message:", message);
       setMessages((prev) => [...prev, message]);
 
-      // メッセージタイプに応じて状態を更新
+      // メッセージタイプに応じてRust側の状態を再取得
       handleMessageReceived(message);
     });
 
@@ -46,122 +70,42 @@ function App() {
     };
   }, []);
 
-  const handleMessageReceived = (message: McvMessage) => {
-    const { type, payload } = message;
-console.log("来たのは" + type);
-    switch (type) {
-      case "plugin-added":
-        setPlugins((prev) => {
-          const newPlugins = new Map(prev);
-          newPlugins.set(payload.plugin_id, {
-            plugin_id: payload.plugin_id,
-            name: payload.name || "Unknown",
-            roles: payload.role || [],
-            api_version: payload.api_version || "v2",
-          });
-          return newPlugins;
-        });
-        break;
+  const handleMessageReceived = async (message: McvMessage) => {
+    const { type } = message;
+    console.log("Message type:", type);
 
-      case "plugin-removed":
-        setPlugins((prev) => {
-          const newPlugins = new Map(prev);
-          newPlugins.delete(payload.plugin_id);
-          return newPlugins;
-        });
-        break;
+    // Rust側で状態管理しているので、Rust側から最新状態を取得
+    // 手動更新ロジックを削除し、Rust側の状態取得コマンドを使用
+    try {
+      switch (type) {
+        case "plugin-added":
+        case "plugin-removed":
+          // プラグイン関連のメッセージ → プラグイン一覧を再取得
+          await refreshPlugins();
+          break;
 
-      case "connection-added":
-        setConnections((prev) => {
-          const newConnections = new Map(prev);
-          newConnections.set(payload.connection_id, {
-            connection_id: payload.connection_id,
-            plugin_id: payload.plugin_id || "unknown",
-            name: payload.name || `#${newConnections.size + 1}`,
-            status: "disconnected",
-          });
-          return newConnections;
-        });
-        break;
+        case "connection-added":
+        case "connection-removed":
+        case "connected":
+        case "disconnected":
+          // 接続関連のメッセージ → 接続一覧を再取得
+          await refreshConnections();
+          break;
 
-      case "connection-removed":
-        setConnections((prev) => {
-          const newConnections = new Map(prev);
-          newConnections.delete(payload.connection_id);
-          return newConnections;
-        });
-        break;
+        case "site-added":
+        case "site-removed":
+          // サイト関連（Rust側で管理していないためスキップ）
+          // 将来的にRust側で管理する場合は refreshSites() を実装
+          break;
 
-      case "connected":
-        setConnections((prev) => {
-          const newConnections = new Map(prev);
-          const conn = newConnections.get(payload.connection_id);
-          if (conn) {
-            newConnections.set(payload.connection_id, {
-              ...conn,
-              status: "connected",
-              site_name: payload.site?.site_name,
-            });
-          }
-          return newConnections;
-        });
-        break;
-
-      case "disconnected":
-        setConnections((prev) => {
-          const newConnections = new Map(prev);
-          const conn = newConnections.get(payload.connection_id);
-          if (conn) {
-            newConnections.set(payload.connection_id, {
-              ...conn,
-              status: "disconnected",
-            });
-          }
-          return newConnections;
-        });
-        break;
-
-      case "site-added":
-        setSites((prev) => {
-          const newSites = new Map(prev);
-          newSites.set(payload.site_id, {
-            site_id: payload.site_id,
-            site_name: payload.site_name,
-            display_name: payload.display_name,
-            plugin_id: payload.plugin_id,
-          });
-          return newSites;
-        });
-        break;
-
-      case "site-removed":
-        setSites((prev) => {
-          const newSites = new Map(prev);
-          newSites.delete(payload.site_id);
-          return newSites;
-        });
-        break;
-
-      case "browser-added":
-        setBrowsers((prev) => {
-          const newBrowsers = new Map(prev);
-          newBrowsers.set(payload.browser_id, {
-            browser_id: payload.browser_id,
-            browser_name: payload.browser_name,
-            display_name: payload.display_name,
-            plugin_id: payload.plugin_id,
-          });
-          return newBrowsers;
-        });
-        break;
-
-      case "browser-removed":
-        setBrowsers((prev) => {
-          const newBrowsers = new Map(prev);
-          newBrowsers.delete(payload.browser_id);
-          return newBrowsers;
-        });
-        break;
+        case "browser-added":
+        case "browser-removed":
+          // ブラウザ関連（Rust側で管理していないためスキップ）
+          // 将来的にRust側で管理する場合は refreshBrowsers() を実装
+          break;
+      }
+    } catch (error) {
+      console.error("Failed to refresh state:", error);
     }
   };
 
@@ -175,6 +119,10 @@ console.log("来たのは" + type);
       setPluginId(id);
       setConnected(true);
       console.log("Connected with plugin_id:", id);
+
+      // 接続後、初回状態を取得
+      await refreshPlugins();
+      await refreshConnections();
     } catch (error) {
       console.error("Failed to connect:", error);
       alert(`接続失敗: ${error}`);

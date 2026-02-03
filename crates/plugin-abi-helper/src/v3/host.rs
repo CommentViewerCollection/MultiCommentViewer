@@ -16,13 +16,6 @@ impl Host {
         self.plugin_id
     }
 
-    /// ログ出力
-    pub fn log(&self, level: i32, msg: &str) {
-        unsafe {
-            ((*self.raw).log)(level, msg.as_ptr(), msg.len());
-        }
-    }
-
     /// メッセージ送信（同期）
     pub fn send_message(&self, json: &[u8]) {
         unsafe {

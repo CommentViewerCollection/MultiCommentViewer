@@ -68,12 +68,12 @@ impl ExePluginManagerV3Impl {
             let addr = format!("127.0.0.1:{}", port);
             match WebSocketServer::new(&addr, Arc::clone(&adapter) as Arc<dyn PluginHost>).await {
                 Ok(server) => {
-                    ctx.host().log(2, &format!("WebSocket server started on port {}", port));
+                    tracing::info!(port, "WebSocket server started");
                     websocket_server = Some(Arc::new(server));
                     break;
                 }
                 Err(e) => {
-                    ctx.host().log(3, &format!("Port {} unavailable, trying next: {}", port, e));
+                    tracing::warn!(port, error = %e, "Port unavailable, trying next");
                     last_error = Some(e);
                 }
             }
@@ -126,10 +126,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         // PluginContextから直接Uuidを取得
         self.plugin_id = ctx.plugin_uuid();
 
-        ctx.host().log(2, &format!(
-            "ExePluginManager v3 loaded, uuid: {}",
-            self.plugin_id
-        ));
+        tracing::info!(plugin_id = %self.plugin_id, "ExePluginManager v3 loaded");
 
         // mcv-tracing初期化
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.plugin_id));
@@ -139,13 +136,13 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
             env!("CARGO_PKG_VERSION"),
             "trace",
         ) {
-            ctx.host().log(4, &format!("Failed to init tracing: {}", e));
+            tracing::error!(error = %e, "Failed to init tracing");
             return;
         }
 
         // 初期化
         if let Err(e) = self.initialize(ctx.clone()).await {
-            ctx.host().log(4, &format!("Initialization failed: {}", e));
+            tracing::error!(error = %e, "Initialization failed");
             return;
         }
 
@@ -169,15 +166,15 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         let json = serde_json::to_vec(&message).unwrap();
         ctx.send_message(&json).await;
 
-        ctx.host().log(2, "ExePluginManager initialized and plugin-hello sent");
+        tracing::info!("ExePluginManager initialized and plugin-hello sent");
     }
 
-    async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {
+    async fn on_message(&mut self, _ctx: PluginContext, msg: &[u8]) {
         // バイト列をMcvMessageに変換
         let message: McvMessage = match serde_json::from_slice(msg) {
             Ok(m) => m,
             Err(e) => {
-                ctx.host().log(4, &format!("Failed to parse message: {}", e));
+                tracing::error!(error = %e, "Failed to parse message");
                 return;
             }
         };
@@ -188,13 +185,13 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
 
             if Self::should_broadcast(&message.message_type) {
                 if let Err(e) = router.broadcast(message).await {
-                    ctx.host().log(4, &format!("Broadcast failed: {}", e));
+                    tracing::error!(error = %e, "Broadcast failed");
                 }
             } else {
                 match &message.dst {
                     MessageDestination::Plugin { plugin_id } => {
                         if let Err(e) = router.route_to_plugin(*plugin_id, message).await {
-                            ctx.host().log(4, &format!("Route to plugin failed: {}", e));
+                            tracing::error!(error = %e, "Route to plugin failed");
                         }
                     }
                     MessageDestination::Core => {
@@ -208,25 +205,25 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         }
     }
 
-    async fn on_shutdown(&mut self, ctx: PluginContext) {
-        ctx.host().log(2, "ExePluginManager shutting down");
+    async fn on_shutdown(&mut self, _ctx: PluginContext) {
+        tracing::info!("ExePluginManager shutting down");
 
         // ProcessManager shutdown
         if let Some(process_manager) = &self.process_manager {
             let mut pm = process_manager.write().await;
             if let Err(e) = pm.shutdown().await {
-                ctx.host().log(4, &format!("ProcessManager shutdown failed: {}", e));
+                tracing::error!(error = %e, "ProcessManager shutdown failed");
             }
         }
 
         // WebSocketServer shutdown
         if let Some(websocket_server) = &self.websocket_server {
             if let Err(e) = websocket_server.shutdown().await {
-                ctx.host().log(4, &format!("WebSocketServer shutdown failed: {}", e));
+                tracing::error!(error = %e, "WebSocketServer shutdown failed");
             }
         }
 
-        ctx.host().log(2, "ExePluginManager shutdown completed");
+        tracing::info!("ExePluginManager shutdown completed");
     }
 }
 

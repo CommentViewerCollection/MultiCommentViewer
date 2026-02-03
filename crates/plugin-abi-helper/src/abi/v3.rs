@@ -11,13 +11,6 @@ pub const PLUGIN_ABI_VERSION: u32 = 3;
 /// Host 側が提供する関数群
 #[repr(C)]
 pub struct HostRuntimeV3 {
-    /// ログ出力
-    pub log: unsafe extern "C" fn(
-        level: i32,
-        msg_ptr: *const u8,
-        msg_len: usize,
-    ),
-
     /// Core へメッセージ送信
     pub send_message: unsafe extern "C" fn(
         json_ptr: *const u8,

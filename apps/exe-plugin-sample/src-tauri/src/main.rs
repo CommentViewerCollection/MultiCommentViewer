@@ -60,6 +60,99 @@ struct AppState {
     messages: Arc<RwLock<Vec<McvMessage>>>,
 }
 
+/// メッセージに応じて状態を更新
+async fn handle_message_state_update(
+    message: &McvMessage,
+    plugins: Arc<RwLock<HashMap<Uuid, PluginInfo>>>,
+    connections: Arc<RwLock<HashMap<Uuid, ConnectionInfo>>>,
+    _sites: Arc<RwLock<HashMap<Uuid, SiteInfo>>>,
+    _browsers: Arc<RwLock<HashMap<Uuid, BrowserInfo>>>,
+    messages: Arc<RwLock<Vec<McvMessage>>>,
+) {
+    use mcv_messages::MessageType;
+
+    match message.message_type {
+        MessageType::PluginAdded => {
+            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+                if let (Some(plugin_id), Some(name), Some(roles), Some(api_version)) = (
+                    payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
+                    payload.get("name").and_then(|v| v.as_str()),
+                    payload.get("role").and_then(|v| v.as_array()),
+                    payload.get("api_version").and_then(|v| v.as_str()),
+                ) {
+                    let plugin_info = PluginInfo {
+                        plugin_id,
+                        name: name.to_string(),
+                        roles: roles.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect(),
+                        api_version: api_version.to_string(),
+                    };
+                    plugins.write().await.insert(plugin_id, plugin_info);
+                    tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, name = %name, "Plugin added to state");
+                }
+            }
+        }
+        MessageType::ConnectionAdded => {
+            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+                if let (Some(connection_id), Some(name)) = (
+                    payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
+                    payload.get("name").and_then(|v| v.as_str()),
+                ) {
+                    let connection_info = ConnectionInfo {
+                        connection_id,
+                        name: name.to_string(),
+                        site_id: payload.get("site_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
+                        url: payload.get("url").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        browser_id: payload.get("browser_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
+                        status: "disconnected".to_string(),
+                    };
+                    connections.write().await.insert(connection_id, connection_info);
+                    tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, name = %name, "Connection added to state");
+                }
+            }
+        }
+        MessageType::Connected => {
+            if let Some(connection_id) = message.payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
+                if let Some(conn) = connections.write().await.get_mut(&connection_id) {
+                    conn.status = "connected".to_string();
+                    tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to connected");
+                }
+            }
+        }
+        MessageType::Disconnected => {
+            if let Some(connection_id) = message.payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
+                if let Some(conn) = connections.write().await.get_mut(&connection_id) {
+                    conn.status = "disconnected".to_string();
+                    tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to disconnected");
+                }
+            }
+        }
+        MessageType::ConnectionRemoved => {
+            if let Some(connection_id) = message.payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
+                connections.write().await.remove(&connection_id);
+                tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection removed from state");
+            }
+        }
+        MessageType::PluginRemoved => {
+            if let Some(plugin_id) = message.payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
+                plugins.write().await.remove(&plugin_id);
+                tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, "Plugin removed from state");
+            }
+        }
+        MessageType::CommentReceived | MessageType::LogEntry => {
+            // メッセージログに追加（最新1000件まで保持）
+            let mut msgs = messages.write().await;
+            msgs.push(message.clone());
+            let len = msgs.len();
+            if len > 1000 {
+                msgs.drain(0..len - 1000);
+            }
+        }
+        _ => {
+            // その他のメッセージは状態更新不要
+        }
+    }
+}
+
 /// WebSocketサーバーに接続
 #[tauri::command]
 async fn connect_to_mcv(
@@ -109,14 +202,41 @@ async fn connect_to_mcv(
 
     // メッセージハンドラーを登録
     let app_clone = app.clone();
-    client.on_message(move |message| {
-        let app = app_clone.clone();
-        // フロントエンドにメッセージを転送
-        if let Err(e) = app.emit("message-received", &message) {
-            tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "Failed to emit message-received event");
-        }
-        tracing::debug!(target:"mcv::exe-plugin-sample",message_type = ?message.message_type, "Message received and forwarded to frontend");
-    }).await;
+    let plugins_clone = state.plugins.clone();
+    let connections_clone = state.connections.clone();
+    let sites_clone = state.sites.clone();
+    let browsers_clone = state.browsers.clone();
+    let messages_clone = state.messages.clone();
+
+    client
+        .on_message(move |message| {
+            let app = app_clone.clone();
+            let plugins = plugins_clone.clone();
+            let connections = connections_clone.clone();
+            let sites = sites_clone.clone();
+            let browsers = browsers_clone.clone();
+            let messages = messages_clone.clone();
+
+            tokio::spawn(async move {
+                // 状態を更新
+                handle_message_state_update(
+                    &message,
+                    plugins,
+                    connections,
+                    sites,
+                    browsers,
+                    messages,
+                )
+                .await;
+
+                // フロントエンドにメッセージを転送
+                if let Err(e) = app.emit("message-received", &message) {
+                    tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "Failed to emit message-received event");
+                }
+                tracing::debug!(target:"mcv::exe-plugin-sample",message_type = ?message.message_type, "Message received and forwarded to frontend");
+            });
+        })
+        .await;
 
     // tokio::spawn(async move {
     //     //let mut client = client_clone.lock().await;

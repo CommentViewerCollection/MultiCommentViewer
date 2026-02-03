@@ -282,6 +282,26 @@ async fn get_connection(connection_id: String, state: State<'_, AppState>) -> Re
     Ok(connections.get(&uuid).cloned())
 }
 
+/// メッセージログを取得（最新N件）
+#[tauri::command]
+async fn get_messages(limit: Option<usize>, state: State<'_, AppState>) -> Result<Vec<McvMessage>, String> {
+    let messages = state.messages.read().await;
+    let limit = limit.unwrap_or(100);
+    let start = if messages.len() > limit {
+        messages.len() - limit
+    } else {
+        0
+    };
+    Ok(messages[start..].to_vec())
+}
+
+/// メッセージログをクリア
+#[tauri::command]
+async fn clear_messages(state: State<'_, AppState>) -> Result<(), String> {
+    state.messages.write().await.clear();
+    Ok(())
+}
+
 /// WebSocketから切断
 #[tauri::command]
 async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
@@ -361,6 +381,8 @@ fn main() {
             get_plugin,
             get_connections,
             get_connection,
+            get_messages,
+            clear_messages,
             get_plugin_id
         ])
         .run(tauri::generate_context!())

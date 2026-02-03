@@ -58,6 +58,12 @@ function App() {
     // メッセージ受信リスナー
     const unlisten = listen<McvMessage>("message-received", (event) => {
       const message = event.payload;
+
+      // タイムスタンプを秒からミリ秒に変換（UNIX秒の場合）
+      if (message.timestamp < 1e12) {
+        message.timestamp = message.timestamp * 1000;
+      }
+
       console.log("Received message:", message);
       setMessages((prev) => [...prev, message]);
 

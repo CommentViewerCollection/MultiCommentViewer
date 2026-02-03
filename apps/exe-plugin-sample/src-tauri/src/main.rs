@@ -76,12 +76,27 @@ async fn handle_message_state_update(
     match message.message_type {
         MessageType::PluginAdded => {
             if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
-                if let (Some(plugin_id), Some(name), Some(roles), Some(api_version)) = (
-                    payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
-                    payload.get("name").and_then(|v| v.as_str()),
-                    payload.get("role").and_then(|v| v.as_array()),
-                    payload.get("api_version").and_then(|v| v.as_str()),
-                ) {
+                // 各フィールドの取得を個別に確認
+                let plugin_id = payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                let name = payload.get("name").and_then(|v| v.as_str());
+                let roles = payload.get("role").and_then(|v| v.as_array());
+                let api_version = payload.get("api_version").and_then(|v| v.as_str());
+
+                // 欠落フィールドをチェック
+                if plugin_id.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-added: missing or invalid 'plugin_id' field");
+                }
+                if name.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-added: missing 'name' field");
+                }
+                if roles.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-added: missing 'role' field");
+                }
+                if api_version.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-added: missing 'api_version' field");
+                }
+
+                if let (Some(plugin_id), Some(name), Some(roles), Some(api_version)) = (plugin_id, name, roles, api_version) {
                     let plugin_info = PluginInfo {
                         plugin_id,
                         name: name.to_string(),
@@ -90,15 +105,28 @@ async fn handle_message_state_update(
                     };
                     plugins.write().await.insert(plugin_id, plugin_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, name = %name, "Plugin added to state");
+                } else {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-added: failed to parse required fields");
                 }
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "plugin-added: failed to parse payload as JSON object");
             }
         }
         MessageType::ConnectionAdded => {
             if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
-                if let (Some(connection_id), Some(name)) = (
-                    payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
-                    payload.get("name").and_then(|v| v.as_str()),
-                ) {
+                // 各フィールドの取得を個別に確認
+                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                let name = payload.get("name").and_then(|v| v.as_str());
+
+                // 欠落フィールドをチェック
+                if connection_id.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-added: missing or invalid 'connection_id' field");
+                }
+                if name.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-added: missing 'name' field");
+                }
+
+                if let (Some(connection_id), Some(name)) = (connection_id, name) {
                     let connection_info = ConnectionInfo {
                         connection_id,
                         plugin_id: payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
@@ -111,35 +139,87 @@ async fn handle_message_state_update(
                     };
                     connections.write().await.insert(connection_id, connection_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, name = %name, "Connection added to state");
+                } else {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-added: failed to parse required fields");
                 }
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "connection-added: failed to parse payload as JSON object");
             }
         }
         MessageType::Connected => {
-            if let Some(connection_id) = message.payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
-                if let Some(conn) = connections.write().await.get_mut(&connection_id) {
-                    conn.status = "connected".to_string();
-                    tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to connected");
+            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+
+                // 欠落フィールドをチェック
+                if connection_id.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connected: missing or invalid 'connection_id' field");
                 }
+
+                if let Some(connection_id) = connection_id {
+                    if let Some(conn) = connections.write().await.get_mut(&connection_id) {
+                        conn.status = "connected".to_string();
+                        tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to connected");
+                    } else {
+                        tracing::error!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "connected: connection_id not found in state");
+                    }
+                }
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "connected: failed to parse payload as JSON object");
             }
         }
         MessageType::Disconnected => {
-            if let Some(connection_id) = message.payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
-                if let Some(conn) = connections.write().await.get_mut(&connection_id) {
-                    conn.status = "disconnected".to_string();
-                    tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to disconnected");
+            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+
+                // 欠落フィールドをチェック
+                if connection_id.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "disconnected: missing or invalid 'connection_id' field");
                 }
+
+                if let Some(connection_id) = connection_id {
+                    if let Some(conn) = connections.write().await.get_mut(&connection_id) {
+                        conn.status = "disconnected".to_string();
+                        tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to disconnected");
+                    } else {
+                        tracing::error!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "disconnected: connection_id not found in state");
+                    }
+                }
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "disconnected: failed to parse payload as JSON object");
             }
         }
         MessageType::ConnectionRemoved => {
-            if let Some(connection_id) = message.payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
-                connections.write().await.remove(&connection_id);
-                tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection removed from state");
+            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+
+                // 欠落フィールドをチェック
+                if connection_id.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-removed: missing or invalid 'connection_id' field");
+                }
+
+                if let Some(connection_id) = connection_id {
+                    connections.write().await.remove(&connection_id);
+                    tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection removed from state");
+                }
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "connection-removed: failed to parse payload as JSON object");
             }
         }
         MessageType::PluginRemoved => {
-            if let Some(plugin_id) = message.payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()) {
-                plugins.write().await.remove(&plugin_id);
-                tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, "Plugin removed from state");
+            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+                let plugin_id = payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+
+                // 欠落フィールドをチェック
+                if plugin_id.is_none() {
+                    tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-removed: missing or invalid 'plugin_id' field");
+                }
+
+                if let Some(plugin_id) = plugin_id {
+                    plugins.write().await.remove(&plugin_id);
+                    tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, "Plugin removed from state");
+                }
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "plugin-removed: failed to parse payload as JSON object");
             }
         }
         MessageType::CommentReceived | MessageType::LogEntry => {

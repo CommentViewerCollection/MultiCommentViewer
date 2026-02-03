@@ -1,17 +1,17 @@
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
-use crate::v4::runtime_event::RuntimeEvent;
-use crate::v4::plugin_async::PluginImplV4Async;
-use crate::v4::context::PluginContext;
-use crate::v4::runtime::runtime;
+use crate::v3::runtime_event::RuntimeEvent;
+use crate::v3::plugin_async::PluginImplV3Async;
+use crate::v3::context::PluginContext;
+use crate::v3::runtime::runtime;
 
-pub struct PluginRuntimeV4 {
+pub struct PluginRuntimeV3 {
     tx: Sender<RuntimeEvent>,
 }
 
-impl PluginRuntimeV4 {
-    pub fn start<P: PluginImplV4Async>(mut plugin: P, ctx: PluginContext) -> Self {
+impl PluginRuntimeV3 {
+    pub fn start<P: PluginImplV3Async>(mut plugin: P, ctx: PluginContext) -> Self {
         let (tx, rx) = channel::<RuntimeEvent>();
 
         thread::spawn(move || {

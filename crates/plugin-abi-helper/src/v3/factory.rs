@@ -1,21 +1,21 @@
 use std::ffi::c_void;
 
-use crate::v4::plugin_async::PluginImplV4Async;
-use crate::v4::plugin_runtime::PluginRuntimeV4;
-use crate::v4::context::PluginContext;
-use crate::abi::v4::{PluginV4, PLUGIN_ABI_VERSION};
+use crate::v3::plugin_async::PluginImplV3Async;
+use crate::v3::plugin_runtime::PluginRuntimeV3;
+use crate::v3::context::PluginContext;
+use crate::abi::v3::{PluginV3, PLUGIN_ABI_VERSION};
 
 /// プラグイン状態（userdataに格納）
 /// context と runtime を一緒に保持する
 pub struct PluginState {
     pub(crate) context: PluginContext,
-    pub(crate) runtime: PluginRuntimeV4,
+    pub(crate) runtime: PluginRuntimeV3,
 }
 
-pub struct PluginFactoryV4;
+pub struct PluginFactoryV3;
 
-impl PluginFactoryV4 {
-    pub fn new<T: PluginImplV4Async + Default>() -> *mut PluginV4 {
+impl PluginFactoryV3 {
+    pub fn new<T: PluginImplV3Async + Default>() -> *mut PluginV3 {
         // 1. Contextを作成
         let context = PluginContext::new();
 
@@ -23,20 +23,20 @@ impl PluginFactoryV4 {
         let plugin_impl = T::default();
 
         // 3. Runtimeを起動（contextをclone）
-        let runtime = PluginRuntimeV4::start(plugin_impl, context.clone());
+        let runtime = PluginRuntimeV3::start(plugin_impl, context.clone());
 
-        // 4. 状態をまとめる
+        // 3. 状態をまとめる
         let state = PluginState { context, runtime };
         let userdata = Box::into_raw(Box::new(state)) as *mut c_void;
 
-        // 5. PluginV4を作成
-        let plugin = Box::new(PluginV4 {
+        // 5. PluginV3を作成
+        let plugin = Box::new(PluginV3 {
             abi_version: PLUGIN_ABI_VERSION,
             plugin_id: 0,
             host: core::ptr::null(),
-            on_loaded: crate::v4::trampoline::on_loaded_trampoline,
-            on_message: crate::v4::trampoline::on_message_trampoline,
-            on_shutdown: crate::v4::trampoline::on_shutdown_trampoline,
+            on_loaded: crate::v3::trampoline::on_loaded_trampoline,
+            on_message: crate::v3::trampoline::on_message_trampoline,
+            on_shutdown: crate::v3::trampoline::on_shutdown_trampoline,
             userdata,
         });
 
@@ -48,8 +48,8 @@ impl PluginFactoryV4 {
 ///
 /// # Safety
 ///
-/// `p`は`PluginFactoryV4::new`で作成された有効なポインタでなければならない
-pub unsafe fn destroy_plugin_v4(p: *mut PluginV4) {
+/// `p`は`PluginFactoryV3::new`で作成された有効なポインタでなければならない
+pub unsafe fn destroy_plugin_v3(p: *mut PluginV3) {
     if p.is_null() {
         return;
     }

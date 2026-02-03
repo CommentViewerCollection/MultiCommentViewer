@@ -1,7 +1,7 @@
 // crates/plugin-abi-helper/src/context.rs
 
-use crate::abi::v4::HostRuntimeV4;
-use crate::v4::host::Host;
+use crate::abi::v3::HostRuntimeV3;
+use crate::v3::host::Host;
 use std::sync::{Arc, OnceLock};
 
 /// プラグイン実装者向けの安全なコンテキスト
@@ -11,7 +11,7 @@ pub struct PluginContext {
 }
 
 struct PluginContextInner {
-    host: OnceLock<*const HostRuntimeV4>,
+    host: OnceLock<*const HostRuntimeV3>,
     plugin_id: OnceLock<u64>,
     runtime: tokio::runtime::Runtime,
 }
@@ -37,7 +37,7 @@ impl PluginContext {
         }
     }
 
-    pub(crate) fn attach_host(&self, host: *const HostRuntimeV4, plugin_id: u64) {
+    pub(crate) fn attach_host(&self, host: *const HostRuntimeV3, plugin_id: u64) {
         let _ = self.inner.host.set(host);
         let _ = self.inner.plugin_id.set(plugin_id);
     }

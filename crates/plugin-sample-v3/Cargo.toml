@@ -8,3 +8,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 plugin-abi-helper = { path = "../plugin-abi-helper" }
+async-trait = "0.1"
+serde_json = "1.0"

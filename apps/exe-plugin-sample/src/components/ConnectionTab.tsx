@@ -26,8 +26,8 @@ export default function ConnectionTab({
     try {
       const message = {
         type: "add-connection",
-        src: { Plugin: { plugin_id: selfPluginId } },
-        dst: { Core: null },
+        src: selfPluginId,
+        dst: "core",
         timestamp: Date.now(),
         payload: {
           site_id: selectedSiteId,
@@ -55,8 +55,8 @@ export default function ConnectionTab({
     try {
       const message = {
         type: "connect",
-        src: { Core: null },
-        dst: { Plugin: { plugin_id: selfPluginId } },
+        src: "core",
+        dst: selfPluginId,
         timestamp: Date.now(),
         payload: {
           connection_id: selectedConnectionId,
@@ -97,8 +97,8 @@ export default function ConnectionTab({
     try {
       const message = {
         type: "disconnect",
-        src: { Core: null },
-        dst: { Plugin: { plugin_id: selfPluginId } },
+        src: "core",
+        dst: selfPluginId,
         timestamp: Date.now(),
         payload: {
           connection_id: selectedConnectionId,
@@ -126,8 +126,8 @@ export default function ConnectionTab({
     try {
       const message = {
         type: "remove-connection",
-        src: { Core: null },
-        dst: { Plugin: { plugin_id: selfPluginId } },
+        src: "core",
+        dst: selfPluginId,
         timestamp: Date.now(),
         payload: {
           connection_id: selectedConnectionId,
@@ -159,8 +159,8 @@ export default function ConnectionTab({
     try {
       const message = {
         type: "rename-connection",
-        src: { Core: null },
-        dst: { Plugin: { plugin_id: selfPluginId } },
+        src: "core",
+        dst: selfPluginId,
         timestamp: Date.now(),
         payload: {
           connection_id: selectedConnectionId,

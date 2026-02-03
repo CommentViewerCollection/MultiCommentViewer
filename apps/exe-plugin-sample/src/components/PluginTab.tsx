@@ -9,23 +9,9 @@ interface PluginTabProps {
 
 export default function PluginTab({ plugins, selfPluginId }: PluginTabProps) {
   const [pluginName, setPluginName] = useState("");
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [roles, setRoles] = useState("");
   const [apiVersion, setApiVersion] = useState("v2");
   const [selectedPluginId, setSelectedPluginId] = useState("");
-
-  const availableRoles = [
-    "comment-provider",
-    "comment-poster",
-    "site-provider",
-    "browser-provider",
-    "debug-tool",
-  ];
-
-  const handleRoleToggle = (role: string) => {
-    setSelectedRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
-    );
-  };
 
   const handleSendPluginHello = async () => {
     if (!pluginName.trim()) {
@@ -34,15 +20,21 @@ export default function PluginTab({ plugins, selfPluginId }: PluginTabProps) {
     }
 
     try {
+      // ロールをカンマ区切りから配列に変換
+      const roleArray = roles
+        .split(',')
+        .map(r => r.trim())
+        .filter(r => r.length > 0);
+
       const message = {
         type: "plugin-hello",
-        src: { Plugin: { plugin_id: selfPluginId } },
-        dst: { Core: null },
+        src: selfPluginId,
+        dst: "core",
         timestamp: Date.now(),
         payload: {
           name: pluginName,
           plugin_id: selfPluginId,
-          role: selectedRoles,
+          role: roleArray,
           api_version: apiVersion,
         },
       };
@@ -68,8 +60,8 @@ export default function PluginTab({ plugins, selfPluginId }: PluginTabProps) {
     try {
       const message = {
         type: "plugin-removed",
-        src: { Plugin: { plugin_id: selfPluginId } },
-        dst: { Core: null },
+        src: selfPluginId,
+        dst: "core",
         timestamp: Date.now(),
         payload: {
           plugin_id: selectedPluginId,
@@ -147,20 +139,16 @@ export default function PluginTab({ plugins, selfPluginId }: PluginTabProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">ロール</label>
-            <div className="space-y-2">
-              {availableRoles.map((role) => (
-                <label key={role} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedRoles.includes(role)}
-                    onChange={() => handleRoleToggle(role)}
-                    className="mr-2"
-                  />
-                  {role}
-                </label>
-              ))}
-            </div>
+            <label className="block text-sm font-medium mb-1">
+              ロール（カンマ区切り）
+            </label>
+            <input
+              type="text"
+              value={roles}
+              onChange={(e) => setRoles(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+              placeholder="comment-provider, debug-tool"
+            />
           </div>
 
           <div>

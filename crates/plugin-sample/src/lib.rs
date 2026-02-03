@@ -7,7 +7,7 @@ use mcv_messages::{
 };
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 
-use plugin_abi_helper as abi;
+use plugin_abi_helper_v2 as abi;
 
 /// ===== プラグイン本体 =====
 

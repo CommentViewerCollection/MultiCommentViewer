@@ -1,39 +1,60 @@
 use crate::abi::v4::PluginV4;
-use crate::v4::context::PluginContext;
-use crate::v4::host::Host;
+use crate::v4::factory::PluginState;
 use crate::v4::runtime_event::RuntimeEvent;
 
+/// on_loaded trampoline
+///
+/// # Safety
+///
+/// `plugin`は有効な`PluginV4`ポインタで、userdataは`PluginState`を指している必要がある
 pub unsafe extern "C" fn on_loaded_trampoline(plugin: *mut PluginV4) -> i32 {
-    let plugin = &mut *plugin;
+    unsafe {
+        let plugin = &mut *plugin;
+        let state = &mut *(plugin.userdata as *mut PluginState);
 
-    let ctx = &*(plugin.userdata as *mut PluginContext);
-    ctx.attach_host(plugin.host);
+        // Hostを設定（plugin_idも一緒に渡す）
+        state.context.attach_host(plugin.host, plugin.plugin_id);
 
-    let impl_ = &mut *(plugin.userdata as *mut PluginV4);
+        // Loadedイベントを送信
+        state.runtime.send(RuntimeEvent::Loaded);
 
-    let host = Host::from_raw(plugin.host);
-    impl_.on_loaded(host);
-
-    0
+        0
+    }
 }
 
+/// on_message trampoline
+///
+/// # Safety
+///
+/// `p`は有効な`PluginV4`ポインタで、userdataは`PluginState`を指している必要がある
 pub unsafe extern "C" fn on_message_trampoline(
     p: *mut PluginV4,
     msg_ptr: *const u8,
     msg_len: usize,
 ) -> i32 {
-    let plugin = &mut *p;
-    let runtime = &*(plugin.userdata as *mut crate::v4::plugin_runtime::PluginRuntimeV4);
+    unsafe {
+        let plugin = &mut *p;
+        let state = &*(plugin.userdata as *mut PluginState);
 
-    let msg = std::slice::from_raw_parts(msg_ptr, msg_len).to_vec();
-    runtime.send(RuntimeEvent::Message(msg));
-    0
+        let msg = std::slice::from_raw_parts(msg_ptr, msg_len).to_vec();
+        state.runtime.send(RuntimeEvent::Message(msg));
+
+        0
+    }
 }
 
+/// on_shutdown trampoline
+///
+/// # Safety
+///
+/// `p`は有効な`PluginV4`ポインタで、userdataは`PluginState`を指している必要がある
 pub unsafe extern "C" fn on_shutdown_trampoline(p: *mut PluginV4) -> i32 {
-    let plugin = &mut *p;
-    let runtime = &*(plugin.userdata as *mut crate::v4::plugin_runtime::PluginRuntimeV4);
+    unsafe {
+        let plugin = &mut *p;
+        let state = &*(plugin.userdata as *mut PluginState);
 
-    runtime.send(RuntimeEvent::Shutdown);
-    0
+        state.runtime.send(RuntimeEvent::Shutdown);
+
+        0
+    }
 }

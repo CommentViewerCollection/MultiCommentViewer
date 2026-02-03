@@ -7,7 +7,7 @@ use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
 };
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
-use plugin_abi_helper_v2 as abi;
+use plugin_abi_helper::v2 as abi;
 use std::ffi::{c_void, CString};
 use std::os::raw::c_char;
 use std::sync::Arc;

@@ -1,5 +1,5 @@
 [package]
-name = "plugin-abi-helper-v2"
+name = "plugin-abi-helper"
 version = "0.1.0"
 edition = "2024"
 

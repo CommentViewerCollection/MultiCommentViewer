@@ -1,5 +1,5 @@
 [package]
-name = "plugin-sample"
+name = "plugin-sample-v2"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,7 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-plugin-abi-helper-v2 = { path = "../plugin-abi-helper-v2" }
+plugin-abi-helper = { path = "../plugin-abi-helper" }
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-messages = { path = "../mcv-messages" }
 async-trait = { workspace = true }

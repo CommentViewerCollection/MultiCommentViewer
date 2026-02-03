@@ -1,0 +1,10 @@
+[package]
+name = "plugin-sample-v3"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+plugin-abi-helper = { path = "../plugin-abi-helper" }

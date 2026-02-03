@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-messages = { path = "../mcv-messages" }
 mcv-tracing = { path = "../mcv-tracing" }
-plugin-abi-helper-v2 = { path = "../plugin-abi-helper-v2" }
+plugin-abi-helper = { path = "../plugin-abi-helper" }
 
 # Async runtime
 tokio = { version = "1.42", features = ["full"] }

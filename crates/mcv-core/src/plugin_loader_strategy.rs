@@ -2,10 +2,14 @@ use actix::prelude::*;
 use async_trait::async_trait;
 use mcv_common::PhysicalPluginId;
 use mcv_plugin_loader::{PluginLoader, PluginLoaderError};
+use mcv_plugin_loader_v3::PluginLoaderV3;
+use plugin_abi_helper::abi::v3::PluginV3;
 use std::path::Path;
+use std::sync::Arc;
 
 use crate::core_actor::CoreActor;
 use crate::plugin_host_actor::PhysicalPluginHostActor;
+use crate::plugin_host_actor_v3::PhysicalPluginHostActorV3;
 
 /// プラグインロード後の情報
 #[derive(Debug)]
@@ -149,6 +153,77 @@ impl PluginLoaderStrategy for V2LoaderStrategy {
     }
 }
 
+/// V3プラグインローダー戦略
+pub struct V3LoaderStrategy;
+
+#[async_trait]
+impl PluginLoaderStrategy for V3LoaderStrategy {
+    fn abi_version(&self) -> u32 {
+        3
+    }
+
+    fn can_load(&self, dll_path: &Path) -> bool {
+        // v3のシンボル（create_plugin_v3）をチェック
+        use libloading::{Library, Symbol};
+
+        let lib: Library = match unsafe { Library::new(dll_path) } {
+            Ok(lib) => lib,
+            Err(_) => return false,
+        };
+
+        // create_plugin_v3 シンボルが存在するか確認
+        unsafe {
+            lib.get::<Symbol<'_, unsafe extern "C" fn() -> *mut PluginV3>>(b"create_plugin_v3\0")
+                .is_ok()
+        }
+    }
+
+    async fn load_plugin(
+        &self,
+        dll_path: &Path,
+        core_addr: Addr<CoreActor>,
+    ) -> Result<LoadedPluginInfo, PluginLoaderError> {
+        // v3プラグインをロード
+        let plugin_loader_v3 = PluginLoaderV3::load(dll_path)
+            .map_err(|e| PluginLoaderError::LoadFailed(e.to_string()))?;
+
+        let physical_plugin_id = PhysicalPluginId::new();
+        // PhysicalPluginIdの内部値はUuidなのでそのまま使用
+        let plugin_id = physical_plugin_id.inner();
+
+        // プラグイン名をDLLファイル名から取得
+        let plugin_name = dll_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| s.to_string());
+
+        tracing::info!(
+            target: "mcv::core::V3LoaderStrategy",
+            physical_plugin_id = %physical_plugin_id,
+            plugin_id = %plugin_id,
+            plugin_name = ?plugin_name,
+            "Loading v3 plugin"
+        );
+
+        let host_actor = PhysicalPluginHostActorV3::new(
+            physical_plugin_id,
+            plugin_id,
+            Arc::new(plugin_loader_v3),
+            Some(core_addr),
+        );
+
+        let _host_addr = host_actor.start();
+
+        // Note: PhysicalPluginHostActorV3 は PhysicalPluginHostActor とは異なる型なので
+        // 現状では LoadedPluginInfo に格納できない
+        // Phase 3 で enum wrapper を実装する必要がある
+
+        // 一時的なワークアラウンド：コンパイルエラーを回避するため、
+        // v2 のダミーアクターを作成して返す（Phase 3で修正）
+        todo!("Phase 3 で PhysicalPluginHostActor を enum wrapper に変更する必要があります")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +245,11 @@ mod tests {
     fn test_v2_strategy_abi_version() {
         let strategy = V2LoaderStrategy;
         assert_eq!(strategy.abi_version(), 2);
+    }
+
+    #[test]
+    fn test_v3_strategy_abi_version() {
+        let strategy = V3LoaderStrategy;
+        assert_eq!(strategy.abi_version(), 3);
     }
 }

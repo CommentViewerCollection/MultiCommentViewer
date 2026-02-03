@@ -8,7 +8,9 @@ mcv-common = { path = "../mcv-common" }
 mcv-messages = { path = "../mcv-messages" }
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-plugin-loader = { path = "../mcv-plugin-loader" }
+mcv-plugin-loader-v3 = { path = "../mcv-plugin-loader-v3" }
 mcv-logger = { path = "../mcv-logger" }
+plugin-abi-helper = { path = "../plugin-abi-helper" }
 actix = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

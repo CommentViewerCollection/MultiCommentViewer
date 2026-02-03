@@ -3,6 +3,7 @@ pub mod core_actor;
 pub mod internal_message;
 pub(crate) mod message_handlers;
 pub mod plugin_host_actor;
+pub mod plugin_host_actor_v3;
 pub mod plugin_loader_strategy;
 pub mod site_browser_manager;
 

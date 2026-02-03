@@ -1,0 +1,10 @@
+[package]
+name = "mcv-plugin-loader-v3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+plugin-abi-helper = { path = "../plugin-abi-helper" }
+libloading = "0.8"
+thiserror = "2.0"
+uuid = { version = "1.11", features = ["v4"] }

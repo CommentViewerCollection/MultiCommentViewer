@@ -33,7 +33,7 @@
 use std::ffi::c_void;
 
 use crate::v4::plugin_async::PluginImplV4Async;
-use crate::v4::runtime::PluginRuntimev4;
+use crate::v4::runtime::PluginRuntimeV4;
 use crate::v4::context::PluginContext;
 use crate::abi::v4::{PluginV4, PLUGIN_ABI_VERSION};
 

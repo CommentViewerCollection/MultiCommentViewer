@@ -23,11 +23,11 @@ use crate::v4::plugin_async::PluginImplV4Async;
 use crate::v4::context::PluginContext;
 // use crate::v4::runtime::runtime;
 
-pub struct PluginRuntimev4 {
+pub struct PluginRuntimeV4 {
     tx: Sender<RuntimeEvent>,
 }
 
-impl PluginRuntimev4 {
+impl PluginRuntimeV4 {
     pub fn start<P: PluginImplV4Async>(mut plugin: P, ctx: PluginContext) -> Self {
         let (tx, rx) = channel::<RuntimeEvent>();
 

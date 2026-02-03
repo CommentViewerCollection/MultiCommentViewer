@@ -1,14 +1,15 @@
 use crate::abi::v4::PluginV4;
+use crate::v4::context::PluginContext;
 use crate::v4::host::Host;
 use crate::v4::runtime_event::RuntimeEvent;
 
-unsafe extern "C" fn on_loaded_trampoline(plugin: *mut PluginV4) -> i32 {
+pub unsafe extern "C" fn on_loaded_trampoline(plugin: *mut PluginV4) -> i32 {
     let plugin = &mut *plugin;
 
     let ctx = &*(plugin.userdata as *mut PluginContext);
     ctx.attach_host(plugin.host);
 
-    let impl_ = &mut *(plugin.userdata as *mut Self);
+    let impl_ = &mut *(plugin.userdata as *mut PluginV4);
 
     let host = Host::from_raw(plugin.host);
     impl_.on_loaded(host);

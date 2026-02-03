@@ -8,7 +8,7 @@ use mcv_messages::{
 };
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 use plugin_abi_helper_v2 as abi;
-use std::ffi::{c_void, CStr, CString};
+use std::ffi::{c_void, CString};
 use std::os::raw::c_char;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -277,218 +277,38 @@ pub extern "C" fn plugin_get_metadata() -> *const c_char {
 }
 
 /// プラグインを初期化
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn plugin_init(_host_context: *mut libc::c_void) -> i32 {
-    println!("=== C ABI: plugin_init called (ExePluginManager) ===");
-
-    unsafe {
-        // Tokioランタイムを初期化
-        let runtime = match Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => {
-                eprintln!("Failed to create Tokio runtime: {}", e);
-                return -1;
-            }
-        };
-
-        if RUNTIME.set(runtime).is_err() {
-            eprintln!("Failed to set RUNTIME");
-            return -1;
-        }
-
-        // プラグインインスタンスを作成
-        let plugin = Arc::new(tokio::sync::Mutex::new(ExePluginManager::new()));
-
-        let plugin_id = {
-            let plugin_guard = RUNTIME.get().unwrap().block_on(plugin.lock());
-            plugin_guard.plugin_id
-        };
-
-        println!("=== C ABI: Generated plugin_id: {} ===", plugin_id);
-
-        if PLUGIN_INSTANCE.set(Arc::clone(&plugin)).is_err() {
-            eprintln!("Failed to set PLUGIN_INSTANCE");
-            return -1;
-        }
-
-        println!("=== C ABI: plugin_init completed successfully (ExePluginManager) ===");
-        0
-    }
+    abi::init_plugin(Box::new(ExePluginManager::new()))
 }
 
 /// プラグインon_loaded呼び出し
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn plugin_on_loaded() -> i32 {
-    tracing::trace!(
-        target = "mcv::plugin_exe_manager",
-        "=== C ABI: plugin_on_loaded called (ExePluginManager) ==="
-    );
-
-    unsafe {
-        if let Some(plugin) = PLUGIN_INSTANCE.get() {
-            if let Some(runtime) = RUNTIME.get() {
-                let host = Arc::new(CApiPluginHost);
-                let result = runtime.block_on(async {
-                    let mut plugin_guard = plugin.lock().await;
-                    plugin_guard.on_loaded(host).await
-                });
-
-                if let Err(e) = result {
-                    tracing::error!(
-                        target = "mcv::plugin_exe_manager",
-                        "plugin_on_loaded: on_loaded failed: {}",
-                        e
-                    );
-                    return -1;
-                }
-
-                tracing::trace!(
-                    target = "mcv::plugin_exe_manager",
-                    "=== C ABI: plugin_on_loaded completed successfully (ExePluginManager) ==="
-                );
-                return 0;
-            } else {
-                tracing::error!(
-                    target = "mcv::plugin_exe_manager",
-                    "plugin_on_loaded: Runtime not initialized"
-                );
-                return -1;
-            }
-        } else {
-            tracing::error!(
-                target = "mcv::plugin_exe_manager",
-                "plugin_on_loaded: Plugin not initialized"
-            );
-            return -1;
-        }
-    }
+    abi::call_on_loaded()
 }
 
 /// コールバックを設定
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn plugin_set_callback(
-    callback: extern "C" fn(*const c_char, *mut c_void),
+    cb: extern "C" fn(*const c_char, *mut c_void),
     userdata: *mut c_void,
 ) -> i32 {
-    println!("=== C ABI: plugin_set_callback called (ExePluginManager) ===");
-    unsafe {
-        MESSAGE_CALLBACK = Some(callback);
-        USERDATA.store(userdata as usize, Ordering::SeqCst);
-        0
-    }
+    abi::set_callback(cb, userdata);
+    0
 }
 
 /// プラグインへメッセージを送信
-#[no_mangle]
-pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
-    tracing::trace!(
-        target = "mcv::plugin_exe_manager",
-        "plugin_send_message called"
-    );
-    unsafe {
-        if message_json.is_null() {
-            tracing::error!(
-                target = "mcv::plugin_exe_manager",
-                "plugin_send_message: message_json is null"
-            );
-            return -1;
-        }
-
-        let message_cstr = CStr::from_ptr(message_json);
-        let message_str = match message_cstr.to_str() {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::error!(
-                    target = "mcv::plugin_exe_manager",
-                    "plugin_send_message: Failed to convert CStr to str: {}",
-                    e
-                );
-                return -1;
-            }
-        };
-        tracing::trace!(
-            target = "mcv::plugin_exe_manager",
-            "plugin_send_message: Received message: {}",
-            message_str
-        );
-        // JSONをパース
-        let message: McvMessage = match serde_json::from_str(message_str) {
-            Ok(m) => m,
-            Err(e) => {
-                tracing::error!(
-                    target = "mcv::plugin_exe_manager",
-                    "plugin_send_message: Failed to parse JSON: {}",
-                    e
-                );
-                return -1;
-            }
-        };
-        tracing::trace!(
-            target = "mcv::plugin_exe_manager",
-            "plugin_send_message: Parsed message successfully"
-        );
-
-        // プラグインインスタンスを取得
-        if let Some(plugin) = PLUGIN_INSTANCE.get() {
-            if let Some(runtime) = RUNTIME.get() {
-                let host = Arc::new(CApiPluginHost);
-                let result = runtime.block_on(async {
-                    let mut plugin_guard = plugin.lock().await;
-                    plugin_guard.on_message(message, host).await
-                });
-
-                if let Err(e) = result {
-                    tracing::error!(
-                        target = "mcv::plugin_exe_manager",
-                        "plugin_send_message: on_message failed: {}",
-                        e
-                    );
-                    return -1;
-                }
-                tracing::trace!(
-                    target = "mcv::plugin_exe_manager",
-                    "plugin_send_message: on_message completed successfully"
-                );
-            } else {
-                tracing::error!(
-                    target = "mcv::plugin_exe_manager",
-                    "plugin_send_message: Runtime not initialized"
-                );
-                return -1;
-            }
-        } else {
-            tracing::error!(
-                target = "mcv::plugin_exe_manager",
-                "plugin_send_message: Plugin not initialized"
-            );
-            return -1;
-        }
-
-        0
-    }
+#[unsafe(no_mangle)]
+pub extern "C" fn plugin_send_message(msg: *const c_char) -> i32 {
+    abi::call_on_message(msg)
 }
 
 /// プラグインをシャットダウン
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn plugin_shutdown() -> i32 {
-    unsafe {
-        if let Some(plugin) = PLUGIN_INSTANCE.get() {
-            if let Some(runtime) = RUNTIME.get() {
-                runtime.block_on(async {
-                    let mut plugin_guard = plugin.lock().await;
-                    match plugin_guard.on_shutdown().await {
-                        Ok(_) => tracing::info!("Plugin shutdown completed"),
-                        Err(e) => tracing::error!(error = %e, "Plugin shutdown failed"),
-                    }
-                });
-            }
-        }
-
-        // グローバル変数をクリア
-        MESSAGE_CALLBACK = None;
-
-        0
-    }
+    abi::shutdown();
+    0
 }
 
 #[cfg(test)]

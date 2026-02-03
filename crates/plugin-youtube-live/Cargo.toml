@@ -27,3 +27,4 @@ mcv-logger = { path = "../../crates/mcv-logger" }
 mcv-tracing = { path = "../../crates/mcv-tracing" }
 tracing = "0.1"
 tracing-subscriber = "0.3"
+plugin-abi-helper = {path = "../../crates/plugin-abi-helper"}

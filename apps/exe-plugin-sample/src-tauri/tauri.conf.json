@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "MCV EXE Plugin Sample",
         "width": 1200,
         "height": 800,
@@ -20,7 +21,20 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "default",
+          "description": "Default capabilities for the main window",
+          "windows": ["main"],
+          "permissions": [
+            "core:default",
+            "core:event:allow-listen",
+            "core:event:allow-emit",
+            "shell:allow-open"
+          ]
+        }
+      ]
     }
   },
   "bundle": {

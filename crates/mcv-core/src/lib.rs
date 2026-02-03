@@ -16,7 +16,8 @@ pub use core_actor::{
 };
 pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 pub use plugin_loader_strategy::{
-    LoadedPluginInfo, PluginLoaderRegistry, PluginLoaderStrategy, V2LoaderStrategy,
+    LoadedPluginInfo, PluginHostAddr, PluginLoaderRegistry, PluginLoaderStrategy,
+    V2LoaderStrategy, V3LoaderStrategy,
 };
 pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
@@ -30,12 +31,22 @@ use std::path::Path;
 /// プラグインの登録・管理を担当
 pub struct PluginManager {
     core_addr: Option<Addr<CoreActor>>,
+    registry: PluginLoaderRegistry,
 }
 
 impl PluginManager {
     /// 新しいPlugin Managerを作成
     pub fn new() -> Self {
-        Self { core_addr: None }
+        let mut registry = PluginLoaderRegistry::new();
+
+        // デフォルト戦略を登録（v3 → v2 の順で検出）
+        registry.register(Box::new(V3LoaderStrategy));
+        registry.register(Box::new(V2LoaderStrategy));
+
+        Self {
+            core_addr: None,
+            registry,
+        }
     }
 
     /// Core Actorのアドレスを設定
@@ -103,11 +114,11 @@ impl PluginManager {
     /// * `plugins_dir` - プラグインディレクトリのパス
     ///
     /// # Returns
-    /// Vec<(physical_plugin_id, plugin_host_addr, plugin_name)>
+    /// Vec<LoadedPluginInfo>
     pub async fn scan_and_load_plugins<P: AsRef<Path>>(
         &self,
         plugins_dir: P,
-    ) -> Vec<(PhysicalPluginId, Addr<PhysicalPluginHostActor>, String)> {
+    ) -> Vec<LoadedPluginInfo> {
         let plugins_dir = plugins_dir.as_ref();
         tracing::info!(plugins_dir = %plugins_dir.display(), "Scanning for DLL plugins");
 
@@ -135,6 +146,15 @@ impl PluginManager {
             }
         };
 
+        // Core Actorのアドレスを取得
+        let core_addr = match &self.core_addr {
+            Some(addr) => addr.clone(),
+            None => {
+                tracing::error!(target: "mcv::core::PluginManager", "Core actor not set");
+                return loaded_plugins;
+            }
+        };
+
         for entry in entries {
             let entry = match entry {
                 Ok(e) => e,
@@ -153,19 +173,19 @@ impl PluginManager {
 
             tracing::info!(target: "mcv::core::PluginManager", dll_path = %path.display(), "Found DLL plugin");
 
-            // DLLをロード
-            match self.register_plugin_from_dll(&path).await {
-                Ok((physical_plugin_id, plugin_host_addr, plugin_name)) => {
-                    // plugin_nameはregister_plugin_from_dllから取得（metadata().name）
+            // Registryを使用してDLLをロード
+            match self.registry.load_plugin(&path, core_addr.clone()).await {
+                Ok(loaded_info) => {
                     tracing::info!(
                         target: "mcv::core::PluginManager",
-                        plugin_id = %physical_plugin_id,
-                        plugin_name = %plugin_name,
+                        plugin_id = %loaded_info.physical_plugin_id,
+                        abi_version = loaded_info.abi_version,
+                        plugin_name = ?loaded_info.plugin_name,
                         dll_path = %path.display(),
                         "Successfully loaded DLL plugin"
                     );
 
-                    loaded_plugins.push((physical_plugin_id, plugin_host_addr, plugin_name));
+                    loaded_plugins.push(loaded_info);
                 }
                 Err(e) => {
                     tracing::error!(

@@ -589,17 +589,34 @@ fn main() {
             tracing::info!(target: "mcv::main", count = loaded_plugins.len(), "Loaded DLL plugins");
 
             // ロードされた物理プラグインをCoreActorに登録
-            for (physical_plugin_id, plugin_host_addr, _plugin_name) in loaded_plugins {
+            for loaded_info in loaded_plugins {
                 tracing::debug!(
                     target: "mcv::main",
-                    physical_plugin_id = %physical_plugin_id,
+                    physical_plugin_id = %loaded_info.physical_plugin_id,
+                    abi_version = loaded_info.abi_version,
+                    plugin_name = ?loaded_info.plugin_name,
                     "Registering physical plugin with CoreActor"
                 );
 
-                core_addr.do_send(mcv_core::core_actor::RegisterPhysicalPlugin {
-                    physical_plugin_id,
-                    host_addr: plugin_host_addr,
-                });
+                // Note: RegisterPhysicalPlugin は現在 Addr<PhysicalPluginHostActor> を期待しているため、
+                // PluginHostAddr を扱えるように更新する必要がある
+                // 一時的なワークアラウンド: v2 のみをサポート
+                match loaded_info.host_addr {
+                    mcv_core::PluginHostAddr::V2(addr) => {
+                        core_addr.do_send(mcv_core::core_actor::RegisterPhysicalPlugin {
+                            physical_plugin_id: loaded_info.physical_plugin_id,
+                            host_addr: addr,
+                        });
+                    }
+                    mcv_core::PluginHostAddr::V3(_) => {
+                        tracing::warn!(
+                            target: "mcv::main",
+                            physical_plugin_id = %loaded_info.physical_plugin_id,
+                            "v3 plugin registration not yet supported (Phase 3 in progress)"
+                        );
+                        // Phase 3で完全対応予定
+                    }
+                }
             }
 
             // AppStateを作成してメインスレッドに送信

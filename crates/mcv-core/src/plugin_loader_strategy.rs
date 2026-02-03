@@ -11,12 +11,19 @@ use crate::core_actor::CoreActor;
 use crate::plugin_host_actor::PhysicalPluginHostActor;
 use crate::plugin_host_actor_v3::PhysicalPluginHostActorV3;
 
+/// プラグインHost Actorのアドレス（バージョン別）
+#[derive(Debug, Clone)]
+pub enum PluginHostAddr {
+    V2(Addr<PhysicalPluginHostActor>),
+    V3(Addr<PhysicalPluginHostActorV3>),
+}
+
 /// プラグインロード後の情報
 #[derive(Debug)]
 pub struct LoadedPluginInfo {
     pub physical_plugin_id: PhysicalPluginId,
     pub abi_version: u32,
-    pub host_addr: Addr<PhysicalPluginHostActor>,
+    pub host_addr: PluginHostAddr,
     pub plugin_name: Option<String>,
 }
 
@@ -147,7 +154,7 @@ impl PluginLoaderStrategy for V2LoaderStrategy {
         Ok(LoadedPluginInfo {
             physical_plugin_id,
             abi_version: 2,
-            host_addr,
+            host_addr: PluginHostAddr::V2(host_addr),
             plugin_name,
         })
     }
@@ -212,15 +219,14 @@ impl PluginLoaderStrategy for V3LoaderStrategy {
             Some(core_addr),
         );
 
-        let _host_addr = host_actor.start();
+        let host_addr = host_actor.start();
 
-        // Note: PhysicalPluginHostActorV3 は PhysicalPluginHostActor とは異なる型なので
-        // 現状では LoadedPluginInfo に格納できない
-        // Phase 3 で enum wrapper を実装する必要がある
-
-        // 一時的なワークアラウンド：コンパイルエラーを回避するため、
-        // v2 のダミーアクターを作成して返す（Phase 3で修正）
-        todo!("Phase 3 で PhysicalPluginHostActor を enum wrapper に変更する必要があります")
+        Ok(LoadedPluginInfo {
+            physical_plugin_id,
+            abi_version: 3,
+            host_addr: PluginHostAddr::V3(host_addr),
+            plugin_name,
+        })
     }
 }
 

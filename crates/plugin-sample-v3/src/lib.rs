@@ -11,18 +11,18 @@ struct SamplePlugin {
 #[async_trait]
 impl PluginImplV3Async for SamplePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        let plugin_id = ctx.plugin_id();
+        let plugin_id = ctx.plugin_uuid();
         ctx.host().log(2, &format!("SamplePlugin v3 loaded, ID: {}", plugin_id));
 
         // plugin-helloを送信
         let hello = serde_json::json!({
             "message_type": "plugin-hello",
-            "src": { "Plugin": { "plugin_id": plugin_id } },
+            "src": { "Plugin": { "plugin_id": plugin_id.to_string() } },
             "dst": "Core",
             "timestamp": 0,
             "payload": {
                 "name": "Sample Plugin v3",
-                "plugin_id": plugin_id,
+                "plugin_id": plugin_id.to_string(),
                 "role": ["sample"],
                 "api_version": "v3"
             }

@@ -16,7 +16,7 @@ impl PluginHandle {
         Ok(Self { raw: p })
     }
 
-    pub fn plugin_id(&self) -> u64 {
+    pub fn plugin_id(&self) -> [u8; 16] {
         unsafe { (*self.raw).plugin_id }
     }
 }

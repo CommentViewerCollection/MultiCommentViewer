@@ -31,8 +31,8 @@ pub struct PluginV3 {
     /// ABI バージョン（必ず PLUGIN_ABI_VERSION）
     pub abi_version: u32,
 
-    /// Core が割り当てる plugin_id
-    pub plugin_id: u64,
+    /// Core が割り当てる plugin_id (Uuid互換: 128bit)
+    pub plugin_id: [u8; 16],
 
     /// HostRuntime へのポインタ
     pub host: *const HostRuntimeV3,

@@ -12,7 +12,7 @@ pub struct PluginContext {
 
 struct PluginContextInner {
     host: OnceLock<*const HostRuntimeV3>,
-    plugin_id: OnceLock<u64>,
+    plugin_id: OnceLock<[u8; 16]>,
     runtime: tokio::runtime::Runtime,
 }
 
@@ -37,7 +37,7 @@ impl PluginContext {
         }
     }
 
-    pub(crate) fn attach_host(&self, host: *const HostRuntimeV3, plugin_id: u64) {
+    pub(crate) fn attach_host(&self, host: *const HostRuntimeV3, plugin_id: [u8; 16]) {
         let _ = self.inner.host.set(host);
         let _ = self.inner.plugin_id.set(plugin_id);
     }
@@ -67,8 +67,13 @@ impl PluginContext {
         host.send_message(bytes);
     }
 
-    /// Core が割り当てた plugin_id
-    pub fn plugin_id(&self) -> u64 {
+    /// Core が割り当てた plugin_id（バイト配列）
+    pub fn plugin_id(&self) -> [u8; 16] {
         self.host().plugin_id()
+    }
+
+    /// Core が割り当てた plugin_id を Uuid として取得
+    pub fn plugin_uuid(&self) -> uuid::Uuid {
+        uuid::Uuid::from_bytes(self.plugin_id())
     }
 }

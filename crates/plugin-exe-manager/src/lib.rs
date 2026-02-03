@@ -7,9 +7,9 @@ use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
 };
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
+use plugin_abi_helper_v2 as abi;
 use std::ffi::{c_void, CStr, CString};
 use std::os::raw::c_char;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -258,23 +258,8 @@ impl Plugin for ExePluginManager {
 // C ABI エクスポート関数
 // ============================================================================
 
-use once_cell::sync::OnceCell;
-use tokio::runtime::Runtime;
-
-/// グローバルなプラグインインスタンス
-static mut PLUGIN_INSTANCE: OnceCell<Arc<tokio::sync::Mutex<ExePluginManager>>> = OnceCell::new();
-
-/// グローバルなメッセージコールバック
-static mut MESSAGE_CALLBACK: Option<extern "C" fn(*const c_char, *mut c_void)> = None;
-
-/// グローバルなuserdata
-static USERDATA: AtomicUsize = AtomicUsize::new(0);
-
-/// グローバルなTokioランタイム
-static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
-
 /// プラグインのメタデータを取得
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn plugin_get_metadata() -> *const c_char {
     let metadata = serde_json::json!({
         "id": "com.mcv.exe-plugin-manager",
@@ -288,31 +273,6 @@ pub extern "C" fn plugin_get_metadata() -> *const c_char {
     match CString::new(metadata_str) {
         Ok(c_str) => c_str.into_raw(),
         Err(_) => std::ptr::null(),
-    }
-}
-
-/// PluginHost実装（コールバック経由でmcvにメッセージ送信）
-struct CApiPluginHost;
-
-#[async_trait::async_trait]
-impl PluginHost for CApiPluginHost {
-    async fn send_message(&self, message: McvMessage) -> Result<(), PluginError> {
-        let message_json = serde_json::to_string(&message).map_err(|e| {
-            PluginError::MessageHandlingFailed(format!("Failed to serialize message: {}", e))
-        })?;
-
-        let message_cstr = CString::new(message_json).map_err(|e| {
-            PluginError::MessageHandlingFailed(format!("Failed to create CString: {}", e))
-        })?;
-
-        unsafe {
-            if let Some(cb) = MESSAGE_CALLBACK {
-                let userdata = USERDATA.load(Ordering::SeqCst) as *mut c_void;
-                cb(message_cstr.as_ptr(), userdata);
-            }
-        }
-
-        Ok(())
     }
 }
 

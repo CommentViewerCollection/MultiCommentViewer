@@ -37,8 +37,31 @@ pub fn handle_plugin_hello(
         tracing::debug!(
             target: "mcv::core::CoreActor",
             logical_plugin_id = %logical_plugin_id,
-            "Logical plugin already registered, ignoring duplicate plugin-hello"
+            "Logical plugin already registered, sending plugin-added response"
         );
+
+        // 既に登録済みの場合でも、plugin-added メッセージを返信
+        if let Some(plugin_info) = actor.logical_plugins.get(&logical_plugin_id) {
+            let response = McvMessage::new(
+                MessageType::PluginAdded,
+                MessageSource::Core,
+                MessageDestination::Plugin {
+                    plugin_id: physical_plugin_id.inner(),
+                },
+                serde_json::to_value(PluginAddedPayload {
+                    name: plugin_info.name.clone(),
+                    plugin_id: logical_plugin_id.inner(),
+                    role: plugin_info.role.clone(),
+                    api_version: plugin_info.api_version.clone(),
+                })
+                .unwrap(),
+            );
+
+            // 物理プラグインのPluginHostActorを取得して送信
+            if let Some(host_addr) = actor.physical_plugin_hosts.get(&physical_plugin_id) {
+                host_addr.do_send(SendMessageToPlugin { message: response });
+            }
+        }
         return;
     }
 

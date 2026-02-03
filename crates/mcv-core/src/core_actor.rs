@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
 use crate::internal_message::InternalMessage;
 use crate::message_handlers;
-use crate::plugin_host_actor::PhysicalPluginHostActor;
+use crate::plugin_loader_strategy::PluginHostAddr;
 use crate::site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 /// 論理プラグイン情報（ユーザーから見えるプラグイン単位）
@@ -20,7 +20,7 @@ pub struct LogicalPluginInfo {
     pub name: String,
     pub role: Vec<String>,
     pub api_version: String,
-    pub host_addr: Addr<PhysicalPluginHostActor>,
+    pub host_addr: PluginHostAddr,
 }
 
 /// 後方互換性のため
@@ -36,7 +36,7 @@ pub struct CoreActor {
     /// 論理プラグイン（ユーザーから見えるプラグイン）
     pub(crate) logical_plugins: HashMap<LogicalPluginId, LogicalPluginInfo>,
     /// 物理プラグイン（DLLファイル）
-    pub(crate) physical_plugin_hosts: HashMap<PhysicalPluginId, Addr<PhysicalPluginHostActor>>,
+    pub(crate) physical_plugin_hosts: HashMap<PhysicalPluginId, PluginHostAddr>,
     /// UIへのイベント送信用コールバック
     pub(crate) event_callback: Option<Arc<dyn Fn(McvMessage) + Send + Sync>>,
     /// プラグインログの直接ストレージ保存用
@@ -222,7 +222,7 @@ impl Handler<SendRequest> for CoreActor {
 #[rtype(result = "()")]
 pub struct RegisterPhysicalPlugin {
     pub physical_plugin_id: PhysicalPluginId,
-    pub host_addr: Addr<PhysicalPluginHostActor>,
+    pub host_addr: PluginHostAddr,
 }
 
 impl Handler<RegisterPhysicalPlugin> for CoreActor {

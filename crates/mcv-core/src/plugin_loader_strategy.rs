@@ -18,6 +18,36 @@ pub enum PluginHostAddr {
     V3(Addr<PhysicalPluginHostActorV3>),
 }
 
+impl PluginHostAddr {
+    /// メッセージを送信（do_send）
+    pub fn do_send<M>(&self, msg: M)
+    where
+        M: actix::Message + Send + 'static,
+        M::Result: Send,
+        PhysicalPluginHostActor: actix::Handler<M>,
+        PhysicalPluginHostActorV3: actix::Handler<M>,
+    {
+        match self {
+            PluginHostAddr::V2(addr) => addr.do_send(msg),
+            PluginHostAddr::V3(addr) => addr.do_send(msg),
+        }
+    }
+
+    /// メッセージを送信（send）
+    pub async fn send<M>(&self, msg: M) -> Result<M::Result, actix::MailboxError>
+    where
+        M: actix::Message + Send + 'static,
+        M::Result: Send,
+        PhysicalPluginHostActor: actix::Handler<M>,
+        PhysicalPluginHostActorV3: actix::Handler<M>,
+    {
+        match self {
+            PluginHostAddr::V2(addr) => addr.send(msg).await,
+            PluginHostAddr::V3(addr) => addr.send(msg).await,
+        }
+    }
+}
+
 /// プラグインロード後の情報
 #[derive(Debug)]
 pub struct LoadedPluginInfo {

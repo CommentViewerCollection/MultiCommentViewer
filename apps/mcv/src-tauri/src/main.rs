@@ -598,25 +598,10 @@ fn main() {
                     "Registering physical plugin with CoreActor"
                 );
 
-                // Note: RegisterPhysicalPlugin は現在 Addr<PhysicalPluginHostActor> を期待しているため、
-                // PluginHostAddr を扱えるように更新する必要がある
-                // 一時的なワークアラウンド: v2 のみをサポート
-                match loaded_info.host_addr {
-                    mcv_core::PluginHostAddr::V2(addr) => {
-                        core_addr.do_send(mcv_core::core_actor::RegisterPhysicalPlugin {
-                            physical_plugin_id: loaded_info.physical_plugin_id,
-                            host_addr: addr,
-                        });
-                    }
-                    mcv_core::PluginHostAddr::V3(_) => {
-                        tracing::warn!(
-                            target: "mcv::main",
-                            physical_plugin_id = %loaded_info.physical_plugin_id,
-                            "v3 plugin registration not yet supported (Phase 3 in progress)"
-                        );
-                        // Phase 3で完全対応予定
-                    }
-                }
+                core_addr.do_send(mcv_core::core_actor::RegisterPhysicalPlugin {
+                    physical_plugin_id: loaded_info.physical_plugin_id,
+                    host_addr: loaded_info.host_addr,
+                });
             }
 
             // AppStateを作成してメインスレッドに送信

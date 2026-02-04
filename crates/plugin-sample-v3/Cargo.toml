@@ -11,3 +11,4 @@ plugin-abi-helper = { path = "../plugin-abi-helper" }
 async-trait = "0.1"
 serde_json = "1.0"
 tracing = "0.1"
+uuid = "1"

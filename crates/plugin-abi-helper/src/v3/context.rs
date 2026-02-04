@@ -66,14 +66,4 @@ impl PluginContext {
         let host = self.host();
         host.send_message(bytes);
     }
-
-    /// Core が割り当てた plugin_id（バイト配列）
-    pub fn plugin_id(&self) -> [u8; 16] {
-        self.host().plugin_id()
-    }
-
-    /// Core が割り当てた plugin_id を Uuid として取得
-    pub fn plugin_uuid(&self) -> uuid::Uuid {
-        uuid::Uuid::from_bytes(self.plugin_id())
-    }
 }

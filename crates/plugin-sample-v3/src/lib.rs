@@ -3,27 +3,28 @@
 //! async/awaitを使用した非同期プラグインの実装例
 
 use plugin_abi_helper::v3::prelude::*;
-
+use uuid::Uuid;
 #[derive(Default)]
 struct SamplePlugin {
     message_count: u32,
+    logical_plugin_id:Uuid,
 }
 
 #[async_trait]
 impl PluginImplV3Async for SamplePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        let plugin_id = ctx.plugin_uuid();
-        tracing::info!("SamplePlugin v3 loaded, ID: {}", plugin_id);
+        self.logical_plugin_id = Uuid::new_v4();
+        tracing::info!("SamplePlugin v3 loaded, ID: {}", self.logical_plugin_id);
 
         // plugin-helloを送信
         let hello = serde_json::json!({
             "message_type": "plugin-hello",
-            "src": { "Plugin": { "plugin_id": plugin_id.to_string() } },
+            "src": { "Plugin": { "plugin_id": self.logical_plugin_id.to_string() } },
             "dst": "Core",
             "timestamp": 0,
             "payload": {
                 "name": "Sample Plugin v3",
-                "plugin_id": plugin_id.to_string(),
+                "plugin_id": self.logical_plugin_id.to_string(),
                 "role": ["sample"],
                 "api_version": "v3"
             }

@@ -41,7 +41,7 @@ impl PluginHost for PluginContextAdapter {
 ///
 /// WebSocketサーバーを起動し、EXEプラグインとの通信を仲介する
 pub struct ExePluginManagerV3Impl {
-    plugin_id: Uuid,
+    logical_plugin_id: Uuid,
     websocket_server: Option<Arc<WebSocketServer>>,
     process_manager: Option<Arc<RwLock<ProcessManager>>>,
 }
@@ -49,7 +49,7 @@ pub struct ExePluginManagerV3Impl {
 impl ExePluginManagerV3Impl {
     pub fn new() -> Self {
         Self {
-            plugin_id: Uuid::nil(),  // on_loadedで設定される
+            logical_plugin_id: Uuid::new_v4(),  // on_loadedで設定される
             websocket_server: None,
             process_manager: None,
         }
@@ -58,7 +58,7 @@ impl ExePluginManagerV3Impl {
     /// WebSocketサーバーとプロセスマネージャーを初期化
     async fn initialize(&mut self, ctx: PluginContext) -> Result<(), String> {
         // PluginContextAdapterを作成
-        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.plugin_id));
+        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.logical_plugin_id));
 
         // WebSocketサーバーを起動（ポート競合時は自動的に次のポートを試行）
         let mut websocket_server = None;
@@ -123,15 +123,12 @@ impl Default for ExePluginManagerV3Impl {
 #[async_trait::async_trait]
 impl PluginImplV3Async for ExePluginManagerV3Impl {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        // PluginContextから直接Uuidを取得
-        self.plugin_id = ctx.plugin_uuid();
-
-        tracing::info!(plugin_id = %self.plugin_id, "ExePluginManager v3 loaded");
+        tracing::info!(plugin_id = %self.logical_plugin_id, "ExePluginManager v3 loaded");
 
         // mcv-tracing初期化
-        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.plugin_id));
+        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.logical_plugin_id));
         if let Err(e) = mcv_tracing::init_tracing(
-            self.plugin_id,
+            self.logical_plugin_id,
             adapter.clone(),
             env!("CARGO_PKG_VERSION"),
             "trace",
@@ -149,7 +146,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         // plugin-hello送信
         let hello_payload = PluginHelloPayload {
             name: "EXE Plugin Manager".to_string(),
-            plugin_id: self.plugin_id,
+            plugin_id: self.logical_plugin_id,
             role: vec!["exe-plugin-manager".to_string()],
             api_version: "v3".to_string(),
         };
@@ -157,7 +154,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         let message = McvMessage::new(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: self.logical_plugin_id,
             },
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),

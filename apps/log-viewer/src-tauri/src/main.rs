@@ -6,11 +6,22 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
+struct SearchFields {
+    message: bool,
+    #[serde(rename = "sourceLocation")]
+    source_location: bool,
+    context: bool,
+    stacktrace: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct LogQueryFilters {
     level: Option<String>,
     from: Option<i64>,
     to: Option<i64>,
     search: Option<String>,
+    #[serde(rename = "searchFields")]
+    search_fields: Option<SearchFields>,
 }
 
 #[derive(Debug, Serialize)]
@@ -51,11 +62,46 @@ async fn get_local_logs(
     }
 
     if let Some(search) = &filters.search {
-        where_clauses.push("(message LIKE ? OR file LIKE ? OR module_path LIKE ?)".to_string());
+        // デフォルトは全フィールド検索(後方互換性)
+        let default_fields = SearchFields {
+            message: true,
+            source_location: true,
+            context: true,
+            stacktrace: true,
+        };
+        let fields = filters.search_fields.as_ref().unwrap_or(&default_fields);
+
+        let mut search_clauses = Vec::new();
         let search_pattern = format!("%{}%", search);
-        params_vec.push(Box::new(search_pattern.clone()));
-        params_vec.push(Box::new(search_pattern.clone()));
-        params_vec.push(Box::new(search_pattern));
+
+        // Message検索
+        if fields.message {
+            search_clauses.push("message LIKE ?".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        // Source Location検索 (file OR module_path)
+        if fields.source_location {
+            search_clauses.push("(file LIKE ? OR module_path LIKE ?)".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        // Context検索 (JSON文字列をLIKE検索)
+        if fields.context {
+            search_clauses.push("context LIKE ?".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        // Stacktrace検索 (JSON文字列をLIKE検索)
+        if fields.stacktrace {
+            search_clauses.push("stacktrace LIKE ?".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        if !search_clauses.is_empty() {
+            where_clauses.push(format!("({})", search_clauses.join(" OR ")));
+        }
     }
 
     let where_clause = if where_clauses.is_empty() {
@@ -275,11 +321,46 @@ async fn export_local_logs(
         params_vec.push(Box::new(to));
     }
     if let Some(search) = &filters.search {
-        where_clauses.push("(message LIKE ? OR file LIKE ? OR module_path LIKE ?)".to_string());
+        // デフォルトは全フィールド検索(後方互換性)
+        let default_fields = SearchFields {
+            message: true,
+            source_location: true,
+            context: true,
+            stacktrace: true,
+        };
+        let fields = filters.search_fields.as_ref().unwrap_or(&default_fields);
+
+        let mut search_clauses = Vec::new();
         let search_pattern = format!("%{}%", search);
-        params_vec.push(Box::new(search_pattern.clone()));
-        params_vec.push(Box::new(search_pattern.clone()));
-        params_vec.push(Box::new(search_pattern));
+
+        // Message検索
+        if fields.message {
+            search_clauses.push("message LIKE ?".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        // Source Location検索 (file OR module_path)
+        if fields.source_location {
+            search_clauses.push("(file LIKE ? OR module_path LIKE ?)".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        // Context検索 (JSON文字列をLIKE検索)
+        if fields.context {
+            search_clauses.push("context LIKE ?".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        // Stacktrace検索 (JSON文字列をLIKE検索)
+        if fields.stacktrace {
+            search_clauses.push("stacktrace LIKE ?".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+        }
+
+        if !search_clauses.is_empty() {
+            where_clauses.push(format!("({})", search_clauses.join(" OR ")));
+        }
     }
 
     let where_clause = if where_clauses.is_empty() {

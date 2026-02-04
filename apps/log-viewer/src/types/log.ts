@@ -30,11 +30,19 @@ export interface LogEntry {
   system_info: SystemInfo;
 }
 
+export interface SearchFields {
+  message: boolean;
+  sourceLocation: boolean;
+  context: boolean;
+  stacktrace: boolean;
+}
+
 export interface LogQueryFilters {
   level?: string;
   from?: number;
   to?: number;
   search?: string;
+  searchFields?: SearchFields;
 }
 
 export interface LogQueryResult {

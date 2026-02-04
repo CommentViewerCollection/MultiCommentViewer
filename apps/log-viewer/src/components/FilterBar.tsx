@@ -14,10 +14,28 @@ export default function FilterBar({ filters, onFiltersChange, onExport, exportLo
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  // 検索対象フィールドのstate (デフォルトは全選択)
+  const [searchMessage, setSearchMessage] = useState(true);
+  const [searchSource, setSearchSource] = useState(true);
+  const [searchContext, setSearchContext] = useState(true);
+  const [searchStacktrace, setSearchStacktrace] = useState(true);
+
+  // 検索が有効かどうかを判定
+  const isSearchValid = !search || (
+    search && (searchMessage || searchSource || searchContext || searchStacktrace)
+  );
+
   const handleApply = () => {
     const newFilters: LogQueryFilters = {
       level: level || undefined,
       search: search || undefined,
+      // searchの有無に関わらず、searchFieldsを常に送信
+      searchFields: {
+        message: searchMessage,
+        sourceLocation: searchSource,
+        context: searchContext,
+        stacktrace: searchStacktrace,
+      },
       from: fromDate ? new Date(fromDate).getTime() : undefined,
       to: toDate ? new Date(toDate).getTime() : undefined,
     };
@@ -27,6 +45,10 @@ export default function FilterBar({ filters, onFiltersChange, onExport, exportLo
   const handleReset = () => {
     setLevel("");
     setSearch("");
+    setSearchMessage(true);
+    setSearchSource(true);
+    setSearchContext(true);
+    setSearchStacktrace(true);
     setFromDate("");
     setToDate("");
     onFiltersChange({});
@@ -57,7 +79,7 @@ export default function FilterBar({ filters, onFiltersChange, onExport, exportLo
         {/* Search Filter */}
         <div className="flex flex-col flex-1">
           <label className="text-xs font-medium text-gray-700 mb-1">
-            Search (message, file, module)
+            Search
           </label>
           <input
             type="text"
@@ -66,6 +88,43 @@ export default function FilterBar({ filters, onFiltersChange, onExport, exportLo
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             placeholder="Enter search keyword..."
           />
+
+          {/* 検索対象選択チェックボックス */}
+          <div className="flex items-center gap-4 mt-2 text-xs text-gray-600">
+            <span className="font-medium">Search in:</span>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={searchMessage}
+                onChange={(e) => setSearchMessage(e.target.checked)}
+              />
+              Message
+            </label>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={searchSource}
+                onChange={(e) => setSearchSource(e.target.checked)}
+              />
+              Source Location
+            </label>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={searchContext}
+                onChange={(e) => setSearchContext(e.target.checked)}
+              />
+              Context
+            </label>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={searchStacktrace}
+                onChange={(e) => setSearchStacktrace(e.target.checked)}
+              />
+              Stack Trace
+            </label>
+          </div>
         </div>
 
         {/* From Date */}
@@ -98,7 +157,12 @@ export default function FilterBar({ filters, onFiltersChange, onExport, exportLo
         <div className="flex gap-2">
           <button
             onClick={handleApply}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+            disabled={!isSearchValid}
+            className={`px-4 py-2 rounded-md text-sm ${
+              !isSearchValid
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
           >
             Apply
           </button>

@@ -189,6 +189,7 @@ pub struct AddConnectionPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionAddedPayload {
     pub connection_id: Uuid,
+    pub name: String,
 }
 
 /// connection-add-failedのpayload

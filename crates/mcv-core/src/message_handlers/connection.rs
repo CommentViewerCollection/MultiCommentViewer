@@ -38,7 +38,7 @@ pub fn generate_connection_default_name(actor: &CoreActor) -> String {
 /// add-connection メッセージのハンドラー
 pub fn handle_add_connection(
     actor: &mut CoreActor,
-    message: &McvMessage,
+    _message: &McvMessage,
     _ctx: &mut Context<CoreActor>,
 ) {
     tracing::trace!(
@@ -49,7 +49,6 @@ pub fn handle_add_connection(
     let connection_id = Uuid::new_v4();
 
     // Connection Managerに登録
-    let response_message = message.clone();
     let conn_name = generate_connection_default_name(actor);
 
     actor
@@ -62,28 +61,17 @@ pub fn handle_add_connection(
         "Connection added"
     );
 
-    // connection-addedを返信
-    let response = McvMessage::create_response(
-        &response_message,
-        MessageType::ConnectionAdded,
-        serde_json::to_value(ConnectionAddedPayload { connection_id }).unwrap(),
-    );
-
-    // プラグインへ返信
-    if let MessageSource::Plugin { plugin_id } = message.src {
-        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
-        if let Some(plugin_info) = actor.logical_plugins.get(&logical_plugin_id) {
-            plugin_info
-                .host_addr
-                .do_send(SendMessageToPlugin { message: response });
-        }
-    }
     // 全論理プラグインにConnectionAddedをブロードキャスト
+    // ユニキャスト送信は不要（送信元も含めて全員がブロードキャストで受信する）
     let broadcast_msg = McvMessage::new_notification(
         MessageType::ConnectionAdded,
         MessageSource::Core,
         MessageDestination::Broadcast,
-        serde_json::to_value(ConnectionAddedPayload { connection_id }).unwrap(),
+        serde_json::to_value(ConnectionAddedPayload {
+            connection_id,
+            name: conn_name,
+        })
+        .unwrap(),
     );
     message_handlers::plugin_hello::broadcast_to_all_logical_plugins(actor, broadcast_msg);
     tracing::debug!(
@@ -93,11 +81,7 @@ pub fn handle_add_connection(
 }
 
 /// connect メッセージのハンドラー
-pub fn handle_connect(
-    actor: &mut CoreActor,
-    message: &McvMessage,
-    _ctx: &mut Context<CoreActor>,
-) {
+pub fn handle_connect(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut Context<CoreActor>) {
     let payload: ConnectPayload = match serde_json::from_value(message.payload.clone()) {
         Ok(p) => p,
         Err(e) => {

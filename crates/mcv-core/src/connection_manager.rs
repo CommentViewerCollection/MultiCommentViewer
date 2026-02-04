@@ -196,7 +196,7 @@ mod tests {
     fn test_connection_lifecycle() {
         let mut manager = ConnectionManager::new();
         let conn_id = Uuid::new_v4();
-        let plugin_id = Uuid::new_v4();
+        let _plugin_id = Uuid::new_v4();
 
         // 接続を追加（plugin_idはOptionに変更）
         manager.add_connection(conn_id,  "Test Connection".to_string());

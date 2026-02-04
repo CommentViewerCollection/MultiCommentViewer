@@ -39,17 +39,16 @@ pub fn handle_plugin_hello(
         tracing::debug!(
             target: "mcv::core::CoreActor",
             logical_plugin_id = %logical_plugin_id,
-            "Logical plugin already registered, sending plugin-added response"
+            "Logical plugin already registered, broadcasting plugin-added to all"
         );
 
-        // 既に登録済みの場合でも、plugin-added メッセージを返信
+        // 既に登録済みの場合でも、plugin-addedをブロードキャスト
+        // ユニキャストは不要（送信元も含めて全員がブロードキャストで受信する）
         if let Some(plugin_info) = actor.logical_plugins.get(&logical_plugin_id) {
             let response = McvMessage::new(
                 MessageType::PluginAdded,
                 MessageSource::Core,
-                MessageDestination::Plugin {
-                    plugin_id: physical_plugin_id.inner(),
-                },
+                MessageDestination::Broadcast,
                 serde_json::to_value(PluginAddedPayload {
                     name: plugin_info.name.clone(),
                     plugin_id: logical_plugin_id.inner(),
@@ -59,10 +58,8 @@ pub fn handle_plugin_hello(
                 .unwrap(),
             );
 
-            // 物理プラグインのPluginHostActorを取得して送信
-            if let Some(host_addr) = actor.physical_plugin_hosts.get(&physical_plugin_id) {
-                host_addr.do_send(SendMessageToPlugin { message: response });
-            }
+            // 全論理プラグインにブロードキャスト
+            broadcast_to_all_logical_plugins(actor, response);
         }
         return;
     }
@@ -211,10 +208,20 @@ pub fn handle_get_plugins(
 }
 
 /// 全論理プラグインにメッセージをブロードキャスト
+///
+/// 各論理プラグインに送信する際、dstをBroadcastから個別のPlugin{plugin_id}に変更します。
+/// これにより、EXE Plugin Managerなど同じhost_addrを共有するプラグインが
+/// 自分宛てのメッセージのみを処理できるようになります。
 pub fn broadcast_to_all_logical_plugins(actor: &CoreActor, message: McvMessage) {
-    for (_, logical_plugin_info) in &actor.logical_plugins {
+    for (logical_plugin_id, logical_plugin_info) in &actor.logical_plugins {
+        // dstを個別のプラグインIDに変更
+        let mut personalized_message = message.clone();
+        personalized_message.dst = MessageDestination::Plugin {
+            plugin_id: logical_plugin_id.inner(),
+        };
+
         logical_plugin_info.host_addr.do_send(SendMessageToPlugin {
-            message: message.clone(),
+            message: personalized_message,
         });
     }
 }

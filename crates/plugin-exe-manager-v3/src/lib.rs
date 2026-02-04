@@ -8,6 +8,7 @@ use mcv_messages::{
 };
 use mcv_plugin_interface::{PluginError, PluginHost};
 use plugin_abi_helper::v3::prelude::*;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -44,6 +45,9 @@ pub struct ExePluginManagerV3Impl {
     logical_plugin_id: Uuid,
     websocket_server: Option<Arc<WebSocketServer>>,
     process_manager: Option<Arc<RwLock<ProcessManager>>>,
+    /// ルーティングテーブル: logical_plugin_id → internal_physical_plugin_id
+    /// Coreから送られてきたメッセージのdstに基づいて、対応するEXEプラグインに転送する
+    routing_table: Arc<RwLock<HashMap<Uuid, Uuid>>>,
 }
 
 impl ExePluginManagerV3Impl {
@@ -52,6 +56,7 @@ impl ExePluginManagerV3Impl {
             logical_plugin_id: Uuid::new_v4(),  // on_loadedで設定される
             websocket_server: None,
             process_manager: None,
+            routing_table: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -68,7 +73,12 @@ impl ExePluginManagerV3Impl {
             let addr = format!("127.0.0.1:{}", port);
             match WebSocketServer::new(&addr, Arc::clone(&adapter) as Arc<dyn PluginHost>).await {
                 Ok(server) => {
-                    tracing::info!(port, "WebSocket server started");
+                    let actual_port = server.get_port();
+                    tracing::info!(
+                        port = actual_port,
+                        "WebSocket server successfully started and listening"
+                    );
+                    println!("=== ExePluginManager: WebSocket server listening on port {} ===", actual_port);
                     websocket_server = Some(Arc::new(server));
                     break;
                 }
@@ -86,7 +96,22 @@ impl ExePluginManagerV3Impl {
             )
         })?;
 
-        self.websocket_server = Some(websocket_server);
+        self.websocket_server = Some(Arc::clone(&websocket_server));
+
+        // plugin-helloコールバックを設定（ルーティングテーブルに登録）
+        let routing_table_clone = Arc::clone(&self.routing_table);
+        websocket_server.set_on_plugin_registered(move |internal_id, logical_id| {
+            // 非同期コンテキストで実行する必要があるため、tokio::spawnを使用
+            let routing_table = Arc::clone(&routing_table_clone);
+            tokio::spawn(async move {
+                routing_table.write().await.insert(logical_id, internal_id);
+                tracing::debug!(
+                    logical_plugin_id = %logical_id,
+                    internal_physical_plugin_id = %internal_id,
+                    "Routing table entry added"
+                );
+            });
+        }).await;
 
         // プロセスマネージャーを初期化
         let process_manager =
@@ -97,20 +122,6 @@ impl ExePluginManagerV3Impl {
         self.process_manager = Some(Arc::new(RwLock::new(process_manager)));
 
         Ok(())
-    }
-
-    /// メッセージタイプがブロードキャストすべきかどうかを判定
-    fn should_broadcast(message_type: &MessageType) -> bool {
-        matches!(
-            message_type,
-            MessageType::PluginAdded
-                | MessageType::PluginRemoved
-                | MessageType::ConnectionAdded
-                | MessageType::ConnectionRemoved
-                | MessageType::Connected
-                | MessageType::Disconnected
-                | MessageType::CommentReceived
-        )
     }
 }
 
@@ -163,7 +174,18 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         let json = serde_json::to_vec(&message).unwrap();
         ctx.send_message(&json).await;
 
-        tracing::info!("ExePluginManager initialized and plugin-hello sent");
+        // WebSocketサーバーのポート番号をログ出力
+        if let Some(ws_server) = &self.websocket_server {
+            let port = ws_server.get_port();
+            tracing::info!(
+                port = port,
+                websocket_url = format!("ws://127.0.0.1:{}", port),
+                "ExePluginManager initialized successfully"
+            );
+            println!("=== ExePluginManager: WebSocket URL = ws://127.0.0.1:{} ===", port);
+        } else {
+            tracing::info!("ExePluginManager initialized and plugin-hello sent");
+        }
     }
 
     async fn on_message(&mut self, _ctx: PluginContext, msg: &[u8]) {
@@ -176,28 +198,57 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
             }
         };
 
-        // 既存のルーティングロジック
-        if let Some(websocket_server) = &self.websocket_server {
-            let router = websocket_server.get_router();
+        // dstに基づいてルーティング
+        match message.dst {
+            MessageDestination::Plugin { plugin_id } => {
+                // 自分宛てかチェック
+                if plugin_id == self.logical_plugin_id {
+                    // EXE Plugin Manager自身宛てのメッセージ
+                    // 現在は何もしない（将来の拡張用）
+                    tracing::trace!(
+                        target: "mcv::plugin_exe_manager",
+                        "Received message for EXE Plugin Manager itself"
+                    );
+                    return;
+                }
 
-            if Self::should_broadcast(&message.message_type) {
-                if let Err(e) = router.broadcast(message).await {
-                    tracing::error!(error = %e, "Broadcast failed");
-                }
-            } else {
-                match &message.dst {
-                    MessageDestination::Plugin { plugin_id } => {
-                        if let Err(e) = router.route_to_plugin(*plugin_id, message).await {
-                            tracing::error!(error = %e, "Route to plugin failed");
+                // ルーティングテーブルを引いてEXEプラグインに転送
+                if let Some(websocket_server) = &self.websocket_server {
+                    let routing_table = self.routing_table.read().await;
+                    if let Some(internal_physical_plugin_id) = routing_table.get(&plugin_id) {
+                        let internal_physical_plugin_id = *internal_physical_plugin_id;
+                        drop(routing_table); // ロック解放
+
+                        let router = websocket_server.get_router();
+                        if let Err(e) = router.route_to_plugin(internal_physical_plugin_id, message).await {
+                            tracing::error!(
+                                error = %e,
+                                logical_plugin_id = %plugin_id,
+                                internal_physical_plugin_id = %internal_physical_plugin_id,
+                                "Failed to route message to EXE plugin"
+                            );
                         }
-                    }
-                    MessageDestination::Core => {
-                        // Coreへのメッセージはルーティング不要
-                    }
-                    MessageDestination::Broadcast => {
-                        // ブロードキャストは上で処理済み
+                    } else {
+                        tracing::warn!(
+                            plugin_id = %plugin_id,
+                            "Received message for unknown EXE plugin (not in routing table)"
+                        );
                     }
                 }
+            }
+            MessageDestination::Core => {
+                // Coreへのメッセージ（通常は発生しない）
+                tracing::trace!(
+                    target: "mcv::plugin_exe_manager",
+                    "Received message destined for Core (unexpected)"
+                );
+            }
+            MessageDestination::Broadcast => {
+                // Broadcastはbroadcast_to_all_logical_pluginsでPlugin{plugin_id}に変換されるはず
+                tracing::warn!(
+                    target: "mcv::plugin_exe_manager",
+                    "Received Broadcast message (should have been converted to Plugin)"
+                );
             }
         }
     }

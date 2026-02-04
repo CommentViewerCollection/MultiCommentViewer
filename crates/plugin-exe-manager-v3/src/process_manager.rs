@@ -28,10 +28,14 @@ pub struct ProcessManager {
 
 /// EXEプラグインのプロセス情報
 struct PluginProcess {
+    #[allow(dead_code)]
     manifest: PluginManifest,
+    #[allow(dead_code)]
     manifest_dir: PathBuf,
     child: Option<Child>,
+    #[allow(dead_code)]
     restart_count: u32,
+    #[allow(dead_code)]
     auto_started: bool, // 自動起動されたプラグインかどうか
 }
 
@@ -216,48 +220,6 @@ impl ProcessManager {
         Ok(())
     }
 
-    /// プラグインを再起動
-    #[allow(dead_code)]
-    async fn restart_plugin(&mut self, plugin_id: &str) -> Result<(), ProcessManagerError> {
-        tracing::info!(target = "mcv::plugin_exe_manager", plugin_id = %plugin_id, "Restarting plugin");
-
-        // プロセスを取得
-        let process = self.processes.get_mut(plugin_id).ok_or_else(|| {
-            ProcessManagerError::SpawnError(format!("Plugin not found: {}", plugin_id))
-        })?;
-
-        // 既存のプロセスを終了
-        if let Some(mut child) = process.child.take() {
-            let _ = child.kill();
-            let _ = child.wait();
-        }
-
-        // 再起動カウントをインクリメント
-        process.restart_count += 1;
-
-        // 最大再起動回数チェック（3回まで）
-        if process.restart_count > 3 {
-            tracing::error!(
-                target = "mcv::plugin_exe_manager",
-                plugin_id = %plugin_id,
-                restart_count = process.restart_count,
-                "Maximum restart count exceeded"
-            );
-            return Err(ProcessManagerError::SpawnError(
-                "Maximum restart count exceeded".to_string(),
-            ));
-        }
-
-        // 再起動
-        let manifest = process.manifest.clone();
-        let manifest_dir = process.manifest_dir.clone();
-        let auto_started = process.auto_started;
-
-        self.start_plugin(&manifest_dir, &manifest, auto_started)
-            .await?;
-
-        Ok(())
-    }
 
     /// プラグインをシャットダウン
     pub async fn shutdown(&mut self) -> Result<(), ProcessManagerError> {

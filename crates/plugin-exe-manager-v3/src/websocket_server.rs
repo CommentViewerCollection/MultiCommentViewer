@@ -31,9 +31,9 @@ pub struct WebSocketServer {
     port: u16,
     clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
     router: Arc<MessageRouter>,
-    #[allow(dead_code)]
-    host: Arc<dyn PluginHost>,
     shutdown_tx: Option<mpsc::Sender<()>>,
+    /// plugin-hello受信時のコールバック (internal_physical_plugin_id, logical_plugin_id)
+    on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
 }
 
 impl WebSocketServer {
@@ -64,20 +64,22 @@ impl WebSocketServer {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = Arc::new(MessageRouter::new(Arc::clone(&clients)));
         let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
+        let on_plugin_registered = Arc::new(RwLock::new(None));
 
         // サーバーループを起動
         let clients_clone = Arc::clone(&clients);
         let host_clone = Arc::clone(&host);
+        let on_plugin_registered_clone = Arc::clone(&on_plugin_registered);
         tokio::spawn(async move {
-            Self::server_loop(listener, clients_clone, host_clone, shutdown_rx).await;
+            Self::server_loop(listener, clients_clone, host_clone, on_plugin_registered_clone, shutdown_rx).await;
         });
 
         Ok(Self {
             port,
             clients,
             router,
-            host,
             shutdown_tx: Some(shutdown_tx),
+            on_plugin_registered,
         })
     }
 
@@ -86,6 +88,7 @@ impl WebSocketServer {
         listener: TcpListener,
         clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
+        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
         mut shutdown_rx: mpsc::Receiver<()>,
     ) {
         loop {
@@ -97,8 +100,9 @@ impl WebSocketServer {
                             tracing::info!(target="mcv::plugin-exe-manager::WebSocketServer",addr = %addr, "New WebSocket connection");
                             let clients_clone = Arc::clone(&clients);
                             let host_clone = Arc::clone(&host);
+                            let on_plugin_registered_clone = Arc::clone(&on_plugin_registered);
                             tokio::spawn(async move {
-                                if let Err(e) = Self::handle_connection(stream, clients_clone, host_clone).await {
+                                if let Err(e) = Self::handle_connection(stream, clients_clone, host_clone, on_plugin_registered_clone).await {
                                     println!("=== WebSocketServer: Connection handler error: {} ===", e);
                                     tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, "Connection handler error");
                                 }
@@ -123,6 +127,7 @@ impl WebSocketServer {
         stream: TcpStream,
         clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
+        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
     ) -> Result<(), WebSocketError> {
         let ws_stream = tokio_tungstenite::accept_async(stream)
             .await
@@ -176,24 +181,44 @@ impl WebSocketServer {
                                 if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
                                     mcv_message.payload.clone(),
                                 ) {
-                                    plugin_id = Some(payload.plugin_id);
+                                    let internal_physical_plugin_id = payload.plugin_id; // WebSocket接続のID
+
+                                    // mcv_messageのsrcからlogical_plugin_idを取得
+                                    let logical_plugin_id = match &mcv_message.src {
+                                        mcv_messages::MessageSource::Plugin { plugin_id } => *plugin_id,
+                                        _ => payload.plugin_id, // フォールバック
+                                    };
+
+                                    plugin_id = Some(internal_physical_plugin_id);
 
                                     let client = ClientInfo {
-                                        plugin_id: payload.plugin_id,
+                                        plugin_id: internal_physical_plugin_id,
                                         sender: tx.clone(),
                                         roles: payload.role.clone(),
                                     };
 
-                                    clients.write().await.insert(payload.plugin_id, client);
+                                    clients.write().await.insert(internal_physical_plugin_id, client);
 
-                                    println!("=== WebSocketServer: EXE plugin registered, id: {}, name: {} ===", payload.plugin_id, payload.name);
+                                    println!("=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
+                                        internal_physical_plugin_id, logical_plugin_id, payload.name);
                                     tracing::info!(
                                         target="mcv::plugin-exe-manager::WebSocketServer",
-                                        plugin_id = %payload.plugin_id,
+                                        internal_physical_plugin_id = %internal_physical_plugin_id,
+                                        logical_plugin_id = %logical_plugin_id,
                                         plugin_name = %payload.name,
                                         roles = ?payload.role,
                                         "EXE plugin registered"
                                     );
+
+                                    // コールバック呼び出し
+                                    let callback_guard = on_plugin_registered.read().await;
+                                    if let Some(callback) = callback_guard.as_ref() {
+                                        callback(internal_physical_plugin_id, logical_plugin_id);
+                                        tracing::debug!(
+                                            target="mcv::plugin-exe-manager::WebSocketServer",
+                                            "plugin-hello callback invoked"
+                                        );
+                                    }
                                 }
                             }
 
@@ -270,17 +295,15 @@ impl WebSocketServer {
         &self.router
     }
 
-    /// EXEプラグインへメッセージを送信（レガシー互換性のため残す）
-    pub async fn send_to_plugin(
-        &self,
-        plugin_id: Uuid,
-        message: McvMessage,
-    ) -> Result<(), WebSocketError> {
-        self.router
-            .route_to_plugin(plugin_id, message)
-            .await
-            .map_err(|e| WebSocketError::SendError(e.to_string()))
+    /// plugin-hello受信時のコールバックを設定
+    pub async fn set_on_plugin_registered<F>(&self, callback: F)
+    where
+        F: Fn(Uuid, Uuid) + Send + Sync + 'static,
+    {
+        let mut cb = self.on_plugin_registered.write().await;
+        *cb = Some(Arc::new(callback));
     }
+
 
     /// WebSocketサーバーをシャットダウン
     pub async fn shutdown(&self) -> Result<(), WebSocketError> {

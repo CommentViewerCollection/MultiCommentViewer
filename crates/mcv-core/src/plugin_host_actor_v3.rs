@@ -155,9 +155,6 @@ impl Actor for PhysicalPluginHostActorV3 {
         // plugin_idを設定
         plugin.plugin_id = *self.plugin_id.as_bytes();
 
-        // PluginV3のuserdataにも設定
-        plugin.userdata = userdata;
-
         // hostポインタを設定
         plugin.host = &*self.host_runtime as *const HostRuntimeV3;
 

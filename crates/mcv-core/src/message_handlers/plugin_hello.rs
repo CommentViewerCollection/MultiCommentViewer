@@ -23,6 +23,8 @@ pub fn handle_plugin_hello(
             tracing::error!(
                 target: "mcv::core::CoreActor",
                 error = %e,
+                physical_plugin_id = %physical_plugin_id,
+                mcv_message = ?message,
                 "Failed to parse plugin-hello payload"
             );
             return;

@@ -19,7 +19,7 @@ impl Host {
     /// メッセージ送信（同期）
     pub fn send_message(&self, json: &[u8]) {
         unsafe {
-            ((*self.raw).send_message)(json.as_ptr(), json.len());
+            ((*self.raw).send_message)(self.raw, json.as_ptr(), json.len());
         }
     }
 }

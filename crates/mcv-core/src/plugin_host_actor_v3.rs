@@ -1,11 +1,20 @@
 use actix::prelude::*;
 use mcv_common::PhysicalPluginId;
+use mcv_messages::Message as McvMessage;
 use mcv_plugin_loader_v3::PluginLoaderV3;
-use plugin_abi_helper::abi::v3::HostRuntimeV3;
+use plugin_abi_helper::abi::v3::{HostRuntimeV3, PLUGIN_ABI_VERSION};
+use std::ffi::c_void;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::internal_message::InternalMessage;
 use crate::plugin_host_actor::SendMessageToPlugin;
+
+/// Callback用のデータ（userdataに格納）
+struct CallbackData {
+    physical_plugin_id: PhysicalPluginId,
+    actor_addr: Addr<PhysicalPluginHostActorV3>,
+}
 
 /// Physical Plugin-Host Actor for v3 ABI
 ///
@@ -26,9 +35,11 @@ impl PhysicalPluginHostActorV3 {
         plugin_loader: Arc<PluginLoaderV3>,
         core_addr: Option<Addr<crate::core_actor::CoreActor>>,
     ) -> Self {
-        // HostRuntimeV3を作成
+        // HostRuntimeV3を作成（userdataはstarted()で設定）
         let host_runtime = Box::new(HostRuntimeV3 {
+            abi_version: PLUGIN_ABI_VERSION,
             send_message: Self::host_send_message,
+            userdata: std::ptr::null_mut(),
         });
 
         Self {
@@ -43,37 +54,65 @@ impl PhysicalPluginHostActorV3 {
     /// Host側のsend_message実装
     ///
     /// プラグインからのメッセージをCoreに転送する
-    unsafe extern "C" fn host_send_message(json_ptr: *const u8, json_len: usize) {
-        if json_ptr.is_null() || json_len == 0 {
+    unsafe extern "C" fn host_send_message(
+        host: *const HostRuntimeV3,
+        json_ptr: *const u8,
+        json_len: usize,
+    ) -> i32 {
+        if host.is_null() || json_ptr.is_null() {
             tracing::error!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                "Invalid message: null pointer or zero length"
+                "Invalid arguments: null pointer"
             );
-            return;
+            return -1;
         }
 
-        let msg_slice = unsafe { std::slice::from_raw_parts(json_ptr, json_len) };
-        let msg_str = match std::str::from_utf8(msg_slice) {
-            Ok(s) => s,
+        // HostRuntimeV3からuserdataを取得
+        let host_ref = &*host;
+        if host_ref.userdata.is_null() {
+            tracing::error!(
+                target: "mcv::core::PhysicalPluginHostActorV3",
+                "userdata is null"
+            );
+            return -1;
+        }
+
+        // CallbackDataを取得
+        let callback_data = &*(host_ref.userdata as *const CallbackData);
+        let physical_plugin_id = callback_data.physical_plugin_id;
+
+        // JSONをパース
+        let msg_slice = std::slice::from_raw_parts(json_ptr, json_len);
+        let message = match serde_json::from_slice::<McvMessage>(msg_slice) {
+            Ok(m) => m,
             Err(e) => {
                 tracing::error!(
                     target: "mcv::core::PhysicalPluginHostActorV3",
                     error = %e,
-                    "Failed to parse message as UTF-8"
+                    "Failed to parse message from v3 plugin"
                 );
-                return;
+                return -1;
             }
         };
 
-        tracing::trace!(
+        // InternalMessageを作成
+        let internal_message = InternalMessage {
+            physical_plugin_id,
+            message,
+        };
+
+        // ReceiveMessageFromDllをactor_addrに送信
+        callback_data
+            .actor_addr
+            .do_send(ReceiveMessageFromDll { internal_message });
+
+        tracing::debug!(
             target: "mcv::core::PhysicalPluginHostActorV3",
-            message = %msg_str,
-            "Received message from plugin"
+            physical_plugin_id = %physical_plugin_id,
+            "Message forwarded to CoreActor"
         );
 
-        // JSONをパースしてCoreに送信
-        // Note: 現在はcore_addrにアクセスできないため、ログ出力のみ
-        // 実際の実装では、userdataなどを使ってcore_addrを取得する必要がある
+        0
     }
 
     /// Core Actorのアドレスを設定
@@ -91,17 +130,33 @@ impl Actor for PhysicalPluginHostActorV3 {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
+        let physical_plugin_id = self.physical_plugin_id;
+        let self_addr = ctx.address();
+
         tracing::debug!(
             target: "mcv::core::PhysicalPluginHostActorV3",
-            physical_plugin_id = %self.physical_plugin_id.inner(),
+            physical_plugin_id = %physical_plugin_id.inner(),
             plugin_id = %self.plugin_id,
             "v3 Plugin host actor started"
         );
+
+        // CallbackDataをヒープに確保
+        let callback_data = CallbackData {
+            physical_plugin_id,
+            actor_addr: self_addr,
+        };
+        let userdata = Box::into_raw(Box::new(callback_data)) as *mut c_void;
+
+        // HostRuntimeV3のuserdataに設定
+        self.host_runtime.userdata = userdata;
 
         let plugin = self.plugin_loader.get_plugin_mut();
 
         // plugin_idを設定
         plugin.plugin_id = *self.plugin_id.as_bytes();
+
+        // PluginV3のuserdataにも設定
+        plugin.userdata = userdata;
 
         // hostポインタを設定
         plugin.host = &*self.host_runtime as *const HostRuntimeV3;
@@ -188,5 +243,34 @@ impl Handler<crate::plugin_host_actor::ShutdownPlugin> for PhysicalPluginHostAct
             "Shutting down v3 plugin"
         );
         ctx.stop();
+    }
+}
+
+// ============================================================================
+// メッセージハンドラ
+// ============================================================================
+
+/// DLLプラグインからメッセージを受信
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ReceiveMessageFromDll {
+    pub internal_message: InternalMessage,
+}
+
+impl Handler<ReceiveMessageFromDll> for PhysicalPluginHostActorV3 {
+    type Result = ();
+
+    fn handle(&mut self, msg: ReceiveMessageFromDll, _ctx: &mut Self::Context) {
+        // CoreActorに転送
+        if let Some(core_addr) = &self.core_addr {
+            core_addr.do_send(crate::core_actor::SendMessageToCore {
+                internal_message: msg.internal_message,
+            });
+        } else {
+            tracing::error!(
+                target: "mcv::core::PhysicalPluginHostActorV3",
+                "CoreActor address not set"
+            );
+        }
     }
 }

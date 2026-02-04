@@ -11,11 +11,22 @@ pub const PLUGIN_ABI_VERSION: u32 = 3;
 /// Host 側が提供する関数群
 #[repr(C)]
 pub struct HostRuntimeV3 {
+    /// ABI バージョン
+    pub abi_version: u32,
+
     /// Core へメッセージ送信
+    /// 第1引数: HostRuntimeV3へのポインタ（userdataアクセス用）
+    /// 第2引数: JSON メッセージポインタ
+    /// 第3引数: JSON メッセージ長
+    /// 戻り値: 0=成功、-1=失敗
     pub send_message: unsafe extern "C" fn(
+        host: *const HostRuntimeV3,
         json_ptr: *const u8,
         json_len: usize,
-    ),
+    ) -> i32,
+
+    /// Host側が保持する任意のデータ（CallbackData等）
+    pub userdata: *mut c_void,
 }
 
 /// Plugin インスタンス（opaque handle）

@@ -15,7 +15,7 @@ cargo tauri build # --features alpha
 Set-Location $workspaceRoot/crates/plugin-dummy
 cargo build --release --features alpha
 
-Set-Location $workspaceRoot/crates/plugin-exe-manager
+Set-Location $workspaceRoot/crates/plugin-exe-manager-v3
 cargo build --release # --features alpha
 
 
@@ -26,8 +26,8 @@ Copy-Item -Path $workspaceRoot/target/release/MultiCommentViewer.pdb -Destinatio
 New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer\plugins -Force
 Copy-Item -Path $workspaceRoot/target/release/plugin_dummy.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
 Copy-Item -Path $workspaceRoot/target/release/plugin_dummy.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
-Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
-Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
+Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager_v3.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
+Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager_v3.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
 New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer\plugins\exe-plugin-sample -Force
 Copy-Item -Path $workspaceRoot/target/release/exe-plugin-sample.exe -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\exe-plugin-sample\
 Copy-Item -Path $workspaceRoot/target/release/exe_plugin_sample.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\exe-plugin-sample\

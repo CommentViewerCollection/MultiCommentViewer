@@ -20,10 +20,10 @@ Copy-Item -Path $workspaceRoot/target/release/plugin_dummy.dll -Destination $env
 Copy-Item -Path $workspaceRoot/target/release/plugin_dummy.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
 
 # plugin-exe-manager-v2
-Set-Location $workspaceRoot/crates/plugin-exe-manager
-cargo build --release # --features alpha
-Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
-Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
+# Set-Location $workspaceRoot/crates/plugin-exe-manager
+# cargo build --release # --features alpha
+# Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
+# Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\
 
 # plugin-exe-manager-v3
 Set-Location $workspaceRoot/crates/plugin-exe-manager-v3

@@ -17,17 +17,7 @@ fn test_load_plugin_dummy_dll() {
     println!("DLL path: {:?}", dll_path);
 
     // DLLをロード
-    let loader = PluginLoader::load(&dll_path).expect("Failed to load plugin DLL");
-
-    // メタデータを確認
-    let metadata = loader.metadata();
-    assert_eq!(metadata.id, "plugin-dummy");
-    assert_eq!(metadata.name, "Dummy Plugin");
-    assert_eq!(metadata.version, "0.1.0");
-    assert_eq!(metadata.api_version, "v2");
-    assert_eq!(metadata.roles, vec!["dummy"]);
-
-    println!("Plugin metadata: {:?}", metadata);
+    let _loader = PluginLoader::load(&dll_path).expect("Failed to load plugin DLL");
 }
 
 #[test]

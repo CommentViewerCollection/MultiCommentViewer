@@ -155,6 +155,15 @@ impl Actor for PhysicalPluginHostActorV3 {
         // plugin_idを設定
         plugin.plugin_id = *self.plugin_id.as_bytes();
 
+        // デバッグ: 設定後のplugin_idを確認
+        let set_plugin_id = Uuid::from_bytes(plugin.plugin_id);
+        tracing::debug!(
+            target: "mcv::core::PhysicalPluginHostActorV3",
+            expected_plugin_id = %self.plugin_id,
+            actual_plugin_id = %set_plugin_id,
+            "plugin_id set in started()"
+        );
+
         // hostポインタを設定
         plugin.host = &*self.host_runtime as *const HostRuntimeV3;
 
@@ -269,5 +278,69 @@ impl Handler<ReceiveMessageFromDll> for PhysicalPluginHostActorV3 {
                 "CoreActor address not set"
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn test_plugin_id_byte_conversion() {
+        // UuidからバイトIJ配列への変換をテスト
+        let uuid = Uuid::new_v4();
+        let bytes = *uuid.as_bytes();
+
+        // 逆変換して確認
+        let uuid_from_bytes = Uuid::from_bytes(bytes);
+        assert_eq!(uuid, uuid_from_bytes);
+
+        // nil UUIDではないことを確認
+        assert_ne!(uuid, Uuid::nil());
+    }
+
+    #[test]
+    fn test_physical_plugin_id_to_bytes() {
+        // PhysicalPluginId::inner()からバイト配列への変換をテスト
+        let physical_id = PhysicalPluginId::new();
+        let uuid = physical_id.inner();
+        let bytes = *uuid.as_bytes();
+
+        // nil UUIDではないことを確認
+        let uuid_from_bytes = Uuid::from_bytes(bytes);
+        assert_ne!(uuid_from_bytes, Uuid::nil());
+        assert_eq!(uuid, uuid_from_bytes);
+    }
+
+    #[test]
+    fn test_plugin_id_assignment_to_struct() {
+        // PluginV3構造体へのplugin_id設定をテスト
+        use plugin_abi_helper::abi::v3::PluginV3;
+        use std::ptr;
+
+        // テスト用のPluginV3を作成（factory.rsと同じ初期化）
+        let mut plugin = PluginV3 {
+            abi_version: 3,
+            plugin_id: [0u8; 16],  // nil UUID
+            host: ptr::null(),
+            on_loaded: unsafe { std::mem::transmute(0usize) },
+            on_message: unsafe { std::mem::transmute(0usize) },
+            on_shutdown: unsafe { std::mem::transmute(0usize) },
+            userdata: ptr::null_mut(),
+        };
+
+        // plugin_idが初期状態でnil UUIDであることを確認
+        let initial_uuid = Uuid::from_bytes(plugin.plugin_id);
+        assert_eq!(initial_uuid, Uuid::nil());
+
+        // 新しいUUIDを生成して設定（plugin_host_actor_v3.rsのstarted()と同じロジック）
+        let test_uuid = Uuid::new_v4();
+        plugin.plugin_id = *test_uuid.as_bytes();
+
+        // plugin_idが正しく設定されたことを確認
+        let assigned_uuid = Uuid::from_bytes(plugin.plugin_id);
+        assert_eq!(assigned_uuid, test_uuid);
+        assert_ne!(assigned_uuid, Uuid::nil());
     }
 }

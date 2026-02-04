@@ -12,6 +12,14 @@ pub unsafe extern "C" fn on_loaded_trampoline(plugin: *mut PluginV3) -> i32 {
         let plugin = &mut *plugin;
         let state = &mut *(plugin.userdata as *mut PluginState);
 
+        // デバッグ: trampolineで受け取ったplugin_idを確認
+        let plugin_id_uuid = uuid::Uuid::from_bytes(plugin.plugin_id);
+        tracing::debug!(
+            target: "plugin_abi_helper::v3::trampoline",
+            plugin_id = %plugin_id_uuid,
+            "on_loaded_trampoline received plugin_id"
+        );
+
         // Hostを設定（plugin_idも一緒に渡す）
         state.context.attach_host(plugin.host, plugin.plugin_id);
 

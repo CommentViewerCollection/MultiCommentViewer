@@ -63,60 +63,6 @@ impl PluginManager {
     pub fn set_core_addr(&mut self, addr: Addr<CoreActor>) {
         self.core_addr = Some(addr);
     }
-
-    /// プラグインを登録（DLLから）
-    ///
-    /// # Arguments
-    /// * `dll_path` - プラグインDLLのパス
-    ///
-    /// # Returns
-    /// (physical_plugin_id, plugin_host_addr, plugin_name)
-    pub async fn register_plugin_from_dll<P: AsRef<Path>>(
-        &self,
-        dll_path: P,
-    ) -> Result<(PhysicalPluginId, Addr<PhysicalPluginHostActor>, String), String> {
-        tracing::trace!(target: "mcv::core::PluginManager", "PluginManager::register_plugin_from_dll called");
-
-        // DLLをロード
-        let plugin_loader = PluginLoader::load(&dll_path).map_err(|e| {
-            format!(
-                "Failed to load plugin DLL from {:?}: {}",
-                dll_path.as_ref(),
-                e
-            )
-        })?;
-        // 物理プラグインの名称はdll名とする
-        let plugin_name = dll_path
-            .as_ref()
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("unknown_plugin")
-            .to_string();
-        //物理プラグインのIDを生成
-        let physical_plugin_id = PhysicalPluginId::new();
-        tracing::trace!(target: "mcv::core::PluginManager", "Generated physical_plugin_id: {} for {}", physical_plugin_id, plugin_name);
-
-        tracing::trace!(target: "mcv::core::PluginManager", "Loaded plugin: {} (id: {})", plugin_name, physical_plugin_id);
-
-        // Plugin-Host Actorを起動
-        let mut plugin_host =
-            PhysicalPluginHostActor::new_from_dll(physical_plugin_id, plugin_loader);
-        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor created from DLL");
-
-        if let Some(core_addr) = &self.core_addr {
-            tracing::trace!(target: "mcv::core::PluginManager", "Setting core_addr to PluginHostActor");
-            plugin_host.set_core_addr(core_addr.clone());
-        } else {
-            tracing::error!(target: "mcv::core::PluginManager", "ERROR: Core actor not set in PluginManager");
-            return Err("Core actor not set".to_string());
-        }
-
-        tracing::trace!(target: "mcv::core::PluginManager", "Starting PluginHostActor...");
-        let plugin_host_addr = plugin_host.start();
-        tracing::trace!(target: "mcv::core::PluginManager", "PluginHostActor started, addr: {:?}", plugin_host_addr);
-
-        Ok((physical_plugin_id, plugin_host_addr, plugin_name))
-    }
     fn is_bare_dll(is_file: bool, path: &Path) -> Option<PathBuf> {
         is_file
             .then(|| path.to_path_buf())
@@ -220,7 +166,9 @@ fn get_dll_plugin_path_from_manifest<R: Read>(
         };
         //entryのタイプによってdllプラグインの配置方法が違う。タイプに合った読み込み方法を採用する
         let entries = entries.filter_map(|e| e.ok());
-        let plugin_paths = entries.filter_map(|entry| {
+        let a :Vec<DirEntry> = entries.collect();
+                tracing::info!(target:"mcv",count = a.len(), "候補DirEntry数");
+        let plugin_paths = a.iter().filter_map(|entry| {
             Self::get_bare_dll_plugin_path(&entry)
                 .or_else(|| Self::get_dir_dll_plugin_path(&entry))
                 .or_else(|| Self::get_zip_dll_plugin_path(&entry))
@@ -233,6 +181,8 @@ fn get_dll_plugin_path_from_manifest<R: Read>(
                 return loaded_plugins;
             }
         };
+        let plugin_paths:Vec<PathBuf> = plugin_paths.collect();
+        tracing::info!(target:"mcv",count = plugin_paths.len(), "候補プラグイン数");
         for path in plugin_paths {
             // Registryを使用してDLLをロード
             match self.registry.load_plugin(&path, core_addr.clone()).await {

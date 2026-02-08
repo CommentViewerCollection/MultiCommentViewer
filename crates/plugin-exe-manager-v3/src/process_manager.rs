@@ -89,7 +89,7 @@ impl ProcessManager {
 
             // manifest.jsonを検索
             let manifest_path = path.join("manifest.json");
-            if manifest_path.exists() {
+            if manifest_path.exists() && manifest_path.extension().and_then(|a|a.to_str()) == Some("exe"){
                 match PluginManifest::load(&manifest_path) {
                     Ok(manifest) => {
                         let plugin_name = manifest.get_plugin_name();

@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
 use youtube_live_lib::{
-    Continuation, Vid, extract_ytcfg, get_live_chat, get_live_chat_messages, get_yt_initial_data
+    Continuation, Vid, extract_ytcfg, get_live_chat, get_live_chat_messages, get_yt_initial_data,
 };
 #[derive(Parser, Debug)]
 struct Args {
@@ -34,19 +34,20 @@ async fn get_comments(vid: &Vid) -> Result<()> {
     let live_chat = get_live_chat(&vid).await?;
     let yt_initial_data = get_yt_initial_data(&live_chat).await?;
     let continuation = yt_initial_data.continuation();
+    let initial_actions = yt_initial_data.actions();
     let ytcfg = extract_ytcfg(&live_chat)?;
 
-    let mut next_continuation:Continuation = continuation.to_owned();
+    let mut next_continuation: Continuation = continuation.to_owned();
     loop {
-        match get_live_chat_messages(&vid, &ytcfg, &next_continuation).await{
-            Ok(g) => {
-                if let Some(c) = g{
+        match get_live_chat_messages(&vid, &ytcfg, &next_continuation).await {
+            Ok((g, actions)) => {
+                if let Some(c) = g {
                     next_continuation = c;
                 } else {
                     println!("No more continuation.");
                     break;
                 }
-            },
+            }
             Err(e) => {
                 eprintln!("Error getting live chat messages: {}", e);
                 break;

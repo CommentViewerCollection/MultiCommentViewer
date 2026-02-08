@@ -1,21 +1,44 @@
+﻿//! YouTube Live plugin for MultiCommentViewer
+//!
+//! このプラグインはYouTube Liveのライブチャットからコメントを取得します。
+//!
+//! ## モジュール構成
+//! - `adapter`: PluginContext→PluginHostアダプタ
+//! - `connection`: 接続管理とチャット取得ロジック
+//! - `message_handler`: メッセージハンドリングとペイロード解析
+//! - `video_id`: YouTube動画ID抽出ユーティリティ
+
+mod adapter;
+mod connection;
+mod message_handler;
+mod video_id;
+
+use std::{collections::HashMap, sync::Arc};
+
+use adapter::PluginContextAdapter;
+use connection::Connection;
+use message_handler::on_message_impl;
 use mcv_messages::{
     AddSitePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
     PluginHelloPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
+
 use uuid::Uuid;
+
 #[derive(Default)]
 struct YouTubeLivePlugin {
-    logical_plugin_id: Uuid,//現在の実装ではplugin-helloは1回しか送らないから1つで良い。
+    logical_plugin_id: Uuid, //現在の実装ではplugin-helloは1回しか送らないから1つで良い。
     is_initialized: bool,
+    connections: HashMap<Uuid, Connection>,
 }
 impl YouTubeLivePlugin {
-    pub fn initialize(&mut self) {
+    pub fn initialize(&mut self, logical_plugin_id: Uuid) {
         if self.is_initialized {
             return;
         }
         self.is_initialized = true;
-        self.logical_plugin_id = Uuid::new_v4();
+        self.logical_plugin_id = logical_plugin_id;
     }
     async fn send_message(ctx: PluginContext, message: McvMessage) {
         let json = serde_json::to_vec(&message).unwrap();
@@ -54,8 +77,22 @@ impl YouTubeLivePlugin {
 
 #[async_trait::async_trait]
 impl PluginImplV3Async for YouTubeLivePlugin {
-    async fn on_loaded(&mut self, ctx: PluginContext) {        
-        self.initialize();
+    async fn on_loaded(&mut self, ctx: PluginContext) {
+        let logical_plugin_id = Uuid::new_v4();
+        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), logical_plugin_id));
+        let result_init_tracing = mcv_plugin_telemetry::init_tracing(
+            logical_plugin_id,
+            adapter,
+            env!("CARGO_PKG_VERSION"),
+            "info",
+        );
+        match result_init_tracing {
+            Ok(_) => {
+                tracing::trace!(target:"mcv::plugin-youtube-live::YouTubeLivePlugin", "init_tracing() success");
+            }
+            Err(_e) => {}
+        }
+        self.initialize(logical_plugin_id);
         // plugin-hello送信
         let hello_payload = PluginHelloPayload {
             name: "YouTubeLive".to_string(),
@@ -76,21 +113,24 @@ impl PluginImplV3Async for YouTubeLivePlugin {
         };
         self.send_add_site(ctx.clone(), add_site, self.logical_plugin_id)
             .await;
-        // let message = McvMessage::new(
-        //     MessageType::PluginHello,
-        //     MessageSource::Plugin {
-        //         plugin_id: self.plugin_id,
-        //     },
-        //     MessageDestination::Core,
-        //     serde_json::to_value(&hello_payload).unwrap(),
-        // );
-
-        // let json = serde_json::to_vec(&message).unwrap();
-        // ctx.send_message(&json).await;
     }
-    async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {}
+    async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {
+        let message: McvMessage = match serde_json::from_slice(&msg) {
+            Ok(m) => m,
+            Err(e) => {
+                tracing::error!(
+                    target: "mcv::plugin-youtube-live",
+                    error=%e,raw=msg,"受信したメッセージが復元できない"
+                );
+                return;
+            }
+        };
+        if let Err(_e) = on_message_impl(&mut self, ctx.clone(), message).await {
 
-    async fn on_shutdown(&mut self, ctx: PluginContext) {}
+        }
+    }
+
+    async fn on_shutdown(&mut self, _ctx: PluginContext) {}
 }
 
 export_plugin_v3_async!(YouTubeLivePlugin);

@@ -43,7 +43,7 @@ impl WebSocketServer {
             "=== WebSocketServer: Starting WebSocket server on {} ===",
             addr
         );
-        tracing::info!(target="mcv::plugin-exe-manager::WebSocketServer",addr = %addr, "Starting WebSocket server");
+        tracing::info!(target:"mcv::plugin-exe-manager::WebSocketServer",addr = %addr, "Starting WebSocket server");
 
         // アドレスをパース
         let socket_addr: SocketAddr = addr
@@ -56,7 +56,7 @@ impl WebSocketServer {
 
         println!("=== WebSocketServer: Listening on port {} ===", port);
         tracing::info!(
-            target = "mcv::plugin-exe-manager::WebSocketServer",
+            target: "mcv::plugin-exe-manager::WebSocketServer",
             port = port,
             "WebSocket server listening"
         );
@@ -97,25 +97,25 @@ impl WebSocketServer {
                     match result {
                         Ok((stream, addr)) => {
                             println!("=== WebSocketServer: New connection from {} ===", addr);
-                            tracing::info!(target="mcv::plugin-exe-manager::WebSocketServer",addr = %addr, "New WebSocket connection");
+                            tracing::info!(target:"mcv::plugin-exe-manager::WebSocketServer",addr = %addr, "New WebSocket connection");
                             let clients_clone = Arc::clone(&clients);
                             let host_clone = Arc::clone(&host);
                             let on_plugin_registered_clone = Arc::clone(&on_plugin_registered);
                             tokio::spawn(async move {
                                 if let Err(e) = Self::handle_connection(stream, clients_clone, host_clone, on_plugin_registered_clone).await {
                                     println!("=== WebSocketServer: Connection handler error: {} ===", e);
-                                    tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, "Connection handler error");
+                                    tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Connection handler error");
                                 }
                             });
                         }
                         Err(e) => {
                             println!("=== WebSocketServer: Failed to accept connection: {} ===", e);
-                            tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to accept connection");
+                            tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to accept connection");
                         }
                     }
                 }
                 _ = shutdown_rx.recv() => {
-                    tracing::info!(target="mcv::plugin-exe-manager::WebSocketServer","WebSocket server shutting down");
+                    tracing::info!(target:"mcv::plugin-exe-manager::WebSocketServer","WebSocket server shutting down");
                     break;
                 }
             }
@@ -134,7 +134,7 @@ impl WebSocketServer {
             .map_err(|e| WebSocketError::WebSocket(e.to_string()))?;
 
         tracing::debug!(
-            target = "mcv::plugin-exe-manager::WebSocketServer",
+            target: "mcv::plugin-exe-manager::WebSocketServer",
             "WebSocket connection established"
         );
 
@@ -145,19 +145,19 @@ impl WebSocketServer {
 
         // 送信タスク
         let send_task = tokio::spawn(async move {
-            tracing::debug!(target="mcv::plugin-exe-manager::WebSocketServer","送信タスクには入ってる");
+            tracing::debug!(target:"mcv::plugin-exe-manager::WebSocketServer","送信タスクには入ってる");
             while let Some(message) = rx.recv().await {
-                tracing::debug!(target = "mcv::plugin-exe-manager::WebSocketServer",message=?message, "送信用のデータが来た");
+                tracing::debug!(target: "mcv::plugin-exe-manager::WebSocketServer",message=?message, "送信用のデータが来た");
                 let json = match serde_json::to_string(&message) {
                     Ok(j) => j,
                     Err(e) => {
-                        tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to serialize message");
+                        tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to serialize message");
                         continue;
                     }
                 };
 
                 if let Err(e) = ws_sender.send(WsMessage::Text(json.into())).await {
-                    tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to send message");
+                    tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to send message");
                     break;
                 }
             }
@@ -167,7 +167,7 @@ impl WebSocketServer {
         while let Some(msg) = ws_receiver.next().await {
             match msg {
                 Ok(WsMessage::Text(text)) => {
-                    tracing::debug!(target="mcv::plugin-exe-manager::WebSocketServer",message_text = %text, "Received message from EXE plugin");
+                    tracing::debug!(target:"mcv::plugin-exe-manager::WebSocketServer",message_text = %text, "Received message from EXE plugin");
 
                     match serde_json::from_str::<McvMessage>(&text) {
                         Ok(mcv_message) => {
@@ -202,7 +202,7 @@ impl WebSocketServer {
                                     println!("=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
                                         internal_physical_plugin_id, logical_plugin_id, payload.name);
                                     tracing::info!(
-                                        target="mcv::plugin-exe-manager::WebSocketServer",
+                                        target:"mcv::plugin-exe-manager::WebSocketServer",
                                         internal_physical_plugin_id = %internal_physical_plugin_id,
                                         logical_plugin_id = %logical_plugin_id,
                                         plugin_name = %payload.name,
@@ -215,7 +215,7 @@ impl WebSocketServer {
                                     if let Some(callback) = callback_guard.as_ref() {
                                         callback(internal_physical_plugin_id, logical_plugin_id);
                                         tracing::debug!(
-                                            target="mcv::plugin-exe-manager::WebSocketServer",
+                                            target:"mcv::plugin-exe-manager::WebSocketServer",
                                             "plugin-hello callback invoked"
                                         );
                                     }
@@ -226,13 +226,13 @@ impl WebSocketServer {
                             println!("=== WebSocketServer: Forwarding message to Core ===");
                             if let Err(e) = host.send_message(mcv_message).await {
                                 println!("=== WebSocketServer: Failed to forward message to Core: {} ===", e);
-                                tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to forward message to Core");
+                                tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to forward message to Core");
                             } else {
                                 println!("=== WebSocketServer: Message forwarded to Core successfully ===");
                             }
                         }
                         Err(e) => {
-                            tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, text = %text, "Failed to parse message");
+                            tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, text = %text, "Failed to parse message");
                         }
                     }
                 }
@@ -242,7 +242,7 @@ impl WebSocketServer {
                 }
                 Ok(WsMessage::Ping(data)) => {
                     tracing::trace!(
-                        target = "mcv::plugin-exe-manager::WebSocketServer",
+                        target: "mcv::plugin-exe-manager::WebSocketServer",
                         "Received ping"
                     );
                     // Pongは自動的に送信される
@@ -250,24 +250,24 @@ impl WebSocketServer {
                 }
                 Ok(WsMessage::Pong(_)) => {
                     tracing::trace!(
-                        target = "mcv::plugin-exe-manager::WebSocketServer",
+                        target: "mcv::plugin-exe-manager::WebSocketServer",
                         "Received pong"
                     );
                 }
                 Ok(WsMessage::Binary(_)) => {
                     tracing::warn!(
-                        target = "mcv::plugin-exe-manager::WebSocketServer",
+                        target: "mcv::plugin-exe-manager::WebSocketServer",
                         "Received unexpected binary message"
                     );
                 }
                 Ok(WsMessage::Frame(_)) => {
                     tracing::trace!(
-                        target = "mcv::plugin-exe-manager::WebSocketServer",
+                        target: "mcv::plugin-exe-manager::WebSocketServer",
                         "Received frame"
                     );
                 }
                 Err(e) => {
-                    tracing::error!(target="mcv::plugin-exe-manager::WebSocketServer",error = %e, "WebSocket error");
+                    tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "WebSocket error");
                     break;
                 }
             }
@@ -276,7 +276,7 @@ impl WebSocketServer {
         // クライアントを登録解除
         if let Some(pid) = plugin_id {
             clients.write().await.remove(&pid);
-            tracing::info!(target="mcv::plugin-exe-manager::WebSocketServer",plugin_id = %pid, "EXE plugin disconnected");
+            tracing::info!(target:"mcv::plugin-exe-manager::WebSocketServer",plugin_id = %pid, "EXE plugin disconnected");
         }
 
         // 送信タスクをキャンセル
@@ -308,7 +308,7 @@ impl WebSocketServer {
     /// WebSocketサーバーをシャットダウン
     pub async fn shutdown(&self) -> Result<(), WebSocketError> {
         tracing::info!(
-            target = "mcv::plugin-exe-manager::WebSocketServer",
+            target: "mcv::plugin-exe-manager::WebSocketServer",
             "WebSocketServer::shutdown called"
         );
 

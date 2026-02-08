@@ -43,7 +43,7 @@ impl ProcessManager {
     /// 新しいプロセスマネージャーを作成
     pub async fn new(websocket_port: u16) -> Result<Self, ProcessManagerError> {
         tracing::info!(
-            target = "mcv::plugin_exe_manager",
+            target: "mcv::plugin_exe_manager",
             websocket_port = websocket_port,
             "ProcessManager::new called"
         );
@@ -66,12 +66,12 @@ impl ProcessManager {
     /// pluginsディレクトリをスキャンしてmanifest.jsonを検出
     async fn scan_plugins_directory(&mut self) -> Result<(), ProcessManagerError> {
         let plugins_dir = Self::get_plugins_directory()?;
-        tracing::trace!(target = "mcv::plugin_exe_manager", "Plugins directory path: {}", plugins_dir.display());
-        tracing::info!(target = "mcv::plugin_exe_manager", plugins_dir = %plugins_dir.display(), "Scanning plugins directory");
+        tracing::trace!(target: "mcv::plugin_exe_manager", "Plugins directory path: {}", plugins_dir.display());
+        tracing::info!(target: "mcv::plugin_exe_manager", plugins_dir = %plugins_dir.display(), "Scanning plugins directory");
 
         if !plugins_dir.exists() {
             tracing::warn!(
-                target = "mcv::plugin_exe_manager",
+                target: "mcv::plugin_exe_manager",
                 "Plugins directory does not exist, creating it"
             );
             std::fs::create_dir_all(&plugins_dir)?;
@@ -95,7 +95,7 @@ impl ProcessManager {
                         let plugin_name = manifest.get_plugin_name();
                         let plugin_id = manifest.get_plugin_id(&path);
                         tracing::info!(
-                            target = "mcv::plugin_exe_manager",
+                            target: "mcv::plugin_exe_manager",
                             plugin_name = %plugin_name,
                             plugin_id = %plugin_id,
                             manifest_path = %manifest_path.display(),
@@ -105,7 +105,7 @@ impl ProcessManager {
                     }
                     Err(e) => {
                         tracing::error!(
-                            target = "mcv::plugin_exe_manager",
+                            target: "mcv::plugin_exe_manager",
                             manifest_path = %manifest_path.display(),
                             error = %e,
                             "Failed to load manifest"
@@ -115,7 +115,7 @@ impl ProcessManager {
             }
         }
 
-        tracing::info!(target = "mcv::plugin_exe_manager", targetcount = self.manifests.len(), "Plugins scanned");
+        tracing::info!(target: "mcv::plugin_exe_manager", targetcount = self.manifests.len(), "Plugins scanned");
 
         Ok(())
     }
@@ -130,7 +130,7 @@ impl ProcessManager {
             let plugin_id = manifest.get_plugin_id(&manifest_dir);
 
             tracing::info!(
-                target = "mcv::plugin_exe_manager",
+                target: "mcv::plugin_exe_manager",
                 plugin_name = %plugin_name,
                 plugin_id = %plugin_id,
                 "Starting auto plugin"
@@ -139,7 +139,7 @@ impl ProcessManager {
             match self.start_plugin(&manifest_dir, &manifest, true).await {
                 Ok(_) => {
                     tracing::info!(
-                        target = "mcv::plugin_exe_manager",
+                        target: "mcv::plugin_exe_manager",
                         plugin_name = %plugin_name,
                         plugin_id = %plugin_id,
                         "Plugin started"
@@ -147,7 +147,7 @@ impl ProcessManager {
                 }
                 Err(e) => {
                     tracing::error!(
-                        target = "mcv::plugin_exe_manager",
+                        target: "mcv::plugin_exe_manager",
                         plugin_name = %plugin_name,
                         plugin_id = %plugin_id,
                         error = %e,
@@ -179,7 +179,7 @@ impl ProcessManager {
         }
 
         tracing::debug!(
-            target = "mcv::plugin_exe_manager",
+            target: "mcv::plugin_exe_manager",
             exe_path = %exe_path.display(),
             working_dir = %working_dir.display(),
             "Starting plugin process"
@@ -201,7 +201,7 @@ impl ProcessManager {
         let plugin_id = manifest.get_plugin_id(manifest_dir);
 
         tracing::info!(
-                target = "mcv::plugin_exe_manager",
+                target: "mcv::plugin_exe_manager",
             plugin_id = %plugin_id,
             pid = child.id(),
             "Plugin process started"
@@ -224,13 +224,13 @@ impl ProcessManager {
     /// プラグインをシャットダウン
     pub async fn shutdown(&mut self) -> Result<(), ProcessManagerError> {
         tracing::info!(
-            target = "mcv::plugin_exe_manager",
+            target: "mcv::plugin_exe_manager",
             "ProcessManager::shutdown called"
         );
 
         // すべてのプロセスを終了
         for (plugin_id, mut process) in self.processes.drain() {
-            tracing::info!(target = "mcv::plugin_exe_manager", plugin_id = %plugin_id, "Stopping plugin process");
+            tracing::info!(target: "mcv::plugin_exe_manager", plugin_id = %plugin_id, "Stopping plugin process");
             if let Some(mut child) = process.child.take() {
                 // グレースフルシャットダウン（TODO: シグナル送信）
                 match child.kill() {
@@ -239,7 +239,7 @@ impl ProcessManager {
                         match child.wait() {
                             Ok(status) => {
                                 tracing::info!(
-                                    target = "mcv::plugin_exe_manager",
+                                    target: "mcv::plugin_exe_manager",
                                     plugin_id = %plugin_id,
                                     exit_code = ?status.code(),
                                     "Plugin process stopped"
@@ -247,7 +247,7 @@ impl ProcessManager {
                             }
                             Err(e) => {
                                 tracing::error!(
-                                    target = "mcv::plugin_exe_manager",
+                                    target: "mcv::plugin_exe_manager",
                                     plugin_id = %plugin_id,
                                     error = %e,
                                     "Failed to wait for plugin process"
@@ -257,7 +257,7 @@ impl ProcessManager {
                     }
                     Err(e) => {
                         tracing::error!(
-                            target = "mcv::plugin_exe_manager",
+                            target: "mcv::plugin_exe_manager",
                             plugin_id = %plugin_id,
                             error = %e,
                             "Failed to kill plugin process"

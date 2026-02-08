@@ -51,12 +51,12 @@ impl ExePluginManager {
             let addr = format!("127.0.0.1:{}", port);
             match WebSocketServer::new(&addr, Arc::clone(&host)).await {
                 Ok(server) => {
-                    tracing::info!(target = "mcv::plugin_exe_manager", port = port, "WebSocket server started successfully");
+                    tracing::info!(target: "mcv::plugin_exe_manager", port = port, "WebSocket server started successfully");
                     websocket_server = Some(Arc::new(server));
                     break;
                 }
                 Err(e) => {
-                    tracing::warn!(target = "mcv::plugin_exe_manager", port = port, error = %e, "Failed to start WebSocket server on port, trying next");
+                    tracing::warn!(target: "mcv::plugin_exe_manager", port = port, error = %e, "Failed to start WebSocket server on port, trying next");
                     last_error = Some(e);
                 }
             }
@@ -83,7 +83,7 @@ impl ExePluginManager {
         self.process_manager = Some(Arc::new(RwLock::new(process_manager)));
 
         tracing::info!(
-            target = "mcv::plugin_exe_manager",
+            target: "mcv::plugin_exe_manager",
             plugin_id = %self.plugin_id,
             websocket_port = self.websocket_server.as_ref().unwrap().get_port(),
             "ExePluginManager initialized"
@@ -157,12 +157,12 @@ impl Plugin for ExePluginManager {
         );
 
         tracing::trace!(
-            target = "mcv::plugin_exe_manager",
+            target: "mcv::plugin_exe_manager",
             "Sending plugin-hello message"
         );
         host.send_message(message).await?;
         tracing::trace!(
-            target = "mcv::plugin_exe_manager",
+            target: "mcv::plugin_exe_manager",
             "ExePluginManager plugin-hello sent"
         );
 

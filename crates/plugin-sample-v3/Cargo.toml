@@ -12,3 +12,8 @@ async-trait = "0.1"
 serde_json = "1.0"
 tracing = "0.1"
 uuid = "1"
+
+[features]
+alpha = []
+beta = []
+stable = []

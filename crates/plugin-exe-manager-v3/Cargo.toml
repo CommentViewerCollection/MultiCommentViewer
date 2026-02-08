@@ -42,3 +42,8 @@ async-trait = "0.1"
 [dev-dependencies]
 tokio-test = "0.4"
 tempfile = "3.14"
+
+[features]
+alpha = ["mcv-tracing/alpha","plugin-abi-helper/alpha"]
+beta = ["mcv-tracing/beta","plugin-abi-helper/beta"]
+stable = ["mcv-tracing/stable","plugin-abi-helper/stable"]

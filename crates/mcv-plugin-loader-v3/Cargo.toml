@@ -8,3 +8,8 @@ plugin-abi-helper = { path = "../plugin-abi-helper" }
 libloading = "0.8"
 thiserror = "2.0"
 uuid = { version = "1.11", features = ["v4"] }
+
+[features]
+alpha = ["plugin-abi-helper/alpha"]
+beta = ["plugin-abi-helper/beta"]
+stable = ["plugin-abi-helper/stable"]

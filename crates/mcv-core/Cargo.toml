@@ -22,3 +22,8 @@ thiserror = { workspace = true }
 tracing = "0.1"
 once_cell = "1.20"
 libloading = "0.8"
+
+[features]
+alpha = ["mcv-logger/alpha","mcv-plugin-loader-v3/alpha","plugin-abi-helper/alpha"]
+beta = ["mcv-logger/beta","mcv-plugin-loader-v3/beta","plugin-abi-helper/beta"]
+stable = ["mcv-logger/stable","mcv-plugin-loader-v3/stable","plugin-abi-helper/stable"]

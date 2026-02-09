@@ -243,7 +243,7 @@ pub fn init_tracing(
     plugin_host: Arc<dyn PluginHost>,
     plugin_version: &str,
     log_level: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let plugin_version = plugin_version.to_string();
     let plugin_build_profile = get_build_profile();
 

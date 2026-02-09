@@ -2,12 +2,15 @@
 //!
 //! async/awaitを使用した非同期プラグインの実装例
 
+use mcv_messages::{
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
+};
 use plugin_abi_helper::v3::prelude::*;
 use uuid::Uuid;
 #[derive(Default)]
 struct SamplePlugin {
     message_count: u32,
-    logical_plugin_id:Uuid,
+    logical_plugin_id: Uuid,
 }
 
 #[async_trait]
@@ -17,20 +20,21 @@ impl PluginImplV3Async for SamplePlugin {
         tracing::info!("SamplePlugin v3 loaded, ID: {}", self.logical_plugin_id);
 
         // plugin-helloを送信
-        let hello = serde_json::json!({
-            "message_type": "plugin-hello",
-            "src": { "Plugin": { "plugin_id": self.logical_plugin_id.to_string() } },
-            "dst": "Core",
-            "timestamp": 0,
-            "payload": {
-                "name": "Sample Plugin v3",
-                "plugin_id": self.logical_plugin_id.to_string(),
-                "role": ["sample"],
-                "api_version": "v3"
-            }
-        });
-
-        let json = serde_json::to_vec(&hello).unwrap();
+        let hello_payload = PluginHelloPayload {
+            name: "Sample Plugin v3".to_string(),
+            plugin_id: self.logical_plugin_id,
+            role: vec![],
+            api_version: "v3".to_string(),
+        };
+        let message = McvMessage::new(
+            MessageType::PluginHello,
+            MessageSource::Plugin {
+                plugin_id: self.logical_plugin_id,
+            },
+            MessageDestination::Core,
+            serde_json::to_value(&hello_payload).unwrap(),
+        );
+        let json = serde_json::to_vec(&message).unwrap();
         ctx.send_message(&json).await;
 
         tracing::info!("plugin-hello sent");

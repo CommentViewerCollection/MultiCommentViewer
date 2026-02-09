@@ -77,8 +77,9 @@ impl PluginManager {
     /// pluginsディレクトリに各プラグイン専用のディレクトリを置いているdllプラグインのpathを取得する
     fn get_dir_dll_plugin_path(entry: &DirEntry) -> Option<PathBuf> {
         let dir_path = (entry.file_type().ok()?.is_dir()).then(|| entry.path())?;
-
+        tracing::trace!(target:"mcv::mcv-core::PluginManager", "dir_path={:?}", dir_path);
         let manifest_path = dir_path.join("manifest.json");
+        tracing::trace!(target:"mcv::mcv-core::PluginManager", "manifest_path={:?}", manifest_path);
         let reader = BufReader::new(File::open(manifest_path).ok()?);
 
         Self::get_dll_plugin_path_from_manifest(reader, &dir_path)
@@ -112,6 +113,7 @@ fn get_dll_plugin_path_from_manifest<R: Read>(
     manifest_dir: &Path,
 ) -> Option<PathBuf> {
     let manifest_path = Self::read_dll_path_from_manifest(reader)?;
+    tracing::trace!(target:"mcv::mcv-core::PluginManager", "manifest relative path = {:?}", manifest_path);
 
     // 相対パスなら manifest_dir 基準で解決
     let joined_path = if manifest_path.is_absolute() {
@@ -119,10 +121,12 @@ fn get_dll_plugin_path_from_manifest<R: Read>(
     } else {
         manifest_dir.join(manifest_path)
     };
+    tracing::trace!(target:"mcv::mcv-core::PluginManager", "joined_path = {:?}", joined_path);
 
     // 実パスに正規化（..、シンボリックリンクを解決）
     let canonical_manifest_dir = manifest_dir.canonicalize().ok()?;
     let canonical_full_path = joined_path.canonicalize().ok()?;
+    tracing::trace!(target:"mcv::mcv-core::PluginManager", "canonical_full_path = {:?}", canonical_full_path);
 
     // プラグインディレクトリ外への脱出を防止
     if !canonical_full_path.starts_with(&canonical_manifest_dir) {

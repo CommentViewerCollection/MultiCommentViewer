@@ -89,12 +89,18 @@ impl PhysicalPluginHostActorV3 {
                 tracing::error!(
                     target: "mcv::core::PhysicalPluginHostActorV3",
                     error = %e,
+                    raw = format!("{:#?}",msg_slice),
                     "Failed to parse message from v3 plugin"
                 );
                 return -1;
             }
         };
-
+        tracing::debug!(
+            target: "mcv::core::PhysicalPluginHostActorV3",
+            physical_plugin_id = %physical_plugin_id,
+            raw = format!("{:?}", message),
+            "Message forwarded to CoreActor"
+        );
         // InternalMessageを作成
         let internal_message = InternalMessage {
             physical_plugin_id,
@@ -105,12 +111,6 @@ impl PhysicalPluginHostActorV3 {
         callback_data
             .actor_addr
             .do_send(ReceiveMessageFromDll { internal_message });
-
-        tracing::debug!(
-            target: "mcv::core::PhysicalPluginHostActorV3",
-            physical_plugin_id = %physical_plugin_id,
-            "Message forwarded to CoreActor"
-        );
 
         0
     }

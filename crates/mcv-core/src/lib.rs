@@ -84,8 +84,26 @@ impl PluginManager {
         Self::get_dll_plugin_path_from_manifest(reader, &dir_path)
     }
 
-fn read_dll_path_from_manifest<R: Read>(reader: R) -> Option<PathBuf> {
-    let manifest: Manifest = serde_json::from_reader(reader).ok()?;
+fn read_dll_path_from_manifest<R: Read>(mut reader: R) -> Option<PathBuf> {
+    let mut buf = Vec::new();
+    reader.read_to_end(&mut buf).ok()?;
+
+    // UTF-8 BOM を除去
+    const BOM: &[u8] = b"\xEF\xBB\xBF";
+    let buf = if buf.starts_with(BOM) {
+        &buf[BOM.len()..]
+    } else {
+        &buf[..]
+    };
+
+    let manifest: Manifest = match serde_json::from_slice(buf) {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::error!("manifest parse failed: {}", e);
+            return None;
+        }
+    };
+
     Some(PathBuf::from(manifest.path))
 }
 

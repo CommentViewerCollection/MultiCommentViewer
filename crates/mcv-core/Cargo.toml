@@ -10,6 +10,7 @@ mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-plugin-loader = { path = "../mcv-plugin-loader" }
 mcv-plugin-loader-v3 = { path = "../mcv-plugin-loader-v3" }
 mcv-log-core = { path = "../mcv-log-core" }
+mcv-settings-core = { path = "../mcv-settings-core" }
 plugin-abi-helper = { path = "../plugin-abi-helper" }
 actix = { workspace = true }
 serde = { workspace = true }

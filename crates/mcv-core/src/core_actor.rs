@@ -2,6 +2,7 @@ use actix::prelude::*;
 use mcv_common::{LogicalPluginId, PhysicalPluginId};
 use mcv_log_core::LogStorage;
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
+use mcv_settings_core::SettingsStorage;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -41,6 +42,8 @@ pub struct CoreActor {
     pub(crate) event_callback: Option<Arc<dyn Fn(McvMessage) + Send + Sync>>,
     /// プラグインログの直接ストレージ保存用
     pub(crate) log_storage: Option<Arc<Mutex<LogStorage>>>,
+    /// 設定ストレージ
+    pub(crate) settings_storage: Option<Arc<Mutex<SettingsStorage>>>,
 }
 
 impl CoreActor {
@@ -53,6 +56,7 @@ impl CoreActor {
             physical_plugin_hosts: HashMap::new(),
             event_callback: None,
             log_storage: None,
+            settings_storage: None,
         }
     }
 
@@ -66,9 +70,39 @@ impl CoreActor {
         self.log_storage = Some(storage);
     }
 
+    /// 設定ストレージを設定
+    pub fn set_settings_storage(&mut self, storage: Arc<Mutex<SettingsStorage>>) {
+        self.settings_storage = Some(storage);
+    }
 
-
-
+    /// Core設定のJSON Schemaを取得
+    pub fn get_core_settings_schema() -> serde_json::Value {
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "theme": {
+                    "type": "string",
+                    "title": "テーマ",
+                    "enum": ["dark", "light"],
+                    "default": "dark"
+                },
+                "auto_scroll": {
+                    "type": "boolean",
+                    "title": "自動スクロール",
+                    "description": "新しいコメントが届いたときに自動的にスクロールします",
+                    "default": true
+                },
+                "max_comments": {
+                    "type": "integer",
+                    "title": "最大コメント数",
+                    "description": "保持する最大コメント数（メモリ使用量に影響）",
+                    "default": 1000,
+                    "minimum": 100,
+                    "maximum": 10000
+                }
+            }
+        })
+    }
 }
 
 impl Actor for CoreActor {

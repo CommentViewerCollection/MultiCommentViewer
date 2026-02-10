@@ -5,4 +5,5 @@
 pub mod comment;
 pub mod connection;
 pub mod plugin_hello;
+pub mod settings;
 pub mod site_browser;

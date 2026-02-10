@@ -495,17 +495,108 @@ async fn get_build_profile_info() -> Result<BuildProfileInfo, String> {
     })
 }
 
+/// 設定スキーマを取得
+#[tauri::command]
+async fn get_settings_schema(
+    target: String,
+    state: State<'_, AppState>,
+) -> Result<serde_json::Value, String> {
+    let message = McvMessage::new(
+        MessageType::GetSettingsSchema,
+        MessageSource::Core,
+        MessageDestination::Core,
+        serde_json::to_value(mcv_messages::GetSettingsSchemaPayload { target })
+            .map_err(|e| e.to_string())?,
+    );
+
+    let response = state
+        .core_addr
+        .send(SendRequest { message })
+        .await
+        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_string())?;
+
+    let payload: mcv_messages::SettingsSchemaPayload =
+        serde_json::from_value(response.payload).map_err(|e| e.to_string())?;
+
+    Ok(payload.schema)
+}
+
+/// 設定値を取得
+#[tauri::command]
+async fn get_settings(
+    target: String,
+    state: State<'_, AppState>,
+) -> Result<serde_json::Value, String> {
+    let message = McvMessage::new(
+        MessageType::GetSettings,
+        MessageSource::Core,
+        MessageDestination::Core,
+        serde_json::to_value(mcv_messages::GetSettingsPayload { target })
+            .map_err(|e| e.to_string())?,
+    );
+
+    let response = state
+        .core_addr
+        .send(SendRequest { message })
+        .await
+        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_string())?;
+
+    let payload: mcv_messages::SettingsDataPayload =
+        serde_json::from_value(response.payload).map_err(|e| e.to_string())?;
+
+    Ok(payload.data)
+}
+
+/// 設定を更新
+#[tauri::command]
+async fn update_settings(
+    target: String,
+    data: serde_json::Value,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    let message = McvMessage::new(
+        MessageType::UpdateSettings,
+        MessageSource::Core,
+        MessageDestination::Core,
+        serde_json::to_value(mcv_messages::UpdateSettingsPayload { target, data })
+            .map_err(|e| e.to_string())?,
+    );
+
+    state
+        .core_addr
+        .send(SendRequest { message })
+        .await
+        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// プラグイン一覧情報
+#[derive(serde::Serialize)]
+struct PluginInfoResponse {
+    plugin_id: String,
+    name: String,
+}
+
+/// プラグイン一覧を取得 (TODO: 実装を完成させる)
+#[tauri::command]
+async fn get_plugins(_state: State<'_, AppState>) -> Result<Vec<PluginInfoResponse>, String> {
+    // TODO: CoreActor から実際のプラグイン一覧を取得する
+    // 現在は空のリストを返す
+    Ok(vec![])
+}
+
 fn main() {
     // ロガーを初期化
     let local_app_data = std::env::var("LOCALAPPDATA").expect("Failed to get LOCALAPPDATA");
-    let log_db_path = PathBuf::from(local_app_data)
-        .join("MultiCommentViewer")
-        .join("logs.db");
+    let app_data_dir = PathBuf::from(&local_app_data).join("MultiCommentViewer");
+    let log_db_path = app_data_dir.join("logs.db");
 
     // ログディレクトリを作成
-    if let Some(parent) = log_db_path.parent() {
-        std::fs::create_dir_all(parent).expect("Failed to create log directory");
-    }
+    std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
 
     mcv_log_core::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
         .expect("Failed to initialize logger");
@@ -519,6 +610,18 @@ fn main() {
 
     // LogSenderActorを起動するためのストレージを取得
     let log_storage = mcv_log_core::get_storage();
+
+    // 設定ストレージを初期化
+    let settings_db_path = app_data_dir.join("settings.db");
+    let settings_storage = Arc::new(std::sync::Mutex::new(
+        mcv_settings_core::SettingsStorage::new(&settings_db_path)
+            .expect("Failed to initialize settings storage"),
+    ));
+    tracing::info!(
+        target: "mcv::main",
+        settings_db_path = %settings_db_path.display(),
+        "Settings storage initialized"
+    );
 
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
@@ -645,6 +748,7 @@ fn main() {
 
             core_actor.set_event_callback(event_callback);
             core_actor.set_log_storage(mcv_log_core::get_storage());
+            core_actor.set_settings_storage(settings_storage.clone());
 
             tracing::debug!(target: "mcv::main","Starting CoreActor");
             let core_addr = core_actor.start();
@@ -754,7 +858,11 @@ fn main() {
             check_for_updates,
             launch_installer,
             get_logs,
-            get_build_profile_info
+            get_build_profile_info,
+            get_settings_schema,
+            get_settings,
+            update_settings,
+            get_plugins
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

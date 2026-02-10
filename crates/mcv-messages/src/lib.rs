@@ -156,6 +156,13 @@ pub enum MessageType {
     SetConnectionSite,
     DiscardConnectionSite,
     UpdateConnectionSettings,
+
+    // Settings関連
+    GetSettingsSchema,
+    SettingsSchema,
+    GetSettings,
+    SettingsData,
+    UpdateSettings,
 }
 
 // ============================================================================
@@ -386,6 +393,39 @@ pub struct UpdateConnectionSettingsPayload {
     pub url: Option<String>,
     pub browser_id: Option<Uuid>,
     pub advanced_settings: Option<serde_json::Value>,
+}
+
+/// get-settings-schemaのpayload (UI → Core/Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetSettingsSchemaPayload {
+    pub target: String, // "core" または plugin_id (UUID文字列)
+}
+
+/// settings-schemaのpayload (Core/Plugin → UI)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SettingsSchemaPayload {
+    pub target: String,
+    pub schema: serde_json::Value,
+}
+
+/// get-settingsのpayload (UI → Core/Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetSettingsPayload {
+    pub target: String,
+}
+
+/// settings-dataのpayload (Core/Plugin → UI)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SettingsDataPayload {
+    pub target: String,
+    pub data: serde_json::Value,
+}
+
+/// update-settingsのpayload (UI → Core/Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateSettingsPayload {
+    pub target: String,
+    pub data: serde_json::Value,
 }
 
 // ============================================================================

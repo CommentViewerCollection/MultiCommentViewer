@@ -3,7 +3,7 @@
 //! 個々のYouTube Live配信への接続を管理し、
 //! ライブチャットメッセージを定期的に取得します。
 
-use mcv_messages::{DisconnectedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType};
+use mcv_messages::{Comment, CommentReceivedPayload, DisconnectedPayload, Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource, MessageType};
 use plugin_abi_helper::v3::prelude::*;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
@@ -11,11 +11,56 @@ use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 use youtube_live_lib::{
     extract_ytcfg, get_live_chat, get_live_chat_messages, get_yt_initial_data, Action,
-    Continuation, Vid,
+    Continuation, LiveChatTextMessage, MessagePart, Vid,
 };
 
 use crate::video_id::extract_video_id;
 use crate::YouTubeLivePlugin;
+
+/// LiveChatTextMessageをCommentに変換
+fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
+    // message_partsをMcvMessagePartに変換
+    let text = msg
+        .message_parts
+        .iter()
+        .filter_map(|part| match part {
+            MessagePart::Text(s) => Some(McvMessagePart::Text {
+                text: s.clone(),
+            }),
+            MessagePart::Emoji(emoji) => {
+                // 絵文字を画像として扱う (最初のサムネイルを使用)
+                emoji.thumbnails.first().map(|thumbnail| McvMessagePart::Image {
+                    url: thumbnail.url.clone(),
+                    width: Some(thumbnail.width as u32),
+                    height: Some(thumbnail.height as u32),
+                    alt: Some(emoji.label.clone()),
+                })
+            }
+        })
+        .collect::<Vec<_>>();
+
+    // user_nameをVec<MessagePart>に変換
+    let user_name = vec![McvMessagePart::Text {
+        text: msg.author_name.clone(),
+    }];
+
+    // timestamp_usecをi64に変換 (マイクロ秒 → ミリ秒)
+    let timestamp = msg
+        .timestamp_usec
+        .parse::<i64>()
+        .unwrap_or(0) / 1000;
+
+    // idはtimestamp_usecを使用 (一意性を保証)
+    let id = msg.timestamp_usec.clone();
+
+    Comment {
+        id,
+        user_name,
+        user_id: String::new(), // TODO: author_external_channel_idを取得する必要がある
+        text,
+        timestamp,
+    }
+}
 
 /// YouTube Live配信への接続を表す構造体
 pub(crate) struct Connection {
@@ -111,13 +156,34 @@ impl Connection {
             };
 
             for action in yt_initial_data.actions() {
-                if let Action::ParseError(raw) = action {
-                    tracing::error!(
-                        target: "mcv::plugin-youtube-live",
-                        connection_id = %connection_id,
-                        raw = raw,
-                        "Failed to parse action"
-                    );
+                match action {
+                    Action::LiveChatTextMessage1(msg) => {
+                        let comment = convert_to_comment(&msg);
+                        let payload = CommentReceivedPayload {
+                            connection_id,
+                            comment,
+                        };
+                        let message = McvMessage::new(
+                            MessageType::CommentReceived,
+                            MessageSource::Plugin {
+                                plugin_id: logical_plugin_id,
+                            },
+                            MessageDestination::Core,
+                            serde_json::to_value(payload).unwrap(),
+                        );
+                        YouTubeLivePlugin::send_message(ctx.clone(), message).await;
+                    }
+                    Action::ParseError(raw) => {
+                        tracing::error!(
+                            target: "mcv::plugin-youtube-live",
+                            connection_id = %connection_id,
+                            raw = raw,
+                            "Failed to parse action"
+                        );
+                    }
+                    _ => {
+                        // その他のアクションは一旦無視
+                    }
                 }
             }
 
@@ -149,13 +215,34 @@ impl Connection {
                 match get_live_chat_messages(&vid, &ytcfg, &next_continuation).await {
                     Ok((maybe_cont, actions)) => {
                         for action in actions {
-                            if let Action::ParseError(raw) = action {
-                                tracing::error!(
-                                    target: "mcv::plugin-youtube-live",
-                                    connection_id = %connection_id,
-                                    raw = raw,
-                                    "Failed to parse action"
-                                );
+                            match action {
+                                Action::LiveChatTextMessage1(msg) => {
+                                    let comment = convert_to_comment(&msg);
+                                    let payload = CommentReceivedPayload {
+                                        connection_id,
+                                        comment,
+                                    };
+                                    let message = McvMessage::new(
+                                        MessageType::CommentReceived,
+                                        MessageSource::Plugin {
+                                            plugin_id: logical_plugin_id,
+                                        },
+                                        MessageDestination::Core,
+                                        serde_json::to_value(payload).unwrap(),
+                                    );
+                                    YouTubeLivePlugin::send_message(ctx.clone(), message).await;
+                                }
+                                Action::ParseError(raw) => {
+                                    tracing::error!(
+                                        target: "mcv::plugin-youtube-live",
+                                        connection_id = %connection_id,
+                                        raw = raw,
+                                        "Failed to parse action"
+                                    );
+                                }
+                                _ => {
+                                    // その他のアクションは一旦無視
+                                }
                             }
                         }
 

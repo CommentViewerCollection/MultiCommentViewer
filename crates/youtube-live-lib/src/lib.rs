@@ -337,16 +337,16 @@ pub fn get_value<'a>(
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Emoji {
-    emoji_id: String,
-    label: String,
-    thumbnails: Vec<Thumbnail>,
-    is_custom_emoji: bool,
+    pub emoji_id: String,
+    pub label: String,
+    pub thumbnails: Vec<Thumbnail>,
+    pub is_custom_emoji: bool,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Thumbnail {
-    url: String,
-    width: u64,
-    height: u64,
+    pub url: String,
+    pub width: u64,
+    pub height: u64,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct AuthorBadge {

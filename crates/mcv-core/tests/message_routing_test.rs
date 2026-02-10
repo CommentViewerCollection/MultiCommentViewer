@@ -41,9 +41,13 @@ async fn test_event_callback_routing() {
             connection_id,
             comment: mcv_messages::Comment {
                 id: Uuid::new_v4().to_string(),
-                user_name: "TestUser".to_string(),
+                user_name: vec![mcv_messages::MessagePart::Text {
+                    text: "TestUser".to_string(),
+                }],
                 user_id: "user123".to_string(),
-                text: "Test comment".to_string(),
+                text: vec![mcv_messages::MessagePart::Text {
+                    text: "Test comment".to_string(),
+                }],
                 timestamp: chrono::Utc::now().timestamp_millis(),
             },
         })
@@ -186,9 +190,13 @@ async fn test_multiple_event_routing() {
                 connection_id,
                 comment: mcv_messages::Comment {
                     id: Uuid::new_v4().to_string(),
-                    user_name: "User1".to_string(),
+                    user_name: vec![mcv_messages::MessagePart::Text {
+                        text: "User1".to_string(),
+                    }],
                     user_id: "user1".to_string(),
-                    text: "Comment 1".to_string(),
+                    text: vec![mcv_messages::MessagePart::Text {
+                        text: "Comment 1".to_string(),
+                    }],
                     timestamp: chrono::Utc::now().timestamp_millis(),
                 },
             })
@@ -200,9 +208,13 @@ async fn test_multiple_event_routing() {
                 connection_id,
                 comment: mcv_messages::Comment {
                     id: Uuid::new_v4().to_string(),
-                    user_name: "User2".to_string(),
+                    user_name: vec![mcv_messages::MessagePart::Text {
+                        text: "User2".to_string(),
+                    }],
                     user_id: "user2".to_string(),
-                    text: "Comment 2".to_string(),
+                    text: vec![mcv_messages::MessagePart::Text {
+                        text: "Comment 2".to_string(),
+                    }],
                     timestamp: chrono::Utc::now().timestamp_millis(),
                 },
             })

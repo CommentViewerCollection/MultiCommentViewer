@@ -85,16 +85,20 @@ impl DummyPlugin {
                 // ランダムなコメントを生成
                 let comment = Comment {
                     id: Uuid::new_v4().to_string(),
-                    user_name: names[rng.gen_range(0..names.len())].to_string(),
+                    user_name: vec![mcv_messages::MessagePart::Text {
+                        text: names[rng.gen_range(0..names.len())].to_string(),
+                    }],
                     user_id: format!("user_{}", rng.gen_range(1000..9999)),
-                    text: texts[rng.gen_range(0..texts.len())].to_string(),
+                    text: vec![mcv_messages::MessagePart::Text {
+                        text: texts[rng.gen_range(0..texts.len())].to_string(),
+                    }],
                     timestamp: chrono::Utc::now().timestamp(),
                 };
 
                 tracing::debug!(
                     connection_id = %connection_id,
-                    user_name = %comment.user_name,
-                    text = %comment.text,
+                    user_name = ?comment.user_name,
+                    text = ?comment.text,
                     "Generated comment"
                 );
 
@@ -292,9 +296,13 @@ impl DummyPlugin {
 
         let comment = Comment {
             id: Uuid::new_v4().to_string(),
-            user_name: user_name.to_string(),
+            user_name: vec![mcv_messages::MessagePart::Text {
+                text: user_name.to_string(),
+            }],
             user_id: format!("user_{}", rand::thread_rng().gen_range(1000..9999)),
-            text,
+            text: vec![mcv_messages::MessagePart::Text {
+                text,
+            }],
             timestamp: chrono::Utc::now().timestamp(),
         };
 

@@ -287,13 +287,31 @@ pub struct CommentReceivedPayload {
     pub comment: Comment,
 }
 
+/// メッセージパーツ（テキストまたは画像）
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum MessagePart {
+    #[serde(rename = "text")]
+    Text { text: String },
+    #[serde(rename = "image")]
+    Image {
+        url: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        width: Option<u32>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        height: Option<u32>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        alt: Option<String>,
+    },
+}
+
 /// コメント情報
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Comment {
     pub id: String,
-    pub user_name: String,
+    pub user_name: Vec<MessagePart>,
     pub user_id: String,
-    pub text: String,
+    pub text: Vec<MessagePart>,
     pub timestamp: i64,
 }
 
@@ -457,9 +475,13 @@ mod tests {
     fn test_comment_payload() {
         let comment = Comment {
             id: "test-id".to_string(),
-            user_name: "太郎".to_string(),
+            user_name: vec![MessagePart::Text {
+                text: "太郎".to_string(),
+            }],
             user_id: "user_1234".to_string(),
-            text: "こんにちは!".to_string(),
+            text: vec![MessagePart::Text {
+                text: "こんにちは!".to_string(),
+            }],
             timestamp: chrono::Utc::now().timestamp(),
         };
 

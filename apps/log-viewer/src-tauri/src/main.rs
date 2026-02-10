@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use mcv_logger::schema::LogEntry;
+use mcv_log_core::schema::LogEntry;
 use rusqlite::{Connection, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -149,7 +149,7 @@ async fn get_local_logs(
             level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
             timestamp: row.get(2)?,
             message: row.get(3)?,
-            source: mcv_logger::schema::SourceLocation {
+            source: mcv_log_core::schema::SourceLocation {
                 file: row.get(4)?,
                 line: row.get(5)?,
                 column: row.get(6)?,
@@ -157,7 +157,7 @@ async fn get_local_logs(
             },
             stacktrace,
             context,
-            system_info: mcv_logger::schema::SystemInfo {
+            system_info: mcv_log_core::schema::SystemInfo {
                 mcv_version: row.get(10)?,
                 platform: row.get(11)?,
                 arch: row.get(12)?,
@@ -393,7 +393,7 @@ async fn export_local_logs(
             level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
             timestamp: row.get(2)?,
             message: row.get(3)?,
-            source: mcv_logger::schema::SourceLocation {
+            source: mcv_log_core::schema::SourceLocation {
                 file: row.get(4)?,
                 line: row.get(5)?,
                 column: row.get(6)?,
@@ -401,7 +401,7 @@ async fn export_local_logs(
             },
             stacktrace,
             context,
-            system_info: mcv_logger::schema::SystemInfo {
+            system_info: mcv_log_core::schema::SystemInfo {
                 mcv_version: row.get(10)?,
                 platform: row.get(11)?,
                 arch: row.get(12)?,

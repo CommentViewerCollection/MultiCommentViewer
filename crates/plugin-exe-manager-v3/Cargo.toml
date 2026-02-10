@@ -10,7 +10,7 @@ crate-type = ["cdylib", "rlib"]
 # Core dependencies
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-messages = { path = "../mcv-messages" }
-mcv-tracing = { path = "../mcv-tracing" }
+mcv-plugin-telemetry = { path = "../mcv-plugin-telemetry" }
 plugin-abi-helper = { path = "../plugin-abi-helper" }
 export-plugin-v3-macros = { path = "../export-plugin-v3-macros" }
 
@@ -44,6 +44,6 @@ tokio-test = "0.4"
 tempfile = "3.14"
 
 [features]
-alpha = ["mcv-tracing/alpha","plugin-abi-helper/alpha"]
-beta = ["mcv-tracing/beta","plugin-abi-helper/beta"]
-stable = ["mcv-tracing/stable","plugin-abi-helper/stable"]
+alpha = ["mcv-plugin-telemetry/alpha","plugin-abi-helper/alpha"]
+beta = ["mcv-plugin-telemetry/beta","plugin-abi-helper/beta"]
+stable = ["mcv-plugin-telemetry/stable","plugin-abi-helper/stable"]

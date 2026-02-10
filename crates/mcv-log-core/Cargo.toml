@@ -1,0 +1,41 @@
+[package]
+name = "mcv-log-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mcv-log-schema = { path = "../mcv-log-schema" }
+
+# Tracing ecosystem
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+tracing-appender = "0.2"
+tracing-error = "0.2"
+
+# Error handling and serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+actix = { workspace = true }
+async-trait = { workspace = true }
+
+# UUID and time
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Stacktrace
+backtrace = "0.3"
+
+# Storage
+rusqlite = { version = "0.30", features = ["bundled"] }
+
+# HTTP client for sending logs
+reqwest = { version = "0.11", features = ["json"] }
+
+[features]
+alpha = ["mcv-log-schema/alpha"]
+beta = ["mcv-log-schema/beta"]
+stable = ["mcv-log-schema/stable"]

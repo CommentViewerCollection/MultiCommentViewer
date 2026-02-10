@@ -418,10 +418,10 @@ impl DummyPlugin {
     async fn process_value(
         value: i32,
         connection_id: Uuid,
-    ) -> Result<String, mcv_tracing::TracingError> {
+    ) -> Result<String, mcv_plugin_telemetry::TracingError> {
         if value == 0 {
             // エラーコンテキストをキャプチャ（構造化フィールド付き）
-            let ctx = mcv_tracing::capture_context!(
+            let ctx = mcv_plugin_telemetry::capture_context!(
                 "Invalid value: cannot be zero",
                 value = value,
                 connection_id = connection_id.to_string(),
@@ -434,7 +434,7 @@ impl DummyPlugin {
 
         if value < 0 {
             // シンプルなエラーコンテキスト
-            let ctx = mcv_tracing::capture_context!("Invalid value: must be positive");
+            let ctx = mcv_plugin_telemetry::capture_context!("Invalid value: must be positive");
             return Err(ctx.into());
         }
 
@@ -499,13 +499,13 @@ impl DummyPlugin {
     async fn simulate_nested_operation(
         operation: &str,
         connection_id: Uuid,
-    ) -> Result<String, mcv_tracing::TracingError> {
+    ) -> Result<String, mcv_plugin_telemetry::TracingError> {
         match operation {
             "fetch" => Self::layer_fetch(connection_id).await,
             "parse" => Self::layer_parse(connection_id).await,
             "process" => Self::layer_process(connection_id).await,
             _ => {
-                let ctx = mcv_tracing::capture_context!(
+                let ctx = mcv_plugin_telemetry::capture_context!(
                     "Unknown operation",
                     operation = operation,
                     connection_id = connection_id.to_string(),
@@ -516,9 +516,9 @@ impl DummyPlugin {
     }
 
     /// レイヤー1: データ取得（最下層でのエラー）
-    async fn layer_fetch(connection_id: Uuid) -> Result<String, mcv_tracing::TracingError> {
+    async fn layer_fetch(connection_id: Uuid) -> Result<String, mcv_plugin_telemetry::TracingError> {
         // ネットワークエラーをシミュレート
-        let network_ctx = mcv_tracing::capture_context!(
+        let network_ctx = mcv_plugin_telemetry::capture_context!(
             "Network connection failed",
             error_code = "ETIMEDOUT",
             host = "api.example.com",
@@ -526,7 +526,7 @@ impl DummyPlugin {
         );
 
         // API層でのエラー
-        let mut api_ctx = mcv_tracing::capture_context!(
+        let mut api_ctx = mcv_plugin_telemetry::capture_context!(
             "Failed to fetch data from API",
             endpoint = "/api/v1/comments",
             connection_id = connection_id.to_string(),
@@ -537,12 +537,12 @@ impl DummyPlugin {
     }
 
     /// レイヤー2: データ解析（中間層でのエラー）
-    async fn layer_parse(connection_id: Uuid) -> Result<String, mcv_tracing::TracingError> {
+    async fn layer_parse(connection_id: Uuid) -> Result<String, mcv_plugin_telemetry::TracingError> {
         // まず fetch を試みる
         match Self::layer_fetch(connection_id).await {
             Ok(_) => {
                 // 仮にデータが取得できたとして、パースエラーをシミュレート
-                let parse_ctx = mcv_tracing::capture_context!(
+                let parse_ctx = mcv_plugin_telemetry::capture_context!(
                     "JSON parse error",
                     position = 42,
                     expected = "closing brace",
@@ -552,7 +552,7 @@ impl DummyPlugin {
             }
             Err(fetch_error) => {
                 // fetch エラーをinner errorとして含める
-                let mut parse_ctx = mcv_tracing::capture_context!(
+                let mut parse_ctx = mcv_plugin_telemetry::capture_context!(
                     "Failed to parse API response",
                     connection_id = connection_id.to_string(),
                     parser = "serde_json",
@@ -565,13 +565,13 @@ impl DummyPlugin {
     }
 
     /// レイヤー3: ビジネスロジック処理（最上層でのエラー）
-    async fn layer_process(connection_id: Uuid) -> Result<String, mcv_tracing::TracingError> {
+    async fn layer_process(connection_id: Uuid) -> Result<String, mcv_plugin_telemetry::TracingError> {
         // parse を試みる
         match Self::layer_parse(connection_id).await {
             Ok(data) => Ok(data),
             Err(parse_error) => {
                 // parse エラーをinner errorとして含める
-                let mut process_ctx = mcv_tracing::capture_context!(
+                let mut process_ctx = mcv_plugin_telemetry::capture_context!(
                     "Failed to process comments",
                     connection_id = connection_id.to_string(),
                     operation = "process_comments",
@@ -609,7 +609,7 @@ impl Plugin for DummyPlugin {
         println!("=== DummyPlugin::on_loaded called, plugin_id: {} ===", self.plugin_id);
 
         // プラグイン tracing を初期化
-        mcv_tracing::init_tracing(
+        mcv_plugin_telemetry::init_tracing(
             self.plugin_id,
             Arc::clone(&host),
             env!("CARGO_PKG_VERSION"),

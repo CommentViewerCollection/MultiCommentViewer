@@ -1,0 +1,38 @@
+[package]
+name = "mcv-plugin-telemetry"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mcv-log-schema = { path = "../mcv-log-schema" }
+# Tracing ecosystem
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+
+# Local crates
+mcv-messages = { path = "../mcv-messages" }
+mcv-plugin-interface = { path = "../mcv-plugin-interface" }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# UUID
+uuid = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Stacktrace
+backtrace = "0.3"
+
+[features]
+alpha = ["mcv-log-schema/alpha"]
+beta = ["mcv-log-schema/beta"]
+stable = ["mcv-log-schema/stable"]

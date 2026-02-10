@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 # Core dependencies
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-messages = { path = "../mcv-messages" }
-mcv-tracing = { path = "../mcv-tracing" }
+mcv-plugin-telemetry = { path = "../mcv-plugin-telemetry" }
 plugin-abi-helper = { path = "../plugin-abi-helper" }
 
 # Async runtime

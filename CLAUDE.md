@@ -77,12 +77,13 @@ crates/
 ├── mcv-messages/              # Message type definitions (MessageType, payloads)
 ├── mcv-common/                # Shared utilities and constants
 ├── mcv-plugin-interface/      # Plugin trait definitions (Plugin, PluginHost)
-├── mcv-tracing/              # Plugin tracing integration (auto log forwarding to Core)
-├── mcv-logger/               # Core logging system (SQLite + remote sending)
-├── mcv-core/                 # Core logic (CoreActor, PluginManager, ConnectionManager)
-├── plugin-dummy/             # Dummy plugin for testing and development
-├── plugin-exe-manager/       # EXE plugin manager (DLL plugin, WebSocket server)
-└── mcv-plugin-exe-interface/ # EXE plugin client library (WebSocket client)
+├── mcv-log-schema/            # Shared logging types (SourceLocation, StackFrame, LogLevel)
+├── mcv-log-core/              # Core logging system (SQLite + remote sending)
+├── mcv-plugin-telemetry/      # Plugin telemetry (auto log forwarding to Core)
+├── mcv-core/                  # Core logic (CoreActor, PluginManager, ConnectionManager)
+├── plugin-dummy/              # Dummy plugin for testing and development
+├── plugin-exe-manager/        # EXE plugin manager (DLL plugin, WebSocket server)
+└── mcv-plugin-exe-interface/  # EXE plugin client library (WebSocket client)
 
 apps/
 ├── mcv/                      # Main Tauri application
@@ -131,9 +132,9 @@ pub struct DummyPlugin {
 
 This ensures that operations on one connection (pause, disconnect, rate change) do not affect other connections.
 
-### Plugin Logging System (mcv-tracing)
+### Plugin Logging System (mcv-plugin-telemetry)
 
-Plugins can use standard tracing macros (`tracing::error!()`, `tracing::warn!()`, etc.) for logging, which are automatically forwarded to Core via LogEntry messages and integrated with mcv-logger.
+Plugins can use standard tracing macros (`tracing::error!()`, `tracing::warn!()`, etc.) for logging, which are automatically forwarded to Core via LogEntry messages and integrated with mcv-log-core.
 
 **Setup in plugin:**
 ```rust
@@ -171,12 +172,12 @@ tracing::error!(error = %e, "Failed to process request");
 - Structured logging support (fields, spans)
 - Works in plugin dependencies (any crate used by the plugin)
 - Error-level logs automatically capture stack traces
-- Integration with mcv-logger (SQLite storage + remote sending)
+- Integration with mcv-log-core (SQLite storage + remote sending)
 
 **Log-error/log-warn commands:**
 - The DummyPlugin's `log-error`, `log-warn`, `log-info`, `log-debug` commands are separate test features
 - They manually construct LogEntry messages for testing purposes
-- mcv-tracing provides automatic logging for production use
+- mcv-plugin-telemetry provides automatic logging for production use
 
 ### EXE Plugin System
 

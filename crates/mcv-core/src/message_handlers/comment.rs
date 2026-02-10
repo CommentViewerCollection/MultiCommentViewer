@@ -1,6 +1,6 @@
 use actix::Context;
 use mcv_common::LogicalPluginId;
-use mcv_logger::{
+use mcv_log_core::{
     LogEntry as LoggerEntry, LogLevel, SourceLocation as LoggerSourceLocation,
     StackFrame as LoggerStackFrame, SystemInfo as LoggerSystemInfo,
 };

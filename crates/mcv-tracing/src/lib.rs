@@ -199,7 +199,7 @@ impl serde::Serialize for ErrorContext {
 ///
 /// # 例
 /// ```rust,ignore
-/// use mcv_tracing::capture_context;
+/// use mcv_plugin_telemetry::capture_context;
 ///
 /// let ctx = capture_context!("Invalid value");
 /// return Err(ctx.into());
@@ -231,7 +231,7 @@ macro_rules! capture_context {
 ///
 /// # 例
 /// ```rust,ignore
-/// mcv_tracing::init_tracing(
+/// mcv_plugin_telemetry::init_tracing(
 ///     self.plugin_id,
 ///     Arc::new(host),
 ///     env!("CARGO_PKG_VERSION"),

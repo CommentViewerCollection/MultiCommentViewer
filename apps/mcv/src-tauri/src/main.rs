@@ -431,7 +431,7 @@ fn main() {
         std::fs::create_dir_all(parent).expect("Failed to create log directory");
     }
 
-    mcv_logger::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
+    mcv_log_core::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
         .expect("Failed to initialize logger");
 
     tracing::info!(
@@ -442,7 +442,7 @@ fn main() {
     );
 
     // LogSenderActorを起動するためのストレージを取得
-    let log_storage = mcv_logger::get_storage();
+    let log_storage = mcv_log_core::get_storage();
 
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
@@ -456,7 +456,7 @@ fn main() {
 
             // LogSenderActorを起動
             const API_BASE_URL: &str = "http://localhost"; // TODO: 運用環境では実際のAPIサーバーURLに変更
-            let _log_sender_addr = mcv_logger::LogSenderActor::new(
+            let _log_sender_addr = mcv_log_core::LogSenderActor::new(
                 log_storage,
                 API_BASE_URL.to_string(),
             ).start();
@@ -568,7 +568,7 @@ fn main() {
             });
 
             core_actor.set_event_callback(event_callback);
-            core_actor.set_log_storage(mcv_logger::get_storage());
+            core_actor.set_log_storage(mcv_log_core::get_storage());
 
             tracing::debug!(target: "mcv::main","Starting CoreActor");
             let core_addr = core_actor.start();

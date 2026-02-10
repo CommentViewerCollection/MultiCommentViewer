@@ -1,0 +1,16 @@
+[package]
+name = "mcv-log-schema"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = "0.1"
+backtrace = "0.3"
+chrono = { workspace = true }
+
+[features]
+alpha = []
+beta = []
+stable = []

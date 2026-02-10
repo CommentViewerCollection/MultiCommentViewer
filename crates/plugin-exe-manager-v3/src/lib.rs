@@ -138,7 +138,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
 
         // mcv-tracing初期化
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.logical_plugin_id));
-        if let Err(e) = mcv_tracing::init_tracing(
+        if let Err(e) = mcv_plugin_telemetry::init_tracing(
             self.logical_plugin_id,
             adapter.clone(),
             env!("CARGO_PKG_VERSION"),

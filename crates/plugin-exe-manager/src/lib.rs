@@ -122,7 +122,7 @@ impl Plugin for ExePluginManager {
         );
 
         // トレーシングを初期化し、Core への LogEntry 自動転送を有効にする
-        mcv_tracing::init_tracing(
+        mcv_plugin_telemetry::init_tracing(
             self.plugin_id,
             Arc::clone(&host),
             env!("CARGO_PKG_VERSION"),

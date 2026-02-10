@@ -14,7 +14,7 @@ stable = []
 [dependencies]
 mcv-messages = { path = "../../crates/mcv-messages" }
 mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
-mcv-tracing = { path = "../../crates/mcv-tracing" }
+mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
 async-trait = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

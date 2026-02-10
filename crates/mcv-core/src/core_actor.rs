@@ -1,6 +1,6 @@
 use actix::prelude::*;
 use mcv_common::{LogicalPluginId, PhysicalPluginId};
-use mcv_logger::LogStorage;
+use mcv_log_core::LogStorage;
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

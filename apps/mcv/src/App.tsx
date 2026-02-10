@@ -492,40 +492,36 @@ function App() {
 
                   {/* アクションボタン */}
                   <div className="flex gap-2 pt-1">
-                    {isDisconnected && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleConnect(conn.connection_id)
-                        }}
-                        disabled={!canConnect}
-                        className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        接続
-                      </button>
-                    )}
-                    {isConnected && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDisconnect(conn.connection_id)
-                        }}
-                        className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors"
-                      >
-                        切断
-                      </button>
-                    )}
-                    {isDisconnected && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRemoveConnection(conn.connection_id)
-                        }}
-                        className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-                      >
-                        削除
-                      </button>
-                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleConnect(conn.connection_id)
+                      }}
+                      disabled={isConnected || !canConnect}
+                      className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      接続
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDisconnect(conn.connection_id)
+                      }}
+                      disabled={isDisconnected}
+                      className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      切断
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveConnection(conn.connection_id)
+                      }}
+                      disabled={isConnected || conn.status.type === 'Connecting'}
+                      className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      削除
+                    </button>
                   </div>
                 </div>
               )

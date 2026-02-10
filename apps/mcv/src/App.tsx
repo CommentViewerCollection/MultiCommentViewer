@@ -54,7 +54,10 @@ interface UpdateInfo {
   min_installer_version: string
 }
 
+type TabType = 'comments' | 'logs'
+
 function App() {
+  const [activeTab, setActiveTab] = useState<TabType>('comments')
   const [comments, setComments] = useState<Comment[]>([])
   const [connections, setConnections] = useState<ConnectionInfo[]>([])
   const [sites, setSites] = useState<SiteInfo[]>([])
@@ -543,70 +546,106 @@ function App() {
         </div>
       </div>
 
-      {/* メインエリア: コメント表示 */}
+      {/* メインエリア */}
       <div className="flex-1 flex flex-col">
-        <div className="p-4 bg-gray-800 border-b border-gray-700">
-          <h2 className="text-xl font-semibold">コメント</h2>
-        </div>
-
-        <div className="flex-1 p-4">
-          <DataGridComponent
-            ref={dataGridRef}
-            data={comments}
-            columns={columns}
-            renderCell={renderCell}
-            height="100%"
-            backgroundColor="#1f2937"
-            border="1px solid #374151"
-            onAtBottomChange={setAtBottom}
-            onColumnResize={handleColumnResize}
-            onColumnVisibilityChange={handleColumnVisibilityChange}
-            defaultItemHeight={60}
-          />
-        </div>
-
-        {/* コメント投稿セクション */}
-        <div className="p-4 bg-gray-800 border-t border-gray-700">
-          <div className="flex gap-2 items-end">
-            <div className="flex-shrink-0">
-              <label className="block text-sm font-medium mb-1 text-gray-300">接続選択</label>
-              <select
-                value={selectedConnectionForCommand}
-                onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
-                className="px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white"
-              >
-                <option value="">選択してください</option>
-                {connections.map((conn) => (
-                  <option key={conn.connection_id} value={conn.connection_id}>
-                    {conn.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1 text-gray-300">コメント</label>
-              <input
-                type="text"
-                value={commandInput}
-                onChange={(e) => setCommandInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSendComment()
-                  }
-                }}
-                placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white placeholder-gray-500"
-              />
-            </div>
-
+        {/* タブヘッダー */}
+        <div className="bg-gray-800 border-b border-gray-700">
+          <div className="flex">
             <button
-              onClick={handleSendComment}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'comments'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('comments')}
             >
-              送信
+              コメント
+            </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'logs'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('logs')}
+            >
+              ログ
             </button>
           </div>
+        </div>
+
+        {/* タブコンテンツ */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {activeTab === 'comments' && (
+            <>
+              {/* コメント表示 */}
+              <div className="flex-1 p-4">
+                <DataGridComponent
+                  ref={dataGridRef}
+                  data={comments}
+                  columns={columns}
+                  renderCell={renderCell}
+                  height="100%"
+                  backgroundColor="#1f2937"
+                  border="1px solid #374151"
+                  onAtBottomChange={setAtBottom}
+                  onColumnResize={handleColumnResize}
+                  onColumnVisibilityChange={handleColumnVisibilityChange}
+                  defaultItemHeight={60}
+                />
+              </div>
+
+              {/* コメント投稿セクション */}
+              <div className="p-4 bg-gray-800 border-t border-gray-700">
+                <div className="flex gap-2 items-end">
+                  <div className="flex-shrink-0">
+                    <label className="block text-sm font-medium mb-1 text-gray-300">接続選択</label>
+                    <select
+                      value={selectedConnectionForCommand}
+                      onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
+                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white"
+                    >
+                      <option value="">選択してください</option>
+                      {connections.map((conn) => (
+                        <option key={conn.connection_id} value={conn.connection_id}>
+                          {conn.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium mb-1 text-gray-300">コメント</label>
+                    <input
+                      type="text"
+                      value={commandInput}
+                      onChange={(e) => setCommandInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSendComment()
+                        }
+                      }}
+                      placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white placeholder-gray-500"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSendComment}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+                  >
+                    送信
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'logs' && (
+            <div className="flex-1 p-4 flex items-center justify-center text-gray-400">
+              ログビューア（実装予定）
+            </div>
+          )}
         </div>
       </div>
 

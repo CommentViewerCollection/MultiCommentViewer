@@ -350,8 +350,8 @@ pub struct Thumbnail {
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct AuthorBadge {
-    tooltip: String,
-    thumbnails: Vec<Thumbnail>,
+    pub tooltip: String,
+    pub thumbnails: Vec<Thumbnail>,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub enum MessagePart {

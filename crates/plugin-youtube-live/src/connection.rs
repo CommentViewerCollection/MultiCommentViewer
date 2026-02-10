@@ -39,10 +39,22 @@ fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
         })
         .collect::<Vec<_>>();
 
-    // user_nameをVec<MessagePart>に変換
-    let user_name = vec![McvMessagePart::Text {
+    // user_nameをVec<MessagePart>に変換（名前 + バッジ画像）
+    let mut user_name = vec![McvMessagePart::Text {
         text: msg.author_name.clone(),
     }];
+
+    // author_badgesから画像を追加
+    for badge in &msg.author_badges {
+        if let Some(thumbnail) = badge.thumbnails.first() {
+            user_name.push(McvMessagePart::Image {
+                url: thumbnail.url.clone(),
+                width: Some(thumbnail.width as u32),
+                height: Some(thumbnail.height as u32),
+                alt: Some(badge.tooltip.clone()),
+            });
+        }
+    }
 
     // timestamp_usecをi64に変換 (マイクロ秒 → ミリ秒)
     let timestamp = msg

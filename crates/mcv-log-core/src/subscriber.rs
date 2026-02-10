@@ -109,6 +109,9 @@ where
         if let Ok(storage) = self.storage.lock() {
             if let Err(e) = storage.insert(&entry) {
                 eprintln!("Failed to insert log entry: {}", e);
+            } else {
+                // ログ挿入成功時にコールバックを呼び出す
+                crate::invoke_log_insert_callback(&entry);
             }
         }
     }

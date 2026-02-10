@@ -1,8 +1,17 @@
-use crate::schema::{LogEntry, SourceLocation, SystemInfo};
-#[cfg(test)]
-use crate::schema::LogLevel;
+use crate::schema::{LogEntry, LogLevel, SourceLocation, SystemInfo};
 use rusqlite::{params, Connection, Result as SqliteResult};
 use std::path::Path;
+
+/// ログクエリフィルタ
+#[derive(Debug, Clone)]
+pub struct LogQueryFilters {
+    pub levels: Option<Vec<LogLevel>>,
+    pub search: Option<String>,
+    pub from: Option<i64>,
+    pub to: Option<i64>,
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
+}
 
 /// ログストレージ（SQLite）
 pub struct LogStorage {
@@ -174,6 +183,101 @@ impl LogStorage {
                 row.get(0)
             })?;
         Ok(count)
+    }
+
+    /// フィルタを使用してログを検索
+    pub fn query_logs(&self, filters: LogQueryFilters) -> SqliteResult<Vec<LogEntry>> {
+        let mut where_clauses = Vec::new();
+        let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+        // レベルフィルタ
+        if let Some(levels) = &filters.levels {
+            if !levels.is_empty() {
+                let placeholders = levels.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+                where_clauses.push(format!("level IN ({})", placeholders));
+                for level in levels {
+                    params_vec.push(Box::new(level.to_string()));
+                }
+            }
+        }
+
+        // タイムスタンプフィルタ（開始）
+        if let Some(from) = filters.from {
+            where_clauses.push("timestamp >= ?".to_string());
+            params_vec.push(Box::new(from));
+        }
+
+        // タイムスタンプフィルタ（終了）
+        if let Some(to) = filters.to {
+            where_clauses.push("timestamp <= ?".to_string());
+            params_vec.push(Box::new(to));
+        }
+
+        // テキスト検索（message, file, module_path）
+        if let Some(search) = &filters.search {
+            let search_pattern = format!("%{}%", search);
+            where_clauses.push("(message LIKE ? OR file LIKE ? OR module_path LIKE ?)".to_string());
+            params_vec.push(Box::new(search_pattern.clone()));
+            params_vec.push(Box::new(search_pattern.clone()));
+            params_vec.push(Box::new(search_pattern));
+        }
+
+        let where_clause = if where_clauses.is_empty() {
+            String::new()
+        } else {
+            format!("WHERE {}", where_clauses.join(" AND "))
+        };
+
+        // クエリ構築（新しいログが先頭、降順ソート）
+        let mut query = format!(
+            "SELECT id, level, timestamp, message, file, line, column, module_path, \
+             stacktrace, context, mcv_version, platform, arch, build_profile \
+             FROM logs {} ORDER BY timestamp DESC",
+            where_clause
+        );
+
+        // LIMIT/OFFSET追加
+        if let Some(limit) = filters.limit {
+            query.push_str(&format!(" LIMIT {}", limit));
+            if let Some(offset) = filters.offset {
+                query.push_str(&format!(" OFFSET {}", offset));
+            }
+        }
+
+        let mut stmt = self.conn.prepare(&query)?;
+
+        let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+
+        let entries = stmt
+            .query_map(params_refs.as_slice(), |row| {
+                Ok(LogEntry {
+                    id: row.get(0)?,
+                    level: row.get::<_, String>(1)?.parse().unwrap(),
+                    timestamp: row.get(2)?,
+                    message: row.get(3)?,
+                    source: SourceLocation {
+                        file: row.get(4)?,
+                        line: row.get(5)?,
+                        column: row.get(6)?,
+                        module_path: row.get(7)?,
+                    },
+                    stacktrace: row
+                        .get::<_, Option<String>>(8)?
+                        .and_then(|s| serde_json::from_str(&s).ok()),
+                    context: row
+                        .get::<_, Option<String>>(9)?
+                        .and_then(|s| serde_json::from_str(&s).ok()),
+                    system_info: SystemInfo {
+                        mcv_version: row.get(10)?,
+                        platform: row.get(11)?,
+                        arch: row.get(12)?,
+                        build_profile: row.get(13)?,
+                    },
+                })
+            })?
+            .collect::<SqliteResult<Vec<_>>>()?;
+
+        Ok(entries)
     }
 }
 

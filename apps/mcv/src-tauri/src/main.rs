@@ -419,6 +419,82 @@ async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+// ログビューア関連のコマンド
+
+/// ログクエリパラメータ
+#[derive(serde::Deserialize)]
+struct LogQueryParams {
+    levels: Option<Vec<String>>,
+    search: Option<String>,
+    from: Option<i64>,
+    to: Option<i64>,
+    limit: Option<usize>,
+    offset: Option<usize>,
+}
+
+/// ビルドプロファイル情報
+#[derive(serde::Serialize)]
+struct BuildProfileInfo {
+    profile: String,
+}
+
+/// ログを取得
+#[tauri::command]
+async fn get_logs(params: LogQueryParams) -> Result<Vec<mcv_log_core::LogEntry>, String> {
+    let storage = mcv_log_core::get_storage();
+
+    // チャンネルに応じたレベルフィルタを適用
+    let build_profile = get_build_profile();
+    let effective_levels = match build_profile {
+        "stable" | "beta" => {
+            // stable/betaはerrorのみ
+            Some(vec![mcv_log_core::LogLevel::Error])
+        }
+        "alpha" => {
+            // alphaはユーザー指定のレベル、または指定なしなら全て
+            params.levels.as_ref().map(|levels| {
+                levels
+                    .iter()
+                    .filter_map(|s| match s.to_lowercase().as_str() {
+                        "trace" => Some(mcv_log_core::LogLevel::Trace),
+                        "debug" => Some(mcv_log_core::LogLevel::Debug),
+                        "info" => Some(mcv_log_core::LogLevel::Info),
+                        "warn" => Some(mcv_log_core::LogLevel::Warn),
+                        "error" => Some(mcv_log_core::LogLevel::Error),
+                        _ => None,
+                    })
+                    .collect()
+            })
+        }
+        _ => None,
+    };
+
+    let filters = mcv_log_core::storage::LogQueryFilters {
+        levels: effective_levels,
+        search: params.search,
+        from: params.from,
+        to: params.to,
+        limit: params.limit,
+        offset: params.offset,
+    };
+
+    let storage_guard = storage
+        .lock()
+        .map_err(|e| format!("Failed to lock storage: {}", e))?;
+
+    storage_guard
+        .query_logs(filters)
+        .map_err(|e| format!("Failed to query logs: {}", e))
+}
+
+/// ビルドプロファイル情報を取得
+#[tauri::command]
+async fn get_build_profile_info() -> Result<BuildProfileInfo, String> {
+    Ok(BuildProfileInfo {
+        profile: get_build_profile().to_string(),
+    })
+}
+
 fn main() {
     // ロガーを初期化
     let local_app_data = std::env::var("LOCALAPPDATA").expect("Failed to get LOCALAPPDATA");
@@ -637,6 +713,19 @@ fn main() {
                 tracing::debug!(target: "mcv::main", title = %title, "Window title set");
             }
 
+            // ログ挿入時のイベント発行を設定
+            let log_app_handle = app.handle().clone();
+            mcv_log_core::set_log_insert_callback(move |entry| {
+                if let Err(e) = log_app_handle.emit("log-added", entry) {
+                    tracing::error!(
+                        target: "mcv::main",
+                        error = %e,
+                        "Failed to emit log-added event"
+                    );
+                }
+            });
+            tracing::debug!(target: "mcv::main", "Log insert callback set");
+
             // AppHandleを保存（ブロッキング操作）
             let handle = app.handle().clone();
             let app_handle_clone = app_handle.clone();
@@ -663,7 +752,9 @@ fn main() {
             update_connection_settings,
             send_comment,
             check_for_updates,
-            launch_installer
+            launch_installer,
+            get_logs,
+            get_build_profile_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -680,6 +771,18 @@ fn get_title() -> String {
     #[cfg(all(not(feature = "alpha"), not(feature = "beta")))]
     let title = format!("MultiCommentViewer v{}", version);
     title
+}
+
+/// ビルドプロファイルを取得
+fn get_build_profile() -> &'static str {
+    #[cfg(feature = "alpha")]
+    return "alpha";
+
+    #[cfg(all(feature = "beta", not(feature = "alpha")))]
+    return "beta";
+
+    #[cfg(all(not(feature = "alpha"), not(feature = "beta")))]
+    return "stable";
 }
 fn exe_dir() -> PathBuf {
     std::env::current_exe()

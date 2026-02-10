@@ -9,6 +9,11 @@ use std::sync::{Arc, Mutex, OnceLock};
 // グローバルストレージインスタンス
 static GLOBAL_STORAGE: OnceLock<Arc<Mutex<storage::LogStorage>>> = OnceLock::new();
 
+// グローバルなログ挿入時コールバック
+static LOG_INSERT_CALLBACK: OnceLock<
+    Arc<Mutex<Option<Box<dyn Fn(&schema::LogEntry) + Send + Sync>>>>
+> = OnceLock::new();
+
 /// ロガーを初期化
 ///
 /// # Arguments
@@ -48,6 +53,31 @@ pub fn get_storage() -> Arc<Mutex<storage::LogStorage>> {
         .get()
         .expect("Storage not initialized. Call init_logger first.")
         .clone()
+}
+
+/// ログ挿入時のコールバックを設定
+pub fn set_log_insert_callback<F>(callback: F)
+where
+    F: Fn(&schema::LogEntry) + Send + Sync + 'static,
+{
+    let callback_holder = LOG_INSERT_CALLBACK.get_or_init(|| {
+        Arc::new(Mutex::new(None))
+    });
+
+    if let Ok(mut holder) = callback_holder.lock() {
+        *holder = Some(Box::new(callback));
+    }
+}
+
+/// ログ挿入時のコールバックを呼び出す（内部使用）
+pub(crate) fn invoke_log_insert_callback(entry: &schema::LogEntry) {
+    if let Some(callback_holder) = LOG_INSERT_CALLBACK.get() {
+        if let Ok(holder) = callback_holder.lock() {
+            if let Some(callback) = holder.as_ref() {
+                callback(entry);
+            }
+        }
+    }
 }
 
 /// ログレベルを取得（feature フラグから）

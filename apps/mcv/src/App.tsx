@@ -464,9 +464,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex">
+    <div className="h-screen bg-gray-900 text-white flex overflow-hidden">
       {/* サイドバー: 接続一覧 */}
-      <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+      <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col h-full">
         <div className="p-4 border-b border-gray-700">
           <h1 className="text-2xl font-bold mb-2">MultiCommentViewer</h1>
           <button
@@ -477,7 +477,7 @@ function App() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 overflow-y-scroll p-4 space-y-2">
           <h2 className="text-sm font-semibold text-gray-400 mb-2">接続一覧</h2>
           {connections.length === 0 ? (
             <div className="text-center py-8 text-gray-500 text-sm">

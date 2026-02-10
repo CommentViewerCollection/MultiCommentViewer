@@ -7,11 +7,16 @@ import { LogViewer } from './components/LogViewer'
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
 
+// MessagePart type matching backend structure
+type MessagePart =
+  | { type: 'text'; text: string }
+  | { type: 'image'; url: string; width?: number; height?: number; alt?: string }
+
 interface Comment {
   id: string
-  user_name: string
+  user_name: MessagePart[]  // Changed from string
   user_id: string
-  text: string
+  text: MessagePart[]       // Changed from string
   timestamp: number
   connection_id?: string
   connection_name?: string
@@ -56,6 +61,66 @@ interface UpdateInfo {
 }
 
 type TabType = 'comments' | 'logs'
+
+// Render a single MessagePart (text or image)
+function RenderMessagePart({
+  part,
+  isUsername = false
+}: {
+  part: MessagePart;
+  isUsername?: boolean
+}) {
+  if (part.type === 'text') {
+    return <span>{part.text}</span>
+  }
+
+  // Image part
+  const size = isUsername ? 16 : 22  // Badges smaller than emojis
+  const [error, setError] = useState(false)
+
+  if (error) {
+    // Fallback to alt text if image fails to load
+    return <span className="text-gray-500 text-xs">[{part.alt || 'image'}]</span>
+  }
+
+  return (
+    <img
+      src={part.url}
+      alt={part.alt || ''}
+      width={part.width || size}
+      height={part.height || size}
+      onError={() => setError(true)}
+      className={`inline-block mx-0.5 ${isUsername ? 'align-middle' : 'align-text-bottom'}`}
+      style={{
+        maxWidth: `${size}px`,
+        maxHeight: `${size}px`,
+        objectFit: 'contain'
+      }}
+      loading="lazy"
+    />
+  )
+}
+
+// Render an array of MessageParts
+function RenderMessageParts({
+  parts,
+  isUsername = false
+}: {
+  parts: MessagePart[];
+  isUsername?: boolean
+}) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-0.5">
+      {parts.map((part, index) => (
+        <RenderMessagePart
+          key={index}
+          part={part}
+          isUsername={isUsername}
+        />
+      ))}
+    </span>
+  )
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('comments')
@@ -357,6 +422,12 @@ function App() {
       const conn = connections.find(c => c.connection_id === item.connection_id)
       return <span>{conn?.name ?? ''}</span>
     }
+    if (column.key === 'user_name') {
+      return <RenderMessageParts parts={item.user_name} isUsername={true} />
+    }
+    if (column.key === 'text') {
+      return <RenderMessageParts parts={item.text} isUsername={false} />
+    }
     return <span>{String(item[column.key])}</span>
   }
 
@@ -592,7 +663,7 @@ function App() {
                   onAtBottomChange={setAtBottom}
                   onColumnResize={handleColumnResize}
                   onColumnVisibilityChange={handleColumnVisibilityChange}
-                  defaultItemHeight={60}
+                  defaultItemHeight={65}
                 />
               </div>
 

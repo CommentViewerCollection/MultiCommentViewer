@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
@@ -38,14 +38,14 @@ pub struct ConnectionInfo {
 ///
 /// 接続インスタンスの管理を担当
 pub struct ConnectionManager {
-    connections: HashMap<Uuid, ConnectionInfo>,
+    connections: IndexMap<Uuid, ConnectionInfo>,
 }
 
 impl ConnectionManager {
     /// 新しいConnection Managerを作成
     pub fn new() -> Self {
         Self {
-            connections: HashMap::new(),
+            connections: IndexMap::new(),
         }
     }
 
@@ -75,7 +75,7 @@ impl ConnectionManager {
 
     /// 接続を削除
     pub fn remove_connection(&mut self, connection_id: &Uuid) -> Option<ConnectionInfo> {
-        self.connections.remove(connection_id)
+        self.connections.shift_remove(connection_id)
     }
 
     /// 接続のステータスを更新

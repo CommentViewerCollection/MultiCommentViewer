@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, DataGridRef, Column } from 'my-dataview'
+import { LogViewer } from './components/LogViewer'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
@@ -641,11 +642,7 @@ function App() {
             </>
           )}
 
-          {activeTab === 'logs' && (
-            <div className="flex-1 p-4 flex items-center justify-center text-gray-400">
-              ログビューア（実装予定）
-            </div>
-          )}
+          {activeTab === 'logs' && <LogViewer />}
         </div>
       </div>
 

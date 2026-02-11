@@ -606,7 +606,7 @@ function App() {
                   </div>
 
                   {/* サイト選択 + ブラウザ選択 */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
                     <div>
                       <label className="text-xs text-gray-400 block mb-0.5">配信サイト</label>
                       <select
@@ -659,7 +659,7 @@ function App() {
                   {/* 接続毎の色設定（color_mode="connection" の時のみ表示） */}
                   {coreSettings?.enable_color_by_plugin_or_connection &&
                     coreSettings?.color_mode === 'connection' && (
-                      <div className="grid grid-cols-2 gap-2">
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
                         <div>
                           <label className="text-xs text-gray-400 block mb-0.5">背景色</label>
                           <div className="flex gap-1 items-center">

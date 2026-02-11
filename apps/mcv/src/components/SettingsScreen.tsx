@@ -264,6 +264,52 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
   const activeTabData = tabs.find(t => t.id === activeTab)
 
+  // Core設定用の動的uiSchema生成（ColorPickerWidget適用）
+  const getCoreUiSchema = () => {
+    const baseUiSchema: any = {
+      'ui:submitButtonOptions': {
+        norender: true,
+      },
+      'ui:order': [
+        'theme',
+        'auto_scroll',
+        'max_comments',
+        'enable_color_by_plugin_or_connection',
+        'color_mode',
+        'site_colors'
+      ],
+      color_mode: {
+        'ui:classNames': 'conditional-field',
+        'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection
+      },
+      site_colors: {
+        'ui:classNames': 'conditional-field',
+        'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
+                       currentData[activeTab]?.color_mode === 'connection',
+        'ui:options': {
+          orderable: false
+        }
+      }
+    };
+
+    // 各Siteのbgcolor/textColorにColorPickerWidgetを動的に割り当て
+    const siteColors = currentData[activeTab]?.site_colors;
+    if (siteColors && typeof siteColors === 'object') {
+      Object.keys(siteColors).forEach((siteName) => {
+        baseUiSchema.site_colors[siteName] = {
+          bgColor: {
+            'ui:widget': 'ColorPickerWidget'
+          },
+          textColor: {
+            'ui:widget': 'ColorPickerWidget'
+          }
+        };
+      });
+    }
+
+    return baseUiSchema;
+  };
+
   // Core設定の動的スキーマ生成（条件付きフィールドのdisabled制御）
   const getEffectiveSchema = () => {
     if (!activeTabData || activeTab !== 'core') {
@@ -349,31 +395,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
                 formData={currentData[activeTab]}
                 validator={validator}
                 onChange={(e) => handleFormChange(activeTab, e.formData)}
-                uiSchema={activeTab === 'core' ? {
-                  'ui:submitButtonOptions': {
-                    norender: true,
-                  },
-                  'ui:order': [
-                    'theme',
-                    'auto_scroll',
-                    'max_comments',
-                    'enable_color_by_plugin_or_connection',
-                    'color_mode',
-                    'site_colors'
-                  ],
-                  color_mode: {
-                    'ui:classNames': 'conditional-field',
-                    'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection
-                  },
-                  site_colors: {
-                    'ui:classNames': 'conditional-field',
-                    'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
-                                   currentData[activeTab]?.color_mode === 'connection',
-                    'ui:options': {
-                      orderable: false
-                    }
-                  }
-                } : {
+                uiSchema={activeTab === 'core' ? getCoreUiSchema() : {
                   'ui:submitButtonOptions': {
                     norender: true,
                   },

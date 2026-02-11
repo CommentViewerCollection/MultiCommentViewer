@@ -819,6 +819,7 @@ fn main() {
     // Tauriアプリを起動
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(move |app| {
             // ウィンドウタイトルにバージョン番号とチャンネルを設定
             if let Some(window) = app.get_webview_window("main") {

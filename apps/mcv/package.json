@@ -13,6 +13,7 @@
     "@rjsf/utils": "^6.2.5",
     "@rjsf/validator-ajv8": "^6.2.5",
     "@tauri-apps/api": "^2.1.0",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-opener": "^2.0.0",
     "my-dataview": "file:../../packages/my-dataview",
     "react": "^18.3.1",

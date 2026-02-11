@@ -14,6 +14,7 @@ mcv-log-core = { path = "../../../crates/mcv-log-core" }
 mcv-settings-core = { path = "../../../crates/mcv-settings-core" }
 tauri = { workspace = true, features = ["devtools"] }
 tauri-plugin-opener = "2.0"
+tauri-plugin-dialog = "2.0"
 serde = { workspace = true }
 serde_json = { workspace = true }
 actix = { workspace = true }

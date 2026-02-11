@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, DataGridRef, Column } from 'my-dataview'
 import { LogViewer } from './components/LogViewer'
+import { SettingsScreen } from './components/SettingsScreen'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
@@ -60,7 +61,7 @@ interface UpdateInfo {
   min_installer_version: string
 }
 
-type TabType = 'comments' | 'logs'
+type TabType = 'comments' | 'logs' | 'settings'
 
 // Render a single MessagePart (text or image)
 function RenderMessagePart({
@@ -137,6 +138,7 @@ function App() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
@@ -643,6 +645,19 @@ function App() {
             >
               ログ
             </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'settings'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+              onClick={() => {
+                setActiveTab('settings')
+                setShowSettings(true)
+              }}
+            >
+              設定
+            </button>
           </div>
         </div>
 
@@ -754,6 +769,14 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 設定画面 */}
+      {showSettings && (
+        <SettingsScreen onClose={() => {
+          setShowSettings(false)
+          setActiveTab('comments')
+        }} />
       )}
     </div>
   )

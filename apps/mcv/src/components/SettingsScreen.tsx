@@ -115,7 +115,8 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
     /* readOnlyフィールド（disabled状態）のスタイル */
     .rjsf .conditional-field:has(input[readonly]),
-    .rjsf .conditional-field:has(select[disabled]) {
+    .rjsf .conditional-field:has(select[disabled]),
+    .rjsf .conditional-field-disabled {
       opacity: 0.5;
       pointer-events: none;
       background-color: rgba(55, 65, 81, 0.2) !important;
@@ -123,7 +124,8 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     }
 
     .rjsf .conditional-field:has(input[readonly]) > label,
-    .rjsf .conditional-field:has(select[disabled]) > label {
+    .rjsf .conditional-field:has(select[disabled]) > label,
+    .rjsf .conditional-field-disabled > label {
       color: #6b7280 !important;
     }
 
@@ -279,11 +281,21 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
         'site_colors'
       ],
       color_mode: {
-        'ui:classNames': 'conditional-field',
-        'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection
+        'ui:classNames': `conditional-field ${
+          !currentData[activeTab]?.enable_color_by_plugin_or_connection
+            ? 'conditional-field-disabled'
+            : ''
+        }`.trim(),
+        'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection,
+        'ui:enumNames': ['配信サイト毎', '接続毎']
       },
       site_colors: {
-        'ui:classNames': 'conditional-field',
+        'ui:classNames': `conditional-field ${
+          !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
+          currentData[activeTab]?.color_mode === 'connection'
+            ? 'conditional-field-disabled'
+            : ''
+        }`.trim(),
         'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
                        currentData[activeTab]?.color_mode === 'connection',
         'ui:options': {

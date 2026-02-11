@@ -35,6 +35,31 @@ pub trait Plugin: Send + Sync {
 
     /// プラグイン終了時に呼ばれる
     async fn on_shutdown(&mut self) -> Result<(), PluginError>;
+
+    /// プラグインの設定スキーマを取得（オプショナル）
+    ///
+    /// JSON Schemaフォーマットでプラグインの設定項目を定義します。
+    /// このメソッドが None を返す場合、プラグインは設定をサポートしていません。
+    async fn get_settings_schema(&self) -> Option<serde_json::Value> {
+        None
+    }
+
+    /// プラグインの現在の設定値を取得（オプショナル）
+    ///
+    /// get_settings_schema() で定義されたスキーマに準拠したJSON値を返します。
+    /// このメソッドが None を返す場合、プラグインは設定をサポートしていません。
+    async fn get_settings(&self) -> Option<serde_json::Value> {
+        None
+    }
+
+    /// プラグインの設定値を更新（オプショナル）
+    ///
+    /// get_settings_schema() で定義されたスキーマに準拠したJSON値を受け取り、
+    /// プラグインの設定を更新します。
+    /// デフォルト実装は何もしません（設定をサポートしていないプラグイン用）。
+    async fn update_settings(&mut self, _data: serde_json::Value) -> Result<(), PluginError> {
+        Ok(())
+    }
 }
 
 /// Plugin-Hostが提供するインターフェース

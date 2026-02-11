@@ -1,82 +1,160 @@
+use actix::Context;
 use crate::core_actor::CoreActor;
+use crate::plugin_host_actor::SendMessageToPlugin;
+use mcv_common::LogicalPluginId;
 use mcv_messages::*;
 use mcv_settings_core::SettingsEntry;
+use uuid::Uuid;
 
 /// get-settings-schema メッセージハンドラ
-pub async fn handle_get_settings_schema(
-    _core: &CoreActor,
-    payload: GetSettingsSchemaPayload,
-) -> Result<SettingsSchemaPayload, String> {
+pub fn handle_get_settings_schema(
+    core: &CoreActor,
+    message: &Message,
+    _ctx: &mut Context<CoreActor>,
+) -> Result<Message, String> {
+    let payload: GetSettingsSchemaPayload = serde_json::from_value(message.payload.clone())
+        .map_err(|e| format!("Failed to parse get-settings-schema payload: {}", e))?;
+
     if payload.target == "core" {
         // Core の設定スキーマを返す
-        Ok(SettingsSchemaPayload {
+        let response_payload = SettingsSchemaPayload {
             target: "core".to_string(),
             schema: CoreActor::get_core_settings_schema(),
-        })
-    } else {
-        // プラグインの設定スキーマを取得（プラグインに転送する必要がある）
-        Err(format!(
-            "Plugin settings schema request should be forwarded to plugin: {}",
-            payload.target
+        };
+
+        Ok(Message::create_response(
+            message,
+            MessageType::SettingsSchema,
+            serde_json::to_value(response_payload)
+                .map_err(|e| format!("Failed to serialize response: {}", e))?,
         ))
+    } else {
+        // プラグインの設定スキーマを取得（プラグインに転送）
+        let plugin_id = Uuid::parse_str(&payload.target)
+            .map_err(|e| format!("Invalid plugin_id format: {}", e))?;
+        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
+
+        if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+            // プラグインにメッセージを転送
+            let forward_message = Message::new(
+                MessageType::GetSettingsSchema,
+                message.src.clone(),
+                MessageDestination::Plugin {
+                    plugin_id: logical_plugin_id.inner(),
+                },
+                message.payload.clone(),
+            );
+
+            plugin_info.host_addr.do_send(SendMessageToPlugin {
+                message: forward_message,
+            });
+
+            // 非同期応答なので、ここではOKを返す（実際の応答はプラグインから送られる）
+            Ok(Message::create_response(
+                message,
+                MessageType::SettingsSchema,
+                serde_json::json!({
+                    "target": payload.target,
+                    "schema": {}
+                }),
+            ))
+        } else {
+            Err(format!("Plugin not found: {}", payload.target))
+        }
     }
 }
 
 /// get-settings メッセージハンドラ
-pub async fn handle_get_settings(
+pub fn handle_get_settings(
     core: &CoreActor,
-    payload: GetSettingsPayload,
-) -> Result<SettingsDataPayload, String> {
+    message: &Message,
+    _ctx: &mut Context<CoreActor>,
+) -> Result<Message, String> {
+    let payload: GetSettingsPayload = serde_json::from_value(message.payload.clone())
+        .map_err(|e| format!("Failed to parse get-settings payload: {}", e))?;
+
     if payload.target == "core" {
         // Core の設定を取得
-        if let Some(storage) = &core.settings_storage {
+        let data = if let Some(storage) = &core.settings_storage {
             let storage = storage.lock().map_err(|e| format!("Lock error: {}", e))?;
 
             match storage.get_settings("core") {
-                Ok(Some(entry)) => {
-                    Ok(SettingsDataPayload {
-                        target: "core".to_string(),
-                        data: entry.data,
-                    })
-                }
+                Ok(Some(entry)) => entry.data,
                 Ok(None) => {
                     // 設定がない場合はデフォルト値を返す
-                    Ok(SettingsDataPayload {
-                        target: "core".to_string(),
-                        data: serde_json::json!({
-                            "theme": "dark",
-                            "auto_scroll": true,
-                            "max_comments": 1000
-                        }),
+                    serde_json::json!({
+                        "theme": "dark",
+                        "auto_scroll": true,
+                        "max_comments": 1000
                     })
                 }
-                Err(e) => Err(format!("Failed to get settings: {}", e)),
+                Err(e) => return Err(format!("Failed to get settings: {}", e)),
             }
         } else {
             // ストレージが設定されていない場合はデフォルト値を返す
-            Ok(SettingsDataPayload {
-                target: "core".to_string(),
-                data: serde_json::json!({
-                    "theme": "dark",
-                    "auto_scroll": true,
-                    "max_comments": 1000
-                }),
+            serde_json::json!({
+                "theme": "dark",
+                "auto_scroll": true,
+                "max_comments": 1000
             })
-        }
-    } else {
-        // プラグインの設定を取得（プラグインに転送する必要がある）
-        Err(format!(
-            "Plugin settings request should be forwarded to plugin: {}",
-            payload.target
+        };
+
+        let response_payload = SettingsDataPayload {
+            target: "core".to_string(),
+            data,
+        };
+
+        Ok(Message::create_response(
+            message,
+            MessageType::SettingsData,
+            serde_json::to_value(response_payload)
+                .map_err(|e| format!("Failed to serialize response: {}", e))?,
         ))
+    } else {
+        // プラグインの設定を取得（プラグインに転送）
+        let plugin_id = Uuid::parse_str(&payload.target)
+            .map_err(|e| format!("Invalid plugin_id format: {}", e))?;
+        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
+
+        if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+            // プラグインにメッセージを転送
+            let forward_message = Message::new(
+                MessageType::GetSettings,
+                message.src.clone(),
+                MessageDestination::Plugin {
+                    plugin_id: logical_plugin_id.inner(),
+                },
+                message.payload.clone(),
+            );
+
+            plugin_info.host_addr.do_send(SendMessageToPlugin {
+                message: forward_message,
+            });
+
+            // 非同期応答なので、ここではダミーを返す（実際の応答はプラグインから送られる）
+            Ok(Message::create_response(
+                message,
+                MessageType::SettingsData,
+                serde_json::json!({
+                    "target": payload.target,
+                    "data": {}
+                }),
+            ))
+        } else {
+            Err(format!("Plugin not found: {}", payload.target))
+        }
     }
 }
 
 /// update-settings メッセージハンドラ
-pub async fn handle_update_settings(
+pub fn handle_update_settings(
     core: &mut CoreActor,
-    payload: UpdateSettingsPayload,
-) -> Result<(), String> {
+    message: &Message,
+    _ctx: &mut Context<CoreActor>,
+) -> Result<Message, String> {
+    let payload: UpdateSettingsPayload = serde_json::from_value(message.payload.clone())
+        .map_err(|e| format!("Failed to parse update-settings payload: {}", e))?;
+
     if payload.target == "core" {
         // Core の設定を保存
         if let Some(storage) = &core.settings_storage {
@@ -93,15 +171,44 @@ pub async fn handle_update_settings(
                 .save_settings(&entry)
                 .map_err(|e| format!("Failed to save settings: {}", e))?;
 
-            Ok(())
+            // 成功応答を返す（空のペイロード）
+            Ok(Message::create_response(
+                message,
+                MessageType::UpdateSettings,
+                serde_json::json!({}),
+            ))
         } else {
             Err("Settings storage is not configured".to_string())
         }
     } else {
-        // プラグインの設定を更新（プラグインに転送する必要がある）
-        Err(format!(
-            "Plugin settings update should be forwarded to plugin: {}",
-            payload.target
-        ))
+        // プラグインの設定を更新（プラグインに転送）
+        let plugin_id = Uuid::parse_str(&payload.target)
+            .map_err(|e| format!("Invalid plugin_id format: {}", e))?;
+        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
+
+        if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+            // プラグインにメッセージを転送
+            let forward_message = Message::new(
+                MessageType::UpdateSettings,
+                message.src.clone(),
+                MessageDestination::Plugin {
+                    plugin_id: logical_plugin_id.inner(),
+                },
+                message.payload.clone(),
+            );
+
+            plugin_info.host_addr.do_send(SendMessageToPlugin {
+                message: forward_message,
+            });
+
+            // 成功応答を返す
+            Ok(Message::create_response(
+                message,
+                MessageType::UpdateSettings,
+                serde_json::json!({}),
+            ))
+        } else {
+            Err(format!("Plugin not found: {}", payload.target))
+        }
     }
 }

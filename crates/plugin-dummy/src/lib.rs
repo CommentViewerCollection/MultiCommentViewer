@@ -3,11 +3,48 @@ use mcv_messages::*;
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
+
+/// DummyPlugin の設定
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DummyPluginSettings {
+    /// デフォルトコメント生成間隔（秒）
+    pub default_interval: u64,
+    /// ランダムな名前を使用するか
+    pub use_random_names: bool,
+    /// デバッグモード
+    pub enable_debug: bool,
+    /// 高度な設定
+    pub advanced_settings: AdvancedSettings,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedSettings {
+    /// 高度な設定を有効にする
+    pub enabled: bool,
+    /// カスタムプレフィックス（有効時のみ）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_prefix: Option<String>,
+}
+
+impl Default for DummyPluginSettings {
+    fn default() -> Self {
+        Self {
+            default_interval: 0,
+            use_random_names: true,
+            enable_debug: false,
+            advanced_settings: AdvancedSettings {
+                enabled: false,
+                custom_prefix: None,
+            },
+        }
+    }
+}
 
 /// ダミープラグイン
 ///
@@ -20,6 +57,8 @@ pub struct DummyPlugin {
     comment_rates: HashMap<Uuid, Arc<tokio::sync::RwLock<u64>>>,
     // 一時停止フラグ（connection_id -> paused）
     paused: HashMap<Uuid, Arc<AtomicBool>>,
+    // 設定
+    settings: Arc<tokio::sync::RwLock<DummyPluginSettings>>,
 }
 
 impl DummyPlugin {
@@ -35,7 +74,75 @@ impl DummyPlugin {
             connections: HashMap::new(),
             comment_rates: HashMap::new(),
             paused: HashMap::new(),
+            settings: Arc::new(tokio::sync::RwLock::new(DummyPluginSettings::default())),
         }
+    }
+
+    /// 設定スキーマを取得
+    fn get_schema() -> serde_json::Value {
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "default_interval": {
+                    "type": "integer",
+                    "title": "デフォルト生成間隔（秒）",
+                    "description": "新規接続時のデフォルトコメント生成間隔を秒単位で指定します。0の場合はランダム（1-5秒）",
+                    "default": 0,
+                    "minimum": 0,
+                    "maximum": 60
+                },
+                "use_random_names": {
+                    "type": "boolean",
+                    "title": "ランダムな名前を使用",
+                    "description": "コメント生成時にランダムな名前を使用します",
+                    "default": true
+                },
+                "enable_debug": {
+                    "type": "boolean",
+                    "title": "デバッグモード",
+                    "description": "詳細なデバッグログを出力します",
+                    "default": false
+                },
+                "advanced_settings": {
+                    "type": "object",
+                    "title": "高度な設定",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "title": "高度な設定を有効にする",
+                            "default": false
+                        }
+                    },
+                    "dependencies": {
+                        "enabled": {
+                            "oneOf": [
+                                {
+                                    "properties": {
+                                        "enabled": {
+                                            "enum": [false]
+                                        }
+                                    }
+                                },
+                                {
+                                    "properties": {
+                                        "enabled": {
+                                            "enum": [true]
+                                        },
+                                        "custom_prefix": {
+                                            "type": "string",
+                                            "title": "カスタムプレフィックス",
+                                            "description": "コメントユーザー名の前に付けるプレフィックス",
+                                            "default": "[Dummy]"
+                                        }
+                                    },
+                                    "required": ["custom_prefix"]
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        })
     }
 
     /// コメント生成タスク（静的メソッドとして実装）
@@ -126,7 +233,13 @@ impl DummyPlugin {
 
 impl Default for DummyPlugin {
     fn default() -> Self {
-        Self::new()
+        Self {
+            plugin_id: Uuid::new_v4(),
+            connections: HashMap::new(),
+            comment_rates: HashMap::new(),
+            paused: HashMap::new(),
+            settings: Arc::new(tokio::sync::RwLock::new(DummyPluginSettings::default())),
+        }
     }
 }
 
@@ -824,6 +937,52 @@ impl Plugin for DummyPlugin {
                 );
                 // DummyPluginは特にクリーンアップ不要
             }
+            MessageType::GetSettingsSchema => {
+                tracing::debug!("GetSettingsSchema received");
+
+                // スキーマを取得して応答
+                if let Some(schema) = self.get_settings_schema().await {
+                    let response = Message::create_response(
+                        &message,
+                        MessageType::SettingsSchema,
+                        serde_json::json!({
+                            "target": self.plugin_id.to_string(),
+                            "schema": schema
+                        }),
+                    );
+
+                    host.send_message(response).await?;
+                }
+            }
+            MessageType::GetSettings => {
+                tracing::debug!("GetSettings received");
+
+                // 設定値を取得して応答
+                if let Some(data) = self.get_settings().await {
+                    let response = Message::create_response(
+                        &message,
+                        MessageType::SettingsData,
+                        serde_json::json!({
+                            "target": self.plugin_id.to_string(),
+                            "data": data
+                        }),
+                    );
+
+                    host.send_message(response).await?;
+                }
+            }
+            MessageType::UpdateSettings => {
+                tracing::debug!("UpdateSettings received");
+
+                // ペイロードから設定データを取得
+                let payload: UpdateSettingsPayload = serde_json::from_value(message.payload.clone())
+                    .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to parse update-settings payload: {}", e)))?;
+
+                // 設定を更新
+                self.update_settings(payload.data).await?;
+
+                tracing::info!("Settings updated via message");
+            }
             _ => {
                 println!("Unhandled message type: {:?}", message.message_type);
             }
@@ -842,6 +1001,26 @@ impl Plugin for DummyPlugin {
         self.connections.clear();
         self.paused.clear();
         self.comment_rates.clear();
+        Ok(())
+    }
+
+    async fn get_settings_schema(&self) -> Option<serde_json::Value> {
+        Some(Self::get_schema())
+    }
+
+    async fn get_settings(&self) -> Option<serde_json::Value> {
+        let settings = self.settings.read().await;
+        serde_json::to_value(&*settings).ok()
+    }
+
+    async fn update_settings(&mut self, data: serde_json::Value) -> Result<(), PluginError> {
+        let new_settings: DummyPluginSettings = serde_json::from_value(data)
+            .map_err(|e| PluginError::Other(format!("Invalid settings data: {}", e)))?;
+
+        let mut settings = self.settings.write().await;
+        *settings = new_settings;
+
+        tracing::info!("Settings updated successfully");
         Ok(())
     }
 }

@@ -10,7 +10,7 @@ pub mod site_browser_manager;
 // 公開エクスポート
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
 pub use core_actor::{
-    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetSites, LogicalPluginInfo,
+    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetLogicalPlugins, GetSites, LogicalPluginInfo,
     PluginInfo, RegisterPhysicalPlugin, RemoveConnection, RenameConnection, SendMessageToCore,
     SendRequest, SetConnectionSite, UpdateConnectionSettings,
 };

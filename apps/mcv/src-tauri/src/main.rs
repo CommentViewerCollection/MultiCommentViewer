@@ -8,6 +8,7 @@ use mcv_core::{
     CreateConnection,
     GetBrowsers,
     GetConnections,
+    GetLogicalPlugins,
     GetSites,
     PluginManager,
     RemoveConnection,
@@ -581,12 +582,22 @@ struct PluginInfoResponse {
     name: String,
 }
 
-/// プラグイン一覧を取得 (TODO: 実装を完成させる)
+/// プラグイン一覧を取得
 #[tauri::command]
-async fn get_plugins(_state: State<'_, AppState>) -> Result<Vec<PluginInfoResponse>, String> {
-    // TODO: CoreActor から実際のプラグイン一覧を取得する
-    // 現在は空のリストを返す
-    Ok(vec![])
+async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoResponse>, String> {
+    let plugins = state
+        .core_addr
+        .send(GetLogicalPlugins)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(plugins
+        .into_iter()
+        .map(|p| PluginInfoResponse {
+            plugin_id: p.logical_plugin_id.inner().to_string(),
+            name: p.name,
+        })
+        .collect())
 }
 
 fn main() {

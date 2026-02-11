@@ -183,6 +183,36 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::UpdateConnectionSettings => {
                 message_handlers::site_browser::handle_update_connection_settings(self, &message, ctx)
             }
+            MessageType::GetSettingsSchema => {
+                tracing::warn!(
+                    target: "mcv::core::CoreActor",
+                    "GetSettingsSchema from plugin is not supported yet"
+                );
+            }
+            MessageType::SettingsSchema => {
+                // プラグインからの応答をUIに転送
+                if let Some(ref callback) = self.event_callback {
+                    callback(message.clone());
+                }
+            }
+            MessageType::GetSettings => {
+                tracing::warn!(
+                    target: "mcv::core::CoreActor",
+                    "GetSettings from plugin is not supported yet"
+                );
+            }
+            MessageType::SettingsData => {
+                // プラグインからの応答をUIに転送
+                if let Some(ref callback) = self.event_callback {
+                    callback(message.clone());
+                }
+            }
+            MessageType::UpdateSettings => {
+                tracing::warn!(
+                    target: "mcv::core::CoreActor",
+                    "UpdateSettings from plugin is not supported yet"
+                );
+            }
             _ => {
                 tracing::warn!(
                     target: "mcv::core::CoreActor",
@@ -237,7 +267,16 @@ impl Handler<SendRequest> for CoreActor {
                 message_handlers::connection::handle_connected(self, &message, ctx)
             }
             MessageType::Disconnected => {
-                message_handlers::connection::handle_disconnected(self, &message, ctx)
+                message_handlers::connection::handle_disconnected(self, &message, ctx);
+            }
+            MessageType::GetSettingsSchema => {
+                return message_handlers::settings::handle_get_settings_schema(self, &message, ctx);
+            }
+            MessageType::GetSettings => {
+                return message_handlers::settings::handle_get_settings(self, &message, ctx);
+            }
+            MessageType::UpdateSettings => {
+                return message_handlers::settings::handle_update_settings(self, &message, ctx);
             }
             _ => {
                 tracing::warn!(
@@ -293,6 +332,22 @@ impl Handler<GetConnections> for CoreActor {
         self.connection_manager
             .list_connections()
             .into_iter()
+            .cloned()
+            .collect()
+    }
+}
+
+/// プラグイン一覧を取得
+#[derive(Message)]
+#[rtype(result = "Vec<PluginInfo>")]
+pub struct GetLogicalPlugins;
+
+impl Handler<GetLogicalPlugins> for CoreActor {
+    type Result = Vec<PluginInfo>;
+
+    fn handle(&mut self, _msg: GetLogicalPlugins, _ctx: &mut Self::Context) -> Self::Result {
+        self.logical_plugins
+            .values()
             .cloned()
             .collect()
     }

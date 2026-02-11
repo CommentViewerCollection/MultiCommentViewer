@@ -583,7 +583,7 @@ function App() {
               return (
                 <div
                   key={conn.connection_id}
-                  className="p-3 bg-gray-700 rounded transition-colors space-y-2"
+                  className="p-3 bg-gray-700 rounded transition-colors space-y-1.5"
                 >
                   {/* 接続名 */}
                   <div className="flex items-center justify-between">
@@ -605,27 +605,46 @@ function App() {
                     </div>
                   </div>
 
-                  {/* サイト選択 */}
-                  <div>
-                    <label className="text-xs text-gray-400 block mb-1">配信サイト</label>
-                    <select
-                      value={conn.site_id || ''}
-                      onChange={(e) => handleSiteChange(conn.connection_id, e.target.value)}
-                      disabled={!canModify}
-                      className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">選択してください</option>
-                      {sites.map((site) => (
-                        <option key={site.site_id} value={site.site_id}>
-                          {site.display_name}
-                        </option>
-                      ))}
-                    </select>
+                  {/* サイト選択 + ブラウザ選択 */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-gray-400 block mb-0.5">配信サイト</label>
+                      <select
+                        value={conn.site_id || ''}
+                        onChange={(e) => handleSiteChange(conn.connection_id, e.target.value)}
+                        disabled={!canModify}
+                        className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">選択してください</option>
+                        {sites.map((site) => (
+                          <option key={site.site_id} value={site.site_id}>
+                            {site.display_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-gray-400 block mb-0.5">ブラウザ</label>
+                      <select
+                        value={conn.browser_id || ''}
+                        onChange={(e) => handleBrowserChange(conn.connection_id, e.target.value)}
+                        disabled={!canModify}
+                        className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">選択してください</option>
+                        {browsers.map((browser) => (
+                          <option key={browser.browser_id} value={browser.browser_id}>
+                            {browser.display_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   {/* URL入力 */}
                   <div>
-                    <label className="text-xs text-gray-400 block mb-1">URL</label>
+                    <label className="text-xs text-gray-400 block mb-0.5">URL</label>
                     <input
                       type="text"
                       value={conn.url || ''}
@@ -637,31 +656,13 @@ function App() {
                     />
                   </div>
 
-                  {/* ブラウザ選択 */}
-                  <div>
-                    <label className="text-xs text-gray-400 block mb-1">ブラウザ</label>
-                    <select
-                      value={conn.browser_id || ''}
-                      onChange={(e) => handleBrowserChange(conn.connection_id, e.target.value)}
-                      disabled={!canModify}
-                      className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">選択してください</option>
-                      {browsers.map((browser) => (
-                        <option key={browser.browser_id} value={browser.browser_id}>
-                          {browser.display_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
                   {/* 接続毎の色設定（color_mode="connection" の時のみ表示） */}
                   {coreSettings?.enable_color_by_plugin_or_connection &&
                     coreSettings?.color_mode === 'connection' && (
-                      <>
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-xs text-gray-400 block mb-1">背景色</label>
-                          <div className="flex gap-2 items-center">
+                          <label className="text-xs text-gray-400 block mb-0.5">背景色</label>
+                          <div className="flex gap-1 items-center">
                             <input
                               type="color"
                               value={conn.advanced_settings?.bgColor || '#1f2937'}
@@ -673,7 +674,7 @@ function App() {
                                 )
                               }
                               disabled={!canModify}
-                              className="w-10 h-8 rounded cursor-pointer disabled:opacity-50"
+                              className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
                             />
                             <input
                               type="text"
@@ -686,15 +687,15 @@ function App() {
                                 )
                               }
                               disabled={!canModify}
-                              className="flex-1 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono"
+                              className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                               pattern="^#[0-9A-Fa-f]{6}$"
                             />
                           </div>
                         </div>
 
-                        <div className="mt-2">
-                          <label className="text-xs text-gray-400 block mb-1">文字色</label>
-                          <div className="flex gap-2 items-center">
+                        <div>
+                          <label className="text-xs text-gray-400 block mb-0.5">文字色</label>
+                          <div className="flex gap-1 items-center">
                             <input
                               type="color"
                               value={conn.advanced_settings?.textColor || '#ffffff'}
@@ -706,7 +707,7 @@ function App() {
                                 )
                               }
                               disabled={!canModify}
-                              className="w-10 h-8 rounded cursor-pointer disabled:opacity-50"
+                              className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
                             />
                             <input
                               type="text"
@@ -719,12 +720,12 @@ function App() {
                                 )
                               }
                               disabled={!canModify}
-                              className="flex-1 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono"
+                              className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                               pattern="^#[0-9A-Fa-f]{6}$"
                             />
                           </div>
                         </div>
-                      </>
+                      </div>
                     )}
 
                   {/* アクションボタン */}
@@ -936,6 +937,7 @@ function App() {
         <SettingsScreen onClose={() => {
           setShowSettings(false)
           setActiveTab('comments')
+          loadCoreSettings()  // 設定変更を反映
         }} />
       )}
     </div>

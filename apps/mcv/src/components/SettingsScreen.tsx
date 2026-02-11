@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import Form from '@rjsf/core'
 import validator from '@rjsf/validator-ajv8'
 import { RJSFSchema } from '@rjsf/utils'
+import { ColorPickerWidget } from './ColorPickerWidget'
 
 interface SettingsTab {
   id: string
@@ -24,6 +25,117 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // RJSF用のカスタムスタイル
+  const customStyles = `
+    /* 入力フィールドとセレクトボックスのスタイル */
+    .rjsf input[type="text"],
+    .rjsf input[type="number"],
+    .rjsf input[type="email"],
+    .rjsf select,
+    .rjsf textarea {
+      background-color: #374151 !important;
+      border: 1px solid #4b5563 !important;
+      color: #f3f4f6 !important;
+      border-radius: 0.375rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .rjsf input[type="text"]:focus,
+    .rjsf input[type="number"]:focus,
+    .rjsf input[type="email"]:focus,
+    .rjsf select:focus,
+    .rjsf textarea:focus {
+      outline: none;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+
+    /* チェックボックスのスタイル */
+    .rjsf input[type="checkbox"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+
+    /* ラジオボタンのスタイル */
+    .rjsf input[type="radio"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+
+    /* ラベルのスタイル */
+    .rjsf label {
+      color: #e5e7eb !important;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    /* 説明文のスタイル */
+    .rjsf .field-description {
+      color: #9ca3af !important;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    /* 条件付きフィールドのグループ化 */
+    .rjsf .field-object > fieldset {
+      border: 1px solid #4b5563;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      background-color: rgba(55, 65, 81, 0.3);
+    }
+
+    .rjsf .field-object > fieldset > legend {
+      color: #9ca3af !important;
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0 0.5rem;
+    }
+
+    /* 条件付きフィールドを視覚的に区別 */
+    .rjsf .conditional-field {
+      margin-left: 1.5rem;
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      padding-left: 1rem;
+      border-left: 3px solid #3b82f6;
+      background-color: rgba(59, 130, 246, 0.08);
+      border-radius: 0.375rem;
+    }
+
+    /* 条件付きフィールドのラベルを強調 */
+    .rjsf .conditional-field > label {
+      color: #93c5fd !important;
+      font-weight: 600;
+    }
+
+    /* readOnlyフィールド（disabled状態）のスタイル */
+    .rjsf .conditional-field:has(input[readonly]),
+    .rjsf .conditional-field:has(select[disabled]) {
+      opacity: 0.5;
+      pointer-events: none;
+      background-color: rgba(55, 65, 81, 0.2) !important;
+      border-left-color: #6b7280 !important;
+    }
+
+    .rjsf .conditional-field:has(input[readonly]) > label,
+    .rjsf .conditional-field:has(select[disabled]) > label {
+      color: #6b7280 !important;
+    }
+
+    /* readOnlyの入力フィールド */
+    .rjsf input[readonly],
+    .rjsf select[disabled],
+    .rjsf textarea[readonly] {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  `
+
   useEffect(() => {
     loadSettings()
   }, [])
@@ -36,6 +148,39 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       // Core 設定を読み込み
       const coreSchema = await invoke<any>('get_settings_schema', { target: 'core' })
       const coreData = await invoke<any>('get_settings', { target: 'core' })
+
+      // Siteリストを取得して、動的にsite_colorsスキーマを生成
+      try {
+        const sites = await invoke<any[]>('get_sites')
+
+        // site_colors プロパティを動的に生成
+        if (coreSchema.properties?.site_colors && sites && sites.length > 0) {
+          const siteColorsProperties: any = {}
+
+          sites.forEach((site: any) => {
+            siteColorsProperties[site.display_name] = {
+              type: "object",
+              title: site.display_name,
+              properties: {
+                bgColor: {
+                  type: "string",
+                  title: "背景色",
+                  default: "#1f2937"
+                },
+                textColor: {
+                  type: "string",
+                  title: "文字色",
+                  default: "#ffffff"
+                }
+              }
+            }
+          })
+
+          coreSchema.properties.site_colors.properties = siteColorsProperties
+        }
+      } catch (err) {
+        console.error('Failed to load sites for color settings:', err)
+      }
 
       const allTabs: SettingsTab[] = [{
         id: 'core',
@@ -119,8 +264,47 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
   const activeTabData = tabs.find(t => t.id === activeTab)
 
+  // Core設定の動的スキーマ生成（条件付きフィールドのdisabled制御）
+  const getEffectiveSchema = () => {
+    if (!activeTabData || activeTab !== 'core') {
+      return activeTabData?.schema
+    }
+
+    const schema = JSON.parse(JSON.stringify(activeTabData.schema))
+    const formData = currentData[activeTab]
+
+    // enable_color_by_plugin_or_connection が false の場合、条件付きフィールドをreadOnlyに
+    if (!formData?.enable_color_by_plugin_or_connection) {
+      if (schema.properties.color_mode) {
+        schema.properties.color_mode.readOnly = true
+      }
+      if (schema.properties.site_colors) {
+        schema.properties.site_colors.readOnly = true
+      }
+    } else {
+      // 有効な場合はreadOnlyを解除
+      if (schema.properties.color_mode) {
+        delete schema.properties.color_mode.readOnly
+      }
+
+      // color_mode が "connection" の場合、site_colors をreadOnlyに
+      if (formData?.color_mode === 'connection') {
+        if (schema.properties.site_colors) {
+          schema.properties.site_colors.readOnly = true
+        }
+      } else {
+        if (schema.properties.site_colors) {
+          delete schema.properties.site_colors.readOnly
+        }
+      }
+    }
+
+    return schema
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <style>{customStyles}</style>
       <div className="bg-gray-800 rounded-lg w-[800px] h-[600px] flex flex-col border border-gray-700">
         {/* ヘッダー */}
         <div className="px-6 py-4 border-b border-gray-700">
@@ -159,19 +343,48 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
           )}
 
           {!loading && !error && activeTabData && (
-            <Form
-              schema={activeTabData.schema}
-              formData={currentData[activeTab]}
-              validator={validator}
-              onChange={(e) => handleFormChange(activeTab, e.formData)}
-              uiSchema={{
-                'ui:submitButtonOptions': {
-                  norender: true,
-                },
-              }}
-            >
-              <></>  {/* ボタンを非表示 */}
-            </Form>
+            <div className="rjsf">
+              <Form
+                schema={getEffectiveSchema()}
+                formData={currentData[activeTab]}
+                validator={validator}
+                onChange={(e) => handleFormChange(activeTab, e.formData)}
+                uiSchema={activeTab === 'core' ? {
+                  'ui:submitButtonOptions': {
+                    norender: true,
+                  },
+                  'ui:order': [
+                    'theme',
+                    'auto_scroll',
+                    'max_comments',
+                    'enable_color_by_plugin_or_connection',
+                    'color_mode',
+                    'site_colors'
+                  ],
+                  color_mode: {
+                    'ui:classNames': 'conditional-field',
+                    'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection
+                  },
+                  site_colors: {
+                    'ui:classNames': 'conditional-field',
+                    'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
+                                   currentData[activeTab]?.color_mode === 'connection',
+                    'ui:options': {
+                      orderable: false
+                    }
+                  }
+                } : {
+                  'ui:submitButtonOptions': {
+                    norender: true,
+                  },
+                }}
+                widgets={{
+                  ColorPickerWidget: ColorPickerWidget
+                }}
+              >
+                <></>  {/* ボタンを非表示 */}
+              </Form>
+            </div>
           )}
         </div>
 

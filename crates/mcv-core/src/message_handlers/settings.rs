@@ -85,7 +85,10 @@ pub fn handle_get_settings(
                     serde_json::json!({
                         "theme": "dark",
                         "auto_scroll": true,
-                        "max_comments": 1000
+                        "max_comments": 1000,
+                        "enable_color_by_plugin_or_connection": false,
+                        "color_mode": "site",
+                        "site_colors": {}
                     })
                 }
                 Err(e) => return Err(format!("Failed to get settings: {}", e)),
@@ -95,7 +98,10 @@ pub fn handle_get_settings(
             serde_json::json!({
                 "theme": "dark",
                 "auto_scroll": true,
-                "max_comments": 1000
+                "max_comments": 1000,
+                "enable_color_by_plugin_or_connection": false,
+                "color_mode": "site",
+                "site_colors": {}
             })
         };
 

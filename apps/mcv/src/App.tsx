@@ -21,6 +21,8 @@ interface Comment {
   timestamp: number
   connection_id?: string
   connection_name?: string
+  backgroundColor?: string  // 新規: コメント背景色
+  color?: string           // 新規: コメント文字色
 }
 
 interface ConnectionInfo {
@@ -32,7 +34,11 @@ interface ConnectionInfo {
   url?: string
   browser_id?: string
   browser_name?: string
-  advanced_settings?: any
+  advanced_settings?: {
+    bgColor?: string      // 新規: 接続毎の背景色
+    textColor?: string    // 新規: 接続毎の文字色
+    [key: string]: any
+  }
   input_info: string
   name: string
 }
@@ -139,6 +145,7 @@ function App() {
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [coreSettings, setCoreSettings] = useState<any>(null)
 
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
@@ -180,6 +187,16 @@ function App() {
     }
   }
 
+  // Core設定を読み込む
+  const loadCoreSettings = async () => {
+    try {
+      const settings = await invoke('get_settings', { target: 'core' })
+      setCoreSettings(settings)
+    } catch (error) {
+      console.error('Failed to load core settings:', error)
+    }
+  }
+
   // atBottomの変更をrefに反映
   useEffect(() => {
     atBottomRef.current = atBottom
@@ -189,10 +206,43 @@ function App() {
     // 初回読み込み
     loadConnections()
     loadSitesAndBrowsers()
+    loadCoreSettings()
 
     // コメント受信イベントをリッスン
     const unlistenComment = listen<Comment>('comment-received', (event) => {
-      setComments((prev) => [...prev, event.payload])
+      const comment = event.payload
+
+      // 色を適用
+      let decoratedComment = comment
+
+      if (coreSettings?.enable_color_by_plugin_or_connection) {
+        if (coreSettings.color_mode === 'site') {
+          // Site毎モード: connection_idからSite名を取得
+          const conn = connections.find((c) => c.connection_id === comment.connection_id)
+          if (conn && conn.site_name) {
+            const siteColors = coreSettings.site_colors?.[conn.site_name]
+            if (siteColors) {
+              decoratedComment = {
+                ...comment,
+                backgroundColor: siteColors.bgColor,
+                color: siteColors.textColor,
+              }
+            }
+          }
+        } else if (coreSettings.color_mode === 'connection') {
+          // 接続毎モード: advanced_settingsから色を取得
+          const conn = connections.find((c) => c.connection_id === comment.connection_id)
+          if (conn?.advanced_settings?.bgColor) {
+            decoratedComment = {
+              ...comment,
+              backgroundColor: conn.advanced_settings.bgColor,
+              color: conn.advanced_settings.textColor || '#ffffff',
+            }
+          }
+        }
+      }
+
+      setComments((prev) => [...prev, decoratedComment])
       // 最下部にいる場合は自動スクロール
       if (atBottomRef.current) {
         setTimeout(() => {
@@ -344,6 +394,44 @@ function App() {
     } catch (error) {
       console.error('[Connection] Failed to set browser:', error)
       alert('ブラウザの設定に失敗しました')
+    }
+  }
+
+  const handleConnectionColorChange = async (
+    connectionId: string,
+    colorType: 'bgColor' | 'textColor',
+    value: string
+  ) => {
+    // 即座にローカル状態を更新（UIのレスポンス性向上）
+    setConnections((prev) =>
+      prev.map((conn) => {
+        if (conn.connection_id === connectionId) {
+          return {
+            ...conn,
+            advanced_settings: {
+              ...conn.advanced_settings,
+              [colorType]: value,
+            },
+          }
+        }
+        return conn
+      })
+    )
+
+    // バックエンドに永続化
+    try {
+      const conn = connections.find((c) => c.connection_id === connectionId)
+      await invoke('update_connection_settings', {
+        connectionId,
+        url: null,
+        browserId: null,
+        advancedSettings: {
+          ...conn?.advanced_settings,
+          [colorType]: value,
+        },
+      })
+    } catch (error) {
+      console.error('[Connection] Failed to update connection color:', error)
     }
   }
 
@@ -566,6 +654,78 @@ function App() {
                       ))}
                     </select>
                   </div>
+
+                  {/* 接続毎の色設定（color_mode="connection" の時のみ表示） */}
+                  {coreSettings?.enable_color_by_plugin_or_connection &&
+                    coreSettings?.color_mode === 'connection' && (
+                      <>
+                        <div>
+                          <label className="text-xs text-gray-400 block mb-1">背景色</label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={conn.advanced_settings?.bgColor || '#1f2937'}
+                              onChange={(e) =>
+                                handleConnectionColorChange(
+                                  conn.connection_id,
+                                  'bgColor',
+                                  e.target.value
+                                )
+                              }
+                              disabled={!canModify}
+                              className="w-10 h-8 rounded cursor-pointer disabled:opacity-50"
+                            />
+                            <input
+                              type="text"
+                              value={conn.advanced_settings?.bgColor || '#1f2937'}
+                              onChange={(e) =>
+                                handleConnectionColorChange(
+                                  conn.connection_id,
+                                  'bgColor',
+                                  e.target.value
+                                )
+                              }
+                              disabled={!canModify}
+                              className="flex-1 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono"
+                              pattern="^#[0-9A-Fa-f]{6}$"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-2">
+                          <label className="text-xs text-gray-400 block mb-1">文字色</label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={conn.advanced_settings?.textColor || '#ffffff'}
+                              onChange={(e) =>
+                                handleConnectionColorChange(
+                                  conn.connection_id,
+                                  'textColor',
+                                  e.target.value
+                                )
+                              }
+                              disabled={!canModify}
+                              className="w-10 h-8 rounded cursor-pointer disabled:opacity-50"
+                            />
+                            <input
+                              type="text"
+                              value={conn.advanced_settings?.textColor || '#ffffff'}
+                              onChange={(e) =>
+                                handleConnectionColorChange(
+                                  conn.connection_id,
+                                  'textColor',
+                                  e.target.value
+                                )
+                              }
+                              disabled={!canModify}
+                              className="flex-1 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono"
+                              pattern="^#[0-9A-Fa-f]{6}$"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                   {/* アクションボタン */}
                   <div className="flex gap-2 pt-1">

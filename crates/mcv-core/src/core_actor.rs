@@ -99,6 +99,79 @@ impl CoreActor {
                     "default": 1000,
                     "minimum": 100,
                     "maximum": 10000
+                },
+                "enable_color_by_plugin_or_connection": {
+                    "type": "boolean",
+                    "title": "サイト毎または接続毎に色を付ける",
+                    "description": "チェックすると、配信サイトまたは接続ごとにコメントの背景色と文字色を設定できます",
+                    "default": false
+                },
+                "color_mode": {
+                    "type": "string",
+                    "title": "↳ 色分けモード",
+                    "description": "配信サイト毎: 設定画面で各サイトの色を設定 / 接続毎: 接続一覧で各接続の色を設定",
+                    "enum": ["site", "connection"],
+                    "enumNames": ["配信サイト毎", "接続毎"],
+                    "default": "site"
+                },
+                "site_colors": {
+                    "type": "object",
+                    "title": "↳ 配信サイト毎の色設定",
+                    "description": "各配信サイト（YouTubeLive、OPENREC、Twitch等）の背景色と文字色を設定します。「配信サイト毎」モード選択時のみ有効です。",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "bgColor": {
+                                "type": "string",
+                                "title": "背景色",
+                                "default": "#1f2937"
+                            },
+                            "textColor": {
+                                "type": "string",
+                                "title": "文字色",
+                                "default": "#ffffff"
+                            }
+                        }
+                    }
+                }
+            },
+            "dependencies": {
+                "enable_color_by_plugin_or_connection": {
+                    "oneOf": [
+                        {
+                            "properties": {
+                                "enable_color_by_plugin_or_connection": { "const": false }
+                            }
+                        },
+                        {
+                            "properties": {
+                                "enable_color_by_plugin_or_connection": { "const": true },
+                                "color_mode": {
+                                    "type": "string",
+                                    "enum": ["site", "connection"]
+                                }
+                            },
+                            "dependencies": {
+                                "color_mode": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "color_mode": { "const": "connection" }
+                                            }
+                                        },
+                                        {
+                                            "properties": {
+                                                "color_mode": { "const": "site" },
+                                                "site_colors": {
+                                                    "type": "object"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
                 }
             }
         })

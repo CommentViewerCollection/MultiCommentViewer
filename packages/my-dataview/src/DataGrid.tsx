@@ -203,6 +203,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   const itemContent = useCallback((index: number, item: T) => {
     const isSelected = selectedIndex === index;
     const backgroundColor = isSelected ? '#264653' : (item as any).backgroundColor || 'transparent';
+    const color = (item as any).color || 'inherit';
     return (
       <div
         onClick={() => handleItemSelect(index)}
@@ -210,6 +211,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           display: 'flex',
           borderBottom: '1px solid #2a2a2a',
           backgroundColor,
+          color,
           cursor: 'pointer',
         }}
       >

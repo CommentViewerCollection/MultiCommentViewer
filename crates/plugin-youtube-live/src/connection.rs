@@ -56,11 +56,11 @@ fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
         }
     }
 
-    // timestamp_usecをi64に変換 (マイクロ秒 → ミリ秒)
+    // timestamp_usecをi64に変換 (マイクロ秒 → 秒)
     let timestamp = msg
         .timestamp_usec
         .parse::<i64>()
-        .unwrap_or(0) / 1000;
+        .unwrap_or(0) / 1000 / 1000;
 
     // idはtimestamp_usecを使用 (一意性を保証)
     let id = msg.timestamp_usec.clone();

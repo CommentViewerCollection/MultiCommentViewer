@@ -464,6 +464,7 @@ pub struct LiveChatTextMessage {
     pub message_parts: Vec<MessagePart>,
     pub timestamp_usec: String,
     pub author_badges: Vec<AuthorBadge>, // 型は実際の戻り値に合わせてください
+    pub author_external_channel_id: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -523,12 +524,16 @@ fn parse_action(action: &serde_json::Value) -> Action {
                 Ok(s) => s,
                 Err(_) => return Action::ParseError(action.to_string()),
             };
-
+            let author_external_channel_id = match get_string(message, &["authorExternalChannelId"]){
+                Ok(s) => s,
+                Err(_) => return Action::ParseError(action.to_string()),
+            };
             let action = LiveChatTextMessage {
                 author_name,
                 message_parts,
                 timestamp_usec,
                 author_badges,
+                author_external_channel_id,
             };
 
             return Action::LiveChatTextMessage1(action);

@@ -1,6 +1,9 @@
 ﻿$workspaceRoot = "C:\Users\ryu\Downloads\mcv"
 
 # mcv
+Set-Location $workspaceRoot/packages/my-dataview
+npm install
+npm run build
 Set-Location $workspaceRoot/apps/mcv
 npm install
 npm run build

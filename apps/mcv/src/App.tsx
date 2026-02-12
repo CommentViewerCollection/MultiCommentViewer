@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useReducer } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, DataGridRef, Column } from 'my-dataview'
 import { LogViewer } from './components/LogViewer'
 import { SettingsScreen } from './components/SettingsScreen'
+import { ColorInfo } from './utils/ColorInfo'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
@@ -21,8 +22,9 @@ interface Comment {
   timestamp: number
   connection_id?: string
   connection_name?: string
-  backgroundColor?: string  // 新規: コメント背景色
-  color?: string           // 新規: コメント文字色
+  backgroundColor?: string  // 新規: コメント背景色（後方互換性のため残す）
+  color?: string           // 新規: コメント文字色（後方互換性のため残す）
+  colorInfo?: ColorInfo    // 新規: 動的色解決
 }
 
 interface ConnectionInfo {
@@ -147,6 +149,13 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [coreSettings, setCoreSettings] = useState<any>(null)
 
+  // 新規: Ref を作成
+  const coreSettingsRef = useRef<any>(null)
+  const connectionMapRef = useRef<Map<string, ConnectionInfo>>(new Map())
+
+  // 新規: forceUpdate のための useReducer
+  const [, forceUpdate] = useReducer(x => x + 1, 0)
+
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
     { key: 'connection_name', label: '接続', width: 150, visible: true, resizable: true },
@@ -192,10 +201,25 @@ function App() {
     try {
       const settings = await invoke('get_settings', { target: 'core' })
       setCoreSettings(settings)
+      forceUpdate()  // DataGrid を強制的に再レンダリング
     } catch (error) {
       console.error('Failed to load core settings:', error)
     }
   }
+
+  // 新規: Ref を state と同期
+  useEffect(() => {
+    coreSettingsRef.current = coreSettings
+  }, [coreSettings])
+
+  useEffect(() => {
+    // Connection Map を作成（O(1) 検索のため）
+    const map = new Map<string, ConnectionInfo>()
+    connections.forEach(conn => {
+      map.set(conn.connection_id, conn)
+    })
+    connectionMapRef.current = map
+  }, [connections])
 
   // atBottomの変更をrefに反映
   useEffect(() => {
@@ -212,37 +236,19 @@ function App() {
     const unlistenComment = listen<Comment>('comment-received', (event) => {
       const comment = event.payload
 
-      // 色を適用
-      let decoratedComment = comment
+      // ColorInfo インスタンスを作成（軽量、O(1)）
+      const colorInfo = new ColorInfo(
+        coreSettingsRef,
+        connectionMapRef,
+        comment.connection_id || ''
+      )
 
-      if (coreSettings?.enable_color_by_plugin_or_connection) {
-        if (coreSettings.color_mode === 'site') {
-          // Site毎モード: connection_idからSite名を取得
-          const conn = connections.find((c) => c.connection_id === comment.connection_id)
-          if (conn && conn.site_name) {
-            const siteColors = coreSettings.site_colors?.[conn.site_name]
-            if (siteColors) {
-              decoratedComment = {
-                ...comment,
-                backgroundColor: siteColors.bgColor,
-                color: siteColors.textColor,
-              }
-            }
-          }
-        } else if (coreSettings.color_mode === 'connection') {
-          // 接続毎モード: advanced_settingsから色を取得
-          const conn = connections.find((c) => c.connection_id === comment.connection_id)
-          if (conn?.advanced_settings?.bgColor) {
-            decoratedComment = {
-              ...comment,
-              backgroundColor: conn.advanced_settings.bgColor,
-              color: conn.advanced_settings.textColor || '#ffffff',
-            }
-          }
-        }
+      const commentWithColorInfo = {
+        ...comment,
+        colorInfo
       }
 
-      setComments((prev) => [...prev, decoratedComment])
+      setComments((prev) => [...prev, commentWithColorInfo])
       // 最下部にいる場合は自動スクロール
       if (atBottomRef.current) {
         setTimeout(() => {
@@ -402,6 +408,14 @@ function App() {
     colorType: 'bgColor' | 'textColor',
     value: string
   ) => {
+    // バリデーション: 色の値が正しい形式か確認（#RRGGBB）
+    const colorRegex = /^#[0-9A-Fa-f]{6}$/
+    if (!colorRegex.test(value)) {
+      console.warn('[Connection] Invalid color format:', value)
+      // 不正な値の場合は何もしない
+      return
+    }
+
     // 即座にローカル状態を更新（UIのレスポンス性向上）
     setConnections((prev) =>
       prev.map((conn) => {
@@ -689,6 +703,8 @@ function App() {
                               disabled={!canModify}
                               className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                               pattern="^#[0-9A-Fa-f]{6}$"
+                              maxLength={7}
+                              placeholder="#1f2937"
                             />
                           </div>
                         </div>
@@ -722,6 +738,8 @@ function App() {
                               disabled={!canModify}
                               className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                               pattern="^#[0-9A-Fa-f]{6}$"
+                              maxLength={7}
+                              placeholder="#ffffff"
                             />
                           </div>
                         </div>
@@ -824,71 +842,71 @@ function App() {
 
         {/* タブコンテンツ */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {activeTab === 'comments' && (
-            <>
-              {/* コメント表示 */}
-              <div className="flex-1 p-4">
-                <DataGridComponent
-                  ref={dataGridRef}
-                  data={comments}
-                  columns={columns}
-                  renderCell={renderCell}
-                  height="100%"
-                  backgroundColor="#1f2937"
-                  border="1px solid #374151"
-                  onAtBottomChange={setAtBottom}
-                  onColumnResize={handleColumnResize}
-                  onColumnVisibilityChange={handleColumnVisibilityChange}
-                  defaultItemHeight={65}
-                />
-              </div>
+          {/* コメントタブ - 常にレンダリング、CSS で表示/非表示 */}
+          <div className={activeTab === 'comments' ? 'flex-1 overflow-hidden flex flex-col' : 'hidden'}>
+            {/* コメント表示 */}
+            <div className="flex-1 p-4">
+              <DataGridComponent
+                ref={dataGridRef}
+                data={comments}
+                columns={columns}
+                renderCell={renderCell}
+                height="100%"
+                backgroundColor="#1f2937"
+                border="1px solid #374151"
+                onAtBottomChange={setAtBottom}
+                onColumnResize={handleColumnResize}
+                onColumnVisibilityChange={handleColumnVisibilityChange}
+                defaultItemHeight={65}
+              />
+            </div>
 
-              {/* コメント投稿セクション */}
-              <div className="p-4 bg-gray-800 border-t border-gray-700">
-                <div className="flex gap-2 items-end">
-                  <div className="flex-shrink-0">
-                    <label className="block text-sm font-medium mb-1 text-gray-300">接続選択</label>
-                    <select
-                      value={selectedConnectionForCommand}
-                      onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
-                      className="px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white"
-                    >
-                      <option value="">選択してください</option>
-                      {connections.map((conn) => (
-                        <option key={conn.connection_id} value={conn.connection_id}>
-                          {conn.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1 text-gray-300">コメント</label>
-                    <input
-                      type="text"
-                      value={commandInput}
-                      onChange={(e) => setCommandInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleSendComment()
-                        }
-                      }}
-                      placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white placeholder-gray-500"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleSendComment}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+            {/* コメント投稿セクション */}
+            <div className="p-4 bg-gray-800 border-t border-gray-700">
+              <div className="flex gap-2 items-end">
+                <div className="flex-shrink-0">
+                  <label className="block text-sm font-medium mb-1 text-gray-300">接続選択</label>
+                  <select
+                    value={selectedConnectionForCommand}
+                    onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
+                    className="px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white"
                   >
-                    送信
-                  </button>
+                    <option value="">選択してください</option>
+                    {connections.map((conn) => (
+                      <option key={conn.connection_id} value={conn.connection_id}>
+                        {conn.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-            </>
-          )}
 
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1 text-gray-300">コメント</label>
+                  <input
+                    type="text"
+                    value={commandInput}
+                    onChange={(e) => setCommandInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSendComment()
+                      }
+                    }}
+                    placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white placeholder-gray-500"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSendComment}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+                >
+                  送信
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ログタブ */}
           {activeTab === 'logs' && <LogViewer />}
         </div>
       </div>

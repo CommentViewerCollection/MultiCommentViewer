@@ -43,7 +43,8 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   onColumnResize,
   onColumnVisibilityChange,
   defaultItemHeight = 50,
-}: DataGridProps<T>, ref: React.Ref<DataGridRef>) {  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+}: DataGridProps<T>, ref: React.Ref<DataGridRef>) {
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [atBottom, setAtBottom] = useState(true);
   const visibleColumns = columns.filter(col => col.visible !== false);
@@ -202,8 +203,26 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
 
   const itemContent = useCallback((index: number, item: T) => {
     const isSelected = selectedIndex === index;
-    const backgroundColor = isSelected ? '#264653' : (item as any).backgroundColor || 'transparent';
-    const color = (item as any).color || 'inherit';
+
+    // ColorInfo による動的色解決
+    let backgroundColor = 'transparent'
+    let textColor = 'inherit'
+
+    if ((item as any).colorInfo) {
+      // 描画時に最新の色を取得
+      backgroundColor = (item as any).colorInfo.getBackColor()
+      textColor = (item as any).colorInfo.getTextColor()
+    } else {
+      // 後方互換性のため、静的フィールドも確認
+      backgroundColor = (item as any).backgroundColor || 'transparent'
+      textColor = (item as any).color || 'inherit'
+    }
+
+    // 選択時の色を上書き
+    if (isSelected) {
+      backgroundColor = '#264653'
+    }
+
     return (
       <div
         onClick={() => handleItemSelect(index)}
@@ -211,7 +230,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           display: 'flex',
           borderBottom: '1px solid #2a2a2a',
           backgroundColor,
-          color,
+          color: textColor,
           cursor: 'pointer',
         }}
       >

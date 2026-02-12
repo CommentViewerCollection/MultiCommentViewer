@@ -104,7 +104,7 @@ impl CoreActor {
                     "type": "boolean",
                     "title": "サイト毎または接続毎に色を付ける",
                     "description": "チェックすると、配信サイトまたは接続ごとにコメントの背景色と文字色を設定できます",
-                    "default": false
+                    "default": true
                 },
                 "color_mode": {
                     "type": "string",
@@ -118,6 +118,12 @@ impl CoreActor {
                     "type": "object",
                     "title": "↳ 配信サイト毎の色設定",
                     "description": "各配信サイト（YouTubeLive、OPENREC、Twitch等）の背景色と文字色を設定します。「配信サイト毎」モード選択時のみ有効です。",
+                    "default": {
+                        "ダミーサイト": {
+                            "bgColor": "#1e3a8a",
+                            "textColor": "#ffffff"
+                        }
+                    },
                     "additionalProperties": {
                         "type": "object",
                         "properties": {

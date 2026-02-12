@@ -87,6 +87,18 @@ impl SiteAndBrowserManager {
     pub fn get_plugin_id_for_site(&self, site_id: &Uuid) -> Option<Uuid> {
         self.sites.get(site_id).map(|s| s.plugin_id)
     }
+
+    /// site_nameから逆引き（永続化復元用）
+    pub fn find_site_by_name(&self, site_name: &str) -> Option<&SiteInfo> {
+        self.sites.values().find(|s| s.site_name == site_name)
+    }
+
+    /// browser_nameから逆引き（永続化復元用）
+    pub fn find_browser_by_name(&self, browser_name: &str) -> Option<&BrowserInfo> {
+        self.browsers
+            .values()
+            .find(|b| b.browser_name == browser_name)
+    }
 }
 
 impl Default for SiteAndBrowserManager {

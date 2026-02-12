@@ -1,7 +1,6 @@
 use actix::Context;
-use mcv_common::LogicalPluginId;
 use mcv_messages::{
-    AddBrowserPayload, AddSitePayload, DiscardConnectionSitePayload, Message as McvMessage,
+    AddBrowserPayload, AddSitePayload, ConnectionAddedPayload, Message as McvMessage,
     MessageDestination, MessageSource, MessageType, SetConnectionSitePayload,
     UpdateConnectionSettingsPayload,
 };
@@ -68,6 +67,49 @@ pub fn handle_add_site(
         plugin_id = %plugin_id,
         "Site registered"
     );
+
+    // サイト登録完了後、Pending接続を確認して有効化
+    let activated_connections = actor.connection_manager.activate_pending_connections_by_site(
+        &site_info.site_name,
+        site_info.site_id,
+        plugin_id,
+    );
+
+    if !activated_connections.is_empty() {
+        tracing::info!(
+            target: "mcv::core::CoreActor",
+            site_name = %site_info.site_name,
+            activated_count = activated_connections.len(),
+            "Activated pending connections after add-site"
+        );
+
+        // 有効化された接続に対してSetConnectionSiteメッセージを送信
+        for conn_id in &activated_connections {
+            actor.send_set_connection_site(*conn_id, site_info.site_id);
+        }
+
+        // 有効化された接続をUIに通知（connection-added再送信）
+        if let Some(ref callback) = actor.event_callback {
+            for conn_id in activated_connections {
+                if let Some(conn) = actor.connection_manager.get_connection(&conn_id) {
+                    let msg = McvMessage::new_notification(
+                        MessageType::ConnectionAdded,
+                        MessageSource::Core,
+                        MessageDestination::Core,
+                        serde_json::to_value(ConnectionAddedPayload {
+                            connection_id: conn.connection_id,
+                            name: conn.name.clone(),
+                        })
+                        .unwrap(),
+                    );
+                    callback(msg);
+                }
+            }
+        }
+
+        // 保存（有効化された接続のstatus変更を反映）
+        let _ = actor.save_connections();
+    }
 }
 
 /// add-browser メッセージのハンドラー
@@ -135,76 +177,11 @@ pub fn handle_set_connection_site(
         }
     };
 
-    let connection_id = payload.connection_id;
-    let site_id = payload.site_id;
+    // 共通メソッドを呼び出し
+    actor.send_set_connection_site(payload.connection_id, payload.site_id);
 
-    tracing::debug!(
-        target: "mcv::core::CoreActor",
-        connection_id = %connection_id,
-        site_id = %site_id,
-        "Setting connection site"
-    );
-
-    // 前のサイトを取得してDiscardConnectionSiteを送信
-    let plugins = actor.logical_plugins.clone();
-
-    // 前のplugin_idを取得
-    let old_plugin_id = actor
-        .connection_manager
-        .get_connection(&connection_id)
-        .and_then(|c| c.plugin_id);
-
-    // 新しいサイト情報を取得
-    if let Some(site_info) = actor.site_browser_manager.get_site(&site_id) {
-        actor.connection_manager.set_site(
-            &connection_id,
-            site_id,
-            site_info.display_name.clone(),
-            site_info.plugin_id,
-        );
-
-        // 前のプラグインにDiscardConnectionSiteを送信
-        if let Some(old_pid) = old_plugin_id {
-            if old_pid != site_info.plugin_id {
-                let old_logical_plugin_id = LogicalPluginId::from_uuid(old_pid);
-                if let Some(old_plugin) = plugins.get(&old_logical_plugin_id) {
-                    let discard_msg = McvMessage::new(
-                        MessageType::DiscardConnectionSite,
-                        MessageSource::Core,
-                        MessageDestination::Plugin { plugin_id: old_pid },
-                        serde_json::to_value(DiscardConnectionSitePayload {
-                            connection_id,
-                            site_id,
-                        })
-                        .unwrap(),
-                    );
-                    old_plugin.host_addr.do_send(SendMessageToPlugin {
-                        message: discard_msg,
-                    });
-                }
-            }
-        }
-
-        // 新しいプラグインにSetConnectionSiteを送信
-        let new_logical_plugin_id = LogicalPluginId::from_uuid(site_info.plugin_id);
-        if let Some(new_plugin) = plugins.get(&new_logical_plugin_id) {
-            let set_msg = McvMessage::new(
-                MessageType::SetConnectionSite,
-                MessageSource::Core,
-                MessageDestination::Plugin {
-                    plugin_id: site_info.plugin_id,
-                },
-                serde_json::to_value(SetConnectionSitePayload {
-                    connection_id,
-                    site_id,
-                })
-                .unwrap(),
-            );
-            new_plugin
-                .host_addr
-                .do_send(SendMessageToPlugin { message: set_msg });
-        }
-    }
+    // 保存
+    let _ = actor.save_connections();
 }
 
 /// update-connection-settings メッセージのハンドラー
@@ -254,4 +231,7 @@ pub fn handle_update_connection_settings(
             .connection_manager
             .update_advanced_settings(&payload.connection_id, Some(settings));
     }
+
+    // 保存
+    let _ = actor.save_connections();
 }

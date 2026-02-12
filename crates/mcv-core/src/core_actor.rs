@@ -4,6 +4,7 @@ use mcv_log_core::LogStorage;
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use mcv_settings_core::SettingsStorage;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
@@ -44,6 +45,8 @@ pub struct CoreActor {
     pub(crate) log_storage: Option<Arc<Mutex<LogStorage>>>,
     /// 設定ストレージ
     pub(crate) settings_storage: Option<Arc<Mutex<SettingsStorage>>>,
+    /// 接続永続化ファイルのパス
+    pub(crate) connections_file_path: Option<PathBuf>,
 }
 
 impl CoreActor {
@@ -57,6 +60,7 @@ impl CoreActor {
             event_callback: None,
             log_storage: None,
             settings_storage: None,
+            connections_file_path: None,
         }
     }
 
@@ -73,6 +77,164 @@ impl CoreActor {
     /// 設定ストレージを設定
     pub fn set_settings_storage(&mut self, storage: Arc<Mutex<SettingsStorage>>) {
         self.settings_storage = Some(storage);
+    }
+
+    /// 接続ファイルパスを設定
+    pub fn set_connections_file_path(&mut self, path: PathBuf) {
+        self.connections_file_path = Some(path);
+    }
+
+    /// 接続をファイルに保存
+    pub fn save_connections(&self) -> Result<(), String> {
+        let path = self
+            .connections_file_path
+            .as_ref()
+            .ok_or_else(|| "Connections file path not set".to_string())?;
+
+        let storage =
+            crate::connection_persistence::ConnectionsStorage::from_connection_manager(
+                &self.connection_manager,
+            );
+        storage.save_to_file(path)?;
+
+        tracing::debug!(path = ?path, "Connections saved");
+        Ok(())
+    }
+
+    /// 接続をファイルから復元
+    pub fn restore_connections(&mut self) -> Result<(), String> {
+        let path = self
+            .connections_file_path
+            .as_ref()
+            .ok_or_else(|| "Connections file path not set".to_string())?;
+
+        let storage = crate::connection_persistence::ConnectionsStorage::load_from_file(path)?;
+
+        tracing::info!(
+            connection_count = storage.connections.len(),
+            "Restoring connections from file"
+        );
+
+        let (success, skipped) = self.connection_manager.import_from_persistence(
+            storage.connections,
+            &self.site_browser_manager,
+        );
+
+        tracing::info!(
+            success_count = success,
+            skipped_count = skipped.len(),
+            "Connection restoration complete"
+        );
+
+        if !skipped.is_empty() {
+            for (name, reason) in &skipped {
+                tracing::warn!(
+                    connection_name = %name,
+                    reason = %reason,
+                    "Skipped connection restoration"
+                );
+            }
+        }
+
+        // UIに復元された接続を通知
+        if let Some(ref callback) = self.event_callback {
+            for conn in self.connection_manager.list_connections() {
+                let msg = McvMessage::new_notification(
+                    MessageType::ConnectionAdded,
+                    MessageSource::Core,
+                    MessageDestination::Core,
+                    serde_json::to_value(ConnectionAddedPayload {
+                        connection_id: conn.connection_id,
+                        name: conn.name.clone(),
+                    })
+                    .unwrap(),
+                );
+                callback(msg);
+            }
+        }
+
+        Ok(())
+    }
+
+    /// SetConnectionSiteメッセージをプラグインに送信（共通処理）
+    ///
+    /// UIからの呼び出しとPending有効化の両方から使用される
+    pub(crate) fn send_set_connection_site(&mut self, connection_id: Uuid, site_id: Uuid) {
+        tracing::debug!(
+            target: "mcv::core::CoreActor",
+            connection_id = %connection_id,
+            site_id = %site_id,
+            "Sending SetConnectionSite to plugin"
+        );
+
+        // 前のplugin_idを取得
+        let old_plugin_id = self
+            .connection_manager
+            .get_connection(&connection_id)
+            .and_then(|c| c.plugin_id);
+
+        // 新しいサイト情報を取得
+        if let Some(site_info) = self.site_browser_manager.get_site(&site_id) {
+            // ConnectionManagerを更新
+            self.connection_manager.set_site(
+                &connection_id,
+                site_id,
+                site_info.site_name.clone(),
+                site_info.plugin_id,
+            );
+
+            let plugins = self.logical_plugins.clone();
+
+            // 前のプラグインにDiscardConnectionSiteを送信（プラグインが変わった場合）
+            if let Some(old_pid) = old_plugin_id {
+                if old_pid != site_info.plugin_id {
+                    let old_logical_plugin_id = LogicalPluginId::from_uuid(old_pid);
+                    if let Some(old_plugin) = plugins.get(&old_logical_plugin_id) {
+                        let discard_msg = McvMessage::new(
+                            MessageType::DiscardConnectionSite,
+                            MessageSource::Core,
+                            MessageDestination::Plugin { plugin_id: old_pid },
+                            serde_json::to_value(DiscardConnectionSitePayload {
+                                connection_id,
+                                site_id,
+                            })
+                            .unwrap(),
+                        );
+                        old_plugin.host_addr.do_send(crate::plugin_host_actor::SendMessageToPlugin {
+                            message: discard_msg,
+                        });
+                    }
+                }
+            }
+
+            // 新しいプラグインにSetConnectionSiteを送信
+            let new_logical_plugin_id = LogicalPluginId::from_uuid(site_info.plugin_id);
+            if let Some(new_plugin) = plugins.get(&new_logical_plugin_id) {
+                let set_msg = McvMessage::new(
+                    MessageType::SetConnectionSite,
+                    MessageSource::Core,
+                    MessageDestination::Plugin {
+                        plugin_id: site_info.plugin_id,
+                    },
+                    serde_json::to_value(SetConnectionSitePayload {
+                        connection_id,
+                        site_id,
+                    })
+                    .unwrap(),
+                );
+                new_plugin
+                    .host_addr
+                    .do_send(crate::plugin_host_actor::SendMessageToPlugin { message: set_msg });
+
+                tracing::info!(
+                    target: "mcv::core::CoreActor",
+                    connection_id = %connection_id,
+                    site_id = %site_id,
+                    plugin_id = %site_info.plugin_id,
+                    "SetConnectionSite message sent to plugin"
+                );
+            }
+        }
     }
 
     /// Core設定のJSON Schemaを取得
@@ -471,6 +633,10 @@ impl Handler<RemoveConnection> for CoreActor {
 
         self.connection_manager
             .remove_connection(&msg.connection_id);
+
+        // 保存
+        let _ = self.save_connections();
+
         Ok(())
     }
 }
@@ -489,6 +655,10 @@ impl Handler<RenameConnection> for CoreActor {
     fn handle(&mut self, msg: RenameConnection, _ctx: &mut Self::Context) -> Self::Result {
         self.connection_manager
             .rename_connection(&msg.connection_id, msg.new_name);
+
+        // 保存
+        let _ = self.save_connections();
+
         Ok(())
     }
 }

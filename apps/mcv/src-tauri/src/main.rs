@@ -761,6 +761,27 @@ fn main() {
             core_actor.set_log_storage(mcv_log_core::get_storage());
             core_actor.set_settings_storage(settings_storage.clone());
 
+            // 接続永続化ファイルのパスを設定
+            let settings_dir = app_data_dir.join("settings");
+            std::fs::create_dir_all(&settings_dir)
+                .expect("Failed to create settings directory");
+            let connections_file_path = settings_dir.join("connections.json");
+            core_actor.set_connections_file_path(connections_file_path.clone());
+
+            // 接続を復元（プラグイン読み込み前に実行）
+            tracing::info!(
+                target: "mcv::main",
+                path = ?connections_file_path,
+                "Restoring connections from file"
+            );
+            if let Err(e) = core_actor.restore_connections() {
+                tracing::warn!(
+                    target: "mcv::main",
+                    error = %e,
+                    "Failed to restore connections"
+                );
+            }
+
             tracing::debug!(target: "mcv::main","Starting CoreActor");
             let core_addr = core_actor.start();
             tracing::info!(target: "mcv::main","CoreActor started");

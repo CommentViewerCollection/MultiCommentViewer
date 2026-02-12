@@ -1,4 +1,5 @@
 pub mod connection_manager;
+pub mod connection_persistence;
 pub mod core_actor;
 pub mod internal_message;
 pub(crate) mod message_handlers;
@@ -9,6 +10,7 @@ pub mod site_browser_manager;
 
 // 公開エクスポート
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
+pub use connection_persistence::{ConnectionsStorage, PersistedConnection};
 pub use core_actor::{
     CoreActor, CreateConnection, GetBrowsers, GetConnections, GetLogicalPlugins, GetSites, LogicalPluginInfo,
     PluginInfo, RegisterPhysicalPlugin, RemoveConnection, RenameConnection, SendMessageToCore,

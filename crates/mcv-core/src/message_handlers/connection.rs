@@ -78,6 +78,9 @@ pub fn handle_add_connection(
         target: "mcv::core::CoreActor",
         "Broadcasted connection-added to all plugins"
     );
+
+    // 保存
+    let _ = actor.save_connections();
 }
 
 /// connect メッセージのハンドラー

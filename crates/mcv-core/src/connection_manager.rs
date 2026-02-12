@@ -6,6 +6,8 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", content = "message")]
 pub enum ConnectionStatus {
+    /// プラグイン待機中（永続化復元時にプラグインが未到着）
+    Pending,
     /// 接続が作成された
     Created,
     /// 接続中
@@ -179,6 +181,117 @@ impl ConnectionManager {
             );
             info.advanced_settings = settings;
         }
+    }
+
+    /// 永続化用データをエクスポート
+    pub fn export_for_persistence(&self) -> Vec<crate::connection_persistence::PersistedConnection> {
+        self.connections
+            .values()
+            .map(|conn| crate::connection_persistence::PersistedConnection {
+                connection_id: conn.connection_id,
+                site_name: conn.site_name.clone(),
+                url: conn.url.clone(),
+                browser_name: conn.browser_name.clone(),
+                advanced_settings: conn.advanced_settings.clone(),
+                name: conn.name.clone(),
+            })
+            .collect()
+    }
+
+    /// 永続化データからインポート（Pending状態で復元）
+    /// 戻り値: (成功した接続数, スキップした接続のリスト[(name, reason)])
+    pub fn import_from_persistence(
+        &mut self,
+        persisted: Vec<crate::connection_persistence::PersistedConnection>,
+        site_browser_manager: &crate::site_browser_manager::SiteAndBrowserManager,
+    ) -> (usize, Vec<(String, String)>) {
+        let mut success_count = 0;
+        let skipped = Vec::new();
+
+        for conn in persisted {
+            // site_nameから現在のsite_id/plugin_idを取得
+            let (site_id, plugin_id) = if let Some(ref site_name) = conn.site_name {
+                match site_browser_manager.find_site_by_name(site_name) {
+                    Some(site_info) => (Some(site_info.site_id), Some(site_info.plugin_id)),
+                    None => {
+                        // プラグイン未到着 → Pending状態で復元
+                        tracing::warn!(
+                            connection_name = %conn.name,
+                            site_name = %site_name,
+                            "Site not found during restoration, marking as Pending"
+                        );
+                        (None, None)
+                    }
+                }
+            } else {
+                (None, None)
+            };
+
+            // browser_nameから現在のbrowser_idを取得
+            let browser_id = if let Some(ref browser_name) = conn.browser_name {
+                site_browser_manager
+                    .find_browser_by_name(browser_name)
+                    .map(|b| b.browser_id)
+            } else {
+                None
+            };
+
+            // ConnectionInfoを構築
+            let status = if site_id.is_some() {
+                ConnectionStatus::Created // プラグイン到着済み
+            } else {
+                ConnectionStatus::Pending // プラグイン未到着
+            };
+
+            let info = ConnectionInfo {
+                connection_id: conn.connection_id,
+                plugin_id,
+                status,
+                site_id,
+                site_name: conn.site_name.clone(),
+                url: conn.url,
+                browser_id,
+                browser_name: conn.browser_name,
+                advanced_settings: conn.advanced_settings,
+                input_info: String::new(),
+                name: conn.name,
+            };
+
+            self.connections.insert(info.connection_id, info);
+            success_count += 1;
+        }
+
+        (success_count, skipped)
+    }
+
+    /// Pending状態の接続をsite_nameで検索し、有効化
+    pub fn activate_pending_connections_by_site(
+        &mut self,
+        site_name: &str,
+        site_id: Uuid,
+        plugin_id: Uuid,
+    ) -> Vec<Uuid> {
+        let mut activated = Vec::new();
+
+        for conn in self.connections.values_mut() {
+            if conn.status == ConnectionStatus::Pending
+                && conn.site_name.as_ref() == Some(&site_name.to_string())
+            {
+                tracing::info!(
+                    connection_id = %conn.connection_id,
+                    connection_name = %conn.name,
+                    site_name = %site_name,
+                    "Activating pending connection"
+                );
+
+                conn.site_id = Some(site_id);
+                conn.plugin_id = Some(plugin_id);
+                conn.status = ConnectionStatus::Created;
+                activated.push(conn.connection_id);
+            }
+        }
+
+        activated
     }
 }
 

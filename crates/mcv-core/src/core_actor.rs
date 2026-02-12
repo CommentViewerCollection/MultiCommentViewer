@@ -179,7 +179,7 @@ impl CoreActor {
             self.connection_manager.set_site(
                 &connection_id,
                 site_id,
-                site_info.site_name.clone(),
+                site_info.display_name.clone(),
                 site_info.plugin_id,
             );
 

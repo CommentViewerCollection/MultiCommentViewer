@@ -1,8 +1,8 @@
 use actix::Context;
 use mcv_common::{LogicalPluginId, PhysicalPluginId};
 use mcv_messages::{
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginAddedPayload,
-    PluginHelloPayload,
+    ConnectionAddedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    PluginAddedPayload, PluginHelloPayload,
 };
 
 use crate::core_actor::{CoreActor, LogicalPluginInfo};
@@ -129,6 +129,80 @@ pub fn handle_plugin_hello(
         logical_plugin_id = %logical_plugin_id,
         logical_plugins_count = actor.logical_plugins.len(),
         "Logical plugin registered and plugin-added broadcasted to all logical plugins"
+    );
+
+    // そのプラグインに関連する全接続のConnectionAddedをユニキャスト
+    send_connection_added_for_plugin(actor, logical_plugin_id);
+}
+
+/// プラグインに関連する全接続のConnectionAddedをユニキャスト
+fn send_connection_added_for_plugin(actor: &CoreActor, logical_plugin_id: LogicalPluginId) {
+    let connections = actor.connection_manager.get_connections();
+    let plugin_uuid = logical_plugin_id.inner();
+
+    // このプラグインに関連する接続をフィルター
+    let related_connections: Vec<_> = connections
+        .iter()
+        .filter(|conn| conn.plugin_id == Some(plugin_uuid))
+        .collect();
+
+    if related_connections.is_empty() {
+        tracing::debug!(
+            target: "mcv::core::CoreActor",
+            logical_plugin_id = %logical_plugin_id,
+            "No connections related to this plugin"
+        );
+        return;
+    }
+
+    // プラグイン情報を取得
+    let plugin_info = match actor.logical_plugins.get(&logical_plugin_id) {
+        Some(info) => info,
+        None => {
+            tracing::error!(
+                target: "mcv::core::CoreActor",
+                logical_plugin_id = %logical_plugin_id,
+                "Plugin info not found"
+            );
+            return;
+        }
+    };
+
+    let connection_count = related_connections.len();
+
+    // 各接続に対してConnectionAddedをユニキャスト
+    for conn in related_connections {
+        let connection_added_msg = McvMessage::new(
+            MessageType::ConnectionAdded,
+            MessageSource::Core,
+            MessageDestination::Plugin {
+                plugin_id: plugin_uuid,
+            },
+            serde_json::to_value(ConnectionAddedPayload {
+                connection_id: conn.connection_id,
+                name: conn.name.clone(),
+            })
+            .unwrap(),
+        );
+
+        plugin_info.host_addr.do_send(SendMessageToPlugin {
+            message: connection_added_msg,
+        });
+
+        tracing::debug!(
+            target: "mcv::core::CoreActor",
+            connection_id = %conn.connection_id,
+            connection_name = %conn.name,
+            logical_plugin_id = %logical_plugin_id,
+            "Sent ConnectionAdded to plugin"
+        );
+    }
+
+    tracing::info!(
+        target: "mcv::core::CoreActor",
+        logical_plugin_id = %logical_plugin_id,
+        connection_count = connection_count,
+        "Sent all related ConnectionAdded messages to plugin"
     );
 }
 

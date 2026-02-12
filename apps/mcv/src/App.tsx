@@ -592,6 +592,8 @@ function App() {
               const isConnected = conn.status.type === 'Connected'
               const isDisconnected = conn.status.type === 'Disconnected' || conn.status.type === 'Created'
               const canModify = isDisconnected
+              const canModifyUrl = true  // URLは常に編集可能
+              const canModifyColors = true  // 色は常に編集可能
               const canConnect = conn.site_id && conn.url
 
               return (
@@ -664,7 +666,7 @@ function App() {
                       value={conn.url || ''}
                       onChange={(e) => handleUrlChange(conn.connection_id, e.target.value)}
                       onBlur={() => handleUrlBlur(conn.connection_id)}
-                      disabled={!canModify}
+                      disabled={!canModifyUrl}
                       placeholder="https://..."
                       className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
@@ -687,7 +689,7 @@ function App() {
                                   e.target.value
                                 )
                               }
-                              disabled={!canModify}
+                              disabled={!canModifyColors}
                               className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
                             />
                             <input
@@ -700,7 +702,7 @@ function App() {
                                   e.target.value
                                 )
                               }
-                              disabled={!canModify}
+                              disabled={!canModifyColors}
                               className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                               pattern="^#[0-9A-Fa-f]{6}$"
                               maxLength={7}
@@ -722,7 +724,7 @@ function App() {
                                   e.target.value
                                 )
                               }
-                              disabled={!canModify}
+                              disabled={!canModifyColors}
                               className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
                             />
                             <input
@@ -735,7 +737,7 @@ function App() {
                                   e.target.value
                                 )
                               }
-                              disabled={!canModify}
+                              disabled={!canModifyColors}
                               className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                               pattern="^#[0-9A-Fa-f]{6}$"
                               maxLength={7}

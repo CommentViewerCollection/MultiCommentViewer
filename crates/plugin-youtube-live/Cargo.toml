@@ -12,6 +12,7 @@ beta = ["mcv-plugin-telemetry/beta", "plugin-abi-helper/beta"]
 stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
 
 [dependencies]
+mcv-common = { path = "../../crates/mcv-common" }
 mcv-messages = { path = "../../crates/mcv-messages" }
 mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
 async-trait = { workspace = true }

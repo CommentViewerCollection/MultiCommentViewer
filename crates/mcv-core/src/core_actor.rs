@@ -1,5 +1,5 @@
 use actix::prelude::*;
-use mcv_common::{LogicalPluginId, PhysicalPluginId};
+use mcv_common::{LogicalPluginId, PhysicalPluginId, SiteId};
 use mcv_log_core::LogStorage;
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use mcv_settings_core::SettingsStorage;
@@ -159,7 +159,7 @@ impl CoreActor {
     /// SetConnectionSiteメッセージをプラグインに送信（共通処理）
     ///
     /// UIからの呼び出しとPending有効化の両方から使用される
-    pub(crate) fn send_set_connection_site(&mut self, connection_id: Uuid, site_id: Uuid) {
+    pub(crate) fn send_set_connection_site(&mut self, connection_id: Uuid, site_id: SiteId) {
         tracing::debug!(
             target: "mcv::core::CoreActor",
             connection_id = %connection_id,
@@ -178,8 +178,7 @@ impl CoreActor {
             // ConnectionManagerを更新
             self.connection_manager.set_site(
                 &connection_id,
-                site_id,
-                site_info.display_name.clone(),
+                site_id.clone(),
                 site_info.plugin_id,
             );
 
@@ -196,7 +195,7 @@ impl CoreActor {
                             MessageDestination::Plugin { plugin_id: old_pid },
                             serde_json::to_value(DiscardConnectionSitePayload {
                                 connection_id,
-                                site_id,
+                                site_id: site_id.clone(),
                             })
                             .unwrap(),
                         );
@@ -218,7 +217,7 @@ impl CoreActor {
                     },
                     serde_json::to_value(SetConnectionSitePayload {
                         connection_id,
-                        site_id,
+                        site_id: site_id.clone(),
                     })
                     .unwrap(),
                 );
@@ -598,9 +597,6 @@ impl Handler<GetLogicalPlugins> for CoreActor {
 #[derive(Message)]
 #[rtype(result = "Uuid")]
 pub struct CreateConnection {
-    pub plugin_id: Option<Uuid>, // 変更: Option<Uuid>に
-    pub site_name: String,
-    pub input_info: String,
     pub name: String,
 }
 impl Handler<CreateConnection> for CoreActor {
@@ -694,7 +690,7 @@ impl Handler<GetBrowsers> for CoreActor {
 #[rtype(result = "Result<(), String>")]
 pub struct SetConnectionSite {
     pub connection_id: Uuid,
-    pub site_id: Uuid,
+    pub site_id: SiteId,
 }
 
 impl Handler<SetConnectionSite> for CoreActor {
@@ -775,9 +771,6 @@ mod tests {
 
         let conn_id = addr
             .send(CreateConnection {
-                plugin_id: None,
-                site_name: "Test".to_string(),
-                input_info: "{}".to_string(),
                 name: "#1".to_string(),
             })
             .await
@@ -797,9 +790,6 @@ mod tests {
 
         let conn_id = addr
             .send(CreateConnection {
-                plugin_id: None,
-                site_name: "Test".to_string(),
-                input_info: "{}".to_string(),
                 name: "#1".to_string(),
             })
             .await
@@ -824,9 +814,6 @@ mod tests {
 
         let conn_id = addr
             .send(CreateConnection {
-                plugin_id: None,
-                site_name: "Test".to_string(),
-                input_info: "{}".to_string(),
                 name: "#1".to_string(),
             })
             .await

@@ -7,6 +7,7 @@ edition = "2021"
 tauri-build = { version = "2.0", features = [] }
 
 [dependencies]
+mcv-common = { path = "../../../crates/mcv-common" }
 mcv-core = { path = "../../../crates/mcv-core" }
 mcv-messages = { path = "../../../crates/mcv-messages" }
 mcv-updater = { path = "../../../crates/mcv-updater" }

@@ -1,3 +1,4 @@
+use mcv_common::SiteId;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
@@ -8,7 +9,7 @@ use crate::connection_manager::ConnectionManager;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PersistedConnection {
     pub connection_id: Uuid,
-    pub site_name: Option<String>,
+    pub site_id: Option<SiteId>,
     pub url: Option<String>,
     pub browser_name: Option<String>,
     pub advanced_settings: Option<serde_json::Value>,
@@ -147,7 +148,7 @@ mod tests {
             connections: vec![
                 PersistedConnection {
                     connection_id: Uuid::new_v4(),
-                    site_name: Some("TestSite".to_string()),
+                    site_id: Some(SiteId::new("TestSite", "00000000-0000-0000-0000-000000000001")),
                     url: Some("https://example.com".to_string()),
                     browser_name: Some("Chrome".to_string()),
                     advanced_settings: Some(serde_json::json!({"key": "value"})),
@@ -164,7 +165,7 @@ mod tests {
         assert_eq!(loaded.schema_version, "1.0");
         assert_eq!(loaded.connections.len(), 1);
         assert_eq!(loaded.connections[0].name, "Test Connection");
-        assert_eq!(loaded.connections[0].site_name, Some("TestSite".to_string()));
+        assert_eq!(loaded.connections[0].site_id, Some(SiteId::new("TestSite", "00000000-0000-0000-0000-000000000001")));
     }
 
     #[test]

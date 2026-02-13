@@ -18,6 +18,7 @@ use std::{collections::HashMap, sync::Arc};
 use adapter::PluginContextAdapter;
 use connection::Connection;
 use message_handler::on_message_impl;
+use mcv_common::SiteId;
 use mcv_messages::{
     AddSitePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
     PluginHelloPayload,
@@ -103,12 +104,9 @@ impl PluginImplV3Async for YouTubeLivePlugin {
         self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
             .await;
 
-        let site_id = Uuid::new_v4();
-
         let add_site = AddSitePayload {
-            site_id,
-            site_name: "YouTubeLive".to_owned(),
-            display_name: "なんでじゃー".to_owned(),
+            site_id: SiteId::new("YouTubeLive", "7a3b5c9d-1e2f-4a5b-8c7d-9e0f1a2b3c4d"),
+            display_name: "YouTube Live".to_owned(),
             options_schema: serde_json::from_str("{}").unwrap(),
         };
         self.send_add_site(ctx.clone(), add_site, self.logical_plugin_id)

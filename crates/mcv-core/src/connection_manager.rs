@@ -1,4 +1,5 @@
 use indexmap::IndexMap;
+use mcv_common::SiteId;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
@@ -26,8 +27,7 @@ pub struct ConnectionInfo {
     pub connection_id: Uuid,
     pub plugin_id: Option<Uuid>,      // 変更: Option<Uuid>に
     pub status: ConnectionStatus,
-    pub site_id: Option<Uuid>,        // 新規
-    pub site_name: Option<String>,
+    pub site_id: Option<SiteId>,
     pub url: Option<String>,          // 新規
     pub browser_id: Option<Uuid>,     // 新規
     pub browser_name: Option<String>, // 新規
@@ -64,7 +64,6 @@ impl ConnectionManager {
             plugin_id: None,
             status: ConnectionStatus::Created,
             site_id: None,
-            site_name:None,
             url: None,
             browser_id: None,
             browser_name: None,
@@ -118,20 +117,17 @@ impl ConnectionManager {
     pub fn set_site(
         &mut self,
         connection_id: &Uuid,
-        site_id: Uuid,
-        site_name: String,
+        site_id: SiteId,
         plugin_id: Uuid,
     ) {
         if let Some(info) = self.connections.get_mut(connection_id) {
             tracing::debug!(
                 connection_id = %connection_id,
                 site_id = %site_id,
-                site_name = %site_name,
                 plugin_id = %plugin_id,
                 "Connection site updated"
             );
             info.site_id = Some(site_id);
-            info.site_name = Some(site_name);
             info.plugin_id = Some(plugin_id);
         }
     }
@@ -189,7 +185,7 @@ impl ConnectionManager {
             .values()
             .map(|conn| crate::connection_persistence::PersistedConnection {
                 connection_id: conn.connection_id,
-                site_name: conn.site_name.clone(),
+                site_id: conn.site_id.clone(),
                 url: conn.url.clone(),
                 browser_name: conn.browser_name.clone(),
                 advanced_settings: conn.advanced_settings.clone(),
@@ -209,18 +205,18 @@ impl ConnectionManager {
         let skipped = Vec::new();
 
         for conn in persisted {
-            // site_nameから現在のsite_id/plugin_idを取得
-            let (site_id, plugin_id) = if let Some(ref site_name) = conn.site_name {
-                match site_browser_manager.find_site_by_name(site_name) {
-                    Some(site_info) => (Some(site_info.site_id), Some(site_info.plugin_id)),
+            // site_idから現在のplugin_idを取得
+            let (site_id, plugin_id) = if let Some(ref site_id) = conn.site_id {
+                match site_browser_manager.get_site(site_id) {
+                    Some(site_info) => (Some(site_id.clone()), Some(site_info.plugin_id)),
                     None => {
                         // プラグイン未到着 → Pending状態で復元
                         tracing::warn!(
                             connection_name = %conn.name,
-                            site_name = %site_name,
+                            site_id = %site_id,
                             "Site not found during restoration, marking as Pending"
                         );
-                        (None, None)
+                        (Some(site_id.clone()), None)
                     }
                 }
             } else {
@@ -237,7 +233,7 @@ impl ConnectionManager {
             };
 
             // ConnectionInfoを構築
-            let status = if site_id.is_some() {
+            let status = if plugin_id.is_some() {
                 ConnectionStatus::Created // プラグイン到着済み
             } else {
                 ConnectionStatus::Pending // プラグイン未到着
@@ -248,7 +244,6 @@ impl ConnectionManager {
                 plugin_id,
                 status,
                 site_id,
-                site_name: conn.site_name.clone(),
                 url: conn.url,
                 browser_id,
                 browser_name: conn.browser_name,
@@ -264,27 +259,25 @@ impl ConnectionManager {
         (success_count, skipped)
     }
 
-    /// Pending状態の接続をsite_nameで検索し、有効化
+    /// Pending状態の接続をsite_idで検索し、有効化
     pub fn activate_pending_connections_by_site(
         &mut self,
-        site_name: &str,
-        site_id: Uuid,
+        site_id: &SiteId,
         plugin_id: Uuid,
     ) -> Vec<Uuid> {
         let mut activated = Vec::new();
 
         for conn in self.connections.values_mut() {
             if conn.status == ConnectionStatus::Pending
-                && conn.site_name.as_ref() == Some(&site_name.to_string())
+                && conn.site_id.as_ref() == Some(site_id)
             {
                 tracing::info!(
                     connection_id = %conn.connection_id,
                     connection_name = %conn.name,
-                    site_name = %site_name,
+                    site_id = %site_id,
                     "Activating pending connection"
                 );
 
-                conn.site_id = Some(site_id);
                 conn.plugin_id = Some(plugin_id);
                 conn.status = ConnectionStatus::Created;
                 activated.push(conn.connection_id);
@@ -335,7 +328,7 @@ mod tests {
     fn test_site_management() {
         let mut manager = ConnectionManager::new();
         let conn_id = Uuid::new_v4();
-        let site_id = Uuid::new_v4();
+        let site_id = SiteId::new("test-site", "00000000-0000-0000-0000-000000000001");
         let plugin_id = Uuid::new_v4();
 
         // 接続を追加（サイト未選択）
@@ -346,12 +339,11 @@ mod tests {
         assert_eq!(conn.site_id, None);
 
         // サイトを設定
-        manager.set_site(&conn_id, site_id, "Test Site".to_string(), plugin_id);
+        manager.set_site(&conn_id, site_id.clone(), plugin_id);
 
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.plugin_id, Some(plugin_id));
         assert_eq!(conn.site_id, Some(site_id));
-        assert_eq!(conn.site_name, Some("Test Site".to_owned()));
     }
 
     #[test]
@@ -457,13 +449,13 @@ mod tests {
     fn test_set_site_updates_plugin_id() {
         let mut manager = ConnectionManager::new();
         let conn_id = Uuid::new_v4();
-        let site_id = Uuid::new_v4();
+        let site_id = SiteId::new("YouTube", "00000000-0000-0000-0000-000000000002");
         let plugin_id = Uuid::new_v4();
 
         manager.add_connection(conn_id, "#1".to_string());
         assert_eq!(manager.get_connection(&conn_id).unwrap().plugin_id, None);
 
-        manager.set_site(&conn_id, site_id, "YouTube".to_string(), plugin_id);
+        manager.set_site(&conn_id, site_id, plugin_id);
         assert_eq!(
             manager.get_connection(&conn_id).unwrap().plugin_id,
             Some(plugin_id)

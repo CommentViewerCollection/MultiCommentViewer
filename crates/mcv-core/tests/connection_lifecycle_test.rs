@@ -16,9 +16,6 @@ async fn test_full_connection_lifecycle() {
     // 1. 接続を作成
     let connection_id = core_addr
         .send(CreateConnection {
-            plugin_id: Some(plugin_id),
-            site_name: "Test Site".to_string(),
-            input_info: "Test Input".to_string(),
             name: "#1".to_string(),
         })
         .await
@@ -71,9 +68,6 @@ async fn test_multiple_connections_lifecycle() {
     for i in 1..=3 {
         let conn_id = core_addr
             .send(CreateConnection {
-                plugin_id: Some(plugin_id),
-                site_name: format!("Site {}", i),
-                input_info: format!("Input {}", i),
                 name: format!("#{}", i),
             })
             .await
@@ -142,9 +136,6 @@ async fn test_connection_status_lifecycle() {
     // 接続を作成
     let connection_id = core_addr
         .send(CreateConnection {
-            plugin_id: Some(plugin_id),
-            site_name: "Test Site".to_string(),
-            input_info: "Test Input".to_string(),
             name: "#1".to_string(),
         })
         .await

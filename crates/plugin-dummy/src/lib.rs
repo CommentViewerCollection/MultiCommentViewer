@@ -769,8 +769,7 @@ impl Plugin for DummyPlugin {
             },
             MessageDestination::Core,
             serde_json::to_value(AddSitePayload {
-                site_id: self.plugin_id,
-                site_name: "dummy".to_string(),
+                site_id: SiteId::new("dummy", "00000000-0000-0000-0000-000000000001"),
                 display_name: "ダミーサイト".to_string(),
                 options_schema: serde_json::json!({
                     "type": "object",

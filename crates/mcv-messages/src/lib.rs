@@ -1,3 +1,4 @@
+pub use mcv_common::SiteId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -231,7 +232,7 @@ pub struct ConnectPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SiteInfo {
     pub name: String,
-    pub id: Uuid,
+    pub id: SiteId,
 }
 
 /// 入力情報
@@ -358,8 +359,7 @@ pub struct LogEntryPayload {
 /// add-siteのpayload (Plugin → Core)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddSitePayload {
-    pub site_id: Uuid,
-    pub site_name: String,
+    pub site_id: SiteId,
     pub display_name: String,
     pub options_schema: serde_json::Value,
 }
@@ -376,14 +376,14 @@ pub struct AddBrowserPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetConnectionSitePayload {
     pub connection_id: Uuid,
-    pub site_id: Uuid,
+    pub site_id: SiteId,
 }
 
 /// discard-connection-siteのpayload (Core → Plugin)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiscardConnectionSitePayload {
     pub connection_id: Uuid,
-    pub site_id: Uuid,
+    pub site_id: SiteId,
 }
 
 /// update-connection-settingsのpayload (UI → Core)

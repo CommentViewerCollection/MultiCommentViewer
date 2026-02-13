@@ -32,8 +32,7 @@ pub fn handle_add_site(
     };
 
     let site_info = SiteInfo {
-        site_id: payload.site_id,
-        site_name: payload.site_name.clone(),
+        site_id: payload.site_id.clone(),
         display_name: payload.display_name.clone(),
         plugin_id,
         options_schema: payload.options_schema,
@@ -42,7 +41,6 @@ pub fn handle_add_site(
     tracing::info!(
         target: "mcv::core::CoreActor",
         site_id = %payload.site_id,
-        site_name = %payload.site_name,
         plugin_id_from_message_src = %plugin_id,
         "Registering site (plugin_id is from message.src)"
     );
@@ -63,29 +61,28 @@ pub fn handle_add_site(
 
     tracing::info!(
         target: "mcv::core::CoreActor",
-        site_name = %payload.site_name,
+        site_id = %payload.site_id,
         plugin_id = %plugin_id,
         "Site registered"
     );
 
     // サイト登録完了後、Pending接続を確認して有効化
     let activated_connections = actor.connection_manager.activate_pending_connections_by_site(
-        &site_info.site_name,
-        site_info.site_id,
+        &site_info.site_id,
         plugin_id,
     );
 
     if !activated_connections.is_empty() {
         tracing::info!(
             target: "mcv::core::CoreActor",
-            site_name = %site_info.site_name,
+            site_id = %site_info.site_id,
             activated_count = activated_connections.len(),
             "Activated pending connections after add-site"
         );
 
         // 有効化された接続に対してSetConnectionSiteメッセージを送信
         for conn_id in &activated_connections {
-            actor.send_set_connection_site(*conn_id, site_info.site_id);
+            actor.send_set_connection_site(*conn_id, site_info.site_id.clone());
         }
 
         // 有効化された接続をUIに通知（connection-added再送信）

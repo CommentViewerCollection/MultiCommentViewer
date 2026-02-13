@@ -1,12 +1,12 @@
 use std::collections::HashMap;
+use mcv_common::SiteId;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
 /// サイト情報
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SiteInfo {
-    pub site_id: Uuid,
-    pub site_name: String,
+    pub site_id: SiteId,
     pub display_name: String,
     pub plugin_id: Uuid,
     pub options_schema: serde_json::Value,
@@ -25,7 +25,7 @@ pub struct BrowserInfo {
 ///
 /// サイトとブラウザ情報の管理を担当
 pub struct SiteAndBrowserManager {
-    sites: HashMap<Uuid, SiteInfo>,
+    sites: HashMap<SiteId, SiteInfo>,
     browsers: HashMap<Uuid, BrowserInfo>,
 }
 
@@ -43,12 +43,12 @@ impl SiteAndBrowserManager {
     pub fn add_site(&mut self, site_info: SiteInfo) {
         tracing::debug!(
             site_id = %site_info.site_id,
-            site_name = %site_info.site_name,
             display_name = %site_info.display_name,
             plugin_id = %site_info.plugin_id,
             "Adding site to manager"
         );
-        self.sites.insert(site_info.site_id, site_info);
+        let key = site_info.site_id.clone();
+        self.sites.insert(key, site_info);
     }
 
     /// ブラウザを追加
@@ -64,7 +64,7 @@ impl SiteAndBrowserManager {
     }
 
     /// サイトを取得
-    pub fn get_site(&self, site_id: &Uuid) -> Option<&SiteInfo> {
+    pub fn get_site(&self, site_id: &SiteId) -> Option<&SiteInfo> {
         self.sites.get(site_id)
     }
 
@@ -84,13 +84,8 @@ impl SiteAndBrowserManager {
     }
 
     /// サイトIDからプラグインIDを取得
-    pub fn get_plugin_id_for_site(&self, site_id: &Uuid) -> Option<Uuid> {
+    pub fn get_plugin_id_for_site(&self, site_id: &SiteId) -> Option<Uuid> {
         self.sites.get(site_id).map(|s| s.plugin_id)
-    }
-
-    /// site_nameから逆引き（永続化復元用）
-    pub fn find_site_by_name(&self, site_name: &str) -> Option<&SiteInfo> {
-        self.sites.values().find(|s| s.site_name == site_name)
     }
 
     /// browser_nameから逆引き（永続化復元用）
@@ -114,12 +109,11 @@ mod tests {
     #[test]
     fn test_site_management() {
         let mut manager = SiteAndBrowserManager::new();
-        let site_id = Uuid::new_v4();
+        let site_id = SiteId::new("test-site", "00000000-0000-0000-0000-000000000001");
         let plugin_id = Uuid::new_v4();
 
         let site_info = SiteInfo {
-            site_id,
-            site_name: "test-site".to_string(),
+            site_id: site_id.clone(),
             display_name: "Test Site".to_string(),
             plugin_id,
             options_schema: serde_json::json!({}),
@@ -162,8 +156,7 @@ mod tests {
         // 複数のサイトを追加
         for i in 0..3 {
             let site_info = SiteInfo {
-                site_id: Uuid::new_v4(),
-                site_name: format!("site-{}", i),
+                site_id: SiteId::new(&format!("site-{}", i), &format!("00000000-0000-0000-0000-00000000000{}", i)),
                 display_name: format!("Site {}", i),
                 plugin_id,
                 options_schema: serde_json::json!({}),

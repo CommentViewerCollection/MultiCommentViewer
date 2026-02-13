@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use actix::prelude::*;
+use mcv_common::SiteId;
 use mcv_core::{
     BrowserInfo as CoreBrowserInfo, // mcv-coreから明示的にインポート
     ConnectionInfo,
@@ -133,11 +134,6 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
     // サイトが選択されていない場合はエラー
     let plugin_id = conn_info.plugin_id.ok_or("サイトが選択されていません")?;
     let site_id = conn_info.site_id.ok_or("サイトが選択されていません")?;
-    let site_name = conn_info
-        .site_name
-        .as_ref()
-        .ok_or("サイト名が設定されていません")?
-        .clone();
     let url = conn_info.url.clone().ok_or("URLが入力されていません")?;
 
     tracing::debug!(
@@ -155,11 +151,11 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
         serde_json::to_value(ConnectPayload {
             connection_id: conn_id,
             site: MsgSiteInfo {
-                name: site_name.clone(),
-                id: site_id,
+                name: site_id.to_string(),
+                id: site_id.clone(),
             },
             input: InputInfo {
-                input_type: site_name,
+                input_type: site_id.to_string(),
                 extra: serde_json::json!({
                     "url": url,
                     "advanced_settings": conn_info.advanced_settings,
@@ -254,7 +250,7 @@ async fn set_connection_site(
     site_id: String,
 ) -> Result<(), String> {
     let conn_id = parse_uuid(&connection_id, "connection_id")?;
-    let s_id = parse_uuid(&site_id, "site_id")?;
+    let s_id = SiteId::from_string(site_id);
 
     tracing::debug!(
         connection_id = %conn_id,

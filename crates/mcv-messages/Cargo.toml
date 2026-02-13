@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+mcv-common = { path = "../mcv-common" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }

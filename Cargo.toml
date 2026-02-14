@@ -28,6 +28,7 @@ members = [
     "crates/plugin-sample-v3",
     "crates/export-plugin-v3-macros",
     "examples/youtube-live-lib-getcomments",
+    "crates/plugin-chrome-cookie"
 ]
 resolver = "2"
 
@@ -35,7 +36,7 @@ resolver = "2"
 actix = "0.13"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-uuid = { version = "1.10", features = ["v4", "serde"] }
+uuid = { version = "1.10", features = ["v4", "v5", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"

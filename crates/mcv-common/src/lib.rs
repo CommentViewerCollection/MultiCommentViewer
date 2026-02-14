@@ -8,9 +8,11 @@
 
 pub mod plugin_id;
 pub mod site_id;
+pub mod browser_id;
 
 pub use plugin_id::{LogicalPluginId, PhysicalPluginId};
 pub use site_id::SiteId;
+pub use browser_id::BrowserId;
 
 pub const APP_NAME: &str = "MultiCommentViewer";
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");

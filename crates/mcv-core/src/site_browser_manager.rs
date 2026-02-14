@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use mcv_common::SiteId;
+use mcv_common::{BrowserId, SiteId};
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
@@ -15,7 +15,7 @@ pub struct SiteInfo {
 /// ブラウザ情報
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrowserInfo {
-    pub browser_id: Uuid,
+    pub browser_id: BrowserId,
     pub browser_name: String,
     pub display_name: String,
     pub plugin_id: Uuid,
@@ -26,7 +26,7 @@ pub struct BrowserInfo {
 /// サイトとブラウザ情報の管理を担当
 pub struct SiteAndBrowserManager {
     sites: HashMap<SiteId, SiteInfo>,
-    browsers: HashMap<Uuid, BrowserInfo>,
+    browsers: HashMap<BrowserId, BrowserInfo>,
 }
 
 impl SiteAndBrowserManager {
@@ -60,7 +60,7 @@ impl SiteAndBrowserManager {
             plugin_id = %browser_info.plugin_id,
             "Adding browser to manager"
         );
-        self.browsers.insert(browser_info.browser_id, browser_info);
+        self.browsers.insert(browser_info.browser_id.clone(), browser_info);
     }
 
     /// サイトを取得
@@ -69,7 +69,7 @@ impl SiteAndBrowserManager {
     }
 
     /// ブラウザを取得
-    pub fn get_browser(&self, browser_id: &Uuid) -> Option<&BrowserInfo> {
+    pub fn get_browser(&self, browser_id: &BrowserId) -> Option<&BrowserInfo> {
         self.browsers.get(browser_id)
     }
 
@@ -132,11 +132,11 @@ mod tests {
     #[test]
     fn test_browser_management() {
         let mut manager = SiteAndBrowserManager::new();
-        let browser_id = Uuid::new_v4();
+        let browser_id = BrowserId::new("chrome", "00000000-0000-0000-0000-000000000001");
         let plugin_id = Uuid::new_v4();
 
         let browser_info = BrowserInfo {
-            browser_id,
+            browser_id: browser_id.clone(),
             browser_name: "chrome".to_string(),
             display_name: "Google Chrome".to_string(),
             plugin_id,
@@ -167,7 +167,7 @@ mod tests {
         // 複数のブラウザを追加
         for i in 0..2 {
             let browser_info = BrowserInfo {
-                browser_id: Uuid::new_v4(),
+                browser_id: BrowserId::new(&format!("browser-{}", i), &format!("00000000-0000-0000-0000-00000000000{}", i)),
                 browser_name: format!("browser-{}", i),
                 display_name: format!("Browser {}", i),
                 plugin_id,

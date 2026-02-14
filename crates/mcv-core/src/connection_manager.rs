@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use mcv_common::SiteId;
+use mcv_common::{BrowserId, SiteId};
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
@@ -29,7 +29,7 @@ pub struct ConnectionInfo {
     pub status: ConnectionStatus,
     pub site_id: Option<SiteId>,
     pub url: Option<String>,          // 新規
-    pub browser_id: Option<Uuid>,     // 新規
+    pub browser_id: Option<BrowserId>, // 新規
     pub browser_name: Option<String>, // 新規
     pub advanced_settings: Option<serde_json::Value>, // 新規
     pub input_info: String,
@@ -148,7 +148,7 @@ impl ConnectionManager {
     pub fn update_browser(
         &mut self,
         connection_id: &Uuid,
-        browser_id: Option<Uuid>,
+        browser_id: Option<BrowserId>,
         browser_name: Option<String>,
     ) {
         if let Some(info) = self.connections.get_mut(connection_id) {
@@ -227,7 +227,7 @@ impl ConnectionManager {
             let browser_id = if let Some(ref browser_name) = conn.browser_name {
                 site_browser_manager
                     .find_browser_by_name(browser_name)
-                    .map(|b| b.browser_id)
+                    .map(|b| b.browser_id.clone())
             } else {
                 None
             };
@@ -350,7 +350,7 @@ mod tests {
     fn test_connection_settings() {
         let mut manager = ConnectionManager::new();
         let conn_id = Uuid::new_v4();
-        let browser_id = Uuid::new_v4();
+        let browser_id = BrowserId::new("Chrome", "00000000-0000-0000-0000-000000000001");
 
         // 接続を追加
         manager.add_connection(conn_id, "#1".to_string());
@@ -361,7 +361,7 @@ mod tests {
         assert_eq!(conn.url, Some("https://example.com".to_string()));
 
         // ブラウザ更新
-        manager.update_browser(&conn_id, Some(browser_id), Some("Chrome".to_string()));
+        manager.update_browser(&conn_id, Some(browser_id.clone()), Some("Chrome".to_string()));
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.browser_id, Some(browser_id));
         assert_eq!(conn.browser_name, Some("Chrome".to_string()));

@@ -796,7 +796,7 @@ impl Plugin for DummyPlugin {
             },
             MessageDestination::Core,
             serde_json::to_value(AddBrowserPayload {
-                browser_id: Uuid::nil(),
+                browser_id: BrowserId::from_string("none_00000000-0000-0000-0000-000000000000".to_string()),
                 browser_name: "none".to_string(),
                 display_name: "なし".to_string(),
             })

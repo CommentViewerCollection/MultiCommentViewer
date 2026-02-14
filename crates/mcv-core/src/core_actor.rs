@@ -718,7 +718,7 @@ impl Handler<SetConnectionSite> for CoreActor {
 pub struct UpdateConnectionSettings {
     pub connection_id: Uuid,
     pub url: Option<String>,
-    pub browser_id: Option<Uuid>,
+    pub browser_id: Option<BrowserId>,
     pub advanced_settings: Option<serde_json::Value>,
 }
 

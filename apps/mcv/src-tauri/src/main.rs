@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use actix::prelude::*;
-use mcv_common::SiteId;
+use mcv_common::{BrowserId, SiteId};
 use mcv_core::{
     BrowserInfo as CoreBrowserInfo, // mcv-coreから明示的にインポート
     ConnectionInfo,
@@ -163,7 +163,7 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
             },
             browser: MsgBrowserInfo {
                 name: conn_info.browser_name.clone().unwrap_or("None".to_string()),
-                id: conn_info.browser_id.unwrap_or(Uuid::nil()),
+                id: conn_info.browser_id.unwrap_or_else(|| BrowserId::from_string("none".to_string())),
             },
         })
         .map_err(|e| format!("Failed to serialize ConnectPayload: {}", e))?,
@@ -282,11 +282,7 @@ async fn update_connection_settings(
 ) -> Result<(), String> {
     let conn_id = parse_uuid(&connection_id, "connection_id")?;
 
-    let b_id = if let Some(bid) = browser_id {
-        Some(parse_uuid(&bid, "browser_id")?)
-    } else {
-        None
-    };
+    let b_id = browser_id.map(BrowserId::from_string);
 
     tracing::debug!(
         connection_id = %conn_id,

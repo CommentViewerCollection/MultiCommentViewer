@@ -1,3 +1,4 @@
+pub use mcv_common::BrowserId;
 pub use mcv_common::SiteId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -247,7 +248,7 @@ pub struct InputInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrowserInfo {
     pub name: String,
-    pub id: Uuid,
+    pub id: BrowserId,
 }
 
 /// connectedのpayload
@@ -367,7 +368,7 @@ pub struct AddSitePayload {
 /// add-browserのpayload (Plugin → Core)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddBrowserPayload {
-    pub browser_id: Uuid,
+    pub browser_id: BrowserId,
     pub browser_name: String,
     pub display_name: String,
 }
@@ -391,7 +392,7 @@ pub struct DiscardConnectionSitePayload {
 pub struct UpdateConnectionSettingsPayload {
     pub connection_id: Uuid,
     pub url: Option<String>,
-    pub browser_id: Option<Uuid>,
+    pub browser_id: Option<BrowserId>,
     pub advanced_settings: Option<serde_json::Value>,
 }
 

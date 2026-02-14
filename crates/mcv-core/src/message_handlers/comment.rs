@@ -5,7 +5,7 @@ use mcv_log_core::{
     StackFrame as LoggerStackFrame, SystemInfo as LoggerSystemInfo,
 };
 use mcv_messages::{
-    LogEntryPayload, Message as McvMessage, MessageSource, SendCommentPayload,
+    LogEntryPayload, Message as McvMessage, MessageDestination, MessageSource, SendCommentPayload,
 };
 use uuid::Uuid;
 
@@ -21,6 +21,19 @@ pub fn handle_comment_received(
     // UIへイベント通知
     if let Some(callback) = &actor.event_callback {
         callback(message.clone());
+    }
+
+    // "comment-processor" ロールを持つプラグインへ転送
+    for (logical_plugin_id, plugin_info) in &actor.logical_plugins {
+        if plugin_info.role.contains(&"comment-processor".to_string()) {
+            let mut forwarded = message.clone();
+            forwarded.dst = MessageDestination::Plugin {
+                plugin_id: logical_plugin_id.inner(),
+            };
+            plugin_info.host_addr.do_send(SendMessageToPlugin {
+                message: forwarded,
+            });
+        }
     }
 }
 

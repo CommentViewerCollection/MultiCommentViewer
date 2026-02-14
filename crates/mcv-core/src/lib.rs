@@ -117,25 +117,20 @@ fn get_dll_plugin_path_from_manifest<R: Read>(
     let manifest_path = Self::read_dll_path_from_manifest(reader)?;
     tracing::trace!(target:"mcv::mcv-core::PluginManager", "manifest relative path = {:?}", manifest_path);
 
-    // 相対パスなら manifest_dir 基準で解決
-    let joined_path = if manifest_path.is_absolute() {
-        manifest_path
-    } else {
-        manifest_dir.join(manifest_path)
-    };
-    tracing::trace!(target:"mcv::mcv-core::PluginManager", "joined_path = {:?}", joined_path);
-
-    // 実パスに正規化（..、シンボリックリンクを解決）
-    let canonical_manifest_dir = manifest_dir.canonicalize().ok()?;
-    let canonical_full_path = joined_path.canonicalize().ok()?;
-    tracing::trace!(target:"mcv::mcv-core::PluginManager", "canonical_full_path = {:?}", canonical_full_path);
-
-    // プラグインディレクトリ外への脱出を防止
-    if !canonical_full_path.starts_with(&canonical_manifest_dir) {
+    // 絶対パスまたはルート相対パスはディレクトリ外への脱出になるため拒否
+    if manifest_path.is_absolute() || manifest_path.has_root() {
         return None;
     }
 
-    Some(canonical_full_path)
+    // ".." コンポーネントによるパストラバーサルを防止
+    if manifest_path.components().any(|c| c == std::path::Component::ParentDir) {
+        return None;
+    }
+
+    let joined_path = manifest_dir.join(manifest_path);
+    tracing::trace!(target:"mcv::mcv-core::PluginManager", "joined_path = {:?}", joined_path);
+
+    Some(joined_path)
 }
     /// zip化されたプラグインのpathを取得する
     fn get_zip_dll_plugin_path(_entry: &DirEntry) -> Option<PathBuf> {

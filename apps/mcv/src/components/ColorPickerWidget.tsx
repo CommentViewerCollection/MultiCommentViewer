@@ -1,17 +1,33 @@
 import { WidgetProps } from '@rjsf/utils'
+import { useRef } from 'react'
 
 export function ColorPickerWidget(props: WidgetProps) {
   const { value, onChange, disabled } = props
+  const colorInputRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className="flex gap-2 items-center">
-      <input
-        type="color"
-        value={value || '#000000'}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-12 h-10 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={disabled}
-      />
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => colorInputRef.current?.click()}
+          disabled={disabled}
+          className="relative w-12 h-10 rounded border-2 border-gray-500 hover:border-blue-400 hover:scale-105 transition-all shadow-sm hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+          style={{ backgroundColor: value || '#000000' }}
+          title="クリックして色を変更"
+        >
+          <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
+          <span className="absolute bottom-0.5 right-0.5 text-white text-[10px] opacity-50 group-hover:opacity-100 drop-shadow transition-opacity">✏</span>
+        </button>
+        <input
+          ref={colorInputRef}
+          type="color"
+          value={value || '#000000'}
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none"
+          disabled={disabled}
+        />
+      </div>
       <input
         type="text"
         value={value || '#000000'}

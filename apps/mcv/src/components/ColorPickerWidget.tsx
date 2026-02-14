@@ -17,7 +17,11 @@ export function ColorPickerWidget(props: WidgetProps) {
           title="クリックして色を変更"
         >
           <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
-          <span className="absolute bottom-0.5 right-0.5 text-white text-[10px] opacity-50 group-hover:opacity-100 drop-shadow transition-opacity">✏</span>
+          <span className="absolute bottom-0.5 right-0.5 opacity-50 group-hover:opacity-100 drop-shadow transition-opacity">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1,1 L1,7.5 L3.2,5.8 L4.8,9 L6,8.4 L4.4,5.2 L7,5.2 Z" />
+            </svg>
+          </span>
         </button>
         <input
           ref={colorInputRef}

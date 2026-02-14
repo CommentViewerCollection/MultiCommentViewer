@@ -146,7 +146,6 @@ function App() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
   const [coreSettings, setCoreSettings] = useState<any>(null)
 
   // 新規: Ref を作成
@@ -832,10 +831,7 @@ function App() {
                   ? 'text-blue-400 border-b-2 border-blue-400'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
-              onClick={() => {
-                setActiveTab('settings')
-                setShowSettings(true)
-              }}
+              onClick={() => setActiveTab('settings')}
             >
               設定
             </button>
@@ -910,6 +906,14 @@ function App() {
 
           {/* ログタブ */}
           {activeTab === 'logs' && <LogViewer />}
+
+          {/* 設定タブ */}
+          {activeTab === 'settings' && (
+            <SettingsScreen onClose={() => {
+              setActiveTab('comments')
+              loadCoreSettings()
+            }} />
+          )}
         </div>
       </div>
 
@@ -952,14 +956,6 @@ function App() {
         </div>
       )}
 
-      {/* 設定画面 */}
-      {showSettings && (
-        <SettingsScreen onClose={() => {
-          setShowSettings(false)
-          setActiveTab('comments')
-          loadCoreSettings()  // 設定変更を反映
-        }} />
-      )}
     </div>
   )
 }

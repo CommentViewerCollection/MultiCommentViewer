@@ -2,8 +2,22 @@ import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import Form from '@rjsf/core'
 import validator from '@rjsf/validator-ajv8'
-import { RJSFSchema } from '@rjsf/utils'
+import { RJSFSchema, ObjectFieldTemplateProps } from '@rjsf/utils'
 import { ColorPickerWidget } from './ColorPickerWidget'
+
+// 配信サイト毎の色設定をカード形式で表示するテンプレート
+const SiteColorTemplate = ({ title, properties }: ObjectFieldTemplateProps) => {
+  return (
+    <div className="site-color-item">
+      <div className="site-color-item-title">{title}</div>
+      <div className="site-color-item-fields">
+        {properties.map(prop => (
+          <div key={prop.name}>{prop.content}</div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 interface SettingsTab {
   id: string
@@ -135,6 +149,28 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     .rjsf textarea[readonly] {
       cursor: not-allowed;
       opacity: 0.6;
+    }
+
+    /* 配信サイト毎の色設定 - サイトカード */
+    .rjsf .site-color-item {
+      border: 1px solid #4b5563;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      background-color: rgba(55, 65, 81, 0.3);
+    }
+
+    .rjsf .site-color-item-title {
+      color: #93c5fd;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.375rem;
+      border-bottom: 1px solid #374151;
+    }
+
+    .rjsf .site-color-item-fields {
+      padding-left: 0.75rem;
     }
   `
 
@@ -309,6 +345,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     if (siteColors && typeof siteColors === 'object') {
       Object.keys(siteColors).forEach((siteName) => {
         baseUiSchema.site_colors[siteName] = {
+          'ui:ObjectFieldTemplate': SiteColorTemplate,
           bgColor: {
             'ui:widget': 'ColorPickerWidget'
           },
@@ -361,90 +398,84 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="flex-1 flex flex-col overflow-hidden">
       <style>{customStyles}</style>
-      <div className="bg-gray-800 rounded-lg w-[800px] h-[600px] flex flex-col border border-gray-700">
-        {/* ヘッダー */}
-        <div className="px-6 py-4 border-b border-gray-700">
-          <h2 className="text-xl font-bold">設定</h2>
-        </div>
 
-        {/* タブヘッダー */}
-        <div className="flex border-b border-gray-700 px-6">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`px-4 py-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-              onClick={() => setActiveTab(tab.id)}
+      {/* タブヘッダー */}
+      <div className="flex border-b border-gray-700 px-6 bg-gray-800">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            className={`px-4 py-2 transition-colors ${
+              activeTab === tab.id
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.name}
+          </button>
+        ))}
+      </div>
+
+      {/* フォームエリア */}
+      <div className="flex-1 overflow-y-auto px-6 py-4">
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-gray-400">読み込み中...</div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-900 bg-opacity-50 border border-red-700 rounded p-4 mb-4">
+            <div className="text-red-200">エラー: {error}</div>
+          </div>
+        )}
+
+        {!loading && !error && activeTabData && (
+          <div className="rjsf">
+            <Form
+              schema={getEffectiveSchema()}
+              formData={currentData[activeTab]}
+              validator={validator}
+              onChange={(e) => handleFormChange(activeTab, e.formData)}
+              uiSchema={activeTab === 'core' ? getCoreUiSchema() : {
+                'ui:submitButtonOptions': {
+                  norender: true,
+                },
+              }}
+              widgets={{
+                ColorPickerWidget: ColorPickerWidget
+              }}
             >
-              {tab.name}
-            </button>
-          ))}
-        </div>
+              <></>  {/* ボタンを非表示 */}
+            </Form>
+          </div>
+        )}
+      </div>
 
-        {/* フォームエリア */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {loading && (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-400">読み込み中...</div>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-900 bg-opacity-50 border border-red-700 rounded p-4 mb-4">
-              <div className="text-red-200">エラー: {error}</div>
-            </div>
-          )}
-
-          {!loading && !error && activeTabData && (
-            <div className="rjsf">
-              <Form
-                schema={getEffectiveSchema()}
-                formData={currentData[activeTab]}
-                validator={validator}
-                onChange={(e) => handleFormChange(activeTab, e.formData)}
-                uiSchema={activeTab === 'core' ? getCoreUiSchema() : {
-                  'ui:submitButtonOptions': {
-                    norender: true,
-                  },
-                }}
-                widgets={{
-                  ColorPickerWidget: ColorPickerWidget
-                }}
-              >
-                <></>  {/* ボタンを非表示 */}
-              </Form>
-            </div>
-          )}
-        </div>
-
-        {/* フッター（ボタン） */}
-        <div className="px-6 py-4 border-t border-gray-700 flex justify-end gap-2">
-          <button
-            onClick={handleOk}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-            disabled={loading}
-          >
-            OK
-          </button>
-          <button
-            onClick={handleApply}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-            disabled={loading}
-          >
-            適用
-          </button>
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-          >
-            キャンセル
-          </button>
-        </div>
+      {/* フッター（ボタン） */}
+      <div className="px-6 py-4 border-t border-gray-700 flex justify-end gap-2 bg-gray-800">
+        <button
+          onClick={handleOk}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+          disabled={loading}
+        >
+          OK
+        </button>
+        <button
+          onClick={handleApply}
+          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+          disabled={loading}
+        >
+          適用
+        </button>
+        <button
+          onClick={handleCancel}
+          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+        >
+          キャンセル
+        </button>
       </div>
     </div>
   )

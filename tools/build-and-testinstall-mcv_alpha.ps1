@@ -59,6 +59,17 @@ $manifest = @{
 }
 $manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-youtube-live\manifest.json" -Encoding UTF8
 
+# plugin-chrome-cookie
+Set-Location $workspaceRoot/crates/plugin-chrome-cookie
+cargo build --release --features alpha
+New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-chrome-cookie -Force
+Copy-Item -Path $workspaceRoot/target/release/plugin_chrome_cookie.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-chrome-cookie\
+Copy-Item -Path $workspaceRoot/target/release/plugin_chrome_cookie.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-chrome-cookie\
+$manifest = @{
+    path = "plugin_chrome_cookie.dll"
+}
+$manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-chrome-cookie\manifest.json" -Encoding UTF8
+
 # plugin-sample-v3
 Set-Location $workspaceRoot/crates/plugin-sample-v3
 cargo build --release --features alpha

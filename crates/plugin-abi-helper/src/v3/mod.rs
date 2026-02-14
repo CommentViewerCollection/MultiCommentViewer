@@ -38,6 +38,7 @@
 
 use crate::abi::v3::{PLUGIN_ABI_VERSION, PluginV3};
 
+pub mod adapter;
 pub mod context;
 pub mod factory;
 pub mod host;
@@ -55,7 +56,8 @@ pub mod prelude {
     pub use crate::v3::context::PluginContext;
     pub use crate::v3::host::Host;
     pub use crate::v3::plugin_async::PluginImplV3Async;
-    pub use async_trait::async_trait;    
+    pub use async_trait::async_trait;
+    pub use crate::v3::adapter::PluginContextAdapter;
 }
 
 pub fn validate_plugin_v3(p: *const PluginV3) -> Result<(), AbiError> {

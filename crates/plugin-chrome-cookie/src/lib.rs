@@ -3,7 +3,6 @@
 //! Chrome のプロファイルを検出し、AddBrowser メッセージを送信するプラグイン。
 //! 各 Chrome プロファイルに対して 1 つの AddBrowser を送信する。
 
-mod adapter;
 mod profiles;
 
 use std::sync::Arc;
@@ -14,8 +13,6 @@ use mcv_messages::{
 };
 use plugin_abi_helper::v3::prelude::*;
 use uuid::Uuid;
-
-use adapter::PluginContextAdapter;
 
 #[derive(Default)]
 struct ChromeCookiePlugin {
@@ -72,7 +69,7 @@ impl ChromeCookiePlugin {
 impl PluginImplV3Async for ChromeCookiePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
         let logical_plugin_id = Uuid::new_v4();
-        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), logical_plugin_id));
+        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
         let result_init_tracing = mcv_plugin_telemetry::init_tracing(
             logical_plugin_id,
             adapter,

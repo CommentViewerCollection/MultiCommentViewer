@@ -5,20 +5,18 @@
 
 use mcv_messages::Message as McvMessage;
 use mcv_plugin_interface::{PluginError, PluginHost};
-use plugin_abi_helper::v3::prelude::*;
 use uuid::Uuid;
+use crate::v3::context::PluginContext;
 
 /// PluginContext → PluginHost adapter for mcv_tracing
-pub(crate) struct PluginContextAdapter {
+pub struct PluginContextAdapter {
     ctx: PluginContext,
-    _plugin_id: Uuid,
 }
 
 impl PluginContextAdapter {
-    pub(crate) fn new(ctx: PluginContext, plugin_id: Uuid) -> Self {
+    pub fn new(ctx: PluginContext) -> Self {
         Self {
             ctx,
-            _plugin_id: plugin_id,
         }
     }
 }

@@ -8,14 +8,12 @@
 //! - `message_handler`: メッセージハンドリングとペイロード解析
 //! - `video_id`: YouTube動画ID抽出ユーティリティ
 
-mod adapter;
 mod connection;
 mod message_handler;
 mod video_id;
 
 use std::{collections::HashMap, sync::Arc};
 
-use adapter::PluginContextAdapter;
 use connection::Connection;
 use message_handler::on_message_impl;
 use mcv_common::SiteId;
@@ -80,7 +78,7 @@ impl YouTubeLivePlugin {
 impl PluginImplV3Async for YouTubeLivePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
         let logical_plugin_id = Uuid::new_v4();
-        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), logical_plugin_id));
+        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
         let result_init_tracing = mcv_plugin_telemetry::init_tracing(
             logical_plugin_id,
             adapter,

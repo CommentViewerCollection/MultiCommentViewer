@@ -92,6 +92,8 @@ pub fn handle_plugin_hello(
         role: payload.role.clone(),
         api_version: payload.api_version.clone(),
         host_addr: physical_plugin_host_addr,
+        settings_schema: None,
+        settings_data: None,
     };
 
     // 論理プラグインとして登録

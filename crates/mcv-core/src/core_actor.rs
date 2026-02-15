@@ -23,6 +23,10 @@ pub struct LogicalPluginInfo {
     pub role: Vec<String>,
     pub api_version: String,
     pub host_addr: PluginHostAddr,
+    /// プラグインが登録した設定スキーマ（キャッシュ）
+    pub settings_schema: Option<serde_json::Value>,
+    /// プラグインの現在の設定値（キャッシュ）
+    pub settings_data: Option<serde_json::Value>,
 }
 
 /// 後方互換性のため
@@ -430,7 +434,15 @@ impl Handler<SendMessageToCore> for CoreActor {
                 );
             }
             MessageType::SettingsSchema => {
-                // プラグインからの応答をUIに転送
+                // プラグインから受信したスキーマをキャッシュして、UIにも転送
+                if let Ok(payload) = serde_json::from_value::<SettingsSchemaPayload>(message.payload.clone()) {
+                    if let Ok(plugin_uuid) = Uuid::parse_str(&payload.target) {
+                        let logical_id = LogicalPluginId::from_uuid(plugin_uuid);
+                        if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
+                            info.settings_schema = Some(payload.schema);
+                        }
+                    }
+                }
                 if let Some(ref callback) = self.event_callback {
                     callback(message.clone());
                 }
@@ -442,7 +454,15 @@ impl Handler<SendMessageToCore> for CoreActor {
                 );
             }
             MessageType::SettingsData => {
-                // プラグインからの応答をUIに転送
+                // プラグインから受信した設定データをキャッシュして、UIにも転送
+                if let Ok(payload) = serde_json::from_value::<SettingsDataPayload>(message.payload.clone()) {
+                    if let Ok(plugin_uuid) = Uuid::parse_str(&payload.target) {
+                        let logical_id = LogicalPluginId::from_uuid(plugin_uuid);
+                        if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
+                            info.settings_data = Some(payload.data);
+                        }
+                    }
+                }
                 if let Some(ref callback) = self.event_callback {
                     callback(message.clone());
                 }

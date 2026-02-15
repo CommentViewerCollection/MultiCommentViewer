@@ -28,7 +28,8 @@ members = [
     "crates/plugin-sample-v3",
     "crates/export-plugin-v3-macros",
     "examples/youtube-live-lib-getcomments",
-    "crates/plugin-chrome-cookie"
+    "crates/plugin-chrome-cookie",
+    "crates/plugin-bouyomi"
 ]
 resolver = "2"
 

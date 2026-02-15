@@ -359,11 +359,58 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     return baseUiSchema;
   };
 
-  // Core設定の動的スキーマ生成（条件付きフィールドのdisabled制御）
-  const getEffectiveSchema = () => {
-    if (!activeTabData || activeTab !== 'core') {
-      return activeTabData?.schema
+  // プラグイン設定用の動的uiSchema生成
+  // - is_enabled フィールドがあるプラグインでは最上段に配置し、
+  //   Core設定の "条件付きフィールド" と同じ見た目で disabled 制御する
+  const getPluginUiSchema = (tabId: string): any => {
+    const uiSchema: any = {
+      'ui:submitButtonOptions': { norender: true },
     }
+    const schema = tabs.find(t => t.id === tabId)?.schema
+    if (!schema?.properties?.is_enabled) return uiSchema
+
+    // スキーマの x-ui-order があればそれを使用、なければ is_enabled を先頭にする
+    const xUiOrder = (schema as any)['x-ui-order'] as string[] | undefined
+    uiSchema['ui:order'] = xUiOrder ?? ['is_enabled', '*']
+
+    const isEnabled = currentData[tabId]?.is_enabled ?? true
+
+    // is_enabled 以外の全フィールドに conditional-field スタイルを適用し、
+    // is_enabled=false のとき conditional-field-disabled で視覚的に無効化する
+    Object.keys(schema.properties as object).forEach(key => {
+      if (key === 'is_enabled') return
+      uiSchema[key] = {
+        'ui:classNames': `conditional-field${!isEnabled ? ' conditional-field-disabled' : ''}`,
+        'ui:readonly': !isEnabled,
+      }
+    })
+
+    return uiSchema
+  }
+
+  // Core・プラグイン共通の動的スキーマ生成（条件付きフィールドのreadOnly制御）
+  const getEffectiveSchema = () => {
+    if (!activeTabData) return undefined
+
+    // プラグインタブ: is_enabled が false のとき他フィールドを readOnly に
+    if (activeTab !== 'core') {
+      const pluginSchema = activeTabData.schema
+      if (!pluginSchema?.properties?.is_enabled) return pluginSchema
+
+      const schema = JSON.parse(JSON.stringify(pluginSchema))
+      const isEnabled = currentData[activeTab]?.is_enabled ?? true
+
+      Object.keys(schema.properties as object).forEach(key => {
+        if (key === 'is_enabled') return
+        if (!isEnabled) {
+          schema.properties[key].readOnly = true
+        } else {
+          delete schema.properties[key].readOnly
+        }
+      })
+      return schema
+    }
+
 
     const schema = JSON.parse(JSON.stringify(activeTabData.schema))
     const formData = currentData[activeTab]
@@ -439,11 +486,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
               formData={currentData[activeTab]}
               validator={validator}
               onChange={(e) => handleFormChange(activeTab, e.formData)}
-              uiSchema={activeTab === 'core' ? getCoreUiSchema() : {
-                'ui:submitButtonOptions': {
-                  norender: true,
-                },
-              }}
+              uiSchema={activeTab === 'core' ? getCoreUiSchema() : getPluginUiSchema(activeTab)}
               widgets={{
                 ColorPickerWidget: ColorPickerWidget
               }}

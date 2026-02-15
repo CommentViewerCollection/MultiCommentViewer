@@ -35,7 +35,21 @@ pub fn handle_get_settings_schema(
         let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
 
         if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
-            // プラグインにメッセージを転送
+            // キャッシュがあればそれを返す
+            if let Some(cached_schema) = &plugin_info.settings_schema {
+                let response_payload = SettingsSchemaPayload {
+                    target: payload.target.clone(),
+                    schema: cached_schema.clone(),
+                };
+                return Ok(Message::create_response(
+                    message,
+                    MessageType::SettingsSchema,
+                    serde_json::to_value(response_payload)
+                        .map_err(|e| format!("Failed to serialize response: {}", e))?,
+                ));
+            }
+
+            // キャッシュ未登録の場合はプラグインに転送して空を返す（暫定）
             let forward_message = Message::new(
                 MessageType::GetSettingsSchema,
                 message.src.clone(),
@@ -49,7 +63,6 @@ pub fn handle_get_settings_schema(
                 message: forward_message,
             });
 
-            // 非同期応答なので、ここではOKを返す（実際の応答はプラグインから送られる）
             Ok(Message::create_response(
                 message,
                 MessageType::SettingsSchema,
@@ -123,7 +136,21 @@ pub fn handle_get_settings(
         let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
 
         if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
-            // プラグインにメッセージを転送
+            // キャッシュがあればそれを返す
+            if let Some(cached_data) = &plugin_info.settings_data {
+                let response_payload = SettingsDataPayload {
+                    target: payload.target.clone(),
+                    data: cached_data.clone(),
+                };
+                return Ok(Message::create_response(
+                    message,
+                    MessageType::SettingsData,
+                    serde_json::to_value(response_payload)
+                        .map_err(|e| format!("Failed to serialize response: {}", e))?,
+                ));
+            }
+
+            // キャッシュ未登録の場合はプラグインに転送して空を返す（暫定）
             let forward_message = Message::new(
                 MessageType::GetSettings,
                 message.src.clone(),
@@ -137,7 +164,6 @@ pub fn handle_get_settings(
                 message: forward_message,
             });
 
-            // 非同期応答なので、ここではダミーを返す（実際の応答はプラグインから送られる）
             Ok(Message::create_response(
                 message,
                 MessageType::SettingsData,
@@ -192,7 +218,10 @@ pub fn handle_update_settings(
             .map_err(|e| format!("Invalid plugin_id format: {}", e))?;
         let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
 
-        if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+        if let Some(plugin_info) = core.logical_plugins.get_mut(&logical_plugin_id) {
+            // 設定データをキャッシュに保存（次回 get-settings でキャッシュから返す）
+            plugin_info.settings_data = Some(payload.data.clone());
+
             // プラグインにメッセージを転送
             let forward_message = Message::new(
                 MessageType::UpdateSettings,

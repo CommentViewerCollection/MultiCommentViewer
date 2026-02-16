@@ -36,7 +36,7 @@ pub(crate) async fn on_message_impl(
                 None => Err(mcv_plugin_telemetry::capture_context!(""))?,
             };
             // connectedを返信
-            let message = McvMessage::new(
+            let message = McvMessage::new_notification(
                 MessageType::Connected,
                 MessageSource::Plugin {
                     plugin_id: plugin.logical_plugin_id,

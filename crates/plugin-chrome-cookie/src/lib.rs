@@ -6,10 +6,11 @@
 mod profiles;
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use mcv_messages::{
-    AddBrowserPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload,
+    AddBrowserAckPayload, AddBrowserPayload, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, PluginHelloAckPayload, PluginHelloPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use uuid::Uuid;
@@ -30,8 +31,13 @@ impl ChromeCookiePlugin {
     }
 
     async fn send_message(ctx: PluginContext, message: McvMessage) {
-        let json = serde_json::to_vec(&message).unwrap();
-        ctx.send_message(&json).await;
+        if let Err(e) = ctx.send_notification(message).await {
+            tracing::error!(
+                target: "mcv::plugin-chrome-cookie",
+                error = %e,
+                "send_notification failed"
+            );
+        }
     }
 
     async fn send_plugin_hello(
@@ -39,14 +45,22 @@ impl ChromeCookiePlugin {
         ctx: PluginContext,
         payload: PluginHelloPayload,
         plugin_id: Uuid,
-    ) {
-        let message = McvMessage::new(
+    ) -> Result<PluginHelloAckPayload, RequestError> {
+        let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin { plugin_id },
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
         );
-        Self::send_message(ctx, message).await;
+        let response = ctx.send_request(message, Duration::from_secs(10)).await?;
+        if response.message_type != MessageType::PluginHelloAck {
+            return Err(RequestError::Internal(format!(
+                "unexpected response for PluginHello: {:?}",
+                response.message_type
+            )));
+        }
+        serde_json::from_value(response.payload)
+            .map_err(|e| RequestError::Internal(format!("invalid PluginHelloAck payload: {}", e)))
     }
 
     async fn send_add_browser(
@@ -54,14 +68,22 @@ impl ChromeCookiePlugin {
         ctx: PluginContext,
         payload: AddBrowserPayload,
         plugin_id: Uuid,
-    ) {
-        let message = McvMessage::new(
+    ) -> Result<AddBrowserAckPayload, RequestError> {
+        let message = McvMessage::new_request(
             MessageType::AddBrowser,
             MessageSource::Plugin { plugin_id },
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
         );
-        Self::send_message(ctx, message).await;
+        let response = ctx.send_request(message, Duration::from_secs(10)).await?;
+        if response.message_type != MessageType::AddBrowserAck {
+            return Err(RequestError::Internal(format!(
+                "unexpected response for AddBrowser: {:?}",
+                response.message_type
+            )));
+        }
+        serde_json::from_value(response.payload)
+            .map_err(|e| RequestError::Internal(format!("invalid AddBrowserAck payload: {}", e)))
     }
 }
 
@@ -95,8 +117,17 @@ impl PluginImplV3Async for ChromeCookiePlugin {
             role: vec!["browser-cookie".to_string()],
             api_version: "v3".to_string(),
         };
-        self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
-            .await;
+        if let Err(e) = self
+            .send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
+            .await
+        {
+            tracing::error!(
+                target: "mcv::plugin-chrome-cookie",
+                error = %e,
+                "PluginHello request failed"
+            );
+            return;
+        }
 
         // Chrome プロファイルを検出して AddBrowser を送信
         let profiles = profiles::get_chrome_profiles();
@@ -108,19 +139,29 @@ impl PluginImplV3Async for ChromeCookiePlugin {
 
         for profile in profiles {
             let display_name = format!("Chrome({})", profile.display_name);
+            let browser_id = profile.browser_id;
             tracing::info!(
                 target: "mcv::plugin-chrome-cookie",
-                browser_id = %profile.browser_id,
+                browser_id = %browser_id,
                 display_name = %display_name,
                 "Sending AddBrowser for Chrome profile"
             );
             let add_browser = AddBrowserPayload {
-                browser_id: profile.browser_id,
+                browser_id: browser_id.clone(),
                 browser_name: "Chrome".to_string(),
                 display_name,
             };
-            self.send_add_browser(ctx.clone(), add_browser, self.logical_plugin_id)
-                .await;
+            if let Err(e) = self
+                .send_add_browser(ctx.clone(), add_browser, self.logical_plugin_id)
+                .await
+            {
+                tracing::error!(
+                    target: "mcv::plugin-chrome-cookie",
+                    error = %e,
+                    browser_id = %browser_id,
+                    "AddBrowser request failed"
+                );
+            }
         }
     }
 

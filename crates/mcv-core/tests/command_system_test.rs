@@ -31,7 +31,7 @@ async fn test_send_comment_message_routing() {
     let connection_id = Uuid::new_v4();
 
     // send-commentメッセージを送信
-    let message = Message::new(
+    let message = Message::new_request(
         MessageType::SendComment,
         MessageSource::Core,
         MessageDestination::Plugin { plugin_id },

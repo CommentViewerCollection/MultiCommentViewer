@@ -50,7 +50,7 @@ pub fn handle_get_settings_schema(
             }
 
             // キャッシュ未登録の場合はプラグインに転送して空を返す（暫定）
-            let forward_message = Message::new(
+            let forward_message = Message::new_notification(
                 MessageType::GetSettingsSchema,
                 message.src.clone(),
                 MessageDestination::Plugin {
@@ -151,7 +151,7 @@ pub fn handle_get_settings(
             }
 
             // キャッシュ未登録の場合はプラグインに転送して空を返す（暫定）
-            let forward_message = Message::new(
+            let forward_message = Message::new_notification(
                 MessageType::GetSettings,
                 message.src.clone(),
                 MessageDestination::Plugin {
@@ -223,7 +223,7 @@ pub fn handle_update_settings(
             plugin_info.settings_data = Some(payload.data.clone());
 
             // プラグインにメッセージを転送
-            let forward_message = Message::new(
+            let forward_message = Message::new_notification(
                 MessageType::UpdateSettings,
                 message.src.clone(),
                 MessageDestination::Plugin {

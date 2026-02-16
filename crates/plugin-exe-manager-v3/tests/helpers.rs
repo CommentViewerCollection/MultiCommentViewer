@@ -41,7 +41,7 @@ impl MockExePlugin {
             api_version: "v2".to_string(),
         };
 
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::PluginHello,
             mcv_messages::MessageSource::Plugin {
                 plugin_id: self.logical_plugin_id, // srcにlogical_plugin_idを設定

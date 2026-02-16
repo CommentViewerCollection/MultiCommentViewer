@@ -253,7 +253,7 @@ mod tests {
             },
         );
 
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::Connected,
             MessageSource::Core,
             MessageDestination::Plugin { plugin_id },

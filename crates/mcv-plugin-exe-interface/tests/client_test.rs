@@ -29,7 +29,7 @@ async fn start_mock_server() -> String {
                                 match mcv_msg.message_type {
                                     MessageType::PluginHello => {
                                         // plugin-addedレスポンスを送信
-                                        let response = McvMessage::new(
+                                        let response = McvMessage::new_request(
                                             MessageType::PluginAdded,
                                             MessageSource::Core,
                                             MessageDestination::Broadcast,
@@ -46,7 +46,7 @@ async fn start_mock_server() -> String {
                                             MessageSource::Plugin { plugin_id } => plugin_id,
                                             _ => uuid::Uuid::nil(),
                                         };
-                                        let response = McvMessage::new(
+                                        let response = McvMessage::new_request(
                                             MessageType::PluginAdded,
                                             MessageSource::Core,
                                             MessageDestination::Plugin { plugin_id },

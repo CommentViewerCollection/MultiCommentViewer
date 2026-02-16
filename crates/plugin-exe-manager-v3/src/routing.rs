@@ -235,7 +235,7 @@ mod tests {
             },
         );
 
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::Connected,
             MessageSource::Core,
             MessageDestination::Plugin { plugin_id },
@@ -525,7 +525,7 @@ mod tests {
         let router = MessageRouter::new(clients);
 
         let plugin_id = Uuid::new_v4();
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::Connected,
             MessageSource::Core,
             MessageDestination::Plugin { plugin_id },
@@ -556,7 +556,7 @@ mod tests {
         // チャネルをクローズ
         drop(rx);
 
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::Connected,
             MessageSource::Core,
             MessageDestination::Plugin { plugin_id },

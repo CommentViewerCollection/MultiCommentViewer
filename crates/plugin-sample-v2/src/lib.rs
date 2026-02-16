@@ -33,7 +33,7 @@ impl Plugin for SamplePlugin {
             api_version: "v2".into(),
         };
 
-        let msg = McvMessage::new(
+        let msg = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
                 plugin_id: self.plugin_id,

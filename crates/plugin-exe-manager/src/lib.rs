@@ -147,7 +147,7 @@ impl Plugin for ExePluginManager {
             api_version: "v2".to_string(),
         };
 
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
                 plugin_id: self.plugin_id,

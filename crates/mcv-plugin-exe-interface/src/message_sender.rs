@@ -21,7 +21,7 @@ pub(crate) fn build_plugin_hello_message(
         api_version: "v2".to_string(),
     };
 
-    Ok(McvMessage::new(
+    Ok(McvMessage::new_request(
         MessageType::PluginHello,
         MessageSource::Plugin { plugin_id },
         MessageDestination::Core,
@@ -34,7 +34,7 @@ pub(crate) fn build_plugin_hello_message(
 /// # Arguments
 /// * `plugin_id` - プラグインID
 pub(crate) fn build_get_plugins_message(plugin_id: Uuid) -> McvMessage {
-    McvMessage::new(
+    McvMessage::new_request(
         MessageType::GetPlugins,
         MessageSource::Plugin { plugin_id },
         MessageDestination::Core,

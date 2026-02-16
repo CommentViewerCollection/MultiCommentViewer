@@ -34,6 +34,14 @@ pub enum RequestError {
     ResponseChannelClosed(Uuid),
     #[error("internal error: {0}")]
     Internal(String),
+    #[error("request message must have request_id")]
+    InvalidRequestMessage,
+}
+
+#[derive(Debug, Error)]
+pub enum SendError {
+    #[error("failed to serialize message: {0}")]
+    Serialize(#[from] serde_json::Error),
 }
 
 // PluginContextInnerはスレッド間で安全に共有できる
@@ -75,8 +83,8 @@ impl PluginContext {
     {
         self.inner.runtime.spawn(fut);
     }
-    /// Core へメッセージ送信（非同期）
-    pub async fn send_message(&self, bytes: &[u8]) {
+    /// Host へバイト列を送信（内部用）
+    pub(crate) async fn send_message(&self, bytes: &[u8]) {
         // hostを取得してから呼び出し
         let host = self.host();
         host.send_message(bytes);
@@ -88,12 +96,22 @@ impl PluginContext {
         host.send_message(bytes);
     }
 
-    pub async fn send_request_and_wait(
+    /// fire-and-forget通知を送信する
+    pub async fn send_notification(&self, message: McvMessage) -> Result<(), SendError> {
+        let bytes = serde_json::to_vec(&message)?;
+        self.send_message(&bytes).await;
+        Ok(())
+    }
+
+    pub async fn send_request(
         &self,
         mut message: McvMessage,
         timeout: Duration,
     ) -> Result<McvMessage, RequestError> {
-        let request_id = message.request_id.unwrap_or_else(Uuid::new_v4);
+        let request_id = match message.request_id {
+            Some(id) => id,
+            None => return Err(RequestError::InvalidRequestMessage),
+        };
         message.request_id = Some(request_id);
 
         let (tx, rx) = oneshot::channel::<McvMessage>();

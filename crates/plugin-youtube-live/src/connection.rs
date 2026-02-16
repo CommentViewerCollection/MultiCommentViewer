@@ -175,7 +175,7 @@ impl Connection {
                             connection_id,
                             comment,
                         };
-                        let message = McvMessage::new(
+                        let message = McvMessage::new_notification(
                             MessageType::CommentReceived,
                             MessageSource::Plugin {
                                 plugin_id: logical_plugin_id,
@@ -234,7 +234,7 @@ impl Connection {
                                         connection_id,
                                         comment,
                                     };
-                                    let message = McvMessage::new(
+                                    let message = McvMessage::new_notification(
                                         MessageType::CommentReceived,
                                         MessageSource::Plugin {
                                             plugin_id: logical_plugin_id,
@@ -293,7 +293,7 @@ impl Connection {
 
             // ループを抜けた = 接続終了
             // CoreにDisconnectedメッセージを送信
-            let message = McvMessage::new(
+            let message = McvMessage::new_notification(
                 MessageType::Disconnected,
                 MessageSource::Plugin {
                     plugin_id: logical_plugin_id,

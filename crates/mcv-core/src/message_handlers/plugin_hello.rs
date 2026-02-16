@@ -16,18 +16,11 @@ pub fn handle_plugin_hello(
     physical_plugin_id: PhysicalPluginId,
     message: &McvMessage,
     _ctx: &mut Context<CoreActor>,
-) {
+) -> Result<(), String> {
     let payload: PluginHelloPayload = match serde_json::from_value(message.payload.clone()) {
         Ok(p) => p,
         Err(e) => {
-            tracing::error!(
-                target: "mcv::core::CoreActor",
-                error = %e,
-                physical_plugin_id = %physical_plugin_id,
-                mcv_message = ?message,
-                "Failed to parse plugin-hello payload"
-            );
-            return;
+            return Err(format!("Failed to parse plugin-hello payload: {}", e));
         }
     };
 
@@ -45,7 +38,7 @@ pub fn handle_plugin_hello(
         // 既に登録済みの場合でも、plugin-addedをブロードキャスト
         // ユニキャストは不要（送信元も含めて全員がブロードキャストで受信する）
         if let Some(plugin_info) = actor.logical_plugins.get(&logical_plugin_id) {
-            let response = McvMessage::new(
+            let response = McvMessage::new_notification(
                 MessageType::PluginAdded,
                 MessageSource::Core,
                 MessageDestination::Broadcast,
@@ -61,7 +54,7 @@ pub fn handle_plugin_hello(
             // 全論理プラグインにブロードキャスト
             broadcast_to_all_logical_plugins(actor, response);
         }
-        return;
+        return Ok(());
     }
 
     // 物理プラグインのPluginHostActorを取得
@@ -76,12 +69,10 @@ pub fn handle_plugin_hello(
             );
             addr.clone()
         } else {
-            tracing::error!(
-                target: "mcv::core::CoreActor",
-                physical_plugin_id = %physical_plugin_id,
-                "Physical plugin host not found"
-            );
-            return;
+            return Err(format!(
+                "Physical plugin host not found: {}",
+                physical_plugin_id
+            ));
         };
 
     // LogicalPluginInfoを作成
@@ -110,7 +101,7 @@ pub fn handle_plugin_hello(
     );
 
     // plugin-addedを全論理プラグインにブロードキャスト
-    let response = McvMessage::new(
+    let response = McvMessage::new_notification(
         MessageType::PluginAdded,
         MessageSource::Core,
         MessageDestination::Broadcast,
@@ -135,6 +126,7 @@ pub fn handle_plugin_hello(
 
     // そのプラグインに関連する全接続のConnectionAddedをユニキャスト
     send_connection_added_for_plugin(actor, logical_plugin_id);
+    Ok(())
 }
 
 /// プラグインに関連する全接続のConnectionAddedをユニキャスト
@@ -174,7 +166,7 @@ fn send_connection_added_for_plugin(actor: &CoreActor, logical_plugin_id: Logica
 
     // 各接続に対してConnectionAddedをユニキャスト
     for conn in related_connections {
-        let connection_added_msg = McvMessage::new(
+        let connection_added_msg = McvMessage::new_notification(
             MessageType::ConnectionAdded,
             MessageSource::Core,
             MessageDestination::Plugin {
@@ -246,7 +238,7 @@ pub fn handle_get_plugins(
 
     // 全論理プラグインの情報をplugin-addedメッセージとして送信
     for (logical_plugin_id, logical_plugin_info) in &actor.logical_plugins {
-        let plugin_added_message = McvMessage::new(
+        let plugin_added_message = McvMessage::new_notification(
             MessageType::PluginAdded,
             MessageSource::Core,
             MessageDestination::Plugin {

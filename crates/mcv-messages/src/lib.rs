@@ -121,6 +121,7 @@ impl MessageDestination {
 pub enum MessageType {
     // Plugin関連
     PluginHello,
+    PluginHelloAck,
     PluginAdded,
     PluginRemoved,
     PluginError,
@@ -154,7 +155,9 @@ pub enum MessageType {
 
     // Site/Browser管理関連
     AddSite,
+    AddSiteAck,
     AddBrowser,
+    AddBrowserAck,
     SetConnectionSite,
     DiscardConnectionSite,
     UpdateConnectionSettings,
@@ -178,6 +181,12 @@ pub struct PluginHelloPayload {
     pub plugin_id: Uuid,
     pub role: Vec<String>,
     pub api_version: String,
+}
+
+/// plugin-hello-ackのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginHelloAckPayload {
+    pub plugin_id: Uuid,
 }
 
 /// plugin-addedのpayload
@@ -371,12 +380,24 @@ pub struct AddSitePayload {
     pub options_schema: serde_json::Value,
 }
 
+/// add-site-ackのpayload (Core -> Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddSiteAckPayload {
+    pub site_id: SiteId,
+}
+
 /// add-browserのpayload (Plugin → Core)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddBrowserPayload {
     pub browser_id: BrowserId,
     pub browser_name: String,
     pub display_name: String,
+}
+
+/// add-browser-ackのpayload (Core -> Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddBrowserAckPayload {
+    pub browser_id: BrowserId,
 }
 
 /// set-connection-siteのpayload (Core → Plugin)
@@ -440,8 +461,8 @@ pub struct UpdateSettingsPayload {
 // ============================================================================
 
 impl Message {
-    /// 新しいメッセージを作成
-    pub fn new(
+    /// request_idありのメッセージを作成（request用）
+    pub fn new_request(
         message_type: MessageType,
         src: MessageSource,
         dst: MessageDestination,
@@ -498,7 +519,7 @@ mod tests {
     #[test]
     fn test_message_serialization() {
         let plugin_id = Uuid::new_v4();
-        let message = Message::new(
+        let message = Message::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin { plugin_id },
             MessageDestination::Core,
@@ -564,7 +585,7 @@ mod tests {
         let plugin_id = Uuid::new_v4();
         let connection_id = Uuid::new_v4();
 
-        let message = Message::new(
+        let message = Message::new_request(
             MessageType::SendComment,
             MessageSource::Core,
             MessageDestination::Plugin { plugin_id },
@@ -633,7 +654,7 @@ mod tests {
     #[test]
     fn test_message_serialization_new_format() {
         let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
-        let message = Message::new(
+        let message = Message::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin { plugin_id },
             MessageDestination::Core,

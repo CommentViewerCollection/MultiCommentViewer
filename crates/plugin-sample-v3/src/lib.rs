@@ -6,6 +6,7 @@ use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
+use std::time::Duration;
 use uuid::Uuid;
 #[derive(Default)]
 struct SamplePlugin {
@@ -26,7 +27,7 @@ impl PluginImplV3Async for SamplePlugin {
             role: vec![],
             api_version: "v3".to_string(),
         };
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
                 plugin_id: self.logical_plugin_id,
@@ -34,13 +35,12 @@ impl PluginImplV3Async for SamplePlugin {
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),
         );
-        let json = serde_json::to_vec(&message).unwrap();
-        ctx.send_message(&json).await;
+        let _ = ctx.send_request(message, Duration::from_secs(10)).await;
 
         tracing::info!("plugin-hello sent");
     }
 
-    async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {
+    async fn on_message(&mut self, _ctx: PluginContext, msg: &[u8]) {
         self.message_count += 1;
 
         // メッセージをパース
@@ -61,7 +61,7 @@ impl PluginImplV3Async for SamplePlugin {
         }
     }
 
-    async fn on_shutdown(&mut self, ctx: PluginContext) {
+    async fn on_shutdown(&mut self, _ctx: PluginContext) {
         tracing::info!(
             "SamplePlugin shutting down, processed {} messages",
             self.message_count

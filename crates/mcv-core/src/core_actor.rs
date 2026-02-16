@@ -193,7 +193,7 @@ impl CoreActor {
                 if old_pid != site_info.plugin_id {
                     let old_logical_plugin_id = LogicalPluginId::from_uuid(old_pid);
                     if let Some(old_plugin) = plugins.get(&old_logical_plugin_id) {
-                        let discard_msg = McvMessage::new(
+                        let discard_msg = McvMessage::new_notification(
                             MessageType::DiscardConnectionSite,
                             MessageSource::Core,
                             MessageDestination::Plugin { plugin_id: old_pid },
@@ -213,7 +213,7 @@ impl CoreActor {
             // 新しいプラグインにSetConnectionSiteを送信
             let new_logical_plugin_id = LogicalPluginId::from_uuid(site_info.plugin_id);
             if let Some(new_plugin) = plugins.get(&new_logical_plugin_id) {
-                let set_msg = McvMessage::new(
+                let set_msg = McvMessage::new_notification(
                     MessageType::SetConnectionSite,
                     MessageSource::Core,
                     MessageDestination::Plugin {
@@ -369,12 +369,7 @@ fn handle_core_request_message(
     ctx: &mut Context<CoreActor>,
     response_mode: bool,
 ) -> Result<McvMessage, String> {
-    // PluginHello をここで扱わない理由:
-    // 1. PluginHello は「問い合わせ」ではなく「登録イベント」として設計されているため
-    //    PluginHello は Core への初期登録通知で、従来は fire-and-forget（通知）で処理する前提です。なので request/response 用の handle_core_request_message に入っていません。
-    // 2. PluginHello 処理には physical_plugin_id が必要だが、request ハンドラのシグネチャに無い
-    //    実装を見ると handle_plugin_hello(...) は physical_plugin_id を受け取って論理プラグイン登録に使っています。
-    //    一方 handle_core_request_message(...) は message だけを受ける設計で physical_plugin_id を渡せないため、そのままでは PluginHello を扱えません。
+    // UI向けのrequestハンドラ。Plugin起点requestはhandle_plugin_request_message()で扱う。
     match message.message_type {
         MessageType::AddConnection => {
             message_handlers::connection::handle_add_connection(core, message, ctx);
@@ -455,18 +450,108 @@ fn handle_core_request_message(
     }
 }
 
-fn send_response_to_plugin(core: &CoreActor, plugin_id: Uuid, response: McvMessage) {
+fn is_supported_plugin_request_type(message_type: &MessageType) -> bool {
+    matches!(
+        message_type,
+        MessageType::PluginHello
+            | MessageType::AddSite
+            | MessageType::AddBrowser
+            | MessageType::GetPlugins
+    )
+}
+
+fn handle_plugin_request_message(
+    core: &mut CoreActor,
+    physical_plugin_id: PhysicalPluginId,
+    message: &McvMessage,
+    ctx: &mut Context<CoreActor>,
+) -> Result<McvMessage, String> {
+    match message.message_type {
+        MessageType::PluginHello => {
+            message_handlers::plugin_hello::handle_plugin_hello(core, physical_plugin_id, message, ctx)?;
+            let payload: PluginHelloPayload =
+                serde_json::from_value(message.payload.clone()).map_err(|e| {
+                    format!("Failed to parse PluginHello payload for ack: {}", e)
+                })?;
+            Ok(message.create_response(
+                MessageType::PluginHelloAck,
+                serde_json::to_value(PluginHelloAckPayload {
+                    plugin_id: payload.plugin_id,
+                })
+                .unwrap(),
+            ))
+        }
+        MessageType::AddSite => {
+            let payload: AddSitePayload =
+                serde_json::from_value(message.payload.clone()).map_err(|e| {
+                    format!("Failed to parse AddSite payload for ack: {}", e)
+                })?;
+            message_handlers::site_browser::handle_add_site(core, message, ctx);
+            Ok(message.create_response(
+                MessageType::AddSiteAck,
+                serde_json::to_value(AddSiteAckPayload {
+                    site_id: payload.site_id,
+                })
+                .unwrap(),
+            ))
+        }
+        MessageType::AddBrowser => {
+            let payload: AddBrowserPayload =
+                serde_json::from_value(message.payload.clone()).map_err(|e| {
+                    format!("Failed to parse AddBrowser payload for ack: {}", e)
+                })?;
+            message_handlers::site_browser::handle_add_browser(core, message, ctx);
+            Ok(message.create_response(
+                MessageType::AddBrowserAck,
+                serde_json::to_value(AddBrowserAckPayload {
+                    browser_id: payload.browser_id,
+                })
+                .unwrap(),
+            ))
+        }
+        MessageType::GetPlugins => {
+            let plugins = core
+                .logical_plugins
+                .values()
+                .map(|info| PluginAddedPayload {
+                    name: info.name.clone(),
+                    plugin_id: info.logical_plugin_id.inner(),
+                    role: info.role.clone(),
+                    api_version: info.api_version.clone(),
+                })
+                .collect::<Vec<_>>();
+            Ok(message.create_response(
+                MessageType::GetPlugins,
+                serde_json::to_value(GetPluginsPayload { plugins }).unwrap(),
+            ))
+        }
+        _ => Err(format!(
+            "Unsupported plugin request message type: {:?}",
+            message.message_type
+        )),
+    }
+}
+
+fn send_response_to_plugin(
+    core: &CoreActor,
+    plugin_id: Uuid,
+    physical_plugin_id: PhysicalPluginId,
+    response: McvMessage,
+) {
     let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
     if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
         plugin_info
             .host_addr
             .do_send(crate::plugin_host_actor::SendMessageToPlugin { message: response });
+    } else if let Some(host_addr) = core.physical_plugin_hosts.get(&physical_plugin_id) {
+        host_addr.do_send(crate::plugin_host_actor::SendMessageToPlugin { message: response });
     } else {
         tracing::error!(
             target: "mcv::core::CoreActor",
             plugin_id = %plugin_id,
+            physical_plugin_id = %physical_plugin_id,
             response = ?response,
-            "Failed to route response to plugin (logical plugin not found)"
+            "Failed to route response to plugin (logical and physical plugin not found)"
         );
     }
 }
@@ -510,7 +595,14 @@ impl Handler<SendMessageToCore> for CoreActor {
                 }
             };
 
-            let response = match handle_core_request_message(self, &message, ctx, true) {
+            let response = match if is_supported_plugin_request_type(&message.message_type) {
+                handle_plugin_request_message(self, physical_plugin_id, &message, ctx)
+            } else {
+                Err(format!(
+                    "Unsupported plugin request message type: {:?}",
+                    message.message_type
+                ))
+            } {
                 Ok(resp) => resp,
                 Err(err) => {
                     // 待機側をハングさせないため、失敗時も必ず同一request_idで応答する。
@@ -521,13 +613,22 @@ impl Handler<SendMessageToCore> for CoreActor {
                 }
             };
 
-            send_response_to_plugin(self, requester, response);
+            send_response_to_plugin(self, requester, physical_plugin_id, response);
             return;
         }
 
         match message.message_type {
             MessageType::PluginHello => {
-                message_handlers::plugin_hello::handle_plugin_hello(self, physical_plugin_id, &message, ctx)
+                if let Err(err) =
+                    message_handlers::plugin_hello::handle_plugin_hello(self, physical_plugin_id, &message, ctx)
+                {
+                    tracing::error!(
+                        target: "mcv::core::CoreActor",
+                        physical_plugin_id = %physical_plugin_id,
+                        error = %err,
+                        "Failed to handle plugin-hello"
+                    );
+                }
             }
             MessageType::GetPlugins => {
                 message_handlers::plugin_hello::handle_get_plugins(self, physical_plugin_id, &message, ctx)
@@ -806,7 +907,7 @@ impl Handler<SetConnectionSite> for CoreActor {
     type Result = ResponseActFuture<Self, Result<(), String>>;
 
     fn handle(&mut self, msg: SetConnectionSite, ctx: &mut Context<Self>) -> Self::Result {
-        let message = McvMessage::new(
+        let message = McvMessage::new_notification(
             MessageType::SetConnectionSite,
             MessageSource::Core,
             MessageDestination::Core,
@@ -835,7 +936,7 @@ impl Handler<UpdateConnectionSettings> for CoreActor {
     type Result = ResponseActFuture<Self, Result<(), String>>;
 
     fn handle(&mut self, msg: UpdateConnectionSettings, ctx: &mut Context<Self>) -> Self::Result {
-        let message = McvMessage::new(
+        let message = McvMessage::new_notification(
             MessageType::UpdateConnectionSettings,
             MessageSource::Core,
             MessageDestination::Core,

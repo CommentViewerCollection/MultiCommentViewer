@@ -741,7 +741,7 @@ impl Plugin for DummyPlugin {
         tracing::info!("Dummy plugin loaded");
 
         // plugin-helloを送信
-        let message = Message::new(
+        let message = Message::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
                 plugin_id: self.plugin_id,

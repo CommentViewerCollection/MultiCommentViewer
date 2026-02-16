@@ -11,6 +11,7 @@ use plugin_abi_helper::v3::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use std::time::Duration;
 use uuid::Uuid;
 
 use process_manager::ProcessManager;
@@ -31,10 +32,10 @@ impl PluginContextAdapter {
 #[async_trait::async_trait]
 impl PluginHost for PluginContextAdapter {
     async fn send_message(&self, message: McvMessage) -> Result<(), PluginError> {
-        let json = serde_json::to_vec(&message)
-            .map_err(|e| PluginError::MessageHandlingFailed(e.to_string()))?;
-        self.ctx.send_message(&json).await;
-        Ok(())
+        self.ctx
+            .send_notification(message)
+            .await
+            .map_err(|e| PluginError::MessageHandlingFailed(e.to_string()))
     }
 }
 
@@ -162,7 +163,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
             api_version: "v3".to_string(),
         };
 
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
                 plugin_id: self.logical_plugin_id,
@@ -171,8 +172,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
             serde_json::to_value(&hello_payload).unwrap(),
         );
 
-        let json = serde_json::to_vec(&message).unwrap();
-        ctx.send_message(&json).await;
+        let _ = ctx.send_request(message, Duration::from_secs(10)).await;
 
         // WebSocketサーバーのポート番号をログ出力
         if let Some(ws_server) = &self.websocket_server {

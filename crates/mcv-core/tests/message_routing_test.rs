@@ -33,7 +33,7 @@ async fn test_event_callback_routing() {
     let plugin_id = Uuid::new_v4();
 
     // comment-received メッセージを送信（UIへのイベント通知対象）
-    let comment_message = Message::new(
+    let comment_message = Message::new_request(
         MessageType::CommentReceived,
         MessageSource::Plugin { plugin_id },
         MessageDestination::Core,
@@ -92,7 +92,7 @@ async fn test_connected_event_routing() {
     let plugin_id = Uuid::new_v4();
 
     // connected メッセージを送信
-    let connected_message = Message::new(
+    let connected_message = Message::new_request(
         MessageType::Connected,
         MessageSource::Plugin { plugin_id },
         MessageDestination::Core,
@@ -137,7 +137,7 @@ async fn test_disconnected_event_routing() {
     let plugin_id = Uuid::new_v4();
 
     // disconnected メッセージを送信
-    let disconnected_message = Message::new(
+    let disconnected_message = Message::new_request(
         MessageType::Disconnected,
         MessageSource::Plugin { plugin_id },
         MessageDestination::Core,
@@ -224,7 +224,7 @@ async fn test_multiple_event_routing() {
     ];
 
     for (msg_type, payload) in messages_to_send {
-        let message = Message::new(
+        let message = Message::new_request(
             msg_type,
             MessageSource::Plugin { plugin_id },
             MessageDestination::Core,

@@ -144,7 +144,7 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
     );
 
     // connectメッセージを送信
-    let message = McvMessage::new(
+    let message = McvMessage::new_request(
         MessageType::Connect,
         MessageSource::Core,
         MessageDestination::Plugin { plugin_id },
@@ -187,7 +187,7 @@ async fn disconnect(
     let conn_id = Uuid::parse_str(&connection_id).map_err(|e| e.to_string())?;
 
     // disconnectメッセージを送信
-    let message = McvMessage::new(
+    let message = McvMessage::new_request(
         MessageType::Disconnect,
         MessageSource::Core,
         MessageDestination::Core,
@@ -324,7 +324,7 @@ async fn send_comment(
         .ok_or("Plugin not assigned to this connection")?;
 
     // send-commentメッセージを送信
-    let message = McvMessage::new(
+    let message = McvMessage::new_request(
         MessageType::SendComment,
         MessageSource::Core,
         MessageDestination::Plugin { plugin_id },
@@ -494,7 +494,7 @@ async fn get_settings_schema(
     target: String,
     state: State<'_, AppState>,
 ) -> Result<serde_json::Value, String> {
-    let message = McvMessage::new(
+    let message = McvMessage::new_request(
         MessageType::GetSettingsSchema,
         MessageSource::Core,
         MessageDestination::Core,
@@ -521,7 +521,7 @@ async fn get_settings(
     target: String,
     state: State<'_, AppState>,
 ) -> Result<serde_json::Value, String> {
-    let message = McvMessage::new(
+    let message = McvMessage::new_request(
         MessageType::GetSettings,
         MessageSource::Core,
         MessageDestination::Core,
@@ -549,7 +549,7 @@ async fn update_settings(
     data: serde_json::Value,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let message = McvMessage::new(
+    let message = McvMessage::new_request(
         MessageType::UpdateSettings,
         MessageSource::Core,
         MessageDestination::Core,

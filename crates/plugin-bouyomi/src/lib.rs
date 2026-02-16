@@ -10,6 +10,7 @@ use mcv_messages::{
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use uuid::Uuid;
@@ -296,7 +297,7 @@ impl PluginImplV3Async for BouyomiPlugin {
             role: vec!["comment-processor".to_string()],
             api_version: "v3".to_string(),
         };
-        let message = McvMessage::new(
+        let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
                 plugin_id: self.logical_plugin_id,
@@ -304,7 +305,7 @@ impl PluginImplV3Async for BouyomiPlugin {
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),
         );
-        ctx.send_message(&serde_json::to_vec(&message).unwrap()).await;
+        let _ = ctx.send_request(message, Duration::from_secs(10)).await;
 
         tracing::info!("plugin-hello 送信完了（role: comment-processor）");
 
@@ -322,7 +323,7 @@ impl PluginImplV3Async for BouyomiPlugin {
             })
             .unwrap(),
         );
-        ctx.send_message(&serde_json::to_vec(&schema_message).unwrap()).await;
+        let _ = ctx.send_notification(schema_message).await;
 
         // 初期設定データを Core にキャッシュ登録
         let data_message = McvMessage::new_notification(
@@ -335,7 +336,7 @@ impl PluginImplV3Async for BouyomiPlugin {
             })
             .unwrap(),
         );
-        ctx.send_message(&serde_json::to_vec(&data_message).unwrap()).await;
+        let _ = ctx.send_notification(data_message).await;
 
         tracing::info!("設定スキーマ・初期データをキャッシュ登録しました");
     }
@@ -403,7 +404,7 @@ impl PluginImplV3Async for BouyomiPlugin {
                         "schema": BouyomiSettings::schema()
                     }),
                 );
-                ctx.send_message(&serde_json::to_vec(&response).unwrap()).await;
+                let _ = ctx.send_notification(response).await;
             }
 
             "get-settings" => {
@@ -419,7 +420,7 @@ impl PluginImplV3Async for BouyomiPlugin {
                         "data": data
                     }),
                 );
-                ctx.send_message(&serde_json::to_vec(&response).unwrap()).await;
+                let _ = ctx.send_notification(response).await;
             }
 
             "update-settings" => {

@@ -1,13 +1,14 @@
-use anyhow::Result;
 use crate::utils::{get_string, send_graphql_query};
 use crate::{auth_token::AuthToken, client_id::ClientId};
+use anyhow::Result;
 
 async fn get_display_name(
     channel_login: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
 ) -> Result<String, anyhow::Error> {
-    let query =format!(r#"{{
+    let query = format!(
+        r#"{{
   "operationName": "GetDisplayName",
   "variables": {{
     "login": "{channel_login}"
@@ -18,16 +19,17 @@ async fn get_display_name(
       "sha256Hash": "ba351b3d3018c3779fcaa398507e41579ae6cf12ad123a04f090943c21dedb8a"
   }}
   }}
-}}"#);
+}}"#
+    );
 
     let json = send_graphql_query(&query, client_id, auth_token).await?;
-println!("{:#}", json);
+    println!("{:#}", json);
     let display_name = get_string(&json, &["data", "user"])?;
 
     Ok(display_name)
 }
 #[cfg(test)]
-mod tests { 
+mod tests {
     use super::*;
     #[tokio::test]
     async fn test_get_display_name() {

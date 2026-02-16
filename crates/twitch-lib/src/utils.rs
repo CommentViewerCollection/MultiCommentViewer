@@ -1,5 +1,5 @@
-use crate::client_id::ClientId;
 use crate::auth_token::AuthToken;
+use crate::client_id::ClientId;
 use anyhow::Result;
 
 pub async fn send_graphql_query(
@@ -36,7 +36,7 @@ pub fn get_value<'a>(
         .try_fold(value, |acc, key| acc.get(key))
         .ok_or_else(|| anyhow::anyhow!("Missing value"))
 }
-pub fn get_auth_token_from_env()->Option<String>{
+pub fn get_auth_token_from_env() -> Option<String> {
     dotenvy::dotenv().ok()?;
     std::env::var("AUTH_TOKEN").ok()
 }

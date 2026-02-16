@@ -81,3 +81,13 @@ $manifest = @{
     path = "plugin_sample_v3.dll"
 }
 $manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-sample-v3\manifest.json" -Encoding UTF8
+
+# plugin-twitch
+cargo build --release --features alpha --manifest-path "$workspaceRoot/crates/plugin-twitch/Cargo.toml"
+New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twitch -Force
+Copy-Item -Path $workspaceRoot/target/release/plugin_twitch.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twitch\
+Copy-Item -Path $workspaceRoot/target/release/plugin_twitch.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twitch\
+$manifest = @{
+    path = "plugin_twitch.dll"
+}
+$manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twitch\manifest.json" -Encoding UTF8

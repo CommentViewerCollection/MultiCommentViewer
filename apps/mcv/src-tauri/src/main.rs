@@ -785,7 +785,7 @@ fn main() {
             tracing::debug!(target: "mcv::main","core_addr set to PluginManager");
 
             // プラグインディレクトリを決定
-            let plugins_dir =get_plugin_dir();            
+            let plugins_dir = get_plugin_dir();
 
             tracing::info!(target: "mcv::main", plugins_dir = %plugins_dir.display(), "Loading DLL plugins from directory");
 

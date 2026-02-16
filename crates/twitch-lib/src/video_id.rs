@@ -1,7 +1,7 @@
-pub struct VideoId{
+pub struct VideoId {
     value: String,
 }
-impl  VideoId {
+impl VideoId {
     pub fn new(value: &str) -> Self {
         VideoId {
             value: value.to_string(),

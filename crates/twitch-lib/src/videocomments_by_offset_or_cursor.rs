@@ -114,10 +114,10 @@ async fn get_video_Comments_by_offset_or_cursor(
         "Authorization",
         format!("OAuth {token}", token = auth_token.value()),
     );
-    let res = if let Some(int)  = integrity {
-        let res = res.header("client-integrity",int.token());
+    let res = if let Some(int) = integrity {
+        let res = res.header("client-integrity", int.token());
         res
-    }else {
+    } else {
         res
     };
 

@@ -1,8 +1,8 @@
-use serde_json::Value;
-use anyhow::Result;
-use crate::client_id::ClientId;
 use crate::auth_token::AuthToken;
+use crate::client_id::ClientId;
 use crate::utils::{get_string, get_value, send_graphql_query};
+use anyhow::Result;
+use serde_json::Value;
 
 struct StreamMetadata {
     user_id: String,

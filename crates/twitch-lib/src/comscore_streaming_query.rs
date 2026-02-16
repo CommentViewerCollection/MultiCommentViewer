@@ -17,8 +17,8 @@ async fn get_comscore_streaming_query(
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
 ) -> Result<ComscoreStreamingQueryVideo> {
-  //本来のAPIでは生配信の情報も取れるけど、他のAPIでも取れるからここでは動画だけにする
-  //ちなみに生配信の情報を取るにはchannelに配信者のIDを入れてisLiveをtrueにする
+    //本来のAPIでは生配信の情報も取れるけど、他のAPIでも取れるからここでは動画だけにする
+    //ちなみに生配信の情報を取るにはchannelに配信者のIDを入れてisLiveをtrueにする
     let query = format!(
         r#"{{
   "operationName": "ComscoreStreamingQuery",

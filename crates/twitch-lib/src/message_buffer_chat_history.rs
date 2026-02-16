@@ -1,8 +1,8 @@
+use crate::auth_token::AuthToken;
+use crate::client_id::ClientId;
+use crate::utils::{get_string, get_value, send_graphql_query};
 use anyhow::Result;
 use serde_json::Value;
-use crate::client_id::ClientId;
-use crate::auth_token::AuthToken;
-use crate::utils::{get_string, get_value, send_graphql_query};
 
 #[derive(Debug)]
 struct RecentChatMessageFragment {

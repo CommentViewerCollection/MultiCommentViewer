@@ -23,3 +23,12 @@ tokio = { workspace = true }
 mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
 tracing = "0.1"
 plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
+rusqlite = { version = "0.30", features = ["bundled"] }
+base64 = "0.22"
+aes-gcm = "0.10"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_Security_Cryptography",
+] }

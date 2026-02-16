@@ -4,6 +4,7 @@
 //! プロファイル名は各 Preferences ではなく Local State の info_cache から取得する。
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use mcv_common::BrowserId;
 use uuid::Uuid;
@@ -14,6 +15,8 @@ pub(crate) struct ChromeProfile {
     pub display_name: String,
     /// 決定論的に生成された BrowserId
     pub browser_id: BrowserId,
+    /// プロファイルディレクトリ
+    pub profile_dir: PathBuf,
 }
 
 /// Chrome Cookie プラグイン固有の namespace UUID (UUID v5 の名前空間として使用)
@@ -145,6 +148,7 @@ pub(crate) fn get_chrome_profiles() -> Vec<ChromeProfile> {
         profiles.push(ChromeProfile {
             display_name,
             browser_id,
+            profile_dir: default_profile_dir,
         });
     }
 
@@ -188,6 +192,7 @@ pub(crate) fn get_chrome_profiles() -> Vec<ChromeProfile> {
         profiles.push(ChromeProfile {
             display_name,
             browser_id,
+            profile_dir: path,
         });
     }
 

@@ -173,8 +173,11 @@ impl Actor for PhysicalPluginHostActorV3 {
         if result != 0 {
             tracing::error!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                result = result,
-                "Plugin on_loaded returned error"
+                physical_plugin_id = %self.physical_plugin_id.inner(),
+                plugin_id = %self.plugin_id,
+                result_code = result,
+                phase = "on_loaded",
+                "Plugin runtime failure detected (possible panic)"
             );
             ctx.stop();
         }
@@ -192,10 +195,22 @@ impl Actor for PhysicalPluginHostActorV3 {
         // on_shutdown呼び出し
         let result = unsafe { (plugin.on_shutdown)(plugin) };
 
-        if result != 0 {
+        if result == -2 {
+            tracing::error!(
+                target: "mcv::core::PhysicalPluginHostActorV3",
+                physical_plugin_id = %self.physical_plugin_id.inner(),
+                plugin_id = %self.plugin_id,
+                result_code = result,
+                phase = "on_shutdown",
+                "Plugin runtime failure detected (possible panic)"
+            );
+        } else if result != 0 {
             tracing::warn!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                result = result,
+                physical_plugin_id = %self.physical_plugin_id.inner(),
+                plugin_id = %self.plugin_id,
+                result_code = result,
+                phase = "on_shutdown",
                 "Plugin on_shutdown returned error"
             );
         }
@@ -230,10 +245,13 @@ impl Handler<SendMessageToPlugin> for PhysicalPluginHostActorV3 {
         let result = unsafe { (plugin.on_message)(plugin, json.as_ptr(), json.len()) };
 
         if result != 0 {
-            tracing::warn!(
+            tracing::error!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                result = result,
-                "Plugin on_message returned error"
+                physical_plugin_id = %self.physical_plugin_id.inner(),
+                plugin_id = %self.plugin_id,
+                result_code = result,
+                phase = "on_message",
+                "Plugin runtime failure detected (possible panic)"
             );
         }
     }

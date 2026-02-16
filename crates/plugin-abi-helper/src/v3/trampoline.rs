@@ -1,6 +1,34 @@
 use crate::abi::v3::PluginV3;
 use crate::v3::factory::PluginState;
+use crate::v3::plugin_runtime::RuntimeSendError;
 use crate::v3::runtime_event::RuntimeEvent;
+
+fn map_runtime_send_result(
+    state: &PluginState,
+    result: Result<(), RuntimeSendError>,
+    phase: &str,
+) -> i32 {
+    match result {
+        Ok(()) => 0,
+        Err(RuntimeSendError::ChannelClosed) => {
+            tracing::error!(
+                target: "plugin_abi_helper::v3::trampoline",
+                phase = phase,
+                "plugin runtime channel is closed"
+            );
+            -1
+        }
+        Err(RuntimeSendError::Panicked) => {
+            tracing::error!(
+                target: "plugin_abi_helper::v3::trampoline",
+                phase = phase,
+                panic_summary = ?state.runtime.panic_summary(),
+                "plugin runtime already panicked"
+            );
+            -2
+        }
+    }
+}
 
 /// on_loaded trampoline
 ///
@@ -24,9 +52,7 @@ pub unsafe extern "C" fn on_loaded_trampoline(plugin: *mut PluginV3) -> i32 {
         state.context.attach_host(plugin.host, plugin.plugin_id);
 
         // Loadedイベントを送信
-        state.runtime.send(RuntimeEvent::Loaded);
-
-        0
+        map_runtime_send_result(state, state.runtime.send(RuntimeEvent::Loaded), "on_loaded")
     }
 }
 
@@ -52,9 +78,11 @@ pub unsafe extern "C" fn on_message_trampoline(
             }
         }
         // 互換維持: 解析不能/未解決メッセージは従来どおりon_messageへ渡す。
-        state.runtime.send(RuntimeEvent::Message(msg));
-
-        0
+        map_runtime_send_result(
+            state,
+            state.runtime.send(RuntimeEvent::Message(msg)),
+            "on_message",
+        )
     }
 }
 
@@ -68,8 +96,10 @@ pub unsafe extern "C" fn on_shutdown_trampoline(p: *mut PluginV3) -> i32 {
         let plugin = &mut *p;
         let state = &*(plugin.userdata as *mut PluginState);
 
-        state.runtime.send(RuntimeEvent::Shutdown);
-
-        0
+        map_runtime_send_result(
+            state,
+            state.runtime.send(RuntimeEvent::Shutdown),
+            "on_shutdown",
+        )
     }
 }

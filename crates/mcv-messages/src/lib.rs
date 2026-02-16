@@ -189,6 +189,12 @@ pub struct PluginAddedPayload {
     pub api_version: String,
 }
 
+/// get-plugins(response)のpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetPluginsPayload {
+    pub plugins: Vec<PluginAddedPayload>,
+}
+
 /// add-connectionのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddConnectionPayload {

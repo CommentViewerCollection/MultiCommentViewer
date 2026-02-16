@@ -369,6 +369,12 @@ fn handle_core_request_message(
     ctx: &mut Context<CoreActor>,
     response_mode: bool,
 ) -> Result<McvMessage, String> {
+    // PluginHello をここで扱わない理由:
+    // 1. PluginHello は「問い合わせ」ではなく「登録イベント」として設計されているため
+    //    PluginHello は Core への初期登録通知で、従来は fire-and-forget（通知）で処理する前提です。なので request/response 用の handle_core_request_message に入っていません。
+    // 2. PluginHello 処理には physical_plugin_id が必要だが、request ハンドラのシグネチャに無い
+    //    実装を見ると handle_plugin_hello(...) は physical_plugin_id を受け取って論理プラグイン登録に使っています。
+    //    一方 handle_core_request_message(...) は message だけを受ける設計で physical_plugin_id を渡せないため、そのままでは PluginHello を扱えません。
     match message.message_type {
         MessageType::AddConnection => {
             message_handlers::connection::handle_add_connection(core, message, ctx);
@@ -410,6 +416,23 @@ fn handle_core_request_message(
         MessageType::UpdateSettings => {
             return message_handlers::settings::handle_update_settings(core, message, ctx);
         }
+        MessageType::GetPlugins => {
+            let plugins = core
+                .logical_plugins
+                .values()
+                .map(|info| PluginAddedPayload {
+                    name: info.name.clone(),
+                    plugin_id: info.logical_plugin_id.inner(),
+                    role: info.role.clone(),
+                    api_version: info.api_version.clone(),
+                })
+                .collect::<Vec<_>>();
+
+            return Ok(message.create_response(
+                MessageType::GetPlugins,
+                serde_json::to_value(GetPluginsPayload { plugins }).unwrap(),
+            ));
+        }
         _ => {
             if response_mode {
                 return Err(format!(
@@ -439,9 +462,10 @@ fn send_response_to_plugin(core: &CoreActor, plugin_id: Uuid, response: McvMessa
             .host_addr
             .do_send(crate::plugin_host_actor::SendMessageToPlugin { message: response });
     } else {
-        tracing::warn!(
+        tracing::error!(
             target: "mcv::core::CoreActor",
             plugin_id = %plugin_id,
+            response = ?response,
             "Failed to route response to plugin (logical plugin not found)"
         );
     }

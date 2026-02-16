@@ -18,7 +18,7 @@ use connection::Connection;
 use message_handler::on_message_impl;
 use mcv_common::SiteId;
 use mcv_messages::{
-    AddSiteAckPayload, AddSitePayload, GetPluginsPayload, Message as McvMessage,
+    AddSiteAckPayload, AddSitePayload, Message as McvMessage,
     MessageDestination, MessageSource, MessageType, PluginHelloAckPayload, PluginHelloPayload,
 };
 use plugin_abi_helper::v3::prelude::*;

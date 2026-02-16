@@ -3,7 +3,7 @@
 //! 個々のYouTube Live配信への接続を管理し、
 //! ライブチャットメッセージを定期的に取得します。
 
-use mcv_messages::{Comment, CommentReceivedPayload, DisconnectedPayload, Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource, MessageType};
+use mcv_messages::{Comment, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload, Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource, MessageType};
 use plugin_abi_helper::v3::prelude::*;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
@@ -92,10 +92,17 @@ impl Connection {
         }
     }
 
-    pub(crate) fn connect(&mut self, ctx: PluginContext, logical_plugin_id: Uuid, url: &str) {
+    pub(crate) fn connect(
+        &mut self,
+        ctx: PluginContext,
+        logical_plugin_id: Uuid,
+        url: &str,
+        cookies: Vec<McvCookie>,
+    ) {
         tracing::trace!(
             target: "mcv::plugin-youtube-live",
             url = url,
+            cookie_count = cookies.len(),
             "connect()"
         );
         if self.running {
@@ -126,8 +133,16 @@ impl Connection {
         let (cancel_tx, mut cancel_rx) = watch::channel(false);
         let connection_id = self.id;
         let vid = Vid::new(vid);
+        let cookie_count = cookies.len();
 
         let task = tokio::spawn(async move {
+            tracing::debug!(
+                target: "mcv::plugin-youtube-live",
+                connection_id = %connection_id,
+                cookie_count = cookie_count,
+                "Connection started with resolved cookies"
+            );
+            // TODO: youtube_live_libのHTTPリクエストへcookieを反映する
             let live_chat = match get_live_chat(&vid).await {
                 Ok(v) => v,
                 Err(e) => {

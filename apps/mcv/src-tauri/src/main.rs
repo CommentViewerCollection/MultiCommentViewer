@@ -163,7 +163,9 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
             },
             browser: MsgBrowserInfo {
                 name: conn_info.browser_name.clone().unwrap_or("None".to_string()),
-                id: conn_info.browser_id.unwrap_or_else(|| BrowserId::from_string("none".to_string())),
+                id: conn_info
+                    .browser_id
+                    .unwrap_or_else(|| BrowserId::from_string("none".to_string())),
             },
         })
         .map_err(|e| format!("Failed to serialize ConnectPayload: {}", e))?,

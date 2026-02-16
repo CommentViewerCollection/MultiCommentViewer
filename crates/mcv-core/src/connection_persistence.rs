@@ -51,9 +51,8 @@ impl ConnectionsStorage {
         }
 
         // ファイルを読み込み
-        let file_content = std::fs::read_to_string(path).map_err(|e| {
-            format!("Failed to read connections file: {}", e)
-        })?;
+        let file_content = std::fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read connections file: {}", e))?;
 
         // JSONをパース
         let storage: ConnectionsStorage = serde_json::from_str(&file_content).map_err(|e| {
@@ -90,20 +89,17 @@ impl ConnectionsStorage {
 
         // 親ディレクトリを作成
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).map_err(|e| {
-                format!("Failed to create parent directory: {}", e)
-            })?;
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create parent directory: {}", e))?;
         }
 
         // JSONにシリアライズ（pretty print）
-        let json = serde_json::to_string_pretty(self).map_err(|e| {
-            format!("Failed to serialize connections: {}", e)
-        })?;
+        let json = serde_json::to_string_pretty(self)
+            .map_err(|e| format!("Failed to serialize connections: {}", e))?;
 
         // ファイルに書き込み
-        std::fs::write(path, json).map_err(|e| {
-            format!("Failed to write connections file: {}", e)
-        })?;
+        std::fs::write(path, json)
+            .map_err(|e| format!("Failed to write connections file: {}", e))?;
 
         tracing::info!(
             target: "mcv::core::connection_persistence",
@@ -145,16 +141,17 @@ mod tests {
         // 保存
         let storage = ConnectionsStorage {
             schema_version: "1.0".to_string(),
-            connections: vec![
-                PersistedConnection {
-                    connection_id: Uuid::new_v4(),
-                    site_id: Some(SiteId::new("TestSite", "00000000-0000-0000-0000-000000000001")),
-                    url: Some("https://example.com".to_string()),
-                    browser_name: Some("Chrome".to_string()),
-                    advanced_settings: Some(serde_json::json!({"key": "value"})),
-                    name: "Test Connection".to_string(),
-                },
-            ],
+            connections: vec![PersistedConnection {
+                connection_id: Uuid::new_v4(),
+                site_id: Some(SiteId::new(
+                    "TestSite",
+                    "00000000-0000-0000-0000-000000000001",
+                )),
+                url: Some("https://example.com".to_string()),
+                browser_name: Some("Chrome".to_string()),
+                advanced_settings: Some(serde_json::json!({"key": "value"})),
+                name: "Test Connection".to_string(),
+            }],
         };
 
         storage.save_to_file(path).unwrap();
@@ -165,7 +162,13 @@ mod tests {
         assert_eq!(loaded.schema_version, "1.0");
         assert_eq!(loaded.connections.len(), 1);
         assert_eq!(loaded.connections[0].name, "Test Connection");
-        assert_eq!(loaded.connections[0].site_id, Some(SiteId::new("TestSite", "00000000-0000-0000-0000-000000000001")));
+        assert_eq!(
+            loaded.connections[0].site_id,
+            Some(SiteId::new(
+                "TestSite",
+                "00000000-0000-0000-0000-000000000001"
+            ))
+        );
     }
 
     #[test]

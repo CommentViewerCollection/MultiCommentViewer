@@ -1,6 +1,6 @@
-use actix::Context;
 use crate::core_actor::CoreActor;
 use crate::plugin_host_actor::SendMessageToPlugin;
+use actix::Context;
 use mcv_common::LogicalPluginId;
 use mcv_messages::*;
 use mcv_settings_core::SettingsEntry;

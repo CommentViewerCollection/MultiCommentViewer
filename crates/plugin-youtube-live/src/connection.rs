@@ -3,7 +3,11 @@
 //! 個々のYouTube Live配信への接続を管理し、
 //! ライブチャットメッセージを定期的に取得します。
 
-use mcv_messages::{Comment, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload, Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource, MessageType};
+use mcv_messages::{
+    Comment, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload,
+    Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
+    MessageType,
+};
 use plugin_abi_helper::v3::prelude::*;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
@@ -24,17 +28,18 @@ fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
         .message_parts
         .iter()
         .filter_map(|part| match part {
-            MessagePart::Text(s) => Some(McvMessagePart::Text {
-                text: s.clone(),
-            }),
+            MessagePart::Text(s) => Some(McvMessagePart::Text { text: s.clone() }),
             MessagePart::Emoji(emoji) => {
                 // 絵文字を画像として扱う (最初のサムネイルを使用)
-                emoji.thumbnails.first().map(|thumbnail| McvMessagePart::Image {
-                    url: thumbnail.url.clone(),
-                    width: Some(thumbnail.width as u32),
-                    height: Some(thumbnail.height as u32),
-                    alt: Some(emoji.label.clone()),
-                })
+                emoji
+                    .thumbnails
+                    .first()
+                    .map(|thumbnail| McvMessagePart::Image {
+                        url: thumbnail.url.clone(),
+                        width: Some(thumbnail.width as u32),
+                        height: Some(thumbnail.height as u32),
+                        alt: Some(emoji.label.clone()),
+                    })
             }
         })
         .collect::<Vec<_>>();
@@ -57,10 +62,7 @@ fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
     }
 
     // timestamp_usecをi64に変換 (マイクロ秒 → 秒)
-    let timestamp = msg
-        .timestamp_usec
-        .parse::<i64>()
-        .unwrap_or(0) / 1000 / 1000;
+    let timestamp = msg.timestamp_usec.parse::<i64>().unwrap_or(0) / 1000 / 1000;
 
     // idはtimestamp_usecを使用 (一意性を保証)
     let id = msg.timestamp_usec.clone();
@@ -314,10 +316,7 @@ impl Connection {
                     plugin_id: logical_plugin_id,
                 },
                 MessageDestination::Core,
-                serde_json::to_value(DisconnectedPayload {
-                    connection_id,
-                })
-                .unwrap(),
+                serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
             );
             YouTubeLivePlugin::send_message(ctx, message).await;
         });

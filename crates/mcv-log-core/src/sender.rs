@@ -95,10 +95,7 @@ impl Handler<SendUnsentLogs> for LogSenderActor {
             match client.post(&url).json(&unsent_logs).send().await {
                 Ok(response) => {
                     if response.status().is_success() {
-                        tracing::info!(
-                            count = unsent_logs.len(),
-                            "Successfully sent logs"
-                        );
+                        tracing::info!(count = unsent_logs.len(), "Successfully sent logs");
 
                         // 送信成功、フラグ更新
                         let ids: Vec<String> = unsent_logs.iter().map(|e| e.id.clone()).collect();
@@ -130,7 +127,10 @@ impl Handler<SendUnsentLogs> for LogSenderActor {
                         }
                     } else {
                         let status = response.status();
-                        let body = response.text().await.unwrap_or_else(|_| "Unable to read response".to_string());
+                        let body = response
+                            .text()
+                            .await
+                            .unwrap_or_else(|_| "Unable to read response".to_string());
                         tracing::error!(
                             status = %status,
                             body = %body,

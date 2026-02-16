@@ -9,7 +9,8 @@ use std::time::Duration;
 use mcv_messages::{
     ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
     GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, SetConnectionSitePayload,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    SetConnectionSitePayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -37,7 +38,8 @@ pub(crate) async fn on_message_impl(
                 None => Err(mcv_plugin_telemetry::capture_context!(""))?,
             };
             let cookies =
-                fetch_cookies_for_connect(&ctx, plugin.logical_plugin_id, &connect.browser.id).await;
+                fetch_cookies_for_connect(&ctx, plugin.logical_plugin_id, &connect.browser.id)
+                    .await;
 
             // connectedを返信
             let message = McvMessage::new_notification(
@@ -145,7 +147,10 @@ async fn fetch_cookies_for_connect(
         .unwrap(),
     );
 
-    match ctx.send_request(get_cookie_message, Duration::from_secs(10)).await {
+    match ctx
+        .send_request(get_cookie_message, Duration::from_secs(10))
+        .await
+    {
         Ok(response) if response.message_type == MessageType::GetCookieAck => {
             match serde_json::from_value::<GetCookieAckPayload>(response.payload) {
                 Ok(payload) => {

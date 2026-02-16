@@ -8,7 +8,7 @@ use mcv_messages::{
 };
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 use plugin_abi_helper::v2 as abi;
-use std::ffi::{c_void, CString};
+use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -128,9 +128,7 @@ impl Plugin for ExePluginManager {
             env!("CARGO_PKG_VERSION"),
             "trace",
         )
-        .map_err(|e| {
-            PluginError::InitializationFailed(format!("Failed to init tracing: {}", e))
-        })?;
+        .map_err(|e| PluginError::InitializationFailed(format!("Failed to init tracing: {}", e)))?;
 
         tracing::info!("ExePluginManager::on_loaded called");
 

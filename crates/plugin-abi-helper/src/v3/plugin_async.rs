@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use crate::v3::context::PluginContext;
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait PluginImplV3Async: Send + 'static {

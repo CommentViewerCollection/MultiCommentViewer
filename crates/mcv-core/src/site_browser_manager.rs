@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use mcv_common::{BrowserId, SiteId};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 /// サイト情報
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,7 +60,8 @@ impl SiteAndBrowserManager {
             plugin_id = %browser_info.plugin_id,
             "Adding browser to manager"
         );
-        self.browsers.insert(browser_info.browser_id.clone(), browser_info);
+        self.browsers
+            .insert(browser_info.browser_id.clone(), browser_info);
     }
 
     /// サイトを取得
@@ -123,10 +124,7 @@ mod tests {
 
         assert_eq!(manager.list_sites().len(), 1);
         assert!(manager.get_site(&site_id).is_some());
-        assert_eq!(
-            manager.get_plugin_id_for_site(&site_id),
-            Some(plugin_id)
-        );
+        assert_eq!(manager.get_plugin_id_for_site(&site_id), Some(plugin_id));
     }
 
     #[test]
@@ -156,7 +154,10 @@ mod tests {
         // 複数のサイトを追加
         for i in 0..3 {
             let site_info = SiteInfo {
-                site_id: SiteId::new(&format!("site-{}", i), &format!("00000000-0000-0000-0000-00000000000{}", i)),
+                site_id: SiteId::new(
+                    &format!("site-{}", i),
+                    &format!("00000000-0000-0000-0000-00000000000{}", i),
+                ),
                 display_name: format!("Site {}", i),
                 plugin_id,
                 options_schema: serde_json::json!({}),
@@ -167,7 +168,10 @@ mod tests {
         // 複数のブラウザを追加
         for i in 0..2 {
             let browser_info = BrowserInfo {
-                browser_id: BrowserId::new(&format!("browser-{}", i), &format!("00000000-0000-0000-0000-00000000000{}", i)),
+                browser_id: BrowserId::new(
+                    &format!("browser-{}", i),
+                    &format!("00000000-0000-0000-0000-00000000000{}", i),
+                ),
                 browser_name: format!("browser-{}", i),
                 display_name: format!("Browser {}", i),
                 plugin_id,

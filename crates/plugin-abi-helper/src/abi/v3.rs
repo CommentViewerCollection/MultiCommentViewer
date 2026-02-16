@@ -43,11 +43,7 @@ pub struct PluginV3 {
 
     /// ライフサイクル
     pub on_loaded: unsafe extern "C" fn(*mut PluginV3) -> i32,
-    pub on_message: unsafe extern "C" fn(
-        *mut PluginV3,
-        msg_ptr: *const u8,
-        msg_len: usize,
-    ) -> i32,
+    pub on_message: unsafe extern "C" fn(*mut PluginV3, msg_ptr: *const u8, msg_len: usize) -> i32,
     pub on_shutdown: unsafe extern "C" fn(*mut PluginV3) -> i32,
 
     /// プラグイン実装が保持する state

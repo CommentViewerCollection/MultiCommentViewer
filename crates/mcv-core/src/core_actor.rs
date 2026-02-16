@@ -95,10 +95,9 @@ impl CoreActor {
             .as_ref()
             .ok_or_else(|| "Connections file path not set".to_string())?;
 
-        let storage =
-            crate::connection_persistence::ConnectionsStorage::from_connection_manager(
-                &self.connection_manager,
-            );
+        let storage = crate::connection_persistence::ConnectionsStorage::from_connection_manager(
+            &self.connection_manager,
+        );
         storage.save_to_file(path)?;
 
         tracing::debug!(path = ?path, "Connections saved");
@@ -119,10 +118,9 @@ impl CoreActor {
             "Restoring connections from file"
         );
 
-        let (success, skipped) = self.connection_manager.import_from_persistence(
-            storage.connections,
-            &self.site_browser_manager,
-        );
+        let (success, skipped) = self
+            .connection_manager
+            .import_from_persistence(storage.connections, &self.site_browser_manager);
 
         tracing::info!(
             success_count = success,
@@ -180,11 +178,8 @@ impl CoreActor {
         // 新しいサイト情報を取得
         if let Some(site_info) = self.site_browser_manager.get_site(&site_id) {
             // ConnectionManagerを更新
-            self.connection_manager.set_site(
-                &connection_id,
-                site_id.clone(),
-                site_info.plugin_id,
-            );
+            self.connection_manager
+                .set_site(&connection_id, site_id.clone(), site_info.plugin_id);
 
             let plugins = self.logical_plugins.clone();
 
@@ -203,9 +198,11 @@ impl CoreActor {
                             })
                             .unwrap(),
                         );
-                        old_plugin.host_addr.do_send(crate::plugin_host_actor::SendMessageToPlugin {
-                            message: discard_msg,
-                        });
+                        old_plugin.host_addr.do_send(
+                            crate::plugin_host_actor::SendMessageToPlugin {
+                                message: discard_msg,
+                            },
+                        );
                     }
                 }
             }
@@ -469,11 +466,14 @@ fn handle_plugin_request_message(
 ) -> Result<McvMessage, String> {
     match message.message_type {
         MessageType::PluginHello => {
-            message_handlers::plugin_hello::handle_plugin_hello(core, physical_plugin_id, message, ctx)?;
-            let payload: PluginHelloPayload =
-                serde_json::from_value(message.payload.clone()).map_err(|e| {
-                    format!("Failed to parse PluginHello payload for ack: {}", e)
-                })?;
+            message_handlers::plugin_hello::handle_plugin_hello(
+                core,
+                physical_plugin_id,
+                message,
+                ctx,
+            )?;
+            let payload: PluginHelloPayload = serde_json::from_value(message.payload.clone())
+                .map_err(|e| format!("Failed to parse PluginHello payload for ack: {}", e))?;
             Ok(message.create_response(
                 MessageType::PluginHelloAck,
                 serde_json::to_value(PluginHelloAckPayload {
@@ -483,10 +483,8 @@ fn handle_plugin_request_message(
             ))
         }
         MessageType::AddSite => {
-            let payload: AddSitePayload =
-                serde_json::from_value(message.payload.clone()).map_err(|e| {
-                    format!("Failed to parse AddSite payload for ack: {}", e)
-                })?;
+            let payload: AddSitePayload = serde_json::from_value(message.payload.clone())
+                .map_err(|e| format!("Failed to parse AddSite payload for ack: {}", e))?;
             message_handlers::site_browser::handle_add_site(core, message, ctx);
             Ok(message.create_response(
                 MessageType::AddSiteAck,
@@ -497,10 +495,8 @@ fn handle_plugin_request_message(
             ))
         }
         MessageType::AddBrowser => {
-            let payload: AddBrowserPayload =
-                serde_json::from_value(message.payload.clone()).map_err(|e| {
-                    format!("Failed to parse AddBrowser payload for ack: {}", e)
-                })?;
+            let payload: AddBrowserPayload = serde_json::from_value(message.payload.clone())
+                .map_err(|e| format!("Failed to parse AddBrowser payload for ack: {}", e))?;
             message_handlers::site_browser::handle_add_browser(core, message, ctx);
             Ok(message.create_response(
                 MessageType::AddBrowserAck,
@@ -597,7 +593,7 @@ impl Handler<SendMessageToCore> for CoreActor {
             message_type = ?message.message_type,
             "CoreActor received message from plugin"
         );
-        
+
         if matches!(message.src, MessageSource::Plugin { .. })
             && matches!(message.dst, MessageDestination::Plugin { .. })
         {
@@ -666,9 +662,12 @@ impl Handler<SendMessageToCore> for CoreActor {
 
         match message.message_type {
             MessageType::PluginHello => {
-                if let Err(err) =
-                    message_handlers::plugin_hello::handle_plugin_hello(self, physical_plugin_id, &message, ctx)
-                {
+                if let Err(err) = message_handlers::plugin_hello::handle_plugin_hello(
+                    self,
+                    physical_plugin_id,
+                    &message,
+                    ctx,
+                ) {
                     tracing::error!(
                         target: "mcv::core::CoreActor",
                         physical_plugin_id = %physical_plugin_id,
@@ -677,13 +676,18 @@ impl Handler<SendMessageToCore> for CoreActor {
                     );
                 }
             }
-            MessageType::GetPlugins => {
-                message_handlers::plugin_hello::handle_get_plugins(self, physical_plugin_id, &message, ctx)
-            }
+            MessageType::GetPlugins => message_handlers::plugin_hello::handle_get_plugins(
+                self,
+                physical_plugin_id,
+                &message,
+                ctx,
+            ),
             MessageType::AddConnection => {
                 message_handlers::connection::handle_add_connection(self, &message, ctx)
             }
-            MessageType::Connect => message_handlers::connection::handle_connect(self, &message, ctx),
+            MessageType::Connect => {
+                message_handlers::connection::handle_connect(self, &message, ctx)
+            }
             MessageType::Connected => {
                 message_handlers::connection::handle_connected(self, &message, ctx)
             }
@@ -712,7 +716,9 @@ impl Handler<SendMessageToCore> for CoreActor {
                 message_handlers::site_browser::handle_set_connection_site(self, &message, ctx)
             }
             MessageType::UpdateConnectionSettings => {
-                message_handlers::site_browser::handle_update_connection_settings(self, &message, ctx)
+                message_handlers::site_browser::handle_update_connection_settings(
+                    self, &message, ctx,
+                )
             }
             MessageType::GetSettingsSchema => {
                 tracing::warn!(
@@ -722,7 +728,9 @@ impl Handler<SendMessageToCore> for CoreActor {
             }
             MessageType::SettingsSchema => {
                 // プラグインから受信したスキーマをキャッシュして、UIにも転送
-                if let Ok(payload) = serde_json::from_value::<SettingsSchemaPayload>(message.payload.clone()) {
+                if let Ok(payload) =
+                    serde_json::from_value::<SettingsSchemaPayload>(message.payload.clone())
+                {
                     if let Ok(plugin_uuid) = Uuid::parse_str(&payload.target) {
                         let logical_id = LogicalPluginId::from_uuid(plugin_uuid);
                         if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
@@ -742,7 +750,9 @@ impl Handler<SendMessageToCore> for CoreActor {
             }
             MessageType::SettingsData => {
                 // プラグインから受信した設定データをキャッシュして、UIにも転送
-                if let Ok(payload) = serde_json::from_value::<SettingsDataPayload>(message.payload.clone()) {
+                if let Ok(payload) =
+                    serde_json::from_value::<SettingsDataPayload>(message.payload.clone())
+                {
                     if let Ok(plugin_uuid) = Uuid::parse_str(&payload.target) {
                         let logical_id = LogicalPluginId::from_uuid(plugin_uuid);
                         if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
@@ -843,10 +853,7 @@ impl Handler<GetLogicalPlugins> for CoreActor {
     type Result = Vec<PluginInfo>;
 
     fn handle(&mut self, _msg: GetLogicalPlugins, _ctx: &mut Self::Context) -> Self::Result {
-        self.logical_plugins
-            .values()
-            .cloned()
-            .collect()
+        self.logical_plugins.values().cloned().collect()
     }
 }
 

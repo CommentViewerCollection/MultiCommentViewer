@@ -38,12 +38,7 @@ impl PluginHost for DummyPluginHost {
 }
 
 /// WebSocketサーバーを起動してポートを取得
-async fn start_websocket_server(
-) -> (
-    Arc<WebSocketServer>,
-    u16,
-    Arc<DummyPluginHost>,
-) {
+async fn start_websocket_server() -> (Arc<WebSocketServer>, u16, Arc<DummyPluginHost>) {
     let host = Arc::new(DummyPluginHost::new());
     let server = WebSocketServer::new("127.0.0.1:0", Arc::clone(&host) as Arc<dyn PluginHost>)
         .await

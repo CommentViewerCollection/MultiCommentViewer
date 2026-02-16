@@ -39,8 +39,8 @@ async fn get_local_logs(
 ) -> Result<LogQueryResult, String> {
     let log_db_path = get_log_db_path()?;
 
-    let conn = Connection::open(&log_db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn =
+        Connection::open(&log_db_path).map_err(|e| format!("Failed to open database: {}", e))?;
 
     // Build WHERE clause
     let mut where_clauses = Vec::new();
@@ -113,10 +113,12 @@ async fn get_local_logs(
     // Get total count
     let count_query = format!("SELECT COUNT(*) FROM logs {}", where_clause);
     let total: usize = {
-        let mut stmt = conn.prepare(&count_query)
+        let mut stmt = conn
+            .prepare(&count_query)
             .map_err(|e| format!("Failed to prepare count query: {}", e))?;
 
-        let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+        let params_refs: Vec<&dyn rusqlite::ToSql> =
+            params_vec.iter().map(|b| b.as_ref()).collect();
         stmt.query_row(params_refs.as_slice(), |row| row.get(0))
             .map_err(|e| format!("Failed to get count: {}", e))?
     };
@@ -129,7 +131,8 @@ async fn get_local_logs(
         where_clause
     );
 
-    let mut stmt = conn.prepare(&query)
+    let mut stmt = conn
+        .prepare(&query)
         .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
     params_vec.push(Box::new(limit as i64));
@@ -137,37 +140,38 @@ async fn get_local_logs(
 
     let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
 
-    let logs = stmt.query_map(params_refs.as_slice(), |row| {
-        let stacktrace_json: Option<String> = row.get(8)?;
-        let stacktrace = stacktrace_json.and_then(|s| serde_json::from_str(&s).ok());
+    let logs = stmt
+        .query_map(params_refs.as_slice(), |row| {
+            let stacktrace_json: Option<String> = row.get(8)?;
+            let stacktrace = stacktrace_json.and_then(|s| serde_json::from_str(&s).ok());
 
-        let context_json: Option<String> = row.get(9)?;
-        let context = context_json.and_then(|s| serde_json::from_str(&s).ok());
+            let context_json: Option<String> = row.get(9)?;
+            let context = context_json.and_then(|s| serde_json::from_str(&s).ok());
 
-        Ok(LogEntry {
-            id: row.get(0)?,
-            level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
-            timestamp: row.get(2)?,
-            message: row.get(3)?,
-            source: mcv_log_core::schema::SourceLocation {
-                file: row.get(4)?,
-                line: row.get(5)?,
-                column: row.get(6)?,
-                module_path: row.get(7)?,
-            },
-            stacktrace,
-            context,
-            system_info: mcv_log_core::schema::SystemInfo {
-                mcv_version: row.get(10)?,
-                platform: row.get(11)?,
-                arch: row.get(12)?,
-                build_profile: row.get(13)?,
-            },
+            Ok(LogEntry {
+                id: row.get(0)?,
+                level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
+                timestamp: row.get(2)?,
+                message: row.get(3)?,
+                source: mcv_log_core::schema::SourceLocation {
+                    file: row.get(4)?,
+                    line: row.get(5)?,
+                    column: row.get(6)?,
+                    module_path: row.get(7)?,
+                },
+                stacktrace,
+                context,
+                system_info: mcv_log_core::schema::SystemInfo {
+                    mcv_version: row.get(10)?,
+                    platform: row.get(11)?,
+                    arch: row.get(12)?,
+                    build_profile: row.get(13)?,
+                },
+            })
         })
-    })
-    .map_err(|e| format!("Failed to query logs: {}", e))?
-    .collect::<SqliteResult<Vec<_>>>()
-    .map_err(|e| format!("Failed to collect logs: {}", e))?;
+        .map_err(|e| format!("Failed to query logs: {}", e))?
+        .collect::<SqliteResult<Vec<_>>>()
+        .map_err(|e| format!("Failed to collect logs: {}", e))?;
 
     Ok(LogQueryResult { logs, total })
 }
@@ -175,8 +179,8 @@ async fn get_local_logs(
 /// ログDBのパスを取得
 #[tauri::command]
 fn get_log_db_path() -> Result<String, String> {
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let db_path = PathBuf::from(local_app_data)
         .join("MultiCommentViewer")
@@ -210,7 +214,8 @@ async fn get_server_logs(
         url.push_str(&format!("&search={}", urlencoding::encode(search)));
     }
 
-    let response = client.get(&url)
+    let response = client
+        .get(&url)
         .send()
         .await
         .map_err(|e| format!("Failed to fetch logs from server: {}", e))?;
@@ -225,20 +230,24 @@ async fn get_server_logs(
         total: usize,
     }
 
-    let server_response: ServerResponse = response.json()
+    let server_response: ServerResponse = response
+        .json()
         .await
         .map_err(|e| format!("Failed to parse server response: {}", e))?;
 
     // Convert server logs to LogEntry
-    let logs: Vec<LogEntry> = server_response.logs.into_iter()
-        .filter_map(|log| {
-            match serde_json::from_value(log.clone()) {
-                Ok(entry) => Some(entry),
-                Err(e) => {
-                    eprintln!("Failed to deserialize log entry: {}", e);
-                    eprintln!("Log data: {}", serde_json::to_string_pretty(&log).unwrap_or_default());
-                    None
-                }
+    let logs: Vec<LogEntry> = server_response
+        .logs
+        .into_iter()
+        .filter_map(|log| match serde_json::from_value(log.clone()) {
+            Ok(entry) => Some(entry),
+            Err(e) => {
+                eprintln!("Failed to deserialize log entry: {}", e);
+                eprintln!(
+                    "Log data: {}",
+                    serde_json::to_string_pretty(&log).unwrap_or_default()
+                );
+                None
             }
         })
         .collect();
@@ -254,18 +263,21 @@ async fn get_server_logs(
 async fn delete_local_logs(ids: Vec<String>) -> Result<usize, String> {
     let log_db_path = get_log_db_path()?;
 
-    let conn = Connection::open(&log_db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn =
+        Connection::open(&log_db_path).map_err(|e| format!("Failed to open database: {}", e))?;
 
     let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
     let query = format!("DELETE FROM logs WHERE id IN ({})", placeholders);
 
-    let mut stmt = conn.prepare(&query)
+    let mut stmt = conn
+        .prepare(&query)
         .map_err(|e| format!("Failed to prepare delete query: {}", e))?;
 
-    let params: Vec<&dyn rusqlite::ToSql> = ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+    let params: Vec<&dyn rusqlite::ToSql> =
+        ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
 
-    let deleted = stmt.execute(params.as_slice())
+    let deleted = stmt
+        .execute(params.as_slice())
         .map_err(|e| format!("Failed to delete logs: {}", e))?;
 
     Ok(deleted)
@@ -302,8 +314,8 @@ async fn export_local_logs(
     };
 
     let log_db_path = get_log_db_path()?;
-    let conn = Connection::open(&log_db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn =
+        Connection::open(&log_db_path).map_err(|e| format!("Failed to open database: {}", e))?;
 
     let mut where_clauses = Vec::new();
     let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -376,48 +388,49 @@ async fn export_local_logs(
         where_clause
     );
 
-    let mut stmt = conn.prepare(&query)
+    let mut stmt = conn
+        .prepare(&query)
         .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
     let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
 
-    let logs = stmt.query_map(params_refs.as_slice(), |row| {
-        let stacktrace_json: Option<String> = row.get(8)?;
-        let stacktrace = stacktrace_json.and_then(|s| serde_json::from_str(&s).ok());
+    let logs = stmt
+        .query_map(params_refs.as_slice(), |row| {
+            let stacktrace_json: Option<String> = row.get(8)?;
+            let stacktrace = stacktrace_json.and_then(|s| serde_json::from_str(&s).ok());
 
-        let context_json: Option<String> = row.get(9)?;
-        let context = context_json.and_then(|s| serde_json::from_str(&s).ok());
+            let context_json: Option<String> = row.get(9)?;
+            let context = context_json.and_then(|s| serde_json::from_str(&s).ok());
 
-        Ok(LogEntry {
-            id: row.get(0)?,
-            level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
-            timestamp: row.get(2)?,
-            message: row.get(3)?,
-            source: mcv_log_core::schema::SourceLocation {
-                file: row.get(4)?,
-                line: row.get(5)?,
-                column: row.get(6)?,
-                module_path: row.get(7)?,
-            },
-            stacktrace,
-            context,
-            system_info: mcv_log_core::schema::SystemInfo {
-                mcv_version: row.get(10)?,
-                platform: row.get(11)?,
-                arch: row.get(12)?,
-                build_profile: row.get(13)?,
-            },
+            Ok(LogEntry {
+                id: row.get(0)?,
+                level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
+                timestamp: row.get(2)?,
+                message: row.get(3)?,
+                source: mcv_log_core::schema::SourceLocation {
+                    file: row.get(4)?,
+                    line: row.get(5)?,
+                    column: row.get(6)?,
+                    module_path: row.get(7)?,
+                },
+                stacktrace,
+                context,
+                system_info: mcv_log_core::schema::SystemInfo {
+                    mcv_version: row.get(10)?,
+                    platform: row.get(11)?,
+                    arch: row.get(12)?,
+                    build_profile: row.get(13)?,
+                },
+            })
         })
-    })
-    .map_err(|e| format!("Failed to query logs: {}", e))?
-    .collect::<SqliteResult<Vec<_>>>()
-    .map_err(|e| format!("Failed to collect logs: {}", e))?;
+        .map_err(|e| format!("Failed to query logs: {}", e))?
+        .collect::<SqliteResult<Vec<_>>>()
+        .map_err(|e| format!("Failed to collect logs: {}", e))?;
 
     let json = serde_json::to_string_pretty(&logs)
         .map_err(|e| format!("Failed to serialize logs: {}", e))?;
 
-    std::fs::write(&save_path, json)
-        .map_err(|e| format!("Failed to write file: {}", e))?;
+    std::fs::write(&save_path, json).map_err(|e| format!("Failed to write file: {}", e))?;
 
     Ok(Some(save_path.to_string_lossy().to_string()))
 }
@@ -469,7 +482,8 @@ async fn export_server_logs(
         url.push_str(&format!("&search={}", urlencoding::encode(search)));
     }
 
-    let response = client.get(&url)
+    let response = client
+        .get(&url)
         .send()
         .await
         .map_err(|e| format!("Failed to fetch logs from server: {}", e))?;
@@ -478,7 +492,8 @@ async fn export_server_logs(
         return Err(format!("Server returned error: {}", response.status()));
     }
 
-    let logs: Vec<serde_json::Value> = response.json::<serde_json::Value>()
+    let logs: Vec<serde_json::Value> = response
+        .json::<serde_json::Value>()
         .await
         .map_err(|e| format!("Failed to parse server response: {}", e))?
         .get("logs")
@@ -489,8 +504,7 @@ async fn export_server_logs(
     let json = serde_json::to_string_pretty(&logs)
         .map_err(|e| format!("Failed to serialize logs: {}", e))?;
 
-    std::fs::write(&save_path, json)
-        .map_err(|e| format!("Failed to write file: {}", e))?;
+    std::fs::write(&save_path, json).map_err(|e| format!("Failed to write file: {}", e))?;
 
     Ok(Some(save_path.to_string_lossy().to_string()))
 }
@@ -507,7 +521,8 @@ async fn delete_server_logs(api_url: String, ids: Vec<String>) -> Result<usize, 
         ids: Vec<String>,
     }
 
-    let response = client.delete(&url)
+    let response = client
+        .delete(&url)
         .json(&DeleteRequest { ids })
         .send()
         .await
@@ -522,7 +537,8 @@ async fn delete_server_logs(api_url: String, ids: Vec<String>) -> Result<usize, 
         deleted: usize,
     }
 
-    let delete_response: DeleteResponse = response.json()
+    let delete_response: DeleteResponse = response
+        .json()
         .await
         .map_err(|e| format!("Failed to parse delete response: {}", e))?;
 

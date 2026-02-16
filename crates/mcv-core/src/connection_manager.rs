@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use mcv_common::{BrowserId, SiteId};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 /// 接続ステータス
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,12 +25,12 @@ pub enum ConnectionStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionInfo {
     pub connection_id: Uuid,
-    pub plugin_id: Option<Uuid>,      // 変更: Option<Uuid>に
+    pub plugin_id: Option<Uuid>, // 変更: Option<Uuid>に
     pub status: ConnectionStatus,
     pub site_id: Option<SiteId>,
-    pub url: Option<String>,          // 新規
-    pub browser_id: Option<BrowserId>, // 新規
-    pub browser_name: Option<String>, // 新規
+    pub url: Option<String>,                          // 新規
+    pub browser_id: Option<BrowserId>,                // 新規
+    pub browser_name: Option<String>,                 // 新規
     pub advanced_settings: Option<serde_json::Value>, // 新規
     pub input_info: String,
     pub name: String,
@@ -97,8 +97,8 @@ impl ConnectionManager {
     pub fn get_connection(&self, connection_id: &Uuid) -> Option<&ConnectionInfo> {
         self.connections.get(connection_id)
     }
-    pub fn get_connections(&self)->Vec<&ConnectionInfo>{
-        self.connections.iter().map(|a|a.1).collect()
+    pub fn get_connections(&self) -> Vec<&ConnectionInfo> {
+        self.connections.iter().map(|a| a.1).collect()
     }
 
     /// 全接続のリストを取得
@@ -114,12 +114,7 @@ impl ConnectionManager {
     }
 
     /// サイトを設定
-    pub fn set_site(
-        &mut self,
-        connection_id: &Uuid,
-        site_id: SiteId,
-        plugin_id: Uuid,
-    ) {
+    pub fn set_site(&mut self, connection_id: &Uuid, site_id: SiteId, plugin_id: Uuid) {
         if let Some(info) = self.connections.get_mut(connection_id) {
             tracing::debug!(
                 connection_id = %connection_id,
@@ -180,7 +175,9 @@ impl ConnectionManager {
     }
 
     /// 永続化用データをエクスポート
-    pub fn export_for_persistence(&self) -> Vec<crate::connection_persistence::PersistedConnection> {
+    pub fn export_for_persistence(
+        &self,
+    ) -> Vec<crate::connection_persistence::PersistedConnection> {
         self.connections
             .values()
             .map(|conn| crate::connection_persistence::PersistedConnection {
@@ -268,9 +265,7 @@ impl ConnectionManager {
         let mut activated = Vec::new();
 
         for conn in self.connections.values_mut() {
-            if conn.status == ConnectionStatus::Pending
-                && conn.site_id.as_ref() == Some(site_id)
-            {
+            if conn.status == ConnectionStatus::Pending && conn.site_id.as_ref() == Some(site_id) {
                 tracing::info!(
                     connection_id = %conn.connection_id,
                     connection_name = %conn.name,
@@ -305,7 +300,7 @@ mod tests {
         let _plugin_id = Uuid::new_v4();
 
         // 接続を追加（plugin_idはOptionに変更）
-        manager.add_connection(conn_id,  "Test Connection".to_string());
+        manager.add_connection(conn_id, "Test Connection".to_string());
         assert_eq!(
             manager.get_status(&conn_id),
             Some(ConnectionStatus::Created)
@@ -361,7 +356,11 @@ mod tests {
         assert_eq!(conn.url, Some("https://example.com".to_string()));
 
         // ブラウザ更新
-        manager.update_browser(&conn_id, Some(browser_id.clone()), Some("Chrome".to_string()));
+        manager.update_browser(
+            &conn_id,
+            Some(browser_id.clone()),
+            Some("Chrome".to_string()),
+        );
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.browser_id, Some(browser_id));
         assert_eq!(conn.browser_name, Some("Chrome".to_string()));
@@ -436,7 +435,10 @@ mod tests {
         let conn_id = Uuid::new_v4();
 
         manager.add_connection(conn_id, "#1".to_string());
-        manager.update_url(&conn_id, Some("https://youtube.com/watch?v=123".to_string()));
+        manager.update_url(
+            &conn_id,
+            Some("https://youtube.com/watch?v=123".to_string()),
+        );
 
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(

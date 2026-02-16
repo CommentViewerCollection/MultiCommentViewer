@@ -46,9 +46,9 @@ impl PluginLoaderV3 {
 
         // create_plugin_v3 シンボルを取得
         let create_fn: Symbol<unsafe extern "C" fn() -> *mut PluginV3> = unsafe {
-            library
-                .get(b"create_plugin_v3\0")
-                .map_err(|e| PluginLoaderV3Error::SymbolNotFound(format!("create_plugin_v3: {}", e)))?
+            library.get(b"create_plugin_v3\0").map_err(|e| {
+                PluginLoaderV3Error::SymbolNotFound(format!("create_plugin_v3: {}", e))
+            })?
         };
 
         // プラグインを作成
@@ -88,9 +88,9 @@ impl PluginLoaderV3 {
     /// v3プラグインとして有効なシンボルを持っているか検証
     pub fn validate(&self) -> Result<(), PluginLoaderV3Error> {
         let _: Symbol<unsafe extern "C" fn() -> *mut PluginV3> = unsafe {
-            self.library
-                .get(b"create_plugin_v3\0")
-                .map_err(|e| PluginLoaderV3Error::SymbolNotFound(format!("create_plugin_v3: {}", e)))?
+            self.library.get(b"create_plugin_v3\0").map_err(|e| {
+                PluginLoaderV3Error::SymbolNotFound(format!("create_plugin_v3: {}", e))
+            })?
         };
 
         Ok(())

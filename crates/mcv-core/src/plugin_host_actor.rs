@@ -135,7 +135,9 @@ impl Actor for PhysicalPluginHostActor {
                 target: "mcv::core::PluginHostActor",
                 "callback_fn physical_plugin_id: {}, message_type: {:?}", physical_plugin_id, internal_message.message.message_type
             );
-            callback_data.actor_addr.do_send(ReceiveMessageFromDll { internal_message });
+            callback_data
+                .actor_addr
+                .do_send(ReceiveMessageFromDll { internal_message });
             tracing::debug!(
                 target: "mcv::core::PluginHostActor",
                 "Message forwarded to PhysicalPluginHostActor"

@@ -30,9 +30,9 @@ pub fn handle_comment_received(
             forwarded.dst = MessageDestination::Plugin {
                 plugin_id: logical_plugin_id.inner(),
             };
-            plugin_info.host_addr.do_send(SendMessageToPlugin {
-                message: forwarded,
-            });
+            plugin_info
+                .host_addr
+                .do_send(SendMessageToPlugin { message: forwarded });
         }
     }
 }

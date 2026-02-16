@@ -52,12 +52,12 @@ pub mod trampoline;
 /// v3の主要な型を一括インポートするためのprelude
 pub mod prelude {
     pub use crate::abi::v3::PluginV3;
-    pub use export_plugin_v3_macros::export_plugin_v3_async;
+    pub use crate::v3::adapter::PluginContextAdapter;
     pub use crate::v3::context::{PluginContext, RequestError, SendError};
     pub use crate::v3::host::Host;
     pub use crate::v3::plugin_async::PluginImplV3Async;
     pub use async_trait::async_trait;
-    pub use crate::v3::adapter::PluginContextAdapter;
+    pub use export_plugin_v3_macros::export_plugin_v3_async;
 }
 
 pub fn validate_plugin_v3(p: *const PluginV3) -> Result<(), AbiError> {

@@ -61,13 +61,20 @@ mod tests {
     #[test]
     fn test_browser_id_creation() {
         let browser_id = BrowserId::new("dummy", "00000000-0000-0000-0000-000000000001");
-        assert_eq!(browser_id.as_str(), "dummy_00000000-0000-0000-0000-000000000001");
+        assert_eq!(
+            browser_id.as_str(),
+            "dummy_00000000-0000-0000-0000-000000000001"
+        );
     }
 
     #[test]
     fn test_browser_id_from_string() {
-        let browser_id = BrowserId::from_string("YouTubeLive_12345678-1234-1234-1234-123456789012".to_string());
-        assert_eq!(browser_id.as_str(), "YouTubeLive_12345678-1234-1234-1234-123456789012");
+        let browser_id =
+            BrowserId::from_string("YouTubeLive_12345678-1234-1234-1234-123456789012".to_string());
+        assert_eq!(
+            browser_id.as_str(),
+            "YouTubeLive_12345678-1234-1234-1234-123456789012"
+        );
     }
 
     #[test]

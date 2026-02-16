@@ -42,9 +42,7 @@ async fn test_full_connection_lifecycle() {
     assert_eq!(connections[0].name, "My Connection");
 
     // 3. 接続を削除（Createdステータスなので削除可能）
-    let result = core_addr
-        .send(RemoveConnection { connection_id })
-        .await;
+    let result = core_addr.send(RemoveConnection { connection_id }).await;
     assert!(result.is_ok());
 
     // 少し待機
@@ -114,7 +112,11 @@ async fn test_multiple_connections_lifecycle() {
 
     // 残りの接続を削除
     for &conn_id in &[connection_ids[0], connection_ids[2]] {
-        let result = core_addr.send(RemoveConnection { connection_id: conn_id }).await;
+        let result = core_addr
+            .send(RemoveConnection {
+                connection_id: conn_id,
+            })
+            .await;
         assert!(result.is_ok());
     }
 
@@ -147,9 +149,7 @@ async fn test_connection_status_lifecycle() {
 
     // ステータスは CoreActor 内部でのみ変更されるため、
     // ここでは初期状態と削除のみをテスト
-    let result = core_addr
-        .send(RemoveConnection { connection_id })
-        .await;
+    let result = core_addr.send(RemoveConnection { connection_id }).await;
     assert!(result.is_ok());
 
     tokio::time::sleep(Duration::from_millis(50)).await;

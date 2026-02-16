@@ -355,8 +355,14 @@ mod tests {
         ctx.add_field("key3", true);
 
         assert_eq!(ctx.fields.len(), 3);
-        assert_eq!(ctx.fields.get("key1"), Some(&serde_json::Value::String("value1".to_string())));
-        assert_eq!(ctx.fields.get("key2"), Some(&serde_json::Value::Number(123.into())));
+        assert_eq!(
+            ctx.fields.get("key1"),
+            Some(&serde_json::Value::String("value1".to_string()))
+        );
+        assert_eq!(
+            ctx.fields.get("key2"),
+            Some(&serde_json::Value::Number(123.into()))
+        );
         assert_eq!(ctx.fields.get("key3"), Some(&serde_json::Value::Bool(true)));
     }
 
@@ -372,8 +378,14 @@ mod tests {
         let ctx = capture_context!("Test error", value = 42, name = "test");
         assert_eq!(ctx.message, "Test error");
         assert_eq!(ctx.fields.len(), 2);
-        assert_eq!(ctx.fields.get("value"), Some(&serde_json::Value::Number(42.into())));
-        assert_eq!(ctx.fields.get("name"), Some(&serde_json::Value::String("test".to_string())));
+        assert_eq!(
+            ctx.fields.get("value"),
+            Some(&serde_json::Value::Number(42.into()))
+        );
+        assert_eq!(
+            ctx.fields.get("name"),
+            Some(&serde_json::Value::String("test".to_string()))
+        );
     }
 
     #[test]
@@ -449,7 +461,10 @@ mod tests {
 
         // middle_ctx (inner_error) の確認
         let middle = outer_ctx.fields.get("inner_error").unwrap();
-        assert_eq!(middle.get("message").unwrap().as_str().unwrap(), "Middle error");
+        assert_eq!(
+            middle.get("message").unwrap().as_str().unwrap(),
+            "Middle error"
+        );
 
         // innermost_ctx (inner_error.inner_error) の確認
         let innermost = middle.get("fields").unwrap().get("inner_error").unwrap();

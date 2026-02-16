@@ -7,7 +7,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{RwLock, mpsc};
 use tokio_tungstenite::tungstenite::Message as WsMessage;
 use uuid::Uuid;
 
@@ -186,7 +186,10 @@ impl WebSocketServer {
 
                                     clients.write().await.insert(payload.plugin_id, client);
 
-                                    println!("=== WebSocketServer: EXE plugin registered, id: {}, name: {} ===", payload.plugin_id, payload.name);
+                                    println!(
+                                        "=== WebSocketServer: EXE plugin registered, id: {}, name: {} ===",
+                                        payload.plugin_id, payload.name
+                                    );
                                     tracing::info!(
                                         target:"mcv::plugin-exe-manager::WebSocketServer",
                                         plugin_id = %payload.plugin_id,
@@ -200,10 +203,15 @@ impl WebSocketServer {
                             // Coreにメッセージをフォワード
                             println!("=== WebSocketServer: Forwarding message to Core ===");
                             if let Err(e) = host.send_message(mcv_message).await {
-                                println!("=== WebSocketServer: Failed to forward message to Core: {} ===", e);
+                                println!(
+                                    "=== WebSocketServer: Failed to forward message to Core: {} ===",
+                                    e
+                                );
                                 tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to forward message to Core");
                             } else {
-                                println!("=== WebSocketServer: Message forwarded to Core successfully ===");
+                                println!(
+                                    "=== WebSocketServer: Message forwarded to Core successfully ==="
+                                );
                             }
                         }
                         Err(e) => {

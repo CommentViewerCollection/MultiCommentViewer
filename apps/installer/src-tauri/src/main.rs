@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use mcv_updater::{UpdateChecker, InstallerUpdateInfo, McvUpdateInfo, PluginListItem};
+use mcv_updater::{InstallerUpdateInfo, McvUpdateInfo, PluginListItem, UpdateChecker};
 use std::path::PathBuf;
 use sysinfo::System;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -10,8 +10,8 @@ use winreg::enums::*;
 #[cfg(windows)]
 use winreg::RegKey;
 
-use std::sync::Mutex;
 use once_cell::sync::Lazy;
+use std::sync::Mutex;
 
 /// グローバル変数: アンインストール対象を保持
 static UNINSTALL_TARGET: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
@@ -33,10 +33,17 @@ async fn check_installer_update(
         CURRENT_VERSION
     );
 
-    match state.update_checker.check_installer_update(CURRENT_VERSION).await {
+    match state
+        .update_checker
+        .check_installer_update(CURRENT_VERSION)
+        .await
+    {
         Ok(update_info) => {
             if let Some(ref info) = update_info {
-                println!("Installer update available: {} -> {}", CURRENT_VERSION, info.version);
+                println!(
+                    "Installer update available: {} -> {}",
+                    CURRENT_VERSION, info.version
+                );
             } else {
                 println!("No installer update available");
             }
@@ -55,12 +62,22 @@ async fn check_mcv_update(
     state: State<'_, AppState>,
     current_version: String,
 ) -> Result<Option<McvUpdateInfo>, String> {
-    println!("Checking for mcv updates... Current version: {}", current_version);
+    println!(
+        "Checking for mcv updates... Current version: {}",
+        current_version
+    );
 
-    match state.update_checker.check_mcv_update(&current_version).await {
+    match state
+        .update_checker
+        .check_mcv_update(&current_version)
+        .await
+    {
         Ok(update_info) => {
             if let Some(ref info) = update_info {
-                println!("Mcv update available: {} -> {}", current_version, info.version);
+                println!(
+                    "Mcv update available: {} -> {}",
+                    current_version, info.version
+                );
             } else {
                 println!("No mcv update available");
             }
@@ -154,11 +171,11 @@ async fn install_mcv(zip_path: String, dest_dir: String) -> Result<(), String> {
     println!("Installing mcv from: {}", zip_path);
     println!("Destination: {}", dest_dir);
 
-    let zip_file = std::fs::File::open(&zip_path)
-        .map_err(|e| format!("Failed to open ZIP file: {}", e))?;
+    let zip_file =
+        std::fs::File::open(&zip_path).map_err(|e| format!("Failed to open ZIP file: {}", e))?;
 
-    let mut archive = zip::ZipArchive::new(zip_file)
-        .map_err(|e| format!("Failed to read ZIP archive: {}", e))?;
+    let mut archive =
+        zip::ZipArchive::new(zip_file).map_err(|e| format!("Failed to read ZIP archive: {}", e))?;
 
     let dest_path = PathBuf::from(&dest_dir);
 
@@ -242,8 +259,8 @@ async fn install_plugin(dll_path: String, dest_dir: String) -> Result<(), String
 #[tauri::command]
 async fn check_existing_installation() -> Result<Option<String>, String> {
     // %LOCALAPPDATA%\Programs\MultiCommentViewer\mcv.exe の存在をチェック
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let mcv_path = PathBuf::from(local_app_data)
         .join("Programs")
@@ -280,15 +297,14 @@ async fn check_existing_installation() -> Result<Option<String>, String> {
 /// LOCALAPPDATAパスを取得
 #[tauri::command]
 async fn get_local_app_data() -> Result<String, String> {
-    std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())
+    std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())
 }
 
 /// mcvを起動
 #[tauri::command]
 async fn launch_mcv() -> Result<(), String> {
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let mcv_path = PathBuf::from(local_app_data)
         .join("Programs")
@@ -316,7 +332,9 @@ async fn get_mcv_download_url(
     version: String,
     channel: String,
 ) -> Result<String, String> {
-    Ok(state.update_checker.build_mcv_download_url(&version, &channel))
+    Ok(state
+        .update_checker
+        .build_mcv_download_url(&version, &channel))
 }
 
 /// プラグインのダウンロードURLを取得
@@ -327,7 +345,9 @@ async fn get_plugin_download_url(
     version: String,
     channel: String,
 ) -> Result<String, String> {
-    Ok(state.update_checker.build_plugin_download_url(&plugin_id, &version, &channel))
+    Ok(state
+        .update_checker
+        .build_plugin_download_url(&plugin_id, &version, &channel))
 }
 
 /// 一時ディレクトリのパスを取得
@@ -341,14 +361,11 @@ async fn get_temp_dir() -> Result<String, String> {
 
 /// デスクトップショートカットを作成
 #[tauri::command]
-async fn create_desktop_shortcut(
-    target_path: String,
-    shortcut_name: String,
-) -> Result<(), String> {
+async fn create_desktop_shortcut(target_path: String, shortcut_name: String) -> Result<(), String> {
     println!("Creating desktop shortcut for: {}", target_path);
 
-    let desktop = std::env::var("USERPROFILE")
-        .map_err(|_| "Failed to get user profile".to_string())?;
+    let desktop =
+        std::env::var("USERPROFILE").map_err(|_| "Failed to get user profile".to_string())?;
     let desktop_path = format!("{}\\Desktop", desktop);
 
     let ps_command = format!(
@@ -375,14 +392,10 @@ async fn create_desktop_shortcut(
 
 /// スタートメニューエントリを作成
 #[tauri::command]
-async fn create_start_menu_entry(
-    target_path: String,
-    app_name: String,
-) -> Result<(), String> {
+async fn create_start_menu_entry(target_path: String, app_name: String) -> Result<(), String> {
     println!("Creating Start Menu entry for: {}", target_path);
 
-    let start_menu = std::env::var("APPDATA")
-        .map_err(|_| "Failed to get APPDATA".to_string())?;
+    let start_menu = std::env::var("APPDATA").map_err(|_| "Failed to get APPDATA".to_string())?;
     let programs_path = format!("{}\\Microsoft\\Windows\\Start Menu\\Programs", start_menu);
     let app_folder = format!("{}\\{}", programs_path, app_name);
 
@@ -427,8 +440,12 @@ async fn register_mcv_to_windows_apps(
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\MultiCommentViewer";
 
-    let (key, _) = hklm.create_subkey(path)
-        .map_err(|e| format!("Failed to create registry key: {}. Administrator privileges may be required.", e))?;
+    let (key, _) = hklm.create_subkey(path).map_err(|e| {
+        format!(
+            "Failed to create registry key: {}. Administrator privileges may be required.",
+            e
+        )
+    })?;
 
     key.set_value("DisplayName", &"MultiCommentViewer")
         .map_err(|e| format!("Failed to set DisplayName: {}", e))?;
@@ -470,16 +487,18 @@ async fn register_mcv_to_windows_apps(
 /// インストーラーをWindowsアプリとして登録
 #[cfg(windows)]
 #[tauri::command]
-async fn register_installer_to_windows_apps(
-    installer_path: String,
-) -> Result<(), String> {
+async fn register_installer_to_windows_apps(installer_path: String) -> Result<(), String> {
     println!("Registering installer to Windows apps...");
 
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\MultiCommentViewerInstaller";
 
-    let (key, _) = hklm.create_subkey(path)
-        .map_err(|e| format!("Failed to create registry key: {}. Administrator privileges may be required.", e))?;
+    let (key, _) = hklm.create_subkey(path).map_err(|e| {
+        format!(
+            "Failed to create registry key: {}. Administrator privileges may be required.",
+            e
+        )
+    })?;
 
     key.set_value("DisplayName", &"MultiCommentViewer Installer & Updater")
         .map_err(|e| format!("Failed to set DisplayName: {}", e))?;
@@ -531,7 +550,8 @@ async fn unregister_from_windows_apps(
     let uninstall_key = hklm.open_subkey_with_flags(uninstall_path, KEY_WRITE)
         .map_err(|e| format!("Failed to open Uninstall registry key: {}. Administrator privileges may be required.", e))?;
 
-    uninstall_key.delete_subkey(&app_name)
+    uninstall_key
+        .delete_subkey(&app_name)
         .map_err(|e| format!("Failed to delete registry key {}: {}", app_name, e))?;
 
     println!("{} successfully unregistered from Windows apps", app_name);
@@ -583,12 +603,12 @@ async fn copy_installer_to_persistent_location() -> Result<String, String> {
     println!("Copying installer to persistent location...");
 
     // 現在の実行ファイルパスを取得
-    let current_exe = std::env::current_exe()
-        .map_err(|e| format!("Failed to get current exe path: {}", e))?;
+    let current_exe =
+        std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
 
     // 固定場所のパスを構築
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let dest_dir = PathBuf::from(local_app_data)
         .join("Programs")
@@ -619,12 +639,12 @@ async fn copy_installer_to_persistent_location() -> Result<String, String> {
 #[tauri::command]
 async fn is_installer_in_persistent_location() -> Result<bool, String> {
     // 現在の実行ファイルパスを取得
-    let current_exe = std::env::current_exe()
-        .map_err(|e| format!("Failed to get current exe path: {}", e))?;
+    let current_exe =
+        std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
 
     // 固定場所のパスを構築
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let persistent_path = PathBuf::from(local_app_data)
         .join("Programs")
@@ -645,8 +665,8 @@ async fn is_installer_in_persistent_location() -> Result<bool, String> {
 /// インストーラーのデフォルトインストール先パスを取得
 #[tauri::command]
 async fn get_installer_default_install_path() -> Result<String, String> {
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let path = PathBuf::from(local_app_data)
         .join("Programs")
@@ -661,9 +681,10 @@ async fn is_mcv_running() -> Result<bool, String> {
     let mut system = System::new_all();
     system.refresh_processes();
 
-    let is_running = system.processes().values().any(|process| {
-        process.name().eq_ignore_ascii_case("mcv.exe")
-    });
+    let is_running = system
+        .processes()
+        .values()
+        .any(|process| process.name().eq_ignore_ascii_case("mcv.exe"));
 
     Ok(is_running)
 }
@@ -675,34 +696,25 @@ async fn get_uninstall_mode() -> Result<Option<String>, String> {
 }
 
 /// ユーザーデータ識別用のパターン
-const USER_DATA_PATTERNS: &[&str] = &[
-    "config.json",
-    "logs.db",
-    "user_data",
-    "settings",
-];
+const USER_DATA_PATTERNS: &[&str] = &["config.json", "logs.db", "user_data", "settings"];
 
 /// パスがユーザーデータかどうか判定
 fn is_user_data(path: &std::path::Path) -> bool {
-    let file_name = path.file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("");
+    let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-    USER_DATA_PATTERNS.iter().any(|pattern| {
-        file_name.contains(pattern)
-    })
+    USER_DATA_PATTERNS
+        .iter()
+        .any(|pattern| file_name.contains(pattern))
 }
 
 /// mcvをアンインストール
 #[tauri::command]
-async fn uninstall_mcv(
-    keep_user_data: bool,
-) -> Result<(), String> {
+async fn uninstall_mcv(keep_user_data: bool) -> Result<(), String> {
     println!("Uninstalling mcv... (keep_user_data: {})", keep_user_data);
 
     // mcvインストールディレクトリを取得
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let mcv_dir = PathBuf::from(&local_app_data)
         .join("Programs")
@@ -748,8 +760,8 @@ async fn uninstall_mcv(
     }
 
     // 2. デスクトップショートカット削除
-    let desktop = std::env::var("USERPROFILE")
-        .map_err(|_| "Failed to get USERPROFILE".to_string())?;
+    let desktop =
+        std::env::var("USERPROFILE").map_err(|_| "Failed to get USERPROFILE".to_string())?;
     let desktop_shortcut = PathBuf::from(desktop)
         .join("Desktop")
         .join("MultiCommentViewer.lnk");
@@ -761,8 +773,7 @@ async fn uninstall_mcv(
     }
 
     // 3. スタートメニューエントリ削除
-    let start_menu = std::env::var("APPDATA")
-        .map_err(|_| "Failed to get APPDATA".to_string())?;
+    let start_menu = std::env::var("APPDATA").map_err(|_| "Failed to get APPDATA".to_string())?;
     let start_menu_entry = PathBuf::from(start_menu)
         .join("Microsoft")
         .join("Windows")
@@ -794,8 +805,8 @@ async fn uninstall_installer() -> Result<(), String> {
     println!("Uninstalling mcv-installer...");
 
     // インストーラーディレクトリを取得
-    let local_app_data = std::env::var("LOCALAPPDATA")
-        .map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
+    let local_app_data =
+        std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
 
     let installer_dir = PathBuf::from(&local_app_data)
         .join("Programs")
@@ -810,7 +821,9 @@ async fn uninstall_installer() -> Result<(), String> {
     {
         unregister_from_windows_apps("MultiCommentViewerInstaller".to_string())
             .await
-            .unwrap_or_else(|e| eprintln!("Failed to unregister installer from Windows apps: {}", e));
+            .unwrap_or_else(|e| {
+                eprintln!("Failed to unregister installer from Windows apps: {}", e)
+            });
     }
 
     // 2. PowerShellで遅延削除を実行（リトライロジック付き）
@@ -823,7 +836,10 @@ async fn uninstall_installer() -> Result<(), String> {
         installer_dir_str
     );
 
-    println!("Scheduling installer directory deletion: {}", installer_dir_str);
+    println!(
+        "Scheduling installer directory deletion: {}",
+        installer_dir_str
+    );
 
     std::process::Command::new("powershell")
         .args(&["-WindowStyle", "Hidden", "-Command", &ps_command])
@@ -847,17 +863,13 @@ async fn register_mcv_to_windows_apps(
 
 #[cfg(not(windows))]
 #[tauri::command]
-async fn register_installer_to_windows_apps(
-    _installer_path: String,
-) -> Result<(), String> {
+async fn register_installer_to_windows_apps(_installer_path: String) -> Result<(), String> {
     Err("This command is only available on Windows".to_string())
 }
 
 #[cfg(not(windows))]
 #[tauri::command]
-async fn unregister_from_windows_apps(
-    _app_name: String,
-) -> Result<(), String> {
+async fn unregister_from_windows_apps(_app_name: String) -> Result<(), String> {
     Err("This command is only available on Windows".to_string())
 }
 
@@ -900,7 +912,6 @@ fn main() {
                 }
             }
 
-
             // 管理者権限チェック（Windows）
             #[cfg(windows)]
             {
@@ -914,7 +925,9 @@ fn main() {
                     Err(_) => {
                         eprintln!("Warning: Running without administrator privileges.");
                         eprintln!("Some operations (Windows app registration) may fail.");
-                        eprintln!("Please run the installer as administrator if you encounter issues.");
+                        eprintln!(
+                            "Please run the installer as administrator if you encounter issues."
+                        );
                     }
                 }
             }

@@ -52,15 +52,9 @@ impl LogStorage {
             [],
         )?;
 
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_sent ON logs(sent)",
-            [],
-        )?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_sent ON logs(sent)", [])?;
 
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_level ON logs(level)",
-            [],
-        )?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_level ON logs(level)", [])?;
 
         Ok(Self { conn })
     }
@@ -151,8 +145,7 @@ impl LogStorage {
         let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
         let query = format!("UPDATE logs SET sent = 1 WHERE id IN ({})", placeholders);
 
-        self.conn
-            .execute(&query, rusqlite::params_from_iter(ids))?;
+        self.conn.execute(&query, rusqlite::params_from_iter(ids))?;
 
         Ok(())
     }
@@ -177,11 +170,11 @@ impl LogStorage {
 
     /// 未送信ログの数を取得
     pub fn count_unsent(&self) -> SqliteResult<usize> {
-        let count: usize = self
-            .conn
-            .query_row("SELECT COUNT(*) FROM logs WHERE sent = 0", [], |row| {
-                row.get(0)
-            })?;
+        let count: usize =
+            self.conn
+                .query_row("SELECT COUNT(*) FROM logs WHERE sent = 0", [], |row| {
+                    row.get(0)
+                })?;
         Ok(count)
     }
 
@@ -246,7 +239,8 @@ impl LogStorage {
 
         let mut stmt = self.conn.prepare(&query)?;
 
-        let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+        let params_refs: Vec<&dyn rusqlite::ToSql> =
+            params_vec.iter().map(|b| b.as_ref()).collect();
 
         let entries = stmt
             .query_map(params_refs.as_slice(), |row| {
@@ -356,8 +350,11 @@ mod tests {
 
         // 5件挿入
         for i in 0..5 {
-            let entry =
-                create_test_entry(&format!("test-{}", i), LogLevel::Info, &format!("Message {}", i));
+            let entry = create_test_entry(
+                &format!("test-{}", i),
+                LogLevel::Info,
+                &format!("Message {}", i),
+            );
             storage.insert(&entry).unwrap();
         }
 

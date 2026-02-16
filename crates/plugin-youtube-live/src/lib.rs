@@ -1,4 +1,4 @@
-﻿//! YouTube Live plugin for MultiCommentViewer
+//! YouTube Live plugin for MultiCommentViewer
 //!
 //! このプラグインはYouTube Liveのライブチャットからコメントを取得します。
 //!
@@ -15,12 +15,12 @@ mod video_id;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use connection::Connection;
-use message_handler::on_message_impl;
 use mcv_common::SiteId;
 use mcv_messages::{
-    AddSiteAckPayload, AddSitePayload, Message as McvMessage,
-    MessageDestination, MessageSource, MessageType, PluginHelloAckPayload, PluginHelloPayload,
+    AddSiteAckPayload, AddSitePayload, Message as McvMessage, MessageDestination, MessageSource,
+    MessageType, PluginHelloAckPayload, PluginHelloPayload,
 };
+use message_handler::on_message_impl;
 use plugin_abi_helper::v3::prelude::*;
 
 use uuid::Uuid;
@@ -163,9 +163,7 @@ impl PluginImplV3Async for YouTubeLivePlugin {
                 return;
             }
         };
-        if let Err(_e) = on_message_impl(&mut self, ctx.clone(), message).await {
-
-        }
+        if let Err(_e) = on_message_impl(&mut self, ctx.clone(), message).await {}
     }
 
     async fn on_shutdown(&mut self, _ctx: PluginContext) {}

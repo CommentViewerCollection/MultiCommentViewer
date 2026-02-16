@@ -3,9 +3,9 @@
 //! mcv_plugin_telemetry で PluginHost トレイトが必要なため、
 //! PluginContext をラップして PluginHost を実装する。
 
+use crate::v3::context::PluginContext;
 use mcv_messages::Message as McvMessage;
 use mcv_plugin_interface::{PluginError, PluginHost};
-use crate::v3::context::PluginContext;
 
 /// PluginContext → PluginHost adapter for mcv_tracing
 pub struct PluginContextAdapter {
@@ -14,9 +14,7 @@ pub struct PluginContextAdapter {
 
 impl PluginContextAdapter {
     pub fn new(ctx: PluginContext) -> Self {
-        Self {
-            ctx,
-        }
+        Self { ctx }
     }
 }
 

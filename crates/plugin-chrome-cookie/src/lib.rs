@@ -15,9 +15,9 @@ use aes_gcm::{Aes256Gcm, Nonce};
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use base64::Engine;
 use mcv_messages::{
-    AddBrowserAckPayload, AddBrowserPayload, Message as McvMessage, MessageDestination,
-    MessageSource, MessageType, PluginHelloAckPayload, PluginHelloPayload, GetCookiePayload,
-    GetCookieAckPayload, Cookie as McvCookie, BrowserId,
+    AddBrowserAckPayload, AddBrowserPayload, BrowserId, Cookie as McvCookie, GetCookieAckPayload,
+    GetCookiePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    PluginHelloAckPayload, PluginHelloPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use rusqlite::Connection;
@@ -346,18 +346,18 @@ impl PluginImplV3Async for ChromeCookiePlugin {
 
         match incoming.message_type {
             MessageType::GetCookie => {
-                let payload = match serde_json::from_value::<GetCookiePayload>(incoming.payload.clone())
-                {
-                    Ok(v) => v,
-                    Err(e) => {
-                        tracing::warn!(
-                            target: "mcv::plugin-chrome-cookie",
-                            error = %e,
-                            "Failed to parse GetCookie payload"
-                        );
-                        return;
-                    }
-                };
+                let payload =
+                    match serde_json::from_value::<GetCookiePayload>(incoming.payload.clone()) {
+                        Ok(v) => v,
+                        Err(e) => {
+                            tracing::warn!(
+                                target: "mcv::plugin-chrome-cookie",
+                                error = %e,
+                                "Failed to parse GetCookie payload"
+                            );
+                            return;
+                        }
+                    };
                 tracing::debug!(
                     target: "mcv::plugin-chrome-cookie",
                     browser_id = %payload.browser_id,

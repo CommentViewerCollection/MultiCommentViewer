@@ -3,7 +3,7 @@ use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload};
 use std::error::Error;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
-    connect_async, tungstenite::protocol::Message as WsMessage, MaybeTlsStream, WebSocketStream,
+    MaybeTlsStream, WebSocketStream, connect_async, tungstenite::protocol::Message as WsMessage,
 };
 use uuid::Uuid;
 
@@ -51,9 +51,7 @@ impl MockExePlugin {
         );
 
         let json = serde_json::to_string(&message)?;
-        self.ws_stream
-            .send(WsMessage::Text(json.into()))
-            .await?;
+        self.ws_stream.send(WsMessage::Text(json.into())).await?;
 
         Ok(())
     }
@@ -77,9 +75,7 @@ impl MockExePlugin {
     /// メッセージを送信
     pub async fn send_message(&mut self, message: McvMessage) -> Result<(), Box<dyn Error>> {
         let json = serde_json::to_string(&message)?;
-        self.ws_stream
-            .send(WsMessage::Text(json.into()))
-            .await?;
+        self.ws_stream.send(WsMessage::Text(json.into())).await?;
         Ok(())
     }
 

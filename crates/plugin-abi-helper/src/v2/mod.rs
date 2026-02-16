@@ -1,7 +1,7 @@
 use std::ffi::{CStr, CString, c_void};
 use std::os::raw::c_char;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
 use once_cell::sync::OnceCell;
@@ -12,13 +12,9 @@ use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 
 /// ===== グローバル（static mut 禁止対応） =====
 
-static PLUGIN_INSTANCE: OnceCell<
-    Arc<tokio::sync::Mutex<Box<dyn Plugin + Send>>>
-> = OnceCell::new();
+static PLUGIN_INSTANCE: OnceCell<Arc<tokio::sync::Mutex<Box<dyn Plugin + Send>>>> = OnceCell::new();
 
-static MESSAGE_CALLBACK: OnceCell<
-    extern "C" fn(*const c_char, *mut c_void)
-> = OnceCell::new();
+static MESSAGE_CALLBACK: OnceCell<extern "C" fn(*const c_char, *mut c_void)> = OnceCell::new();
 
 static USERDATA: AtomicUsize = AtomicUsize::new(0);
 
@@ -119,10 +115,7 @@ pub fn call_on_message(json: *const c_char) -> i32 {
     .unwrap_or(-1)
 }
 
-pub fn set_callback(
-    cb: extern "C" fn(*const c_char, *mut c_void),
-    userdata: *mut c_void,
-) {
+pub fn set_callback(cb: extern "C" fn(*const c_char, *mut c_void), userdata: *mut c_void) {
     let _ = MESSAGE_CALLBACK.set(cb);
     USERDATA.store(userdata as usize, Ordering::SeqCst);
 }

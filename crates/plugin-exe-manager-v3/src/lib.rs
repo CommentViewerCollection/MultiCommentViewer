@@ -10,8 +10,8 @@ use mcv_plugin_interface::{PluginError, PluginHost};
 use plugin_abi_helper::v3::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use std::time::Duration;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use process_manager::ProcessManager;
@@ -20,12 +20,15 @@ use websocket_server::WebSocketServer;
 /// PluginContext を PluginHost に変換するアダプター
 struct PluginContextAdapter {
     ctx: PluginContext,
-    _plugin_id: Uuid,  // 将来的な拡張用に保持
+    _plugin_id: Uuid, // 将来的な拡張用に保持
 }
 
 impl PluginContextAdapter {
     fn new(ctx: PluginContext, plugin_id: Uuid) -> Self {
-        Self { ctx, _plugin_id: plugin_id }
+        Self {
+            ctx,
+            _plugin_id: plugin_id,
+        }
     }
 }
 
@@ -54,7 +57,7 @@ pub struct ExePluginManagerV3Impl {
 impl ExePluginManagerV3Impl {
     pub fn new() -> Self {
         Self {
-            logical_plugin_id: Uuid::new_v4(),  // on_loadedで設定される
+            logical_plugin_id: Uuid::new_v4(), // on_loadedで設定される
             websocket_server: None,
             process_manager: None,
             routing_table: Arc::new(RwLock::new(HashMap::new())),
@@ -64,7 +67,10 @@ impl ExePluginManagerV3Impl {
     /// WebSocketサーバーとプロセスマネージャーを初期化
     async fn initialize(&mut self, ctx: PluginContext) -> Result<(), String> {
         // PluginContextAdapterを作成
-        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.logical_plugin_id));
+        let adapter = Arc::new(PluginContextAdapter::new(
+            ctx.clone(),
+            self.logical_plugin_id,
+        ));
 
         // WebSocketサーバーを起動（ポート競合時は自動的に次のポートを試行）
         let mut websocket_server = None;
@@ -79,7 +85,10 @@ impl ExePluginManagerV3Impl {
                         port = actual_port,
                         "WebSocket server successfully started and listening"
                     );
-                    println!("=== ExePluginManager: WebSocket server listening on port {} ===", actual_port);
+                    println!(
+                        "=== ExePluginManager: WebSocket server listening on port {} ===",
+                        actual_port
+                    );
                     websocket_server = Some(Arc::new(server));
                     break;
                 }
@@ -93,7 +102,9 @@ impl ExePluginManagerV3Impl {
         let websocket_server = websocket_server.ok_or_else(|| {
             format!(
                 "Failed to start WebSocket server: {}",
-                last_error.map(|e| e.to_string()).unwrap_or_else(|| "unknown".to_string())
+                last_error
+                    .map(|e| e.to_string())
+                    .unwrap_or_else(|| "unknown".to_string())
             )
         })?;
 
@@ -101,18 +112,20 @@ impl ExePluginManagerV3Impl {
 
         // plugin-helloコールバックを設定（ルーティングテーブルに登録）
         let routing_table_clone = Arc::clone(&self.routing_table);
-        websocket_server.set_on_plugin_registered(move |internal_id, logical_id| {
-            // 非同期コンテキストで実行する必要があるため、tokio::spawnを使用
-            let routing_table = Arc::clone(&routing_table_clone);
-            tokio::spawn(async move {
-                routing_table.write().await.insert(logical_id, internal_id);
-                tracing::debug!(
-                    logical_plugin_id = %logical_id,
-                    internal_physical_plugin_id = %internal_id,
-                    "Routing table entry added"
-                );
-            });
-        }).await;
+        websocket_server
+            .set_on_plugin_registered(move |internal_id, logical_id| {
+                // 非同期コンテキストで実行する必要があるため、tokio::spawnを使用
+                let routing_table = Arc::clone(&routing_table_clone);
+                tokio::spawn(async move {
+                    routing_table.write().await.insert(logical_id, internal_id);
+                    tracing::debug!(
+                        logical_plugin_id = %logical_id,
+                        internal_physical_plugin_id = %internal_id,
+                        "Routing table entry added"
+                    );
+                });
+            })
+            .await;
 
         // プロセスマネージャーを初期化
         let process_manager =
@@ -138,7 +151,10 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         tracing::info!(plugin_id = %self.logical_plugin_id, "ExePluginManager v3 loaded");
 
         // mcv-tracing初期化
-        let adapter = Arc::new(PluginContextAdapter::new(ctx.clone(), self.logical_plugin_id));
+        let adapter = Arc::new(PluginContextAdapter::new(
+            ctx.clone(),
+            self.logical_plugin_id,
+        ));
         if let Err(e) = mcv_plugin_telemetry::init_tracing(
             self.logical_plugin_id,
             adapter.clone(),
@@ -182,7 +198,10 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
                 websocket_url = format!("ws://127.0.0.1:{}", port),
                 "ExePluginManager initialized successfully"
             );
-            println!("=== ExePluginManager: WebSocket URL = ws://127.0.0.1:{} ===", port);
+            println!(
+                "=== ExePluginManager: WebSocket URL = ws://127.0.0.1:{} ===",
+                port
+            );
         } else {
             tracing::info!("ExePluginManager initialized and plugin-hello sent");
         }
@@ -220,7 +239,10 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
                         drop(routing_table); // ロック解放
 
                         let router = websocket_server.get_router();
-                        if let Err(e) = router.route_to_plugin(internal_physical_plugin_id, message).await {
+                        if let Err(e) = router
+                            .route_to_plugin(internal_physical_plugin_id, message)
+                            .await
+                        {
                             tracing::error!(
                                 error = %e,
                                 logical_plugin_id = %plugin_id,

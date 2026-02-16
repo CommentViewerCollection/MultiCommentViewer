@@ -5,10 +5,10 @@ use std::path::Path;
 /// 設定エントリ
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SettingsEntry {
-    pub target: String,              // "core" または plugin_id
-    pub schema: serde_json::Value,   // JSON Schema
-    pub data: serde_json::Value,     // 設定値
-    pub updated_at: i64,             // Unix timestamp
+    pub target: String,            // "core" または plugin_id
+    pub schema: serde_json::Value, // JSON Schema
+    pub data: serde_json::Value,   // 設定値
+    pub updated_at: i64,           // Unix timestamp
 }
 
 /// 設定ストレージ
@@ -53,9 +53,9 @@ impl SettingsStorage {
 
     /// 設定を取得
     pub fn get_settings(&self, target: &str) -> SqliteResult<Option<SettingsEntry>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT target, schema, data, updated_at FROM settings WHERE target = ?1"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT target, schema, data, updated_at FROM settings WHERE target = ?1")?;
 
         let mut rows = stmt.query(rusqlite::params![target])?;
 
@@ -65,14 +65,20 @@ impl SettingsStorage {
             let data_str: String = row.get(2)?;
             let updated_at: i64 = row.get(3)?;
 
-            let schema = serde_json::from_str(&schema_str)
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
-                    1, rusqlite::types::Type::Text, Box::new(e)
-                ))?;
-            let data = serde_json::from_str(&data_str)
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
-                    2, rusqlite::types::Type::Text, Box::new(e)
-                ))?;
+            let schema = serde_json::from_str(&schema_str).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    1,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
+            let data = serde_json::from_str(&data_str).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    2,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
 
             Ok(Some(SettingsEntry {
                 target,
@@ -87,9 +93,9 @@ impl SettingsStorage {
 
     /// すべての設定を取得
     pub fn list_all_settings(&self) -> SqliteResult<Vec<SettingsEntry>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT target, schema, data, updated_at FROM settings"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT target, schema, data, updated_at FROM settings")?;
 
         let rows = stmt.query_map([], |row| {
             let target: String = row.get(0)?;
@@ -97,14 +103,20 @@ impl SettingsStorage {
             let data_str: String = row.get(2)?;
             let updated_at: i64 = row.get(3)?;
 
-            let schema = serde_json::from_str(&schema_str)
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
-                    1, rusqlite::types::Type::Text, Box::new(e)
-                ))?;
-            let data = serde_json::from_str(&data_str)
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
-                    2, rusqlite::types::Type::Text, Box::new(e)
-                ))?;
+            let schema = serde_json::from_str(&schema_str).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    1,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
+            let data = serde_json::from_str(&data_str).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    2,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
 
             Ok(SettingsEntry {
                 target,

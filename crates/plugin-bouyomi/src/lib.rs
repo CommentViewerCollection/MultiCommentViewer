@@ -213,12 +213,12 @@ async fn send_to_bouyomi(
     let text_len = text_bytes.len() as i32;
 
     let mut buf: Vec<u8> = Vec::with_capacity(13 + text_bytes.len());
-    buf.extend_from_slice(&1i16.to_le_bytes());             // COMMAND = 0x0001
+    buf.extend_from_slice(&1i16.to_le_bytes()); // COMMAND = 0x0001
     buf.extend_from_slice(&voice_speed.to_le_bytes());
     buf.extend_from_slice(&voice_tone.to_le_bytes());
     buf.extend_from_slice(&voice_volume.to_le_bytes());
     buf.extend_from_slice(&voice_type.to_le_bytes());
-    buf.push(0u8);                                          // charCode = UTF-8
+    buf.push(0u8); // charCode = UTF-8
     buf.extend_from_slice(&text_len.to_le_bytes());
     buf.extend_from_slice(text_bytes);
 
@@ -424,14 +424,15 @@ impl PluginImplV3Async for BouyomiPlugin {
             }
 
             "update-settings" => {
-                let payload: UpdateSettingsPayload =
-                    match serde_json::from_value(value["payload"].clone()) {
-                        Ok(p) => p,
-                        Err(e) => {
-                            tracing::warn!(error = %e, "UpdateSettingsPayload のパースに失敗しました");
-                            return;
-                        }
-                    };
+                let payload: UpdateSettingsPayload = match serde_json::from_value(
+                    value["payload"].clone(),
+                ) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        tracing::warn!(error = %e, "UpdateSettingsPayload のパースに失敗しました");
+                        return;
+                    }
+                };
                 match serde_json::from_value::<BouyomiSettings>(payload.data) {
                     Ok(new_settings) => {
                         self.settings = new_settings;

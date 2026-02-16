@@ -27,7 +27,10 @@ async fn test_checksum_verification() {
     // 間違ったハッシュでテスト
     let wrong_hash = "0000000000000000000000000000000000000000000000000000000000000000";
     let result = updater.verify_checksum(&test_file, wrong_hash).await;
-    assert!(result.is_err(), "Checksum verification should fail with wrong hash");
+    assert!(
+        result.is_err(),
+        "Checksum verification should fail with wrong hash"
+    );
 
     // クリーンアップ
     tokio::fs::remove_file(&test_file).await.ok();
@@ -51,7 +54,10 @@ async fn test_checksum_with_empty_file() {
     let updater = UpdateChecker::new("https://api.example.com");
     let result = updater.verify_checksum(&test_file, expected_hash).await;
 
-    assert!(result.is_ok(), "Empty file checksum verification should succeed");
+    assert!(
+        result.is_ok(),
+        "Empty file checksum verification should succeed"
+    );
     assert_eq!(result.unwrap(), true);
 
     // クリーンアップ

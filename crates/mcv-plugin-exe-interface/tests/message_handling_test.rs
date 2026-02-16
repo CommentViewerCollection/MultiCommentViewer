@@ -2,7 +2,6 @@
 ///
 /// WebSocketのモックは複雑なため、チャネルベースの設計が
 /// 正しく動作することを確認する簡易テスト
-
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::mpsc;

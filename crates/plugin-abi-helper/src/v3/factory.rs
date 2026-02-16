@@ -1,9 +1,9 @@
 use std::ffi::c_void;
 
+use crate::abi::v3::{PLUGIN_ABI_VERSION, PluginV3};
+use crate::v3::context::PluginContext;
 use crate::v3::plugin_async::PluginImplV3Async;
 use crate::v3::plugin_runtime::PluginRuntimeV3;
-use crate::v3::context::PluginContext;
-use crate::abi::v3::{PluginV3, PLUGIN_ABI_VERSION};
 
 /// プラグイン状態（userdataに格納）
 /// context と runtime を一緒に保持する
@@ -32,7 +32,7 @@ impl PluginFactoryV3 {
         // 5. PluginV3を作成
         let plugin = Box::new(PluginV3 {
             abi_version: PLUGIN_ABI_VERSION,
-            plugin_id: [0u8; 16],  // nil UUID
+            plugin_id: [0u8; 16], // nil UUID
             host: core::ptr::null(),
             on_loaded: crate::v3::trampoline::on_loaded_trampoline,
             on_message: crate::v3::trampoline::on_message_trampoline,

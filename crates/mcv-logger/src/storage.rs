@@ -1,6 +1,6 @@
-use crate::schema::{LogEntry, SourceLocation, SystemInfo};
 #[cfg(test)]
 use crate::schema::LogLevel;
+use crate::schema::{LogEntry, SourceLocation, SystemInfo};
 use rusqlite::{params, Connection, Result as SqliteResult};
 use std::path::Path;
 
@@ -43,15 +43,9 @@ impl LogStorage {
             [],
         )?;
 
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_sent ON logs(sent)",
-            [],
-        )?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_sent ON logs(sent)", [])?;
 
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_level ON logs(level)",
-            [],
-        )?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_level ON logs(level)", [])?;
 
         Ok(Self { conn })
     }
@@ -142,8 +136,7 @@ impl LogStorage {
         let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
         let query = format!("UPDATE logs SET sent = 1 WHERE id IN ({})", placeholders);
 
-        self.conn
-            .execute(&query, rusqlite::params_from_iter(ids))?;
+        self.conn.execute(&query, rusqlite::params_from_iter(ids))?;
 
         Ok(())
     }
@@ -168,11 +161,11 @@ impl LogStorage {
 
     /// 未送信ログの数を取得
     pub fn count_unsent(&self) -> SqliteResult<usize> {
-        let count: usize = self
-            .conn
-            .query_row("SELECT COUNT(*) FROM logs WHERE sent = 0", [], |row| {
-                row.get(0)
-            })?;
+        let count: usize =
+            self.conn
+                .query_row("SELECT COUNT(*) FROM logs WHERE sent = 0", [], |row| {
+                    row.get(0)
+                })?;
         Ok(count)
     }
 }
@@ -252,8 +245,11 @@ mod tests {
 
         // 5件挿入
         for i in 0..5 {
-            let entry =
-                create_test_entry(&format!("test-{}", i), LogLevel::Info, &format!("Message {}", i));
+            let entry = create_test_entry(
+                &format!("test-{}", i),
+                LogLevel::Info,
+                &format!("Message {}", i),
+            );
             storage.insert(&entry).unwrap();
         }
 

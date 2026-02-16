@@ -1,6 +1,8 @@
 use crate::schema::{LogEntry, SystemInfo};
 use crate::storage::LogStorage;
-use mcv_log_schema::{capture_stacktrace, get_build_profile, LogLevel, MessageVisitor, SourceLocation};
+use mcv_log_schema::{
+    capture_stacktrace, get_build_profile, LogLevel, MessageVisitor, SourceLocation,
+};
 use std::sync::{Arc, Mutex};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 

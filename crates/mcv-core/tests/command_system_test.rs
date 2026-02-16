@@ -43,9 +43,7 @@ async fn test_send_comment_message_routing() {
     );
 
     // メッセージを送信（プラグインがない場合はエラーにならないことを確認）
-    let result = core_addr
-        .send(SendRequest { message })
-        .await;
+    let result = core_addr.send(SendRequest { message }).await;
 
     assert!(result.is_ok());
 
@@ -191,10 +189,7 @@ async fn test_multiple_connections() {
     assert_eq!(connections.len(), 2);
 
     // connection_id1とconnection_id3が残っていることを確認
-    let ids: Vec<Uuid> = connections
-        .iter()
-        .map(|c| c.connection_id)
-        .collect();
+    let ids: Vec<Uuid> = connections.iter().map(|c| c.connection_id).collect();
 
     assert!(ids.contains(&connection_id1));
     assert!(ids.contains(&connection_id3));

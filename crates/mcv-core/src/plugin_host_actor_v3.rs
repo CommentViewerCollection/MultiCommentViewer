@@ -322,7 +322,7 @@ mod tests {
         // テスト用のPluginV3を作成（factory.rsと同じ初期化）
         let mut plugin = PluginV3 {
             abi_version: 3,
-            plugin_id: [0u8; 16],  // nil UUID
+            plugin_id: [0u8; 16], // nil UUID
             host: ptr::null(),
             on_loaded: unsafe { std::mem::transmute(0usize) },
             on_message: unsafe { std::mem::transmute(0usize) },

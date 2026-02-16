@@ -27,7 +27,8 @@ impl Visit for MessageVisitor {
         if field.name() == "message" {
             self.message = Some(format!("{:?}", value));
         } else {
-            self.fields.push((field.name().to_string(), format!("{:?}", value)));
+            self.fields
+                .push((field.name().to_string(), format!("{:?}", value)));
         }
     }
 
@@ -35,7 +36,8 @@ impl Visit for MessageVisitor {
         if field.name() == "message" {
             self.message = Some(value.to_string());
         } else {
-            self.fields.push((field.name().to_string(), value.to_string()));
+            self.fields
+                .push((field.name().to_string(), value.to_string()));
         }
     }
 }
@@ -47,10 +49,7 @@ pub struct WsLayer {
 impl WsLayer {
     pub fn new(client: Option<Arc<ExePluginClient>>) -> Self {
         let plugin_id = client.as_ref().map(|c| c.plugin_id());
-        Self {
-            client,
-            plugin_id,
-        }
+        Self { client, plugin_id }
     }
 }
 
@@ -74,9 +73,9 @@ where
         event.record(&mut visitor);
 
         // メッセージを取得（messageフィールドがない場合はターゲットを使用）
-        let message = visitor.message.unwrap_or_else(|| {
-            event.metadata().target().to_string()
-        });
+        let message = visitor
+            .message
+            .unwrap_or_else(|| event.metadata().target().to_string());
 
         let metadata = event.metadata();
 

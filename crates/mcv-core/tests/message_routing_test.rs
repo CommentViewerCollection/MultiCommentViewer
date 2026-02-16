@@ -1,8 +1,8 @@
 use actix::prelude::*;
 use mcv_core::*;
 use mcv_messages::{
-    CommentReceivedPayload, ConnectedPayload, DisconnectedPayload,
-    Message, MessageDestination, MessageSource, MessageType,
+    CommentReceivedPayload, ConnectedPayload, DisconnectedPayload, Message, MessageDestination,
+    MessageSource, MessageType,
 };
 use std::sync::Arc;
 use std::time::Duration;
@@ -183,7 +183,10 @@ async fn test_multiple_event_routing() {
 
     // 複数のメッセージを順次送信
     let messages_to_send = vec![
-        (MessageType::Connected, serde_json::to_value(ConnectedPayload { connection_id }).unwrap()),
+        (
+            MessageType::Connected,
+            serde_json::to_value(ConnectedPayload { connection_id }).unwrap(),
+        ),
         (
             MessageType::CommentReceived,
             serde_json::to_value(CommentReceivedPayload {
@@ -220,7 +223,10 @@ async fn test_multiple_event_routing() {
             })
             .unwrap(),
         ),
-        (MessageType::Disconnected, serde_json::to_value(DisconnectedPayload { connection_id }).unwrap()),
+        (
+            MessageType::Disconnected,
+            serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
+        ),
     ];
 
     for (msg_type, payload) in messages_to_send {
@@ -231,10 +237,7 @@ async fn test_multiple_event_routing() {
             payload,
         );
 
-        let _ = core_addr
-            .send(SendRequest { message })
-            .await
-            .unwrap();
+        let _ = core_addr.send(SendRequest { message }).await.unwrap();
     }
 
     // 少し待機

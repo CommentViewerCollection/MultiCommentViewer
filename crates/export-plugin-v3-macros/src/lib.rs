@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Type};
+use syn::{Type, parse_macro_input};
 
 /// v3非同期プラグインをエクスポートするproc-macro
 ///

@@ -1,4 +1,7 @@
-use crate::{abi::v3::PluginV3, v3::{AbiError, validate_plugin_v3}};
+use crate::{
+    abi::v3::PluginV3,
+    v3::{AbiError, validate_plugin_v3},
+};
 
 // destroy_plugin_v3 は factory.rs に移動済み
 pub use crate::v3::factory::destroy_plugin_v3;

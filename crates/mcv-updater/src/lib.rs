@@ -223,7 +223,10 @@ impl UpdateChecker {
     /// # Returns
     /// ダウンロードURL
     pub fn build_mcv_download_url(&self, version: &str, channel: &str) -> String {
-        format!("{}/api/mcv/core/{}/{}/download", self.api_base_url, version, channel)
+        format!(
+            "{}/api/mcv/core/{}/{}/download",
+            self.api_base_url, version, channel
+        )
     }
 
     /// プラグインのダウンロードURLを構築
@@ -235,8 +238,16 @@ impl UpdateChecker {
     ///
     /// # Returns
     /// ダウンロードURL
-    pub fn build_plugin_download_url(&self, plugin_id: &str, version: &str, channel: &str) -> String {
-        format!("{}/api/mcv/plugins/{}/{}/{}/download", self.api_base_url, plugin_id, version, channel)
+    pub fn build_plugin_download_url(
+        &self,
+        plugin_id: &str,
+        version: &str,
+        channel: &str,
+    ) -> String {
+        format!(
+            "{}/api/mcv/plugins/{}/{}/{}/download",
+            self.api_base_url, plugin_id, version, channel
+        )
     }
 
     /// ファイルをダウンロード

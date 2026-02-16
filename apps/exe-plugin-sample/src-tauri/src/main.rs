@@ -75,9 +75,14 @@ async fn handle_message_state_update(
 
     match message.message_type {
         MessageType::PluginAdded => {
-            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+            if let Ok(payload) =
+                serde_json::from_value::<serde_json::Value>(message.payload.clone())
+            {
                 // 各フィールドの取得を個別に確認
-                let plugin_id = payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                let plugin_id = payload
+                    .get("plugin_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| Uuid::parse_str(s).ok());
                 let name = payload.get("name").and_then(|v| v.as_str());
                 let roles = payload.get("role").and_then(|v| v.as_array());
                 let api_version = payload.get("api_version").and_then(|v| v.as_str());
@@ -96,11 +101,16 @@ async fn handle_message_state_update(
                     tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-added: missing 'api_version' field");
                 }
 
-                if let (Some(plugin_id), Some(name), Some(roles), Some(api_version)) = (plugin_id, name, roles, api_version) {
+                if let (Some(plugin_id), Some(name), Some(roles), Some(api_version)) =
+                    (plugin_id, name, roles, api_version)
+                {
                     let plugin_info = PluginInfo {
                         plugin_id,
                         name: name.to_string(),
-                        roles: roles.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect(),
+                        roles: roles
+                            .iter()
+                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .collect(),
                         api_version: api_version.to_string(),
                     };
                     plugins.write().await.insert(plugin_id, plugin_info);
@@ -113,9 +123,14 @@ async fn handle_message_state_update(
             }
         }
         MessageType::ConnectionAdded => {
-            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
+            if let Ok(payload) =
+                serde_json::from_value::<serde_json::Value>(message.payload.clone())
+            {
                 // 各フィールドの取得を個別に確認
-                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+                let connection_id = payload
+                    .get("connection_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| Uuid::parse_str(s).ok());
                 let name = payload.get("name").and_then(|v| v.as_str());
 
                 // 欠落フィールドをチェック
@@ -129,15 +144,33 @@ async fn handle_message_state_update(
                 if let (Some(connection_id), Some(name)) = (connection_id, name) {
                     let connection_info = ConnectionInfo {
                         connection_id,
-                        plugin_id: payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
+                        plugin_id: payload
+                            .get("plugin_id")
+                            .and_then(|v| v.as_str())
+                            .and_then(|s| Uuid::parse_str(s).ok()),
                         name: name.to_string(),
-                        site_id: payload.get("site_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
-                        site_name: payload.get("site_name").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                        url: payload.get("url").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                        browser_id: payload.get("browser_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
+                        site_id: payload
+                            .get("site_id")
+                            .and_then(|v| v.as_str())
+                            .and_then(|s| Uuid::parse_str(s).ok()),
+                        site_name: payload
+                            .get("site_name")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string()),
+                        url: payload
+                            .get("url")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string()),
+                        browser_id: payload
+                            .get("browser_id")
+                            .and_then(|v| v.as_str())
+                            .and_then(|s| Uuid::parse_str(s).ok()),
                         status: "disconnected".to_string(),
                     };
-                    connections.write().await.insert(connection_id, connection_info);
+                    connections
+                        .write()
+                        .await
+                        .insert(connection_id, connection_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, name = %name, "Connection added to state");
                 } else {
                     tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-added: failed to parse required fields");
@@ -147,8 +180,13 @@ async fn handle_message_state_update(
             }
         }
         MessageType::Connected => {
-            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
-                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+            if let Ok(payload) =
+                serde_json::from_value::<serde_json::Value>(message.payload.clone())
+            {
+                let connection_id = payload
+                    .get("connection_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| Uuid::parse_str(s).ok());
 
                 // 欠落フィールドをチェック
                 if connection_id.is_none() {
@@ -168,8 +206,13 @@ async fn handle_message_state_update(
             }
         }
         MessageType::Disconnected => {
-            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
-                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+            if let Ok(payload) =
+                serde_json::from_value::<serde_json::Value>(message.payload.clone())
+            {
+                let connection_id = payload
+                    .get("connection_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| Uuid::parse_str(s).ok());
 
                 // 欠落フィールドをチェック
                 if connection_id.is_none() {
@@ -189,8 +232,13 @@ async fn handle_message_state_update(
             }
         }
         MessageType::ConnectionRemoved => {
-            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
-                let connection_id = payload.get("connection_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+            if let Ok(payload) =
+                serde_json::from_value::<serde_json::Value>(message.payload.clone())
+            {
+                let connection_id = payload
+                    .get("connection_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| Uuid::parse_str(s).ok());
 
                 // 欠落フィールドをチェック
                 if connection_id.is_none() {
@@ -206,8 +254,13 @@ async fn handle_message_state_update(
             }
         }
         MessageType::PluginRemoved => {
-            if let Ok(payload) = serde_json::from_value::<serde_json::Value>(message.payload.clone()) {
-                let plugin_id = payload.get("plugin_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+            if let Ok(payload) =
+                serde_json::from_value::<serde_json::Value>(message.payload.clone())
+            {
+                let plugin_id = payload
+                    .get("plugin_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|s| Uuid::parse_str(s).ok());
 
                 // 欠落フィールドをチェック
                 if plugin_id.is_none() {
@@ -345,7 +398,10 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfo>, Stri
 
 /// 特定のプラグイン情報を取得
 #[tauri::command]
-async fn get_plugin(plugin_id: String, state: State<'_, AppState>) -> Result<Option<PluginInfo>, String> {
+async fn get_plugin(
+    plugin_id: String,
+    state: State<'_, AppState>,
+) -> Result<Option<PluginInfo>, String> {
     let uuid = Uuid::parse_str(&plugin_id).map_err(|e| format!("Invalid UUID: {}", e))?;
     let plugins = state.plugins.read().await;
     Ok(plugins.get(&uuid).cloned())
@@ -360,7 +416,10 @@ async fn get_connections(state: State<'_, AppState>) -> Result<Vec<ConnectionInf
 
 /// 特定の接続情報を取得
 #[tauri::command]
-async fn get_connection(connection_id: String, state: State<'_, AppState>) -> Result<Option<ConnectionInfo>, String> {
+async fn get_connection(
+    connection_id: String,
+    state: State<'_, AppState>,
+) -> Result<Option<ConnectionInfo>, String> {
     let uuid = Uuid::parse_str(&connection_id).map_err(|e| format!("Invalid UUID: {}", e))?;
     let connections = state.connections.read().await;
     Ok(connections.get(&uuid).cloned())
@@ -368,7 +427,10 @@ async fn get_connection(connection_id: String, state: State<'_, AppState>) -> Re
 
 /// メッセージログを取得（最新N件）
 #[tauri::command]
-async fn get_messages(limit: Option<usize>, state: State<'_, AppState>) -> Result<Vec<McvMessage>, String> {
+async fn get_messages(
+    limit: Option<usize>,
+    state: State<'_, AppState>,
+) -> Result<Vec<McvMessage>, String> {
     let messages = state.messages.read().await;
     let limit = limit.unwrap_or(100);
     let start = if messages.len() > limit {

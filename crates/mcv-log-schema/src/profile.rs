@@ -9,11 +9,7 @@ pub fn get_build_profile() -> String {
     #[cfg(all(feature = "beta", not(feature = "alpha")))]
     return "beta".to_string();
 
-    #[cfg(all(
-        not(feature = "alpha"),
-        not(feature = "beta"),
-        feature = "stable"
-    ))]
+    #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
     return "stable".to_string();
 
     // フィーチャーフラグが指定されていない場合

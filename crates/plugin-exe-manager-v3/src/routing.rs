@@ -2,7 +2,7 @@ use mcv_messages::{Message as McvMessage, MessageDestination};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{RwLock, mpsc};
 use uuid::Uuid;
 
 #[derive(Debug, Error)]
@@ -148,7 +148,6 @@ impl MessageRouter {
 
         Ok(())
     }
-
 
     /// 接続中のクライアント数を取得
     pub async fn client_count(&self) -> usize {

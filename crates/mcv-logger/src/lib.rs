@@ -58,11 +58,7 @@ fn get_log_level() -> &'static str {
     #[cfg(all(feature = "beta", not(feature = "alpha")))]
     return "info";
 
-    #[cfg(all(
-        not(feature = "alpha"),
-        not(feature = "beta"),
-        feature = "stable"
-    ))]
+    #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
     return "error";
 
     // フィーチャーフラグが指定されていない場合
@@ -71,9 +67,7 @@ fn get_log_level() -> &'static str {
 }
 
 // 公開API
-pub use schema::{
-    capture_stacktrace, LogEntry, LogLevel, SourceLocation, StackFrame, SystemInfo,
-};
+pub use schema::{capture_stacktrace, LogEntry, LogLevel, SourceLocation, StackFrame, SystemInfo};
 pub use sender::{LogSenderActor, SendImmediately, SendUnsentLogs};
 pub use storage::LogStorage;
 

@@ -1,6 +1,4 @@
-use mcv_core::{
-    PluginLoaderRegistry, PluginLoaderStrategy, V2LoaderStrategy, V3LoaderStrategy,
-};
+use mcv_core::{PluginLoaderRegistry, PluginLoaderStrategy, V2LoaderStrategy, V3LoaderStrategy};
 
 #[test]
 fn test_registry_with_both_strategies() {

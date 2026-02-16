@@ -77,7 +77,9 @@ impl Serialize for MessageDestination {
     {
         match self {
             MessageDestination::Core => serializer.serialize_str("core"),
-            MessageDestination::Plugin { plugin_id } => serializer.serialize_str(&plugin_id.to_string()),
+            MessageDestination::Plugin { plugin_id } => {
+                serializer.serialize_str(&plugin_id.to_string())
+            }
             MessageDestination::Broadcast => serializer.serialize_str("broadcast"),
         }
     }
@@ -245,8 +247,7 @@ pub struct GetCookieAckPayload {
 
 /// add-connectionのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AddConnectionPayload {
-}
+pub struct AddConnectionPayload {}
 
 /// connection-addedのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -535,11 +536,7 @@ impl Message {
     }
 
     /// レスポンスメッセージを作成
-    pub fn create_response(
-        &self,
-        message_type: MessageType,
-        payload: serde_json::Value,
-    ) -> Self {
+    pub fn create_response(&self, message_type: MessageType, payload: serde_json::Value) -> Self {
         Self {
             message_type,
             src: self.dst.to_source(),
@@ -656,7 +653,10 @@ mod tests {
         let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
         let plugin = MessageSource::Plugin { plugin_id };
         let json = serde_json::to_value(&plugin).unwrap();
-        assert_eq!(json, serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string()));
+        assert_eq!(
+            json,
+            serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string())
+        );
 
         let deserialized: MessageSource = serde_json::from_value(json).unwrap();
         assert_eq!(plugin, deserialized);
@@ -676,7 +676,10 @@ mod tests {
         let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
         let plugin = MessageDestination::Plugin { plugin_id };
         let json = serde_json::to_value(&plugin).unwrap();
-        assert_eq!(json, serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string()));
+        assert_eq!(
+            json,
+            serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string())
+        );
 
         let deserialized: MessageDestination = serde_json::from_value(json).unwrap();
         assert_eq!(plugin, deserialized);

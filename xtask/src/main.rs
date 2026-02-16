@@ -47,7 +47,7 @@ fn main() -> Result<()> {
     // copy core artifacts
     copy_binary(&args.crate_name, &args.target, &stage_root)?;
     copy_pdb(&args.crate_name, &args.target, &stage_root)?;
-    
+
     // copy plugins
     if !args.plugin.is_empty() {
         let plugin_dir = stage_root.join("plugins");

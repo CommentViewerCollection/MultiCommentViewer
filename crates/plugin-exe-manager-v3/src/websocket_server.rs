@@ -7,7 +7,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{RwLock, mpsc};
 use tokio_tungstenite::tungstenite::Message as WsMessage;
 use uuid::Uuid;
 
@@ -71,7 +71,14 @@ impl WebSocketServer {
         let host_clone = Arc::clone(&host);
         let on_plugin_registered_clone = Arc::clone(&on_plugin_registered);
         tokio::spawn(async move {
-            Self::server_loop(listener, clients_clone, host_clone, on_plugin_registered_clone, shutdown_rx).await;
+            Self::server_loop(
+                listener,
+                clients_clone,
+                host_clone,
+                on_plugin_registered_clone,
+                shutdown_rx,
+            )
+            .await;
         });
 
         Ok(Self {
@@ -185,7 +192,9 @@ impl WebSocketServer {
 
                                     // mcv_messageのsrcからlogical_plugin_idを取得
                                     let logical_plugin_id = match &mcv_message.src {
-                                        mcv_messages::MessageSource::Plugin { plugin_id } => *plugin_id,
+                                        mcv_messages::MessageSource::Plugin { plugin_id } => {
+                                            *plugin_id
+                                        }
                                         _ => payload.plugin_id, // フォールバック
                                     };
 
@@ -197,10 +206,17 @@ impl WebSocketServer {
                                         roles: payload.role.clone(),
                                     };
 
-                                    clients.write().await.insert(internal_physical_plugin_id, client);
+                                    clients
+                                        .write()
+                                        .await
+                                        .insert(internal_physical_plugin_id, client);
 
-                                    println!("=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
-                                        internal_physical_plugin_id, logical_plugin_id, payload.name);
+                                    println!(
+                                        "=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
+                                        internal_physical_plugin_id,
+                                        logical_plugin_id,
+                                        payload.name
+                                    );
                                     tracing::info!(
                                         target:"mcv::plugin-exe-manager::WebSocketServer",
                                         internal_physical_plugin_id = %internal_physical_plugin_id,
@@ -225,10 +241,15 @@ impl WebSocketServer {
                             // Coreにメッセージをフォワード
                             println!("=== WebSocketServer: Forwarding message to Core ===");
                             if let Err(e) = host.send_message(mcv_message).await {
-                                println!("=== WebSocketServer: Failed to forward message to Core: {} ===", e);
+                                println!(
+                                    "=== WebSocketServer: Failed to forward message to Core: {} ===",
+                                    e
+                                );
                                 tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to forward message to Core");
                             } else {
-                                println!("=== WebSocketServer: Message forwarded to Core successfully ===");
+                                println!(
+                                    "=== WebSocketServer: Message forwarded to Core successfully ==="
+                                );
                             }
                         }
                         Err(e) => {
@@ -303,7 +324,6 @@ impl WebSocketServer {
         let mut cb = self.on_plugin_registered.write().await;
         *cb = Some(Arc::new(callback));
     }
-
 
     /// WebSocketサーバーをシャットダウン
     pub async fn shutdown(&self) -> Result<(), WebSocketError> {

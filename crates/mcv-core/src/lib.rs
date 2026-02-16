@@ -12,9 +12,9 @@ pub mod site_browser_manager;
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
 pub use connection_persistence::{ConnectionsStorage, PersistedConnection};
 pub use core_actor::{
-    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetLogicalPlugins, GetSites, LogicalPluginInfo,
-    PluginInfo, RegisterPhysicalPlugin, RemoveConnection, RenameConnection, SendMessageToCore,
-    SendRequest, SetConnectionSite, UpdateConnectionSettings,
+    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetLogicalPlugins, GetSites,
+    LogicalPluginInfo, PluginInfo, RegisterPhysicalPlugin, RemoveConnection, RenameConnection,
+    SendMessageToCore, SendRequest, SetConnectionSite, UpdateConnectionSettings,
 };
 pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 pub use plugin_loader_strategy::{
@@ -87,51 +87,54 @@ impl PluginManager {
         Self::get_dll_plugin_path_from_manifest(reader, &dir_path)
     }
 
-fn read_dll_path_from_manifest<R: Read>(mut reader: R) -> Option<PathBuf> {
-    let mut buf = Vec::new();
-    reader.read_to_end(&mut buf).ok()?;
+    fn read_dll_path_from_manifest<R: Read>(mut reader: R) -> Option<PathBuf> {
+        let mut buf = Vec::new();
+        reader.read_to_end(&mut buf).ok()?;
 
-    // UTF-8 BOM を除去
-    const BOM: &[u8] = b"\xEF\xBB\xBF";
-    let buf = if buf.starts_with(BOM) {
-        &buf[BOM.len()..]
-    } else {
-        &buf[..]
-    };
+        // UTF-8 BOM を除去
+        const BOM: &[u8] = b"\xEF\xBB\xBF";
+        let buf = if buf.starts_with(BOM) {
+            &buf[BOM.len()..]
+        } else {
+            &buf[..]
+        };
 
-    let manifest: Manifest = match serde_json::from_slice(buf) {
-        Ok(m) => m,
-        Err(e) => {
-            tracing::error!("manifest parse failed: {}", e);
+        let manifest: Manifest = match serde_json::from_slice(buf) {
+            Ok(m) => m,
+            Err(e) => {
+                tracing::error!("manifest parse failed: {}", e);
+                return None;
+            }
+        };
+
+        Some(PathBuf::from(manifest.path))
+    }
+
+    fn get_dll_plugin_path_from_manifest<R: Read>(
+        reader: R,
+        manifest_dir: &Path,
+    ) -> Option<PathBuf> {
+        let manifest_path = Self::read_dll_path_from_manifest(reader)?;
+        tracing::trace!(target:"mcv::mcv-core::PluginManager", "manifest relative path = {:?}", manifest_path);
+
+        // 絶対パスまたはルート相対パスはディレクトリ外への脱出になるため拒否
+        if manifest_path.is_absolute() || manifest_path.has_root() {
             return None;
         }
-    };
 
-    Some(PathBuf::from(manifest.path))
-}
+        // ".." コンポーネントによるパストラバーサルを防止
+        if manifest_path
+            .components()
+            .any(|c| c == std::path::Component::ParentDir)
+        {
+            return None;
+        }
 
-fn get_dll_plugin_path_from_manifest<R: Read>(
-    reader: R,
-    manifest_dir: &Path,
-) -> Option<PathBuf> {
-    let manifest_path = Self::read_dll_path_from_manifest(reader)?;
-    tracing::trace!(target:"mcv::mcv-core::PluginManager", "manifest relative path = {:?}", manifest_path);
+        let joined_path = manifest_dir.join(manifest_path);
+        tracing::trace!(target:"mcv::mcv-core::PluginManager", "joined_path = {:?}", joined_path);
 
-    // 絶対パスまたはルート相対パスはディレクトリ外への脱出になるため拒否
-    if manifest_path.is_absolute() || manifest_path.has_root() {
-        return None;
+        Some(joined_path)
     }
-
-    // ".." コンポーネントによるパストラバーサルを防止
-    if manifest_path.components().any(|c| c == std::path::Component::ParentDir) {
-        return None;
-    }
-
-    let joined_path = manifest_dir.join(manifest_path);
-    tracing::trace!(target:"mcv::mcv-core::PluginManager", "joined_path = {:?}", joined_path);
-
-    Some(joined_path)
-}
     /// zip化されたプラグインのpathを取得する
     fn get_zip_dll_plugin_path(_entry: &DirEntry) -> Option<PathBuf> {
         None
@@ -185,8 +188,8 @@ fn get_dll_plugin_path_from_manifest<R: Read>(
         };
         //entryのタイプによってdllプラグインの配置方法が違う。タイプに合った読み込み方法を採用する
         let entries = entries.filter_map(|e| e.ok());
-        let a :Vec<DirEntry> = entries.collect();
-                tracing::info!(target:"mcv",count = a.len(), "候補DirEntry数");
+        let a: Vec<DirEntry> = entries.collect();
+        tracing::info!(target:"mcv",count = a.len(), "候補DirEntry数");
         let plugin_paths = a.iter().filter_map(|entry| {
             Self::get_bare_dll_plugin_path(&entry)
                 .or_else(|| Self::get_dir_dll_plugin_path(&entry))
@@ -200,7 +203,7 @@ fn get_dll_plugin_path_from_manifest<R: Read>(
                 return loaded_plugins;
             }
         };
-        let plugin_paths:Vec<PathBuf> = plugin_paths.collect();
+        let plugin_paths: Vec<PathBuf> = plugin_paths.collect();
         tracing::info!(target:"mcv",count = plugin_paths.len(), "候補プラグイン数");
         for path in plugin_paths {
             // Registryを使用してDLLをロード

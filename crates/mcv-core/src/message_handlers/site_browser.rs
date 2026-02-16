@@ -10,11 +10,7 @@ use crate::plugin_host_actor::SendMessageToPlugin;
 use crate::site_browser_manager::{BrowserInfo, SiteInfo};
 
 /// add-site メッセージのハンドラー
-pub fn handle_add_site(
-    actor: &mut CoreActor,
-    message: &McvMessage,
-    _ctx: &mut Context<CoreActor>,
-) {
+pub fn handle_add_site(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut Context<CoreActor>) {
     let payload: AddSitePayload = match serde_json::from_value(message.payload.clone()) {
         Ok(p) => p,
         Err(e) => {
@@ -67,10 +63,9 @@ pub fn handle_add_site(
     );
 
     // サイト登録完了後、Pending接続を確認して有効化
-    let activated_connections = actor.connection_manager.activate_pending_connections_by_site(
-        &site_info.site_id,
-        plugin_id,
-    );
+    let activated_connections = actor
+        .connection_manager
+        .activate_pending_connections_by_site(&site_info.site_id, plugin_id);
 
     if !activated_connections.is_empty() {
         tracing::info!(

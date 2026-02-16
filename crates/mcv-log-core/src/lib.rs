@@ -11,7 +11,7 @@ static GLOBAL_STORAGE: OnceLock<Arc<Mutex<storage::LogStorage>>> = OnceLock::new
 
 // グローバルなログ挿入時コールバック
 static LOG_INSERT_CALLBACK: OnceLock<
-    Arc<Mutex<Option<Box<dyn Fn(&schema::LogEntry) + Send + Sync>>>>
+    Arc<Mutex<Option<Box<dyn Fn(&schema::LogEntry) + Send + Sync>>>>,
 > = OnceLock::new();
 
 /// ロガーを初期化
@@ -60,9 +60,7 @@ pub fn set_log_insert_callback<F>(callback: F)
 where
     F: Fn(&schema::LogEntry) + Send + Sync + 'static,
 {
-    let callback_holder = LOG_INSERT_CALLBACK.get_or_init(|| {
-        Arc::new(Mutex::new(None))
-    });
+    let callback_holder = LOG_INSERT_CALLBACK.get_or_init(|| Arc::new(Mutex::new(None)));
 
     if let Ok(mut holder) = callback_holder.lock() {
         *holder = Some(Box::new(callback));
@@ -88,11 +86,7 @@ fn get_log_level() -> &'static str {
     #[cfg(all(feature = "beta", not(feature = "alpha")))]
     return "info";
 
-    #[cfg(all(
-        not(feature = "alpha"),
-        not(feature = "beta"),
-        feature = "stable"
-    ))]
+    #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
     return "error";
 
     // フィーチャーフラグが指定されていない場合

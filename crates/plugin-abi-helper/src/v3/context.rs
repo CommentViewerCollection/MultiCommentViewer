@@ -73,7 +73,11 @@ impl PluginContext {
 
     pub fn host(&self) -> Host {
         let raw = *self.inner.host.get().expect("host not initialized");
-        let plugin_id = *self.inner.plugin_id.get().expect("plugin_id not initialized");
+        let plugin_id = *self
+            .inner
+            .plugin_id
+            .get()
+            .expect("plugin_id not initialized");
         unsafe { Host::from_raw(raw, plugin_id) }
     }
 

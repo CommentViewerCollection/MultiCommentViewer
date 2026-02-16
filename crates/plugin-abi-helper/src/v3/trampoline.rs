@@ -45,6 +45,13 @@ pub unsafe extern "C" fn on_message_trampoline(
         let state = &*(plugin.userdata as *mut PluginState);
 
         let msg = std::slice::from_raw_parts(msg_ptr, msg_len).to_vec();
+        // requestの応答はここで先に消化し、逐次on_message実行待ちによる自己待機を避ける。
+        if let Ok(parsed) = serde_json::from_slice::<mcv_messages::Message>(&msg) {
+            if state.context.try_resolve_pending_response(&parsed) {
+                return 0;
+            }
+        }
+        // 互換維持: 解析不能/未解決メッセージは従来どおりon_messageへ渡す。
         state.runtime.send(RuntimeEvent::Message(msg));
 
         0

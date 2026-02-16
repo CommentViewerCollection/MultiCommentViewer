@@ -363,6 +363,90 @@ impl Default for CoreActor {
 // メッセージハンドラ
 // ============================================================================
 
+fn handle_core_request_message(
+    core: &mut CoreActor,
+    message: &McvMessage,
+    ctx: &mut Context<CoreActor>,
+    response_mode: bool,
+) -> Result<McvMessage, String> {
+    match message.message_type {
+        MessageType::AddConnection => {
+            message_handlers::connection::handle_add_connection(core, message, ctx);
+        }
+        MessageType::Connect => message_handlers::connection::handle_connect(core, message, ctx),
+        MessageType::Disconnect => {
+            message_handlers::connection::handle_disconnect(core, message, ctx);
+        }
+        MessageType::SendComment => {
+            message_handlers::comment::handle_send_comment(core, message, ctx);
+        }
+        MessageType::AddSite => {
+            message_handlers::site_browser::handle_add_site(core, message, ctx);
+        }
+        MessageType::AddBrowser => {
+            message_handlers::site_browser::handle_add_browser(core, message, ctx);
+        }
+        MessageType::SetConnectionSite => {
+            message_handlers::site_browser::handle_set_connection_site(core, message, ctx);
+        }
+        MessageType::UpdateConnectionSettings => {
+            message_handlers::site_browser::handle_update_connection_settings(core, message, ctx);
+        }
+        MessageType::CommentReceived => {
+            message_handlers::comment::handle_comment_received(core, message, ctx);
+        }
+        MessageType::Connected => {
+            message_handlers::connection::handle_connected(core, message, ctx);
+        }
+        MessageType::Disconnected => {
+            message_handlers::connection::handle_disconnected(core, message, ctx);
+        }
+        MessageType::GetSettingsSchema => {
+            return message_handlers::settings::handle_get_settings_schema(core, message, ctx);
+        }
+        MessageType::GetSettings => {
+            return message_handlers::settings::handle_get_settings(core, message, ctx);
+        }
+        MessageType::UpdateSettings => {
+            return message_handlers::settings::handle_update_settings(core, message, ctx);
+        }
+        _ => {
+            if response_mode {
+                return Err(format!(
+                    "Unsupported plugin request message type: {:?}",
+                    message.message_type
+                ));
+            }
+            tracing::warn!(
+                target: "mcv::core::CoreActor",
+                message_type = ?message.message_type,
+                "Unhandled UI message type"
+            );
+        }
+    }
+
+    if response_mode {
+        Ok(message.create_response(message.message_type.clone(), serde_json::json!({})))
+    } else {
+        Ok(message.clone())
+    }
+}
+
+fn send_response_to_plugin(core: &CoreActor, plugin_id: Uuid, response: McvMessage) {
+    let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
+    if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+        plugin_info
+            .host_addr
+            .do_send(crate::plugin_host_actor::SendMessageToPlugin { message: response });
+    } else {
+        tracing::warn!(
+            target: "mcv::core::CoreActor",
+            plugin_id = %plugin_id,
+            "Failed to route response to plugin (logical plugin not found)"
+        );
+    }
+}
+
 /// プラグインからcoreへのメッセージ（InternalMessage対応）
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -385,6 +469,37 @@ impl Handler<SendMessageToCore> for CoreActor {
             message_type = ?message.message_type,
             "CoreActor received message from plugin"
         );
+
+        // pluginからのrequest_id付きメッセージはrequest/responseとして処理する。
+        if message.request_id.is_some()
+            && matches!(message.dst, MessageDestination::Core)
+            && matches!(message.src, MessageSource::Plugin { .. })
+        {
+            let requester = match message.src {
+                MessageSource::Plugin { plugin_id } => plugin_id,
+                MessageSource::Core => {
+                    tracing::warn!(
+                        target: "mcv::core::CoreActor",
+                        "Unexpected core source for plugin request branch"
+                    );
+                    return;
+                }
+            };
+
+            let response = match handle_core_request_message(self, &message, ctx, true) {
+                Ok(resp) => resp,
+                Err(err) => {
+                    // 待機側をハングさせないため、失敗時も必ず同一request_idで応答する。
+                    message.create_response(
+                        MessageType::PluginError,
+                        serde_json::json!({ "reason": err }),
+                    )
+                }
+            };
+
+            send_response_to_plugin(self, requester, response);
+            return;
+        }
 
         match message.message_type {
             MessageType::PluginHello => {
@@ -496,57 +611,7 @@ impl Handler<SendRequest> for CoreActor {
     type Result = Result<McvMessage, String>;
 
     fn handle(&mut self, msg: SendRequest, ctx: &mut Self::Context) -> Self::Result {
-        let message = msg.message;
-        match message.message_type {
-            MessageType::AddConnection => {
-                message_handlers::connection::handle_add_connection(self, &message, ctx)
-            }
-            MessageType::Connect => message_handlers::connection::handle_connect(self, &message, ctx),
-            MessageType::Disconnect => {
-                message_handlers::connection::handle_disconnect(self, &message, ctx)
-            }
-            MessageType::SendComment => {
-                message_handlers::comment::handle_send_comment(self, &message, ctx)
-            }
-            MessageType::AddSite => {
-                message_handlers::site_browser::handle_add_site(self, &message, ctx)
-            }
-            MessageType::AddBrowser => {
-                message_handlers::site_browser::handle_add_browser(self, &message, ctx)
-            }
-            MessageType::SetConnectionSite => {
-                message_handlers::site_browser::handle_set_connection_site(self, &message, ctx)
-            }
-            MessageType::UpdateConnectionSettings => {
-                message_handlers::site_browser::handle_update_connection_settings(self, &message, ctx)
-            }
-            MessageType::CommentReceived => {
-                message_handlers::comment::handle_comment_received(self, &message, ctx)
-            }
-            MessageType::Connected => {
-                message_handlers::connection::handle_connected(self, &message, ctx)
-            }
-            MessageType::Disconnected => {
-                message_handlers::connection::handle_disconnected(self, &message, ctx);
-            }
-            MessageType::GetSettingsSchema => {
-                return message_handlers::settings::handle_get_settings_schema(self, &message, ctx);
-            }
-            MessageType::GetSettings => {
-                return message_handlers::settings::handle_get_settings(self, &message, ctx);
-            }
-            MessageType::UpdateSettings => {
-                return message_handlers::settings::handle_update_settings(self, &message, ctx);
-            }
-            _ => {
-                tracing::warn!(
-                    target: "mcv::core::CoreActor",
-                    message_type = ?message.message_type,
-                    "Unhandled UI message type"
-                );
-            }
-        }
-        Ok(message)
+        handle_core_request_message(self, &msg.message, ctx, false)
     }
 }
 

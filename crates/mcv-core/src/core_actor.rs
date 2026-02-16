@@ -457,6 +457,7 @@ fn is_supported_plugin_request_type(message_type: &MessageType) -> bool {
             | MessageType::AddSite
             | MessageType::AddBrowser
             | MessageType::GetPlugins
+            | MessageType::GetBrowserPlugin
     )
 }
 
@@ -525,6 +526,24 @@ fn handle_plugin_request_message(
                 serde_json::to_value(GetPluginsPayload { plugins }).unwrap(),
             ))
         }
+        MessageType::GetBrowserPlugin => {
+            let payload: GetBrowserPluginPayload = serde_json::from_value(message.payload.clone())
+                .map_err(|e| format!("Failed to parse GetBrowserPlugin payload: {}", e))?;
+
+            let browser = core
+                .site_browser_manager
+                .get_browser(&payload.browser_id)
+                .ok_or_else(|| format!("Browser not found: {}", payload.browser_id))?;
+
+            Ok(message.create_response(
+                MessageType::GetBrowserPluginAck,
+                serde_json::to_value(GetBrowserPluginAckPayload {
+                    browser_id: payload.browser_id,
+                    plugin_id: browser.plugin_id,
+                })
+                .unwrap(),
+            ))
+        }
         _ => Err(format!(
             "Unsupported plugin request message type: {:?}",
             message.message_type
@@ -578,12 +597,40 @@ impl Handler<SendMessageToCore> for CoreActor {
             message_type = ?message.message_type,
             "CoreActor received message from plugin"
         );
+        
+        if matches!(message.src, MessageSource::Plugin { .. })
+            && matches!(message.dst, MessageDestination::Plugin { .. })
+        {
+            //プラグイン間通信
 
-        // pluginからのrequest_id付きメッセージはrequest/responseとして処理する。
+            let destination_plugin_id = match message.dst {
+                MessageDestination::Plugin { plugin_id } => plugin_id,
+                _ => unreachable!(),
+            };
+            let destination_logical_id = LogicalPluginId::from_uuid(destination_plugin_id);
+            if let Some(plugin_info) = self.logical_plugins.get(&destination_logical_id) {
+                plugin_info
+                    .host_addr
+                    .do_send(crate::plugin_host_actor::SendMessageToPlugin {
+                        message: message.clone(),
+                    });
+            } else {
+                tracing::error!(
+                    target: "mcv::core::CoreActor",
+                    destination_plugin_id = %destination_plugin_id,
+                    message_type = ?message.message_type,
+                    "Failed to route plugin-to-plugin message (destination not found)"
+                );
+            }
+            return;
+        }
+
         if message.request_id.is_some()
             && matches!(message.dst, MessageDestination::Core)
             && matches!(message.src, MessageSource::Plugin { .. })
         {
+            // pluginからのrequest_id付きメッセージはrequest/responseとして処理する。
+
             let requester = match message.src {
                 MessageSource::Plugin { plugin_id } => plugin_id,
                 MessageSource::Core => {

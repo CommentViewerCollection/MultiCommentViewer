@@ -126,6 +126,10 @@ pub enum MessageType {
     PluginRemoved,
     PluginError,
     GetPlugins,
+    GetBrowserPlugin,
+    GetBrowserPluginAck,
+    GetCookie,
+    GetCookieAck,
 
     // Connection関連
     AddConnection,
@@ -202,6 +206,41 @@ pub struct PluginAddedPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetPluginsPayload {
     pub plugins: Vec<PluginAddedPayload>,
+}
+
+/// get-browser-pluginのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetBrowserPluginPayload {
+    pub browser_id: BrowserId,
+}
+
+/// get-browser-plugin-ackのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetBrowserPluginAckPayload {
+    pub browser_id: BrowserId,
+    pub plugin_id: Uuid,
+}
+
+/// get-cookieのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetCookiePayload {
+    pub browser_id: BrowserId,
+    pub domain: String,
+}
+
+/// cookie情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cookie {
+    pub name: String,
+    pub value: String,
+    pub domain: String,
+    pub path: String,
+}
+
+/// get-cookie-ackのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetCookieAckPayload {
+    pub cookies: Vec<Cookie>,
 }
 
 /// add-connectionのpayload

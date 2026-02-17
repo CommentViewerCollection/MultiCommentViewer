@@ -35,7 +35,6 @@ interface ConnectionInfo {
   site_name: string
   url?: string
   browser_id?: string
-  browser_name?: string
   advanced_settings?: {
     bgColor?: string      // 新規: 接続毎の背景色
     textColor?: string    // 新規: 接続毎の文字色
@@ -270,6 +269,8 @@ function App() {
     const unlistenSiteAdded = listen<SiteInfo>('site-added', (event) => {
       console.log('[Site] Site added:', event.payload)
       setSites((prev) => [...prev, event.payload])
+      // サイト登録完了後にPending接続がCreatedに変わっている可能性があるため再取得
+      loadConnections()
     })
 
     // ブラウザ追加イベントをリッスン

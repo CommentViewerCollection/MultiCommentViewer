@@ -1,4 +1,4 @@
-use mcv_common::SiteId;
+use mcv_common::{BrowserId, SiteId};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
@@ -11,7 +11,9 @@ pub struct PersistedConnection {
     pub connection_id: Uuid,
     pub site_id: Option<SiteId>,
     pub url: Option<String>,
-    pub browser_name: Option<String>,
+    /// ブラウザID。旧形式ファイルとの互換のため省略可。
+    #[serde(default)]
+    pub browser_id: Option<BrowserId>,
     pub advanced_settings: Option<serde_json::Value>,
     pub name: String,
 }
@@ -148,7 +150,7 @@ mod tests {
                     "00000000-0000-0000-0000-000000000001",
                 )),
                 url: Some("https://example.com".to_string()),
-                browser_name: Some("Chrome".to_string()),
+                browser_id: Some(BrowserId::new("Chrome", "00000000-0000-0000-0000-000000000002")),
                 advanced_settings: Some(serde_json::json!({"key": "value"})),
                 name: "Test Connection".to_string(),
             }],

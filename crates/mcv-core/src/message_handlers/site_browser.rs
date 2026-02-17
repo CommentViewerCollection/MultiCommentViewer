@@ -207,15 +207,9 @@ pub fn handle_update_connection_settings(
     }
 
     if let Some(browser_id) = payload.browser_id {
-        let browser_name = actor
-            .site_browser_manager
-            .get_browser(&browser_id)
-            .map(|b| b.display_name.clone());
-        actor.connection_manager.update_browser(
-            &payload.connection_id,
-            Some(browser_id),
-            browser_name,
-        );
+        actor
+            .connection_manager
+            .update_browser(&payload.connection_id, Some(browser_id));
     }
 
     if let Some(settings) = payload.advanced_settings {

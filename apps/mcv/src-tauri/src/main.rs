@@ -162,7 +162,11 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
                 }),
             },
             browser: MsgBrowserInfo {
-                name: conn_info.browser_name.clone().unwrap_or("None".to_string()),
+                name: conn_info
+                    .browser_id
+                    .as_ref()
+                    .map(|b| b.as_str().to_string())
+                    .unwrap_or_else(|| "none".to_string()),
                 id: conn_info
                     .browser_id
                     .unwrap_or_else(|| BrowserId::from_string("none".to_string())),

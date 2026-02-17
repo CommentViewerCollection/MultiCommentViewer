@@ -25,13 +25,12 @@ pub enum ConnectionStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionInfo {
     pub connection_id: Uuid,
-    pub plugin_id: Option<Uuid>, // 変更: Option<Uuid>に
+    pub plugin_id: Option<Uuid>,
     pub status: ConnectionStatus,
     pub site_id: Option<SiteId>,
-    pub url: Option<String>,                          // 新規
-    pub browser_id: Option<BrowserId>,                // 新規
-    pub browser_name: Option<String>,                 // 新規
-    pub advanced_settings: Option<serde_json::Value>, // 新規
+    pub url: Option<String>,
+    pub browser_id: Option<BrowserId>,
+    pub advanced_settings: Option<serde_json::Value>,
     pub input_info: String,
     pub name: String,
 }
@@ -66,7 +65,6 @@ impl ConnectionManager {
             site_id: None,
             url: None,
             browser_id: None,
-            browser_name: None,
             advanced_settings: None,
             input_info: "".to_string(),
             name,
@@ -140,21 +138,14 @@ impl ConnectionManager {
     }
 
     /// ブラウザを更新
-    pub fn update_browser(
-        &mut self,
-        connection_id: &Uuid,
-        browser_id: Option<BrowserId>,
-        browser_name: Option<String>,
-    ) {
+    pub fn update_browser(&mut self, connection_id: &Uuid, browser_id: Option<BrowserId>) {
         if let Some(info) = self.connections.get_mut(connection_id) {
             tracing::debug!(
                 connection_id = %connection_id,
                 browser_id = ?browser_id,
-                browser_name = ?browser_name,
                 "Connection browser updated"
             );
             info.browser_id = browser_id;
-            info.browser_name = browser_name;
         }
     }
 
@@ -184,7 +175,7 @@ impl ConnectionManager {
                 connection_id: conn.connection_id,
                 site_id: conn.site_id.clone(),
                 url: conn.url.clone(),
-                browser_name: conn.browser_name.clone(),
+                browser_id: conn.browser_id.clone(),
                 advanced_settings: conn.advanced_settings.clone(),
                 name: conn.name.clone(),
             })
@@ -220,20 +211,15 @@ impl ConnectionManager {
                 (None, None)
             };
 
-            // browser_nameから現在のbrowser_idを取得
-            let browser_id = if let Some(ref browser_name) = conn.browser_name {
-                site_browser_manager
-                    .find_browser_by_name(browser_name)
-                    .map(|b| b.browser_id.clone())
-            } else {
-                None
-            };
+            let browser_id = conn.browser_id.clone();
 
             // ConnectionInfoを構築
-            let status = if plugin_id.is_some() {
-                ConnectionStatus::Created // プラグイン到着済み
+            // Pendingはsite_idが指定されているのにプラグインがまだ未到着の場合のみ
+            // site_idが未選択（None）の場合はCreated（通常の未接続状態）
+            let status = if site_id.is_some() && plugin_id.is_none() {
+                ConnectionStatus::Pending // site_idあり・プラグイン未到着
             } else {
-                ConnectionStatus::Pending // プラグイン未到着
+                ConnectionStatus::Created // site_idなし、またはプラグイン到着済み
             };
 
             let info = ConnectionInfo {
@@ -243,7 +229,6 @@ impl ConnectionManager {
                 site_id,
                 url: conn.url,
                 browser_id,
-                browser_name: conn.browser_name,
                 advanced_settings: conn.advanced_settings,
                 input_info: String::new(),
                 name: conn.name,
@@ -356,14 +341,9 @@ mod tests {
         assert_eq!(conn.url, Some("https://example.com".to_string()));
 
         // ブラウザ更新
-        manager.update_browser(
-            &conn_id,
-            Some(browser_id.clone()),
-            Some("Chrome".to_string()),
-        );
+        manager.update_browser(&conn_id, Some(browser_id.clone()));
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.browser_id, Some(browser_id));
-        assert_eq!(conn.browser_name, Some("Chrome".to_string()));
 
         // 詳細設定更新
         let settings = serde_json::json!({"key": "value"});

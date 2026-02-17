@@ -31,7 +31,8 @@ members = [
     "crates/plugin-chrome-cookie",
     "crates/plugin-cookies-txt",
     "crates/plugin-bouyomi",
-    "crates/plugin-twitch"
+    "crates/plugin-twitch",
+    "crates/plugin-twicas",
 ]
 resolver = "2"
 

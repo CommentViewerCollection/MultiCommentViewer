@@ -99,3 +99,13 @@ $manifest = @{
     path = "plugin_cookies_txt.dll"
 }
 $manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-cookies-txt\manifest.json" -Encoding UTF8
+
+# plugin-twicas
+cargo build --release --features alpha --manifest-path "$workspaceRoot/crates/plugin-twicas/Cargo.toml"
+New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twicas -Force
+Copy-Item -Path $workspaceRoot/target/release/plugin_twicas.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twicas\
+Copy-Item -Path $workspaceRoot/target/release/plugin_twicas.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twicas\
+$manifest = @{
+    path = "plugin_twicas.dll"
+}
+$manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twicas\manifest.json" -Encoding UTF8

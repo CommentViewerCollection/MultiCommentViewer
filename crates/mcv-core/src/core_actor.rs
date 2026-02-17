@@ -533,9 +533,13 @@ fn send_response_to_plugin(
     if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
         plugin_info
             .host_addr
-            .do_send(crate::plugin_host_actor::SendMessageToPlugin { message: response });
+            .send_plugin_message(crate::plugin_host_actor::SendMessageToPlugin {
+                message: response,
+            });
     } else if let Some(host_addr) = core.physical_plugin_hosts.get(&physical_plugin_id) {
-        host_addr.do_send(crate::plugin_host_actor::SendMessageToPlugin { message: response });
+        host_addr.send_plugin_message(crate::plugin_host_actor::SendMessageToPlugin {
+            message: response,
+        });
     } else {
         tracing::error!(
             target: "mcv::core::CoreActor",
@@ -579,6 +583,31 @@ impl Handler<SendMessageToCore> for CoreActor {
                 MessageDestination::Plugin { plugin_id } => plugin_id,
                 _ => unreachable!(),
             };
+
+            // "なし" ブラウザ宛ての GetCookie を intercept して空クッキーを返す
+            if destination_plugin_id == crate::site_browser_manager::NONE_BROWSER_PLUGIN_ID
+                && message.message_type == MessageType::GetCookie
+            {
+                let src_plugin_id = match message.src {
+                    MessageSource::Plugin { plugin_id } => plugin_id,
+                    _ => unreachable!(),
+                };
+                let response = message.create_response(
+                    MessageType::GetCookieAck,
+                    serde_json::to_value(mcv_messages::GetCookieAckPayload {
+                        cookies: vec![],
+                    })
+                    .unwrap_or_default(),
+                );
+                tracing::debug!(
+                    target: "mcv::core::CoreActor",
+                    src_plugin_id = %src_plugin_id,
+                    "GetCookie to NONE_BROWSER intercepted; returning empty cookies"
+                );
+                send_response_to_plugin(self, src_plugin_id, physical_plugin_id, response);
+                return;
+            }
+
             let destination_logical_id = LogicalPluginId::from_uuid(destination_plugin_id);
             if let Some(plugin_info) = self.logical_plugins.get(&destination_logical_id) {
                 plugin_info
@@ -964,6 +993,38 @@ impl Handler<UpdateConnectionSettings> for CoreActor {
     }
 }
 
+/// テスト専用：論理プラグインを直接登録するメッセージ。
+///
+/// 外部テストクレート（`crates/mcv-core/tests/`）から CoreActor に
+/// テスト用の論理プラグインを注入するために使用する。
+#[cfg(test)]
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct RegisterTestLogicalPlugin {
+    pub logical_plugin_id: LogicalPluginId,
+    pub physical_plugin_id: PhysicalPluginId,
+    pub host_addr: crate::plugin_loader_strategy::PluginHostAddr,
+}
+
+#[cfg(test)]
+impl Handler<RegisterTestLogicalPlugin> for CoreActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: RegisterTestLogicalPlugin, _ctx: &mut Self::Context) {
+        let info = LogicalPluginInfo {
+            logical_plugin_id: msg.logical_plugin_id,
+            physical_plugin_id: msg.physical_plugin_id,
+            name: "test-plugin".to_string(),
+            role: vec![],
+            api_version: "test".to_string(),
+            host_addr: msg.host_addr,
+            settings_schema: None,
+            settings_data: None,
+        };
+        self.logical_plugins.insert(msg.logical_plugin_id, info);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1050,5 +1111,129 @@ mod tests {
 
         let connections = addr.send(GetConnections).await.unwrap();
         assert_eq!(connections[0].name, "My Stream");
+    }
+
+    // ---- なし ブラウザ GetCookie intercept テスト ----
+
+    /// テスト専用プラグインアクター（受信メッセージをキャプチャする）
+    struct TestPluginActor {
+        received: std::sync::Arc<tokio::sync::Mutex<Vec<McvMessage>>>,
+    }
+
+    impl actix::Actor for TestPluginActor {
+        type Context = actix::Context<Self>;
+    }
+
+    impl actix::Handler<crate::plugin_host_actor::SendMessageToPlugin> for TestPluginActor {
+        type Result = ();
+        fn handle(
+            &mut self,
+            msg: crate::plugin_host_actor::SendMessageToPlugin,
+            _ctx: &mut Self::Context,
+        ) {
+            let received = self.received.clone();
+            actix::spawn(async move {
+                received.lock().await.push(msg.message);
+            });
+        }
+    }
+
+    /// なし ブラウザ宛て GetCookie を送ったとき GetCookieAck { cookies: [] } が返ること。
+    ///
+    /// **修正前はこのテストが失敗する**（CoreActor に intercept ロジックがないため
+    /// メッセージが TestPluginActor に届かない）。
+    #[actix::test]
+    async fn test_none_browser_get_cookie_returns_empty_ack() {
+        use crate::internal_message::InternalMessage;
+        use crate::plugin_loader_strategy::PluginHostAddr;
+        use crate::site_browser_manager::NONE_BROWSER_PLUGIN_ID;
+        use mcv_common::PhysicalPluginId;
+        use mcv_messages::{
+            GetCookieAckPayload, GetCookiePayload, MessageDestination, MessageSource, MessageType,
+        };
+        use std::sync::Arc;
+        use std::time::Duration;
+        use tokio::sync::Mutex;
+        use uuid::Uuid;
+
+        // CoreActor 起動
+        let core_actor = CoreActor::new();
+        let core_addr = core_actor.start();
+
+        // テスト用プラグインアクター（Twitch プラグイン相当）
+        let received_messages = Arc::new(Mutex::new(Vec::<McvMessage>::new()));
+        let test_actor = TestPluginActor {
+            received: received_messages.clone(),
+        };
+        let test_actor_addr = test_actor.start();
+
+        // プラグイン ID を決める
+        let src_plugin_id = Uuid::new_v4();
+        let src_physical_plugin_id = PhysicalPluginId::from_uuid(Uuid::new_v4());
+        let logical_id = LogicalPluginId::from_uuid(src_plugin_id);
+
+        // テスト用プラグインを論理プラグインとして CoreActor に登録
+        let host_addr = PluginHostAddr::Test(
+            test_actor_addr
+                .recipient::<crate::plugin_host_actor::SendMessageToPlugin>(),
+        );
+        core_addr
+            .send(RegisterTestLogicalPlugin {
+                logical_plugin_id: logical_id,
+                physical_plugin_id: src_physical_plugin_id,
+                host_addr,
+            })
+            .await
+            .unwrap();
+
+        // NONE_BROWSER_PLUGIN_ID は crate 内部定数として直接使用する
+        // （GetBrowserPlugin 経由で取得する必要なし）
+
+        // plugin-to-plugin GetCookie を SendMessageToCore 経由で送る
+        let get_cookie_msg = McvMessage::new_request(
+            MessageType::GetCookie,
+            MessageSource::Plugin {
+                plugin_id: src_plugin_id,
+            },
+            MessageDestination::Plugin {
+                plugin_id: NONE_BROWSER_PLUGIN_ID,
+            },
+            serde_json::to_value(GetCookiePayload {
+                browser_id: crate::site_browser_manager::none_browser_id(),
+                domain: "twitch.tv".to_string(),
+            })
+            .unwrap(),
+        );
+        core_addr.do_send(SendMessageToCore {
+            internal_message: InternalMessage {
+                physical_plugin_id: src_physical_plugin_id,
+                message: get_cookie_msg,
+            },
+        });
+
+        // CoreActor がメッセージを処理するまで待機
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        // GetCookieAck { cookies: [] } が届いていること
+        let messages = received_messages.lock().await;
+        assert_eq!(
+            messages.len(),
+            1,
+            "GetCookieAck が 1 件届くべき（実際: {} 件）",
+            messages.len()
+        );
+        assert_eq!(
+            messages[0].message_type,
+            MessageType::GetCookieAck,
+            "返ってくるメッセージは GetCookieAck であるべき（実際: {:?}）",
+            messages[0].message_type
+        );
+        let payload: GetCookieAckPayload =
+            serde_json::from_value(messages[0].payload.clone()).unwrap();
+        assert!(
+            payload.cookies.is_empty(),
+            "なし ブラウザの cookies は空であるべき（実際: {:?}）",
+            payload.cookies
+        );
     }
 }

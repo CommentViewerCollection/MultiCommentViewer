@@ -16,6 +16,9 @@ use crate::plugin_host_actor_v3::PhysicalPluginHostActorV3;
 pub enum PluginHostAddr {
     V2(Addr<PhysicalPluginHostActor>),
     V3(Addr<PhysicalPluginHostActorV3>),
+    /// テスト専用バリアント。SendMessageToPlugin を受信できる任意のアクターを指定する。
+    #[cfg(test)]
+    Test(actix::Recipient<crate::plugin_host_actor::SendMessageToPlugin>),
 }
 
 impl PluginHostAddr {
@@ -30,6 +33,27 @@ impl PluginHostAddr {
         match self {
             PluginHostAddr::V2(addr) => addr.do_send(msg),
             PluginHostAddr::V3(addr) => addr.do_send(msg),
+            #[cfg(test)]
+            PluginHostAddr::Test(_) => {
+                panic!("Test variant: use send_plugin_message instead of do_send");
+            }
+        }
+    }
+
+    /// プラグインに SendMessageToPlugin を送信する（型特化版）。
+    ///
+    /// `do_send` の代わりにこちらを使うことで、テスト用の `Test` バリアントもサポートできる。
+    pub(crate) fn send_plugin_message(
+        &self,
+        msg: crate::plugin_host_actor::SendMessageToPlugin,
+    ) {
+        match self {
+            PluginHostAddr::V2(addr) => addr.do_send(msg),
+            PluginHostAddr::V3(addr) => addr.do_send(msg),
+            #[cfg(test)]
+            PluginHostAddr::Test(recipient) => {
+                let _ = recipient.do_send(msg);
+            }
         }
     }
 
@@ -44,6 +68,10 @@ impl PluginHostAddr {
         match self {
             PluginHostAddr::V2(addr) => addr.send(msg).await,
             PluginHostAddr::V3(addr) => addr.send(msg).await,
+            #[cfg(test)]
+            PluginHostAddr::Test(_) => {
+                panic!("Test variant does not support async send");
+            }
         }
     }
 }

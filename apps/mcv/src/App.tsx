@@ -388,7 +388,6 @@ function App() {
   }
 
   const handleBrowserChange = async (connectionId: string, browserId: string) => {
-    if (!browserId) return
     try {
       await invoke('update_connection_settings', {
         connectionId,
@@ -643,12 +642,11 @@ function App() {
                     <div>
                       <label className="text-xs text-gray-400 block mb-0.5">ブラウザ</label>
                       <select
-                        value={conn.browser_id || ''}
+                        value={conn.browser_id || browsers[0]?.browser_id || ''}
                         onChange={(e) => handleBrowserChange(conn.connection_id, e.target.value)}
                         disabled={!canModify}
                         className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <option value="">選択してください</option>
                         {browsers.map((browser) => (
                           <option key={browser.browser_id} value={browser.browser_id}>
                             {browser.display_name}

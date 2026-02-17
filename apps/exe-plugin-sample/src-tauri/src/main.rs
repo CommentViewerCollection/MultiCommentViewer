@@ -62,7 +62,7 @@ struct AppState {
     messages: Arc<RwLock<Vec<McvMessage>>>,
 }
 
-/// メッセージに応じて状態を更新
+/// メッセージに応じて状態を更新し、変化があればフロントエンドに通知する
 async fn handle_message_state_update(
     message: &McvMessage,
     plugins: Arc<RwLock<HashMap<Uuid, PluginInfo>>>,
@@ -70,6 +70,7 @@ async fn handle_message_state_update(
     _sites: Arc<RwLock<HashMap<Uuid, SiteInfo>>>,
     _browsers: Arc<RwLock<HashMap<Uuid, BrowserInfo>>>,
     messages: Arc<RwLock<Vec<McvMessage>>>,
+    app: AppHandle,
 ) {
     use mcv_messages::MessageType;
 
@@ -115,6 +116,7 @@ async fn handle_message_state_update(
                     };
                     plugins.write().await.insert(plugin_id, plugin_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, name = %name, "Plugin added to state");
+                    let _ = app.emit("plugins-updated", ());
                 } else {
                     tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "plugin-added: failed to parse required fields");
                 }
@@ -172,6 +174,7 @@ async fn handle_message_state_update(
                         .await
                         .insert(connection_id, connection_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, name = %name, "Connection added to state");
+                    let _ = app.emit("connections-updated", ());
                 } else {
                     tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-added: failed to parse required fields");
                 }
@@ -197,6 +200,7 @@ async fn handle_message_state_update(
                     if let Some(conn) = connections.write().await.get_mut(&connection_id) {
                         conn.status = "connected".to_string();
                         tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to connected");
+                        let _ = app.emit("connections-updated", ());
                     } else {
                         tracing::error!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "connected: connection_id not found in state");
                     }
@@ -223,6 +227,7 @@ async fn handle_message_state_update(
                     if let Some(conn) = connections.write().await.get_mut(&connection_id) {
                         conn.status = "disconnected".to_string();
                         tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection status updated to disconnected");
+                        let _ = app.emit("connections-updated", ());
                     } else {
                         tracing::error!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "disconnected: connection_id not found in state");
                     }
@@ -248,6 +253,7 @@ async fn handle_message_state_update(
                 if let Some(connection_id) = connection_id {
                     connections.write().await.remove(&connection_id);
                     tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, "Connection removed from state");
+                    let _ = app.emit("connections-updated", ());
                 }
             } else {
                 tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "connection-removed: failed to parse payload as JSON object");
@@ -270,9 +276,33 @@ async fn handle_message_state_update(
                 if let Some(plugin_id) = plugin_id {
                     plugins.write().await.remove(&plugin_id);
                     tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, "Plugin removed from state");
+                    let _ = app.emit("plugins-updated", ());
                 }
             } else {
                 tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "plugin-removed: failed to parse payload as JSON object");
+            }
+        }
+        MessageType::GetPlugins => {
+            // get-pluginsレスポンス: GetPluginsPayload を処理してstate.pluginsに一括登録
+            if let Ok(payload) =
+                serde_json::from_value::<mcv_messages::GetPluginsPayload>(message.payload.clone())
+            {
+                let mut plugins_guard = plugins.write().await;
+                for plugin_added in payload.plugins {
+                    let plugin_id = plugin_added.plugin_id;
+                    let plugin_info = PluginInfo {
+                        plugin_id,
+                        name: plugin_added.name,
+                        roles: plugin_added.role,
+                        api_version: plugin_added.api_version,
+                    };
+                    plugins_guard.insert(plugin_id, plugin_info);
+                    tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, "Plugin added to state via get-plugins response");
+                }
+                drop(plugins_guard);
+                let _ = app.emit("plugins-updated", ());
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "get-plugins: failed to parse GetPluginsPayload");
             }
         }
         MessageType::CommentReceived | MessageType::LogEntry => {
@@ -355,7 +385,7 @@ async fn connect_to_mcv(
             let messages = messages_clone.clone();
 
             tokio::spawn(async move {
-                // 状態を更新
+                // 状態を更新し、変化があればフロントエンドに通知
                 handle_message_state_update(
                     &message,
                     plugins,
@@ -363,10 +393,11 @@ async fn connect_to_mcv(
                     sites,
                     browsers,
                     messages,
+                    app.clone(),
                 )
                 .await;
 
-                // フロントエンドにメッセージを転送
+                // ログ表示用にメッセージ本文を転送
                 if let Err(e) = app.emit("message-received", &message) {
                     tracing::error!(target:"mcv::exe-plugin-sample",error = %e, "Failed to emit message-received event");
                 }

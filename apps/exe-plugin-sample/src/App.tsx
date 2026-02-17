@@ -55,65 +55,31 @@ function App() {
   };
 
   useEffect(() => {
-    // メッセージ受信リスナー
-    const unlisten = listen<McvMessage>("message-received", (event) => {
+    // ログ表示用メッセージリスナー
+    const unlistenMsg = listen<McvMessage>("message-received", (event) => {
       const message = event.payload;
-
-      // タイムスタンプを秒からミリ秒に変換（UNIX秒の場合）
       if (message.timestamp < 1e12) {
         message.timestamp = message.timestamp * 1000;
       }
-
-      console.log("Received message:", message);
       setMessages((prev) => [...prev, message]);
+    });
 
-      // メッセージタイプに応じてRust側の状態を再取得
-      handleMessageReceived(message);
+    // プラグイン状態変化リスナー（バックエンドが状態更新後に発火）
+    const unlistenPlugins = listen("plugins-updated", () => {
+      refreshPlugins();
+    });
+
+    // 接続状態変化リスナー（バックエンドが状態更新後に発火）
+    const unlistenConnections = listen("connections-updated", () => {
+      refreshConnections();
     });
 
     return () => {
-      unlisten.then((fn) => fn());
+      unlistenMsg.then((fn) => fn());
+      unlistenPlugins.then((fn) => fn());
+      unlistenConnections.then((fn) => fn());
     };
   }, []);
-
-  const handleMessageReceived = async (message: McvMessage) => {
-    const { type } = message;
-    console.log("Message type:", type);
-
-    // Rust側で状態管理しているので、Rust側から最新状態を取得
-    // 手動更新ロジックを削除し、Rust側の状態取得コマンドを使用
-    try {
-      switch (type) {
-        case "plugin-added":
-        case "plugin-removed":
-          // プラグイン関連のメッセージ → プラグイン一覧を再取得
-          await refreshPlugins();
-          break;
-
-        case "connection-added":
-        case "connection-removed":
-        case "connected":
-        case "disconnected":
-          // 接続関連のメッセージ → 接続一覧を再取得
-          await refreshConnections();
-          break;
-
-        case "site-added":
-        case "site-removed":
-          // サイト関連（Rust側で管理していないためスキップ）
-          // 将来的にRust側で管理する場合は refreshSites() を実装
-          break;
-
-        case "browser-added":
-        case "browser-removed":
-          // ブラウザ関連（Rust側で管理していないためスキップ）
-          // 将来的にRust側で管理する場合は refreshBrowsers() を実装
-          break;
-      }
-    } catch (error) {
-      console.error("Failed to refresh state:", error);
-    }
-  };
 
   const handleConnect = async () => {
     try {

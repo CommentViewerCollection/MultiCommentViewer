@@ -127,6 +127,21 @@ impl ExePluginManagerV3Impl {
             })
             .await;
 
+        // プラグイン切断コールバックを設定（ルーティングテーブルから削除）
+        let routing_table_clone = Arc::clone(&self.routing_table);
+        websocket_server
+            .set_on_plugin_disconnected(move |logical_id| {
+                let routing_table = Arc::clone(&routing_table_clone);
+                tokio::spawn(async move {
+                    routing_table.write().await.remove(&logical_id);
+                    tracing::debug!(
+                        logical_plugin_id = %logical_id,
+                        "Routing table entry removed"
+                    );
+                });
+            })
+            .await;
+
         // プロセスマネージャーを初期化
         let process_manager =
             ProcessManager::new(self.websocket_server.as_ref().unwrap().get_port())

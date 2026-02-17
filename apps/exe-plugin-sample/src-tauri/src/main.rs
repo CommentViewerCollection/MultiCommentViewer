@@ -2,7 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod ws_tracing;
-use mcv_messages::Message as McvMessage;
+use mcv_messages::{
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginRemovedPayload,
+};
 use mcv_plugin_exe_interface::ExePluginClient;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -483,6 +485,33 @@ async fn clear_messages(state: State<'_, AppState>) -> Result<(), String> {
 #[tauri::command]
 async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
     tracing::info!(target:"mcv::exe-plugin-sample","Disconnecting from MCV");
+
+    let client = {
+        let guard = state.client.read().await;
+        guard.clone()
+    };
+
+    if let Some(client) = client {
+        // PluginRemoved メッセージを送信してプラグイン登録を抹消
+        let plugin_id_guard = state.plugin_id.read().await;
+        if let Some(pid) = *plugin_id_guard {
+            let msg = McvMessage::new_notification(
+                MessageType::PluginRemoved,
+                MessageSource::Plugin { plugin_id: pid },
+                MessageDestination::Core,
+                serde_json::to_value(PluginRemovedPayload { plugin_id: pid }).unwrap(),
+            );
+            let _ = client.send_message(msg);
+            tracing::info!(target:"mcv::exe-plugin-sample", plugin_id = %pid, "Sent PluginRemoved before disconnect");
+        }
+        drop(plugin_id_guard);
+
+        // WebSocket Closeフレームを送信
+        let _ = client.send_close();
+
+        // メッセージ送信を確実に行うため少し待機
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
 
     *state.client.write().await = None;
     *state.connected.write().await = false;

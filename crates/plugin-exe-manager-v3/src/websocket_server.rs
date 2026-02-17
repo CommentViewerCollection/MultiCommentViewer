@@ -1,10 +1,14 @@
 use crate::routing::{ClientInfo, MessageRouter};
 use futures_util::{SinkExt, StreamExt};
-use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload};
+use mcv_messages::{
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
+    PluginRemovedPayload,
+};
 use mcv_plugin_interface::PluginHost;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{RwLock, mpsc};
@@ -34,6 +38,8 @@ pub struct WebSocketServer {
     shutdown_tx: Option<mpsc::Sender<()>>,
     /// plugin-hello受信時のコールバック (internal_physical_plugin_id, logical_plugin_id)
     on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
+    /// プラグイン切断時のコールバック (logical_plugin_id)
+    on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(Uuid) + Send + Sync>>>>,
 }
 
 impl WebSocketServer {
@@ -65,17 +71,20 @@ impl WebSocketServer {
         let router = Arc::new(MessageRouter::new(Arc::clone(&clients)));
         let (shutdown_tx, shutdown_rx) = mpsc::channel(1);
         let on_plugin_registered = Arc::new(RwLock::new(None));
+        let on_plugin_disconnected = Arc::new(RwLock::new(None));
 
         // サーバーループを起動
         let clients_clone = Arc::clone(&clients);
         let host_clone = Arc::clone(&host);
         let on_plugin_registered_clone = Arc::clone(&on_plugin_registered);
+        let on_plugin_disconnected_clone = Arc::clone(&on_plugin_disconnected);
         tokio::spawn(async move {
             Self::server_loop(
                 listener,
                 clients_clone,
                 host_clone,
                 on_plugin_registered_clone,
+                on_plugin_disconnected_clone,
                 shutdown_rx,
             )
             .await;
@@ -87,6 +96,7 @@ impl WebSocketServer {
             router,
             shutdown_tx: Some(shutdown_tx),
             on_plugin_registered,
+            on_plugin_disconnected,
         })
     }
 
@@ -96,6 +106,7 @@ impl WebSocketServer {
         clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
         on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
+        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(Uuid) + Send + Sync>>>>,
         mut shutdown_rx: mpsc::Receiver<()>,
     ) {
         loop {
@@ -108,8 +119,15 @@ impl WebSocketServer {
                             let clients_clone = Arc::clone(&clients);
                             let host_clone = Arc::clone(&host);
                             let on_plugin_registered_clone = Arc::clone(&on_plugin_registered);
+                            let on_plugin_disconnected_clone = Arc::clone(&on_plugin_disconnected);
                             tokio::spawn(async move {
-                                if let Err(e) = Self::handle_connection(stream, clients_clone, host_clone, on_plugin_registered_clone).await {
+                                if let Err(e) = Self::handle_connection(
+                                    stream,
+                                    clients_clone,
+                                    host_clone,
+                                    on_plugin_registered_clone,
+                                    on_plugin_disconnected_clone,
+                                ).await {
                                     println!("=== WebSocketServer: Connection handler error: {} ===", e);
                                     tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Connection handler error");
                                 }
@@ -135,6 +153,7 @@ impl WebSocketServer {
         clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
         on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
+        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(Uuid) + Send + Sync>>>>,
     ) -> Result<(), WebSocketError> {
         let ws_stream = tokio_tungstenite::accept_async(stream)
             .await
@@ -149,147 +168,183 @@ impl WebSocketServer {
         let (tx, mut rx) = mpsc::unbounded_channel::<McvMessage>();
 
         let mut plugin_id: Option<Uuid> = None;
+        let mut logical_plugin_id: Option<Uuid> = None;
 
-        // 送信タスク
-        let send_task = tokio::spawn(async move {
-            tracing::debug!(target:"mcv::plugin-exe-manager::WebSocketServer","送信タスクには入ってる");
-            while let Some(message) = rx.recv().await {
-                tracing::debug!(target: "mcv::plugin-exe-manager::WebSocketServer",message=?message, "送信用のデータが来た");
-                let json = match serde_json::to_string(&message) {
-                    Ok(j) => j,
-                    Err(e) => {
-                        tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to serialize message");
-                        continue;
+        // 30秒ごとのハートビートタイマー
+        let mut heartbeat = tokio::time::interval(Duration::from_secs(30));
+        // 初回のtick()はすぐ発火するためスキップ
+        heartbeat.tick().await;
+        heartbeat.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+
+        // unified select! ループ: 送信キュー・受信・ハートビートを一元管理
+        loop {
+            tokio::select! {
+                // 送信キューからメッセージを受信して送信
+                msg = rx.recv() => {
+                    match msg {
+                        Some(message) => {
+                            tracing::debug!(target: "mcv::plugin-exe-manager::WebSocketServer", message=?message, "送信用のデータが来た");
+                            let json = match serde_json::to_string(&message) {
+                                Ok(j) => j,
+                                Err(e) => {
+                                    tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to serialize message");
+                                    continue;
+                                }
+                            };
+                            if let Err(e) = ws_sender.send(WsMessage::Text(json.into())).await {
+                                tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to send message");
+                                break;
+                            }
+                        }
+                        None => {
+                            // チャンネルが閉じられた
+                            tracing::debug!(target:"mcv::plugin-exe-manager::WebSocketServer","Send channel closed");
+                            break;
+                        }
                     }
-                };
-
-                if let Err(e) = ws_sender.send(WsMessage::Text(json.into())).await {
-                    tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to send message");
-                    break;
                 }
-            }
-        });
 
-        // 受信ループ
-        while let Some(msg) = ws_receiver.next().await {
-            match msg {
-                Ok(WsMessage::Text(text)) => {
-                    tracing::debug!(target:"mcv::plugin-exe-manager::WebSocketServer",message_text = %text, "Received message from EXE plugin");
+                // WebSocketから受信
+                result = ws_receiver.next() => {
+                    match result {
+                        Some(Ok(WsMessage::Text(text))) => {
+                            tracing::debug!(target:"mcv::plugin-exe-manager::WebSocketServer",message_text = %text, "Received message from EXE plugin");
 
-                    match serde_json::from_str::<McvMessage>(&text) {
-                        Ok(mcv_message) => {
-                            println!(
-                                "=== WebSocketServer: Received message, type: {:?} ===",
-                                mcv_message.message_type
-                            );
-
-                            // plugin-helloの場合は登録
-                            if mcv_message.message_type == MessageType::PluginHello {
-                                if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
-                                    mcv_message.payload.clone(),
-                                ) {
-                                    let internal_physical_plugin_id = payload.plugin_id; // WebSocket接続のID
-
-                                    // mcv_messageのsrcからlogical_plugin_idを取得
-                                    let logical_plugin_id = match &mcv_message.src {
-                                        mcv_messages::MessageSource::Plugin { plugin_id } => {
-                                            *plugin_id
-                                        }
-                                        _ => payload.plugin_id, // フォールバック
-                                    };
-
-                                    plugin_id = Some(internal_physical_plugin_id);
-
-                                    let client = ClientInfo {
-                                        plugin_id: internal_physical_plugin_id,
-                                        sender: tx.clone(),
-                                        roles: payload.role.clone(),
-                                    };
-
-                                    clients
-                                        .write()
-                                        .await
-                                        .insert(internal_physical_plugin_id, client);
-
+                            match serde_json::from_str::<McvMessage>(&text) {
+                                Ok(mcv_message) => {
                                     println!(
-                                        "=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
-                                        internal_physical_plugin_id,
-                                        logical_plugin_id,
-                                        payload.name
-                                    );
-                                    tracing::info!(
-                                        target:"mcv::plugin-exe-manager::WebSocketServer",
-                                        internal_physical_plugin_id = %internal_physical_plugin_id,
-                                        logical_plugin_id = %logical_plugin_id,
-                                        plugin_name = %payload.name,
-                                        roles = ?payload.role,
-                                        "EXE plugin registered"
+                                        "=== WebSocketServer: Received message, type: {:?} ===",
+                                        mcv_message.message_type
                                     );
 
-                                    // コールバック呼び出し
-                                    let callback_guard = on_plugin_registered.read().await;
-                                    if let Some(callback) = callback_guard.as_ref() {
-                                        callback(internal_physical_plugin_id, logical_plugin_id);
-                                        tracing::debug!(
-                                            target:"mcv::plugin-exe-manager::WebSocketServer",
-                                            "plugin-hello callback invoked"
+                                    // plugin-helloの場合は登録
+                                    if mcv_message.message_type == MessageType::PluginHello {
+                                        if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
+                                            mcv_message.payload.clone(),
+                                        ) {
+                                            let internal_physical_plugin_id = payload.plugin_id;
+
+                                            // mcv_messageのsrcからlogical_plugin_idを取得
+                                            let log_pid = match &mcv_message.src {
+                                                mcv_messages::MessageSource::Plugin { plugin_id: pid } => *pid,
+                                                _ => payload.plugin_id, // フォールバック
+                                            };
+
+                                            plugin_id = Some(internal_physical_plugin_id);
+                                            logical_plugin_id = Some(log_pid);
+
+                                            let client = ClientInfo {
+                                                plugin_id: internal_physical_plugin_id,
+                                                sender: tx.clone(),
+                                                roles: payload.role.clone(),
+                                            };
+
+                                            clients
+                                                .write()
+                                                .await
+                                                .insert(internal_physical_plugin_id, client);
+
+                                            println!(
+                                                "=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
+                                                internal_physical_plugin_id,
+                                                log_pid,
+                                                payload.name
+                                            );
+                                            tracing::info!(
+                                                target:"mcv::plugin-exe-manager::WebSocketServer",
+                                                internal_physical_plugin_id = %internal_physical_plugin_id,
+                                                logical_plugin_id = %log_pid,
+                                                plugin_name = %payload.name,
+                                                roles = ?payload.role,
+                                                "EXE plugin registered"
+                                            );
+
+                                            // コールバック呼び出し
+                                            let callback_guard = on_plugin_registered.read().await;
+                                            if let Some(callback) = callback_guard.as_ref() {
+                                                callback(internal_physical_plugin_id, log_pid);
+                                                tracing::debug!(
+                                                    target:"mcv::plugin-exe-manager::WebSocketServer",
+                                                    "plugin-hello callback invoked"
+                                                );
+                                            }
+                                        }
+                                    }
+
+                                    // Coreにメッセージをフォワード
+                                    println!("=== WebSocketServer: Forwarding message to Core ===");
+                                    if let Err(e) = host.send_message(mcv_message).await {
+                                        println!(
+                                            "=== WebSocketServer: Failed to forward message to Core: {} ===",
+                                            e
+                                        );
+                                        tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to forward message to Core");
+                                    } else {
+                                        println!(
+                                            "=== WebSocketServer: Message forwarded to Core successfully ==="
                                         );
                                     }
                                 }
-                            }
-
-                            // Coreにメッセージをフォワード
-                            println!("=== WebSocketServer: Forwarding message to Core ===");
-                            if let Err(e) = host.send_message(mcv_message).await {
-                                println!(
-                                    "=== WebSocketServer: Failed to forward message to Core: {} ===",
-                                    e
-                                );
-                                tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "Failed to forward message to Core");
-                            } else {
-                                println!(
-                                    "=== WebSocketServer: Message forwarded to Core successfully ==="
-                                );
+                                Err(e) => {
+                                    tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, text = %text, "Failed to parse message");
+                                }
                             }
                         }
-                        Err(e) => {
-                            tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, text = %text, "Failed to parse message");
+                        Some(Ok(WsMessage::Close(_))) => {
+                            tracing::info!("WebSocket closed by client");
+                            break;
+                        }
+                        Some(Ok(WsMessage::Ping(data))) => {
+                            tracing::trace!(
+                                target: "mcv::plugin-exe-manager::WebSocketServer",
+                                "Received ping, sending pong"
+                            );
+                            // 手動でPongを送信
+                            let _ = ws_sender.send(WsMessage::Pong(data)).await;
+                        }
+                        Some(Ok(WsMessage::Pong(_))) => {
+                            tracing::trace!(
+                                target: "mcv::plugin-exe-manager::WebSocketServer",
+                                "Received pong (heartbeat acknowledged)"
+                            );
+                        }
+                        Some(Ok(WsMessage::Binary(_))) => {
+                            tracing::warn!(
+                                target: "mcv::plugin-exe-manager::WebSocketServer",
+                                "Received unexpected binary message"
+                            );
+                        }
+                        Some(Ok(WsMessage::Frame(_))) => {
+                            tracing::trace!(
+                                target: "mcv::plugin-exe-manager::WebSocketServer",
+                                "Received frame"
+                            );
+                        }
+                        Some(Err(e)) => {
+                            tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "WebSocket error");
+                            break;
+                        }
+                        None => {
+                            tracing::info!(target:"mcv::plugin-exe-manager::WebSocketServer","WebSocket stream ended");
+                            break;
                         }
                     }
                 }
-                Ok(WsMessage::Close(_)) => {
-                    tracing::info!("WebSocket closed by client");
-                    break;
-                }
-                Ok(WsMessage::Ping(data)) => {
+
+                // 30秒ごとのハートビートPing送信
+                _ = heartbeat.tick() => {
                     tracing::trace!(
                         target: "mcv::plugin-exe-manager::WebSocketServer",
-                        "Received ping"
+                        "Sending heartbeat ping"
                     );
-                    // Pongは自動的に送信される
-                    drop(data);
-                }
-                Ok(WsMessage::Pong(_)) => {
-                    tracing::trace!(
-                        target: "mcv::plugin-exe-manager::WebSocketServer",
-                        "Received pong"
-                    );
-                }
-                Ok(WsMessage::Binary(_)) => {
-                    tracing::warn!(
-                        target: "mcv::plugin-exe-manager::WebSocketServer",
-                        "Received unexpected binary message"
-                    );
-                }
-                Ok(WsMessage::Frame(_)) => {
-                    tracing::trace!(
-                        target: "mcv::plugin-exe-manager::WebSocketServer",
-                        "Received frame"
-                    );
-                }
-                Err(e) => {
-                    tracing::error!(target:"mcv::plugin-exe-manager::WebSocketServer",error = %e, "WebSocket error");
-                    break;
+                    if let Err(e) = ws_sender.send(WsMessage::Ping(vec![].into())).await {
+                        tracing::warn!(
+                            target: "mcv::plugin-exe-manager::WebSocketServer",
+                            error = %e,
+                            "Heartbeat ping failed, disconnecting"
+                        );
+                        break;
+                    }
                 }
             }
         }
@@ -300,8 +355,36 @@ impl WebSocketServer {
             tracing::info!(target:"mcv::plugin-exe-manager::WebSocketServer",plugin_id = %pid, "EXE plugin disconnected");
         }
 
-        // 送信タスクをキャンセル
-        send_task.abort();
+        // PluginRemoved をCoreに通知（登録済みの場合のみ）
+        if let Some(log_pid) = logical_plugin_id {
+            tracing::info!(
+                target: "mcv::plugin-exe-manager::WebSocketServer",
+                logical_plugin_id = %log_pid,
+                "Sending PluginRemoved to Core"
+            );
+
+            let msg = McvMessage::new_notification(
+                MessageType::PluginRemoved,
+                MessageSource::Plugin { plugin_id: log_pid },
+                MessageDestination::Core,
+                serde_json::to_value(PluginRemovedPayload { plugin_id: log_pid }).unwrap(),
+            );
+
+            if let Err(e) = host.send_message(msg).await {
+                tracing::error!(
+                    target: "mcv::plugin-exe-manager::WebSocketServer",
+                    error = %e,
+                    logical_plugin_id = %log_pid,
+                    "Failed to send PluginRemoved to Core"
+                );
+            }
+
+            // ルーティングテーブルのクリーンアップコールバック
+            let cb = on_plugin_disconnected.read().await;
+            if let Some(callback) = cb.as_ref() {
+                callback(log_pid);
+            }
+        }
 
         Ok(())
     }
@@ -322,6 +405,15 @@ impl WebSocketServer {
         F: Fn(Uuid, Uuid) + Send + Sync + 'static,
     {
         let mut cb = self.on_plugin_registered.write().await;
+        *cb = Some(Arc::new(callback));
+    }
+
+    /// プラグイン切断時のコールバックを設定
+    pub async fn set_on_plugin_disconnected<F>(&self, callback: F)
+    where
+        F: Fn(Uuid) + Send + Sync + 'static,
+    {
+        let mut cb = self.on_plugin_disconnected.write().await;
         *cb = Some(Arc::new(callback));
     }
 

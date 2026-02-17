@@ -204,6 +204,12 @@ pub struct PluginAddedPayload {
     pub api_version: String,
 }
 
+/// plugin-removedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginRemovedPayload {
+    pub plugin_id: Uuid,
+}
+
 /// get-plugins(response)のpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetPluginsPayload {

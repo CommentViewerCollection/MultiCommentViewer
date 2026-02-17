@@ -74,6 +74,12 @@ impl ExePluginClient {
         Ok(())
     }
 
+    /// WebSocket Closeフレームを送信してサーバーに切断を通知
+    pub fn send_close(&self) -> Result<(), ExePluginError> {
+        let _ = self.tx.send(WsMessage::Close(None));
+        Ok(())
+    }
+
     /// メッセージハンドラーを登録
     ///
     /// ハンドラーは別タスクで実行されるため、RwLockの競合問題を回避できます。

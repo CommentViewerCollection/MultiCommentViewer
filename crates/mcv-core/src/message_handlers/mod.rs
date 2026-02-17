@@ -65,6 +65,10 @@ pub fn handle_common_notification(
             site_browser::handle_update_connection_settings(core, message, ctx);
             true
         }
+        MessageType::PluginRemoved => {
+            plugin_hello::handle_plugin_removed(core, message, ctx);
+            true
+        }
         _ => false,
     }
 }

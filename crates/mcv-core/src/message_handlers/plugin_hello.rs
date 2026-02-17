@@ -2,7 +2,7 @@ use actix::Context;
 use mcv_common::{LogicalPluginId, PhysicalPluginId};
 use mcv_messages::{
     ConnectionAddedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginAddedPayload, PluginHelloPayload,
+    PluginAddedPayload, PluginHelloPayload, PluginRemovedPayload,
 };
 
 use crate::core_actor::{CoreActor, LogicalPluginInfo};
@@ -197,6 +197,65 @@ fn send_connection_added_for_plugin(actor: &CoreActor, logical_plugin_id: Logica
         logical_plugin_id = %logical_plugin_id,
         connection_count = connection_count,
         "Sent all related ConnectionAdded messages to plugin"
+    );
+}
+
+/// plugin-removed メッセージのハンドラー
+///
+/// EXEプラグインが切断された際に論理プラグインを削除し、全プラグインに通知する
+pub fn handle_plugin_removed(
+    actor: &mut CoreActor,
+    message: &McvMessage,
+    _ctx: &mut Context<CoreActor>,
+) {
+    let payload: PluginRemovedPayload = match serde_json::from_value(message.payload.clone()) {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!(
+                target: "mcv::core::CoreActor",
+                error = %e,
+                "Failed to parse plugin-removed payload"
+            );
+            return;
+        }
+    };
+
+    let logical_plugin_id = LogicalPluginId::from_uuid(payload.plugin_id);
+
+    // 既に削除済みなら警告して終了（二重送信への冪等対応）
+    if !actor.logical_plugins.contains_key(&logical_plugin_id) {
+        tracing::warn!(
+            target: "mcv::core::CoreActor",
+            logical_plugin_id = %logical_plugin_id,
+            "PluginRemoved: plugin already removed (idempotent)"
+        );
+        return;
+    }
+
+    actor.logical_plugins.remove(&logical_plugin_id);
+
+    tracing::info!(
+        target: "mcv::core::CoreActor",
+        logical_plugin_id = %logical_plugin_id,
+        "Logical plugin removed"
+    );
+
+    // PluginRemoved を残りの全論理プラグインにブロードキャスト
+    let notification = McvMessage::new_notification(
+        MessageType::PluginRemoved,
+        MessageSource::Core,
+        MessageDestination::Broadcast,
+        serde_json::to_value(PluginRemovedPayload {
+            plugin_id: payload.plugin_id,
+        })
+        .unwrap(),
+    );
+    broadcast_to_all_logical_plugins(actor, notification);
+
+    tracing::info!(
+        target: "mcv::core::CoreActor",
+        logical_plugin_id = %logical_plugin_id,
+        "plugin-removed broadcasted to all logical plugins"
     );
 }
 

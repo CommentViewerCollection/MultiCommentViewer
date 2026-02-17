@@ -5,7 +5,7 @@ npm install --prefix "$workspaceRoot/packages/my-dataview"
 npm run build --prefix "$workspaceRoot/packages/my-dataview"
 npm install --prefix "$workspaceRoot/apps/mcv"
 npm run build --prefix "$workspaceRoot/apps/mcv"
-cargo build --release --features alpha --manifest-path "$workspaceRoot/apps/mcv/src-tauri/Cargo.toml"
+cargo tauri build -- --features alpha --manifest-path "$workspaceRoot/apps/mcv/src-tauri/Cargo.toml"
 New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer -Force
 Copy-Item -Path $workspaceRoot/target/release/MultiCommentViewer.exe -Destination $env:LOCALAPPDATA\MultiCommentViewer\
 Copy-Item -Path $workspaceRoot/target/release/MultiCommentViewer.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\
@@ -31,7 +31,7 @@ Copy-Item -Path $workspaceRoot/target/release/plugin_exe_manager_v3.pdb -Destina
 # exe-plugin-sample
 npm install --prefix "$workspaceRoot/apps/exe-plugin-sample"
 npm run build --prefix "$workspaceRoot/apps/exe-plugin-sample"
-cargo build --release --manifest-path "$workspaceRoot/apps/exe-plugin-sample/src-tauri/Cargo.toml"
+cargo tauri build -- --manifest-path "$workspaceRoot/apps/exe-plugin-sample/src-tauri/Cargo.toml"
 New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer\plugins\exe-plugin-sample -Force
 Copy-Item -Path $workspaceRoot/target/release/exe-plugin-sample.exe -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\exe-plugin-sample\
 Copy-Item -Path $workspaceRoot/target/release/exe_plugin_sample.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\exe-plugin-sample\

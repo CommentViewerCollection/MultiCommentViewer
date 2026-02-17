@@ -367,38 +367,9 @@ fn handle_core_request_message(
     response_mode: bool,
 ) -> Result<McvMessage, String> {
     // UI向けのrequestハンドラ。Plugin起点requestはhandle_plugin_request_message()で扱う。
+
+    // ① レスポンスが必要なメッセージ（early return）
     match message.message_type {
-        MessageType::AddConnection => {
-            message_handlers::connection::handle_add_connection(core, message, ctx);
-        }
-        MessageType::Connect => message_handlers::connection::handle_connect(core, message, ctx),
-        MessageType::Disconnect => {
-            message_handlers::connection::handle_disconnect(core, message, ctx);
-        }
-        MessageType::SendComment => {
-            message_handlers::comment::handle_send_comment(core, message, ctx);
-        }
-        MessageType::AddSite => {
-            message_handlers::site_browser::handle_add_site(core, message, ctx);
-        }
-        MessageType::AddBrowser => {
-            message_handlers::site_browser::handle_add_browser(core, message, ctx);
-        }
-        MessageType::SetConnectionSite => {
-            message_handlers::site_browser::handle_set_connection_site(core, message, ctx);
-        }
-        MessageType::UpdateConnectionSettings => {
-            message_handlers::site_browser::handle_update_connection_settings(core, message, ctx);
-        }
-        MessageType::CommentReceived => {
-            message_handlers::comment::handle_comment_received(core, message, ctx);
-        }
-        MessageType::Connected => {
-            message_handlers::connection::handle_connected(core, message, ctx);
-        }
-        MessageType::Disconnected => {
-            message_handlers::connection::handle_disconnected(core, message, ctx);
-        }
         MessageType::GetSettingsSchema => {
             return message_handlers::settings::handle_get_settings_schema(core, message, ctx);
         }
@@ -425,26 +396,31 @@ fn handle_core_request_message(
                 serde_json::to_value(GetPluginsPayload { plugins }).unwrap(),
             ));
         }
-        _ => {
-            if response_mode {
-                return Err(format!(
-                    "Unsupported plugin request message type: {:?}",
-                    message.message_type
-                ));
-            }
-            tracing::warn!(
-                target: "mcv::core::CoreActor",
-                message_type = ?message.message_type,
-                "Unhandled UI message type"
-            );
-        }
+        _ => {}
     }
 
-    if response_mode {
-        Ok(message.create_response(message.message_type.clone(), serde_json::json!({})))
-    } else {
-        Ok(message.clone())
+    // ② UIとプラグインで共通の通知メッセージ
+    if message_handlers::handle_common_notification(core, message, ctx) {
+        return if response_mode {
+            Ok(message.create_response(message.message_type.clone(), serde_json::json!({})))
+        } else {
+            Ok(message.clone())
+        };
     }
+
+    // ③ 未処理
+    if response_mode {
+        return Err(format!(
+            "Unsupported plugin request message type: {:?}",
+            message.message_type
+        ));
+    }
+    tracing::warn!(
+        target: "mcv::core::CoreActor",
+        message_type = ?message.message_type,
+        "Unhandled UI message type"
+    );
+    Ok(message.clone())
 }
 
 fn is_supported_plugin_request_type(message_type: &MessageType) -> bool {
@@ -660,6 +636,7 @@ impl Handler<SendMessageToCore> for CoreActor {
             return;
         }
 
+        // プラグイン固有メッセージ（plugin-hello、get-plugins 等）
         match message.message_type {
             MessageType::PluginHello => {
                 if let Err(err) = message_handlers::plugin_hello::handle_plugin_hello(
@@ -675,56 +652,20 @@ impl Handler<SendMessageToCore> for CoreActor {
                         "Failed to handle plugin-hello"
                     );
                 }
+                return;
             }
-            MessageType::GetPlugins => message_handlers::plugin_hello::handle_get_plugins(
-                self,
-                physical_plugin_id,
-                &message,
-                ctx,
-            ),
-            MessageType::AddConnection => {
-                message_handlers::connection::handle_add_connection(self, &message, ctx)
-            }
-            MessageType::Connect => {
-                message_handlers::connection::handle_connect(self, &message, ctx)
-            }
-            MessageType::Connected => {
-                message_handlers::connection::handle_connected(self, &message, ctx)
-            }
-            MessageType::Disconnect => {
-                message_handlers::connection::handle_disconnect(self, &message, ctx)
-            }
-            MessageType::Disconnected => {
-                message_handlers::connection::handle_disconnected(self, &message, ctx)
-            }
-            MessageType::CommentReceived => {
-                message_handlers::comment::handle_comment_received(self, &message, ctx)
-            }
-            MessageType::SendComment => {
-                message_handlers::comment::handle_send_comment(self, &message, ctx)
+            MessageType::GetPlugins => {
+                message_handlers::plugin_hello::handle_get_plugins(
+                    self,
+                    physical_plugin_id,
+                    &message,
+                    ctx,
+                );
+                return;
             }
             MessageType::LogEntry => {
-                message_handlers::comment::handle_log_entry(self, &message, ctx)
-            }
-            MessageType::AddSite => {
-                message_handlers::site_browser::handle_add_site(self, &message, ctx)
-            }
-            MessageType::AddBrowser => {
-                message_handlers::site_browser::handle_add_browser(self, &message, ctx)
-            }
-            MessageType::SetConnectionSite => {
-                message_handlers::site_browser::handle_set_connection_site(self, &message, ctx)
-            }
-            MessageType::UpdateConnectionSettings => {
-                message_handlers::site_browser::handle_update_connection_settings(
-                    self, &message, ctx,
-                )
-            }
-            MessageType::GetSettingsSchema => {
-                tracing::warn!(
-                    target: "mcv::core::CoreActor",
-                    "GetSettingsSchema from plugin is not supported yet"
-                );
+                message_handlers::comment::handle_log_entry(self, &message, ctx);
+                return;
             }
             MessageType::SettingsSchema => {
                 // プラグインから受信したスキーマをキャッシュして、UIにも転送
@@ -741,12 +682,7 @@ impl Handler<SendMessageToCore> for CoreActor {
                 if let Some(ref callback) = self.event_callback {
                     callback(message.clone());
                 }
-            }
-            MessageType::GetSettings => {
-                tracing::warn!(
-                    target: "mcv::core::CoreActor",
-                    "GetSettings from plugin is not supported yet"
-                );
+                return;
             }
             MessageType::SettingsData => {
                 // プラグインから受信した設定データをキャッシュして、UIにも転送
@@ -763,21 +699,42 @@ impl Handler<SendMessageToCore> for CoreActor {
                 if let Some(ref callback) = self.event_callback {
                     callback(message.clone());
                 }
+                return;
+            }
+            MessageType::GetSettingsSchema => {
+                tracing::warn!(
+                    target: "mcv::core::CoreActor",
+                    "GetSettingsSchema from plugin is not supported yet"
+                );
+                return;
+            }
+            MessageType::GetSettings => {
+                tracing::warn!(
+                    target: "mcv::core::CoreActor",
+                    "GetSettings from plugin is not supported yet"
+                );
+                return;
             }
             MessageType::UpdateSettings => {
                 tracing::warn!(
                     target: "mcv::core::CoreActor",
                     "UpdateSettings from plugin is not supported yet"
                 );
+                return;
             }
-            _ => {
-                tracing::warn!(
-                    target: "mcv::core::CoreActor",
-                    message_type = ?message.message_type,
-                    "Unhandled message type"
-                );
-            }
+            _ => {}
         }
+
+        // UIとプラグインで共通の通知メッセージ
+        if message_handlers::handle_common_notification(self, &message, ctx) {
+            return;
+        }
+
+        tracing::warn!(
+            target: "mcv::core::CoreActor",
+            message_type = ?message.message_type,
+            "Unhandled message type"
+        );
     }
 }
 

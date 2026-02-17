@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { open } from '@tauri-apps/plugin-dialog'
 import Form from '@rjsf/core'
 import validator from '@rjsf/validator-ajv8'
 import { RJSFSchema, ObjectFieldTemplateProps } from '@rjsf/utils'
@@ -18,6 +19,179 @@ const SiteColorTemplate = ({ title, properties }: ObjectFieldTemplateProps) => {
     </div>
   )
 }
+
+// ============================================================================
+// cookie.txt読み込みプラグイン用カスタム設定UI
+// ============================================================================
+
+interface CookiesTxtEntry {
+  name: string
+  path: string
+  browser_id: string
+}
+
+function CookiesTxtSettings({
+  pluginId,
+  data,
+}: {
+  pluginId: string
+  data: any
+}) {
+  const [name, setName] = useState('')
+  const [path, setPath] = useState('')
+  const [loading, setLoading] = useState(false)
+  // ローカル状態で管理し、即時UIフィードバックを実現
+  const [localData, setLocalData] = useState<any>(data)
+
+  // 親から渡される data が変わったときに同期
+  useEffect(() => {
+    setLocalData(data)
+  }, [data])
+
+  const entries: CookiesTxtEntry[] = localData?.entries ?? []
+
+  const handlePickFile = async () => {
+    const selected = await open({
+      filters: [{ name: 'Cookies', extensions: ['txt'] }],
+      multiple: false,
+    })
+    if (typeof selected === 'string') {
+      setPath(selected)
+    }
+  }
+
+  // update_settings 後にプラグインの処理完了を待ってから設定を再取得する
+  // Core の handle_update_settings はアクションJSONをキャッシュに保存するため、
+  // プラグインが SettingsData を Core に送り返すまで少し待つ必要がある
+  const reloadLocalData = async () => {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    try {
+      const freshData = await invoke<any>('get_settings', { target: pluginId })
+      setLocalData(freshData)
+    } catch (e) {
+      console.error('設定の再取得に失敗しました:', e)
+    }
+  }
+
+  const handleRegister = async () => {
+    if (!path) return
+    try {
+      setLoading(true)
+      await invoke('update_settings', {
+        target: pluginId,
+        data: { action: 'add', name, path },
+      })
+      setName('')
+      setPath('')
+      await reloadLocalData()
+    } catch (e) {
+      console.error('cookies.txt の登録に失敗しました:', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (browserId: string) => {
+    try {
+      setLoading(true)
+      await invoke('update_settings', {
+        target: pluginId,
+        data: { action: 'remove', browser_id: browserId },
+      })
+      await reloadLocalData()
+    } catch (e) {
+      console.error('cookies.txt の削除に失敗しました:', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* ファイル追加フォーム */}
+      <div className="border border-gray-600 rounded-lg p-4 bg-gray-800 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-200">新しいファイルを登録</h3>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">名前（任意）</label>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="例: My YouTube Cookie"
+            className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-500 rounded focus:outline-none focus:border-blue-500 text-gray-100"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">cookies.txt ファイル</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={path}
+              readOnly
+              placeholder="ファイルを選択してください"
+              className="flex-1 px-3 py-1.5 text-sm bg-gray-700 border border-gray-500 rounded text-gray-300 cursor-default"
+            />
+            <button
+              onClick={handlePickFile}
+              className="px-3 py-1.5 text-sm bg-gray-600 hover:bg-gray-500 border border-gray-500 rounded transition-colors text-gray-200"
+            >
+              選択...
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={handleRegister}
+          disabled={!path || loading}
+          className="px-4 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors text-white"
+        >
+          登録
+        </button>
+      </div>
+
+      {/* 登録済みファイル一覧 */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-200 mb-2">
+          登録済みファイル（{entries.length}件）
+        </h3>
+        {entries.length === 0 ? (
+          <div className="text-sm text-gray-500 py-4 text-center border border-gray-700 rounded-lg">
+            登録済みのファイルはありません
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {entries.map(entry => (
+              <div
+                key={entry.browser_id}
+                className="flex items-center gap-3 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-gray-200 font-medium truncate">
+                    {entry.name || entry.path}
+                  </div>
+                  {entry.name && (
+                    <div className="text-xs text-gray-500 truncate">{entry.path}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDelete(entry.browser_id)}
+                  disabled={loading}
+                  className="flex-shrink-0 px-2 py-1 text-xs bg-red-700 hover:bg-red-600 disabled:opacity-50 rounded transition-colors text-white"
+                >
+                  削除
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
 
 interface SettingsTab {
   id: string
@@ -480,20 +654,27 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
         )}
 
         {!loading && !error && activeTabData && (
-          <div className="rjsf">
-            <Form
-              schema={getEffectiveSchema()}
-              formData={currentData[activeTab]}
-              validator={validator}
-              onChange={(e) => handleFormChange(activeTab, e.formData)}
-              uiSchema={activeTab === 'core' ? getCoreUiSchema() : getPluginUiSchema(activeTab)}
-              widgets={{
-                ColorPickerWidget: ColorPickerWidget
-              }}
-            >
-              <></>  {/* ボタンを非表示 */}
-            </Form>
-          </div>
+          activeTabData.name === 'cookie.txt読み込み' ? (
+            <CookiesTxtSettings
+              pluginId={activeTab}
+              data={activeTabData.data}
+            />
+          ) : (
+            <div className="rjsf">
+              <Form
+                schema={getEffectiveSchema()}
+                formData={currentData[activeTab]}
+                validator={validator}
+                onChange={(e) => handleFormChange(activeTab, e.formData)}
+                uiSchema={activeTab === 'core' ? getCoreUiSchema() : getPluginUiSchema(activeTab)}
+                widgets={{
+                  ColorPickerWidget: ColorPickerWidget
+                }}
+              >
+                <></>  {/* ボタンを非表示 */}
+              </Form>
+            </div>
+          )
         )}
       </div>
 

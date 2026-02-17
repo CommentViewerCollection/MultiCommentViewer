@@ -89,3 +89,13 @@ $manifest = @{
     path = "plugin_twitch.dll"
 }
 $manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-twitch\manifest.json" -Encoding UTF8
+
+# plugin-cookies-txt
+cargo build --release --manifest-path "$workspaceRoot/crates/plugin-cookies-txt/Cargo.toml"
+New-Item -ItemType Directory -Path $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-cookies-txt -Force
+Copy-Item -Path $workspaceRoot/target/release/plugin_cookies_txt.dll -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-cookies-txt\
+Copy-Item -Path $workspaceRoot/target/release/plugin_cookies_txt.pdb -Destination $env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-cookies-txt\
+$manifest = @{
+    path = "plugin_cookies_txt.dll"
+}
+$manifest | ConvertTo-Json | Out-File -FilePath "$env:LOCALAPPDATA\MultiCommentViewer\plugins\plugin-cookies-txt\manifest.json" -Encoding UTF8

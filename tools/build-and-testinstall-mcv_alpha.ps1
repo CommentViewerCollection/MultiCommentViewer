@@ -12,4 +12,5 @@ cargo xtask install `
   --plugin twitch `
   --plugin cookies-txt `
   --plugin twicas `
-  --plugin exe-manager-v3
+  --plugin exe-manager-v3 `
+  --plugin nicolive

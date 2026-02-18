@@ -97,5 +97,14 @@
     "entry": "plugin_kick.dll",
     "api": "v3",
     "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-nicolive",
+    "id": "nicolive",
+    "name": "ニコ生",
+    "description": "ニコ生のコメント取得・投稿をするプラグインです",
+    "entry": "plugin_nicolive.dll",
+    "api": "v3",
+    "has_channel_feature": true
   }
 ]

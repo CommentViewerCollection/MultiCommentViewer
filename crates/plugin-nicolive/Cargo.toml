@@ -1,0 +1,33 @@
+[package]
+name = "plugin-nicolive"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+alpha = ["mcv-plugin-telemetry/alpha", "plugin-abi-helper/alpha"]
+beta = ["mcv-plugin-telemetry/beta", "plugin-abi-helper/beta"]
+stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
+
+[dependencies]
+nicolive-lib = { path = "../../crates/nicolive-lib" }
+mcv-common = { path = "../../crates/mcv-common" }
+mcv-messages = { path = "../../crates/mcv-messages" }
+mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
+async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
+tracing = "0.1"
+plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
+regex = "1.12.3"
+reqwest = { version = "0.12", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+futures-util = "0.3"
+prost = "0.13"
+base64 = "0.22"

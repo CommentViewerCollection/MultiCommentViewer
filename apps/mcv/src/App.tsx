@@ -151,8 +151,44 @@ function App() {
   const coreSettingsRef = useRef<any>(null)
   const connectionMapRef = useRef<Map<string, ConnectionInfo>>(new Map())
 
+  // サイドバー幅リサイズ
+  const [sidebarWidth, setSidebarWidth] = useState(320)
+  const isResizing = useRef(false)
+  const resizeStartX = useRef(0)
+  const resizeStartWidth = useRef(0)
+
   // 新規: forceUpdate のための useReducer
   const [, forceUpdate] = useReducer(x => x + 1, 0)
+
+  // サイドバーリサイズ: グローバルマウスイベント
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return
+      const delta = e.clientX - resizeStartX.current
+      const newWidth = Math.max(200, Math.min(600, resizeStartWidth.current + delta))
+      setSidebarWidth(newWidth)
+    }
+    const handleMouseUp = () => {
+      isResizing.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    isResizing.current = true
+    resizeStartX.current = e.clientX
+    resizeStartWidth.current = sidebarWidth
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    e.preventDefault()
+  }
 
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
@@ -577,7 +613,10 @@ function App() {
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex overflow-hidden">
       {/* サイドバー: 接続一覧 */}
-      <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full">
+      <div
+        style={{ width: sidebarWidth }}
+        className="shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full relative"
+      >
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-2xl font-bold mb-2">MultiCommentViewer</h1>
           <button
@@ -805,10 +844,16 @@ function App() {
             {checkingUpdate ? '確認中...' : '更新を確認'}
           </button>
         </div>
+
+        {/* リサイズハンドル */}
+        <div
+          onMouseDown={handleResizeMouseDown}
+          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 transition-colors"
+        />
       </div>
 
       {/* メインエリア */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* タブヘッダー */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="flex">

@@ -151,14 +151,33 @@ function App() {
   const coreSettingsRef = useRef<any>(null)
   const connectionMapRef = useRef<Map<string, ConnectionInfo>>(new Map())
 
-  // サイドバー幅リサイズ
+  // サイドバー幅リサイズ（core.json で永続化）
   const [sidebarWidth, setSidebarWidth] = useState(320)
   const isResizing = useRef(false)
   const resizeStartX = useRef(0)
   const resizeStartWidth = useRef(0)
+  const sidebarWidthRef = useRef(sidebarWidth)
+  const sidebarWidthInitialized = useRef(false)
 
   // 新規: forceUpdate のための useReducer
   const [, forceUpdate] = useReducer(x => x + 1, 0)
+
+  // sidebarWidthRef を sidebarWidth と同期
+  useEffect(() => {
+    sidebarWidthRef.current = sidebarWidth
+  }, [sidebarWidth])
+
+  // coreSettings が初めてロードされたとき、sidebar_width を反映（以降は変更しない）
+  useEffect(() => {
+    if (coreSettings && !sidebarWidthInitialized.current) {
+      sidebarWidthInitialized.current = true
+      const saved = coreSettings.sidebar_width
+      if (typeof saved === 'number' && saved >= 200 && saved <= 600) {
+        setSidebarWidth(saved)
+        sidebarWidthRef.current = saved
+      }
+    }
+  }, [coreSettings])
 
   // サイドバーリサイズ: グローバルマウスイベント
   useEffect(() => {
@@ -172,6 +191,15 @@ function App() {
       isResizing.current = false
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
+      // sidebar_width を core.json に保存（coreSettingsRef の他フィールドを引き継ぐ）
+      invoke('update_settings', {
+        target: 'core',
+        data: { ...coreSettingsRef.current, sidebar_width: sidebarWidthRef.current },
+      }).catch(console.error)
+      // ローカルの ref も即時更新
+      if (coreSettingsRef.current) {
+        coreSettingsRef.current = { ...coreSettingsRef.current, sidebar_width: sidebarWidthRef.current }
+      }
     }
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)

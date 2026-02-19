@@ -598,6 +598,93 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoRespons
         .collect())
 }
 
+// ============================================================
+// ウィンドウ状態の保存・復元（settings/core.json に直接読み書き）
+// ============================================================
+
+/// タイトルバー領域（上部 50px）がいずれかのモニターと重なっているか確認する
+fn is_title_bar_visible(monitors: &[tauri::Monitor], x: i32, y: i32, width: u32) -> bool {
+    let title_bar_h = 50i32;
+    for m in monitors {
+        let mp = m.position();
+        let ms = m.size();
+        let m_right = mp.x + ms.width as i32;
+        let m_bottom = mp.y + ms.height as i32;
+        if x < m_right
+            && (x + width as i32) > mp.x
+            && y < m_bottom
+            && (y + title_bar_h) > mp.y
+        {
+            return true;
+        }
+    }
+    false
+}
+
+/// ウィンドウ状態を core.json にマージ保存する
+///
+/// 最大化中はサイズ・位置を保存しない（最大化解除後のサイズを維持するため）。
+fn save_window_state(window: &tauri::WebviewWindow, settings_dir: &std::path::Path) {
+    let core_json = settings_dir.join("core.json");
+    let mut data: serde_json::Value = std::fs::read_to_string(&core_json)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::json!({}));
+
+    let is_maximized = window.is_maximized().unwrap_or(false);
+    data["window_maximized"] = serde_json::json!(is_maximized);
+
+    if !is_maximized {
+        if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
+            data["window_x"] = serde_json::json!(pos.x);
+            data["window_y"] = serde_json::json!(pos.y);
+            data["window_width"] = serde_json::json!(size.width);
+            data["window_height"] = serde_json::json!(size.height);
+        }
+    }
+
+    if let Ok(json) = serde_json::to_string_pretty(&data) {
+        let _ = std::fs::write(&core_json, json);
+    }
+}
+
+/// core.json からウィンドウ状態を復元する（マルチモニター対応）
+fn restore_window_state(window: &tauri::WebviewWindow, settings_dir: &std::path::Path) {
+    let core_json = settings_dir.join("core.json");
+    let Ok(json) = std::fs::read_to_string(&core_json) else {
+        return;
+    };
+    let Ok(data): Result<serde_json::Value, _> = serde_json::from_str(&json) else {
+        return;
+    };
+
+    let maximized = data.get("window_maximized").and_then(|v| v.as_bool()).unwrap_or(false);
+    if maximized {
+        let _ = window.maximize();
+        return;
+    }
+
+    let x = data.get("window_x").and_then(|v| v.as_i64()).map(|v| v as i32);
+    let y = data.get("window_y").and_then(|v| v.as_i64()).map(|v| v as i32);
+    let w = data.get("window_width").and_then(|v| v.as_u64()).map(|v| v as u32);
+    let h = data.get("window_height").and_then(|v| v.as_u64()).map(|v| v as u32);
+
+    if let (Some(x), Some(y), Some(w), Some(h)) = (x, y, w, h) {
+        let monitors = window.available_monitors().unwrap_or_default();
+        if monitors.is_empty() || is_title_bar_visible(&monitors, x, y, w) {
+            let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                width: w,
+                height: h,
+            }));
+            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                x,
+                y,
+            }));
+        }
+        // タイトルバーが見えない場合（モニター切断等）はデフォルト位置のまま
+    }
+}
+
 fn main() {
     // ロガーを初期化
     let local_app_data = std::env::var("LOCALAPPDATA").expect("Failed to get LOCALAPPDATA");
@@ -620,17 +707,21 @@ fn main() {
     // LogSenderActorを起動するためのストレージを取得
     let log_storage = mcv_log_core::get_storage();
 
-    // 設定ストレージを初期化
-    let settings_db_path = app_data_dir.join("settings.db");
+    // 設定ストレージを初期化（settings/ ディレクトリに JSON ファイルとして保存）
+    let settings_dir = app_data_dir.join("settings");
+    std::fs::create_dir_all(&settings_dir).expect("Failed to create settings directory");
     let settings_storage = Arc::new(std::sync::Mutex::new(
-        mcv_settings_core::SettingsStorage::new(&settings_db_path)
+        mcv_settings_core::SettingsStorage::new(&settings_dir)
             .expect("Failed to initialize settings storage"),
     ));
     tracing::info!(
         target: "mcv::main",
-        settings_db_path = %settings_db_path.display(),
+        settings_dir = %settings_dir.display(),
         "Settings storage initialized"
     );
+
+    // Tauri セットアップでも settings_dir を使うためにクローン
+    let settings_dir_for_tauri = settings_dir.clone();
 
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
@@ -760,9 +851,6 @@ fn main() {
             core_actor.set_settings_storage(settings_storage.clone());
 
             // 接続永続化ファイルのパスを設定
-            let settings_dir = app_data_dir.join("settings");
-            std::fs::create_dir_all(&settings_dir)
-                .expect("Failed to create settings directory");
             let connections_file_path = settings_dir.join("connections.json");
             core_actor.set_connections_file_path(connections_file_path.clone());
 
@@ -840,12 +928,24 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(move |app| {
-            // ウィンドウタイトルにバージョン番号とチャンネルを設定
+            // ウィンドウタイトルの設定・ウィンドウ状態の復元
             if let Some(window) = app.get_webview_window("main") {
                 let title = get_title();
-
                 let _ = window.set_title(&title);
                 tracing::debug!(target: "mcv::main", title = %title, "Window title set");
+
+                // 前回のウィンドウ状態（位置・サイズ・最大化）を復元（core.json から読み込み）
+                restore_window_state(&window, &settings_dir_for_tauri);
+                tracing::debug!(target: "mcv::main", settings_dir = %settings_dir_for_tauri.display(), "Window state restore attempted");
+
+                // ウィンドウを閉じる時にウィンドウ状態を保存（core.json にマージ）
+                let window_for_close = window.clone();
+                let settings_dir_for_close = settings_dir_for_tauri.clone();
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { .. } = event {
+                        save_window_state(&window_for_close, &settings_dir_for_close);
+                    }
+                });
             }
 
             // ログ挿入時のイベント発行を設定

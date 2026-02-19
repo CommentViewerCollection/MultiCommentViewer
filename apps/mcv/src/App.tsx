@@ -210,6 +210,12 @@ function App() {
     coreSettingsRef.current = coreSettings
   }, [coreSettings])
 
+  // テーマをhtmlタグに適用（coreSettings が null の場合はダークがデフォルト）
+  useEffect(() => {
+    const isDark = coreSettings?.theme !== 'light'
+    document.documentElement.classList.toggle('dark', isDark)
+  }, [coreSettings])
+
   useEffect(() => {
     // Connection Map を作成（O(1) 検索のため）
     const map = new Map<string, ConnectionInfo>()
@@ -567,10 +573,10 @@ function App() {
   }
 
   return (
-    <div className="h-screen bg-gray-900 text-white flex overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex overflow-hidden">
       {/* サイドバー: 接続一覧 */}
-      <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col h-full">
-        <div className="p-4 border-b border-gray-700">
+      <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-2xl font-bold mb-2">MultiCommentViewer</h1>
           <button
             onClick={handleAddConnection}
@@ -581,9 +587,9 @@ function App() {
         </div>
 
         <div className="flex-1 overflow-y-scroll p-4 space-y-2">
-          <h2 className="text-sm font-semibold text-gray-400 mb-2">接続一覧</h2>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">接続一覧</h2>
           {connections.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 text-sm">
+            <div className="text-center py-8 text-gray-600 dark:text-gray-500 text-sm">
               接続がありません
             </div>
           ) : (
@@ -598,7 +604,7 @@ function App() {
               return (
                 <div
                   key={conn.connection_id}
-                  className="p-3 bg-gray-700 rounded transition-colors space-y-1.5"
+                  className="p-3 bg-gray-100 dark:bg-gray-700 rounded transition-colors space-y-1.5"
                 >
                   {/* 接続名 */}
                   <div className="flex items-center justify-between">
@@ -608,13 +614,13 @@ function App() {
                       onChange={(e) => handleNameChange(conn.connection_id, e.target.value)}
                       onBlur={() => handleNameBlur(conn.connection_id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-500 focus:border-blue-500 focus:outline-none flex-1 mr-2"
+                      className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-400 dark:hover:border-gray-500 focus:border-blue-500 focus:outline-none flex-1 mr-2"
                     />
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
                       />
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {getStatusText(conn.status)}
                       </span>
                     </div>
@@ -623,12 +629,12 @@ function App() {
                   {/* サイト選択 + ブラウザ選択 */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
                     <div>
-                      <label className="text-xs text-gray-400 block mb-0.5">配信サイト</label>
+                      <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">配信サイト</label>
                       <select
                         value={conn.site_id || ''}
                         onChange={(e) => handleSiteChange(conn.connection_id, e.target.value)}
                         disabled={!canModify}
-                        className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
                       >
                         <option value="">選択してください</option>
                         {sites.map((site) => (
@@ -640,12 +646,12 @@ function App() {
                     </div>
 
                     <div>
-                      <label className="text-xs text-gray-400 block mb-0.5">ブラウザ</label>
+                      <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">ブラウザ</label>
                       <select
                         value={conn.browser_id || browsers[0]?.browser_id || ''}
                         onChange={(e) => handleBrowserChange(conn.connection_id, e.target.value)}
                         disabled={!canModify}
-                        className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
                       >
                         {browsers.map((browser) => (
                           <option key={browser.browser_id} value={browser.browser_id}>
@@ -658,7 +664,7 @@ function App() {
 
                   {/* URL入力 */}
                   <div>
-                    <label className="text-xs text-gray-400 block mb-0.5">URL</label>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">URL</label>
                     <input
                       type="text"
                       value={conn.url || ''}
@@ -666,7 +672,7 @@ function App() {
                       onBlur={() => handleUrlBlur(conn.connection_id)}
                       disabled={!canModifyUrl}
                       placeholder="https://..."
-                      className="w-full px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
                     />
                   </div>
 
@@ -675,7 +681,7 @@ function App() {
                     coreSettings?.color_mode === 'connection' && (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
                         <div>
-                          <label className="text-xs text-gray-400 block mb-0.5">背景色</label>
+                          <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">背景色</label>
                           <div className="flex gap-1 items-center">
                             <input
                               type="color"
@@ -701,7 +707,7 @@ function App() {
                                 )
                               }
                               disabled={!canModifyColors}
-                              className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-20 px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
                               pattern="^#[0-9A-Fa-f]{6}$"
                               maxLength={7}
                               placeholder="#1f2937"
@@ -710,7 +716,7 @@ function App() {
                         </div>
 
                         <div>
-                          <label className="text-xs text-gray-400 block mb-0.5">文字色</label>
+                          <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">文字色</label>
                           <div className="flex gap-1 items-center">
                             <input
                               type="color"
@@ -736,7 +742,7 @@ function App() {
                                 )
                               }
                               disabled={!canModifyColors}
-                              className="w-20 px-2 py-1 text-xs bg-gray-600 border border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-20 px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
                               pattern="^#[0-9A-Fa-f]{6}$"
                               maxLength={7}
                               placeholder="#ffffff"
@@ -774,7 +780,7 @@ function App() {
                         handleRemoveConnection(conn.connection_id)
                       }}
                       disabled={isConnected || conn.status.type === 'Connecting'}
-                      className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
                     >
                       削除
                     </button>
@@ -785,14 +791,14 @@ function App() {
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-700 space-y-2">
-          <div className="text-xs text-gray-500">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+          <div className="text-xs text-gray-600 dark:text-gray-500">
             <span>接続数: {connections.length}</span>
           </div>
           <button
             onClick={handleCheckForUpdates}
             disabled={checkingUpdate}
-            className="w-full px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
           >
             {checkingUpdate ? '確認中...' : '更新を確認'}
           </button>
@@ -802,13 +808,13 @@ function App() {
       {/* メインエリア */}
       <div className="flex-1 flex flex-col">
         {/* タブヘッダー */}
-        <div className="bg-gray-800 border-b border-gray-700">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="flex">
             <button
               className={`px-6 py-3 font-medium transition-colors ${
                 activeTab === 'comments'
                   ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-gray-200'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
               onClick={() => setActiveTab('comments')}
             >
@@ -818,7 +824,7 @@ function App() {
               className={`px-6 py-3 font-medium transition-colors ${
                 activeTab === 'logs'
                   ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-gray-200'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
               onClick={() => setActiveTab('logs')}
             >
@@ -828,7 +834,7 @@ function App() {
               className={`px-6 py-3 font-medium transition-colors ${
                 activeTab === 'settings'
                   ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-gray-200'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
               onClick={() => setActiveTab('settings')}
             >
@@ -849,8 +855,9 @@ function App() {
                 columns={columns}
                 renderCell={renderCell}
                 height="100%"
-                backgroundColor="#1f2937"
-                border="1px solid #374151"
+                backgroundColor={coreSettings?.theme === 'light' ? '#f9fafb' : '#1f2937'}
+                headerBackgroundColor={coreSettings?.theme === 'light' ? '#e5e7eb' : '#374151'}
+                border={coreSettings?.theme === 'light' ? '1px solid #e5e7eb' : '1px solid #374151'}
                 onAtBottomChange={setAtBottom}
                 onColumnResize={handleColumnResize}
                 onColumnVisibilityChange={handleColumnVisibilityChange}
@@ -859,14 +866,14 @@ function App() {
             </div>
 
             {/* コメント投稿セクション */}
-            <div className="p-4 bg-gray-800 border-t border-gray-700">
+            <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
               <div className="flex gap-2 items-end">
                 <div className="flex-shrink-0">
-                  <label className="block text-sm font-medium mb-1 text-gray-300">接続選択</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">接続選択</label>
                   <select
                     value={selectedConnectionForCommand}
                     onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
-                    className="px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white"
+                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white"
                   >
                     <option value="">選択してください</option>
                     {connections.map((conn) => (
@@ -878,7 +885,7 @@ function App() {
                 </div>
 
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1 text-gray-300">コメント</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">コメント</label>
                   <input
                     type="text"
                     value={commandInput}
@@ -889,7 +896,7 @@ function App() {
                       }
                     }}
                     placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white placeholder-gray-500"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
@@ -904,7 +911,7 @@ function App() {
           </div>
 
           {/* ログタブ */}
-          {activeTab === 'logs' && <LogViewer />}
+          {activeTab === 'logs' && <LogViewer theme={coreSettings?.theme ?? 'dark'} />}
 
           {/* 設定タブ */}
           {activeTab === 'settings' && (
@@ -919,20 +926,20 @@ function App() {
       {/* 更新ダイアログ */}
       {showUpdateDialog && updateInfo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
             <h3 className="text-xl font-bold mb-4">新しいバージョンが利用可能です</h3>
             <div className="space-y-3 mb-6">
               <div>
-                <span className="text-gray-400">バージョン: </span>
+                <span className="text-gray-500 dark:text-gray-400">バージョン: </span>
                 <span className="font-semibold">{updateInfo.version}</span>
               </div>
               <div>
-                <span className="text-gray-400">リリース日: </span>
+                <span className="text-gray-500 dark:text-gray-400">リリース日: </span>
                 <span>{new Date(updateInfo.released_at).toLocaleDateString('ja-JP')}</span>
               </div>
               <div>
-                <span className="text-gray-400 block mb-1">リリースノート:</span>
-                <div className="bg-gray-700 p-3 rounded text-sm whitespace-pre-wrap">
+                <span className="text-gray-500 dark:text-gray-400 block mb-1">リリースノート:</span>
+                <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded text-sm whitespace-pre-wrap">
                   {updateInfo.release_notes}
                 </div>
               </div>
@@ -946,7 +953,7 @@ function App() {
               </button>
               <button
                 onClick={() => setShowUpdateDialog(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
               >
                 後で
               </button>

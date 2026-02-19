@@ -18,6 +18,7 @@ export interface DataGridProps<T> {
   height?: string;
   width?: string;
   backgroundColor?: string;
+  headerBackgroundColor?: string;
   border?: string;
   onAtBottomChange?: (atBottom: boolean) => void;
   onItemSelect?: (index: number, item: T) => void;
@@ -37,6 +38,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   height = '100vh',
   width = '100%',
   backgroundColor = '#1a1a1a',
+  headerBackgroundColor = '#333',
   border = '2px solid red',
   onAtBottomChange,
   onItemSelect,
@@ -64,7 +66,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
     <div
       style={{
         display: 'flex',
-        backgroundColor: '#333',
+        backgroundColor: headerBackgroundColor,
         borderBottom: '1px solid #555',
         fontWeight: 'bold',
         position: 'relative',

@@ -109,33 +109,33 @@ function CookiesTxtSettings({
   return (
     <div className="space-y-6">
       {/* ファイル追加フォーム */}
-      <div className="border border-gray-600 rounded-lg p-4 bg-gray-800 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-200">新しいファイルを登録</h3>
+      <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">新しいファイルを登録</h3>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">名前（任意）</label>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">名前（任意）</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="例: My YouTube Cookie"
-            className="w-full px-3 py-1.5 text-sm bg-gray-700 border border-gray-500 rounded focus:outline-none focus:border-blue-500 text-gray-100"
+            className="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-500 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-gray-100"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">cookies.txt ファイル</label>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">cookies.txt ファイル</label>
           <div className="flex gap-2">
             <input
               type="text"
               value={path}
               readOnly
               placeholder="ファイルを選択してください"
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-700 border border-gray-500 rounded text-gray-300 cursor-default"
+              className="flex-1 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-500 rounded text-gray-600 dark:text-gray-300 cursor-default"
             />
             <button
               onClick={handlePickFile}
-              className="px-3 py-1.5 text-sm bg-gray-600 hover:bg-gray-500 border border-gray-500 rounded transition-colors text-gray-200"
+              className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded transition-colors text-gray-700 dark:text-gray-200"
             >
               選択...
             </button>
@@ -153,11 +153,11 @@ function CookiesTxtSettings({
 
       {/* 登録済みファイル一覧 */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-200 mb-2">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
           登録済みファイル（{entries.length}件）
         </h3>
         {entries.length === 0 ? (
-          <div className="text-sm text-gray-500 py-4 text-center border border-gray-700 rounded-lg">
+          <div className="text-sm text-gray-600 dark:text-gray-500 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg">
             登録済みのファイルはありません
           </div>
         ) : (
@@ -165,14 +165,14 @@ function CookiesTxtSettings({
             {entries.map(entry => (
               <div
                 key={entry.browser_id}
-                className="flex items-center gap-3 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg"
+                className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-200 font-medium truncate">
+                  <div className="text-sm text-gray-700 dark:text-gray-200 font-medium truncate">
                     {entry.name || entry.path}
                   </div>
                   {entry.name && (
-                    <div className="text-xs text-gray-500 truncate">{entry.path}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500 truncate">{entry.path}</div>
                   )}
                 </div>
                 <button
@@ -213,19 +213,30 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // RJSF用のカスタムスタイル
+  // RJSF用のカスタムスタイル（ライト/ダーク両対応）
   const customStyles = `
-    /* 入力フィールドとセレクトボックスのスタイル */
+    /* 入力フィールドとセレクトボックスのスタイル（ライトモードデフォルト） */
     .rjsf input[type="text"],
     .rjsf input[type="number"],
     .rjsf input[type="email"],
     .rjsf select,
     .rjsf textarea {
+      background-color: #f3f4f6 !important;
+      border: 1px solid #d1d5db !important;
+      color: #111827 !important;
+      border-radius: 0.375rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    /* ダークモード: 入力フィールド */
+    .dark .rjsf input[type="text"],
+    .dark .rjsf input[type="number"],
+    .dark .rjsf input[type="email"],
+    .dark .rjsf select,
+    .dark .rjsf textarea {
       background-color: #374151 !important;
       border: 1px solid #4b5563 !important;
       color: #f3f4f6 !important;
-      border-radius: 0.375rem;
-      padding: 0.5rem 0.75rem;
     }
 
     .rjsf input[type="text"]:focus,
@@ -253,35 +264,55 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       margin-right: 0.5rem;
     }
 
-    /* ラベルのスタイル */
+    /* ラベルのスタイル（ライトモードデフォルト） */
     .rjsf label {
-      color: #e5e7eb !important;
+      color: #374151 !important;
       font-weight: 500;
       margin-bottom: 0.25rem;
       display: block;
     }
 
-    /* 説明文のスタイル */
+    /* ダークモード: ラベル */
+    .dark .rjsf label {
+      color: #e5e7eb !important;
+    }
+
+    /* 説明文のスタイル（ライトモードデフォルト） */
     .rjsf .field-description {
-      color: #9ca3af !important;
+      color: #6b7280 !important;
       font-size: 0.875rem;
       margin-top: 0.25rem;
     }
 
-    /* 条件付きフィールドのグループ化 */
+    /* ダークモード: 説明文 */
+    .dark .rjsf .field-description {
+      color: #9ca3af !important;
+    }
+
+    /* 条件付きフィールドのグループ化（ライトモードデフォルト） */
     .rjsf .field-object > fieldset {
-      border: 1px solid #4b5563;
+      border: 1px solid #d1d5db;
       border-radius: 0.5rem;
       padding: 1rem;
       margin-top: 0.5rem;
+      background-color: rgba(209, 213, 219, 0.3);
+    }
+
+    /* ダークモード: fieldset */
+    .dark .rjsf .field-object > fieldset {
+      border: 1px solid #4b5563;
       background-color: rgba(55, 65, 81, 0.3);
     }
 
     .rjsf .field-object > fieldset > legend {
-      color: #9ca3af !important;
+      color: #6b7280 !important;
       font-size: 0.875rem;
       font-weight: 600;
       padding: 0 0.5rem;
+    }
+
+    .dark .rjsf .field-object > fieldset > legend {
+      color: #9ca3af !important;
     }
 
     /* 条件付きフィールドを視覚的に区別 */
@@ -297,8 +328,12 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
     /* 条件付きフィールドのラベルを強調 */
     .rjsf .conditional-field > label {
-      color: #93c5fd !important;
+      color: #2563eb !important;
       font-weight: 600;
+    }
+
+    .dark .rjsf .conditional-field > label {
+      color: #93c5fd !important;
     }
 
     /* readOnlyフィールド（disabled状態）のスタイル */
@@ -307,6 +342,13 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     .rjsf .conditional-field-disabled {
       opacity: 0.5;
       pointer-events: none;
+      background-color: rgba(209, 213, 219, 0.2) !important;
+      border-left-color: #9ca3af !important;
+    }
+
+    .dark .rjsf .conditional-field:has(input[readonly]),
+    .dark .rjsf .conditional-field:has(select[disabled]),
+    .dark .rjsf .conditional-field-disabled {
       background-color: rgba(55, 65, 81, 0.2) !important;
       border-left-color: #6b7280 !important;
     }
@@ -314,6 +356,12 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     .rjsf .conditional-field:has(input[readonly]) > label,
     .rjsf .conditional-field:has(select[disabled]) > label,
     .rjsf .conditional-field-disabled > label {
+      color: #9ca3af !important;
+    }
+
+    .dark .rjsf .conditional-field:has(input[readonly]) > label,
+    .dark .rjsf .conditional-field:has(select[disabled]) > label,
+    .dark .rjsf .conditional-field-disabled > label {
       color: #6b7280 !important;
     }
 
@@ -325,21 +373,32 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       opacity: 0.6;
     }
 
-    /* 配信サイト毎の色設定 - サイトカード */
+    /* 配信サイト毎の色設定 - サイトカード（ライトモードデフォルト） */
     .rjsf .site-color-item {
-      border: 1px solid #4b5563;
+      border: 1px solid #d1d5db;
       border-radius: 0.5rem;
       padding: 0.75rem 1rem;
       margin-bottom: 0.75rem;
+      background-color: rgba(209, 213, 219, 0.3);
+    }
+
+    /* ダークモード: サイトカード */
+    .dark .rjsf .site-color-item {
+      border: 1px solid #4b5563;
       background-color: rgba(55, 65, 81, 0.3);
     }
 
     .rjsf .site-color-item-title {
-      color: #93c5fd;
+      color: #2563eb;
       font-weight: 600;
       font-size: 0.9rem;
       margin-bottom: 0.5rem;
       padding-bottom: 0.375rem;
+      border-bottom: 1px solid #d1d5db;
+    }
+
+    .dark .rjsf .site-color-item-title {
+      color: #93c5fd;
       border-bottom: 1px solid #374151;
     }
 
@@ -623,14 +682,14 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       <style>{customStyles}</style>
 
       {/* タブヘッダー */}
-      <div className="flex border-b border-gray-700 px-6 bg-gray-800">
+      <div className="flex border-b border-gray-200 dark:border-gray-700 px-6 bg-white dark:bg-gray-800">
         {tabs.map(tab => (
           <button
             key={tab.id}
             className={`px-4 py-2 transition-colors ${
               activeTab === tab.id
                 ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-200'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
             onClick={() => setActiveTab(tab.id)}
           >
@@ -643,7 +702,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {loading && (
           <div className="flex items-center justify-center h-full">
-            <div className="text-gray-400">読み込み中...</div>
+            <div className="text-gray-500 dark:text-gray-400">読み込み中...</div>
           </div>
         )}
 
@@ -679,24 +738,24 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* フッター（ボタン） */}
-      <div className="px-6 py-4 border-t border-gray-700 flex justify-end gap-2 bg-gray-800">
+      <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2 bg-white dark:bg-gray-800">
         <button
           onClick={handleOk}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-white"
           disabled={loading}
         >
           OK
         </button>
         <button
           onClick={handleApply}
-          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
           disabled={loading}
         >
           適用
         </button>
         <button
           onClick={handleCancel}
-          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
         >
           キャンセル
         </button>

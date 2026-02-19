@@ -40,7 +40,7 @@ interface LogRow {
   line: number
 }
 
-export function LogViewer() {
+export function LogViewer({ theme = 'dark' }: { theme?: string }) {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [buildProfile, setBuildProfile] = useState<string>('')
   const [searchText, setSearchText] = useState('')
@@ -161,7 +161,7 @@ export function LogViewer() {
           <input
             type="text"
             placeholder="メッセージを検索..."
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500 text-white placeholder-gray-500"
+            className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
@@ -171,7 +171,7 @@ export function LogViewer() {
         {buildProfile === 'alpha' && (
           <div className="flex gap-2">
             {['trace', 'debug', 'info', 'warn', 'error'].map((level) => (
-              <label key={level} className="flex items-center gap-1 text-sm text-gray-300">
+              <label key={level} className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={selectedLevels.includes(level)}
@@ -191,7 +191,7 @@ export function LogViewer() {
         )}
 
         {/* チャンネル表示 */}
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           チャンネル: {buildProfile}
           {(buildProfile === 'stable' || buildProfile === 'beta') && ' (ERRORのみ表示)'}
         </div>
@@ -206,13 +206,14 @@ export function LogViewer() {
       </div>
 
       {/* ログテーブル */}
-      <div className="flex-1 border border-gray-600 rounded overflow-hidden">
+      <div className="flex-1 border border-gray-300 dark:border-gray-600 rounded overflow-hidden">
         <DataGridComponent
           data={rows}
           columns={columns}
           renderCell={renderCell}
           height="100%"
-          backgroundColor="#1f2937"
+          backgroundColor={theme === 'light' ? '#f9fafb' : '#1f2937'}
+          headerBackgroundColor={theme === 'light' ? '#e5e7eb' : '#374151'}
           border="none"
           defaultItemHeight={40}
         />

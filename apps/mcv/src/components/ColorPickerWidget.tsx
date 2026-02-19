@@ -12,7 +12,7 @@ export function ColorPickerWidget(props: WidgetProps) {
           type="button"
           onClick={() => colorInputRef.current?.click()}
           disabled={disabled}
-          className="relative w-12 h-10 rounded border-2 border-gray-500 hover:border-blue-400 hover:scale-105 transition-all shadow-sm hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+          className="relative w-12 h-10 rounded border-2 border-gray-400 dark:border-gray-500 hover:border-blue-400 hover:scale-105 transition-all shadow-sm hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
           style={{ backgroundColor: value || '#000000' }}
           title="クリックして色を変更"
         >
@@ -36,7 +36,7 @@ export function ColorPickerWidget(props: WidgetProps) {
         type="text"
         value={value || '#000000'}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded font-mono text-white"
+        className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded font-mono text-gray-900 dark:text-white"
         pattern="^#[0-9A-Fa-f]{6}$"
         disabled={disabled}
       />

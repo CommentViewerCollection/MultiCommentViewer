@@ -506,6 +506,9 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   }
 
   const handleCancel = () => {
+    // キャンセル時は元のテーマに戻す
+    const originalTheme = originalData['core']?.theme ?? 'dark'
+    applyThemeToHtml(originalTheme)
     onClose()
   }
 
@@ -526,11 +529,22 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     }
   }
 
+  // テーマをhtmlタグに即座に適用するヘルパー
+  const applyThemeToHtml = (theme: string) => {
+    const isDark = theme !== 'light'
+    document.documentElement.classList.toggle('dark', isDark)
+    document.documentElement.classList.toggle('modern-dark', theme === 'modern-dark')
+  }
+
   const handleFormChange = (tabId: string, formData: any) => {
     setCurrentData(prev => ({
       ...prev,
       [tabId]: formData,
     }))
+    // coreタブのテーマが変更されたら即座にUIに反映
+    if (tabId === 'core' && formData?.theme) {
+      applyThemeToHtml(formData.theme)
+    }
   }
 
   const activeTabData = tabs.find(t => t.id === activeTab)

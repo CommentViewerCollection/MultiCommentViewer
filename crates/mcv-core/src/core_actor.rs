@@ -245,7 +245,8 @@ impl CoreActor {
                 "theme": {
                     "type": "string",
                     "title": "テーマ",
-                    "enum": ["dark", "light"],
+                    "enum": ["dark", "light", "modern-dark"],
+                    "enumNames": ["ダーク", "ライト", "モダンダーク"],
                     "default": "dark"
                 },
                 "auto_scroll": {

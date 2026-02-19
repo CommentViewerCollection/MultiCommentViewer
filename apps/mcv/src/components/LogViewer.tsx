@@ -212,8 +212,8 @@ export function LogViewer({ theme = 'dark' }: { theme?: string }) {
           columns={columns}
           renderCell={renderCell}
           height="100%"
-          backgroundColor={theme === 'light' ? '#f9fafb' : '#1f2937'}
-          headerBackgroundColor={theme === 'light' ? '#e5e7eb' : '#374151'}
+          backgroundColor={theme === 'light' ? '#f9fafb' : theme === 'modern-dark' ? '#121212' : '#1f2937'}
+          headerBackgroundColor={theme === 'light' ? '#e5e7eb' : theme === 'modern-dark' ? '#1e1e1e' : '#374151'}
           border="none"
           defaultItemHeight={40}
         />

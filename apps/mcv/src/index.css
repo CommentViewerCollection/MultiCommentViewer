@@ -40,3 +40,74 @@ input[type="color"]:focus {
   outline: none;
   box-shadow: none;
 }
+
+/* ============================================================
+   モダンダークテーマ (#121212 / #1e1e1e ベース)
+   html.dark.modern-dark が付与された場合に上書き
+   ============================================================ */
+
+/* メイン背景 */
+html.modern-dark .dark\:bg-gray-900 {
+  background-color: #121212 !important;
+}
+
+/* サイドバー・カード */
+html.modern-dark .dark\:bg-gray-800 {
+  background-color: #1e1e1e !important;
+}
+
+/* 入力フィールド・ホバー */
+html.modern-dark .dark\:bg-gray-700 {
+  background-color: #2a2a2a !important;
+}
+
+/* ボタン・薄い要素 */
+html.modern-dark .dark\:bg-gray-600 {
+  background-color: #333333 !important;
+}
+
+/* ホバー */
+html.modern-dark .dark\:hover\:bg-gray-700:hover {
+  background-color: #2a2a2a !important;
+}
+html.modern-dark .dark\:hover\:bg-gray-600:hover {
+  background-color: #333333 !important;
+}
+
+/* テキスト（メイン）: 純白を少し抑えた #E5E7EB */
+html.modern-dark .dark\:text-white {
+  color: #e5e7eb !important;
+}
+
+/* ボーダー */
+html.modern-dark .dark\:border-gray-700 {
+  border-color: #2a2a2a !important;
+}
+html.modern-dark .dark\:border-gray-600 {
+  border-color: #333333 !important;
+}
+
+/* SettingsScreen の customStyles 内 .dark セレクタも上書き */
+html.modern-dark .rjsf input[type="text"],
+html.modern-dark .rjsf input[type="number"],
+html.modern-dark .rjsf input[type="email"],
+html.modern-dark .rjsf select,
+html.modern-dark .rjsf textarea {
+  background-color: #2a2a2a !important;
+  border: 1px solid #333333 !important;
+  color: #e5e7eb !important;
+}
+
+html.modern-dark .rjsf .field-object > fieldset {
+  border: 1px solid #333333 !important;
+  background-color: rgba(42, 42, 42, 0.3) !important;
+}
+
+html.modern-dark .rjsf .site-color-item {
+  border: 1px solid #333333 !important;
+  background-color: rgba(42, 42, 42, 0.3) !important;
+}
+
+html.modern-dark .rjsf .site-color-item-title {
+  border-bottom: 1px solid #2a2a2a !important;
+}

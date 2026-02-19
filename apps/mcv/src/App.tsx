@@ -212,8 +212,10 @@ function App() {
 
   // テーマをhtmlタグに適用（coreSettings が null の場合はダークがデフォルト）
   useEffect(() => {
-    const isDark = coreSettings?.theme !== 'light'
+    const theme = coreSettings?.theme ?? 'dark'
+    const isDark = theme !== 'light'
     document.documentElement.classList.toggle('dark', isDark)
+    document.documentElement.classList.toggle('modern-dark', theme === 'modern-dark')
   }, [coreSettings])
 
   useEffect(() => {
@@ -855,9 +857,9 @@ function App() {
                 columns={columns}
                 renderCell={renderCell}
                 height="100%"
-                backgroundColor={coreSettings?.theme === 'light' ? '#f9fafb' : '#1f2937'}
-                headerBackgroundColor={coreSettings?.theme === 'light' ? '#e5e7eb' : '#374151'}
-                border={coreSettings?.theme === 'light' ? '1px solid #e5e7eb' : '1px solid #374151'}
+                backgroundColor={coreSettings?.theme === 'light' ? '#f9fafb' : coreSettings?.theme === 'modern-dark' ? '#121212' : '#1f2937'}
+                headerBackgroundColor={coreSettings?.theme === 'light' ? '#e5e7eb' : coreSettings?.theme === 'modern-dark' ? '#1e1e1e' : '#374151'}
+                border={coreSettings?.theme === 'light' ? '1px solid #e5e7eb' : coreSettings?.theme === 'modern-dark' ? '1px solid #2a2a2a' : '1px solid #374151'}
                 onAtBottomChange={setAtBottom}
                 onColumnResize={handleColumnResize}
                 onColumnVisibilityChange={handleColumnVisibilityChange}

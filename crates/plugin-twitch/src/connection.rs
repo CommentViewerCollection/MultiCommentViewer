@@ -173,23 +173,6 @@ impl Connection {
                     );
 
                     let (mut write, mut read) = ws_stream.split();
-                    let mut text_log_file = match OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("twitch_messages.txt")
-                        .await
-                    {
-                        Ok(file) => Some(file),
-                        Err(e) => {
-                            tracing::warn!(
-                                target: "mcv::plugin-twitch",
-                                connection_id = %connection_id,
-                                error = %e,
-                                "Failed to open twitch_messages.txt for append"
-                            );
-                            None
-                        }
-                    };
 
                     let nick = if password.is_some() {
                         username
@@ -279,7 +262,6 @@ impl Connection {
                                             logical_plugin_id,
                                             connection_id,
                                             &mut write,
-                                            &mut text_log_file,
                                             text.to_string(),
                                         ).await;
                                         if !should_continue {
@@ -400,12 +382,21 @@ impl Connection {
         logical_plugin_id: Uuid,
         connection_id: Uuid,
         write: &mut WsWrite,
-        text_log_file: &mut Option<tokio::fs::File>,
         raw_text: String,
     ) -> bool {
         for line in raw_text.lines() {
             let irc = parse_irc_line(line);
+            let mut text_log_file = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(format!("twitch_{}.txt", &irc.command))
+                .await
+                .unwrap();
+            let _ = text_log_file
+                .write_all(format!("{line}\n").as_bytes())
+                .await;
             let event = to_twitch_event(irc);
+
             match event {
                 TwitchEvent::PrivMsg {
                     channel,
@@ -451,37 +442,7 @@ impl Connection {
                 _ => {}
             }
         }
-        Self::append_text_log(text_log_file, connection_id, &raw_text).await;
-
         true
-    }
-
-    async fn append_text_log(
-        text_log_file: &mut Option<File>,
-        connection_id: Uuid,
-        raw_text: &str,
-    ) {
-        if let Some(file) = text_log_file.as_mut() {
-            if let Err(e) = file.write_all(raw_text.as_bytes()).await {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    error = %e,
-                    "Failed to write websocket text message to twitch_messages.txt"
-                );
-                *text_log_file = None;
-                return;
-            }
-            if let Err(e) = file.write_all(b"\n").await {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    error = %e,
-                    "Failed to write newline to twitch_messages.txt"
-                );
-                *text_log_file = None;
-            }
-        }
     }
 
     async fn send_comment_if_privmsg(

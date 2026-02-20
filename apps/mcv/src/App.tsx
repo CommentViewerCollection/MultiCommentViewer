@@ -5,6 +5,7 @@ import { DataGrid, DataGridRef, Column } from 'my-dataview'
 import { LogViewer } from './components/LogViewer'
 import { SettingsScreen } from './components/SettingsScreen'
 import { ColorInfo } from './utils/ColorInfo'
+import { TitleBar } from './components/TitleBar'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
@@ -639,7 +640,9 @@ function App() {
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden">
+      <TitleBar theme={coreSettings?.theme ?? 'dark'} />
+      <div className="flex-1 flex overflow-hidden min-h-0">
       {/* サイドバー: 接続一覧 */}
       <div
         style={{ width: sidebarWidth }}
@@ -996,6 +999,7 @@ function App() {
             }} />
           )}
         </div>
+      </div>
       </div>
 
       {/* 更新ダイアログ */}

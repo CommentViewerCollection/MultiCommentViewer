@@ -1,41 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { type ThemeColors, PRESET_THEME_COLORS } from '../theme'
 
 interface TitleBarProps {
-  theme: string
+  themeColors: ThemeColors | null
 }
 
-function getThemeStyles(theme: string) {
-  if (theme === 'light') {
-    return {
-      bg: '#e5e7eb',
-      border: '#c8cdd5',
-      text: '#1f2937',
-      btnHover: '#d1d5db',
-      closeBtnHover: '#dc2626',
-    }
-  }
-  if (theme === 'modern-dark') {
-    return {
-      bg: '#1e1e1e',
-      border: '#333333',
-      text: '#e5e7eb',
-      btnHover: '#2a2a2a',
-      closeBtnHover: '#dc2626',
-    }
-  }
-  // dark (default)
-  return {
-    bg: '#111827',
-    border: '#374151',
-    text: '#f9fafb',
-    btnHover: '#374151',
-    closeBtnHover: '#dc2626',
-  }
-}
-
-export function TitleBar({ theme }: TitleBarProps) {
+export function TitleBar({ themeColors }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null)
   const [windowTitle, setWindowTitle] = useState('MultiCommentViewer')
@@ -66,7 +38,7 @@ export function TitleBar({ theme }: TitleBarProps) {
     return () => { if (unlistenFn) unlistenFn() }
   }, [])
 
-  const styles = getThemeStyles(theme)
+  const colors = themeColors ?? PRESET_THEME_COLORS['dark']
 
   const btnStyle = (id: string, isClose = false): CSSProperties => ({
     display: 'flex',
@@ -75,9 +47,9 @@ export function TitleBar({ theme }: TitleBarProps) {
     width: '46px',
     height: '32px',
     background: hoveredBtn === id
-      ? (isClose ? styles.closeBtnHover : styles.btnHover)
+      ? (isClose ? '#dc2626' : colors.bg_input)
       : 'transparent',
-    color: (hoveredBtn === id && isClose) ? '#ffffff' : styles.text,
+    color: (hoveredBtn === id && isClose) ? '#ffffff' : colors.titlebar_text,
     border: 'none',
     cursor: 'default',
     fontSize: '16px',
@@ -108,11 +80,11 @@ export function TitleBar({ theme }: TitleBarProps) {
         height: '32px',
         minHeight: '32px',
         flexShrink: 0,
-        background: styles.bg,
-        borderBottom: `1px solid ${styles.border}`,
+        background: colors.titlebar_bg,
+        borderBottom: `1px solid ${colors.border}`,
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        color: styles.text,
+        color: colors.titlebar_text,
         boxSizing: 'border-box',
       }}
     >

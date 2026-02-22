@@ -6,6 +6,7 @@ import { LogViewer } from './components/LogViewer'
 import { SettingsScreen } from './components/SettingsScreen'
 import { ColorInfo } from './utils/ColorInfo'
 import { TitleBar } from './components/TitleBar'
+import { type ThemeColors, PRESET_THEME_COLORS, applyThemeColors, resolveThemeColors } from './theme'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
@@ -147,6 +148,7 @@ function App() {
   const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [coreSettings, setCoreSettings] = useState<any>(null)
+  const [currentThemeColors, setCurrentThemeColors] = useState<ThemeColors>(PRESET_THEME_COLORS['dark'])
 
   // 新規: Ref を作成
   const coreSettingsRef = useRef<any>(null)
@@ -280,7 +282,9 @@ function App() {
     const theme = coreSettings?.theme ?? 'dark'
     const isDark = theme !== 'light'
     document.documentElement.classList.toggle('dark', isDark)
-    document.documentElement.classList.toggle('modern-dark', theme === 'modern-dark')
+    const colors = resolveThemeColors(theme, coreSettings?.custom_theme_colors)
+    applyThemeColors(colors)
+    setCurrentThemeColors(colors)
   }, [coreSettings])
 
   useEffect(() => {
@@ -641,7 +645,7 @@ function App() {
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden">
-      <TitleBar theme={coreSettings?.theme ?? 'dark'} />
+      <TitleBar themeColors={currentThemeColors} />
       <div className="flex-1 flex overflow-hidden min-h-0">
       {/* サイドバー: 接続一覧 */}
       <div
@@ -933,9 +937,9 @@ function App() {
                 columns={columns}
                 renderCell={renderCell}
                 height="100%"
-                backgroundColor={coreSettings?.theme === 'light' ? '#f9fafb' : coreSettings?.theme === 'modern-dark' ? '#121212' : '#1f2937'}
-                headerBackgroundColor={coreSettings?.theme === 'light' ? '#e5e7eb' : coreSettings?.theme === 'modern-dark' ? '#1e1e1e' : '#374151'}
-                border={coreSettings?.theme === 'light' ? '1px solid #e5e7eb' : coreSettings?.theme === 'modern-dark' ? '1px solid #2a2a2a' : '1px solid #374151'}
+                backgroundColor={currentThemeColors.bg_main}
+                headerBackgroundColor={currentThemeColors.bg_sidebar}
+                border={`1px solid ${currentThemeColors.border}`}
                 onAtBottomChange={setAtBottom}
                 onColumnResize={handleColumnResize}
                 onColumnVisibilityChange={handleColumnVisibilityChange}
@@ -989,7 +993,7 @@ function App() {
           </div>
 
           {/* ログタブ */}
-          {activeTab === 'logs' && <LogViewer theme={coreSettings?.theme ?? 'dark'} />}
+          {activeTab === 'logs' && <LogViewer themeColors={currentThemeColors} />}
 
           {/* 設定タブ */}
           {activeTab === 'settings' && (

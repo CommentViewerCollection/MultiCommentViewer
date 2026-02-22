@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, Column } from 'my-dataview'
+import { type ThemeColors, PRESET_THEME_COLORS } from '../theme'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
@@ -40,7 +41,8 @@ interface LogRow {
   line: number
 }
 
-export function LogViewer({ theme = 'dark' }: { theme?: string }) {
+export function LogViewer({ themeColors = null }: { themeColors?: ThemeColors | null }) {
+  const colors = themeColors ?? PRESET_THEME_COLORS['dark']
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [buildProfile, setBuildProfile] = useState<string>('')
   const [searchText, setSearchText] = useState('')
@@ -212,8 +214,8 @@ export function LogViewer({ theme = 'dark' }: { theme?: string }) {
           columns={columns}
           renderCell={renderCell}
           height="100%"
-          backgroundColor={theme === 'light' ? '#f9fafb' : theme === 'modern-dark' ? '#121212' : '#1f2937'}
-          headerBackgroundColor={theme === 'light' ? '#e5e7eb' : theme === 'modern-dark' ? '#1e1e1e' : '#374151'}
+          backgroundColor={colors.bg_main}
+          headerBackgroundColor={colors.bg_sidebar}
           border="none"
           defaultItemHeight={40}
         />

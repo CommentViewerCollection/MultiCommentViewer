@@ -101,7 +101,8 @@ pub fn handle_get_settings(
                         "max_comments": 1000,
                         "enable_color_by_plugin_or_connection": false,
                         "color_mode": "site",
-                        "site_colors": {}
+                        "site_colors": {},
+                        "custom_theme_colors": {}
                     })
                 }
                 Err(e) => return Err(format!("Failed to get settings: {}", e)),
@@ -114,7 +115,8 @@ pub fn handle_get_settings(
                 "max_comments": 1000,
                 "enable_color_by_plugin_or_connection": false,
                 "color_mode": "site",
-                "site_colors": {}
+                "site_colors": {},
+                "custom_theme_colors": {}
             })
         };
 

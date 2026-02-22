@@ -245,9 +245,23 @@ impl CoreActor {
                 "theme": {
                     "type": "string",
                     "title": "テーマ",
-                    "enum": ["dark", "light", "modern-dark"],
-                    "enumNames": ["ダーク", "ライト", "モダンダーク"],
+                    "enum": ["dark", "light", "modern-dark", "custom"],
+                    "enumNames": ["ダーク", "ライト", "モダンダーク", "カスタム"],
                     "default": "dark"
+                },
+                "custom_theme_colors": {
+                    "type": "object",
+                    "title": "↳ カスタムテーマの色設定",
+                    "properties": {
+                        "bg_main":       { "type": "string", "title": "メイン背景色",               "default": "#121212" },
+                        "bg_sidebar":    { "type": "string", "title": "サイドバー/カード背景色",     "default": "#1e1e1e" },
+                        "bg_input":      { "type": "string", "title": "入力フィールド/ホバー背景色", "default": "#2a2a2a" },
+                        "bg_button":     { "type": "string", "title": "ボタン/薄い要素の背景色",     "default": "#333333" },
+                        "text_main":     { "type": "string", "title": "テキスト色",                 "default": "#e5e7eb" },
+                        "border":        { "type": "string", "title": "ボーダー色",                 "default": "#2a2a2a" },
+                        "titlebar_bg":   { "type": "string", "title": "タイトルバー背景色",          "default": "#1e1e1e" },
+                        "titlebar_text": { "type": "string", "title": "タイトルバーテキスト色",      "default": "#e5e7eb" }
+                    }
                 },
                 "auto_scroll": {
                     "type": "boolean",

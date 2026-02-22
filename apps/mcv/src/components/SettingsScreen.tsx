@@ -5,6 +5,7 @@ import Form from '@rjsf/core'
 import validator from '@rjsf/validator-ajv8'
 import { RJSFSchema, ObjectFieldTemplateProps } from '@rjsf/utils'
 import { ColorPickerWidget } from './ColorPickerWidget'
+import { applyThemeColors, resolveThemeColors } from '../theme'
 
 // 配信サイト毎の色設定をカード形式で表示するテンプレート
 const SiteColorTemplate = ({ title, properties }: ObjectFieldTemplateProps) => {
@@ -530,10 +531,11 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   }
 
   // テーマをhtmlタグに即座に適用するヘルパー
-  const applyThemeToHtml = (theme: string) => {
+  const applyThemeToHtml = (theme: string, customColors?: any) => {
     const isDark = theme !== 'light'
     document.documentElement.classList.toggle('dark', isDark)
-    document.documentElement.classList.toggle('modern-dark', theme === 'modern-dark')
+    const colors = resolveThemeColors(theme, customColors)
+    applyThemeColors(colors)
   }
 
   const handleFormChange = (tabId: string, formData: any) => {
@@ -541,9 +543,9 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       ...prev,
       [tabId]: formData,
     }))
-    // coreタブのテーマが変更されたら即座にUIに反映
+    // coreタブのテーマまたはカスタム色が変更されたら即座にUIに反映
     if (tabId === 'core' && formData?.theme) {
-      applyThemeToHtml(formData.theme)
+      applyThemeToHtml(formData.theme, formData?.custom_theme_colors)
     }
   }
 
@@ -557,11 +559,13 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       },
       'ui:order': [
         'theme',
+        'custom_theme_colors',
         'auto_scroll',
         'max_comments',
         'enable_color_by_plugin_or_connection',
         'color_mode',
-        'site_colors'
+        'site_colors',
+        '*'
       ],
       color_mode: {
         'ui:classNames': `conditional-field ${
@@ -584,6 +588,20 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
         'ui:options': {
           orderable: false
         }
+      },
+      custom_theme_colors: {
+        'ui:classNames': `conditional-field ${
+          currentData[activeTab]?.theme !== 'custom' ? 'conditional-field-disabled' : ''
+        }`.trim(),
+        'ui:readonly': currentData[activeTab]?.theme !== 'custom',
+        bg_main:       { 'ui:widget': 'ColorPickerWidget' },
+        bg_sidebar:    { 'ui:widget': 'ColorPickerWidget' },
+        bg_input:      { 'ui:widget': 'ColorPickerWidget' },
+        bg_button:     { 'ui:widget': 'ColorPickerWidget' },
+        text_main:     { 'ui:widget': 'ColorPickerWidget' },
+        border:        { 'ui:widget': 'ColorPickerWidget' },
+        titlebar_bg:   { 'ui:widget': 'ColorPickerWidget' },
+        titlebar_text: { 'ui:widget': 'ColorPickerWidget' },
       }
     };
 

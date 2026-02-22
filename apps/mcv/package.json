@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run build --prefix ../../packages/my-dataview && tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
   },

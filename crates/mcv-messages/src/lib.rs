@@ -158,6 +158,8 @@ pub enum MessageType {
     // その他
     GetAppName,
     GetAppVersion,
+    GetLogsDir,
+    LogsDirAck,
 
     // Site/Browser管理関連
     AddSite,
@@ -591,6 +593,16 @@ pub struct LogEntryPayload {
     /// プラグインのビルドプロファイル（"alpha", "beta", "stable"、オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plugin_build_profile: Option<String>,
+}
+
+/// get-logs-dirのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetLogsDirPayload {}
+
+/// logs-dir-ackのpayload (Core → Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogsDirAckPayload {
+    pub path: String,
 }
 
 /// add-siteのpayload (Plugin → Core)

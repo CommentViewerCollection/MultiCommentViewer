@@ -791,6 +791,10 @@ fn main() {
     // Tauri セットアップでも settings_dir を使うためにクローン
     let settings_dir_for_tauri = settings_dir.clone();
 
+    // ログディレクトリを作成（EXEプラグインのセッションDB保存先）
+    let logs_dir = app_data_dir.join("logs");
+    std::fs::create_dir_all(&logs_dir).expect("Failed to create logs directory");
+
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
 
@@ -925,6 +929,9 @@ fn main() {
             // 接続永続化ファイルのパスを設定
             let connections_file_path = settings_dir.join("connections.json");
             core_actor.set_connections_file_path(connections_file_path.clone());
+
+            // ログディレクトリパスを設定（GetLogsDir への応答用）
+            core_actor.set_logs_dir(logs_dir);
 
             // 接続を復元（プラグイン読み込み前に実行）
             tracing::info!(

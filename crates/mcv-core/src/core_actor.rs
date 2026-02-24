@@ -51,6 +51,8 @@ pub struct CoreActor {
     pub(crate) settings_storage: Option<Arc<Mutex<SettingsStorage>>>,
     /// 接続永続化ファイルのパス
     pub(crate) connections_file_path: Option<PathBuf>,
+    /// ログディレクトリのパス（EXEプラグインの保存先通知用）
+    pub(crate) logs_dir: Option<PathBuf>,
 }
 
 impl CoreActor {
@@ -65,6 +67,7 @@ impl CoreActor {
             log_storage: None,
             settings_storage: None,
             connections_file_path: None,
+            logs_dir: None,
         }
     }
 
@@ -86,6 +89,11 @@ impl CoreActor {
     /// 接続ファイルパスを設定
     pub fn set_connections_file_path(&mut self, path: PathBuf) {
         self.connections_file_path = Some(path);
+    }
+
+    /// ログディレクトリパスを設定
+    pub fn set_logs_dir(&mut self, path: PathBuf) {
+        self.logs_dir = Some(path);
     }
 
     /// 接続をファイルに保存
@@ -446,6 +454,7 @@ fn is_supported_plugin_request_type(message_type: &MessageType) -> bool {
             | MessageType::AddBrowser
             | MessageType::GetPlugins
             | MessageType::GetBrowserPlugin
+            | MessageType::GetLogsDir
     )
 }
 
@@ -529,6 +538,17 @@ fn handle_plugin_request_message(
                     plugin_id: browser.plugin_id,
                 })
                 .unwrap(),
+            ))
+        }
+        MessageType::GetLogsDir => {
+            let path = core
+                .logs_dir
+                .as_ref()
+                .map(|p| p.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            Ok(message.create_response(
+                MessageType::LogsDirAck,
+                serde_json::to_value(LogsDirAckPayload { path }).unwrap(),
             ))
         }
         _ => Err(format!(

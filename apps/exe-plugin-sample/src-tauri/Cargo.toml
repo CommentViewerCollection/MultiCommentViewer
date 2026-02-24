@@ -32,6 +32,7 @@ anyhow = "1.0"
 thiserror = "2.0"
 
 chrono = "0.4"
+rusqlite = { version = "0.30", features = ["bundled"] }
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-cli = "2"

@@ -3,7 +3,8 @@
 
 mod ws_tracing;
 use mcv_messages::{
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginRemovedPayload,
+    CommentReceivedPayload, GetLogsDirPayload, LogsDirAckPayload, Message as McvMessage,
+    MessageDestination, MessageSource, MessageType, PluginRemovedPayload,
 };
 use mcv_plugin_exe_interface::ExePluginClient;
 use std::collections::HashMap;
@@ -62,6 +63,10 @@ struct AppState {
     sites: Arc<RwLock<HashMap<Uuid, SiteInfo>>>,
     browsers: Arc<RwLock<HashMap<Uuid, BrowserInfo>>>,
     messages: Arc<RwLock<Vec<McvMessage>>>,
+    // SQLite セッション DB（起動ごとに session_{timestamp}.db を作成）
+    db: Arc<std::sync::Mutex<Option<rusqlite::Connection>>>,
+    // ログディレクトリパス（GetLogsDir で取得）
+    logs_dir: Arc<RwLock<Option<String>>>,
 }
 
 /// メッセージに応じて状態を更新し、変化があればフロントエンドに通知する
@@ -72,6 +77,8 @@ async fn handle_message_state_update(
     _sites: Arc<RwLock<HashMap<Uuid, SiteInfo>>>,
     _browsers: Arc<RwLock<HashMap<Uuid, BrowserInfo>>>,
     messages: Arc<RwLock<Vec<McvMessage>>>,
+    db: Arc<std::sync::Mutex<Option<rusqlite::Connection>>>,
+    logs_dir: Arc<RwLock<Option<String>>>,
     app: AppHandle,
 ) {
     use mcv_messages::MessageType;
@@ -307,13 +314,139 @@ async fn handle_message_state_update(
                 tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "get-plugins: failed to parse GetPluginsPayload");
             }
         }
-        MessageType::CommentReceived | MessageType::LogEntry => {
+        MessageType::LogEntry => {
             // メッセージログに追加（最新1000件まで保持）
             let mut msgs = messages.write().await;
             msgs.push(message.clone());
             let len = msgs.len();
             if len > 1000 {
                 msgs.drain(0..len - 1000);
+            }
+        }
+        MessageType::CommentReceived => {
+            // メッセージログに追加（最新1000件まで保持）
+            {
+                let mut msgs = messages.write().await;
+                msgs.push(message.clone());
+                let len = msgs.len();
+                if len > 1000 {
+                    msgs.drain(0..len - 1000);
+                }
+            }
+
+            // SQLite に保存
+            if let Ok(payload) =
+                serde_json::from_value::<CommentReceivedPayload>(message.payload.clone())
+            {
+                let envelope = &payload.envelope;
+                let messages_json =
+                    serde_json::to_string(&envelope.messages).unwrap_or_default();
+                let db_clone = Arc::clone(&db);
+                let (eid, cid, rat, raw) = (
+                    envelope.event_id.to_string(),
+                    envelope.connection_id.to_string(),
+                    envelope.received_at,
+                    envelope.raw_message.clone(),
+                );
+                tokio::task::spawn_blocking(move || {
+                    if let Ok(guard) = db_clone.lock() {
+                        if let Some(conn) = guard.as_ref() {
+                            let result = conn.execute(
+                                "INSERT OR IGNORE INTO envelopes \
+                                 (event_id, connection_id, received_at, messages_json, raw_message) \
+                                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                                rusqlite::params![eid, cid, rat, messages_json, raw],
+                            );
+                            if let Err(e) = result {
+                                tracing::error!(
+                                    target: "mcv::exe-plugin-sample",
+                                    error = %e,
+                                    "Failed to insert envelope into SQLite"
+                                );
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        MessageType::LogsDirAck => {
+            // logs ディレクトリパスを取得し、セッション DB を作成する
+            if let Ok(payload) =
+                serde_json::from_value::<LogsDirAckPayload>(message.payload.clone())
+            {
+                let path = payload.path.clone();
+                if path.is_empty() {
+                    tracing::warn!(
+                        target: "mcv::exe-plugin-sample",
+                        "LogsDirAck received but path is empty"
+                    );
+                } else {
+                    *logs_dir.write().await = Some(path.clone());
+                    let db_clone = Arc::clone(&db);
+                    tokio::task::spawn_blocking(move || {
+                        // ディレクトリが存在しない場合は作成
+                        if let Err(e) = std::fs::create_dir_all(&path) {
+                            tracing::error!(
+                                target: "mcv::exe-plugin-sample",
+                                error = %e,
+                                path = %path,
+                                "Failed to create logs directory"
+                            );
+                            return;
+                        }
+                        let timestamp = std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs();
+                        let db_path = format!("{}/session_{}.db", path, timestamp);
+                        tracing::info!(
+                            target: "mcv::exe-plugin-sample",
+                            db_path = %db_path,
+                            "Creating session SQLite DB"
+                        );
+                        match rusqlite::Connection::open(&db_path) {
+                            Ok(conn) => {
+                                let schema = r#"
+                                    CREATE TABLE IF NOT EXISTS envelopes (
+                                        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                                        event_id      TEXT NOT NULL UNIQUE,
+                                        connection_id TEXT NOT NULL,
+                                        received_at   INTEGER NOT NULL,
+                                        messages_json TEXT NOT NULL,
+                                        raw_message   TEXT
+                                    );
+                                    CREATE INDEX IF NOT EXISTS idx_conn
+                                        ON envelopes(connection_id);
+                                    CREATE INDEX IF NOT EXISTS idx_time
+                                        ON envelopes(received_at);
+                                "#;
+                                if let Err(e) = conn.execute_batch(schema) {
+                                    tracing::error!(
+                                        target: "mcv::exe-plugin-sample",
+                                        error = %e,
+                                        "Failed to create SQLite schema"
+                                    );
+                                    return;
+                                }
+                                if let Ok(mut guard) = db_clone.lock() {
+                                    *guard = Some(conn);
+                                    tracing::info!(
+                                        target: "mcv::exe-plugin-sample",
+                                        "Session SQLite DB initialized"
+                                    );
+                                }
+                            }
+                            Err(e) => {
+                                tracing::error!(
+                                    target: "mcv::exe-plugin-sample",
+                                    error = %e,
+                                    db_path = %db_path,
+                                    "Failed to open SQLite DB"
+                                );
+                            }
+                        }
+                    });
+                }
             }
         }
         _ => {
@@ -369,6 +502,19 @@ async fn connect_to_mcv(
 
     tracing::info!(target:"mcv::exe-plugin-sample","Sent get-plugins request");
 
+    // GetLogsDir リクエストを送信（LogsDirAck でセッション DB を作成する）
+    let get_logs_dir_msg = McvMessage::new_request(
+        MessageType::GetLogsDir,
+        MessageSource::Plugin { plugin_id },
+        MessageDestination::Core,
+        serde_json::to_value(GetLogsDirPayload {}).unwrap(),
+    );
+    client
+        .send_message(get_logs_dir_msg)
+        .map_err(|e| format!("Failed to send GetLogsDir: {}", e))?;
+
+    tracing::info!(target:"mcv::exe-plugin-sample","Sent GetLogsDir request");
+
     // メッセージハンドラーを登録
     let app_clone = app.clone();
     let plugins_clone = state.plugins.clone();
@@ -376,6 +522,8 @@ async fn connect_to_mcv(
     let sites_clone = state.sites.clone();
     let browsers_clone = state.browsers.clone();
     let messages_clone = state.messages.clone();
+    let db_clone = state.db.clone();
+    let logs_dir_clone = state.logs_dir.clone();
 
     client
         .on_message(move |message| {
@@ -385,6 +533,8 @@ async fn connect_to_mcv(
             let sites = sites_clone.clone();
             let browsers = browsers_clone.clone();
             let messages = messages_clone.clone();
+            let db = db_clone.clone();
+            let logs_dir = logs_dir_clone.clone();
 
             tokio::spawn(async move {
                 // 状態を更新し、変化があればフロントエンドに通知
@@ -395,6 +545,8 @@ async fn connect_to_mcv(
                     sites,
                     browsers,
                     messages,
+                    db,
+                    logs_dir,
                     app.clone(),
                 )
                 .await;
@@ -517,6 +669,13 @@ async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
     *state.connected.write().await = false;
     *state.plugin_id.write().await = None;
 
+    // セッション DB を閉じる
+    if let Ok(mut guard) = state.db.lock() {
+        *guard = None;
+        tracing::info!(target:"mcv::exe-plugin-sample","Session DB closed");
+    }
+    *state.logs_dir.write().await = None;
+
     Ok(())
 }
 
@@ -573,6 +732,8 @@ fn main() {
         sites: Arc::new(RwLock::new(HashMap::new())),
         browsers: Arc::new(RwLock::new(HashMap::new())),
         messages: Arc::new(RwLock::new(Vec::new())),
+        db: Arc::new(std::sync::Mutex::new(None)),
+        logs_dir: Arc::new(RwLock::new(None)),
     };
 
     tauri::Builder::default()

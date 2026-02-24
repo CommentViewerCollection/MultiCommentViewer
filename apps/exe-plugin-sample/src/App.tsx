@@ -86,7 +86,7 @@ function App() {
       const id = await invoke<string>("connect_to_mcv", {
         url: websocketUrl,
         pluginName: pluginName,
-        roles: ["debug-tool"],
+        roles: ["debug-tool", "comment-processor"],
       });
       setPluginId(id);
       setConnected(true);

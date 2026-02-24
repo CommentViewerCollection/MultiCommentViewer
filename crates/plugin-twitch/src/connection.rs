@@ -385,6 +385,8 @@ impl Connection {
         write: &mut WsWrite,
         raw_text: String,
     ) -> bool {
+        // 1 WebSocket フレーム内の全 PrivMsg を収集して1つの McvEnvelope にまとめる
+        let mut provider_messages = Vec::new();
         for line in raw_text.lines() {
             let irc = parse_irc_line(line);
             let mut text_log_file = OpenOptions::new()
@@ -428,26 +430,7 @@ impl Connection {
                         reply_to: None,
                         metadata: serde_json::Value::Null,
                     };
-                    let envelope = McvEnvelope {
-                        event_id: Uuid::new_v4(),
-                        connection_id,
-                        messages: vec![provider_msg],
-                        received_at: chrono::Utc::now().timestamp(),
-                        raw_message: None,
-                    };
-                    let comment_message = McvMessage::new_notification(
-                        MessageType::CommentReceived,
-                        MessageSource::Plugin {
-                            plugin_id: logical_plugin_id,
-                        },
-                        MessageDestination::Core,
-                        serde_json::to_value(CommentReceivedPayload {
-                            connection_id,
-                            envelope,
-                        })
-                        .unwrap(),
-                    );
-                    TwitchPlugin::send_message(ctx.clone(), comment_message).await;
+                    provider_messages.push(provider_msg);
                 }
                 TwitchEvent::Ping => {
                     if let Err(e) = Self::send_irc_line(write, "PONG").await {
@@ -462,6 +445,28 @@ impl Connection {
                 }
                 _ => {}
             }
+        }
+        if !provider_messages.is_empty() {
+            let envelope = McvEnvelope {
+                event_id: Uuid::new_v4(),
+                connection_id,
+                messages: provider_messages,
+                received_at: chrono::Utc::now().timestamp(),
+                raw_message: Some(raw_text),
+            };
+            let comment_message = McvMessage::new_notification(
+                MessageType::CommentReceived,
+                MessageSource::Plugin {
+                    plugin_id: logical_plugin_id,
+                },
+                MessageDestination::Core,
+                serde_json::to_value(CommentReceivedPayload {
+                    connection_id,
+                    envelope,
+                })
+                .unwrap(),
+            );
+            TwitchPlugin::send_message(ctx, comment_message).await;
         }
         true
     }
@@ -501,7 +506,7 @@ impl Connection {
                 connection_id,
                 messages: vec![provider_msg],
                 received_at: chrono::Utc::now().timestamp(),
-                raw_message: None,
+                raw_message: Some(line.to_owned()),
             };
             let comment_message = McvMessage::new_notification(
                 MessageType::CommentReceived,

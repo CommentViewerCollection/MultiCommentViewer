@@ -20,9 +20,9 @@ use mcv_core::{
     UpdateConnectionSettings,
 };
 use mcv_messages::{
-    self, AddConnectionPayload, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload,
+    self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload,
     ConnectPayload, DisconnectPayload, InputInfo, Message as McvMessage, MessageDestination,
-    MessageSource, MessageType, SendCommentPayload, SiteInfo as MsgSiteInfo,
+    MessageSource, MessageType, ProviderContent, SendCommentPayload, SiteInfo as MsgSiteInfo,
 };
 use mcv_updater::{McvUpdateInfo, UpdateChecker};
 #[cfg(debug_assertions)]
@@ -31,6 +31,39 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
+
+/// McvEnvelope をフロントエンド表示用に変換した行
+#[derive(Debug, Clone, serde::Serialize)]
+struct CommentRow {
+    id: String,
+    user_name: Vec<mcv_messages::MessagePart>,
+    user_id: String,
+    text: Vec<mcv_messages::MessagePart>,
+    timestamp: i64,
+    connection_id: String,
+}
+
+/// McvEnvelope の ProviderMessage を CommentRow のリストに変換する
+fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<CommentRow> {
+    envelope
+        .messages
+        .iter()
+        .map(|msg| {
+            let text = match &msg.content {
+                ProviderContent::Text { text } => text.clone(),
+                ProviderContent::Empty => vec![],
+            };
+            CommentRow {
+                id: msg.id.clone(),
+                user_name: msg.sender.display_name.clone(),
+                user_id: msg.sender.id.clone(),
+                text,
+                timestamp: msg.timestamp,
+                connection_id: envelope.connection_id.to_string(),
+            }
+        })
+        .collect()
+}
 
 /// アプリケーションの状態
 struct AppState {
@@ -777,19 +810,9 @@ fn main() {
                                     message_count = payload.envelope.messages.len(),
                                     "Emitting comment-received event"
                                 );
-                                // envelope ごとフロントエンドへ送信（connection_id は envelope に含まれる）
-                                let envelope_value = match serde_json::to_value(&payload.envelope) {
-                                    Ok(v) => v,
-                                    Err(e) => {
-                                        tracing::error!(
-                                            target: "mcv::main",
-                                            error = %e,
-                                            "Failed to serialize envelope"
-                                        );
-                                        return;
-                                    }
-                                };
-                                if let Err(e) = app_handle.emit("comment-received", envelope_value) {
+                                // McvEnvelope → CommentRow[] に変換してフロントエンドへ送信
+                                let rows = envelope_to_comment_rows(&payload.envelope);
+                                if let Err(e) = app_handle.emit("comment-received", rows) {
                                     tracing::error!(
                                         target: "mcv::main",
                                         error = %e,

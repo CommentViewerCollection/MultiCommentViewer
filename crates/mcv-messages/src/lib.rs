@@ -530,7 +530,7 @@ pub struct McvEnvelope {
     pub received_at: i64,
     /// プラットフォームからの生データ（デバッグ・再処理用）
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub raw_message: Option<serde_json::Value>,
+    pub raw_message: Option<String>,
 }
 
 /// comment-receivedのpayload

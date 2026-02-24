@@ -25,6 +25,7 @@ impl Continuation {
 pub struct YtInitialData {
     actions: Vec<Action>,
     continuation: Continuation,
+    raw: String,
 }
 impl YtInitialData {
     pub fn actions(&self) -> &Vec<Action> {
@@ -32,6 +33,9 @@ impl YtInitialData {
     }
     pub fn continuation(&self) -> &Continuation {
         &self.continuation
+    }
+    pub fn raw(&self) -> &str {
+        &self.raw
     }
 }
 pub struct LiveChat {
@@ -104,7 +108,7 @@ pub async fn get_live_chat_messages(
     vid: &Vid,
     ytcfg: &Ytcfg,
     continuation: &Continuation,
-) -> Result<(Option<Continuation>, Vec<Action>), mcv_tracing::TracingError> {
+) -> Result<(Option<Continuation>, Vec<Action>, String), mcv_tracing::TracingError> {
     let mut obj: serde_json::Value = serde_json::from_str(r#"{"context":{}}"#).unwrap();
     //objのcontextにytcfg.clientをセットする
     obj["context"]["client"] = ytcfg.client.clone();
@@ -165,7 +169,7 @@ pub async fn get_live_chat_messages(
     } else {
         None
     };
-    Ok((continuation, aabb))
+    Ok((continuation, aabb, body))
 }
 fn extract_ytcfg_raw<'a>(live_chat: &'a LiveChat) -> Option<&'a str> {
     let before_part = "ytcfg.set({";
@@ -300,6 +304,7 @@ fn extract_yt_initial_data(
     let yt_initial_data = YtInitialData {
         actions: aabb,
         continuation: Continuation::new(continuation),
+        raw: json_str.to_owned(),
     };
     Ok(yt_initial_data)
 }

@@ -191,31 +191,12 @@ impl Connection {
                 }
             };
 
-            for action in yt_initial_data.actions() {
-                match action {
-                    Action::LiveChatTextMessage1(msg) => {
-                        let provider_msg = convert_to_provider_message(&msg);
-                        let envelope = McvEnvelope {
-                            event_id: Uuid::new_v4(),
-                            connection_id,
-                            messages: vec![provider_msg],
-                            received_at: chrono::Utc::now().timestamp(),
-                            raw_message: None,
-                        };
-                        let payload = CommentReceivedPayload {
-                            connection_id,
-                            envelope,
-                        };
-                        let message = McvMessage::new_notification(
-                            MessageType::CommentReceived,
-                            MessageSource::Plugin {
-                                plugin_id: logical_plugin_id,
-                            },
-                            MessageDestination::Core,
-                            serde_json::to_value(payload).unwrap(),
-                        );
-                        YouTubeLivePlugin::send_message(ctx.clone(), message).await;
-                    }
+            // YtInitialData の全 actions をまとめて1つの McvEnvelope に収める
+            let provider_messages: Vec<ProviderMessage> = yt_initial_data
+                .actions()
+                .iter()
+                .filter_map(|action| match action {
+                    Action::LiveChatTextMessage1(msg) => Some(convert_to_provider_message(msg)),
                     Action::ParseError(raw) => {
                         tracing::error!(
                             target: "mcv::plugin-youtube-live",
@@ -223,11 +204,32 @@ impl Connection {
                             raw = raw,
                             "Failed to parse action"
                         );
+                        None
                     }
-                    _ => {
-                        // その他のアクションは一旦無視
-                    }
-                }
+                    _ => None,
+                })
+                .collect();
+            if !provider_messages.is_empty() {
+                let envelope = McvEnvelope {
+                    event_id: Uuid::new_v4(),
+                    connection_id,
+                    messages: provider_messages,
+                    received_at: chrono::Utc::now().timestamp(),
+                    raw_message: Some(yt_initial_data.raw().to_owned()),
+                };
+                let payload = CommentReceivedPayload {
+                    connection_id,
+                    envelope,
+                };
+                let message = McvMessage::new_notification(
+                    MessageType::CommentReceived,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+                YouTubeLivePlugin::send_message(ctx.clone(), message).await;
             }
 
             let mut next_continuation: Continuation = yt_initial_data.continuation().to_owned();
@@ -256,31 +258,13 @@ impl Connection {
                 }
 
                 match get_live_chat_messages(&vid, &ytcfg, &next_continuation).await {
-                    Ok((maybe_cont, actions)) => {
-                        for action in actions {
-                            match action {
+                    Ok((maybe_cont, actions, raw_body)) => {
+                        // ポーリング1レスポンス分の actions をまとめて1つの McvEnvelope に収める
+                        let provider_messages: Vec<ProviderMessage> = actions
+                            .iter()
+                            .filter_map(|action| match action {
                                 Action::LiveChatTextMessage1(msg) => {
-                                    let provider_msg = convert_to_provider_message(&msg);
-                                    let envelope = McvEnvelope {
-                                        event_id: Uuid::new_v4(),
-                                        connection_id,
-                                        messages: vec![provider_msg],
-                                        received_at: chrono::Utc::now().timestamp(),
-                                        raw_message: None,
-                                    };
-                                    let payload = CommentReceivedPayload {
-                                        connection_id,
-                                        envelope,
-                                    };
-                                    let message = McvMessage::new_notification(
-                                        MessageType::CommentReceived,
-                                        MessageSource::Plugin {
-                                            plugin_id: logical_plugin_id,
-                                        },
-                                        MessageDestination::Core,
-                                        serde_json::to_value(payload).unwrap(),
-                                    );
-                                    YouTubeLivePlugin::send_message(ctx.clone(), message).await;
+                                    Some(convert_to_provider_message(msg))
                                 }
                                 Action::ParseError(raw) => {
                                     tracing::error!(
@@ -289,11 +273,32 @@ impl Connection {
                                         raw = raw,
                                         "Failed to parse action"
                                     );
+                                    None
                                 }
-                                _ => {
-                                    // その他のアクションは一旦無視
-                                }
-                            }
+                                _ => None,
+                            })
+                            .collect();
+                        if !provider_messages.is_empty() {
+                            let envelope = McvEnvelope {
+                                event_id: Uuid::new_v4(),
+                                connection_id,
+                                messages: provider_messages,
+                                received_at: chrono::Utc::now().timestamp(),
+                                raw_message: Some(raw_body),
+                            };
+                            let payload = CommentReceivedPayload {
+                                connection_id,
+                                envelope,
+                            };
+                            let message = McvMessage::new_notification(
+                                MessageType::CommentReceived,
+                                MessageSource::Plugin {
+                                    plugin_id: logical_plugin_id,
+                                },
+                                MessageDestination::Core,
+                                serde_json::to_value(payload).unwrap(),
+                            );
+                            YouTubeLivePlugin::send_message(ctx.clone(), message).await;
                         }
 
                         if let Some(c) = maybe_cont {

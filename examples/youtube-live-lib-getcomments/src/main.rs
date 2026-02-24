@@ -40,7 +40,7 @@ async fn get_comments(vid: &Vid) -> Result<()> {
     let mut next_continuation: Continuation = continuation.to_owned();
     loop {
         match get_live_chat_messages(&vid, &ytcfg, &next_continuation).await {
-            Ok((g, actions)) => {
+            Ok((g, actions, _raw_body)) => {
                 if let Some(c) = g {
                     next_continuation = c;
                 } else {

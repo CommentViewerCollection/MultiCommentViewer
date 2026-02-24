@@ -466,6 +466,8 @@ async fn handle_text_message(
         Err(_) => return,
     };
 
+    // 1 WebSocket フレーム内の全コメントイベントを収集して1つの McvEnvelope にまとめる
+    let mut provider_messages = Vec::new();
     for event in events {
         if event.event_type != "comment" {
             continue;
@@ -509,12 +511,15 @@ async fn handle_text_message(
             reply_to: None,
             metadata: serde_json::Value::Null,
         };
+        provider_messages.push(provider_msg);
+    }
+    if !provider_messages.is_empty() {
         let envelope = McvEnvelope {
             event_id: Uuid::new_v4(),
             connection_id,
-            messages: vec![provider_msg],
+            messages: provider_messages,
             received_at: chrono::Utc::now().timestamp(),
-            raw_message: None,
+            raw_message: Some(raw_text.to_owned()),
         };
         let message = McvMessage::new_notification(
             MessageType::CommentReceived,
@@ -528,7 +533,7 @@ async fn handle_text_message(
             })
             .unwrap(),
         );
-        TwicasPlugin::send_message(ctx.clone(), message).await;
+        TwicasPlugin::send_message(ctx, message).await;
     }
 }
 

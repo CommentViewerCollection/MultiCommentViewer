@@ -454,9 +454,10 @@ fn parse_author_badges(
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     LiveChatTextMessage1(LiveChatTextMessage),
+    PlaceholderItem(PlaceholderItemAction),
     Membership,
     RemoveChatItem(RemoveChatItemAction),
-    ReplaceChatItem,
+    ReplaceChatItem(ReplaceChatItemAction),
     UpdatePoll,
     ReportModerationState,
     ViewerEngagementMessage,
@@ -472,9 +473,44 @@ pub struct LiveChatTextMessage {
     pub author_external_channel_id: String,
 }
 
+/// 承認待ちコメント（liveChatPlaceholderItemRenderer）
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlaceholderItemAction {
+    pub id: String,
+    pub timestamp_usec: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct RemoveChatItemAction {
     pub target_item_id: String,
+}
+
+/// replaceChatItemAction: Placeholder を実際のコメントで置き換える
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReplaceChatItemAction {
+    pub target_item_id: String,
+    pub message: LiveChatTextMessage,
+}
+
+/// liveChatTextMessageRenderer をパースして LiveChatTextMessage を返す
+fn parse_live_chat_text_message(renderer: &serde_json::Value) -> Option<LiveChatTextMessage> {
+    let message_parts = {
+        let message_value = get_value(renderer, &["message"]).ok()?;
+        parse_message(message_value).ok()?
+    };
+
+    let author_badges = parse_author_badges(renderer).ok()?;
+    let author_name = get_string(renderer, &["authorName", "simpleText"]).ok()?;
+    let timestamp_usec = get_string(renderer, &["timestampUsec"]).ok()?;
+    let author_external_channel_id = get_string(renderer, &["authorExternalChannelId"]).ok()?;
+
+    Some(LiveChatTextMessage {
+        author_name,
+        message_parts,
+        timestamp_usec,
+        author_badges,
+        author_external_channel_id,
+    })
 }
 
 fn parse_action(action: &serde_json::Value) -> Action {
@@ -498,51 +534,26 @@ fn parse_action(action: &serde_json::Value) -> Action {
         };
 
         if item_map.contains_key("liveChatTextMessageRenderer") {
-            let message = match get_value(item, &["liveChatTextMessageRenderer"]) {
+            let renderer = match get_value(item, &["liveChatTextMessageRenderer"]) {
                 Ok(v) => v,
                 Err(_) => return Action::ParseError(action.to_string()),
             };
 
-            let message_parts = {
-                let message_value = match get_value(&message, &["message"]) {
-                    Ok(v) => v,
-                    Err(_) => return Action::ParseError(action.to_string()),
-                };
-
-                match parse_message(message_value) {
-                    Ok(parts) => parts,
-                    Err(_) => return Action::ParseError(action.to_string()),
-                }
-            };
-
-            let author_badges = match parse_author_badges(&message) {
-                Ok(b) => b,
-                Err(_) => return Action::ParseError(action.to_string()),
-            };
-
-            let author_name = match get_string(message, &["authorName", "simpleText"]) {
+            match parse_live_chat_text_message(renderer) {
+                Some(msg) => return Action::LiveChatTextMessage1(msg),
+                None => return Action::ParseError(action.to_string()),
+            }
+        } else if item_map.contains_key("liveChatPlaceholderItemRenderer") {
+            let placeholder = &item["liveChatPlaceholderItemRenderer"];
+            let id = match get_string(placeholder, &["id"]) {
                 Ok(s) => s,
                 Err(_) => return Action::ParseError(action.to_string()),
             };
-
-            let timestamp_usec = match get_string(message, &["timestampUsec"]) {
+            let timestamp_usec = match get_string(placeholder, &["timestampUsec"]) {
                 Ok(s) => s,
                 Err(_) => return Action::ParseError(action.to_string()),
             };
-            let author_external_channel_id = match get_string(message, &["authorExternalChannelId"])
-            {
-                Ok(s) => s,
-                Err(_) => return Action::ParseError(action.to_string()),
-            };
-            let action = LiveChatTextMessage {
-                author_name,
-                message_parts,
-                timestamp_usec,
-                author_badges,
-                author_external_channel_id,
-            };
-
-            return Action::LiveChatTextMessage1(action);
+            return Action::PlaceholderItem(PlaceholderItemAction { id, timestamp_usec });
         } else if item_map.contains_key("liveChatMembershipItemRenderer") {
             return Action::Membership;
         } else if item_map.contains_key("liveChatViewerEngagementMessageRenderer") {
@@ -555,7 +566,31 @@ fn parse_action(action: &serde_json::Value) -> Action {
     } else if obj.contains_key("updateLiveChatPollAction") {
         return Action::UpdatePoll;
     } else if obj.contains_key("replaceChatItemAction") {
-        return Action::ReplaceChatItem;
+        let target_item_id =
+            match get_string(action, &["replaceChatItemAction", "targetItemId"]) {
+                Ok(s) => s,
+                Err(_) => return Action::ParseError(action.to_string()),
+            };
+        let renderer = match get_value(
+            action,
+            &[
+                "replaceChatItemAction",
+                "replacementItem",
+                "liveChatTextMessageRenderer",
+            ],
+        ) {
+            Ok(v) => v,
+            Err(_) => return Action::ParseError(action.to_string()),
+        };
+        match parse_live_chat_text_message(renderer) {
+            Some(message) => {
+                return Action::ReplaceChatItem(ReplaceChatItemAction {
+                    target_item_id,
+                    message,
+                })
+            }
+            None => return Action::ParseError(action.to_string()),
+        }
     } else if obj.contains_key("removeChatItemAction") {
         let target_item_id = match get_string(action, &["removeChatItemAction", "targetItemId"]) {
             Ok(a) => a,
@@ -603,7 +638,7 @@ mod tests {
         let sample_action = r#"{"replaceChatItemAction":{"replacementItem":{"liveChatTextMessageRenderer":{"authorExternalChannelId":"UCzaldqARrkEzL3hN8j1pyJA","authorName":{"simpleText":"@かす.-r"},"authorPhoto":{"thumbnails":[{"height":32,"url":"https://yt4.ggpht.com/ytc/AIdro_m9gY2yREG_m6tve7_Aw4mJQWdGAevU5k2niOTeP9BdWpc=s32-c-k-c0x00ffffff-no-rj","width":32},{"height":64,"url":"https://yt4.ggpht.com/ytc/AIdro_m9gY2yREG_m6tve7_Aw4mJQWdGAevU5k2niOTeP9BdWpc=s64-c-k-c0x00ffffff-no-rj","width":64}]},"contextMenuAccessibility":{"accessibilityData":{"label":"チャットの操作"}},"contextMenuEndpoint":{"commandMetadata":{"webCommandMetadata":{"ignoreNavigation":true}},"liveChatItemContextMenuEndpoint":{"params":"Q2g0S0hBb2FRMHhEY0RCUFlrOXdjRWxFUmxsbVIwWm5hMlJxUzNOMmVFRWFLU29uQ2hoVlEzbE1SMk54V1hNM1VuTkNZak5NTUZOS1pucEhXVUVTQ3pSYVpUTlFjMjVpVVVOTklBSW9CRElhQ2hoVlEzcGhiR1J4UVZKeWEwVjZURE5vVGpocU1YQjVTa0U0QWtnQVVBRSUzRA=="}},"id":"ChwKGkNMQ3AwT2JPcHBJREZZZkdGZ2tkaktzdnhB","message":{"runs":[{"text":"おい"},{"text":"w"}]},"timestampUsec":"1769341520715607"}},"targetItemId":"ChwKGkNMQ3AwT2JPcHBJREZZZkdGZ2tkaktzdnhB"}}"#.trim();
         let action_json: serde_json::Value = serde_json::from_str(sample_action).unwrap();
         let result = parse_action(&action_json);
-        assert!(matches!(result, Action::ReplaceChatItem));
+        assert!(matches!(result, Action::ReplaceChatItem(_)));
         Ok(())
     }
     #[tokio::test]

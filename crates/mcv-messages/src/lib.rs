@@ -450,7 +450,7 @@ pub enum ModerationAction {
 
 /// システム通知の種別
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
+#[serde(tag = "system_kind", rename_all = "snake_case")]
 pub enum SystemKind {
     Notice,
     Subscription,
@@ -458,6 +458,8 @@ pub enum SystemKind {
     MessageUpdate { target_message_id: String },
     MessageDelete { target_message_id: String },
     ChannelEvent,
+    /// 承認待ちコメント（配信者の許可が来るまで非表示）
+    Placeholder,
 }
 
 /// メッセージの種別

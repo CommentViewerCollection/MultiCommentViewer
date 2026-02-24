@@ -24,6 +24,8 @@ interface CommentRow {
   text: MessagePart[]
   timestamp: number
   connection_id: string
+  is_visible: boolean
+  replaces_id?: string
 }
 
 // Display-friendly comment row (for DataGrid)
@@ -38,6 +40,8 @@ interface Comment {
   backgroundColor?: string
   color?: string
   colorInfo?: ColorInfo
+  is_visible: boolean
+  replaces_id?: string
 }
 
 
@@ -333,7 +337,33 @@ function App() {
           const batch = commentBufferRef.current.splice(0)
           flushTimerRef.current = null
           if (batch.length === 0) return
-          setComments((prev) => [...prev, ...batch])
+          setComments((prev) => {
+            let updated = [...prev]
+            const newComments: Comment[] = []
+
+            for (const comment of batch) {
+              if (comment.replaces_id) {
+                // コミット済み状態から対象を検索して置き換え
+                const idx = updated.findIndex(c => c.id === comment.replaces_id)
+                if (idx !== -1) {
+                  updated[idx] = { ...comment, id: comment.replaces_id }
+                } else {
+                  // 同フラッシュバッチ内の未コミット分を検索
+                  const buffIdx = newComments.findIndex(c => c.id === comment.replaces_id)
+                  if (buffIdx !== -1) {
+                    newComments[buffIdx] = { ...comment, id: comment.replaces_id }
+                  } else {
+                    // プレースホルダーが見つからない場合は通常コメントとして追加
+                    newComments.push({ ...comment, is_visible: true })
+                  }
+                }
+              } else {
+                newComments.push(comment)
+              }
+            }
+
+            return [...updated, ...newComments]
+          })
           if (atBottomRef.current) {
             dataGridRef.current?.scrollToBottom()
           }
@@ -946,7 +976,7 @@ function App() {
             <div className="flex-1 p-4">
               <DataGridComponent
                 ref={dataGridRef}
-                data={comments}
+                data={comments.filter(c => c.is_visible !== false)}
                 columns={columns}
                 renderCell={renderCell}
                 height="100%"

@@ -7,7 +7,7 @@ use mcv_messages::{
     ChannelId, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
     MessageType, ProviderBadge, ProviderContent, ProviderMessage, ProviderMessageKind,
-    ProviderSender, ServiceId,
+    ProviderSender, ServiceId, SystemKind,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::sync::watch;
@@ -80,6 +80,59 @@ fn convert_to_provider_message(msg: &LiveChatTextMessage) -> ProviderMessage {
         content: ProviderContent::Text { text },
         reply_to: None,
         metadata: serde_json::Value::Null,
+    }
+}
+
+/// Action を ProviderMessage に変換する（変換不要なアクションは None を返す）
+fn convert_action_to_provider_message(
+    action: &Action,
+    connection_id: Uuid,
+) -> Option<ProviderMessage> {
+    match action {
+        Action::LiveChatTextMessage1(msg) => Some(convert_to_provider_message(msg)),
+
+        // 承認待ちコメント: System(Placeholder) として追加
+        Action::PlaceholderItem(placeholder) => {
+            let timestamp =
+                placeholder.timestamp_usec.parse::<i64>().unwrap_or(0) / 1_000_000;
+            Some(ProviderMessage {
+                id: placeholder.id.clone(),
+                platform_message_id: Some(placeholder.id.clone()),
+                service: ServiceId("youtube".to_string()),
+                channel: ChannelId("".to_string()),
+                sender: ProviderSender {
+                    id: String::new(),
+                    display_name: vec![],
+                    badges: vec![],
+                    role: None,
+                },
+                timestamp,
+                kind: ProviderMessageKind::System(SystemKind::Placeholder),
+                content: ProviderContent::Empty,
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
+
+        // 置き換えコメント: System(MessageUpdate) として追加
+        Action::ReplaceChatItem(replace_action) => {
+            let mut msg = convert_to_provider_message(&replace_action.message);
+            msg.kind = ProviderMessageKind::System(SystemKind::MessageUpdate {
+                target_message_id: replace_action.target_item_id.clone(),
+            });
+            Some(msg)
+        }
+
+        Action::ParseError(raw) => {
+            tracing::error!(
+                target: "mcv::plugin-youtube-live",
+                connection_id = %connection_id,
+                raw = raw,
+                "Failed to parse action"
+            );
+            None
+        }
+        _ => None,
     }
 }
 
@@ -195,19 +248,7 @@ impl Connection {
             let provider_messages: Vec<ProviderMessage> = yt_initial_data
                 .actions()
                 .iter()
-                .filter_map(|action| match action {
-                    Action::LiveChatTextMessage1(msg) => Some(convert_to_provider_message(msg)),
-                    Action::ParseError(raw) => {
-                        tracing::error!(
-                            target: "mcv::plugin-youtube-live",
-                            connection_id = %connection_id,
-                            raw = raw,
-                            "Failed to parse action"
-                        );
-                        None
-                    }
-                    _ => None,
-                })
+                .filter_map(|action| convert_action_to_provider_message(action, connection_id))
                 .collect();
             if !provider_messages.is_empty() {
                 let envelope = McvEnvelope {
@@ -262,21 +303,7 @@ impl Connection {
                         // ポーリング1レスポンス分の actions をまとめて1つの McvEnvelope に収める
                         let provider_messages: Vec<ProviderMessage> = actions
                             .iter()
-                            .filter_map(|action| match action {
-                                Action::LiveChatTextMessage1(msg) => {
-                                    Some(convert_to_provider_message(msg))
-                                }
-                                Action::ParseError(raw) => {
-                                    tracing::error!(
-                                        target: "mcv::plugin-youtube-live",
-                                        connection_id = %connection_id,
-                                        raw = raw,
-                                        "Failed to parse action"
-                                    );
-                                    None
-                                }
-                                _ => None,
-                            })
+                            .filter_map(|action| convert_action_to_provider_message(action, connection_id))
                             .collect();
                         if !provider_messages.is_empty() {
                             let envelope = McvEnvelope {

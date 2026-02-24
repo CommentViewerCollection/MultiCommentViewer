@@ -46,35 +46,44 @@ struct CommentRow {
     is_visible: bool,
     /// 置き換え・削除対象の CommentRow の id
     replaces_id: Option<String>,
-    /// BAN 等で削除するユーザーの external_channel_id
-    delete_author_id: Option<String>,
+}
+
+/// "delete-all-by-user" イベントのペイロード
+#[derive(Debug, Clone, serde::Serialize)]
+struct DeleteAllByUserPayload {
+    user_id: String,
+    connection_id: String,
 }
 
 /// McvEnvelope の ProviderMessage を CommentRow のリストに変換する
+/// MessageDeleteAll は CommentRow に変換しない（別イベントで処理）
 fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<CommentRow> {
     envelope
         .messages
         .iter()
+        .filter(|msg| {
+            !matches!(
+                &msg.kind,
+                ProviderMessageKind::System(SystemKind::MessageDeleteAll { .. })
+            )
+        })
         .map(|msg| {
             let extract_text = |content: &ProviderContent| match content {
                 ProviderContent::Text { text } => text.clone(),
                 ProviderContent::Empty => vec![],
             };
 
-            let (is_visible, replaces_id, delete_author_id, text) = match &msg.kind {
+            let (is_visible, replaces_id, text) = match &msg.kind {
                 ProviderMessageKind::System(SystemKind::Placeholder) => {
-                    (false, None, None, vec![])
+                    (false, None, vec![])
                 }
                 ProviderMessageKind::System(SystemKind::MessageUpdate { target_message_id }) => {
-                    (true, Some(target_message_id.clone()), None, extract_text(&msg.content))
+                    (true, Some(target_message_id.clone()), extract_text(&msg.content))
                 }
                 ProviderMessageKind::System(SystemKind::MessageDelete { target_message_id }) => {
-                    (false, Some(target_message_id.clone()), None, vec![])
+                    (false, Some(target_message_id.clone()), vec![])
                 }
-                ProviderMessageKind::System(SystemKind::AuthorDelete { external_channel_id }) => {
-                    (false, None, Some(external_channel_id.clone()), vec![])
-                }
-                _ => (true, None, None, extract_text(&msg.content)),
+                _ => (true, None, extract_text(&msg.content)),
             };
 
             CommentRow {
@@ -86,7 +95,6 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 connection_id: envelope.connection_id.to_string(),
                 is_visible,
                 replaces_id,
-                delete_author_id,
             }
         })
         .collect()
@@ -837,7 +845,24 @@ fn main() {
                                     message_count = payload.envelope.messages.len(),
                                     "Emitting comment-received event"
                                 );
+                                // MessageDeleteAll を "delete-all-by-user" イベントとして emit
+                                for msg in &payload.envelope.messages {
+                                    if let ProviderMessageKind::System(SystemKind::MessageDeleteAll { user_id }) = &msg.kind {
+                                        let evt = DeleteAllByUserPayload {
+                                            user_id: user_id.clone(),
+                                            connection_id: payload.envelope.connection_id.to_string(),
+                                        };
+                                        if let Err(e) = app_handle.emit("delete-all-by-user", evt) {
+                                            tracing::error!(
+                                                target: "mcv::main",
+                                                error = %e,
+                                                "Failed to emit delete-all-by-user event"
+                                            );
+                                        }
+                                    }
+                                }
                                 // McvEnvelope → CommentRow[] に変換してフロントエンドへ送信
+                                // （MessageDeleteAll は envelope_to_comment_rows 内で除外済み）
                                 let rows = envelope_to_comment_rows(&payload.envelope);
                                 if let Err(e) = app_handle.emit("comment-received", rows) {
                                     tracing::error!(

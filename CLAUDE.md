@@ -377,6 +377,34 @@ cargo test --package mcv-core
 cargo test --test command_system_test
 ```
 
+## mcv-messages 設計原則（重要）
+
+`crates/mcv-messages` はすべての配信サイト・プラグインが共通で使う型定義クレートです。
+**特定プラットフォーム固有の概念を追加してはならない。**
+
+### NG の例（やってはいけないこと）
+
+```rust
+// NG: YouTube 固有の概念をそのまま持ち込む
+AuthorDelete { external_channel_id: String }  // external_channel_id は YouTube 固有
+```
+
+### OK の例
+
+```rust
+// OK: 汎用的な概念で表現する
+MessageDeleteAll { user_id: String }  // user_id はどのプラットフォームでも意味をなす
+```
+
+### 判断基準
+
+新しい型・フィールド・バリアントを追加する前に必ず問う:
+- **「YouTube 以外の配信サイト（Twitch, ニコ生等）でも意味をなすか？」**
+- YES → `mcv-messages` に追加してよい
+- NO → プラグイン側（`plugin-youtube-live` 等）で吸収し、汎用的な表現に変換して送出する
+
+`CommentRow`（`main.rs` のフロントエンド DTO）も同様。YouTube 固有の概念を持ち込まないこと。
+
 ## Future Extension Points
 
 See `docs/specifications.md` for detailed specifications including:

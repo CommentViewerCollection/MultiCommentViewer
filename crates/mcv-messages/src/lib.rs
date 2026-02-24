@@ -460,8 +460,8 @@ pub enum SystemKind {
     ChannelEvent,
     /// 承認待ちコメント（配信者の許可が来るまで非表示）
     Placeholder,
-    /// 特定ユーザーのコメントを全て削除（BAN 等）
-    AuthorDelete { external_channel_id: String },
+    /// 指定ユーザーのコメントを全て削除（BAN 等）
+    MessageDeleteAll { user_id: String },
 }
 
 /// メッセージの種別

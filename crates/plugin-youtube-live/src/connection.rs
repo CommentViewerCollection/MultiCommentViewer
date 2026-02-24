@@ -144,7 +144,7 @@ fn convert_action_to_provider_message(
             metadata: serde_json::Value::Null,
         }),
 
-        // ユーザー全コメント削除: System(AuthorDelete) として追加
+        // ユーザー全コメント削除: System(MessageDeleteAll) として追加
         Action::RemoveChatItemByAuthor(remove_action) => Some(ProviderMessage {
             id: Uuid::new_v4().to_string(),
             platform_message_id: None,
@@ -157,8 +157,8 @@ fn convert_action_to_provider_message(
                 role: None,
             },
             timestamp: 0,
-            kind: ProviderMessageKind::System(SystemKind::AuthorDelete {
-                external_channel_id: remove_action.external_channel_id.clone(),
+            kind: ProviderMessageKind::System(SystemKind::MessageDeleteAll {
+                user_id: remove_action.external_channel_id.clone(),
             }),
             content: ProviderContent::Empty,
             reply_to: None,

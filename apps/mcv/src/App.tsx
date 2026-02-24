@@ -26,7 +26,6 @@ interface CommentRow {
   connection_id: string
   is_visible: boolean
   replaces_id?: string
-  delete_author_id?: string
 }
 
 // Display-friendly comment row (for DataGrid)
@@ -43,7 +42,6 @@ interface Comment {
   colorInfo?: ColorInfo
   is_visible: boolean
   replaces_id?: string
-  delete_author_id?: string
 }
 
 
@@ -344,18 +342,7 @@ function App() {
             const newComments: Comment[] = []
 
             for (const comment of batch) {
-              if (comment.delete_author_id) {
-                // BAN 等: 該当ユーザーのコメントを全て非表示
-                updated = updated.map(c =>
-                  c.user_id === comment.delete_author_id ? { ...c, is_visible: false } : c
-                )
-                // 同バッチ内の未コミット分も非表示
-                for (let i = 0; i < newComments.length; i++) {
-                  if (newComments[i].user_id === comment.delete_author_id) {
-                    newComments[i] = { ...newComments[i], is_visible: false }
-                  }
-                }
-              } else if (comment.replaces_id) {
+              if (comment.replaces_id) {
                 // Replace（承認）または Delete（特定コメント削除）
                 const idx = updated.findIndex(c => c.id === comment.replaces_id)
                 if (idx !== -1) {
@@ -385,6 +372,21 @@ function App() {
       }
     })
 
+    // ユーザー全コメント削除イベントをリッスン（BAN 等）
+    const unlistenDeleteAll = listen<{ user_id: string; connection_id: string }>(
+      'delete-all-by-user',
+      (event) => {
+        const { user_id, connection_id } = event.payload
+        setComments((prev) =>
+          prev.map((c) =>
+            c.user_id === user_id && c.connection_id === connection_id
+              ? { ...c, is_visible: false }
+              : c
+          )
+        )
+      }
+    )
+
     // 接続完了イベントをリッスン
     const unlistenConnected = listen('connected', () => {
       loadConnections()
@@ -411,6 +413,7 @@ function App() {
 
     return () => {
       unlistenComment.then((fn) => fn())
+      unlistenDeleteAll.then((fn) => fn())
       unlistenConnected.then((fn) => fn())
       unlistenDisconnected.then((fn) => fn())
       unlistenSiteAdded.then((fn) => fn())

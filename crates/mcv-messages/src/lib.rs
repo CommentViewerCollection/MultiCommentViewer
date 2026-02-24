@@ -350,13 +350,6 @@ pub struct GetConnectionStatusPayload {
     pub connection_id: Uuid,
 }
 
-/// comment-receivedのpayload
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CommentReceivedPayload {
-    pub connection_id: Uuid,
-    pub comment: Comment,
-}
-
 /// メッセージパーツ（テキストまたは画像）
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -375,14 +368,192 @@ pub enum MessagePart {
     },
 }
 
-/// コメント情報
+// ============================================================================
+// ProviderMessage — 正規化済み配信メッセージ（Comment の後継）
+// ============================================================================
+
+/// 配信サービスの識別子（例: "twitch", "youtube", "nicolive", "dummy"）
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct ServiceId(pub String);
+
+/// チャンネル識別子（プラットフォーム固有）
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct ChannelId(pub String);
+
+/// 送信者バッジ
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Comment {
+pub struct ProviderBadge {
     pub id: String,
-    pub user_name: Vec<MessagePart>,
-    pub user_id: String,
-    pub text: Vec<MessagePart>,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_url: Option<String>,
+}
+
+/// 送信者のロール
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UserRole {
+    Streamer,
+    Moderator,
+    Vip,
+    Subscriber,
+    Member,
+    Viewer,
+    Staff,
+}
+
+/// 送信者情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderSender {
+    /// プラットフォーム上のユーザーID（旧 user_id）
+    pub id: String,
+    /// リッチ表示名（旧 user_name）
+    pub display_name: Vec<MessagePart>,
+    pub badges: Vec<ProviderBadge>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<UserRole>,
+}
+
+impl ProviderSender {
+    /// display_name をプレーンテキストとして返す
+    pub fn display_name_text(&self) -> String {
+        extract_message_parts_text(&self.display_name)
+    }
+}
+
+/// 投げ銭・サブスク等の金額情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Money {
+    /// ISO 4217 通貨コード (例: "JPY", "USD")
+    pub currency: String,
+    /// 最小単位での金額 (JPY=1円, USD=セント)
+    pub value_minor: i64,
+}
+
+/// マネタイズイベント情報（スーパーチャット・メンバーシップ等）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MonetaryInfo {
+    pub amount: Money,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tier: Option<String>,
+    pub recurring: bool,
+}
+
+/// モデレーションアクション
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "action", rename_all = "snake_case")]
+pub enum ModerationAction {
+    Delete { target_message_id: String },
+    Timeout { target_user_id: String, duration_sec: u64 },
+    Ban { target_user_id: String },
+}
+
+/// システム通知の種別
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum SystemKind {
+    Notice,
+    Subscription,
+    Membership,
+    MessageUpdate { target_message_id: String },
+    MessageDelete { target_message_id: String },
+    ChannelEvent,
+}
+
+/// メッセージの種別
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum ProviderMessageKind {
+    Chat,
+    Monetary(MonetaryInfo),
+    Moderation(ModerationAction),
+    System(SystemKind),
+}
+
+/// メッセージ本文
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "content_type", rename_all = "snake_case")]
+pub enum ProviderContent {
+    Empty,
+    Text { text: Vec<MessagePart> },
+}
+
+impl ProviderContent {
+    /// テキスト文字列を抽出する（Image の alt も含む）
+    pub fn to_plain_text(&self) -> String {
+        match self {
+            ProviderContent::Empty => String::new(),
+            ProviderContent::Text { text } => extract_message_parts_text(text),
+        }
+    }
+}
+
+/// 正規化済み配信メッセージ（旧 Comment の後継）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderMessage {
+    /// 内部一意ID
+    pub id: String,
+    /// プラットフォーム固有のメッセージID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub platform_message_id: Option<String>,
+    /// 配信サービス識別子
+    pub service: ServiceId,
+    /// チャンネル識別子
+    pub channel: ChannelId,
+    /// 送信者情報
+    pub sender: ProviderSender,
+    /// Unix タイムスタンプ（秒）
     pub timestamp: i64,
+    /// メッセージ種別
+    pub kind: ProviderMessageKind,
+    /// メッセージ本文
+    pub content: ProviderContent,
+    /// 返信先の platform_message_id
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reply_to: Option<String>,
+    /// プラットフォーム固有の追加データ
+    pub metadata: serde_json::Value,
+}
+
+/// rawイベント保存コンテナ
+/// 1つのプラットフォームイベント（WebSocketフレーム等）から
+/// 0..N 件の ProviderMessage を生成する。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McvEnvelope {
+    /// イベント一意ID
+    pub event_id: Uuid,
+    /// このイベントを受信した接続のID
+    pub connection_id: Uuid,
+    /// 正規化済みメッセージ一覧
+    pub messages: Vec<ProviderMessage>,
+    /// 受信時刻（Unix タイムスタンプ、秒）
+    pub received_at: i64,
+    /// プラットフォームからの生データ（デバッグ・再処理用）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_message: Option<serde_json::Value>,
+}
+
+/// comment-receivedのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommentReceivedPayload {
+    /// 後方互換のために残す（envelope.connection_id と同値）
+    pub connection_id: Uuid,
+    pub envelope: McvEnvelope,
+}
+
+// ============================================================================
+// ヘルパー関数（プライベート）
+// ============================================================================
+
+fn extract_message_parts_text(parts: &[MessagePart]) -> String {
+    parts
+        .iter()
+        .filter_map(|p| match p {
+            MessagePart::Text { text } => Some(text.as_str()),
+            MessagePart::Image { alt, .. } => alt.as_deref(),
+        })
+        .collect::<Vec<_>>()
+        .join("")
 }
 
 /// send-commentのpayload
@@ -583,28 +754,51 @@ mod tests {
 
     #[test]
     fn test_comment_payload() {
-        let comment = Comment {
-            id: "test-id".to_string(),
-            user_name: vec![MessagePart::Text {
-                text: "太郎".to_string(),
-            }],
-            user_id: "user_1234".to_string(),
-            text: vec![MessagePart::Text {
-                text: "こんにちは!".to_string(),
-            }],
+        let connection_id = Uuid::new_v4();
+        let msg = ProviderMessage {
+            id: Uuid::new_v4().to_string(),
+            platform_message_id: None,
+            service: ServiceId("dummy".to_string()),
+            channel: ChannelId("test".to_string()),
+            sender: ProviderSender {
+                id: "user_1234".to_string(),
+                display_name: vec![MessagePart::Text {
+                    text: "太郎".to_string(),
+                }],
+                badges: vec![],
+                role: None,
+            },
             timestamp: chrono::Utc::now().timestamp(),
+            kind: ProviderMessageKind::Chat,
+            content: ProviderContent::Text {
+                text: vec![MessagePart::Text {
+                    text: "こんにちは!".to_string(),
+                }],
+            },
+            reply_to: None,
+            metadata: serde_json::Value::Null,
+        };
+
+        let envelope = McvEnvelope {
+            event_id: Uuid::new_v4(),
+            connection_id,
+            messages: vec![msg],
+            received_at: chrono::Utc::now().timestamp(),
+            raw_message: None,
         };
 
         let payload = CommentReceivedPayload {
-            connection_id: Uuid::new_v4(),
-            comment,
+            connection_id,
+            envelope,
         };
 
         let json = serde_json::to_value(&payload).unwrap();
         let deserialized: CommentReceivedPayload = serde_json::from_value(json).unwrap();
 
-        assert_eq!(payload.comment.user_name, deserialized.comment.user_name);
-        assert_eq!(payload.comment.text, deserialized.comment.text);
+        let orig_msg = &payload.envelope.messages[0];
+        let deser_msg = &deserialized.envelope.messages[0];
+        assert_eq!(orig_msg.sender.display_name, deser_msg.sender.display_name);
+        assert_eq!(orig_msg.content.to_plain_text(), deser_msg.content.to_plain_text());
     }
 
     #[test]

@@ -1,8 +1,9 @@
 use crate::TwicasPlugin;
 use futures_util::{FutureExt, StreamExt};
 use mcv_messages::{
-    Comment, CommentReceivedPayload, DisconnectedPayload, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType,
+    ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
+    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent,
+    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
 };
 use plugin_abi_helper::v3::prelude::*;
 use reqwest::multipart::Form;
@@ -489,6 +490,32 @@ async fn handle_text_message(
             .map(|ms| ms / 1000)
             .unwrap_or_else(|| chrono::Utc::now().timestamp());
 
+        let provider_msg = ProviderMessage {
+            id: id.clone(),
+            platform_message_id: Some(id),
+            service: ServiceId("twicas".to_string()),
+            channel: ChannelId("".to_string()),
+            sender: ProviderSender {
+                id: user_id,
+                display_name: vec![MessagePart::Text { text: user_name }],
+                badges: vec![],
+                role: None,
+            },
+            timestamp,
+            kind: ProviderMessageKind::Chat,
+            content: ProviderContent::Text {
+                text: vec![MessagePart::Text { text }],
+            },
+            reply_to: None,
+            metadata: serde_json::Value::Null,
+        };
+        let envelope = McvEnvelope {
+            event_id: Uuid::new_v4(),
+            connection_id,
+            messages: vec![provider_msg],
+            received_at: chrono::Utc::now().timestamp(),
+            raw_message: None,
+        };
         let message = McvMessage::new_notification(
             MessageType::CommentReceived,
             MessageSource::Plugin {
@@ -497,13 +524,7 @@ async fn handle_text_message(
             MessageDestination::Core,
             serde_json::to_value(CommentReceivedPayload {
                 connection_id,
-                comment: Comment {
-                    id,
-                    user_name: vec![MessagePart::Text { text: user_name }],
-                    user_id,
-                    text: vec![MessagePart::Text { text }],
-                    timestamp,
-                },
+                envelope,
             })
             .unwrap(),
         );

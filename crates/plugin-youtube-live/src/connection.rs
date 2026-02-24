@@ -4,9 +4,10 @@
 //! ライブチャットメッセージを定期的に取得します。
 
 use mcv_messages::{
-    Comment, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload,
+    ChannelId, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
-    MessageType,
+    MessageType, ProviderBadge, ProviderContent, ProviderMessage, ProviderMessageKind,
+    ProviderSender, ServiceId,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::sync::watch;
@@ -21,8 +22,8 @@ use youtube_live_lib::{
 use crate::video_id::extract_video_id;
 use crate::YouTubeLivePlugin;
 
-/// LiveChatTextMessageをCommentに変換
-fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
+/// LiveChatTextMessageをProviderMessageに変換
+fn convert_to_provider_message(msg: &LiveChatTextMessage) -> ProviderMessage {
     // message_partsをMcvMessagePartに変換
     let text = msg
         .message_parts
@@ -44,22 +45,16 @@ fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
         })
         .collect::<Vec<_>>();
 
-    // user_nameをVec<MessagePart>に変換（名前 + バッジ画像）
-    let mut user_name = vec![McvMessagePart::Text {
-        text: msg.author_name.clone(),
-    }];
-
-    // author_badgesから画像を追加
-    for badge in &msg.author_badges {
-        if let Some(thumbnail) = badge.thumbnails.first() {
-            user_name.push(McvMessagePart::Image {
-                url: thumbnail.url.clone(),
-                width: Some(thumbnail.width as u32),
-                height: Some(thumbnail.height as u32),
-                alt: Some(badge.tooltip.clone()),
-            });
-        }
-    }
+    // author_badgesをProviderBadgeに変換
+    let badges = msg
+        .author_badges
+        .iter()
+        .map(|badge| ProviderBadge {
+            id: badge.tooltip.clone(),
+            name: badge.tooltip.clone(),
+            image_url: badge.thumbnails.first().map(|t| t.url.clone()),
+        })
+        .collect::<Vec<_>>();
 
     // timestamp_usecをi64に変換 (マイクロ秒 → 秒)
     let timestamp = msg.timestamp_usec.parse::<i64>().unwrap_or(0) / 1000 / 1000;
@@ -67,12 +62,24 @@ fn convert_to_comment(msg: &LiveChatTextMessage) -> Comment {
     // idはtimestamp_usecを使用 (一意性を保証)
     let id = msg.timestamp_usec.clone();
 
-    Comment {
-        id,
-        user_name,
-        user_id: String::new(), // TODO: author_external_channel_idを取得する必要がある
-        text,
+    ProviderMessage {
+        id: id.clone(),
+        platform_message_id: Some(id),
+        service: ServiceId("youtube".to_string()),
+        channel: ChannelId("".to_string()),
+        sender: ProviderSender {
+            id: String::new(), // TODO: author_external_channel_idを取得する必要がある
+            display_name: vec![McvMessagePart::Text {
+                text: msg.author_name.clone(),
+            }],
+            badges,
+            role: None,
+        },
         timestamp,
+        kind: ProviderMessageKind::Chat,
+        content: ProviderContent::Text { text },
+        reply_to: None,
+        metadata: serde_json::Value::Null,
     }
 }
 
@@ -187,10 +194,17 @@ impl Connection {
             for action in yt_initial_data.actions() {
                 match action {
                     Action::LiveChatTextMessage1(msg) => {
-                        let comment = convert_to_comment(&msg);
+                        let provider_msg = convert_to_provider_message(&msg);
+                        let envelope = McvEnvelope {
+                            event_id: Uuid::new_v4(),
+                            connection_id,
+                            messages: vec![provider_msg],
+                            received_at: chrono::Utc::now().timestamp(),
+                            raw_message: None,
+                        };
                         let payload = CommentReceivedPayload {
                             connection_id,
-                            comment,
+                            envelope,
                         };
                         let message = McvMessage::new_notification(
                             MessageType::CommentReceived,
@@ -246,10 +260,17 @@ impl Connection {
                         for action in actions {
                             match action {
                                 Action::LiveChatTextMessage1(msg) => {
-                                    let comment = convert_to_comment(&msg);
+                                    let provider_msg = convert_to_provider_message(&msg);
+                                    let envelope = McvEnvelope {
+                                        event_id: Uuid::new_v4(),
+                                        connection_id,
+                                        messages: vec![provider_msg],
+                                        received_at: chrono::Utc::now().timestamp(),
+                                        raw_message: None,
+                                    };
                                     let payload = CommentReceivedPayload {
                                         connection_id,
-                                        comment,
+                                        envelope,
                                     };
                                     let message = McvMessage::new_notification(
                                         MessageType::CommentReceived,

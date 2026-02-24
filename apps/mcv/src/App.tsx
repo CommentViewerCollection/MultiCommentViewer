@@ -16,17 +16,70 @@ type MessagePart =
   | { type: 'text'; text: string }
   | { type: 'image'; url: string; width?: number; height?: number; alt?: string }
 
+// ProviderContent from backend (tagged enum with content_type)
+type ProviderContent =
+  | { content_type: 'empty' }
+  | { content_type: 'text'; text: MessagePart[] }
+
+// ProviderSender from backend
+interface ProviderSender {
+  id: string
+  display_name: MessagePart[]
+  badges: Array<{ id: string; name: string; image_url?: string }>
+  role?: string
+}
+
+// ProviderMessage from backend
+interface ProviderMessage {
+  id: string
+  platform_message_id?: string
+  service: string        // ServiceId(pub String) — JSON: "twitch" etc.
+  channel: string        // ChannelId(pub String)
+  sender: ProviderSender
+  timestamp: number
+  kind: { kind: string } // ProviderMessageKind tagged enum
+  content: ProviderContent
+  reply_to?: string
+  metadata: any
+}
+
+// McvEnvelope from backend (what comment-received event now sends)
+interface McvEnvelope {
+  event_id: string
+  connection_id: string
+  messages: ProviderMessage[]
+  received_at: number
+  raw_message?: any
+}
+
+// Display-friendly comment row (for DataGrid)
 interface Comment {
   id: string
-  user_name: MessagePart[]  // Changed from string
+  user_name: MessagePart[]
   user_id: string
-  text: MessagePart[]       // Changed from string
+  text: MessagePart[]
   timestamp: number
   connection_id?: string
   connection_name?: string
-  backgroundColor?: string  // 新規: コメント背景色（後方互換性のため残す）
-  color?: string           // 新規: コメント文字色（後方互換性のため残す）
-  colorInfo?: ColorInfo    // 新規: 動的色解決
+  backgroundColor?: string
+  color?: string
+  colorInfo?: ColorInfo
+}
+
+/** McvEnvelope の ProviderMessage を Comment 表示行に変換する */
+function envelopeToComments(envelope: McvEnvelope): Comment[] {
+  return envelope.messages.map((msg) => {
+    const textParts: MessagePart[] =
+      msg.content.content_type === 'text' ? msg.content.text : []
+    return {
+      id: msg.id,
+      user_name: msg.sender.display_name,
+      user_id: msg.sender.id,
+      text: textParts,
+      timestamp: msg.timestamp,
+      connection_id: envelope.connection_id,
+    }
+  })
 }
 
 interface ConnectionInfo {
@@ -307,10 +360,12 @@ function App() {
     loadSitesAndBrowsers()
     loadCoreSettings()
 
-    // コメント受信イベントをリッスン
-    const unlistenComment = listen<Comment>('comment-received', (event) => {
-      const comment = event.payload
+    // コメント受信イベントをリッスン（McvEnvelope を受け取る）
+    const unlistenComment = listen<McvEnvelope>('comment-received', (event) => {
+      const envelope = event.payload
+      const newComments = envelopeToComments(envelope)
 
+      for (const comment of newComments) {
       // ColorInfo インスタンスを作成（軽量、O(1)）
       const colorInfo = new ColorInfo(
         coreSettingsRef,
@@ -330,6 +385,7 @@ function App() {
           dataGridRef.current?.scrollToBottom()
         }, 50)
       }
+      } // end for
     })
 
     // 接続完了イベントをリッスン

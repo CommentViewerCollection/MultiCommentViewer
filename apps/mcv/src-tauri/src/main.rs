@@ -773,26 +773,23 @@ fn main() {
                                     };
                                 tracing::debug!(
                                     target: "mcv::main",
-                                    comment_id = %payload.comment.id,
                                     connection_id = %payload.connection_id,
+                                    message_count = payload.envelope.messages.len(),
                                     "Emitting comment-received event"
                                 );
-                                // connection_idを含めたコメントオブジェクトを作成
-                                let mut comment_with_conn = match serde_json::to_value(&payload.comment) {
+                                // envelope ごとフロントエンドへ送信（connection_id は envelope に含まれる）
+                                let envelope_value = match serde_json::to_value(&payload.envelope) {
                                     Ok(v) => v,
                                     Err(e) => {
                                         tracing::error!(
                                             target: "mcv::main",
                                             error = %e,
-                                            "Failed to serialize comment"
+                                            "Failed to serialize envelope"
                                         );
                                         return;
                                     }
                                 };
-                                if let Some(obj) = comment_with_conn.as_object_mut() {
-                                    obj.insert("connection_id".to_string(), serde_json::Value::String(payload.connection_id.to_string()));
-                                }
-                                if let Err(e) = app_handle.emit("comment-received", comment_with_conn) {
+                                if let Err(e) = app_handle.emit("comment-received", envelope_value) {
                                     tracing::error!(
                                         target: "mcv::main",
                                         error = %e,

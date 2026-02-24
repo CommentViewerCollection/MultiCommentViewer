@@ -4,9 +4,8 @@
 //! 棒読みちゃん（BouyomiChan）の TCP プロトコルを通じてコメントを読み上げさせる。
 
 use mcv_messages::{
-    CommentReceivedPayload, Message as McvMessage, MessageDestination, MessagePart, MessageSource,
-    MessageType, PluginHelloPayload, SettingsDataPayload, SettingsSchemaPayload,
-    UpdateSettingsPayload,
+    CommentReceivedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    PluginHelloPayload, SettingsDataPayload, SettingsSchemaPayload, UpdateSettingsPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -233,17 +232,6 @@ async fn send_to_bouyomi(
 // テキスト抽出ユーティリティ
 // ============================================================================
 
-/// `Vec<MessagePart>` からテキスト部分を結合して文字列を取得する
-fn extract_text(parts: &[MessagePart]) -> String {
-    parts
-        .iter()
-        .filter_map(|p| match p {
-            MessagePart::Text { text } => Some(text.as_str()),
-            MessagePart::Image { alt, .. } => alt.as_deref(),
-        })
-        .collect::<Vec<_>>()
-        .join("")
-}
 
 // ============================================================================
 // プラグイン本体
@@ -260,8 +248,13 @@ impl BouyomiPlugin {
     fn build_talk_text(&self, payload: &CommentReceivedPayload) -> Option<String> {
         let settings = &self.settings;
 
-        let handle_name = extract_text(&payload.comment.user_name);
-        let comment_text = extract_text(&payload.comment.text);
+        // エンベロープ内の最初のチャットメッセージを使用
+        let first_msg = payload.envelope.messages.iter().find(|m| {
+            matches!(m.kind, mcv_messages::ProviderMessageKind::Chat)
+        })?;
+
+        let handle_name = first_msg.sender.display_name_text();
+        let comment_text = first_msg.content.to_plain_text();
 
         let mut parts: Vec<String> = Vec::new();
 

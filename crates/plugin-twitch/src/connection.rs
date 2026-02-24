@@ -5,8 +5,9 @@
 
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
-    Comment, CommentReceivedPayload, DisconnectedPayload, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType,
+    ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
+    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent,
+    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::fs::{File, OpenOptions};
@@ -404,6 +405,36 @@ impl Connection {
                     text,
                     tags,
                 } => {
+                    let provider_msg = ProviderMessage {
+                        id: Uuid::new_v4().to_string(),
+                        platform_message_id: None,
+                        service: ServiceId("twitch".to_string()),
+                        channel: ChannelId(channel.clone()),
+                        sender: ProviderSender {
+                            id: user.clone(),
+                            display_name: vec![MessagePart::Text {
+                                text: user.clone(),
+                            }],
+                            badges: vec![],
+                            role: None,
+                        },
+                        timestamp: chrono::Utc::now().timestamp(),
+                        kind: ProviderMessageKind::Chat,
+                        content: ProviderContent::Text {
+                            text: vec![MessagePart::Text {
+                                text: text.to_string(),
+                            }],
+                        },
+                        reply_to: None,
+                        metadata: serde_json::Value::Null,
+                    };
+                    let envelope = McvEnvelope {
+                        event_id: Uuid::new_v4(),
+                        connection_id,
+                        messages: vec![provider_msg],
+                        received_at: chrono::Utc::now().timestamp(),
+                        raw_message: None,
+                    };
                     let comment_message = McvMessage::new_notification(
                         MessageType::CommentReceived,
                         MessageSource::Plugin {
@@ -412,17 +443,7 @@ impl Connection {
                         MessageDestination::Core,
                         serde_json::to_value(CommentReceivedPayload {
                             connection_id,
-                            comment: Comment {
-                                id: Uuid::new_v4().to_string(),
-                                user_name: vec![MessagePart::Text {
-                                    text: "unknown".to_string(),
-                                }],
-                                user_id: "unknown".to_string(),
-                                text: vec![MessagePart::Text {
-                                    text: text.to_string(),
-                                }],
-                                timestamp: chrono::Utc::now().timestamp(),
-                            },
+                            envelope,
                         })
                         .unwrap(),
                     );
@@ -452,6 +473,36 @@ impl Connection {
         line: &str,
     ) {
         if let Some(comment_text) = Self::extract_privmsg_text(line) {
+            let provider_msg = ProviderMessage {
+                id: Uuid::new_v4().to_string(),
+                platform_message_id: None,
+                service: ServiceId("twitch".to_string()),
+                channel: ChannelId("unknown".to_string()),
+                sender: ProviderSender {
+                    id: "unknown".to_string(),
+                    display_name: vec![MessagePart::Text {
+                        text: "unknown".to_string(),
+                    }],
+                    badges: vec![],
+                    role: None,
+                },
+                timestamp: chrono::Utc::now().timestamp(),
+                kind: ProviderMessageKind::Chat,
+                content: ProviderContent::Text {
+                    text: vec![MessagePart::Text {
+                        text: comment_text.to_string(),
+                    }],
+                },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            };
+            let envelope = McvEnvelope {
+                event_id: Uuid::new_v4(),
+                connection_id,
+                messages: vec![provider_msg],
+                received_at: chrono::Utc::now().timestamp(),
+                raw_message: None,
+            };
             let comment_message = McvMessage::new_notification(
                 MessageType::CommentReceived,
                 MessageSource::Plugin {
@@ -460,17 +511,7 @@ impl Connection {
                 MessageDestination::Core,
                 serde_json::to_value(CommentReceivedPayload {
                     connection_id,
-                    comment: Comment {
-                        id: Uuid::new_v4().to_string(),
-                        user_name: vec![MessagePart::Text {
-                            text: "unknown".to_string(),
-                        }],
-                        user_id: "unknown".to_string(),
-                        text: vec![MessagePart::Text {
-                            text: comment_text.to_string(),
-                        }],
-                        timestamp: chrono::Utc::now().timestamp(),
-                    },
+                    envelope,
                 })
                 .unwrap(),
             );

@@ -1,13 +1,44 @@
 use actix::prelude::*;
 use mcv_core::*;
 use mcv_messages::{
-    CommentReceivedPayload, ConnectedPayload, DisconnectedPayload, Message, MessageDestination,
-    MessageSource, MessageType,
+    ChannelId, CommentReceivedPayload, ConnectedPayload, DisconnectedPayload, McvEnvelope, Message,
+    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent, ProviderMessage,
+    ProviderMessageKind, ProviderSender, ServiceId,
 };
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+
+fn make_test_comment_payload(connection_id: Uuid, user: &str, text: &str) -> CommentReceivedPayload {
+    let msg = ProviderMessage {
+        id: Uuid::new_v4().to_string(),
+        platform_message_id: None,
+        service: ServiceId("test".to_string()),
+        channel: ChannelId("test".to_string()),
+        sender: ProviderSender {
+            id: user.to_string(),
+            display_name: vec![MessagePart::Text { text: user.to_string() }],
+            badges: vec![],
+            role: None,
+        },
+        timestamp: chrono::Utc::now().timestamp(),
+        kind: ProviderMessageKind::Chat,
+        content: ProviderContent::Text {
+            text: vec![MessagePart::Text { text: text.to_string() }],
+        },
+        reply_to: None,
+        metadata: serde_json::Value::Null,
+    };
+    let envelope = McvEnvelope {
+        event_id: Uuid::new_v4(),
+        connection_id,
+        messages: vec![msg],
+        received_at: chrono::Utc::now().timestamp(),
+        raw_message: None,
+    };
+    CommentReceivedPayload { connection_id, envelope }
+}
 
 /// メッセージルーティングの統合テスト
 
@@ -37,21 +68,8 @@ async fn test_event_callback_routing() {
         MessageType::CommentReceived,
         MessageSource::Plugin { plugin_id },
         MessageDestination::Core,
-        serde_json::to_value(CommentReceivedPayload {
-            connection_id,
-            comment: mcv_messages::Comment {
-                id: Uuid::new_v4().to_string(),
-                user_name: vec![mcv_messages::MessagePart::Text {
-                    text: "TestUser".to_string(),
-                }],
-                user_id: "user123".to_string(),
-                text: vec![mcv_messages::MessagePart::Text {
-                    text: "Test comment".to_string(),
-                }],
-                timestamp: chrono::Utc::now().timestamp_millis(),
-            },
-        })
-        .unwrap(),
+        serde_json::to_value(make_test_comment_payload(connection_id, "TestUser", "Test comment"))
+            .unwrap(),
     );
 
     let _ = core_addr
@@ -189,39 +207,13 @@ async fn test_multiple_event_routing() {
         ),
         (
             MessageType::CommentReceived,
-            serde_json::to_value(CommentReceivedPayload {
-                connection_id,
-                comment: mcv_messages::Comment {
-                    id: Uuid::new_v4().to_string(),
-                    user_name: vec![mcv_messages::MessagePart::Text {
-                        text: "User1".to_string(),
-                    }],
-                    user_id: "user1".to_string(),
-                    text: vec![mcv_messages::MessagePart::Text {
-                        text: "Comment 1".to_string(),
-                    }],
-                    timestamp: chrono::Utc::now().timestamp_millis(),
-                },
-            })
-            .unwrap(),
+            serde_json::to_value(make_test_comment_payload(connection_id, "User1", "Comment 1"))
+                .unwrap(),
         ),
         (
             MessageType::CommentReceived,
-            serde_json::to_value(CommentReceivedPayload {
-                connection_id,
-                comment: mcv_messages::Comment {
-                    id: Uuid::new_v4().to_string(),
-                    user_name: vec![mcv_messages::MessagePart::Text {
-                        text: "User2".to_string(),
-                    }],
-                    user_id: "user2".to_string(),
-                    text: vec![mcv_messages::MessagePart::Text {
-                        text: "Comment 2".to_string(),
-                    }],
-                    timestamp: chrono::Utc::now().timestamp_millis(),
-                },
-            })
-            .unwrap(),
+            serde_json::to_value(make_test_comment_payload(connection_id, "User2", "Comment 2"))
+                .unwrap(),
         ),
         (
             MessageType::Disconnected,

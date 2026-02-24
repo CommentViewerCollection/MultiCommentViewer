@@ -190,24 +190,24 @@ impl DummyPlugin {
                 }
 
                 // ランダムなコメントを生成
-                let comment = Comment {
-                    id: Uuid::new_v4().to_string(),
-                    user_name: vec![mcv_messages::MessagePart::Text {
-                        text: names[rng.gen_range(0..names.len())].to_string(),
-                    }],
-                    user_id: format!("user_{}", rng.gen_range(1000..9999)),
-                    text: vec![mcv_messages::MessagePart::Text {
-                        text: texts[rng.gen_range(0..texts.len())].to_string(),
-                    }],
-                    timestamp: chrono::Utc::now().timestamp(),
-                };
+                let user_name = names[rng.gen_range(0..names.len())].to_string();
+                let text = texts[rng.gen_range(0..texts.len())].to_string();
+                let provider_msg = make_dummy_provider_message(&user_name, &text);
 
                 tracing::debug!(
                     connection_id = %connection_id,
-                    user_name = ?comment.user_name,
-                    text = ?comment.text,
+                    user_name = %user_name,
+                    text = %text,
                     "Generated comment"
                 );
+
+                let envelope = McvEnvelope {
+                    event_id: Uuid::new_v4(),
+                    connection_id,
+                    messages: vec![provider_msg],
+                    received_at: chrono::Utc::now().timestamp(),
+                    raw_message: None,
+                };
 
                 let message = Message::new_notification(
                     MessageType::CommentReceived,
@@ -215,7 +215,7 @@ impl DummyPlugin {
                     MessageDestination::Core,
                     serde_json::to_value(CommentReceivedPayload {
                         connection_id,
-                        comment,
+                        envelope,
                     })
                     .unwrap(),
                 );
@@ -423,14 +423,13 @@ impl DummyPlugin {
         let user_name = args[0];
         let text = args[1..].join(" ");
 
-        let comment = Comment {
-            id: Uuid::new_v4().to_string(),
-            user_name: vec![mcv_messages::MessagePart::Text {
-                text: user_name.to_string(),
-            }],
-            user_id: format!("user_{}", rand::thread_rng().gen_range(1000..9999)),
-            text: vec![mcv_messages::MessagePart::Text { text }],
-            timestamp: chrono::Utc::now().timestamp(),
+        let provider_msg = make_dummy_provider_message(user_name, &text);
+        let envelope = McvEnvelope {
+            event_id: Uuid::new_v4(),
+            connection_id,
+            messages: vec![provider_msg],
+            received_at: chrono::Utc::now().timestamp(),
+            raw_message: None,
         };
 
         let message = Message::new_notification(
@@ -441,7 +440,7 @@ impl DummyPlugin {
             MessageDestination::Core,
             serde_json::to_value(CommentReceivedPayload {
                 connection_id,
-                comment,
+                envelope,
             })
             .unwrap(),
         );
@@ -1069,6 +1068,33 @@ impl Plugin for DummyPlugin {
 
         tracing::info!("Settings updated successfully");
         Ok(())
+    }
+}
+
+/// ダミープラグイン用の ProviderMessage を構築するヘルパー
+fn make_dummy_provider_message(user_name: &str, text: &str) -> ProviderMessage {
+    ProviderMessage {
+        id: Uuid::new_v4().to_string(),
+        platform_message_id: None,
+        service: ServiceId("dummy".to_string()),
+        channel: ChannelId("test".to_string()),
+        sender: ProviderSender {
+            id: format!("user_{}", rand::thread_rng().gen_range(1000..9999)),
+            display_name: vec![mcv_messages::MessagePart::Text {
+                text: user_name.to_string(),
+            }],
+            badges: vec![],
+            role: None,
+        },
+        timestamp: chrono::Utc::now().timestamp(),
+        kind: ProviderMessageKind::Chat,
+        content: ProviderContent::Text {
+            text: vec![mcv_messages::MessagePart::Text {
+                text: text.to_string(),
+            }],
+        },
+        reply_to: None,
+        metadata: serde_json::Value::Null,
     }
 }
 

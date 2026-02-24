@@ -70,11 +70,11 @@ interface Comment {
 function envelopeToComments(envelope: McvEnvelope): Comment[] {
   return envelope.messages.map((msg) => {
     const textParts: MessagePart[] =
-      msg.content.content_type === 'text' ? msg.content.text : []
+      msg.content?.content_type === 'text' ? msg.content.text : []
     return {
       id: msg.id,
-      user_name: msg.sender.display_name,
-      user_id: msg.sender.id,
+      user_name: msg.sender?.display_name ?? [],
+      user_id: msg.sender?.id ?? '',
       text: textParts,
       timestamp: msg.timestamp,
       connection_id: envelope.connection_id,
@@ -206,6 +206,8 @@ function App() {
   // 新規: Ref を作成
   const coreSettingsRef = useRef<any>(null)
   const connectionMapRef = useRef<Map<string, ConnectionInfo>>(new Map())
+  const commentBufferRef = useRef<Comment[]>([])
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // サイドバー幅リサイズ（core.json で永続化）
   const [sidebarWidth, setSidebarWidth] = useState(320)
@@ -361,31 +363,24 @@ function App() {
     loadCoreSettings()
 
     // コメント受信イベントをリッスン（McvEnvelope を受け取る）
+    // バッファに蓄積して一定間隔でまとめて反映することで UI フリーズを防ぐ
     const unlistenComment = listen<McvEnvelope>('comment-received', (event) => {
-      const envelope = event.payload
-      const newComments = envelopeToComments(envelope)
-
+      const newComments = envelopeToComments(event.payload)
       for (const comment of newComments) {
-      // ColorInfo インスタンスを作成（軽量、O(1)）
-      const colorInfo = new ColorInfo(
-        coreSettingsRef,
-        connectionMapRef,
-        comment.connection_id || ''
-      )
-
-      const commentWithColorInfo = {
-        ...comment,
-        colorInfo
+        const colorInfo = new ColorInfo(coreSettingsRef, connectionMapRef, comment.connection_id || '')
+        commentBufferRef.current.push({ ...comment, colorInfo })
       }
-
-      setComments((prev) => [...prev, commentWithColorInfo])
-      // 最下部にいる場合は自動スクロール
-      if (atBottomRef.current) {
-        setTimeout(() => {
-          dataGridRef.current?.scrollToBottom()
-        }, 50)
+      if (flushTimerRef.current === null) {
+        flushTimerRef.current = setTimeout(() => {
+          const batch = commentBufferRef.current.splice(0)
+          flushTimerRef.current = null
+          if (batch.length === 0) return
+          setComments((prev) => [...prev, ...batch])
+          if (atBottomRef.current) {
+            dataGridRef.current?.scrollToBottom()
+          }
+        }, 32)
       }
-      } // end for
     })
 
     // 接続完了イベントをリッスン

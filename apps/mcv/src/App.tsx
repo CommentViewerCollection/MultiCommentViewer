@@ -413,6 +413,10 @@ function App() {
       unlistenDisconnected.then((fn) => fn())
       unlistenSiteAdded.then((fn) => fn())
       unlistenBrowserAdded.then((fn) => fn())
+      if (flushTimerRef.current !== null) {
+        clearTimeout(flushTimerRef.current)
+        flushTimerRef.current = null
+      }
     }
   }, [])
 

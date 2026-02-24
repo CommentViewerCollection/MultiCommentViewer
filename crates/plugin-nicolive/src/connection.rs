@@ -638,8 +638,9 @@ impl Connection {
         file.write_all(format!("{:?}", messages).as_bytes())
             .unwrap();
         file.write_all(b"\n").unwrap(); // 改行を追加したい場合
-        let mut comment_count = 0u32;
 
+        // 1セグメント HTTP レスポンス内の全コメントを収集して1つの McvEnvelope にまとめる
+        let mut provider_messages = Vec::new();
         for chat in messages {
             let timestamp = chat
                 .at_secs
@@ -665,11 +666,21 @@ impl Connection {
                 reply_to: None,
                 metadata: serde_json::Value::Null,
             };
+            provider_messages.push(provider_msg);
+        }
+        if !provider_messages.is_empty() {
+            tracing::info!(
+                target: "mcv::plugin-nicolive",
+                connection_id = %connection_id,
+                comment_count = provider_messages.len(),
+                "コメント送信完了"
+            );
             let envelope = McvEnvelope {
                 event_id: Uuid::new_v4(),
                 connection_id,
-                messages: vec![provider_msg],
+                messages: provider_messages,
                 received_at: chrono::Utc::now().timestamp(),
+                // データ形式が protobuf バイナリのため文字列として保存しない
                 raw_message: None,
             };
             let payload = CommentReceivedPayload {
@@ -685,16 +696,6 @@ impl Connection {
                 serde_json::to_value(&payload).unwrap_or_default(),
             );
             NicoLivePlugin::send_message(ctx.clone(), mcv_msg).await;
-            comment_count += 1;
-        }
-
-        if comment_count > 0 {
-            tracing::info!(
-                target: "mcv::plugin-nicolive",
-                connection_id = %connection_id,
-                comment_count = comment_count,
-                "コメント送信完了"
-            );
         }
 
         Ok(())

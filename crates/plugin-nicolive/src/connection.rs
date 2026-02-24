@@ -10,6 +10,7 @@ use nicolive_lib::{
     decode_chunked_messages, decode_segment_messages, decode_view_entries, extract_live_id,
     fetch_websocket_url, ServerTimeCache, ViewEntry,
 };
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use plugin_abi_helper::v3::prelude::*;
 use std::{io::Write, sync::Arc};
 use tokio::{
@@ -680,8 +681,7 @@ impl Connection {
                 connection_id,
                 messages: provider_messages,
                 received_at: chrono::Utc::now().timestamp(),
-                // データ形式が protobuf バイナリのため文字列として保存しない
-                raw_message: None,
+                raw_message: Some(STANDARD.encode(&bytes)),
             };
             let payload = CommentReceivedPayload {
                 connection_id,

@@ -13,6 +13,7 @@ import ConnectionTab from "./components/ConnectionTab";
 import CommentTab from "./components/CommentTab";
 import RawMessageTab from "./components/RawMessageTab";
 import LogViewTab from "./components/LogViewTab";
+import ReplayTab from "./components/ReplayTab";
 
 function App() {
   const [connected, setConnected] = useState(false);
@@ -139,6 +140,8 @@ function App() {
         return <RawMessageTab />;
       case "log":
         return <LogViewTab messages={messages} onClear={handleClearLogs} />;
+      case "replay":
+        return <ReplayTab />;
       default:
         return null;
     }
@@ -223,6 +226,7 @@ function App() {
               { id: "comment", label: "コメント" },
               { id: "raw", label: "生メッセージ" },
               { id: "log", label: "ログ" },
+              { id: "replay", label: "リプレイ" },
             ].map((tab) => (
               <button
                 key={tab.id}

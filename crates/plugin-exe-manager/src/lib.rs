@@ -102,7 +102,7 @@ impl ExePluginManager {
                 | MessageType::ConnectionRemoved
                 | MessageType::Connected
                 | MessageType::Disconnected
-                | MessageType::CommentReceived
+            // CommentReceived は comment-processor ロールへの role-based routing を使用
         )
     }
 }
@@ -185,6 +185,19 @@ impl Plugin for ExePluginManager {
         // EXEプラグインへメッセージをルーティング
         if let Some(websocket_server) = &self.websocket_server {
             let router = websocket_server.get_router();
+
+            // CommentReceived は comment-processor ロールを持つプラグインにのみ送信
+            if message.message_type == MessageType::CommentReceived {
+                tracing::debug!(
+                    target: "mcv::plugin_exe_manager",
+                    "Routing CommentReceived to comment-processor plugins"
+                );
+                router
+                    .broadcast_to_role("comment-processor", message)
+                    .await
+                    .map_err(|e| PluginError::ConnectionError(e.to_string()))?;
+                return Ok(());
+            }
 
             // ブロードキャストが必要なメッセージタイプかチェック
             if Self::should_broadcast(&message.message_type) {

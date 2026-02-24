@@ -457,6 +457,7 @@ pub enum Action {
     PlaceholderItem(PlaceholderItemAction),
     Membership,
     RemoveChatItem(RemoveChatItemAction),
+    RemoveChatItemByAuthor(RemoveChatItemByAuthorAction),
     ReplaceChatItem(ReplaceChatItemAction),
     UpdatePoll,
     ReportModerationState,
@@ -483,6 +484,12 @@ pub struct PlaceholderItemAction {
 #[derive(Debug, Clone, PartialEq)]
 pub struct RemoveChatItemAction {
     pub target_item_id: String,
+}
+
+/// removeChatItemByAuthorAction: 特定ユーザーのコメントを全て削除（BAN 等）
+#[derive(Debug, Clone, PartialEq)]
+pub struct RemoveChatItemByAuthorAction {
+    pub external_channel_id: String,
 }
 
 /// replaceChatItemAction: Placeholder を実際のコメントで置き換える
@@ -600,6 +607,18 @@ fn parse_action(action: &serde_json::Value) -> Action {
         let rcia = RemoveChatItemAction { target_item_id };
 
         return Action::RemoveChatItem(rcia);
+    } else if obj.contains_key("removeChatItemByAuthorAction") {
+        let external_channel_id = match get_string(
+            action,
+            &["removeChatItemByAuthorAction", "externalChannelId"],
+        ) {
+            Ok(s) => s,
+            Err(_) => return Action::ParseError(action.to_string()),
+        };
+
+        return Action::RemoveChatItemByAuthor(RemoveChatItemByAuthorAction {
+            external_channel_id,
+        });
     } else {
         return Action::ParseError(action.to_string());
     }

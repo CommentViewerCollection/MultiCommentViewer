@@ -26,6 +26,7 @@ interface CommentRow {
   connection_id: string
   is_visible: boolean
   replaces_id?: string
+  delete_author_id?: string
 }
 
 // Display-friendly comment row (for DataGrid)
@@ -42,6 +43,7 @@ interface Comment {
   colorInfo?: ColorInfo
   is_visible: boolean
   replaces_id?: string
+  delete_author_id?: string
 }
 
 
@@ -342,8 +344,19 @@ function App() {
             const newComments: Comment[] = []
 
             for (const comment of batch) {
-              if (comment.replaces_id) {
-                // コミット済み状態から対象を検索して置き換え
+              if (comment.delete_author_id) {
+                // BAN 等: 該当ユーザーのコメントを全て非表示
+                updated = updated.map(c =>
+                  c.user_id === comment.delete_author_id ? { ...c, is_visible: false } : c
+                )
+                // 同バッチ内の未コミット分も非表示
+                for (let i = 0; i < newComments.length; i++) {
+                  if (newComments[i].user_id === comment.delete_author_id) {
+                    newComments[i] = { ...newComments[i], is_visible: false }
+                  }
+                }
+              } else if (comment.replaces_id) {
+                // Replace（承認）または Delete（特定コメント削除）
                 const idx = updated.findIndex(c => c.id === comment.replaces_id)
                 if (idx !== -1) {
                   updated[idx] = { ...comment, id: comment.replaces_id }
@@ -352,9 +365,10 @@ function App() {
                   const buffIdx = newComments.findIndex(c => c.id === comment.replaces_id)
                   if (buffIdx !== -1) {
                     newComments[buffIdx] = { ...comment, id: comment.replaces_id }
-                  } else {
-                    // プレースホルダーが見つからない場合は通常コメントとして追加
-                    newComments.push({ ...comment, is_visible: true })
+                  } else if (comment.is_visible) {
+                    // Replace でプレースホルダーが見つからない場合のみ通常コメントとして追加
+                    // Delete（is_visible: false）の場合は対象が既に存在しないため何もしない
+                    newComments.push(comment)
                   }
                 }
               } else {

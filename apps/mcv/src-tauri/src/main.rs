@@ -44,8 +44,10 @@ struct CommentRow {
     connection_id: String,
     /// false の場合は非表示（承認待ちプレースホルダー）
     is_visible: bool,
-    /// 置き換え対象の CommentRow の id（Replace メッセージの場合のみ Some）
+    /// 置き換え・削除対象の CommentRow の id
     replaces_id: Option<String>,
+    /// BAN 等で削除するユーザーの external_channel_id
+    delete_author_id: Option<String>,
 }
 
 /// McvEnvelope の ProviderMessage を CommentRow のリストに変換する
@@ -59,14 +61,20 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 ProviderContent::Empty => vec![],
             };
 
-            let (is_visible, replaces_id, text) = match &msg.kind {
+            let (is_visible, replaces_id, delete_author_id, text) = match &msg.kind {
                 ProviderMessageKind::System(SystemKind::Placeholder) => {
-                    (false, None, vec![])
+                    (false, None, None, vec![])
                 }
                 ProviderMessageKind::System(SystemKind::MessageUpdate { target_message_id }) => {
-                    (true, Some(target_message_id.clone()), extract_text(&msg.content))
+                    (true, Some(target_message_id.clone()), None, extract_text(&msg.content))
                 }
-                _ => (true, None, extract_text(&msg.content)),
+                ProviderMessageKind::System(SystemKind::MessageDelete { target_message_id }) => {
+                    (false, Some(target_message_id.clone()), None, vec![])
+                }
+                ProviderMessageKind::System(SystemKind::AuthorDelete { external_channel_id }) => {
+                    (false, None, Some(external_channel_id.clone()), vec![])
+                }
+                _ => (true, None, None, extract_text(&msg.content)),
             };
 
             CommentRow {
@@ -78,6 +86,7 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 connection_id: envelope.connection_id.to_string(),
                 is_visible,
                 replaces_id,
+                delete_author_id,
             }
         })
         .collect()

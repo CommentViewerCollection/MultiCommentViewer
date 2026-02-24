@@ -68,7 +68,7 @@ fn convert_to_provider_message(msg: &LiveChatTextMessage) -> ProviderMessage {
         service: ServiceId("youtube".to_string()),
         channel: ChannelId("".to_string()),
         sender: ProviderSender {
-            id: String::new(), // TODO: author_external_channel_idを取得する必要がある
+            id: msg.author_external_channel_id.clone(),
             display_name: vec![McvMessagePart::Text {
                 text: msg.author_name.clone(),
             }],
@@ -122,6 +122,48 @@ fn convert_action_to_provider_message(
             });
             Some(msg)
         }
+
+        // 特定コメント削除: System(MessageDelete) として追加
+        Action::RemoveChatItem(remove_action) => Some(ProviderMessage {
+            id: Uuid::new_v4().to_string(),
+            platform_message_id: None,
+            service: ServiceId("youtube".to_string()),
+            channel: ChannelId("".to_string()),
+            sender: ProviderSender {
+                id: String::new(),
+                display_name: vec![],
+                badges: vec![],
+                role: None,
+            },
+            timestamp: 0,
+            kind: ProviderMessageKind::System(SystemKind::MessageDelete {
+                target_message_id: remove_action.target_item_id.clone(),
+            }),
+            content: ProviderContent::Empty,
+            reply_to: None,
+            metadata: serde_json::Value::Null,
+        }),
+
+        // ユーザー全コメント削除: System(AuthorDelete) として追加
+        Action::RemoveChatItemByAuthor(remove_action) => Some(ProviderMessage {
+            id: Uuid::new_v4().to_string(),
+            platform_message_id: None,
+            service: ServiceId("youtube".to_string()),
+            channel: ChannelId("".to_string()),
+            sender: ProviderSender {
+                id: String::new(),
+                display_name: vec![],
+                badges: vec![],
+                role: None,
+            },
+            timestamp: 0,
+            kind: ProviderMessageKind::System(SystemKind::AuthorDelete {
+                external_channel_id: remove_action.external_channel_id.clone(),
+            }),
+            content: ProviderContent::Empty,
+            reply_to: None,
+            metadata: serde_json::Value::Null,
+        }),
 
         Action::ParseError(raw) => {
             tracing::error!(

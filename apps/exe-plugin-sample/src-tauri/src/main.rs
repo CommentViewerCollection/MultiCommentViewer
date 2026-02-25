@@ -452,7 +452,6 @@ async fn handle_message_state_update(
                         match rusqlite::Connection::open(&db_path) {
                             Ok(conn) => {
                                 let schema = r#"
-                                    PRAGMA journal_mode=WAL;
                                     CREATE TABLE IF NOT EXISTS envelopes (
                                         id            INTEGER PRIMARY KEY AUTOINCREMENT,
                                         event_id      TEXT NOT NULL UNIQUE,

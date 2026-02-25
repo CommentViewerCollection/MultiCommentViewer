@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useReducer } from 'react'
+import { useState, useEffect, useRef, useReducer, useLayoutEffect, useMemo } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, DataGridRef, Column } from 'my-dataview'
@@ -155,8 +155,7 @@ function App() {
   const [sites, setSites] = useState<SiteInfo[]>([])
   const [browsers, setBrowsers] = useState<BrowserInfo[]>([])
   const dataGridRef = useRef<DataGridRef>(null)
-  const [atBottom, setAtBottom] = useState(true)
-  const atBottomRef = useRef(true)
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true)
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
   const [selectedConnectionForCommand, setSelectedConnectionForCommand] = useState<string>('')
   const [commandInput, setCommandInput] = useState('')
@@ -305,6 +304,18 @@ function App() {
     setCurrentThemeColors(colors)
   }, [coreSettings])
 
+  // AutoScroll の真のON/OFF状態（設定値）を同期
+  useEffect(() => {
+    setIsAutoScrollEnabled(coreSettings?.auto_scroll ?? true)
+  }, [coreSettings?.auto_scroll])
+
+  const handleAtBottomChange = (isAtBottom: boolean) => {
+    if (!isAtBottom) return
+    // 設定で auto_scroll が無効化されている場合は自動復帰しない
+    if ((coreSettings?.auto_scroll ?? true) === false) return
+    setIsAutoScrollEnabled(true)
+  }
+
   useEffect(() => {
     // Connection Map を作成（O(1) 検索のため）
     const map = new Map<string, ConnectionInfo>()
@@ -313,11 +324,6 @@ function App() {
     })
     connectionMapRef.current = map
   }, [connections])
-
-  // atBottomの変更をrefに反映
-  useEffect(() => {
-    atBottomRef.current = atBottom
-  }, [atBottom])
 
   useEffect(() => {
     // 初回読み込み
@@ -365,9 +371,6 @@ function App() {
 
             return [...updated, ...newComments]
           })
-          if (atBottomRef.current) {
-            dataGridRef.current?.scrollToBottom()
-          }
         }, 32)
       }
     })
@@ -424,6 +427,31 @@ function App() {
       }
     }
   }, [])
+
+  const visibleComments = useMemo(
+    () => comments.filter(c => c.is_visible !== false),
+    [comments]
+  )
+
+  // AutoScroll ON に切り替わったら即座に末尾へ移動
+  useEffect(() => {
+    if (!isAutoScrollEnabled) return
+    const raf = requestAnimationFrame(() => {
+      dataGridRef.current?.scrollToBottom()
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [isAutoScrollEnabled])
+
+  // 新規データ反映後に Bottom 追従（setComments直後ではなく描画後に実行）
+  // atBottom の真偽に関わらず、AutoScroll ON のときは件数変化で必ず追従させる
+  // （複数行追加時に仮想リストの表示更新が遅延するケースを防ぐ）
+  useLayoutEffect(() => {
+    if (!isAutoScrollEnabled || visibleComments.length === 0) return
+    const raf = requestAnimationFrame(() => {
+      dataGridRef.current?.scrollToBottom()
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [visibleComments.length, isAutoScrollEnabled])
 
   const handleAddConnection = async () => {
     try {
@@ -993,14 +1021,16 @@ function App() {
             <div className="flex-1 p-4">
               <DataGridComponent
                 ref={dataGridRef}
-                data={comments.filter(c => c.is_visible !== false)}
+                data={visibleComments}
                 columns={columns}
                 renderCell={renderCell}
                 height="100%"
                 backgroundColor={currentThemeColors.bg_main}
                 headerBackgroundColor={currentThemeColors.bg_sidebar}
                 border={`1px solid ${currentThemeColors.border}`}
-                onAtBottomChange={setAtBottom}
+                onAtBottomChange={handleAtBottomChange}
+                autoScrollEnabled={isAutoScrollEnabled}
+                onUserDetachedFromBottom={() => setIsAutoScrollEnabled(false)}
                 onColumnResize={handleColumnResize}
                 onColumnVisibilityChange={handleColumnVisibilityChange}
                 defaultItemHeight={65}

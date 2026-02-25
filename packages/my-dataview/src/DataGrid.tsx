@@ -21,6 +21,8 @@ export interface DataGridProps<T> {
   headerBackgroundColor?: string;
   border?: string;
   onAtBottomChange?: (atBottom: boolean) => void;
+  autoScrollEnabled?: boolean;
+  onUserDetachedFromBottom?: () => void;
   onItemSelect?: (index: number, item: T) => void;
   onColumnResize?: (columnKey: keyof T, width: number) => void;
   onColumnVisibilityChange?: (columnKey: keyof T, visible: boolean) => void;
@@ -28,7 +30,7 @@ export interface DataGridProps<T> {
 }
 
 export interface DataGridRef {
-  scrollToBottom: () => void;
+  scrollToBottom: (opts?: { behavior?: ScrollBehavior; reason?: 'new-data' | 'manual' }) => void;
 }
 
 export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function DataGrid<T>({
@@ -41,6 +43,8 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   headerBackgroundColor = '#333',
   border = '2px solid red',
   onAtBottomChange,
+  autoScrollEnabled = true,
+  onUserDetachedFromBottom,
   onItemSelect,
   onColumnResize,
   onColumnVisibilityChange,
@@ -49,7 +53,38 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [atBottom, setAtBottom] = useState(true);
+  const scrollerRef = useRef<HTMLElement | null>(null);
+  const userScrollIntentRef = useRef(false);
+  const userDetachedCandidateRef = useRef(false);
+  const userUpwardScrollPxRef = useRef(0);
+  const lastScrollTopRef = useRef(0);
+  const programmaticScrollRef = useRef(false);
+  const userIntentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const visibleColumns = columns.filter(col => col.visible !== false);
+
+  const markProgrammaticScroll = useCallback(() => {
+    programmaticScrollRef.current = true;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        programmaticScrollRef.current = false;
+      });
+    });
+  }, []);
+
+  const markUserIntent = useCallback(() => {
+    userScrollIntentRef.current = true;
+    userDetachedCandidateRef.current = false;
+    userUpwardScrollPxRef.current = 0;
+    if (userIntentTimerRef.current !== null) {
+      clearTimeout(userIntentTimerRef.current);
+    }
+    userIntentTimerRef.current = setTimeout(() => {
+      userScrollIntentRef.current = false;
+      userDetachedCandidateRef.current = false;
+      userUpwardScrollPxRef.current = 0;
+      userIntentTimerRef.current = null;
+    }, 1200);
+  }, []);
 
   const defaultRenderCell = (item: T, column: Column<T>) => {
     const value = item[column.key];
@@ -266,10 +301,83 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   const totalWidth = visibleColumns.reduce((sum, col) => sum + (col.width || 100), 0);
 
   useImperativeHandle(ref, () => ({
-    scrollToBottom: () => {
-      virtuosoRef.current?.scrollToIndex(data.length - 1);
+    scrollToBottom: (opts) => {
+      if (data.length === 0) return;
+      markProgrammaticScroll();
+      const behavior = opts?.behavior === 'smooth' ? 'smooth' : 'auto';
+      virtuosoRef.current?.scrollToIndex({
+        index: data.length - 1,
+        align: 'end',
+        behavior,
+      });
     },
-  }), [data.length]);
+  }), [data.length, markProgrammaticScroll]);
+
+  React.useEffect(() => {
+    return () => {
+      if (userIntentTimerRef.current !== null) {
+        clearTimeout(userIntentTimerRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const onWheel = () => {
+      markUserIntent();
+    };
+
+    const onTouchMove = () => {
+      markUserIntent();
+    };
+
+    const onPointerDown = () => {
+      markUserIntent();
+      lastScrollTopRef.current = scroller.scrollTop;
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === 'PageUp' ||
+        e.key === 'PageDown' ||
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown' ||
+        e.key === 'Home' ||
+        (e.key === ' ' && e.shiftKey)
+      ) {
+        markUserIntent();
+      }
+    };
+
+    const onScroll = () => {
+      const currentTop = scroller.scrollTop;
+      const delta = lastScrollTopRef.current - currentTop;
+      lastScrollTopRef.current = currentTop;
+      if (!programmaticScrollRef.current && userScrollIntentRef.current && delta > 0) {
+        userUpwardScrollPxRef.current += delta;
+        if (userUpwardScrollPxRef.current >= 24) {
+          userDetachedCandidateRef.current = true;
+        }
+      }
+    };
+
+    lastScrollTopRef.current = scroller.scrollTop;
+    scroller.addEventListener('wheel', onWheel, { passive: true });
+    scroller.addEventListener('touchmove', onTouchMove, { passive: true });
+    scroller.addEventListener('pointerdown', onPointerDown);
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      scroller.removeEventListener('wheel', onWheel);
+      scroller.removeEventListener('touchmove', onTouchMove);
+      scroller.removeEventListener('pointerdown', onPointerDown);
+      scroller.removeEventListener('scroll', onScroll);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [markUserIntent]);
 
   return (
     <div style={{ height, width: '100%', backgroundColor, border, position: 'relative', overflowX: 'auto' }}>
@@ -277,12 +385,27 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         {renderHeader()}
         <Virtuoso
           ref={virtuosoRef}
+          scrollerRef={(el) => {
+            scrollerRef.current = el instanceof HTMLElement ? el : null;
+          }}
           data={data}
           itemContent={itemContent}
           defaultItemHeight={defaultItemHeight}
           atBottomStateChange={(atBottom) => {
             setAtBottom(atBottom);
             onAtBottomChange?.(atBottom);
+            if (
+              !atBottom &&
+              autoScrollEnabled &&
+              userDetachedCandidateRef.current &&
+              userScrollIntentRef.current &&
+              !programmaticScrollRef.current
+            ) {
+              onUserDetachedFromBottom?.();
+              userDetachedCandidateRef.current = false;
+              userScrollIntentRef.current = false;
+              userUpwardScrollPxRef.current = 0;
+            }
           }}
           atBottomThreshold={60}
           initialTopMostItemIndex={0}

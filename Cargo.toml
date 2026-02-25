@@ -32,6 +32,7 @@ members = [
     "crates/plugin-bouyomi",
     "crates/plugin-twitch",
     "crates/plugin-twicas",
+    "crates/plugin-kick",
 ]
 resolver = "2"
 

@@ -88,5 +88,14 @@
     "entry": "exe-plugin-sample.exe",
     "api": "v2",
     "has_channel_feature": false
+  },
+  {
+    "path": "crates/plugin-kick",
+    "id": "kick",
+    "name": "Kick",
+    "description": "Kickのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_kick.dll",
+    "api": "v3",
+    "has_channel_feature": true
   }
 ]

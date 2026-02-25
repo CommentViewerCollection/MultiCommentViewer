@@ -494,7 +494,13 @@ impl ProviderContent {
     }
 }
 
-/// 正規化済み配信メッセージ（旧 Comment の後継）
+/// 正規化済み配信メッセージ（1 件分）。
+///
+/// # 設計
+/// [`McvEnvelope`] に 0..N 件格納される。
+/// `timestamp` はメッセージの**投稿時刻**（プラットフォーム提供）であり、
+/// [`McvEnvelope::received_at`]（Core の受信時刻）とは独立している。
+/// 表示・replay 等の時刻基準には `timestamp` を使用すること。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProviderMessage {
     /// 内部一意ID
@@ -508,7 +514,16 @@ pub struct ProviderMessage {
     pub channel: ChannelId,
     /// 送信者情報
     pub sender: ProviderSender,
-    /// Unix タイムスタンプ（秒）
+    /// メッセージの投稿時刻（Unix タイムスタンプ、秒）。
+    ///
+    /// プラットフォームが返すメッセージ送信時刻であり、[`McvEnvelope::received_at`]
+    /// （Core の受信時刻）とは異なる。
+    ///
+    /// # 用途
+    /// - フロントエンドでの表示順序の決定
+    /// - 複数メッセージを 1 件ずつ表示する際のタイミング計算
+    ///   （`apps/mcv` の `event_callback` が担当）
+    /// - replay 時の元の投稿間隔の再現
     pub timestamp: i64,
     /// メッセージ種別
     pub kind: ProviderMessageKind,
@@ -521,18 +536,34 @@ pub struct ProviderMessage {
     pub metadata: serde_json::Value,
 }
 
-/// rawイベント保存コンテナ
-/// 1つのプラットフォームイベント（WebSocketフレーム等）から
-/// 0..N 件の ProviderMessage を生成する。
+/// 1 つのプラットフォームイベント（WebSocket フレーム等）を表すコンテナ。
+///
+/// # 設計
+/// - **1 envelope = 1 プラットフォームイベント**（サーバーから届いた生メッセージと 1:1）
+/// - 1 イベント中に複数のアクションが含まれることがあるため
+///   `messages` フィールドは **0..N 件の [`ProviderMessage`]** を保持する。
+///   例: YouTube Live のポーリングレスポンスは複数のチャットアクションを一括で返す。
+/// - `received_at` は Core がイベントを受信した時刻であり、各 [`ProviderMessage`] の
+///   `timestamp`（ユーザーが投稿した時刻）とは異なる。
+/// - `messages` の表示順・表示タイミングは [`ProviderMessage::timestamp`] に従うこと。
+///   複数メッセージをまとめて表示するのではなく、timestamp 差分を尊重して
+///   1 件ずつ表示する（担当: `apps/mcv` の `event_callback`）。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McvEnvelope {
     /// イベント一意ID
     pub event_id: Uuid,
     /// このイベントを受信した接続のID
     pub connection_id: Uuid,
-    /// 正規化済みメッセージ一覧
+    /// このイベントに含まれる正規化済みメッセージ一覧（0..N 件）。
+    ///
+    /// 複数プラットフォームでは 1 フレームに複数アクションが含まれるため
+    /// N > 1 になる場合がある。表示側では [`ProviderMessage::timestamp`] に
+    /// 従い 1 件ずつ時刻順に表示すること。
     pub messages: Vec<ProviderMessage>,
-    /// 受信時刻（Unix タイムスタンプ、秒）
+    /// Core がこのイベントを受信した時刻（Unix タイムスタンプ、秒）。
+    ///
+    /// 各メッセージの投稿時刻は [`ProviderMessage::timestamp`] を参照すること。
+    /// replay 時はエンベロープ送信間隔の基準として使用する。
     pub received_at: i64,
     /// プラットフォームからの生データ（デバッグ・再処理用）
     #[serde(skip_serializing_if = "Option::is_none")]

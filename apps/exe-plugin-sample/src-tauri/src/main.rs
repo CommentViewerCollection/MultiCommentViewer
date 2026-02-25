@@ -622,7 +622,7 @@ async fn start_replay_from_file(
 
     // DB からユニークな connection_id を取得
     let fp = file_path.clone();
-    let old_conn_ids: Vec<Uuid> = tokio::task::spawn_blocking(move || {
+    let old_conn_ids: Vec<Uuid> = match tokio::task::spawn_blocking(move || {
         let conn = rusqlite::Connection::open_with_flags(
             &fp,
             rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
@@ -631,7 +631,8 @@ async fn start_replay_from_file(
 
         let mut stmt = conn
             .prepare(
-                "SELECT DISTINCT connection_id FROM envelopes ORDER BY MIN(received_at) ASC",
+                "SELECT connection_id FROM envelopes \
+                 GROUP BY connection_id ORDER BY MIN(received_at) ASC",
             )
             .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
@@ -645,9 +646,26 @@ async fn start_replay_from_file(
         Ok::<Vec<Uuid>, String>(ids)
     })
     .await
-    .ok()
-    .and_then(|r| r.ok())
-    .unwrap_or_default();
+    {
+        Ok(Ok(ids)) => ids,
+        Ok(Err(e)) => {
+            tracing::error!(
+                target: "mcv::exe-plugin-sample",
+                error = %e,
+                file_path = %file_path,
+                "Failed to read connection IDs from replay DB"
+            );
+            return;
+        }
+        Err(e) => {
+            tracing::error!(
+                target: "mcv::exe-plugin-sample",
+                error = %e,
+                "spawn_blocking panicked while reading replay DB"
+            );
+            return;
+        }
+    };
 
     if old_conn_ids.is_empty() {
         tracing::warn!(
@@ -720,7 +738,7 @@ async fn run_replay(
     }
 
     let fp = file_path.clone();
-    let rows: Vec<EnvelopeRow> = tokio::task::spawn_blocking(move || {
+    let rows: Vec<EnvelopeRow> = match tokio::task::spawn_blocking(move || {
         let conn = rusqlite::Connection::open_with_flags(
             &fp,
             rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
@@ -750,9 +768,26 @@ async fn run_replay(
         Ok::<Vec<EnvelopeRow>, String>(rows)
     })
     .await
-    .ok()
-    .and_then(|r| r.ok())
-    .unwrap_or_default();
+    {
+        Ok(Ok(rows)) => rows,
+        Ok(Err(e)) => {
+            tracing::error!(
+                target: "mcv::exe-plugin-sample",
+                error = %e,
+                file_path = %file_path,
+                "Failed to read envelopes from replay DB"
+            );
+            return;
+        }
+        Err(e) => {
+            tracing::error!(
+                target: "mcv::exe-plugin-sample",
+                error = %e,
+                "spawn_blocking panicked while reading replay DB envelopes"
+            );
+            return;
+        }
+    };
 
     if rows.is_empty() {
         tracing::warn!(

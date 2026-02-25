@@ -847,9 +847,9 @@ fn main() {
                                     target: "mcv::main",
                                     connection_id = %payload.connection_id,
                                     message_count = payload.envelope.messages.len(),
-                                    "Emitting comment-received event"
+                                    "Processing comment-received event"
                                 );
-                                // MessageDeleteAll を "delete-all-by-user" イベントとして emit
+                                // MessageDeleteAll を "delete-all-by-user" イベントとして即座に emit
                                 for msg in &payload.envelope.messages {
                                     if let ProviderMessageKind::System(SystemKind::MessageDeleteAll { user_id }) = &msg.kind {
                                         let evt = DeleteAllByUserPayload {
@@ -865,16 +865,74 @@ fn main() {
                                         }
                                     }
                                 }
-                                // McvEnvelope → CommentRow[] に変換してフロントエンドへ送信
-                                // （MessageDeleteAll は envelope_to_comment_rows 内で除外済み）
-                                let rows = envelope_to_comment_rows(&payload.envelope);
-                                if let Err(e) = app_handle.emit("comment-received", rows) {
-                                    tracing::error!(
-                                        target: "mcv::main",
-                                        error = %e,
-                                        "Failed to emit comment-received event"
-                                    );
-                                }
+                                // ProviderMessage を 1 件ずつ timestamp 順にタイミング制御して emit
+                                // （McvEnvelope は 1 プラットフォームイベントと 1:1 のため複数メッセージを含む場合がある）
+                                // Mutex ガードを await をまたいで保持できないため、AppHandle をクローンして
+                                // 別タスクで処理する
+                                let ah = app_handle.clone();
+                                let messages: Vec<mcv_messages::ProviderMessage> = payload
+                                    .envelope
+                                    .messages
+                                    .into_iter()
+                                    .filter(|msg| {
+                                        !matches!(
+                                            &msg.kind,
+                                            ProviderMessageKind::System(
+                                                SystemKind::MessageDeleteAll { .. }
+                                            )
+                                        )
+                                    })
+                                    .collect();
+                                let connection_id = payload.envelope.connection_id;
+                                let received_at = payload.envelope.received_at;
+                                let event_id = payload.envelope.event_id;
+
+                                actix::spawn(async move {
+                                    if messages.is_empty() {
+                                        return;
+                                    }
+                                    let base_ts = messages[0].timestamp;
+                                    let base_instant = std::time::Instant::now();
+                                    // 最低送信間隔 32ms（フロントエンドのバッチ処理周期に合わせる）
+                                    let min_interval = std::time::Duration::from_millis(32);
+                                    // 最初のメッセージを即時送信できるよう 1 間隔分だけ前に設定
+                                    let mut last_instant = base_instant
+                                        .checked_sub(min_interval)
+                                        .unwrap_or(base_instant);
+
+                                    for msg in messages {
+                                        // ProviderMessage.timestamp の差分（秒）に基づく送信予定時刻
+                                        let offset_secs =
+                                            (msg.timestamp - base_ts).max(0) as u64;
+                                        let target_by_ts = base_instant
+                                            + std::time::Duration::from_secs(offset_secs);
+                                        // 最低間隔（32ms）を守った送信予定時刻
+                                        let target_by_interval = last_instant + min_interval;
+                                        let target = target_by_ts.max(target_by_interval);
+
+                                        let now = std::time::Instant::now();
+                                        if target > now {
+                                            tokio::time::sleep(target - now).await;
+                                        }
+                                        last_instant = std::time::Instant::now();
+
+                                        let single_envelope = mcv_messages::McvEnvelope {
+                                            event_id,
+                                            connection_id,
+                                            messages: vec![msg],
+                                            received_at,
+                                            raw_message: None,
+                                        };
+                                        let rows = envelope_to_comment_rows(&single_envelope);
+                                        if let Err(e) = ah.emit("comment-received", rows) {
+                                            tracing::error!(
+                                                target: "mcv::main",
+                                                error = %e,
+                                                "Failed to emit comment-received event"
+                                            );
+                                        }
+                                    }
+                                });
                             }
                             MessageType::Connected => {
                                 tracing::debug!(target: "mcv::main","Emitting connected event");

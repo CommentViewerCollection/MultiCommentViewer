@@ -137,6 +137,9 @@ fn build_tauri(profile: &str) -> Result<()> {
         if let Some(manifest_dir) = tauri_project_dir(&pkg) {
             println!("== Tauri build: {} ==", pkg.name);
 
+            // ステップ3a: フロントエンドの変更チェックと npm run build
+            build_frontend_if_needed(&manifest_dir)?;
+
             // ソースの更新日時と出力 exe を比較し、変更がなければスキップ
             if !should_build_tauri(&pkg, &manifest_dir, profile) {
                 continue;
@@ -158,6 +161,96 @@ fn build_tauri(profile: &str) -> Result<()> {
     Ok(())
 }
 
+/// フロントエンドの依存関係・ソースを確認し、必要に応じて npm install / npm run build を実行する
+fn build_frontend_if_needed(manifest_dir: &Path) -> Result<()> {
+    // manifest_dir = apps/mcv/src-tauri/  →  parent = apps/mcv/
+    let frontend_dir = match manifest_dir.parent() {
+        Some(p) => p,
+        None => return Ok(()),
+    };
+
+    // ① npm install が必要か判定
+    //    node_modules/.package-lock.json は npm install 実行時に更新されるため、
+    //    package.json / package-lock.json より古ければ install が必要
+    let installed_marker = frontend_dir.join("node_modules/.package-lock.json");
+    let installed_mtime = latest_mtime(&installed_marker);
+
+    let dep_files: Vec<PathBuf> = vec![
+        frontend_dir.join("package.json"),
+        frontend_dir.join("package-lock.json"),
+    ];
+    let needs_install = match installed_mtime {
+        None => true, // node_modules が未セットアップ
+        Some(installed) => dep_files
+            .iter()
+            .any(|p| latest_mtime(p).map(|m| m > installed).unwrap_or(false)),
+    };
+
+    if needs_install {
+        println!("  依存関係に変更あり → npm install を実行");
+        run_npm_install(frontend_dir)?;
+    }
+
+    // ② npm run build が必要か判定
+    let dist_dir = frontend_dir.join("dist");
+    let dist_mtime = match latest_mtime(&dist_dir) {
+        Some(m) => m,
+        None => {
+            println!("  フロントエンド: dist/ が存在しないため npm run build を実行");
+            return run_npm_build(frontend_dir);
+        }
+    };
+
+    // 監視対象のフロントエンドソースファイル
+    let src_paths: Vec<PathBuf> = vec![
+        frontend_dir.join("src"),
+        frontend_dir.join("index.html"),
+        frontend_dir.join("vite.config.ts"),
+        frontend_dir.join("package.json"),
+        frontend_dir.join("tailwind.config.js"),
+        frontend_dir.join("tsconfig.json"),
+    ];
+
+    let needs_build = src_paths
+        .iter()
+        .any(|p| latest_mtime(p).map(|m| m > dist_mtime).unwrap_or(false));
+
+    if needs_build {
+        println!("  フロントエンドに変更あり → npm run build を実行");
+        run_npm_build(frontend_dir)?;
+    } else {
+        println!("  フロントエンド: 変更なし (スキップ)");
+    }
+
+    Ok(())
+}
+
+fn run_npm_install(dir: &Path) -> Result<()> {
+    // Windows では npm は npm.cmd (バッチファイル) のため cmd /C 経由で実行する
+    let mut cmd = npm_command();
+    cmd.arg("install");
+    cmd.current_dir(dir);
+    run(cmd)
+}
+
+fn run_npm_build(dir: &Path) -> Result<()> {
+    let mut cmd = npm_command();
+    cmd.arg("run").arg("build");
+    cmd.current_dir(dir);
+    run(cmd)
+}
+
+/// Windows では `cmd /C npm`、それ以外では `npm` を返す
+fn npm_command() -> Command {
+    if cfg!(windows) {
+        let mut cmd = Command::new("cmd");
+        cmd.args(["/C", "npm"]);
+        cmd
+    } else {
+        Command::new("npm")
+    }
+}
+
 /// ソースの最新更新日時と出力 exe の更新日時を比較し、ビルドが必要かどうかを返す
 fn should_build_tauri(pkg: &Package, manifest_dir: &Path, profile: &str) -> bool {
     // manifest_dir は src-tauri/ を指す。出力 exe はワークスペースの target/ に生成される
@@ -171,12 +264,13 @@ fn should_build_tauri(pkg: &Package, manifest_dir: &Path, profile: &str) -> bool
     };
 
     // manifest_dir = apps/mcv/src-tauri/ なので parent() = apps/mcv/
+    // フロントエンドは build_frontend_if_needed で事前にビルド済みのため、
+    // dist/ の更新日時で判断する（src/ は見ない）
     let watch_paths: Vec<PathBuf> = vec![
         manifest_dir.join("src"),                                    // Rust バックエンド
         manifest_dir.join("tauri.conf.json"),                        // Tauri 設定
         manifest_dir.join("Cargo.toml"),                             // クレート依存
-        manifest_dir.parent().unwrap().join("src"),                  // TS/JS フロントエンド
-        manifest_dir.parent().unwrap().join("package.json"),         // npm 依存
+        manifest_dir.parent().unwrap().join("dist"),                 // ビルド済みフロントエンド
     ];
 
     for path in &watch_paths {

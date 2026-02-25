@@ -71,18 +71,6 @@ struct AppState {
     db: Arc<std::sync::Mutex<Option<rusqlite::Connection>>>,
     // ログディレクトリパス（GetLogsDir で取得）
     logs_dir: Arc<RwLock<Option<String>>>,
-    // replay 用: old_connection_id → new_connection_id マッピング
-    replay_id_map: Arc<RwLock<HashMap<Uuid, Uuid>>>,
-    // replay 用: AddConnection の request_id → old_connection_id
-    pending_add_connections: Arc<std::sync::Mutex<HashMap<Uuid, Uuid>>>,
-    // replay 用: 期待する ConnectionAdded の数
-    pending_connections_total: Arc<std::sync::atomic::AtomicUsize>,
-    // replay 用: 受信した ConnectionAdded の数
-    pending_connections_done: Arc<std::sync::atomic::AtomicUsize>,
-    // replay 用: 再生中のファイルパス（ConnectionAdded 完了後に replay タスクを起動するために使用）
-    replay_file_path: Arc<RwLock<Option<String>>>,
-    // replay 用: apps/mcv からの Connect メッセージの connection_id（Connected/Disconnected を返すために必要）
-    replay_trigger_conn_id: Arc<RwLock<Option<Uuid>>>,
 }
 
 /// メッセージに応じて状態を更新し、変化があればフロントエンドに通知する
@@ -96,12 +84,6 @@ async fn handle_message_state_update(
     messages: Arc<RwLock<Vec<McvMessage>>>,
     db: Arc<std::sync::Mutex<Option<rusqlite::Connection>>>,
     logs_dir: Arc<RwLock<Option<String>>>,
-    replay_id_map: Arc<RwLock<HashMap<Uuid, Uuid>>>,
-    pending_add_connections: Arc<std::sync::Mutex<HashMap<Uuid, Uuid>>>,
-    pending_connections_total: Arc<std::sync::atomic::AtomicUsize>,
-    pending_connections_done: Arc<std::sync::atomic::AtomicUsize>,
-    replay_file_path: Arc<RwLock<Option<String>>>,
-    replay_trigger_conn_id: Arc<RwLock<Option<Uuid>>>,
     client: Arc<ExePluginClient>,
     plugin_id: Uuid,
     app: AppHandle,
@@ -247,48 +229,6 @@ async fn handle_message_state_update(
                     tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, name = %name, "Connection added to state");
                     let _ = app.emit("connections-updated", ());
 
-                    // replay 用: request_id から old_connection_id を逆引き
-                    if let Some(req_id) = message.request_id {
-                        let old_conn_id = {
-                            let mut guard = pending_add_connections.lock().unwrap();
-                            guard.remove(&req_id)
-                        };
-                        if let Some(old_id) = old_conn_id {
-                            replay_id_map.write().await.insert(old_id, connection_id);
-                            tracing::info!(
-                                target: "mcv::exe-plugin-sample",
-                                old_id = %old_id,
-                                new_id = %connection_id,
-                                "Replay connection mapping registered"
-                            );
-
-                            let done = pending_connections_done
-                                .fetch_add(1, std::sync::atomic::Ordering::SeqCst)
-                                + 1;
-                            let total = pending_connections_total
-                                .load(std::sync::atomic::Ordering::SeqCst);
-
-                            if done >= total && total > 0 {
-                                // 全接続の mapping が揃ったので replay を開始
-                                let file_path = replay_file_path.read().await.clone();
-                                if let Some(file_path) = file_path {
-                                    let id_map = replay_id_map.read().await.clone();
-                                    let client_clone = client.clone();
-                                    let pid = plugin_id;
-                                    let trigger = *replay_trigger_conn_id.read().await;
-                                    tokio::spawn(async move {
-                                        run_replay(file_path, id_map, client_clone, pid, trigger)
-                                            .await;
-                                    });
-                                    // カウンターをリセット
-                                    pending_connections_total
-                                        .store(0, std::sync::atomic::Ordering::SeqCst);
-                                    pending_connections_done
-                                        .store(0, std::sync::atomic::Ordering::SeqCst);
-                                }
-                            }
-                        }
-                    }
                 } else {
                     tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-added: failed to parse required fields");
                 }
@@ -562,9 +502,7 @@ async fn handle_message_state_update(
             {
                 let site_id = payload.site.id.to_string();
                 if site_id == REPLAY_SITE_ID {
-                    // apps/mcv 側の接続 ID を保存（後で Connected/Disconnected を返すために使用）
                     let trigger_conn_id = payload.connection_id;
-                    *replay_trigger_conn_id.write().await = Some(trigger_conn_id);
 
                     // URL 欄からファイル名を取得
                     let file_name = payload
@@ -587,17 +525,35 @@ async fn handle_message_state_update(
                         };
                         drop(logs_dir_guard);
 
-                        start_replay_from_file(
-                            file_path,
-                            client.clone(),
-                            plugin_id,
-                            replay_id_map.clone(),
-                            pending_add_connections.clone(),
-                            pending_connections_total.clone(),
-                            pending_connections_done.clone(),
-                            replay_file_path.clone(),
-                        )
-                        .await;
+                        // Connected を即座に送信（apps/mcv の接続ボタンを更新）
+                        let connected_msg = McvMessage::new_notification(
+                            MessageType::Connected,
+                            MessageSource::Plugin { plugin_id },
+                            MessageDestination::Core,
+                            serde_json::to_value(mcv_messages::ConnectedPayload {
+                                connection_id: trigger_conn_id,
+                            })
+                            .unwrap(),
+                        );
+                        if let Err(e) = client.send_message(connected_msg) {
+                            tracing::error!(
+                                target: "mcv::exe-plugin-sample",
+                                error = %e,
+                                "Failed to send Connected for trigger connection"
+                            );
+                        }
+
+                        // replay タスクを起動（trigger_conn_id を使って全コメントを送信）
+                        let client_clone = client.clone();
+                        tokio::spawn(async move {
+                            run_replay_simple(
+                                file_path,
+                                Some(trigger_conn_id),
+                                client_clone,
+                                plugin_id,
+                            )
+                            .await;
+                        });
                     } else {
                         tracing::warn!(
                             target: "mcv::exe-plugin-sample",
@@ -613,133 +569,25 @@ async fn handle_message_state_update(
     }
 }
 
-/// DB からセッションのコネクション ID 一覧を取得し、AddConnection を送信して replay を準備する
-async fn start_replay_from_file(
-    file_path: String,
-    client: Arc<ExePluginClient>,
-    plugin_id: Uuid,
-    replay_id_map: Arc<RwLock<HashMap<Uuid, Uuid>>>,
-    pending_add_connections: Arc<std::sync::Mutex<HashMap<Uuid, Uuid>>>,
-    pending_connections_total: Arc<std::sync::atomic::AtomicUsize>,
-    pending_connections_done: Arc<std::sync::atomic::AtomicUsize>,
-    replay_file_path: Arc<RwLock<Option<String>>>,
-) {
-    tracing::info!(
-        target: "mcv::exe-plugin-sample",
-        file_path = %file_path,
-        "Starting replay from file"
-    );
-
-    // DB からユニークな connection_id を取得
-    let fp = file_path.clone();
-    let old_conn_ids: Vec<Uuid> = match tokio::task::spawn_blocking(move || {
-        let conn = rusqlite::Connection::open(&fp)
-            .map_err(|e| format!("Failed to open replay DB: {}", e))?;
-
-        let mut stmt = conn
-            .prepare(
-                "SELECT connection_id FROM envelopes \
-                 GROUP BY connection_id ORDER BY MIN(received_at) ASC",
-            )
-            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
-
-        let ids: Vec<Uuid> = stmt
-            .query_map([], |row| row.get::<_, String>(0))
-            .map_err(|e| format!("Failed to query: {}", e))?
-            .filter_map(|r| r.ok())
-            .filter_map(|s| Uuid::parse_str(&s).ok())
-            .collect();
-
-        Ok::<Vec<Uuid>, String>(ids)
-    })
-    .await
-    {
-        Ok(Ok(ids)) => ids,
-        Ok(Err(e)) => {
-            tracing::error!(
-                target: "mcv::exe-plugin-sample",
-                error = %e,
-                file_path = %file_path,
-                "Failed to read connection IDs from replay DB"
-            );
-            return;
-        }
-        Err(e) => {
-            tracing::error!(
-                target: "mcv::exe-plugin-sample",
-                error = %e,
-                "spawn_blocking panicked while reading replay DB"
-            );
-            return;
-        }
-    };
-
-    if old_conn_ids.is_empty() {
-        tracing::warn!(
-            target: "mcv::exe-plugin-sample",
-            file_path = %file_path,
-            "No connection IDs found in replay DB"
-        );
-        return;
-    }
-
-    tracing::info!(
-        target: "mcv::exe-plugin-sample",
-        count = old_conn_ids.len(),
-        "Found connection IDs in replay DB"
-    );
-
-    // 既存のマッピングをリセット
-    replay_id_map.write().await.clear();
-    pending_connections_total.store(old_conn_ids.len(), std::sync::atomic::Ordering::SeqCst);
-    pending_connections_done.store(0, std::sync::atomic::Ordering::SeqCst);
-    *replay_file_path.write().await = Some(file_path);
-
-    // 各 old_connection_id に対して AddConnection を送信
-    for old_id in old_conn_ids {
-        let request_id = Uuid::new_v4();
-        {
-            let mut guard = pending_add_connections.lock().unwrap();
-            guard.insert(request_id, old_id);
-        }
-        let msg = McvMessage {
-            message_type: MessageType::AddConnection,
-            src: MessageSource::Plugin { plugin_id },
-            dst: MessageDestination::Core,
-            request_id: Some(request_id),
-            timestamp: chrono::Utc::now().timestamp(),
-            payload: serde_json::json!({}),
-        };
-        if let Err(e) = client.send_message(msg) {
-            tracing::error!(
-                target: "mcv::exe-plugin-sample",
-                error = %e,
-                old_id = %old_id,
-                "Failed to send AddConnection for replay"
-            );
-        }
-    }
-}
-
 /// replay タスク: 保存されたエンベロープを元の間隔で CommentReceived として送信する
-async fn run_replay(
+/// trigger_conn_id が Some の場合はその connection_id を全コメントに使用し、完了後 Disconnected を送信する
+/// trigger_conn_id が None の場合は新しい UUID を生成して使用する（exe-plugin-sample UI からの直接再生用）
+async fn run_replay_simple(
     file_path: String,
-    id_map: HashMap<Uuid, Uuid>,
+    trigger_conn_id: Option<Uuid>,
     client: Arc<ExePluginClient>,
     plugin_id: Uuid,
-    trigger_conn_id: Option<Uuid>,
 ) {
     tracing::info!(
         target: "mcv::exe-plugin-sample",
         file_path = %file_path,
-        connections = id_map.len(),
-        "Running replay"
+        trigger_conn_id = ?trigger_conn_id,
+        "Starting replay"
     );
 
     // DB からエンベロープを received_at 昇順で全件取得
     #[derive(Debug)]
     struct EnvelopeRow {
-        connection_id: String,
         received_at: i64,
         messages_json: String,
         raw_message: Option<String>,
@@ -752,7 +600,7 @@ async fn run_replay(
 
         let mut stmt = conn
             .prepare(
-                "SELECT connection_id, received_at, messages_json, raw_message \
+                "SELECT received_at, messages_json, raw_message \
                  FROM envelopes ORDER BY received_at ASC",
             )
             .map_err(|e| format!("Failed to prepare: {}", e))?;
@@ -760,10 +608,9 @@ async fn run_replay(
         let rows: Vec<EnvelopeRow> = stmt
             .query_map([], |row| {
                 Ok(EnvelopeRow {
-                    connection_id: row.get(0)?,
-                    received_at: row.get(1)?,
-                    messages_json: row.get(2)?,
-                    raw_message: row.get(3)?,
+                    received_at: row.get(0)?,
+                    messages_json: row.get(1)?,
+                    raw_message: row.get(2)?,
                 })
             })
             .map_err(|e| format!("Failed to query: {}", e))?
@@ -802,46 +649,8 @@ async fn run_replay(
         return;
     }
 
-    // apps/mcv の接続（trigger）に Connected を送信してボタンの表示を更新
-    if let Some(tcid) = trigger_conn_id {
-        let connected_msg = McvMessage::new_notification(
-            MessageType::Connected,
-            MessageSource::Plugin { plugin_id },
-            MessageDestination::Core,
-            serde_json::to_value(mcv_messages::ConnectedPayload {
-                connection_id: tcid,
-            })
-            .unwrap(),
-        );
-        if let Err(e) = client.send_message(connected_msg) {
-            tracing::error!(
-                target: "mcv::exe-plugin-sample",
-                error = %e,
-                "Failed to send Connected for trigger connection"
-            );
-        }
-    }
-
-    // Connected を各 new_connection_id に送信
-    for new_conn_id in id_map.values() {
-        let connected_msg = McvMessage::new_notification(
-            MessageType::Connected,
-            MessageSource::Plugin { plugin_id },
-            MessageDestination::Core,
-            serde_json::to_value(mcv_messages::ConnectedPayload {
-                connection_id: *new_conn_id,
-            })
-            .unwrap(),
-        );
-        if let Err(e) = client.send_message(connected_msg) {
-            tracing::error!(
-                target: "mcv::exe-plugin-sample",
-                error = %e,
-                "Failed to send Connected for replay"
-            );
-        }
-    }
-
+    // trigger_conn_id が None の場合は新しい UUID を生成
+    let conn_id = trigger_conn_id.unwrap_or_else(Uuid::new_v4);
     let base_replay_at = rows[0].received_at;
     let base_now = chrono::Utc::now().timestamp();
 
@@ -854,26 +663,19 @@ async fn run_replay(
             tokio::time::sleep(std::time::Duration::from_secs(wait_secs)).await;
         }
 
-        // connection_id を付け替え
-        let old_conn_id = match Uuid::parse_str(&row.connection_id) {
-            Ok(id) => id,
-            Err(_) => continue,
-        };
-        let new_conn_id = id_map.get(&old_conn_id).copied().unwrap_or(old_conn_id);
-
         let messages: Vec<mcv_messages::ProviderMessage> =
             serde_json::from_str(&row.messages_json).unwrap_or_default();
 
         let envelope = mcv_messages::McvEnvelope {
             event_id: Uuid::new_v4(),
-            connection_id: new_conn_id,
+            connection_id: conn_id,
             messages,
             received_at: chrono::Utc::now().timestamp(),
             raw_message: row.raw_message.clone(),
         };
 
         let payload = mcv_messages::CommentReceivedPayload {
-            connection_id: new_conn_id,
+            connection_id: conn_id,
             envelope,
         };
 
@@ -893,27 +695,7 @@ async fn run_replay(
         }
     }
 
-    // 全件送信完了後 Disconnected を送信
-    for new_conn_id in id_map.values() {
-        let disconnect_msg = McvMessage::new_notification(
-            MessageType::Disconnected,
-            MessageSource::Plugin { plugin_id },
-            MessageDestination::Core,
-            serde_json::to_value(mcv_messages::DisconnectedPayload {
-                connection_id: *new_conn_id,
-            })
-            .unwrap(),
-        );
-        if let Err(e) = client.send_message(disconnect_msg) {
-            tracing::error!(
-                target: "mcv::exe-plugin-sample",
-                error = %e,
-                "Failed to send Disconnected after replay"
-            );
-        }
-    }
-
-    // apps/mcv の接続（trigger）に Disconnected を送信してボタンの表示を更新
+    // 全件送信完了後、trigger_conn_id がある場合は Disconnected を送信
     if let Some(tcid) = trigger_conn_id {
         let disconnect_msg = McvMessage::new_notification(
             MessageType::Disconnected,
@@ -928,7 +710,7 @@ async fn run_replay(
             tracing::error!(
                 target: "mcv::exe-plugin-sample",
                 error = %e,
-                "Failed to send Disconnected for trigger connection"
+                "Failed to send Disconnected after replay"
             );
         }
     }
@@ -1009,12 +791,6 @@ async fn connect_to_mcv(
     let messages_clone = state.messages.clone();
     let db_clone = state.db.clone();
     let logs_dir_clone = state.logs_dir.clone();
-    let replay_id_map_clone = state.replay_id_map.clone();
-    let pending_add_connections_clone = state.pending_add_connections.clone();
-    let pending_connections_total_clone = state.pending_connections_total.clone();
-    let pending_connections_done_clone = state.pending_connections_done.clone();
-    let replay_file_path_clone = state.replay_file_path.clone();
-    let replay_trigger_conn_id_clone = state.replay_trigger_conn_id.clone();
     let client_for_handler = client.clone();
 
     client
@@ -1027,12 +803,6 @@ async fn connect_to_mcv(
             let messages = messages_clone.clone();
             let db = db_clone.clone();
             let logs_dir = logs_dir_clone.clone();
-            let replay_id_map = replay_id_map_clone.clone();
-            let pending_add_connections = pending_add_connections_clone.clone();
-            let pending_connections_total = pending_connections_total_clone.clone();
-            let pending_connections_done = pending_connections_done_clone.clone();
-            let replay_file_path = replay_file_path_clone.clone();
-            let replay_trigger_conn_id = replay_trigger_conn_id_clone.clone();
             let client_inner = client_for_handler.clone();
 
             tokio::spawn(async move {
@@ -1046,12 +816,6 @@ async fn connect_to_mcv(
                     messages,
                     db,
                     logs_dir,
-                    replay_id_map,
-                    pending_add_connections,
-                    pending_connections_total,
-                    pending_connections_done,
-                    replay_file_path,
-                    replay_trigger_conn_id,
                     client_inner,
                     plugin_id,
                     app.clone(),
@@ -1183,21 +947,6 @@ async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
     }
     *state.logs_dir.write().await = None;
 
-    // replay 状態のリセット
-    state.replay_id_map.write().await.clear();
-    {
-        let mut guard = state.pending_add_connections.lock().unwrap();
-        guard.clear();
-    }
-    state
-        .pending_connections_total
-        .store(0, std::sync::atomic::Ordering::SeqCst);
-    state
-        .pending_connections_done
-        .store(0, std::sync::atomic::Ordering::SeqCst);
-    *state.replay_file_path.write().await = None;
-    *state.replay_trigger_conn_id.write().await = None;
-
     Ok(())
 }
 
@@ -1293,17 +1042,9 @@ async fn start_replay(file_name: String, state: State<'_, AppState>) -> Result<(
         .await
         .ok_or_else(|| "Plugin ID not set".to_string())?;
 
-    start_replay_from_file(
-        file_path,
-        client,
-        plugin_id,
-        state.replay_id_map.clone(),
-        state.pending_add_connections.clone(),
-        state.pending_connections_total.clone(),
-        state.pending_connections_done.clone(),
-        state.replay_file_path.clone(),
-    )
-    .await;
+    tokio::spawn(async move {
+        run_replay_simple(file_path, None, client, plugin_id).await;
+    });
 
     Ok(())
 }
@@ -1330,12 +1071,6 @@ fn main() {
         messages: Arc::new(RwLock::new(Vec::new())),
         db: Arc::new(std::sync::Mutex::new(None)),
         logs_dir: Arc::new(RwLock::new(None)),
-        replay_id_map: Arc::new(RwLock::new(HashMap::new())),
-        pending_add_connections: Arc::new(std::sync::Mutex::new(HashMap::new())),
-        pending_connections_total: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
-        pending_connections_done: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
-        replay_file_path: Arc::new(RwLock::new(None)),
-        replay_trigger_conn_id: Arc::new(RwLock::new(None)),
     };
 
     tauri::Builder::default()

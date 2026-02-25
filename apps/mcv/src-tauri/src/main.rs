@@ -21,9 +21,9 @@ use mcv_core::{
 };
 use mcv_messages::{
     self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload,
-    ConnectPayload, DisconnectPayload, InputInfo, Message as McvMessage, MessageDestination,
-    MessageSource, MessageType, ProviderContent, ProviderMessageKind, SendCommentPayload,
-    SiteInfo as MsgSiteInfo, SystemKind,
+    ConnectPayload, DisconnectPayload, DisconnectedPayload, InputInfo, Message as McvMessage,
+    MessageDestination, MessageSource, MessageType, ProviderContent, ProviderMessageKind,
+    SendCommentPayload, SiteInfo as MsgSiteInfo, SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, UpdateChecker};
 #[cfg(debug_assertions)]
@@ -823,10 +823,21 @@ fn main() {
             let app_handle: Arc<tokio::sync::Mutex<Option<AppHandle>>> =
                 Arc::new(tokio::sync::Mutex::new(None));
 
+            // connection_id ごとの表示タイミング基準
+            // エンベロープをまたいで正確な timestamp ベースのタイミングを実現するために使用
+            // Value: (base_ts: i64, base_instant: Instant) — 接続内の最初のメッセージ到着時に初期化
+            let comment_timing: Arc<
+                tokio::sync::Mutex<
+                    std::collections::HashMap<Uuid, (i64, std::time::Instant)>,
+                >,
+            > = Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new()));
+
             // イベントコールバックを設定
             let app_handle_clone = app_handle.clone();
+            let comment_timing_clone = comment_timing.clone();
             let event_callback = Arc::new(move |message: McvMessage| {
                 let app_handle_clone2 = app_handle_clone.clone();
+                let timing_clone = comment_timing_clone.clone();
                 actix::spawn(async move {
                     if let Some(app_handle) = app_handle_clone2.lock().await.as_ref() {
                         match message.message_type {
@@ -867,9 +878,8 @@ fn main() {
                                 }
                                 // ProviderMessage を 1 件ずつ timestamp 順にタイミング制御して emit
                                 // （McvEnvelope は 1 プラットフォームイベントと 1:1 のため複数メッセージを含む場合がある）
-                                // Mutex ガードを await をまたいで保持できないため、AppHandle をクローンして
-                                // 別タスクで処理する
-                                let ah = app_handle.clone();
+                                // connection_id 単位のグローバル基準時刻（base_ts, base_instant）を用いて
+                                // エンベロープをまたぐ正確なタイミングを実現する
                                 let messages: Vec<mcv_messages::ProviderMessage> = payload
                                     .envelope
                                     .messages
@@ -887,21 +897,30 @@ fn main() {
                                 let received_at = payload.envelope.received_at;
                                 let event_id = payload.envelope.event_id;
 
-                                actix::spawn(async move {
-                                    if messages.is_empty() {
-                                        return;
-                                    }
-                                    let base_ts = messages[0].timestamp;
-                                    let base_instant = std::time::Instant::now();
+                                if !messages.is_empty() {
+                                    // per-connection グローバル基準を取得または初期化
+                                    // 接続内の最初のメッセージ到着時に base_ts / base_instant を確定する
+                                    let (base_ts, base_instant) = {
+                                        let mut map = timing_clone.lock().await;
+                                        *map.entry(connection_id).or_insert_with(|| {
+                                            (
+                                                messages[0].timestamp,
+                                                std::time::Instant::now(),
+                                            )
+                                        })
+                                    };
+                                    let ah = app_handle.clone();
+                                    actix::spawn(async move {
                                     // 最低送信間隔 32ms（フロントエンドのバッチ処理周期に合わせる）
                                     let min_interval = std::time::Duration::from_millis(32);
                                     // 最初のメッセージを即時送信できるよう 1 間隔分だけ前に設定
-                                    let mut last_instant = base_instant
+                                    let mut last_instant = std::time::Instant::now()
                                         .checked_sub(min_interval)
-                                        .unwrap_or(base_instant);
+                                        .unwrap_or_else(std::time::Instant::now);
 
                                     for msg in messages {
                                         // ProviderMessage.timestamp の差分（秒）に基づく送信予定時刻
+                                        // グローバル base_ts を基準とするためエンベロープをまたいでも正確
                                         let offset_secs =
                                             (msg.timestamp - base_ts).max(0) as u64;
                                         let target_by_ts = base_instant
@@ -932,7 +951,8 @@ fn main() {
                                             );
                                         }
                                     }
-                                });
+                                    }); // actix::spawn for timing loop
+                                } // if !messages.is_empty()
                             }
                             MessageType::Connected => {
                                 tracing::debug!(target: "mcv::main","Emitting connected event");
@@ -946,6 +966,12 @@ fn main() {
                             }
                             MessageType::Disconnected => {
                                 tracing::debug!(target: "mcv::main","Emitting disconnected event");
+                                // 切断時に connection_id 単位のタイミング基準をクリア
+                                if let Ok(disc) = serde_json::from_value::<DisconnectedPayload>(
+                                    message.payload.clone(),
+                                ) {
+                                    timing_clone.lock().await.remove(&disc.connection_id);
+                                }
                                 if let Err(e) = app_handle.emit("disconnected", message.payload) {
                                     tracing::error!(
                                         target: "mcv::main",

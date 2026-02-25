@@ -586,38 +586,25 @@ async fn run_replay_simple(
     );
 
     // DB からエンベロープを received_at 昇順で全件取得
-    #[derive(Debug)]
-    struct EnvelopeRow {
-        received_at: i64,
-        messages_json: String,
-        raw_message: Option<String>,
-    }
-
     let fp = file_path.clone();
-    let rows: Vec<EnvelopeRow> = match tokio::task::spawn_blocking(move || {
+    let rows: Vec<String> = match tokio::task::spawn_blocking(move || {
         let conn = rusqlite::Connection::open(&fp)
             .map_err(|e| format!("Failed to open replay DB: {}", e))?;
 
         let mut stmt = conn
             .prepare(
-                "SELECT received_at, messages_json, raw_message \
+                "SELECT messages_json \
                  FROM envelopes ORDER BY received_at ASC",
             )
             .map_err(|e| format!("Failed to prepare: {}", e))?;
 
-        let rows: Vec<EnvelopeRow> = stmt
-            .query_map([], |row| {
-                Ok(EnvelopeRow {
-                    received_at: row.get(0)?,
-                    messages_json: row.get(1)?,
-                    raw_message: row.get(2)?,
-                })
-            })
+        let rows: Vec<String> = stmt
+            .query_map([], |row| row.get::<_, String>(0))
             .map_err(|e| format!("Failed to query: {}", e))?
             .filter_map(|r| r.ok())
             .collect();
 
-        Ok::<Vec<EnvelopeRow>, String>(rows)
+        Ok::<Vec<String>, String>(rows)
     })
     .await
     {
@@ -651,47 +638,76 @@ async fn run_replay_simple(
 
     // trigger_conn_id が None の場合は新しい UUID を生成
     let conn_id = trigger_conn_id.unwrap_or_else(Uuid::new_v4);
-    let base_replay_at = rows[0].received_at;
-    let base_now = chrono::Utc::now().timestamp();
 
-    for row in &rows {
-        // 元の間隔で待機
-        let target_offset = row.received_at - base_replay_at;
-        let elapsed = chrono::Utc::now().timestamp() - base_now;
-        let wait_secs = (target_offset - elapsed).max(0) as u64;
-        if wait_secs > 0 {
-            tokio::time::sleep(std::time::Duration::from_secs(wait_secs)).await;
-        }
+    // エンベロープを ProviderMessage 単位にフラット化し、timestamp でソート
+    let mut items: Vec<mcv_messages::ProviderMessage> = rows
+        .iter()
+        .flat_map(|messages_json| {
+            serde_json::from_str::<Vec<mcv_messages::ProviderMessage>>(messages_json)
+                .unwrap_or_default()
+        })
+        .collect();
+    // 安定ソート: 同一 timestamp 内の順序を保持
+    items.sort_by_key(|msg| msg.timestamp);
 
-        let messages: Vec<mcv_messages::ProviderMessage> =
-            serde_json::from_str(&row.messages_json).unwrap_or_default();
+    tracing::info!(
+        target: "mcv::exe-plugin-sample",
+        messages = items.len(),
+        envelopes = rows.len(),
+        "Replay: flattened envelopes into individual messages"
+    );
 
-        let envelope = mcv_messages::McvEnvelope {
-            event_id: Uuid::new_v4(),
-            connection_id: conn_id,
-            messages,
-            received_at: chrono::Utc::now().timestamp(),
-            raw_message: row.raw_message.clone(),
-        };
+    if !items.is_empty() {
+        let base_ts = items[0].timestamp;
+        let base_now = std::time::Instant::now();
+        // 最低送信間隔 32ms（フロントエンドのバッチ処理周期に合わせる）
+        let min_interval = std::time::Duration::from_millis(32);
+        // 最初のメッセージを即時送信できるよう 1 間隔分だけ前に設定
+        let mut last_send = base_now.checked_sub(min_interval).unwrap_or(base_now);
 
-        let payload = mcv_messages::CommentReceivedPayload {
-            connection_id: conn_id,
-            envelope,
-        };
+        for item in &items {
+            // ProviderMessage.timestamp の差分（秒）に基づく送信予定時刻
+            let offset_secs = (item.timestamp - base_ts).max(0) as u64;
+            let target_by_ts = base_now + std::time::Duration::from_secs(offset_secs);
+            // 最低間隔（32ms）を守った送信予定時刻
+            let target_by_interval = last_send + min_interval;
+            // どちらか遅い方を実際の送信時刻とする
+            let target = target_by_ts.max(target_by_interval);
 
-        let msg = McvMessage::new_notification(
-            MessageType::CommentReceived,
-            MessageSource::Plugin { plugin_id },
-            MessageDestination::Core,
-            serde_json::to_value(payload).unwrap(),
-        );
+            let now = std::time::Instant::now();
+            if target > now {
+                tokio::time::sleep(target - now).await;
+            }
+            last_send = std::time::Instant::now();
 
-        if let Err(e) = client.send_message(msg) {
-            tracing::error!(
-                target: "mcv::exe-plugin-sample",
-                error = %e,
-                "Failed to send CommentReceived during replay"
+            // 1 メッセージのみを含むエンベロープとして送信
+            let envelope = mcv_messages::McvEnvelope {
+                event_id: Uuid::new_v4(),
+                connection_id: conn_id,
+                messages: vec![item.clone()],
+                received_at: chrono::Utc::now().timestamp(),
+                raw_message: None,
+            };
+
+            let payload = mcv_messages::CommentReceivedPayload {
+                connection_id: conn_id,
+                envelope,
+            };
+
+            let msg = McvMessage::new_notification(
+                MessageType::CommentReceived,
+                MessageSource::Plugin { plugin_id },
+                MessageDestination::Core,
+                serde_json::to_value(payload).unwrap(),
             );
+
+            if let Err(e) = client.send_message(msg) {
+                tracing::error!(
+                    target: "mcv::exe-plugin-sample",
+                    error = %e,
+                    "Failed to send CommentReceived during replay"
+                );
+            }
         }
     }
 
@@ -717,7 +733,8 @@ async fn run_replay_simple(
 
     tracing::info!(
         target: "mcv::exe-plugin-sample",
-        rows = rows.len(),
+        messages = items.len(),
+        envelopes = rows.len(),
         "Replay completed"
     );
 }

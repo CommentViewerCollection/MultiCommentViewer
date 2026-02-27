@@ -59,7 +59,7 @@ impl ProcessManager {
         Ok(manager)
     }
 
-    /// pluginsディレクトリをスキャンしてmanifest.jsonを検出
+    /// pluginsディレクトリをスキャンしてplugin.jsonを検出
     async fn scan_plugins_directory(&mut self) -> Result<(), ProcessManagerError> {
         let plugins_dir = Self::get_plugins_directory()?;
         tracing::trace!(target: "mcv::plugin_exe_manager", "Plugins directory path: {}", plugins_dir.display());
@@ -83,8 +83,8 @@ impl ProcessManager {
                 continue;
             }
 
-            // manifest.jsonを検索
-            let manifest_path = path.join("manifest.json");
+            // plugin.jsonを検索
+            let manifest_path = path.join("plugin.json");
             if manifest_path.exists() {
                 match PluginManifest::load(&manifest_path) {
                     Ok(manifest) => {

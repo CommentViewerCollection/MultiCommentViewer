@@ -79,14 +79,33 @@ interface BrowserInfo {
 
 interface UpdateInfo {
   version: string
-  download_url: string
+  channel: string
+  fileName: string
+  fileSize?: number
   sha256: string
-  release_notes: string
-  released_at: string
-  min_installer_version: string
+  uploadedAt: string
 }
 
-type TabType = 'comments' | 'logs' | 'settings'
+interface RegistryPlugin {
+  id: string
+  name: string
+  description: string
+  download_count: number
+  channels: {
+    stable: string | null
+    beta: string | null
+    alpha: string | null
+  }
+}
+
+interface InstalledPluginMeta {
+  id: string
+  version: string | null
+  channel: string | null
+}
+
+
+type TabType = 'comments' | 'logs' | 'settings' | 'updates' | 'plugins'
 
 // Render a single MessagePart (text or image)
 function RenderMessagePart({
@@ -160,8 +179,15 @@ function App() {
   const [selectedConnectionForCommand, setSelectedConnectionForCommand] = useState<string>('')
   const [commandInput, setCommandInput] = useState('')
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
-  const [showUpdateDialog, setShowUpdateDialog] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [downloadingUpdate, setDownloadingUpdate] = useState(false)
+  const [downloadedUpdatePath, setDownloadedUpdatePath] = useState<string | null>(null)
+  const [updateMessage, setUpdateMessage] = useState<string>('')
+  const [registryPlugins, setRegistryPlugins] = useState<RegistryPlugin[]>([])
+  const [installedPlugins, setInstalledPlugins] = useState<Map<string, InstalledPluginMeta>>(new Map())
+  const [pendingUpdateIds, setPendingUpdateIds] = useState<Set<string>>(new Set())
+  const [pluginBusyId, setPluginBusyId] = useState<string | null>(null)
+  const [selectedPluginId, setSelectedPluginId] = useState<string | null>(null)
   const [coreSettings, setCoreSettings] = useState<any>(null)
   const [currentThemeColors, setCurrentThemeColors] = useState<ThemeColors>(PRESET_THEME_COLORS['dark'])
 
@@ -428,6 +454,33 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const startupCheck = async () => {
+      setCheckingUpdate(true)
+      try {
+        const update = await invoke<UpdateInfo | null>('check_for_updates')
+        if (update) {
+          setUpdateInfo(update)
+          setActiveTab('updates')
+          setUpdateMessage(`新しいバージョン ${update.version} (${update.channel}) が利用可能です。`)
+        } else {
+          setUpdateMessage('最新バージョンです。')
+        }
+      } catch (error) {
+        console.error('Failed startup update check:', error)
+      } finally {
+        setCheckingUpdate(false)
+      }
+    }
+    startupCheck()
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'plugins') {
+      loadRegistryPlugins()
+    }
+  }, [activeTab])
+
   const visibleComments = useMemo(
     () => comments.filter(c => c.is_visible !== false),
     [comments]
@@ -642,25 +695,178 @@ function App() {
       const update = await invoke<UpdateInfo | null>('check_for_updates')
       if (update) {
         setUpdateInfo(update)
-        setShowUpdateDialog(true)
+        setActiveTab('updates')
+        setUpdateMessage(`新しいバージョン ${update.version} (${update.channel}) が利用可能です。`)
       } else {
-        alert('最新バージョンです')
+        setUpdateInfo(null)
+        setUpdateMessage('最新バージョンです。')
       }
     } catch (error) {
       console.error('Failed to check for updates:', error)
-      alert(`更新確認失敗: ${error}`)
+      setUpdateMessage(`更新確認失敗: ${error}`)
     } finally {
       setCheckingUpdate(false)
     }
   }
 
-  const handleUpdateNow = async () => {
+  const handleDownloadUpdate = async () => {
+    if (!updateInfo) return
+    setDownloadingUpdate(true)
+    setUpdateMessage('アップデートをダウンロード中...')
     try {
-      await invoke('launch_installer')
-      // インストーラが起動してmcvが終了する
+      const zipPath = await invoke<string>('download_core_update', {
+        version: updateInfo.version,
+        channel: updateInfo.channel,
+        sha256: updateInfo.sha256,
+      })
+      setDownloadedUpdatePath(zipPath)
+      setUpdateMessage('ダウンロード完了。適用して再起動できます。')
     } catch (error) {
-      console.error('Failed to launch installer:', error)
-      alert(`インストーラ起動失敗: ${error}`)
+      console.error('Failed to download update:', error)
+      setUpdateMessage(`アップデートのダウンロードに失敗しました: ${error}`)
+    } finally {
+      setDownloadingUpdate(false)
+    }
+  }
+
+  const handleApplyUpdate = async () => {
+    if (!downloadedUpdatePath) return
+    try {
+      await invoke('apply_core_update', { zipPath: downloadedUpdatePath })
+    } catch (error) {
+      console.error('Failed to apply update:', error)
+      setUpdateMessage(`アップデート適用失敗: ${error}`)
+    }
+  }
+
+  const compareVersions = (a: string, b: string): number => {
+    const aParts = a.split('.').map(Number)
+    const bParts = b.split('.').map(Number)
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aNum = aParts[i] ?? 0
+      const bNum = bParts[i] ?? 0
+      if (aNum !== bNum) return aNum - bNum
+    }
+    return 0
+  }
+
+  const getPreferredChannel = (plugin: RegistryPlugin): { channel: string; version: string } | null => {
+    if (plugin.channels.stable) return { channel: 'stable', version: plugin.channels.stable }
+    if (plugin.channels.beta) return { channel: 'beta', version: plugin.channels.beta }
+    if (plugin.channels.alpha) return { channel: 'alpha', version: plugin.channels.alpha }
+    return null
+  }
+
+  // アップデート対象チャンネルを返す
+  // インストール済みの channel（plugin.json の channel フィールド）を厳守し、チャンネルを跨いだ移行は行わない。
+  // channel 情報がない場合（手動インストール等）のみ優先チャンネルにフォールバック。
+  const getUpdateTarget = (plugin: RegistryPlugin): { channel: string; version: string } | null => {
+    const installed = installedPlugins.get(plugin.id)
+    if (installed?.channel) {
+      const ver = plugin.channels[installed.channel as keyof typeof plugin.channels]
+      if (ver) return { channel: installed.channel, version: ver }
+      // 同チャンネルのバージョンがレジストリにない場合はアップデートなし
+      return null
+    }
+    return getPreferredChannel(plugin)
+  }
+
+  const loadRegistryPlugins = async () => {
+    try {
+      const [registry, installedList] = await Promise.all([
+        invoke<RegistryPlugin[]>('list_registry_plugins'),
+        invoke<InstalledPluginMeta[]>('list_installed_plugins'),
+      ])
+
+      const installedMap = new Map(installedList.map(m => [m.id, m]))
+      setInstalledPlugins(installedMap)
+
+      // レジストリに存在しないローカルインストール済みプラグインを追加
+      const registryIdSet = new Set(registry.map(p => p.id))
+      const localOnlyPlugins: RegistryPlugin[] = installedList
+        .filter(m => !registryIdSet.has(m.id))
+        .map(m => ({
+          id: m.id,
+          name: m.id,
+          description: '(レジストリ未登録)',
+          download_count: 0,
+          channels: { stable: null, beta: null, alpha: null },
+        }))
+
+      const allPlugins = [...registry, ...localOnlyPlugins]
+      const sorted = allPlugins.sort((a, b) => {
+        const aInstalled = installedMap.has(a.id)
+        const bInstalled = installedMap.has(b.id)
+        if (aInstalled !== bInstalled) return aInstalled ? -1 : 1
+        if (a.download_count !== b.download_count) return b.download_count - a.download_count
+        return a.name.localeCompare(b.name, 'ja')
+      })
+      setRegistryPlugins(sorted)
+    } catch (error) {
+      console.error('Failed to load registry plugins:', error)
+    }
+  }
+
+  const handleInstallPlugin = async (plugin: RegistryPlugin) => {
+    const target = getPreferredChannel(plugin)
+    if (!target) return
+    setPluginBusyId(plugin.id)
+    try {
+      await invoke('install_registry_plugin', {
+        pluginId: plugin.id,
+        version: target.version,
+        channel: target.channel,
+      })
+      await loadRegistryPlugins()
+      await loadSitesAndBrowsers()
+    } catch (error) {
+      console.error('Failed to install plugin:', error)
+      alert(`プラグインインストール失敗: ${error}`)
+    } finally {
+      setPluginBusyId(null)
+    }
+  }
+
+  const isUpdateAvailable = (plugin: RegistryPlugin): boolean => {
+    const installed = installedPlugins.get(plugin.id)
+    if (!installed?.version) return false
+    const target = getUpdateTarget(plugin)
+    if (!target) return false
+    return compareVersions(target.version, installed.version) > 0
+  }
+
+  const handleUpdatePlugin = async (plugin: RegistryPlugin) => {
+    const target = getUpdateTarget(plugin)
+    if (!target) return
+    setPluginBusyId(plugin.id)
+    try {
+      await invoke('install_registry_plugin', {
+        pluginId: plugin.id,
+        version: target.version,
+        channel: target.channel,
+      })
+      setPendingUpdateIds(prev => new Set(prev).add(plugin.id))
+      await loadRegistryPlugins()
+      await loadSitesAndBrowsers()
+    } catch (error) {
+      console.error('Failed to update plugin:', error)
+      alert(`プラグインアップデート失敗: ${error}`)
+    } finally {
+      setPluginBusyId(null)
+    }
+  }
+
+  const handleUninstallPlugin = async (plugin: RegistryPlugin) => {
+    setPluginBusyId(plugin.id)
+    try {
+      await invoke('uninstall_registry_plugin', { pluginId: plugin.id })
+      await loadRegistryPlugins()
+      await loadSitesAndBrowsers()
+    } catch (error) {
+      console.error('Failed to uninstall plugin:', error)
+      alert(`プラグインアンインストール失敗: ${error}`)
+    } finally {
+      setPluginBusyId(null)
     }
   }
 
@@ -1002,6 +1208,26 @@ function App() {
             </button>
             <button
               className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'updates'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('updates')}
+            >
+              アップデート
+            </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'plugins'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('plugins')}
+            >
+              プラグイン
+            </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors ${
                 activeTab === 'settings'
                   ? 'text-blue-400 border-b-2 border-blue-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
@@ -1085,6 +1311,175 @@ function App() {
           {/* ログタブ */}
           {activeTab === 'logs' && <LogViewer themeColors={currentThemeColors} />}
 
+          {/* アップデートタブ */}
+          {activeTab === 'updates' && (
+            <div className="flex-1 overflow-auto p-6 bg-white dark:bg-gray-800 space-y-4">
+              <h2 className="text-lg font-semibold">アップデート</h2>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {updateMessage || '更新状態を確認できます。'}
+              </div>
+              <div className="border border-gray-200 dark:border-gray-700 rounded p-4 space-y-2">
+                <div className="text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">現在の状態: </span>
+                  {checkingUpdate ? '確認中...' : updateInfo ? '更新あり' : '最新'}
+                </div>
+                {updateInfo && (
+                  <>
+                    <div className="text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">新バージョン: </span>
+                      {updateInfo.version} ({updateInfo.channel})
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">公開日: </span>
+                      {new Date(updateInfo.uploadedAt).toLocaleString('ja-JP')}
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCheckForUpdates}
+                  disabled={checkingUpdate}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-sm disabled:opacity-50"
+                >
+                  {checkingUpdate ? '確認中...' : '更新を確認'}
+                </button>
+                <button
+                  onClick={handleDownloadUpdate}
+                  disabled={!updateInfo || downloadingUpdate}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm disabled:opacity-50"
+                >
+                  {downloadingUpdate ? 'ダウンロード中...' : 'ダウンロード'}
+                </button>
+                <button
+                  onClick={handleApplyUpdate}
+                  disabled={!downloadedUpdatePath}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm disabled:opacity-50"
+                >
+                  適用して再起動
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* プラグインタブ */}
+          {activeTab === 'plugins' && (
+            <div className="flex flex-col h-full bg-white dark:bg-gray-800">
+              {/* ヘッダー */}
+              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
+                <h2 className="text-base font-semibold">プラグイン</h2>
+                <button
+                  onClick={loadRegistryPlugins}
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded"
+                >
+                  再読み込み
+                </button>
+              </div>
+
+              {/* 2カラムレイアウト */}
+              <div className="flex flex-1 min-h-0">
+                {/* 左: コンパクトリスト */}
+                <div className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+                  {registryPlugins.map((plugin) => {
+                    const installed = installedPlugins.has(plugin.id)
+                    const selected = selectedPluginId === plugin.id
+                    return (
+                      <button
+                        key={plugin.id}
+                        onClick={() => setSelectedPluginId(plugin.id)}
+                        className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                          selected ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                        }`}
+                      >
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full shrink-0 ${
+                            installed ? 'bg-green-500' : 'bg-gray-400'
+                          }`}
+                        />
+                        <span className="truncate">{plugin.name}</span>
+                        {isUpdateAvailable(plugin) && (
+                          <span className={`ml-auto text-xs shrink-0 ${pendingUpdateIds.has(plugin.id) ? 'text-gray-400' : 'text-yellow-400'}`}>
+                            {pendingUpdateIds.has(plugin.id) ? '↑*' : '↑'}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* 右: 詳細パネル */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  {(() => {
+                    const plugin = registryPlugins.find(p => p.id === selectedPluginId)
+                    if (!plugin) {
+                      return (
+                        <div className="h-full flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
+                          左のリストからプラグインを選択してください
+                        </div>
+                      )
+                    }
+                    const installed = installedPlugins.has(plugin.id)
+                    const installedMeta = installedPlugins.get(plugin.id)
+                    const target = getPreferredChannel(plugin)
+                    return (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-lg font-semibold">{plugin.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{plugin.id}</div>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{plugin.description}</p>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                          <div>ダウンロード数: {plugin.download_count.toLocaleString('ja-JP')}</div>
+                          <div>対象バージョン: {target ? `${target.version} (${target.channel})` : 'なし'}</div>
+                          {installedMeta?.version && (
+                            <div>インストール済みバージョン: {installedMeta.version}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 pt-2 flex-wrap">
+                          <span className={`text-xs px-2 py-1 rounded text-white ${installed ? 'bg-green-700' : 'bg-gray-600'}`}>
+                            {installed ? 'インストール済み' : '未インストール'}
+                          </span>
+                          {installed && isUpdateAvailable(plugin) && (
+                            pendingUpdateIds.has(plugin.id) ? (
+                              <span className="text-xs text-gray-400 dark:text-gray-500 italic">
+                                再起動後にアップデートされます
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleUpdatePlugin(plugin)}
+                                disabled={pluginBusyId === plugin.id}
+                                className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-500 rounded disabled:opacity-50"
+                              >
+                                {pluginBusyId === plugin.id ? '処理中...' : 'アップデート'}
+                              </button>
+                            )
+                          )}
+                          {installed ? (
+                            <button
+                              onClick={() => handleUninstallPlugin(plugin)}
+                              disabled={pluginBusyId === plugin.id}
+                              className="px-3 py-1.5 text-sm bg-red-700 hover:bg-red-600 rounded disabled:opacity-50"
+                            >
+                              {pluginBusyId === plugin.id ? '処理中...' : 'アンインストール'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleInstallPlugin(plugin)}
+                              disabled={!target || pluginBusyId === plugin.id}
+                              className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+                            >
+                              {pluginBusyId === plugin.id ? '処理中...' : 'インストール'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 設定タブ */}
           {activeTab === 'settings' && (
             <SettingsScreen onClose={() => {
@@ -1095,45 +1490,6 @@ function App() {
         </div>
       </div>
       </div>
-
-      {/* 更新ダイアログ */}
-      {showUpdateDialog && updateInfo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xl font-bold mb-4">新しいバージョンが利用可能です</h3>
-            <div className="space-y-3 mb-6">
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">バージョン: </span>
-                <span className="font-semibold">{updateInfo.version}</span>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">リリース日: </span>
-                <span>{new Date(updateInfo.released_at).toLocaleDateString('ja-JP')}</span>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400 block mb-1">リリースノート:</span>
-                <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded text-sm whitespace-pre-wrap">
-                  {updateInfo.release_notes}
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleUpdateNow}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
-              >
-                今すぐ更新
-              </button>
-              <button
-                onClick={() => setShowUpdateDialog(false)}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
-              >
-                後で
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   )

@@ -6,6 +6,10 @@ use std::path::Path;
 use thiserror::Error;
 use tokio::io::AsyncWriteExt;
 
+fn default_true() -> bool {
+    true
+}
+
 /// アップデート情報
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateInfo {
@@ -41,6 +45,31 @@ pub struct PluginListItem {
     pub name: String,
     pub description: String,
     pub channels: PluginChannels,
+    #[serde(default)]
+    pub download_count: u64,
+}
+
+/// プラグイン詳細レスポンス
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginDetail {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub versions: Vec<PluginVersionDetail>,
+}
+
+/// プラグインの各バージョン情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginVersionDetail {
+    pub version: String,
+    pub channel: String,
+    pub file_name: String,
+    pub sha256: String,
+    #[serde(default = "default_true")]
+    pub is_public: bool,
+    #[serde(default)]
+    pub is_deleted: bool,
 }
 
 /// プラグイン詳細情報（将来の拡張用）
@@ -214,6 +243,21 @@ impl UpdateChecker {
         Ok(plugins)
     }
 
+    /// 特定プラグインの詳細情報を取得
+    pub async fn get_plugin_detail(&self, plugin_id: &str) -> Result<PluginDetail, UpdateError> {
+        let url = format!("{}/api/mcv/plugins/{}", self.api_base_url, plugin_id);
+        let response = self.client.get(&url).send().await?;
+
+        if !response.status().is_success() {
+            return Err(UpdateError::HttpError(
+                response.error_for_status().unwrap_err(),
+            ));
+        }
+
+        let detail: PluginDetail = response.json().await?;
+        Ok(detail)
+    }
+
     /// mcvのダウンロードURLを構築
     ///
     /// # Arguments
@@ -380,6 +424,7 @@ mod tests {
             id: "test-plugin1".to_string(),
             name: "一番最初のテストプラグイン".to_string(),
             description: "ここに説明を記述".to_string(),
+            download_count: 0,
             channels: PluginChannels {
                 stable: Some("0.1.0".to_string()),
                 beta: None,

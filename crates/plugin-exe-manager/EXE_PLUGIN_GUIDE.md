@@ -40,7 +40,7 @@ Your EXE Plugin (independent process)
 ### メッセージフロー
 
 1. **起動時**:
-   - plugin-exe-managerがmanifest.jsonをスキャン
+   - plugin-exe-managerがplugin.jsonをスキャン
    - EXEプラグインを起動（環境変数 `MCV_WEBSOCKET_URL` を設定）
    - EXEプラグインがWebSocketに接続
    - `plugin-hello` メッセージを送信
@@ -171,11 +171,11 @@ if __name__ == "__main__":
 ```
 %LOCALAPPDATA%\MultiCommentViewer\plugins\
 └── my-plugin/
-    ├── manifest.json
+    ├── plugin.json
     └── my-plugin.exe
 ```
 
-### 2. manifest.json の作成
+### 2. plugin.json の作成
 
 ```json
 {
@@ -191,7 +191,7 @@ cargo build --release
 
 # バイナリをコピー
 copy target\release\my-plugin.exe "%LOCALAPPDATA%\MultiCommentViewer\plugins\my-plugin\"
-copy manifest.json "%LOCALAPPDATA%\MultiCommentViewer\plugins\my-plugin\"
+copy plugin.json "%LOCALAPPDATA%\MultiCommentViewer\plugins\my-plugin\"
 ```
 
 ## メッセージハンドリング
@@ -282,7 +282,7 @@ npm run tauri dev
 ```
 my-plugin.zip
 └── my-plugin/
-    ├── manifest.json
+    ├── plugin.json
     ├── my-plugin.exe
     └── README.md (オプション)
 ```
@@ -291,7 +291,7 @@ my-plugin.zip
 
 ### プラグインが起動しない
 
-1. manifest.jsonの `path` が正しいか確認
+1. plugin.jsonの `path` が正しいか確認
 2. 実行ファイルに実行権限があるか確認
 3. MultiCommentViewerのログを確認
 
@@ -309,7 +309,7 @@ my-plugin.zip
 
 ## 参考リソース
 
-- [MANIFEST_SCHEMA.md](./MANIFEST_SCHEMA.md) - manifest.jsonスキーマ
+- [MANIFEST_SCHEMA.md](./MANIFEST_SCHEMA.md) - plugin.jsonスキーマ
 - [mcv-messages](../mcv-messages/) - メッセージ型定義
 - [mcv-plugin-exe-interface](../mcv-plugin-exe-interface/) - Rust用クライアントライブラリ
 - [exe-plugin-sample](../../apps/exe-plugin-sample/) - デバッグツール

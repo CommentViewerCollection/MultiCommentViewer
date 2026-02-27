@@ -6,7 +6,6 @@ use mcv_core::{
     BrowserInfo as CoreBrowserInfo, // mcv-coreから明示的にインポート
     ConnectionInfo,
     CoreActor,
-    CreateConnection,
     GetBrowsers,
     GetConnections,
     GetLogicalPlugins,
@@ -14,6 +13,7 @@ use mcv_core::{
     PluginManager,
     RemoveConnection,
     RenameConnection,
+    ScanAndLoadNewPlugins,
     SendRequest,
     SetConnectionSite,
     SiteInfo as CoreSiteInfo,
@@ -25,13 +25,12 @@ use mcv_messages::{
     MessageDestination, MessageSource, MessageType, ProviderContent, ProviderMessageKind,
     SendCommentPayload, SiteInfo as MsgSiteInfo, SystemKind,
 };
-use mcv_updater::{McvUpdateInfo, UpdateChecker};
-#[cfg(debug_assertions)]
-use std::path::Path;
+use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
+use zip::ZipArchive;
 
 /// McvEnvelope をフロントエンド表示用に変換した行
 #[derive(Debug, Clone, serde::Serialize)]
@@ -451,39 +450,456 @@ async fn check_for_updates() -> Result<Option<McvUpdateInfo>, String> {
     }
 }
 
-/// インストーラを起動してmcvを終了
 #[tauri::command]
-async fn launch_installer(app_handle: AppHandle) -> Result<(), String> {
-    tracing::info!("Launching installer");
+async fn get_current_version() -> Result<String, String> {
+    Ok(env!("CARGO_PKG_VERSION").to_string())
+}
 
-    // インストーラのパスを構築
-    let installer_path = std::env::current_exe()
-        .map_err(|e| format!("Failed to get current exe path: {}", e))?
-        .parent()
-        .ok_or_else(|| "Failed to get parent directory".to_string())?
-        .join("installer.exe");
+/// 配布サーバーのプラグイン一覧を取得
+#[tauri::command]
+async fn list_registry_plugins() -> Result<Vec<PluginListItem>, String> {
+    const API_BASE_URL: &str = "http://localhost";
+    let updater = UpdateChecker::new(API_BASE_URL);
+    updater
+        .list_plugins()
+        .await
+        .map_err(|e| format!("Failed to list registry plugins: {}", e))
+}
 
-    tracing::debug!(installer_path = ?installer_path, "Installer path");
+fn ps_escape_single_quoted(input: &str) -> String {
+    input.replace('\'', "''")
+}
 
-    // インストーラが存在するか確認
-    if !installer_path.exists() {
-        return Err(format!(
-            "Installer not found at {:?}. Please download the installer manually.",
-            installer_path
-        ));
+fn can_write_to_dir(dir: &PathBuf) -> Result<(), String> {
+    let probe = dir.join(".mcv_write_probe.tmp");
+    std::fs::write(&probe, b"probe").map_err(|e| {
+        format!(
+            "Update requires write permission to install directory ({}): {}",
+            dir.display(),
+            e
+        )
+    })?;
+    let _ = std::fs::remove_file(&probe);
+    Ok(())
+}
+
+fn extract_zip_file(zip_path: &PathBuf, dest_dir: &PathBuf) -> Result<(), String> {
+    if dest_dir.exists() {
+        std::fs::remove_dir_all(dest_dir)
+            .map_err(|e| format!("Failed to clean temporary directory: {}", e))?;
+    }
+    std::fs::create_dir_all(dest_dir)
+        .map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+
+    let zip_file =
+        std::fs::File::open(zip_path).map_err(|e| format!("Failed to open ZIP file: {}", e))?;
+    let mut archive =
+        ZipArchive::new(zip_file).map_err(|e| format!("Failed to read ZIP archive: {}", e))?;
+
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("Failed to access ZIP entry: {}", e))?;
+        let out_path = match file.enclosed_name() {
+            Some(path) => dest_dir.join(path),
+            None => continue,
+        };
+
+        if file.name().ends_with('/') {
+            std::fs::create_dir_all(&out_path)
+                .map_err(|e| format!("Failed to create directory: {}", e))?;
+        } else {
+            if let Some(parent) = out_path.parent() {
+                std::fs::create_dir_all(parent)
+                    .map_err(|e| format!("Failed to create parent directory: {}", e))?;
+            }
+            let mut output = std::fs::File::create(&out_path)
+                .map_err(|e| format!("Failed to create extracted file: {}", e))?;
+            std::io::copy(&mut file, &mut output)
+                .map_err(|e| format!("Failed to extract ZIP entry: {}", e))?;
+        }
     }
 
-    // インストーラを起動（--update-mcv フラグ付き）
-    std::process::Command::new(&installer_path)
-        .arg("--update-mcv")
-        .spawn()
-        .map_err(|e| format!("Failed to launch installer: {}", e))?;
+    Ok(())
+}
 
-    // mcvを終了
-    tracing::info!("Exiting mcv for update");
+fn find_file_recursive(root: &PathBuf, file_name: &str) -> Option<PathBuf> {
+    if !root.is_dir() {
+        return None;
+    }
+
+    let entries = std::fs::read_dir(root).ok()?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if path.file_name().and_then(|n| n.to_str()) == Some(file_name) {
+                return Some(path);
+            }
+        } else if path.is_dir() {
+            if let Some(found) = find_file_recursive(&path, file_name) {
+                return Some(found);
+            }
+        }
+    }
+    None
+}
+
+
+/// mcv本体アップデートZIPをダウンロードしてチェックサム検証
+#[tauri::command]
+async fn download_core_update(
+    version: String,
+    channel: String,
+    sha256: String,
+) -> Result<String, String> {
+    const API_BASE_URL: &str = "http://localhost";
+    let updater = UpdateChecker::new(API_BASE_URL);
+    let temp_dir = std::env::temp_dir().join("mcv-updater");
+    std::fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create temp directory: {}", e))?;
+    let zip_path = temp_dir.join(format!("mcv-core-{}-{}.zip", version, channel));
+
+    let download_url = updater.build_mcv_download_url(&version, &channel);
+    updater
+        .download(&download_url, &zip_path, |_downloaded, _total| {})
+        .await
+        .map_err(|e| format!("Failed to download update package: {}", e))?;
+
+    updater
+        .verify_checksum(&zip_path, &sha256)
+        .await
+        .map_err(|e| format!("Failed to verify update package checksum: {}", e))?;
+
+    Ok(zip_path.to_string_lossy().to_string())
+}
+
+/// ダウンロード済みアップデートを適用し、再起動
+#[tauri::command]
+async fn apply_core_update(zip_path: String, app_handle: AppHandle) -> Result<(), String> {
+    let current_exe =
+        std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {}", e))?;
+    let exe_dir = current_exe
+        .parent()
+        .ok_or_else(|| "Failed to resolve executable directory".to_string())?
+        .to_path_buf();
+
+    can_write_to_dir(&exe_dir)?;
+
+    let update_zip = PathBuf::from(&zip_path);
+    if !update_zip.exists() {
+        return Err(format!("Update ZIP not found: {}", update_zip.display()));
+    }
+
+    let extracted_dir = std::env::temp_dir().join(format!("mcv-update-extracted-{}", std::process::id()));
+    extract_zip_file(&update_zip, &extracted_dir)?;
+
+    let exe_name = current_exe
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| "Failed to resolve executable name".to_string())?;
+    let new_exe = find_file_recursive(&extracted_dir, exe_name)
+        .ok_or_else(|| format!("{} not found in update package", exe_name))?;
+
+    let ps_command = format!(
+        "Start-Sleep -Milliseconds 700; \
+         Copy-Item -Path '{src}' -Destination '{dst}' -Force; \
+         Start-Process -FilePath '{dst}'; \
+         Remove-Item -Path '{zip}' -Force -ErrorAction SilentlyContinue; \
+         Remove-Item -Path '{extract}' -Recurse -Force -ErrorAction SilentlyContinue",
+        src = ps_escape_single_quoted(&new_exe.to_string_lossy()),
+        dst = ps_escape_single_quoted(&current_exe.to_string_lossy()),
+        zip = ps_escape_single_quoted(&update_zip.to_string_lossy()),
+        extract = ps_escape_single_quoted(&extracted_dir.to_string_lossy()),
+    );
+
+    std::process::Command::new("powershell")
+        .args(["-WindowStyle", "Hidden", "-Command", &ps_command])
+        .spawn()
+        .map_err(|e| format!("Failed to launch update script: {}", e))?;
+
+    tracing::info!("Core update script launched, exiting mcv");
     app_handle.exit(0);
+    Ok(())
+}
+
+/// レジストリからプラグインZIPをダウンロードしてインストール
+#[tauri::command]
+async fn install_registry_plugin(
+    plugin_id: String,
+    version: String,
+    channel: String,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    const API_BASE_URL: &str = "http://localhost";
+    let updater = UpdateChecker::new(API_BASE_URL);
+    let plugin_detail = updater
+        .get_plugin_detail(&plugin_id)
+        .await
+        .map_err(|e| format!("Failed to fetch plugin detail: {}", e))?;
+
+    let target_version: &PluginVersionDetail = plugin_detail
+        .versions
+        .iter()
+        .find(|v| v.version == version && v.channel == channel && !v.is_deleted && v.is_public)
+        .ok_or_else(|| format!("Plugin version not found: {plugin_id} {version} {channel}"))?;
+
+    let temp_dir = std::env::temp_dir().join("mcv-plugin-install");
+    std::fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create temp directory: {}", e))?;
+    let zip_path = temp_dir.join(format!("{}-{}-{}.zip", plugin_id, version, channel));
+
+    let download_url = updater.build_plugin_download_url(&plugin_id, &version, &channel);
+    updater
+        .download(&download_url, &zip_path, |_downloaded, _total| {})
+        .await
+        .map_err(|e| format!("Failed to download plugin package: {}", e))?;
+
+    updater
+        .verify_checksum(&zip_path, &target_version.sha256)
+        .await
+        .map_err(|e| format!("Failed to verify plugin package checksum: {}", e))?;
+
+    // ZIPをそのままpluginsディレクトリに配置する（依存ファイルを含めて保持するため）
+    let plugin_dir = get_plugin_dir();
+    std::fs::create_dir_all(&plugin_dir)
+        .map_err(|e| format!("Failed to create plugin directory: {}", e))?;
+
+    let dest_path = plugin_dir.join(format!("{}.zip", plugin_id));
+    std::fs::copy(&zip_path, &dest_path)
+        .map_err(|e| format!("Failed to install plugin: {}", e))?;
+
+    // 再インストール時に古いキャッシュが残らないよう削除する
+    let cache_dir = plugin_dir.join(".cache").join(&plugin_id);
+    let _ = std::fs::remove_dir_all(&cache_dir);
+
+    let _ = std::fs::remove_file(&zip_path);
+
+    // actix コンテキスト内で新プラグインをスキャン・ロードする
+    state
+        .core_addr
+        .send(ScanAndLoadNewPlugins {
+            plugin_manager: Arc::clone(&state.plugin_manager),
+            plugins_dir: plugin_dir,
+        })
+        .await
+        .map_err(|e| format!("Failed to load plugin after install: {}", e))?;
 
     Ok(())
+}
+
+/// plugin.json から id フィールドを読み取る（BOM 対応）
+fn read_plugin_id_from_manifest(manifest_path: &std::path::Path) -> Option<String> {
+    #[derive(serde::Deserialize)]
+    struct Manifest {
+        #[serde(default)]
+        id: Option<String>,
+    }
+    let content = std::fs::read(manifest_path).ok()?;
+    let content = if content.starts_with(b"\xEF\xBB\xBF") {
+        &content[3..]
+    } else {
+        &content
+    };
+    let manifest: Manifest = serde_json::from_slice(content).ok()?;
+    manifest.id.filter(|s| !s.is_empty())
+}
+
+/// インストール済みプラグインのメタ情報（ID + バージョン + チャンネル）
+#[derive(serde::Serialize)]
+struct InstalledPluginMeta {
+    id: String,
+    version: Option<String>,
+    channel: Option<String>,
+}
+
+/// plugin.json からバージョンとチャンネルを読み取る（BOM 対応）
+fn read_installed_plugin_meta(plugin_dir: &std::path::Path, id: &str) -> (Option<String>, Option<String>) {
+    #[derive(serde::Deserialize)]
+    struct PluginJsonMeta {
+        #[serde(default)]
+        version: Option<String>,
+        #[serde(default)]
+        channel: Option<String>,
+    }
+    let try_read = |path: &std::path::Path| -> Option<(Option<String>, Option<String>)> {
+        let content = std::fs::read(path).ok()?;
+        let content = if content.starts_with(b"\xEF\xBB\xBF") { &content[3..] } else { &content[..] };
+        let meta: PluginJsonMeta = serde_json::from_slice(content).ok()?;
+        Some((meta.version, meta.channel))
+    };
+    // ZIP 形式: .cache/{id}/plugin.json (起動時に展開済み)
+    let cache_path = plugin_dir.join(".cache").join(id).join("plugin.json");
+    if let Some(pair) = try_read(&cache_path) { return pair; }
+    // ディレクトリ形式: {id}/plugin.json
+    let dir_path = plugin_dir.join(id).join("plugin.json");
+    try_read(&dir_path).unwrap_or((None, None))
+}
+
+/// pluginsディレクトリを直接スキャンしてインストール済みプラグインIDの一覧を返す
+///
+/// - サブディレクトリ形式（plugin.json あり）: manifest の `id` フィールド、またはディレクトリ名
+/// - ZIP 形式: ZIPのファイル名（拡張子除く）
+fn scan_installed_plugin_ids(plugin_dir: &std::path::Path) -> Result<Vec<String>, String> {
+    if !plugin_dir.exists() {
+        return Ok(vec![]);
+    }
+    let entries = std::fs::read_dir(plugin_dir)
+        .map_err(|e| format!("Failed to read plugin directory: {}", e))?;
+
+    let mut ids = std::collections::HashSet::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let dir_name = match path.file_name().and_then(|n| n.to_str()) {
+                Some(n) => n.to_string(),
+                None => continue,
+            };
+            // 隠しディレクトリ（.cache 等）はスキップ
+            if dir_name.starts_with('.') {
+                continue;
+            }
+            let manifest_path = path.join("plugin.json");
+            if !manifest_path.exists() {
+                continue;
+            }
+            let id = read_plugin_id_from_manifest(&manifest_path).unwrap_or(dir_name);
+            // アンインストールマーカーがある場合はスキップ（次回起動時に削除予定）
+            let marker = plugin_dir.join(format!(".uninstall-{}", &id));
+            if marker.exists() {
+                continue;
+            }
+            ids.insert(id);
+        } else if path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("zip"))
+            .unwrap_or(false)
+        {
+            if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                ids.insert(stem.to_string());
+            }
+        }
+    }
+    Ok(ids.into_iter().collect())
+}
+
+/// インストール済みプラグイン一覧をバージョン情報付きで取得
+#[tauri::command]
+async fn list_installed_plugins() -> Result<Vec<InstalledPluginMeta>, String> {
+    let plugin_dir = get_plugin_dir();
+    let ids = scan_installed_plugin_ids(&plugin_dir)?;
+    Ok(ids.into_iter().map(|id| {
+        let (version, channel) = read_installed_plugin_meta(&plugin_dir, &id);
+        InstalledPluginMeta { id, version, channel }
+    }).collect())
+}
+
+/// インストール済みプラグインを削除する（ZIP形式・ディレクトリ形式の両方に対応）
+///
+/// DLL がプロセスにロードされているため即時削除できない場合は、
+/// `.uninstall-{id}` にリネームして次回起動時にクリーンアップする。
+#[tauri::command]
+async fn uninstall_registry_plugin(plugin_id: String) -> Result<(), String> {
+    let plugin_dir = get_plugin_dir();
+    let zip_path = plugin_dir.join(format!("{}.zip", plugin_id));
+    let dir_path = plugin_dir.join(&plugin_id);
+    let cache_dir = plugin_dir.join(".cache").join(&plugin_id);
+
+    let mut found = false;
+
+    if zip_path.exists() {
+        std::fs::remove_file(&zip_path)
+            .map_err(|e| format!("Failed to remove plugin '{}': {}", plugin_id, e))?;
+        found = true;
+    }
+
+    if dir_path.exists() {
+        // まず即時削除を試みる
+        if std::fs::remove_dir_all(&dir_path).is_err() {
+            // DLL ロック中のためリネームを試みる
+            let pending_path = plugin_dir.join(format!(".uninstall-{}", plugin_id));
+            if std::fs::rename(&dir_path, &pending_path).is_err() {
+                // Windows では DLL がロード中だとリネームも拒否されることがある。
+                // その場合はマーカーファイルを作成し、次回起動時にディレクトリを削除する。
+                tracing::warn!(
+                    target: "mcv::main",
+                    id = %plugin_id,
+                    "Cannot rename locked plugin directory; creating uninstall marker for next startup"
+                );
+                std::fs::write(&pending_path, b"").map_err(|e| {
+                    format!("Failed to queue plugin '{}' for removal: {}", plugin_id, e)
+                })?;
+            }
+        }
+        found = true;
+    }
+
+    // キャッシュも同様に処理（best-effort、失敗時はリネームして次回起動時にクリーンアップ）
+    if cache_dir.exists() {
+        if std::fs::remove_dir_all(&cache_dir).is_err() {
+            let pending_cache = plugin_dir.join(".cache").join(format!(".uninstall-{}", plugin_id));
+            let _ = std::fs::rename(&cache_dir, &pending_cache);
+        }
+    }
+
+    if !found {
+        return Err(format!("Plugin '{}' is not installed.", plugin_id));
+    }
+
+    Ok(())
+}
+
+/// 前回セッションでアンインストール待ちになったエントリを削除する
+///
+/// `.uninstall-{id}` がディレクトリの場合はそのまま削除（リネーム成功済み）。
+/// ファイルの場合はマーカーファイルで、対応する `{id}/` ディレクトリの削除を試みてからマーカーを消す。
+fn cleanup_pending_uninstalls(plugin_dir: &std::path::Path) {
+    // plugin_dir 直下の .uninstall-* エントリを処理
+    if let Ok(entries) = std::fs::read_dir(plugin_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = match path.file_name().and_then(|n| n.to_str()) {
+                Some(n) => n.to_string(),
+                None => continue,
+            };
+            if !name.starts_with(".uninstall-") {
+                continue;
+            }
+            if path.is_dir() {
+                // リネーム済みのディレクトリ → 削除
+                tracing::info!(target: "mcv::main", path = %path.display(), "Cleaning up pending uninstall directory");
+                let _ = std::fs::remove_dir_all(&path);
+            } else if path.is_file() {
+                // マーカーファイル → 実際のディレクトリ削除を試みてからマーカーを消す
+                let plugin_id = &name[".uninstall-".len()..];
+                let target_dir = plugin_dir.join(plugin_id);
+                tracing::info!(target: "mcv::main", id = %plugin_id, "Cleaning up plugin directory from uninstall marker");
+                if target_dir.exists() {
+                    if std::fs::remove_dir_all(&target_dir).is_ok() {
+                        let _ = std::fs::remove_file(&path);
+                    }
+                    // まだ失敗する場合はマーカーを残して次回再試行
+                } else {
+                    let _ = std::fs::remove_file(&path);
+                }
+            }
+        }
+    }
+    // .cache/ 下の .uninstall-* ディレクトリも削除
+    let cache_root = plugin_dir.join(".cache");
+    if let Ok(entries) = std::fs::read_dir(&cache_root) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir()
+                && path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|n| n.starts_with(".uninstall-"))
+                    .unwrap_or(false)
+            {
+                tracing::info!(target: "mcv::main", path = %path.display(), "Cleaning up pending uninstall cache directory");
+                let _ = std::fs::remove_dir_all(&path);
+            }
+        }
+    }
 }
 
 // ログビューア関連のコマンド
@@ -1044,6 +1460,9 @@ fn main() {
 
             tracing::info!(target: "mcv::main", plugins_dir = %plugins_dir.display(), "Loading DLL plugins from directory");
 
+            // 前回セッションでアンインストール待ちになったディレクトリを先にクリーンアップ
+            cleanup_pending_uninstalls(&plugins_dir);
+
             // プラグインディレクトリをスキャンして自動ロード
             let loaded_plugins = plugin_manager.scan_and_load_plugins(&plugins_dir).await;
 
@@ -1150,7 +1569,13 @@ fn main() {
             update_connection_settings,
             send_comment,
             check_for_updates,
-            launch_installer,
+            get_current_version,
+            list_registry_plugins,
+            download_core_update,
+            apply_core_update,
+            install_registry_plugin,
+            uninstall_registry_plugin,
+            list_installed_plugins,
             get_logs,
             get_build_profile_info,
             get_settings_schema,
@@ -1195,8 +1620,8 @@ fn exe_dir() -> PathBuf {
 }
 #[cfg(debug_assertions)]
 fn get_plugin_dir() -> PathBuf {
-    // デバッグ環境
-    exe_dir()
+    // デバッグ環境: exe と同じ場所にある plugins/ サブディレクトリ
+    exe_dir().join("plugins")
 }
 
 #[cfg(not(debug_assertions))]

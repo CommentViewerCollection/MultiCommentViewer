@@ -1,0 +1,92 @@
+[
+  {
+    "path": "crates/plugin-bouyomi",
+    "id": "bouyomi",
+    "name": "棒読みちゃん連携",
+    "description": "棒読みちゃんとの連携プラグインです",
+    "entry": "plugin_bouyomi.dll",
+    "api": "v3",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-chrome-cookie",
+    "id": "chrome-cookie",
+    "name": "Chromeクッキー取得",
+    "description": "Chromeのクッキーを取得するプラグインです",
+    "entry": "plugin_chrome_cookie.dll",
+    "api": "v3",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-cookies-txt",
+    "id": "cookies-txt",
+    "name": "cookies.txt",
+    "description": "cookies.txtからcookieを取得するプラグインです",
+    "entry": "plugin_cookies_txt.dll",
+    "api": "v3",
+    "has_channel_feature": false
+  },
+  {
+    "path": "crates/plugin-exe-manager-v3",
+    "id": "exe-manager-v3",
+    "name": "EXEプラグインマネージャー v3",
+    "description": "EXEプラグインを管理するプラグインです",
+    "entry": "plugin_exe_manager_v3.dll",
+    "api": "v3",
+    "has_channel_feature": false
+  },
+  {
+    "path": "crates/plugin-twicas",
+    "id": "twicas",
+    "name": "ツイキャス",
+    "description": "ツイキャスのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_twicas.dll",
+    "api": "v3",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-twitch",
+    "id": "twitch",
+    "name": "Twitch",
+    "description": "Twitchのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_twitch.dll",
+    "api": "v3",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-youtube-live",
+    "id": "youtubelive",
+    "name": "YouTubeLive",
+    "description": "YouTubeLiveのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_youtube_live.dll",
+    "api": "v3",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-dummy",
+    "id": "dummy",
+    "name": "ダミープラグイン",
+    "description": "テスト・開発用のダミープラグインです",
+    "entry": "plugin_dummy.dll",
+    "api": "v3",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-sample-v3",
+    "id": "sample-v3",
+    "name": "サンプルプラグイン v3",
+    "description": "v3 API のサンプルプラグインです",
+    "entry": "plugin_sample_v3.dll",
+    "api": "v3",
+    "has_channel_feature": true
+  },
+  {
+    "path": "apps/exe-plugin-sample/src-tauri",
+    "id": "exe-plugin-sample",
+    "name": "EXEプラグインサンプル",
+    "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+    "entry": "exe-plugin-sample.exe",
+    "api": "v2",
+    "has_channel_feature": false
+  }
+]

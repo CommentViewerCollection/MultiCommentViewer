@@ -25,6 +25,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt"] }
 tokio-tungstenite = "0.28.0"
 futures-util = "0.3"
+zip = "2.2"
 
 [features]
 default = ["custom-protocol"]

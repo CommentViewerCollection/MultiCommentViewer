@@ -679,7 +679,7 @@ impl Handler<SendMessageToCore> for CoreActor {
             };
 
             let response = match if is_supported_plugin_request_type(&message.message_type) {
-                handle_plugin_request_message(self, physical_plugin_id, &message, ctx)
+                handle_plugin_request_message(self, physical_plugin_id.clone(), &message, ctx)
             } else {
                 Err(format!(
                     "Unsupported plugin request message type: {:?}",
@@ -705,7 +705,7 @@ impl Handler<SendMessageToCore> for CoreActor {
             MessageType::PluginHello => {
                 if let Err(err) = message_handlers::plugin_hello::handle_plugin_hello(
                     self,
-                    physical_plugin_id,
+                    physical_plugin_id.clone(),
                     &message,
                     ctx,
                 ) {
@@ -837,7 +837,7 @@ impl Handler<RegisterPhysicalPlugin> for CoreActor {
         );
 
         self.physical_plugin_hosts
-            .insert(msg.physical_plugin_id, msg.host_addr);
+            .insert(msg.physical_plugin_id.clone(), msg.host_addr);
 
         tracing::debug!(
             target: "mcv::core::CoreActor",
@@ -875,6 +875,22 @@ impl Handler<GetLogicalPlugins> for CoreActor {
 
     fn handle(&mut self, _msg: GetLogicalPlugins, _ctx: &mut Self::Context) -> Self::Result {
         self.logical_plugins.values().cloned().collect()
+    }
+}
+
+/// ロード済み物理プラグイン ID 一覧を取得
+#[derive(Message)]
+#[rtype(result = "Vec<String>")]
+pub struct GetPhysicalPlugins;
+
+impl Handler<GetPhysicalPlugins> for CoreActor {
+    type Result = Vec<String>;
+
+    fn handle(&mut self, _msg: GetPhysicalPlugins, _ctx: &mut Self::Context) -> Self::Result {
+        self.physical_plugin_hosts
+            .keys()
+            .map(|id| id.as_str().to_string())
+            .collect()
     }
 }
 
@@ -1025,6 +1041,40 @@ impl Handler<UpdateConnectionSettings> for CoreActor {
         );
         message_handlers::site_browser::handle_update_connection_settings(self, &message, ctx);
         Box::pin(async { Ok(()) }.into_actor(self))
+    }
+}
+
+/// インストール済みの新しいプラグインをスキャンしてロードする
+///
+/// `install_registry_plugin` コマンドが ZIP をダウンロードした後に呼び出され、
+/// PluginManager のスキャンを actix コンテキスト内で実行する。
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ScanAndLoadNewPlugins {
+    pub plugin_manager: std::sync::Arc<tokio::sync::Mutex<crate::PluginManager>>,
+    pub plugins_dir: std::path::PathBuf,
+}
+
+impl Handler<ScanAndLoadNewPlugins> for CoreActor {
+    type Result = ResponseActFuture<Self, ()>;
+
+    fn handle(&mut self, msg: ScanAndLoadNewPlugins, ctx: &mut Self::Context) -> Self::Result {
+        let core_addr = ctx.address();
+        Box::pin(
+            async move {
+                let new_plugins = {
+                    let mut pm = msg.plugin_manager.lock().await;
+                    pm.scan_and_load_plugins(&msg.plugins_dir).await
+                };
+                for info in new_plugins {
+                    core_addr.do_send(RegisterPhysicalPlugin {
+                        physical_plugin_id: info.physical_plugin_id,
+                        host_addr: info.host_addr,
+                    });
+                }
+            }
+            .into_actor(self),
+        )
     }
 }
 
@@ -1204,7 +1254,7 @@ mod tests {
 
         // プラグイン ID を決める
         let src_plugin_id = Uuid::new_v4();
-        let src_physical_plugin_id = PhysicalPluginId::from_uuid(Uuid::new_v4());
+        let src_physical_plugin_id = PhysicalPluginId::from_id(&format!("test-{}", Uuid::new_v4()));
         let logical_id = LogicalPluginId::from_uuid(src_plugin_id);
 
         // テスト用プラグインを論理プラグインとして CoreActor に登録
@@ -1215,7 +1265,7 @@ mod tests {
         core_addr
             .send(RegisterTestLogicalPlugin {
                 logical_plugin_id: logical_id,
-                physical_plugin_id: src_physical_plugin_id,
+                physical_plugin_id: src_physical_plugin_id.clone(),
                 host_addr,
             })
             .await

@@ -198,7 +198,7 @@ EXE plugin (independent process)
 
 1. **plugin-exe-manager** (DLL plugin)
    - WebSocket server on port 28901 (auto-selects 28902+ if unavailable)
-   - Scans `%APPDATA%\MultiCommentViewer\plugins\` for manifest.json
+   - Scans `%APPDATA%\MultiCommentViewer\plugins\` for plugin.json
    - Auto-starts EXE plugins on mcv startup
    - Message routing (unicast, broadcast, role-based)
    - Process management (spawn, monitor, restart up to 3 times)
@@ -208,7 +208,7 @@ EXE plugin (independent process)
    - Auto-reconnect support
    - Message send/receive helpers
 
-3. **manifest.json schema:**
+3. **plugin.json schema:**
    ```json
    {
      "schema_version": "1.0",

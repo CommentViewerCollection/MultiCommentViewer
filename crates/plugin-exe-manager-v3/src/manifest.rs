@@ -14,14 +14,14 @@ pub enum ManifestError {
     Invalid(String),
 }
 
-/// manifest.jsonのシンプルなスキーマ
+/// plugin.jsonのシンプルなスキーマ
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginManifest {
     pub path: String,
 }
 
 impl PluginManifest {
-    /// manifest.jsonを読み込む
+    /// plugin.jsonを読み込む
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, ManifestError> {
         let content = std::fs::read_to_string(&path)?;
         //BOM付きの場合があるかもしれないので除去
@@ -34,7 +34,7 @@ impl PluginManifest {
         Ok(manifest)
     }
 
-    /// manifest.jsonのバリデーション
+    /// plugin.jsonのバリデーション
     fn validate(&self) -> Result<(), ManifestError> {
         if self.path.is_empty() {
             return Err(ManifestError::Invalid("path is empty".to_string()));
@@ -46,16 +46,16 @@ impl PluginManifest {
     /// 実行ファイルの絶対パスを取得
     ///
     /// # Arguments
-    /// * `manifest_dir` - manifest.jsonが配置されているディレクトリ
+    /// * `manifest_dir` - plugin.jsonが配置されているディレクトリ
     pub fn get_executable_path<P: AsRef<Path>>(&self, manifest_dir: P) -> PathBuf {
         let manifest_dir = manifest_dir.as_ref();
         manifest_dir.join(&self.path)
     }
 
-    /// 作業ディレクトリの絶対パスを取得（manifest.jsonと同じディレクトリ）
+    /// 作業ディレクトリの絶対パスを取得（plugin.jsonと同じディレクトリ）
     ///
     /// # Arguments
-    /// * `manifest_dir` - manifest.jsonが配置されているディレクトリ
+    /// * `manifest_dir` - plugin.jsonが配置されているディレクトリ
     pub fn get_working_directory<P: AsRef<Path>>(&self, manifest_dir: P) -> PathBuf {
         manifest_dir.as_ref().to_path_buf()
     }
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn test_manifest_load() {
         let temp_dir = TempDir::new().unwrap();
-        let manifest_path = temp_dir.path().join("manifest.json");
+        let manifest_path = temp_dir.path().join("plugin.json");
 
         let json = r#"{
             "path": "test.exe"

@@ -12,9 +12,10 @@ pub mod site_browser_manager;
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
 pub use connection_persistence::{ConnectionsStorage, PersistedConnection};
 pub use core_actor::{
-    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetLogicalPlugins, GetSites,
-    LogicalPluginInfo, PluginInfo, RegisterPhysicalPlugin, RemoveConnection, RenameConnection,
-    SendMessageToCore, SendRequest, SetConnectionSite, UpdateConnectionSettings,
+    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetLogicalPlugins, GetPhysicalPlugins,
+    GetSites, LogicalPluginInfo, PluginInfo, RegisterPhysicalPlugin, RemoveConnection,
+    RenameConnection, ScanAndLoadNewPlugins, SendMessageToCore, SendRequest, SetConnectionSite,
+    UpdateConnectionSettings,
 };
 pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 pub use plugin_loader_strategy::{
@@ -26,24 +27,33 @@ pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 use actix::prelude::*;
 use mcv_common::PhysicalPluginId;
-use mcv_plugin_loader::{PluginLoader, PluginLoaderError};
 use std::{
-    collections::HashMap,
+    collections::HashSet,
     fs::{DirEntry, File},
     io::{BufReader, Read},
     path::{Path, PathBuf},
-    str::FromStr,
 };
+use zip::ZipArchive;
+
+/// plugin.json のマニフェスト（ディレクトリ形式・ZIP 内どちらにも対応）
 #[derive(Deserialize)]
-struct Manifest {
+struct PluginManifest {
+    /// プラグイン ID（省略時はディレクトリ名や ZIP stem をフォールバック）
+    #[serde(default)]
+    id: Option<String>,
+    /// DLL ファイル名（"entry" エイリアスも受け付ける）
+    #[serde(alias = "entry")]
     path: String,
 }
+
 /// プラグインマネージャー
 ///
 /// プラグインの登録・管理を担当
 pub struct PluginManager {
     core_addr: Option<Addr<CoreActor>>,
     registry: PluginLoaderRegistry,
+    /// 既にロード済みのプラグイン ID（再スキャン時の重複ロードを防ぐ）
+    loaded_physical_ids: HashSet<String>,
 }
 
 impl PluginManager {
@@ -58,6 +68,7 @@ impl PluginManager {
         Self {
             core_addr: None,
             registry,
+            loaded_physical_ids: HashSet::new(),
         }
     }
 
@@ -65,29 +76,16 @@ impl PluginManager {
     pub fn set_core_addr(&mut self, addr: Addr<CoreActor>) {
         self.core_addr = Some(addr);
     }
-    fn is_bare_dll(is_file: bool, path: &Path) -> Option<PathBuf> {
-        is_file
-            .then(|| path.to_path_buf())
-            .filter(|p| p.extension().and_then(|e| e.to_str()) == Some("dll"))
-    }
-    /// pluginsディレクトリに直接置かれたdllプラグインのpathを取得する
-    fn get_bare_dll_plugin_path(entry: &DirEntry) -> Option<PathBuf> {
-        let is_file = entry.file_type().ok()?.is_file();
-        let path = entry.path();
-        Self::is_bare_dll(is_file, &path)
-    }
-    /// pluginsディレクトリに各プラグイン専用のディレクトリを置いているdllプラグインのpathを取得する
-    fn get_dir_dll_plugin_path(entry: &DirEntry) -> Option<PathBuf> {
-        let dir_path = (entry.file_type().ok()?.is_dir()).then(|| entry.path())?;
-        tracing::trace!(target:"mcv::mcv-core::PluginManager", "dir_path={:?}", dir_path);
-        let manifest_path = dir_path.join("manifest.json");
-        tracing::trace!(target:"mcv::mcv-core::PluginManager", "manifest_path={:?}", manifest_path);
-        let reader = BufReader::new(File::open(manifest_path).ok()?);
 
-        Self::get_dll_plugin_path_from_manifest(reader, &dir_path)
-    }
-
-    fn read_dll_path_from_manifest<R: Read>(mut reader: R) -> Option<PathBuf> {
+    /// plugin.json を読み込んで (dll_path, plugin_id) を返す共通処理
+    ///
+    /// - `base_dir`: DLL の検索基点となるディレクトリ
+    /// - `fallback_id`: `plugin.json` に `id` が無い場合のフォールバック
+    fn read_manifest<R: Read>(
+        mut reader: R,
+        base_dir: &Path,
+        fallback_id: &str,
+    ) -> Option<(PathBuf, String)> {
         let mut buf = Vec::new();
         reader.read_to_end(&mut buf).ok()?;
 
@@ -99,71 +97,168 @@ impl PluginManager {
             &buf[..]
         };
 
-        let manifest: Manifest = match serde_json::from_slice(buf) {
+        let manifest: PluginManifest = match serde_json::from_slice(buf) {
             Ok(m) => m,
             Err(e) => {
-                tracing::error!("manifest parse failed: {}", e);
+                tracing::error!("plugin.json parse failed: {}", e);
                 return None;
             }
         };
 
-        Some(PathBuf::from(manifest.path))
-    }
+        let dll_rel = PathBuf::from(&manifest.path);
 
-    fn get_dll_plugin_path_from_manifest<R: Read>(
-        reader: R,
-        manifest_dir: &Path,
-    ) -> Option<PathBuf> {
-        let manifest_path = Self::read_dll_path_from_manifest(reader)?;
-        tracing::trace!(target:"mcv::mcv-core::PluginManager", "manifest relative path = {:?}", manifest_path);
-
-        // 絶対パスまたはルート相対パスはディレクトリ外への脱出になるため拒否
-        if manifest_path.is_absolute() || manifest_path.has_root() {
+        // 絶対パスおよびパストラバーサルを拒否
+        if dll_rel.is_absolute() || dll_rel.has_root() {
+            tracing::error!("plugin.json: absolute path is not allowed: {}", manifest.path);
+            return None;
+        }
+        if dll_rel.components().any(|c| c == std::path::Component::ParentDir) {
+            tracing::error!("plugin.json: path traversal is not allowed: {}", manifest.path);
             return None;
         }
 
-        // ".." コンポーネントによるパストラバーサルを防止
-        if manifest_path
-            .components()
-            .any(|c| c == std::path::Component::ParentDir)
+        let plugin_id = manifest
+            .id
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| fallback_id.to_string());
+
+        Some((base_dir.join(dll_rel), plugin_id))
+    }
+
+    /// サブディレクトリ形式のプラグイン（{id}/plugin.json + DLL）から (dll_path, plugin_id) を取得する
+    fn get_dir_plugin(entry: &DirEntry) -> Option<(PathBuf, String)> {
+        let is_dir = entry.file_type().ok()?.is_dir();
+        if !is_dir {
+            return None;
+        }
+        let dir_path = entry.path();
+
+        // 隠しディレクトリ（.cache など）は除外
+        let dir_name = dir_path.file_name().and_then(|s| s.to_str())?;
+        if dir_name.starts_with('.') {
+            return None;
+        }
+
+        let manifest_path = dir_path.join("plugin.json");
+        if !manifest_path.exists() {
+            return None;
+        }
+
+        let reader = BufReader::new(File::open(&manifest_path).ok()?);
+        let (dll_path, plugin_id) = Self::read_manifest(reader, &dir_path, dir_name)?;
+
+        if !dll_path.exists() {
+            tracing::debug!(
+                target: "mcv::core::PluginManager",
+                dll = %dll_path.display(),
+                "DLL not found in plugin directory, skipping"
+            );
+            return None;
+        }
+
+        Some((dll_path, plugin_id))
+    }
+
+    /// ZIP 形式のプラグインから (dll_path, plugin_id) を取得する
+    ///
+    /// ZIPファイルを `.cache/{stem}/` に展開し、`plugin.json` の `id` フィールド（または ZIP stem）を
+    /// plugin_id、`entry`（または `path`）フィールドで指定された DLL のパスを返す。
+    fn get_zip_plugin(entry: &DirEntry) -> Option<(PathBuf, String)> {
+        let is_file = entry.file_type().ok()?.is_file();
+        if !is_file {
+            return None;
+        }
+        let zip_path = entry.path();
+        if zip_path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+            .as_deref()
+            != Some("zip")
         {
             return None;
         }
 
-        let joined_path = manifest_dir.join(manifest_path);
-        tracing::trace!(target:"mcv::mcv-core::PluginManager", "joined_path = {:?}", joined_path);
+        let stem = zip_path.file_stem().and_then(|s| s.to_str())?.to_string();
+        let plugins_dir = zip_path.parent()?;
+        let cache_dir = plugins_dir.join(".cache").join(&stem);
 
-        Some(joined_path)
+        // キャッシュが存在しない場合はZIPを展開する
+        if !cache_dir.exists() {
+            tracing::info!(target: "mcv::core::PluginManager", zip = %zip_path.display(), cache = %cache_dir.display(), "Extracting plugin ZIP to cache");
+            if let Err(e) = std::fs::create_dir_all(&cache_dir) {
+                tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to create cache directory");
+                return None;
+            }
+
+            let file = match File::open(&zip_path) {
+                Ok(f) => f,
+                Err(e) => {
+                    tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to open plugin ZIP");
+                    return None;
+                }
+            };
+            let mut archive = match ZipArchive::new(file) {
+                Ok(a) => a,
+                Err(e) => {
+                    tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to read plugin ZIP");
+                    let _ = std::fs::remove_dir_all(&cache_dir);
+                    return None;
+                }
+            };
+
+            for i in 0..archive.len() {
+                let mut zip_file = match archive.by_index(i) {
+                    Ok(f) => f,
+                    Err(e) => {
+                        tracing::warn!(target: "mcv::core::PluginManager", error = %e, "Skipping ZIP entry");
+                        continue;
+                    }
+                };
+                let out_path = match zip_file.enclosed_name() {
+                    Some(p) => cache_dir.join(p),
+                    None => continue,
+                };
+                if zip_file.name().ends_with('/') {
+                    let _ = std::fs::create_dir_all(&out_path);
+                } else {
+                    if let Some(parent) = out_path.parent() {
+                        let _ = std::fs::create_dir_all(parent);
+                    }
+                    let mut out_file = match File::create(&out_path) {
+                        Ok(f) => f,
+                        Err(e) => {
+                            tracing::warn!(target: "mcv::core::PluginManager", error = %e, path = %out_path.display(), "Failed to create extracted file");
+                            continue;
+                        }
+                    };
+                    if let Err(e) = std::io::copy(&mut zip_file, &mut out_file) {
+                        tracing::warn!(target: "mcv::core::PluginManager", error = %e, "Failed to extract ZIP entry");
+                    }
+                }
+            }
+        }
+
+        let manifest_path = cache_dir.join("plugin.json");
+        // ZIP stem をフォールバック ID として使用（plugin.json に id がない場合）
+        let reader = BufReader::new(File::open(&manifest_path).ok()?);
+        Self::read_manifest(reader, &cache_dir, &stem)
     }
-    /// zip化されたプラグインのpathを取得する
-    fn get_zip_dll_plugin_path(_entry: &DirEntry) -> Option<PathBuf> {
-        None
-    }
-    /// 指定ディレクトリ内のDLLプラグインをスキャンして登録（新形式）
+
+    /// 指定ディレクトリ内のDLLプラグインをスキャンして登録
     ///
-    /// # Arguments
-    /// * `plugins_dir` - プラグインディレクトリのパス
-    ///
-    /// # Returns
-    /// Vec<(physical_plugin_id, plugin_host_addr, plugin_name)>
+    /// ① サブディレクトリ形式（{id}/plugin.json + DLL）をロード
+    /// ② ZIP 形式プラグインをロード（① でロード済みの ID はスキップ）
     pub async fn scan_and_load_plugins<P: AsRef<Path>>(
-        &self,
+        &mut self,
         plugins_dir: P,
     ) -> Vec<LoadedPluginInfo> {
-        //dllファイルでcoreが直接読み込むプラグインを物理プラグインと呼ぶ
-        //物理プラグインは以下の3つの形状をしている
-        //1. zip化されているプラグイン
-        //2. 各プラグイン専用のディレクトリに展開されているプラグイン
-        //3. dllファイル単体で配置されているプラグイン
-        //
-        //1と2のプラグインは、プラグイン専用のディレクトリにmanifest.jsonが存在し、その中のpathでdllファイルのパスを指定する
-
-        //TODO: zip化されている場合は一時ディレクトリに展開してから読み込む処理が必要になる。
-
         let plugins_dir = plugins_dir.as_ref();
         tracing::info!(target: "mcv::core::PluginManager", plugins_dir = %plugins_dir.display(), "Scanning for DLL plugins");
 
         let mut loaded_plugins = Vec::new();
+        // 今回の呼び出し内での重複防止 + 既にロード済みの ID はスキップ
+        let mut loaded_ids: HashSet<String> = self.loaded_physical_ids.clone();
 
         // ディレクトリが存在しない場合は作成
         if !plugins_dir.exists() {
@@ -178,23 +273,6 @@ impl PluginManager {
             }
         }
 
-        // ディレクトリ内の.dllファイルをスキャン
-        let entries = match std::fs::read_dir(plugins_dir) {
-            Ok(entries) => entries,
-            Err(e) => {
-                tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to read plugins directory");
-                return loaded_plugins;
-            }
-        };
-        //entryのタイプによってdllプラグインの配置方法が違う。タイプに合った読み込み方法を採用する
-        let entries = entries.filter_map(|e| e.ok());
-        let a: Vec<DirEntry> = entries.collect();
-        tracing::info!(target:"mcv",count = a.len(), "候補DirEntry数");
-        let plugin_paths = a.iter().filter_map(|entry| {
-            Self::get_bare_dll_plugin_path(&entry)
-                .or_else(|| Self::get_dir_dll_plugin_path(&entry))
-                .or_else(|| Self::get_zip_dll_plugin_path(&entry))
-        });
         // Core Actorのアドレスを取得
         let core_addr = match &self.core_addr {
             Some(addr) => addr.clone(),
@@ -203,33 +281,91 @@ impl PluginManager {
                 return loaded_plugins;
             }
         };
-        let plugin_paths: Vec<PathBuf> = plugin_paths.collect();
-        tracing::info!(target:"mcv",count = plugin_paths.len(), "候補プラグイン数");
-        for path in plugin_paths {
-            // Registryを使用してDLLをロード
-            match self.registry.load_plugin(&path, core_addr.clone()).await {
-                Ok(loaded_info) => {
-                    tracing::info!(
-                        target: "mcv::core::PluginManager",
-                        plugin_id = %loaded_info.physical_plugin_id,
-                        abi_version = loaded_info.abi_version,
-                        plugin_name = ?loaded_info.plugin_name,
-                        dll_path = %path.display(),
-                        "Successfully loaded DLL plugin"
-                    );
 
-                    loaded_plugins.push(loaded_info);
-                }
-                Err(e) => {
-                    tracing::error!(
-                        target: "mcv::core::PluginManager",
-                        dll_path = %path.display(),
-                        error = %e,
-                        "Failed to load DLL plugin"
-                    );
+        let entries = match std::fs::read_dir(plugins_dir) {
+            Ok(e) => e,
+            Err(e) => {
+                tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to read plugins directory");
+                return loaded_plugins;
+            }
+        };
+
+        let dir_entries: Vec<DirEntry> = entries.flatten().collect();
+        // ① サブディレクトリ形式を先に処理
+        for entry in &dir_entries {
+            if let Some((dll_path, plugin_id)) = Self::get_dir_plugin(entry) {
+                let physical_plugin_id = PhysicalPluginId::from_id(&plugin_id);
+                tracing::info!(
+                    target: "mcv::core::PluginManager",
+                    id = %plugin_id,
+                    dll = %dll_path.display(),
+                    "Loading directory plugin"
+                );
+                match self
+                    .registry
+                    .load_plugin(&dll_path, physical_plugin_id, core_addr.clone())
+                    .await
+                {
+                    Ok(info) => {
+                        self.loaded_physical_ids.insert(plugin_id.clone());
+                        loaded_ids.insert(plugin_id);
+                        loaded_plugins.push(info);
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            target: "mcv::core::PluginManager",
+                            id = %plugin_id,
+                            dll = %dll_path.display(),
+                            error = %e,
+                            "Failed to load directory plugin"
+                        );
+                    }
                 }
             }
         }
+
+        // ② ZIP 形式プラグインをスキャン（① でロード済みの ID はスキップ）
+        for entry in &dir_entries {
+            if let Some((dll_path, plugin_id)) = Self::get_zip_plugin(entry) {
+                if loaded_ids.contains(&plugin_id) {
+                    tracing::debug!(
+                        target: "mcv::core::PluginManager",
+                        id = %plugin_id,
+                        "ZIP plugin already loaded as directory plugin, skipping"
+                    );
+                    continue;
+                }
+                let physical_plugin_id = PhysicalPluginId::from_id(&plugin_id);
+                tracing::info!(
+                    target: "mcv::core::PluginManager",
+                    id = %plugin_id,
+                    dll = %dll_path.display(),
+                    "Loading ZIP plugin"
+                );
+                match self
+                    .registry
+                    .load_plugin(&dll_path, physical_plugin_id, core_addr.clone())
+                    .await
+                {
+                    Ok(info) => {
+                        self.loaded_physical_ids.insert(plugin_id.clone());
+                        loaded_ids.insert(plugin_id);
+                        loaded_plugins.push(info);
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            target: "mcv::core::PluginManager",
+                            dll = %dll_path.display(),
+                            error = %e,
+                            "Failed to load ZIP plugin"
+                        );
+                    }
+                }
+            }
+        }
+
+        // dir_entries は読み取り済みなので drop
+        drop(dir_entries);
 
         tracing::info!(target: "mcv::core::PluginManager", count = loaded_plugins.len(), "DLL plugins scan completed");
         loaded_plugins
@@ -264,23 +400,34 @@ mod tests {
             Some(ConnectionStatus::Created)
         );
     }
-    #[test]
-    fn test_is_bare_dll() {
-        assert!(PluginManager::is_bare_dll(true, Path::new("a.dll")).is_some());
-    }
 
-    mod get_dll_plugin_path_from_manifest {
+    mod read_manifest {
         use std::path::PathBuf;
 
         use crate::PluginManager;
 
         #[test]
-        fn valid_manifest_returns_absolute_path() {
+        fn valid_manifest_with_id() {
+            let json = r#"{ "id": "chrome-cookie", "entry": "plugin.dll" }"#;
+            let reader = std::io::Cursor::new(json);
+            let base_dir = PathBuf::from("plugins/chrome-cookie");
+            let result = PluginManager::read_manifest(reader, &base_dir, "fallback");
+            assert_eq!(
+                result,
+                Some((base_dir.join("plugin.dll"), "chrome-cookie".to_string()))
+            );
+        }
+
+        #[test]
+        fn valid_manifest_without_id_uses_fallback() {
             let json = r#"{ "path": "plugin.dll" }"#;
             let reader = std::io::Cursor::new(json);
             let base_dir = PathBuf::from("plugins/example");
-            let result = PluginManager::get_dll_plugin_path_from_manifest(reader, &base_dir);
-            assert_eq!(result, Some(base_dir.join("plugin.dll")));
+            let result = PluginManager::read_manifest(reader, &base_dir, "example");
+            assert_eq!(
+                result,
+                Some((base_dir.join("plugin.dll"), "example".to_string()))
+            );
         }
 
         #[test]
@@ -288,7 +435,7 @@ mod tests {
             let json = r#"{ "name": "test" }"#;
             let reader = std::io::Cursor::new(json);
             let base_dir = PathBuf::from("plugins/example");
-            assert!(PluginManager::get_dll_plugin_path_from_manifest(reader, &base_dir).is_none());
+            assert!(PluginManager::read_manifest(reader, &base_dir, "example").is_none());
         }
 
         #[test]
@@ -296,7 +443,7 @@ mod tests {
             let json = r#"{ "path": 123 }"#;
             let reader = std::io::Cursor::new(json);
             let base_dir = PathBuf::from("plugins/example");
-            assert!(PluginManager::get_dll_plugin_path_from_manifest(reader, &base_dir).is_none());
+            assert!(PluginManager::read_manifest(reader, &base_dir, "example").is_none());
         }
 
         #[test]
@@ -304,15 +451,15 @@ mod tests {
             let json = r#"{ path: }"#;
             let reader = std::io::Cursor::new(json);
             let base_dir = PathBuf::from("plugins/example");
-            assert!(PluginManager::get_dll_plugin_path_from_manifest(reader, &base_dir).is_none());
+            assert!(PluginManager::read_manifest(reader, &base_dir, "example").is_none());
         }
 
         #[test]
-        fn absolute_manifest_path_outside_dir_returns_none() {
+        fn absolute_path_returns_none() {
             let json = r#"{ "path": "/other/plugin.dll" }"#;
             let reader = std::io::Cursor::new(json);
             let base_dir = PathBuf::from("plugins/example");
-            assert!(PluginManager::get_dll_plugin_path_from_manifest(reader, &base_dir).is_none());
+            assert!(PluginManager::read_manifest(reader, &base_dir, "example").is_none());
         }
     }
 }

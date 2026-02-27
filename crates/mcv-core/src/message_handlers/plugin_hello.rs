@@ -78,7 +78,7 @@ pub fn handle_plugin_hello(
     // LogicalPluginInfoを作成
     let logical_plugin_info = LogicalPluginInfo {
         logical_plugin_id,
-        physical_plugin_id,
+        physical_plugin_id: physical_plugin_id.clone(),
         name: payload.name.clone(),
         role: payload.role.clone(),
         api_version: payload.api_version.clone(),

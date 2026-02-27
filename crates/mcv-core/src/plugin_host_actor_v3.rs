@@ -79,7 +79,7 @@ impl PhysicalPluginHostActorV3 {
 
         // CallbackDataを取得
         let callback_data = &*(host_ref.userdata as *const CallbackData);
-        let physical_plugin_id = callback_data.physical_plugin_id;
+        let physical_plugin_id = callback_data.physical_plugin_id.clone();
 
         // JSONをパース
         let msg_slice = std::slice::from_raw_parts(json_ptr, json_len);
@@ -130,12 +130,12 @@ impl Actor for PhysicalPluginHostActorV3 {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let physical_plugin_id = self.physical_plugin_id;
+        let physical_plugin_id = self.physical_plugin_id.clone();
         let self_addr = ctx.address();
 
         tracing::debug!(
             target: "mcv::core::PhysicalPluginHostActorV3",
-            physical_plugin_id = %physical_plugin_id.inner(),
+            physical_plugin_id = %physical_plugin_id,
             plugin_id = %self.plugin_id,
             "v3 Plugin host actor started"
         );
@@ -173,7 +173,7 @@ impl Actor for PhysicalPluginHostActorV3 {
         if result != 0 {
             tracing::error!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                physical_plugin_id = %self.physical_plugin_id.inner(),
+                physical_plugin_id = %self.physical_plugin_id,
                 plugin_id = %self.plugin_id,
                 result_code = result,
                 phase = "on_loaded",
@@ -186,7 +186,7 @@ impl Actor for PhysicalPluginHostActorV3 {
     fn stopped(&mut self, _ctx: &mut Self::Context) {
         tracing::debug!(
             target: "mcv::core::PhysicalPluginHostActorV3",
-            physical_plugin_id = %self.physical_plugin_id.inner(),
+            physical_plugin_id = %self.physical_plugin_id,
             "v3 Plugin host actor stopped"
         );
 
@@ -198,7 +198,7 @@ impl Actor for PhysicalPluginHostActorV3 {
         if result == -2 {
             tracing::error!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                physical_plugin_id = %self.physical_plugin_id.inner(),
+                physical_plugin_id = %self.physical_plugin_id,
                 plugin_id = %self.plugin_id,
                 result_code = result,
                 phase = "on_shutdown",
@@ -207,7 +207,7 @@ impl Actor for PhysicalPluginHostActorV3 {
         } else if result != 0 {
             tracing::warn!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                physical_plugin_id = %self.physical_plugin_id.inner(),
+                physical_plugin_id = %self.physical_plugin_id,
                 plugin_id = %self.plugin_id,
                 result_code = result,
                 phase = "on_shutdown",
@@ -223,7 +223,7 @@ impl Handler<SendMessageToPlugin> for PhysicalPluginHostActorV3 {
     fn handle(&mut self, msg: SendMessageToPlugin, _ctx: &mut Self::Context) {
         tracing::trace!(
             target: "mcv::core::PhysicalPluginHostActorV3",
-            physical_plugin_id = %self.physical_plugin_id.inner(),
+            physical_plugin_id = %self.physical_plugin_id,
             "Sending message to v3 plugin"
         );
 
@@ -247,7 +247,7 @@ impl Handler<SendMessageToPlugin> for PhysicalPluginHostActorV3 {
         if result != 0 {
             tracing::error!(
                 target: "mcv::core::PhysicalPluginHostActorV3",
-                physical_plugin_id = %self.physical_plugin_id.inner(),
+                physical_plugin_id = %self.physical_plugin_id,
                 plugin_id = %self.plugin_id,
                 result_code = result,
                 phase = "on_message",
@@ -263,7 +263,7 @@ impl Handler<crate::plugin_host_actor::ShutdownPlugin> for PhysicalPluginHostAct
     fn handle(&mut self, _msg: crate::plugin_host_actor::ShutdownPlugin, ctx: &mut Self::Context) {
         tracing::info!(
             target: "mcv::core::PhysicalPluginHostActorV3",
-            physical_plugin_id = %self.physical_plugin_id.inner(),
+            physical_plugin_id = %self.physical_plugin_id,
             "Shutting down v3 plugin"
         );
         ctx.stop();
@@ -301,7 +301,6 @@ impl Handler<ReceiveMessageFromDll> for PhysicalPluginHostActorV3 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use uuid::Uuid;
 
     #[test]
@@ -316,19 +315,6 @@ mod tests {
 
         // nil UUIDではないことを確認
         assert_ne!(uuid, Uuid::nil());
-    }
-
-    #[test]
-    fn test_physical_plugin_id_to_bytes() {
-        // PhysicalPluginId::inner()からバイト配列への変換をテスト
-        let physical_id = PhysicalPluginId::new();
-        let uuid = physical_id.inner();
-        let bytes = *uuid.as_bytes();
-
-        // nil UUIDではないことを確認
-        let uuid_from_bytes = Uuid::from_bytes(bytes);
-        assert_ne!(uuid_from_bytes, Uuid::nil());
-        assert_eq!(uuid, uuid_from_bytes);
     }
 
     #[test]

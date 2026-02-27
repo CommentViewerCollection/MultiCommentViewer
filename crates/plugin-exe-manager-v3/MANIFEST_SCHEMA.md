@@ -1,13 +1,13 @@
-# manifest.json スキーマ
+# plugin.json スキーマ
 
-EXEプラグインの設定ファイル `manifest.json` のスキーマ仕様です。
+EXEプラグインの設定ファイル `plugin.json` のスキーマ仕様です。
 
 ## 配置場所
 
 ```
 %LOCALAPPDATA%\MultiCommentViewer\plugins\
 └── your-plugin-name/
-    ├── manifest.json    ← このファイル
+    ├── plugin.json    ← このファイル
     └── your-plugin.exe
 ```
 
@@ -26,19 +26,19 @@ EXEプラグインの設定ファイル `manifest.json` のスキーマ仕様で
 #### `path` (必須)
 
 - **型**: `string`
-- **説明**: 実行ファイルへの相対パス（manifest.jsonからの相対パス）
+- **説明**: 実行ファイルへの相対パス（plugin.jsonからの相対パス）
 - **例**:
   - `"your-plugin.exe"` - 同じディレクトリ内
   - `"bin/your-plugin.exe"` - binサブディレクトリ内
 
 ## プラグインIDの決定
 
-プラグインIDは、manifest.jsonが配置されているディレクトリ名から自動的に生成されます。
+プラグインIDは、plugin.jsonが配置されているディレクトリ名から自動的に生成されます。
 
 **例:**
 ```
 %LOCALAPPDATA%\MultiCommentViewer\plugins\my-awesome-plugin\
-└── manifest.json
+└── plugin.json
 ```
 
 この場合、プラグインIDは `"my-awesome-plugin"` になります。
@@ -53,7 +53,7 @@ EXEプラグインの設定ファイル `manifest.json` のスキーマ仕様で
 
 ## バリデーション
 
-manifest.json読み込み時に以下のバリデーションが行われます：
+plugin.json読み込み時に以下のバリデーションが行われます：
 
 1. `path` フィールドが存在すること
 2. `path` が空文字列でないこと

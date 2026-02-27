@@ -60,10 +60,10 @@ impl Actor for PhysicalPluginHostActor {
             return;
         }
 
-        let physical_plugin_id = self.physical_plugin_id;
+        let physical_plugin_id = self.physical_plugin_id.clone();
         tracing::debug!(
             target: "mcv::core::PhysicalPluginHostActor",
-            physical_plugin_id = %self.physical_plugin_id.inner(),
+            physical_plugin_id = %self.physical_plugin_id,
             "Plugin host actor started"
         );
 
@@ -71,7 +71,7 @@ impl Actor for PhysicalPluginHostActor {
 
         // userdataを作成（CallbackDataをヒープに確保）
         let callback_data = CallbackData {
-            physical_plugin_id,
+            physical_plugin_id: physical_plugin_id.clone(),
             actor_addr: self_addr,
         };
         let userdata = Box::into_raw(Box::new(callback_data)) as *mut c_void;
@@ -95,7 +95,7 @@ impl Actor for PhysicalPluginHostActor {
 
             // userdataからCallbackDataを取得
             let callback_data = unsafe { &*(userdata as *const CallbackData) };
-            let physical_plugin_id = callback_data.physical_plugin_id;
+            let physical_plugin_id = callback_data.physical_plugin_id.clone();
 
             let message_str = unsafe {
                 match CStr::from_ptr(message_json).to_str() {
@@ -126,7 +126,7 @@ impl Actor for PhysicalPluginHostActor {
 
             // InternalMessageを作成
             let internal_message = InternalMessage {
-                physical_plugin_id,
+                physical_plugin_id: physical_plugin_id.clone(),
                 message,
             };
 

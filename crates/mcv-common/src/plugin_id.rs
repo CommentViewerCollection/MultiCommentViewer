@@ -1,21 +1,17 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// 物理プラグインID（DLLファイル）
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct PhysicalPluginId(Uuid);
+/// 物理プラグインID（plugin.json の id フィールドに対応する文字列）
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct PhysicalPluginId(String);
 
 impl PhysicalPluginId {
-    pub fn new() -> Self {
-        Self(Uuid::new_v4())
+    pub fn from_id(id: impl AsRef<str>) -> Self {
+        Self(id.as_ref().to_string())
     }
 
-    pub fn inner(&self) -> Uuid {
-        self.0
-    }
-
-    pub fn from_uuid(uuid: Uuid) -> Self {
-        Self(uuid)
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
@@ -55,16 +51,15 @@ mod tests {
 
     #[test]
     fn test_physical_plugin_id() {
-        let id1 = PhysicalPluginId::new();
-        let id2 = PhysicalPluginId::new();
+        let id1 = PhysicalPluginId::from_id("chrome-cookie");
+        let id2 = PhysicalPluginId::from_id("cookies-txt");
         assert_ne!(id1, id2);
 
-        let uuid = Uuid::new_v4();
-        let id3 = PhysicalPluginId::from_uuid(uuid);
-        assert_eq!(id3.inner(), uuid);
+        let id3 = PhysicalPluginId::from_id("chrome-cookie");
+        assert_eq!(id1, id3);
 
-        let id_str = id1.to_string();
-        assert!(!id_str.is_empty());
+        assert_eq!(id1.as_str(), "chrome-cookie");
+        assert_eq!(id1.to_string(), "chrome-cookie");
     }
 
     #[test]
@@ -83,7 +78,7 @@ mod tests {
 
     #[test]
     fn test_serialization() {
-        let physical_id = PhysicalPluginId::new();
+        let physical_id = PhysicalPluginId::from_id("chrome-cookie");
         let json = serde_json::to_string(&physical_id).unwrap();
         let deserialized: PhysicalPluginId = serde_json::from_str(&json).unwrap();
         assert_eq!(physical_id, deserialized);

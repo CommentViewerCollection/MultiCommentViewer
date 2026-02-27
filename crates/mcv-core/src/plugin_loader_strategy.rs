@@ -98,6 +98,7 @@ pub trait PluginLoaderStrategy: Send + Sync {
     async fn load_plugin(
         &self,
         dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
         core_addr: Addr<CoreActor>,
     ) -> Result<LoadedPluginInfo, PluginLoaderError>;
 }
@@ -124,6 +125,7 @@ impl PluginLoaderRegistry {
     pub async fn load_plugin(
         &self,
         dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
         core_addr: Addr<CoreActor>,
     ) -> Result<LoadedPluginInfo, PluginLoaderError> {
         // 各戦略を試す（最後に登録されたものから = 新しいバージョン優先）
@@ -135,7 +137,7 @@ impl PluginLoaderRegistry {
                     dll_path = %dll_path.display(),
                     "Detected plugin ABI version"
                 );
-                return strategy.load_plugin(dll_path, core_addr).await;
+                return strategy.load_plugin(dll_path, physical_plugin_id, core_addr).await;
             }
         }
 
@@ -182,13 +184,12 @@ impl PluginLoaderStrategy for V2LoaderStrategy {
     async fn load_plugin(
         &self,
         dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
         core_addr: Addr<CoreActor>,
     ) -> Result<LoadedPluginInfo, PluginLoaderError> {
         // 既存のコードを再利用
         let plugin_loader = PluginLoader::load(dll_path)?;
         plugin_loader.validate_plugin_exports()?;
-
-        let physical_plugin_id = PhysicalPluginId::new();
 
         // プラグイン名をDLLファイル名から取得
         let plugin_name = dll_path
@@ -204,7 +205,7 @@ impl PluginLoaderStrategy for V2LoaderStrategy {
         );
 
         let mut host_actor =
-            PhysicalPluginHostActor::new_from_dll(physical_plugin_id, plugin_loader);
+            PhysicalPluginHostActor::new_from_dll(physical_plugin_id.clone(), plugin_loader);
         host_actor.set_core_addr(core_addr);
 
         let host_addr = host_actor.start();
@@ -246,15 +247,15 @@ impl PluginLoaderStrategy for V3LoaderStrategy {
     async fn load_plugin(
         &self,
         dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
         core_addr: Addr<CoreActor>,
     ) -> Result<LoadedPluginInfo, PluginLoaderError> {
         // v3プラグインをロード
         let plugin_loader_v3 = PluginLoaderV3::load(dll_path)
             .map_err(|e| PluginLoaderError::LoadFailed(e.to_string()))?;
 
-        let physical_plugin_id = PhysicalPluginId::new();
-        // PhysicalPluginIdの内部値はUuidなのでそのまま使用
-        let plugin_id = physical_plugin_id.inner();
+        // V3 プロトコル用 plugin_id は PhysicalPluginId とは独立して生成する UUID
+        let plugin_id = uuid::Uuid::new_v4();
 
         // プラグイン名をDLLファイル名から取得
         let plugin_name = dll_path
@@ -271,7 +272,7 @@ impl PluginLoaderStrategy for V3LoaderStrategy {
         );
 
         let host_actor = PhysicalPluginHostActorV3::new(
-            physical_plugin_id,
+            physical_plugin_id.clone(),
             plugin_id,
             Arc::new(plugin_loader_v3),
             Some(core_addr),

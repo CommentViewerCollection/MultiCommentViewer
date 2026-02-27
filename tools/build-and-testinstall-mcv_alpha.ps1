@@ -1,13 +1,15 @@
-cargo xtask build --release `
+# apps/mcv と全プラグインをデバッグビルドしてローカルにインストールする
+#
+# cargo xtask install がフルビルド（Tauri 含む）とデプロイを一括で行う。
+
+$ErrorActionPreference = "Stop"
+
+cargo xtask install `
   --dir "$env:LOCALAPPDATA\MultiCommentViewer" `
-  --crate "apps/mcv/src-tauri,alpha," `
-  --crate "crates/plugin-dummy,alpha,plugins" `
-  --crate "crates/plugin-exe-manager-v3,,plugins" `
-  --crate "apps/exe-plugin-sample/src-tauri,,plugins/exe-plugin-sample" `
-  --crate "crates/plugin-youtube-live,alpha,plugins/plugin-youtube-live" `
-  --crate "crates/plugin-chrome-cookie,alpha,plugins/plugin-chrome-cookie" `
-  --crate "crates/plugin-bouyomi,alpha,plugins/plugin-bouyomi" `
-  --crate "crates/plugin-sample-v3,alpha,plugins/plugin-sample-v3" `
-  --crate "crates/plugin-twitch,alpha,plugins/plugin-twitch" `
-  --crate "crates/plugin-cookies-txt,,plugins/plugin-cookies-txt" `
-  --crate "crates/plugin-twicas,alpha,plugins/plugin-twicas"
+  --plugin youtubelive `
+  --plugin chrome-cookie `
+  --plugin bouyomi `
+  --plugin twitch `
+  --plugin cookies-txt `
+  --plugin twicas `
+  --plugin exe-manager-v3

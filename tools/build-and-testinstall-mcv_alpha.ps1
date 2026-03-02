@@ -13,4 +13,5 @@ cargo xtask install `
   --plugin cookies-txt `
   --plugin twicas `
   --plugin exe-manager-v3 `
-  --plugin nicolive
+  --plugin nicolive `
+  --plugin exe-plugin-sample

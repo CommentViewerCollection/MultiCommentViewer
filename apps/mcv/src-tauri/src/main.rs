@@ -20,10 +20,10 @@ use mcv_core::{
     UpdateConnectionSettings,
 };
 use mcv_messages::{
-    self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload,
-    ConnectPayload, DisconnectPayload, DisconnectedPayload, InputInfo, Message as McvMessage,
-    MessageDestination, MessageSource, MessageType, ProviderContent, ProviderMessageKind,
-    SendCommentPayload, SiteInfo as MsgSiteInfo, SystemKind,
+    self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload, ConnectPayload, DisconnectPayload,
+    DisconnectedPayload, InputInfo, Message as McvMessage, MessageDestination, MessageSource,
+    MessageType, ProviderContent, ProviderMessageKind, SendCommentPayload, SiteInfo as MsgSiteInfo,
+    SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
@@ -45,7 +45,7 @@ struct CommentRow {
     is_visible: bool,
     /// 置き換え・削除対象の CommentRow の id
     replaces_id: Option<String>,
-    /// メッセージ種別: "chat" | "monetary" | "system"
+    /// メッセージ種別: "chat" | "history_chat" | "monetary" | "system"
     kind: String,
 }
 
@@ -75,12 +75,12 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
             };
 
             let (is_visible, replaces_id, text) = match &msg.kind {
-                ProviderMessageKind::System(SystemKind::Placeholder) => {
-                    (false, None, vec![])
-                }
-                ProviderMessageKind::System(SystemKind::MessageUpdate { target_message_id }) => {
-                    (true, Some(target_message_id.clone()), extract_text(&msg.content))
-                }
+                ProviderMessageKind::System(SystemKind::Placeholder) => (false, None, vec![]),
+                ProviderMessageKind::System(SystemKind::MessageUpdate { target_message_id }) => (
+                    true,
+                    Some(target_message_id.clone()),
+                    extract_text(&msg.content),
+                ),
                 ProviderMessageKind::System(SystemKind::MessageDelete { target_message_id }) => {
                     (false, Some(target_message_id.clone()), vec![])
                 }
@@ -89,6 +89,7 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
 
             let kind = match &msg.kind {
                 ProviderMessageKind::Chat => "chat",
+                ProviderMessageKind::HistoryChat => "history_chat",
                 ProviderMessageKind::Monetary(_) => "monetary",
                 _ => "system",
             }
@@ -554,7 +555,6 @@ fn find_file_recursive(root: &PathBuf, file_name: &str) -> Option<PathBuf> {
     None
 }
 
-
 /// mcv本体アップデートZIPをダウンロードしてチェックサム検証
 #[tauri::command]
 async fn download_core_update(
@@ -565,7 +565,8 @@ async fn download_core_update(
     const API_BASE_URL: &str = "http://localhost";
     let updater = UpdateChecker::new(API_BASE_URL);
     let temp_dir = std::env::temp_dir().join("mcv-updater");
-    std::fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create temp directory: {}", e))?;
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create temp directory: {}", e))?;
     let zip_path = temp_dir.join(format!("mcv-core-{}-{}.zip", version, channel));
 
     let download_url = updater.build_mcv_download_url(&version, &channel);
@@ -599,7 +600,8 @@ async fn apply_core_update(zip_path: String, app_handle: AppHandle) -> Result<()
         return Err(format!("Update ZIP not found: {}", update_zip.display()));
     }
 
-    let extracted_dir = std::env::temp_dir().join(format!("mcv-update-extracted-{}", std::process::id()));
+    let extracted_dir =
+        std::env::temp_dir().join(format!("mcv-update-extracted-{}", std::process::id()));
     extract_zip_file(&update_zip, &extracted_dir)?;
 
     let exe_name = current_exe
@@ -653,7 +655,8 @@ async fn install_registry_plugin(
         .ok_or_else(|| format!("Plugin version not found: {plugin_id} {version} {channel}"))?;
 
     let temp_dir = std::env::temp_dir().join("mcv-plugin-install");
-    std::fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create temp directory: {}", e))?;
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create temp directory: {}", e))?;
     let zip_path = temp_dir.join(format!("{}-{}-{}.zip", plugin_id, version, channel));
 
     let download_url = updater.build_plugin_download_url(&plugin_id, &version, &channel);
@@ -673,8 +676,7 @@ async fn install_registry_plugin(
         .map_err(|e| format!("Failed to create plugin directory: {}", e))?;
 
     let dest_path = plugin_dir.join(format!("{}.zip", plugin_id));
-    std::fs::copy(&zip_path, &dest_path)
-        .map_err(|e| format!("Failed to install plugin: {}", e))?;
+    std::fs::copy(&zip_path, &dest_path).map_err(|e| format!("Failed to install plugin: {}", e))?;
 
     // 再インストール時に古いキャッシュが残らないよう削除する
     let cache_dir = plugin_dir.join(".cache").join(&plugin_id);
@@ -721,7 +723,10 @@ struct InstalledPluginMeta {
 }
 
 /// plugin.json からバージョンとチャンネルを読み取る（BOM 対応）
-fn read_installed_plugin_meta(plugin_dir: &std::path::Path, id: &str) -> (Option<String>, Option<String>) {
+fn read_installed_plugin_meta(
+    plugin_dir: &std::path::Path,
+    id: &str,
+) -> (Option<String>, Option<String>) {
     #[derive(serde::Deserialize)]
     struct PluginJsonMeta {
         #[serde(default)]
@@ -731,13 +736,19 @@ fn read_installed_plugin_meta(plugin_dir: &std::path::Path, id: &str) -> (Option
     }
     let try_read = |path: &std::path::Path| -> Option<(Option<String>, Option<String>)> {
         let content = std::fs::read(path).ok()?;
-        let content = if content.starts_with(b"\xEF\xBB\xBF") { &content[3..] } else { &content[..] };
+        let content = if content.starts_with(b"\xEF\xBB\xBF") {
+            &content[3..]
+        } else {
+            &content[..]
+        };
         let meta: PluginJsonMeta = serde_json::from_slice(content).ok()?;
         Some((meta.version, meta.channel))
     };
     // ZIP 形式: .cache/{id}/plugin.json (起動時に展開済み)
     let cache_path = plugin_dir.join(".cache").join(id).join("plugin.json");
-    if let Some(pair) = try_read(&cache_path) { return pair; }
+    if let Some(pair) = try_read(&cache_path) {
+        return pair;
+    }
     // ディレクトリ形式: {id}/plugin.json
     let dir_path = plugin_dir.join(id).join("plugin.json");
     try_read(&dir_path).unwrap_or((None, None))
@@ -796,10 +807,17 @@ fn scan_installed_plugin_ids(plugin_dir: &std::path::Path) -> Result<Vec<String>
 async fn list_installed_plugins() -> Result<Vec<InstalledPluginMeta>, String> {
     let plugin_dir = get_plugin_dir();
     let ids = scan_installed_plugin_ids(&plugin_dir)?;
-    Ok(ids.into_iter().map(|id| {
-        let (version, channel) = read_installed_plugin_meta(&plugin_dir, &id);
-        InstalledPluginMeta { id, version, channel }
-    }).collect())
+    Ok(ids
+        .into_iter()
+        .map(|id| {
+            let (version, channel) = read_installed_plugin_meta(&plugin_dir, &id);
+            InstalledPluginMeta {
+                id,
+                version,
+                channel,
+            }
+        })
+        .collect())
 }
 
 /// インストール済みプラグインを削除する（ZIP形式・ディレクトリ形式の両方に対応）
@@ -845,7 +863,9 @@ async fn uninstall_registry_plugin(plugin_id: String) -> Result<(), String> {
     // キャッシュも同様に処理（best-effort、失敗時はリネームして次回起動時にクリーンアップ）
     if cache_dir.exists() {
         if std::fs::remove_dir_all(&cache_dir).is_err() {
-            let pending_cache = plugin_dir.join(".cache").join(format!(".uninstall-{}", plugin_id));
+            let pending_cache = plugin_dir
+                .join(".cache")
+                .join(format!(".uninstall-{}", plugin_id));
             let _ = std::fs::rename(&cache_dir, &pending_cache);
         }
     }
@@ -1104,11 +1124,7 @@ fn is_title_bar_visible(monitors: &[tauri::Monitor], x: i32, y: i32, width: u32)
         let ms = m.size();
         let m_right = mp.x + ms.width as i32;
         let m_bottom = mp.y + ms.height as i32;
-        if x < m_right
-            && (x + width as i32) > mp.x
-            && y < m_bottom
-            && (y + title_bar_h) > mp.y
-        {
+        if x < m_right && (x + width as i32) > mp.x && y < m_bottom && (y + title_bar_h) > mp.y {
             return true;
         }
     }
@@ -1152,16 +1168,31 @@ fn restore_window_state(window: &tauri::WebviewWindow, settings_dir: &std::path:
         return;
     };
 
-    let maximized = data.get("window_maximized").and_then(|v| v.as_bool()).unwrap_or(false);
+    let maximized = data
+        .get("window_maximized")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
     if maximized {
         let _ = window.maximize();
         return;
     }
 
-    let x = data.get("window_x").and_then(|v| v.as_i64()).map(|v| v as i32);
-    let y = data.get("window_y").and_then(|v| v.as_i64()).map(|v| v as i32);
-    let w = data.get("window_width").and_then(|v| v.as_u64()).map(|v| v as u32);
-    let h = data.get("window_height").and_then(|v| v.as_u64()).map(|v| v as u32);
+    let x = data
+        .get("window_x")
+        .and_then(|v| v.as_i64())
+        .map(|v| v as i32);
+    let y = data
+        .get("window_y")
+        .and_then(|v| v.as_i64())
+        .map(|v| v as i32);
+    let w = data
+        .get("window_width")
+        .and_then(|v| v.as_u64())
+        .map(|v| v as u32);
+    let h = data
+        .get("window_height")
+        .and_then(|v| v.as_u64())
+        .map(|v| v as u32);
 
     if let (Some(x), Some(y), Some(w), Some(h)) = (x, y, w, h) {
         let monitors = window.available_monitors().unwrap_or_default();
@@ -1170,10 +1201,8 @@ fn restore_window_state(window: &tauri::WebviewWindow, settings_dir: &std::path:
                 width: w,
                 height: h,
             }));
-            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                x,
-                y,
-            }));
+            let _ =
+                window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
         }
         // タイトルバーが見えない場合（モニター切断等）はデフォルト位置のまま
     }
@@ -1302,38 +1331,42 @@ fn main() {
                                         }
                                     }
                                 }
-                                // ProviderMessage を 1 件ずつ timestamp 順にタイミング制御して emit
-                                // （McvEnvelope は 1 プラットフォームイベントと 1:1 のため複数メッセージを含む場合がある）
-                                // connection_id 単位のグローバル基準時刻（base_ts, base_instant）を用いて
-                                // エンベロープをまたぐ正確なタイミングを実現する
-                                let messages: Vec<mcv_messages::ProviderMessage> = payload
-                                    .envelope
-                                    .messages
-                                    .into_iter()
-                                    .filter(|msg| {
-                                        !matches!(
-                                            &msg.kind,
-                                            ProviderMessageKind::System(
-                                                SystemKind::MessageDeleteAll { .. }
-                                            )
+                                // HistoryChat は timestamp 差分を再生せず短間隔でバースト送信し、
+                                // それ以外（Chat/Monetary/System）は従来どおり timestamp 再生を行う。
+                                let mut history_messages = Vec::new();
+                                let mut timed_messages = Vec::new();
+                                for msg in payload.envelope.messages.into_iter() {
+                                    if matches!(
+                                        &msg.kind,
+                                        ProviderMessageKind::System(
+                                            SystemKind::MessageDeleteAll { .. }
                                         )
-                                    })
-                                    .collect();
+                                    ) {
+                                        continue;
+                                    }
+                                    if matches!(&msg.kind, ProviderMessageKind::HistoryChat) {
+                                        history_messages.push(msg);
+                                    } else {
+                                        timed_messages.push(msg);
+                                    }
+                                }
                                 let connection_id = payload.envelope.connection_id;
                                 let received_at = payload.envelope.received_at;
                                 let event_id = payload.envelope.event_id;
 
-                                if !messages.is_empty() {
+                                if !history_messages.is_empty() || !timed_messages.is_empty() {
                                     // per-connection グローバル基準を取得または初期化
-                                    // 接続内の最初のメッセージ到着時に base_ts / base_instant を確定する
-                                    let (base_ts, base_instant) = {
+                                    // 接続内の最初の通常メッセージ到着時に base_ts / base_instant を確定する
+                                    let base_timing = if timed_messages.is_empty() {
+                                        None
+                                    } else {
                                         let mut map = timing_clone.lock().await;
-                                        *map.entry(connection_id).or_insert_with(|| {
+                                        Some(*map.entry(connection_id).or_insert_with(|| {
                                             (
-                                                messages[0].timestamp,
+                                                timed_messages[0].timestamp,
                                                 std::time::Instant::now(),
                                             )
-                                        })
+                                        }))
                                     };
                                     let ah = app_handle.clone();
                                     actix::spawn(async move {
@@ -1344,17 +1377,9 @@ fn main() {
                                         .checked_sub(min_interval)
                                         .unwrap_or_else(std::time::Instant::now);
 
-                                    for msg in messages {
-                                        // ProviderMessage.timestamp の差分（秒）に基づく送信予定時刻
-                                        // グローバル base_ts を基準とするためエンベロープをまたいでも正確
-                                        let offset_secs =
-                                            (msg.timestamp - base_ts).max(0) as u64;
-                                        let target_by_ts = base_instant
-                                            + std::time::Duration::from_secs(offset_secs);
-                                        // 最低間隔（32ms）を守った送信予定時刻
-                                        let target_by_interval = last_instant + min_interval;
-                                        let target = target_by_ts.max(target_by_interval);
-
+                                    // 履歴コメントは timestamp 差分を無視してバースト表示
+                                    for msg in history_messages {
+                                        let target = last_instant + min_interval;
                                         let now = std::time::Instant::now();
                                         if target > now {
                                             tokio::time::sleep(target - now).await;
@@ -1377,8 +1402,46 @@ fn main() {
                                             );
                                         }
                                     }
+
+                                    // 通常コメントは timestamp 差分で再生（従来挙動）
+                                    if let Some((base_ts, base_instant)) = base_timing {
+                                        for msg in timed_messages {
+                                            // ProviderMessage.timestamp の差分（秒）に基づく送信予定時刻
+                                            // グローバル base_ts を基準とするためエンベロープをまたいでも正確
+                                            let offset_secs =
+                                                (msg.timestamp - base_ts).max(0) as u64;
+                                            let target_by_ts = base_instant
+                                                + std::time::Duration::from_secs(offset_secs);
+                                            // 最低間隔（32ms）を守った送信予定時刻
+                                            let target_by_interval = last_instant + min_interval;
+                                            let target = target_by_ts.max(target_by_interval);
+
+                                            let now = std::time::Instant::now();
+                                            if target > now {
+                                                tokio::time::sleep(target - now).await;
+                                            }
+                                            last_instant = std::time::Instant::now();
+
+                                            let single_envelope = mcv_messages::McvEnvelope {
+                                                event_id,
+                                                connection_id,
+                                                messages: vec![msg],
+                                                received_at,
+                                                raw_message: None,
+                                            };
+                                            let rows = envelope_to_comment_rows(&single_envelope);
+                                            if let Err(e) = ah.emit("comment-received", rows) {
+                                                tracing::error!(
+                                                    target: "mcv::main",
+                                                    error = %e,
+                                                    "Failed to emit comment-received event"
+                                                );
+                                            }
+                                        }
+                                    }
+
                                     }); // actix::spawn for timing loop
-                                } // if !messages.is_empty()
+                                } // if history or timed messages exist
                             }
                             MessageType::Connected => {
                                 tracing::debug!(target: "mcv::main","Emitting connected event");

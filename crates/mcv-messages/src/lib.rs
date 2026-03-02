@@ -446,9 +446,16 @@ pub struct MonetaryInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum ModerationAction {
-    Delete { target_message_id: String },
-    Timeout { target_user_id: String, duration_sec: u64 },
-    Ban { target_user_id: String },
+    Delete {
+        target_message_id: String,
+    },
+    Timeout {
+        target_user_id: String,
+        duration_sec: u64,
+    },
+    Ban {
+        target_user_id: String,
+    },
 }
 
 /// システム通知の種別
@@ -458,13 +465,19 @@ pub enum SystemKind {
     Notice,
     Subscription,
     Membership,
-    MessageUpdate { target_message_id: String },
-    MessageDelete { target_message_id: String },
+    MessageUpdate {
+        target_message_id: String,
+    },
+    MessageDelete {
+        target_message_id: String,
+    },
     ChannelEvent,
     /// 承認待ちコメント（配信者の許可が来るまで非表示）
     Placeholder,
     /// 指定ユーザーのコメントを全て削除（BAN 等）
-    MessageDeleteAll { user_id: String },
+    MessageDeleteAll {
+        user_id: String,
+    },
 }
 
 /// メッセージの種別
@@ -472,6 +485,11 @@ pub enum SystemKind {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ProviderMessageKind {
     Chat,
+    /// 接続直後に取得した過去ログ（バックログ）コメント。
+    ///
+    /// 表示上はチャットだが、UI は timestamp 差分再生を行わず
+    /// 短間隔で一気に表示してよい。
+    HistoryChat,
     Monetary(MonetaryInfo),
     Moderation(ModerationAction),
     System(SystemKind),
@@ -852,7 +870,10 @@ mod tests {
         let orig_msg = &payload.envelope.messages[0];
         let deser_msg = &deserialized.envelope.messages[0];
         assert_eq!(orig_msg.sender.display_name, deser_msg.sender.display_name);
-        assert_eq!(orig_msg.content.to_plain_text(), deser_msg.content.to_plain_text());
+        assert_eq!(
+            orig_msg.content.to_plain_text(),
+            deser_msg.content.to_plain_text()
+        );
     }
 
     #[test]
@@ -868,6 +889,16 @@ mod tests {
 
         assert_eq!(payload.connection_id, deserialized.connection_id);
         assert_eq!(payload.text, deserialized.text);
+    }
+
+    #[test]
+    fn test_provider_message_kind_history_chat_serialization() {
+        let kind = ProviderMessageKind::HistoryChat;
+        let json = serde_json::to_value(&kind).unwrap();
+        assert_eq!(json, serde_json::json!({ "kind": "history_chat" }));
+
+        let deserialized: ProviderMessageKind = serde_json::from_value(json).unwrap();
+        assert!(matches!(deserialized, ProviderMessageKind::HistoryChat));
     }
 
     #[test]

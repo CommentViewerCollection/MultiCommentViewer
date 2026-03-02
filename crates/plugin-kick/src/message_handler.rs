@@ -10,7 +10,7 @@ use mcv_messages::{
     CommentReceivedPayload, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload,
     DisconnectPayload, DisconnectedPayload, GetBrowserPluginAckPayload, GetBrowserPluginPayload,
     GetCookieAckPayload, GetCookiePayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessageSource, MessageType, SetConnectionSitePayload,
+    MessageDestination, MessageSource, MessageType, ProviderMessageKind, SetConnectionSitePayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -194,6 +194,7 @@ pub(crate) async fn on_message_impl(
                                 item.sender.username,
                                 &item.content,
                                 &item.created_at,
+                                ProviderMessageKind::HistoryChat,
                             )
                         })
                         .collect::<Vec<_>>();

@@ -232,7 +232,6 @@ async fn send_to_bouyomi(
 // テキスト抽出ユーティリティ
 // ============================================================================
 
-
 // ============================================================================
 // プラグイン本体
 // ============================================================================
@@ -248,10 +247,13 @@ impl BouyomiPlugin {
     fn build_talk_text(&self, payload: &CommentReceivedPayload) -> Option<String> {
         let settings = &self.settings;
 
-        // エンベロープ内の最初のチャットメッセージを使用
-        let first_msg = payload.envelope.messages.iter().find(|m| {
-            matches!(m.kind, mcv_messages::ProviderMessageKind::Chat)
-        })?;
+        // エンベロープ内の最初の通常チャットメッセージを使用
+        // HistoryChat は履歴表示専用のため読み上げ対象にしない
+        let first_msg = payload
+            .envelope
+            .messages
+            .iter()
+            .find(|m| matches!(m.kind, mcv_messages::ProviderMessageKind::Chat))?;
 
         let handle_name = first_msg.sender.display_name_text();
         let comment_text = first_msg.content.to_plain_text();

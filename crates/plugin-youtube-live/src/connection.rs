@@ -93,8 +93,7 @@ fn convert_action_to_provider_message(
 
         // 承認待ちコメント: System(Placeholder) として追加
         Action::PlaceholderItem(placeholder) => {
-            let timestamp =
-                placeholder.timestamp_usec.parse::<i64>().unwrap_or(0) / 1_000_000;
+            let timestamp = placeholder.timestamp_usec.parse::<i64>().unwrap_or(0) / 1_000_000;
             Some(ProviderMessage {
                 id: placeholder.id.clone(),
                 platform_message_id: Some(placeholder.id.clone()),
@@ -291,6 +290,12 @@ impl Connection {
                 .actions()
                 .iter()
                 .filter_map(|action| convert_action_to_provider_message(action, connection_id))
+                .map(|mut msg| {
+                    if matches!(msg.kind, ProviderMessageKind::Chat) {
+                        msg.kind = ProviderMessageKind::HistoryChat;
+                    }
+                    msg
+                })
                 .collect();
             if !provider_messages.is_empty() {
                 let envelope = McvEnvelope {
@@ -345,7 +350,9 @@ impl Connection {
                         // ポーリング1レスポンス分の actions をまとめて1つの McvEnvelope に収める
                         let provider_messages: Vec<ProviderMessage> = actions
                             .iter()
-                            .filter_map(|action| convert_action_to_provider_message(action, connection_id))
+                            .filter_map(|action| {
+                                convert_action_to_provider_message(action, connection_id)
+                            })
                             .collect();
                         if !provider_messages.is_empty() {
                             let envelope = McvEnvelope {

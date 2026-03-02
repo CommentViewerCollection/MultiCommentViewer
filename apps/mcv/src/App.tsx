@@ -26,7 +26,7 @@ interface CommentRow {
   connection_id: string
   is_visible: boolean
   replaces_id?: string
-  /** メッセージ種別: "chat" | "monetary" | "system" */
+  /** メッセージ種別: "chat" | "history_chat" | "monetary" | "system" */
   kind: string
 }
 
@@ -44,7 +44,7 @@ interface Comment {
   colorInfo?: ColorInfo
   is_visible: boolean
   replaces_id?: string
-  /** メッセージ種別: "chat" | "monetary" | "system" */
+  /** メッセージ種別: "chat" | "history_chat" | "monetary" | "system" */
   kind: string
 }
 
@@ -901,6 +901,7 @@ function App() {
   const kindCellClass = (kind: string) => {
     if (kind === 'monetary') return 'text-yellow-700 dark:text-yellow-300 italic'
     if (kind === 'system') return 'text-gray-500 dark:text-gray-400 italic'
+    if (kind === 'history_chat') return ''
     return ''
   }
 

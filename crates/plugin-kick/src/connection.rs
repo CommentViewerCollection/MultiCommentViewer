@@ -130,6 +130,7 @@ pub(crate) fn build_provider_message(
     sender_username: String,
     content: &str,
     created_at: &str,
+    kind: ProviderMessageKind,
 ) -> ProviderMessage {
     ProviderMessage {
         id: Uuid::new_v4().to_string(),
@@ -145,7 +146,7 @@ pub(crate) fn build_provider_message(
             role: None,
         },
         timestamp: parse_timestamp(created_at),
-        kind: ProviderMessageKind::Chat,
+        kind,
         content: ProviderContent::Text {
             text: parse_kick_message_parts(content),
         },
@@ -442,6 +443,7 @@ impl Connection {
                     chat_event.sender.username,
                     &chat_event.content,
                     &chat_event.created_at,
+                    ProviderMessageKind::Chat,
                 );
 
                 let envelope = McvEnvelope {

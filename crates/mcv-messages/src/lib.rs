@@ -415,6 +415,9 @@ pub struct ProviderSender {
     pub badges: Vec<ProviderBadge>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub role: Option<UserRole>,
+    /// ユーザーアイコン画像URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar_url: Option<String>,
 }
 
 impl ProviderSender {
@@ -839,6 +842,7 @@ mod tests {
                 }],
                 badges: vec![],
                 role: None,
+                avatar_url: None,
             },
             timestamp: chrono::Utc::now().timestamp(),
             kind: ProviderMessageKind::Chat,

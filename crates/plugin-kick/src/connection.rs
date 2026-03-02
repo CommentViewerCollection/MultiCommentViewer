@@ -144,6 +144,7 @@ pub(crate) fn build_provider_message(
             }],
             badges: vec![],
             role: None,
+            avatar_url: None,
         },
         timestamp: parse_timestamp(created_at),
         kind,

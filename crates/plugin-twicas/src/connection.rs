@@ -502,6 +502,7 @@ async fn handle_text_message(
                 display_name: vec![MessagePart::Text { text: user_name }],
                 badges: vec![],
                 role: None,
+                avatar_url: None,
             },
             timestamp,
             kind: ProviderMessageKind::Chat,

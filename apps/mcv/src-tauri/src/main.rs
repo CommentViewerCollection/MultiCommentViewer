@@ -48,6 +48,9 @@ struct CommentRow {
     replaces_id: Option<String>,
     /// メッセージ種別: "chat" | "history_chat" | "monetary" | "system"
     kind: String,
+    /// ユーザーアイコン URL（省略可）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    avatar_url: Option<String>,
 }
 
 /// "delete-all-by-user" イベントのペイロード
@@ -107,6 +110,7 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 is_visible,
                 replaces_id,
                 kind,
+                avatar_url: msg.sender.avatar_url.clone(),
             }
         })
         .collect()

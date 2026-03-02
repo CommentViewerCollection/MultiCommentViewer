@@ -1030,6 +1030,7 @@ fn segment_event_to_provider_msg(event: SegmentEvent) -> Option<ProviderMessage>
                     }],
                     badges: vec![],
                     role: None,
+                    avatar_url: None,
                 },
                 timestamp,
                 kind: ProviderMessageKind::Chat,
@@ -1054,6 +1055,7 @@ fn segment_event_to_provider_msg(event: SegmentEvent) -> Option<ProviderMessage>
                     display_name: vec![],
                     badges: vec![],
                     role: None,
+                    avatar_url: None,
                 },
                 timestamp,
                 kind: ProviderMessageKind::System(SystemKind::Notice),
@@ -1094,6 +1096,7 @@ fn segment_event_to_provider_msg(event: SegmentEvent) -> Option<ProviderMessage>
                     }],
                     badges: vec![],
                     role: None,
+                    avatar_url: None,
                 },
                 timestamp,
                 kind: ProviderMessageKind::Monetary(MonetaryInfo {
@@ -1131,6 +1134,7 @@ fn segment_event_to_provider_msg(event: SegmentEvent) -> Option<ProviderMessage>
                     display_name: vec![MessagePart::Text { text: advertiser }],
                     badges: vec![],
                     role: None,
+                    avatar_url: None,
                 },
                 timestamp,
                 kind: ProviderMessageKind::Monetary(MonetaryInfo {

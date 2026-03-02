@@ -74,6 +74,7 @@ fn convert_to_provider_message(msg: &LiveChatTextMessage) -> ProviderMessage {
             }],
             badges,
             role: None,
+            avatar_url: msg.author_photo_url.clone(),
         },
         timestamp,
         kind: ProviderMessageKind::Chat,
@@ -104,6 +105,7 @@ fn convert_action_to_provider_message(
                     display_name: vec![],
                     badges: vec![],
                     role: None,
+                    avatar_url: None,
                 },
                 timestamp,
                 kind: ProviderMessageKind::System(SystemKind::Placeholder),
@@ -133,6 +135,7 @@ fn convert_action_to_provider_message(
                 display_name: vec![],
                 badges: vec![],
                 role: None,
+                avatar_url: None,
             },
             timestamp: 0,
             kind: ProviderMessageKind::System(SystemKind::MessageDelete {
@@ -154,6 +157,7 @@ fn convert_action_to_provider_message(
                 display_name: vec![],
                 badges: vec![],
                 role: None,
+                avatar_url: None,
             },
             timestamp: 0,
             kind: ProviderMessageKind::System(SystemKind::MessageDeleteAll {

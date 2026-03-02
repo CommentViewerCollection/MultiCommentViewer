@@ -21,6 +21,7 @@ fn make_test_comment_payload(connection_id: Uuid, user: &str, text: &str) -> Com
             display_name: vec![MessagePart::Text { text: user.to_string() }],
             badges: vec![],
             role: None,
+            avatar_url: None,
         },
         timestamp: chrono::Utc::now().timestamp(),
         kind: ProviderMessageKind::Chat,

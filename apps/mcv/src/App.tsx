@@ -36,6 +36,7 @@ interface CommentRow {
   replaces_id?: string
   /** メッセージ種別: "chat" | "history_chat" | "monetary" | "system" */
   kind: string
+  avatar_url?: string
 }
 
 // Display-friendly comment row (for DataGrid)
@@ -55,6 +56,7 @@ interface Comment {
   replaces_id?: string
   /** メッセージ種別: "chat" | "history_chat" | "monetary" | "system" */
   kind: string
+  avatar_url?: string
 }
 
 
@@ -280,6 +282,7 @@ function App() {
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
     { key: 'connection_name', label: '接続', width: 150, visible: true, resizable: true },
+    { key: 'avatar_url', label: 'サムネ', width: 48, visible: true, resizable: true },
     { key: 'user_name', label: 'ユーザー名', width: 150, visible: true, resizable: true },
     { key: 'text', label: 'コメント', width: 400, visible: true, resizable: true, wrap: true },
     { key: 'timestamp', label: '時刻', width: 150, visible: true, resizable: true },
@@ -923,6 +926,18 @@ function App() {
       // 接続名を動的に取得（名前変更に連動、空欄も許容）
       const conn = connections.find(c => c.connection_id === item.connection_id)
       return <span className={extraClass}>{conn?.name ?? ''}</span>
+    }
+    if (column.key === 'avatar_url') {
+      return item.avatar_url ? (
+        <img
+          src={item.avatar_url}
+          alt=""
+          width={32}
+          height={32}
+          className="rounded-full"
+          style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+        />
+      ) : null
     }
     if (column.key === 'user_name') {
       return (

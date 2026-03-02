@@ -1085,6 +1085,7 @@ fn make_dummy_provider_message(user_name: &str, text: &str) -> ProviderMessage {
             }],
             badges: vec![],
             role: None,
+            avatar_url: None,
         },
         timestamp: chrono::Utc::now().timestamp(),
         kind: ProviderMessageKind::Chat,

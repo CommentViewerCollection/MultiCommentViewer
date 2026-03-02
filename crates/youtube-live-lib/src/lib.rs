@@ -479,8 +479,9 @@ pub struct LiveChatTextMessage {
     pub author_name: String,
     pub message_parts: Vec<MessagePart>,
     pub timestamp_usec: String,
-    pub author_badges: Vec<AuthorBadge>, // 型は実際の戻り値に合わせてください
+    pub author_badges: Vec<AuthorBadge>,
     pub author_external_channel_id: String,
+    pub author_photo_url: Option<String>,
 }
 
 /// 承認待ちコメント（liveChatPlaceholderItemRenderer）
@@ -519,6 +520,14 @@ fn parse_live_chat_text_message(renderer: &serde_json::Value) -> Option<LiveChat
     let author_name = get_string(renderer, &["authorName", "simpleText"]).ok()?;
     let timestamp_usec = get_string(renderer, &["timestampUsec"]).ok()?;
     let author_external_channel_id = get_string(renderer, &["authorExternalChannelId"]).ok()?;
+    let author_photo_url = renderer
+        .get("authorPhoto")
+        .and_then(|v| v.get("thumbnails"))
+        .and_then(|v| v.as_array())
+        .and_then(|arr| arr.first())
+        .and_then(|tn| tn.get("url"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     Some(LiveChatTextMessage {
         author_name,
@@ -526,6 +535,7 @@ fn parse_live_chat_text_message(renderer: &serde_json::Value) -> Option<LiveChat
         timestamp_usec,
         author_badges,
         author_external_channel_id,
+        author_photo_url,
     })
 }
 

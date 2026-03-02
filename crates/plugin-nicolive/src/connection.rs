@@ -3,13 +3,12 @@
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType, Money, MonetaryInfo,
-    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
-    SystemKind,
+    MessageDestination, MessagePart, MessageSource, MessageType, MonetaryInfo, Money,
+    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
 };
 use nicolive_lib::{
-    extract_live_id, fetch_websocket_url,
-    try_pop_segment_event, try_pop_view_entry, SegmentEvent, ServerTimeCache, ViewEntry,
+    extract_live_id, fetch_websocket_url, try_pop_segment_event, try_pop_view_entry, SegmentEvent,
+    ServerTimeCache, ViewEntry,
 };
 use plugin_abi_helper::v3::prelude::*;
 use std::sync::Arc;
@@ -529,7 +528,11 @@ impl Connection {
                             let ctx = ctx.clone();
                             tokio::spawn(async move {
                                 if let Err(e) = Self::fetch_segment_messages(
-                                    &client, &uri, connection_id, &ctx, logical_plugin_id,
+                                    &client,
+                                    &uri,
+                                    connection_id,
+                                    &ctx,
+                                    logical_plugin_id,
                                 )
                                 .await
                                 {
@@ -567,7 +570,11 @@ impl Connection {
                                 let ctx = ctx.clone();
                                 tokio::spawn(async move {
                                     if let Err(e) = Self::fetch_segment_messages(
-                                        &client, &uri, connection_id, &ctx, logical_plugin_id,
+                                        &client,
+                                        &uri,
+                                        connection_id,
+                                        &ctx,
+                                        logical_plugin_id,
                                     )
                                     .await
                                     {
@@ -792,8 +799,18 @@ impl Connection {
                     }
                 }
             }
+            "error" => {
+                let code = json["data"]["code"].as_str().unwrap_or("unknown");
+                tracing::warn!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    error_code = %code,
+                    raw = %text,
+                    "サーバーからエラーメッセージ受信"
+                );
+            }
             _ => {
-                tracing::info!(
+                tracing::debug!(
                     target: "mcv::plugin-nicolive",
                     connection_id = %connection_id,
                     msg_type = msg_type,

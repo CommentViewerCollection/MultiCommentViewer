@@ -499,13 +499,31 @@ impl Connection {
 
                 match entry {
                     ViewEntry::Previous { uri } => {
-                        // 直前の完成済みセグメント（約30秒前）はスキップ
-                        fetched_uris.insert(uri);
-                        tracing::debug!(
-                            target: "mcv::plugin-nicolive",
-                            connection_id = %connection_id,
-                            "Previous エントリをスキップ（遅延防止）"
-                        );
+                        if !fetched_uris.contains(&uri) {
+                            fetched_uris.insert(uri.clone());
+                            tracing::info!(
+                                target: "mcv::plugin-nicolive",
+                                connection_id = %connection_id,
+                                uri = %uri,
+                                "Previous 受信: 過去コメントを取得"
+                            );
+                            let client = client.clone();
+                            let ctx = ctx.clone();
+                            tokio::spawn(async move {
+                                if let Err(e) = Self::fetch_segment_messages(
+                                    &client, &uri, connection_id, &ctx, logical_plugin_id,
+                                )
+                                .await
+                                {
+                                    tracing::warn!(
+                                        target: "mcv::plugin-nicolive",
+                                        connection_id = %connection_id,
+                                        error = %e,
+                                        "Previous セグメント取得失敗"
+                                    );
+                                }
+                            });
+                        }
                     }
                     ViewEntry::Segment { uri } => {
                         if fetched_uris.contains(&uri) {
@@ -555,8 +573,23 @@ impl Connection {
                         );
                         next_info = Some((Duration::ZERO, at.to_string()));
                     }
-                    ViewEntry::Backward { segment_uri, .. } => {
-                        // snapshot_uri (/data/backward/v4/) は異なるフォーマットのためスキップ
+                    ViewEntry::Backward { segment_uri, snapshot_uri } => {
+                        // snapshot_uri: 調査用に取得・ログ出力
+                        if let Some(snap_uri) = snapshot_uri {
+                            if !fetched_uris.contains(&snap_uri) {
+                                fetched_uris.insert(snap_uri.clone());
+                                tracing::info!(
+                                    target: "mcv::plugin-nicolive",
+                                    connection_id = %connection_id,
+                                    uri = %snap_uri,
+                                    "Backward snapshot 受信: 調査のため取得"
+                                );
+                                let client = client.clone();
+                                tokio::spawn(async move {
+                                    Self::investigate_backward_snapshot(&client, &snap_uri, connection_id).await;
+                                });
+                            }
+                        }
                         if let Some(uri) = segment_uri {
                             if !fetched_uris.contains(&uri) {
                                 fetched_uris.insert(uri.clone());
@@ -602,6 +635,136 @@ impl Connection {
         );
 
         Ok(next_info)
+    }
+
+    /// Backward snapshot URI の内容を調査してログに出力する（フロントへは送信しない）。
+    async fn investigate_backward_snapshot(
+        client: &rquest::Client,
+        uri: &str,
+        connection_id: Uuid,
+    ) {
+        use nicolive_lib::decode_segment_events;
+        use tokio::time::timeout;
+
+        let response = match client
+            .get(uri)
+            .header("Accept", "*/*")
+            .header("Origin", "https://live.nicovideo.jp")
+            .header("Referer", "https://live.nicovideo.jp/")
+            .send()
+            .await
+        {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::warn!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    uri = %uri,
+                    error = %e,
+                    "Backward snapshot GET 失敗"
+                );
+                return;
+            }
+        };
+
+        tracing::info!(
+            target: "mcv::plugin-nicolive",
+            connection_id = %connection_id,
+            status = %response.status(),
+            content_type = ?response.headers().get("content-type"),
+            "Backward snapshot レスポンス"
+        );
+
+        if !response.status().is_success() {
+            return;
+        }
+
+        match timeout(Duration::from_secs(15), response.bytes()).await {
+            Ok(Ok(bytes)) => {
+                use nicolive_lib::decode_chunked_messages;
+
+                // 先頭40バイトを hex でログ（フォーマット特定用）
+                let hex_head: String = bytes.iter().take(40)
+                    .map(|b| format!("{:02X}", b))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                tracing::info!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    bytes_len = bytes.len(),
+                    hex_head = %hex_head,
+                    "Backward snapshot バイト列"
+                );
+
+                // 試み1: そのまま decode_segment_events（length-delimited ChunkedMessage 列）
+                let events_full = decode_segment_events(&bytes);
+                tracing::info!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    count = events_full.len(),
+                    "snapshot 試み1: decode_segment_events(full) → {} 件",
+                    events_full.len()
+                );
+
+                // 試み2: 先頭の varint 長さプレフィックスを読み飛ばして再試行
+                {
+                    use prost::bytes::Buf;
+                    let mut cursor = prost::bytes::Bytes::copy_from_slice(&bytes);
+                    if let Ok(inner_len) = prost::decode_length_delimiter(&mut cursor) {
+                        let remaining = cursor.remaining();
+                        tracing::info!(
+                            target: "mcv::plugin-nicolive",
+                            connection_id = %connection_id,
+                            inner_len = inner_len,
+                            remaining_after_prefix = remaining,
+                            "snapshot varint prefix 読み飛ばし"
+                        );
+                        let inner: Vec<u8> = cursor.chunk()[..inner_len.min(remaining)].to_vec();
+                        let events_inner = decode_segment_events(&inner);
+                        tracing::info!(
+                            target: "mcv::plugin-nicolive",
+                            connection_id = %connection_id,
+                            count = events_inner.len(),
+                            "snapshot 試み2: decode_segment_events(inner) → {} 件",
+                            events_inner.len()
+                        );
+                        for (i, event) in events_inner.iter().take(3).enumerate() {
+                            tracing::info!(
+                                target: "mcv::plugin-nicolive",
+                                connection_id = %connection_id,
+                                index = i,
+                                event = ?event,
+                                "snapshot サンプルイベント"
+                            );
+                        }
+                        // ChunkedMessage (raw) も試す
+                        let raw = decode_chunked_messages(&inner);
+                        tracing::info!(
+                            target: "mcv::plugin-nicolive",
+                            connection_id = %connection_id,
+                            raw_count = raw.len(),
+                            "snapshot 試み2: decode_chunked_messages(inner) → {} 件",
+                            raw.len()
+                        );
+                    }
+                }
+            }
+            Ok(Err(e)) => {
+                tracing::warn!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "Backward snapshot 読み取りエラー"
+                );
+            }
+            Err(_) => {
+                tracing::warn!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    "Backward snapshot タイムアウト（15秒）"
+                );
+            }
+        }
     }
 
     /// セグメント URI からコメント一覧を取得し CommentReceived を送信する。

@@ -16,11 +16,19 @@ type MessagePart =
   | { type: 'text'; text: string }
   | { type: 'image'; url: string; width?: number; height?: number; alt?: string }
 
+// バッジ（ProviderBadge に対応）
+interface Badge {
+  id: string
+  name: string
+  image_url?: string
+}
+
 // バックエンドから送られてくる表示用コメント行（main.rs の CommentRow に対応）
 interface CommentRow {
   id: string
   user_name: MessagePart[]
   user_id: string
+  badges: Badge[]
   text: MessagePart[]
   timestamp: number
   connection_id: string
@@ -35,6 +43,7 @@ interface Comment {
   id: string
   user_name: MessagePart[]
   user_id: string
+  badges: Badge[]
   text: MessagePart[]
   timestamp: number
   connection_id?: string
@@ -919,6 +928,20 @@ function App() {
       return (
         <span className={extraClass}>
           <RenderMessageParts parts={item.user_name} isUsername={true} />
+          {item.badges?.map((badge, i) =>
+            badge.image_url ? (
+              <img
+                key={i}
+                src={badge.image_url}
+                alt={badge.name}
+                title={badge.name}
+                width={16}
+                height={16}
+                className="inline-block align-middle ml-0.5"
+                style={{ maxWidth: '16px', maxHeight: '16px' }}
+              />
+            ) : null
+          )}
         </span>
       )
     }

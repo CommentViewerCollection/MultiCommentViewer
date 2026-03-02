@@ -443,6 +443,7 @@ fn parse_author_badges(
             let mut thumbnails = vec![];
             if let Some(tns) = badge
                 .get("liveChatAuthorBadgeRenderer")
+                .and_then(|v| v.get("customThumbnail"))
                 .and_then(|v| v.get("thumbnails"))
                 .and_then(|v| v.as_array())
             {

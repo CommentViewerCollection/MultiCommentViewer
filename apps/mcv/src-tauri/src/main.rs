@@ -1404,17 +1404,12 @@ fn main() {
                                     }
 
                                     // 通常コメントは timestamp 差分で再生（従来挙動）
-                                    if let Some((base_ts, base_instant)) = base_timing {
+                                    if let Some((_base_ts, _base_instant)) = base_timing {
                                         for msg in timed_messages {
-                                            // ProviderMessage.timestamp の差分（秒）に基づく送信予定時刻
-                                            // グローバル base_ts を基準とするためエンベロープをまたいでも正確
-                                            let offset_secs =
-                                                (msg.timestamp - base_ts).max(0) as u64;
-                                            let target_by_ts = base_instant
-                                                + std::time::Duration::from_secs(offset_secs);
+                                            // TODO: ラグ調査中のため timestamp 差分を一時的に無効化
                                             // 最低間隔（32ms）を守った送信予定時刻
                                             let target_by_interval = last_instant + min_interval;
-                                            let target = target_by_ts.max(target_by_interval);
+                                            let target = target_by_interval;
 
                                             let now = std::time::Instant::now();
                                             if target > now {

@@ -8,12 +8,11 @@ use mcv_messages::{
     SystemKind,
 };
 use nicolive_lib::{
-    decode_chunked_messages, decode_segment_events, decode_view_entries, extract_live_id,
-    fetch_websocket_url, SegmentEvent, ServerTimeCache, ViewEntry,
+    extract_live_id, fetch_websocket_url,
+    try_pop_segment_event, try_pop_view_entry, SegmentEvent, ServerTimeCache, ViewEntry,
 };
-use base64::{engine::general_purpose::STANDARD, Engine as _};
 use plugin_abi_helper::v3::prelude::*;
-use std::{io::Write, sync::Arc};
+use std::sync::Arc;
 use tokio::{
     net::TcpStream,
     sync::watch,
@@ -381,9 +380,12 @@ impl Connection {
 
         let _end_guard = PollEndGuard { connection_id };
 
-        let client = reqwest::Client::builder()
+        // Chrome 131 の TLS/HTTP2 フィンガープリントでリクエストし、
+        // サーバー側のブラウザ検出・意図的な遅延を回避する。
+        let client = rquest::Client::builder()
+            .impersonate(rquest::Impersonate::Chrome131)
             .build()
-            .unwrap_or_else(|_| reqwest::Client::new());
+            .unwrap_or_else(|_| rquest::Client::new());
 
         let mut at_param = "now".to_string();
         // ポーリングをまたいで同じセグメント URI を重複取得しないよう管理する
@@ -427,11 +429,15 @@ impl Connection {
         }
     }
 
-    /// viewUri を 1 回 GET し、レスポンス内の全 ChunkedEntry をデコードする。
+    /// viewUri を 1 回 GET し、ストリームを読みながら ChunkedEntry をリアルタイムにデコードする。
+    ///
+    /// 従来の `bytes().await` では全レスポンス（約30秒）が届くまでブロックしていた。
+    /// `bytes_stream()` を使い、Segment エントリが届いた瞬間に `fetch_segment_messages` を
+    /// tokio::spawn でスポーンすることで遅延を解消する。
     ///
     /// `Next` エントリがあれば `Some((待機時間, 次回 at))` を返す。
     async fn fetch_and_decode_view(
-        client: &reqwest::Client,
+        client: &rquest::Client,
         view_uri: &str,
         at_param: &str,
         connection_id: Uuid,
@@ -439,6 +445,8 @@ impl Connection {
         logical_plugin_id: Uuid,
         fetched_uris: &mut std::collections::HashSet<String>,
     ) -> Result<Option<(Duration, String)>, String> {
+        use prost::bytes::{Buf, BufMut, BytesMut};
+
         let url = if view_uri.contains('?') {
             format!("{view_uri}&at={at_param}")
         } else {
@@ -450,129 +458,130 @@ impl Connection {
             .header("Accept", "*/*")
             .header("Origin", "https://live.nicovideo.jp")
             .header("Referer", "https://live.nicovideo.jp/")
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
             .send()
             .await
             .map_err(|e| format!("GET 失敗: {e}"))?;
 
         let status = response.status();
-        let bytes = response
-            .bytes()
-            .await
-            .map_err(|e| format!("レスポンス読み取り失敗: {e}"))?;
-
         tracing::info!(
             target: "mcv::plugin-nicolive",
             connection_id = %connection_id,
             status = %status,
-            bytes_len = bytes.len(),
-            "viewUri レスポンス受信"
+            "viewUri レスポンス受信開始"
         );
 
         if !status.is_success() {
             return Err(format!("HTTP エラー: {status}"));
         }
 
-        let entries = decode_view_entries(&bytes);
-        let mut file = std::fs::OpenOptions::new()
-            .create(true) // ファイルがなければ作成
-            .append(true) // 追記モード
-            .open("a.txt")
-            .unwrap();
-
-        file.write_all(format!("{:?}", entries).as_bytes()).unwrap();
-        file.write_all(b"\n").unwrap(); // 改行を追加したい場合
+        // ストリーミング読み取り: バイト列が届き次第デコードし Segment を即時スポーン
+        let mut buf = BytesMut::new();
+        let mut stream = response.bytes_stream();
         let mut next_info: Option<(Duration, String)> = None;
         let mut entry_count = 0u32;
-        // 今回取得すべき新規セグメント URI を収集する（重複チェック済み）
-        let mut segment_uris: Vec<String> = Vec::new();
 
-        for entry in &entries {
-            entry_count += 1;
-            match entry {
-                ViewEntry::Segment { uri } | ViewEntry::Previous { uri } => {
-                    if fetched_uris.contains(uri) {
+        while let Some(chunk_result) = stream.next().await {
+            let chunk = chunk_result.map_err(|e| format!("ストリーム読み取りエラー: {e}"))?;
+            buf.put(chunk.as_ref());
+
+            // バッファから完全なエントリが取り出せる限りループ
+            loop {
+                let (entry_opt, consumed) = try_pop_view_entry(&buf);
+                if consumed == 0 {
+                    break; // データ不足、次のチャンクを待つ
+                }
+                buf.advance(consumed);
+                entry_count += 1;
+
+                let entry = match entry_opt {
+                    Some(e) => e,
+                    None => continue, // 認識外エントリをスキップ
+                };
+
+                match entry {
+                    ViewEntry::Previous { uri } => {
+                        // 直前の完成済みセグメント（約30秒前）はスキップ
+                        fetched_uris.insert(uri);
                         tracing::debug!(
                             target: "mcv::plugin-nicolive",
                             connection_id = %connection_id,
-                            uri = %uri,
-                            "セグメント重複スキップ"
+                            "Previous エントリをスキップ（遅延防止）"
                         );
-                    } else {
-                        tracing::info!(
-                            target: "mcv::plugin-nicolive",
-                            connection_id = %connection_id,
-                            uri = %uri,
-                            "Segment/Previous 受信: コメント取得対象"
-                        );
-                        fetched_uris.insert(uri.clone());
-                        segment_uris.push(uri.clone());
                     }
-                }
-                ViewEntry::Next { at } => {
-                    tracing::info!(
-                        target: "mcv::plugin-nicolive",
-                        connection_id = %connection_id,
-                        at = at,
-                        "ReadyForNext 受信"
-                    );
-                    // Duration はダミー（呼び出し元では使用しない）
-                    next_info = Some((Duration::ZERO, at.to_string()));
-                }
-                ViewEntry::Backward { segment_uri, .. } => {
-                    // BackwardSegment.segment.uri は /data/segment/v4/ 形式 → 通常通り取得可能
-                    // snapshot_uri (/data/backward/v4/) は異なるフォーマットのためスキップ
-                    if let Some(uri) = segment_uri {
-                        if fetched_uris.contains(uri) {
+                    ViewEntry::Segment { uri } => {
+                        if fetched_uris.contains(&uri) {
                             tracing::debug!(
                                 target: "mcv::plugin-nicolive",
                                 connection_id = %connection_id,
                                 uri = %uri,
-                                "Backward セグメント重複スキップ"
+                                "セグメント重複スキップ"
                             );
                         } else {
+                            fetched_uris.insert(uri.clone());
                             tracing::info!(
                                 target: "mcv::plugin-nicolive",
                                 connection_id = %connection_id,
                                 uri = %uri,
-                                "Backward segment 受信: コメント取得対象"
+                                "Segment 受信: セグメント取得を即時スポーン"
                             );
-                            fetched_uris.insert(uri.clone());
-                            segment_uris.push(uri.clone());
+                            // 受け取った瞬間にスポーン（full レスポンスを待たない）
+                            let client = client.clone();
+                            let ctx = ctx.clone();
+                            tokio::spawn(async move {
+                                if let Err(e) = Self::fetch_segment_messages(
+                                    &client, &uri, connection_id, &ctx, logical_plugin_id,
+                                )
+                                .await
+                                {
+                                    tracing::warn!(
+                                        target: "mcv::plugin-nicolive",
+                                        connection_id = %connection_id,
+                                        error = %e,
+                                        "セグメントメッセージ取得失敗"
+                                    );
+                                }
+                            });
                         }
                     }
-                }
-            }
-        }
-
-        // 複数セグメントを並列で取得（直列だと後ろのセグメントほど遅延が増える）
-        if !segment_uris.is_empty() {
-            let fetch_futures = segment_uris.iter().map(|uri| {
-                let client = client.clone();
-                let ctx = ctx.clone();
-                let uri = uri.clone();
-                async move {
-                    let result = Self::fetch_segment_messages(
-                        &client,
-                        &uri,
-                        connection_id,
-                        &ctx,
-                        logical_plugin_id,
-                    )
-                    .await;
-                    (uri, result)
-                }
-            });
-            let results = futures_util::future::join_all(fetch_futures).await;
-            for (uri, result) in results {
-                if let Err(e) = result {
-                    tracing::warn!(
-                        target: "mcv::plugin-nicolive",
-                        connection_id = %connection_id,
-                        error = %e,
-                        uri = %uri,
-                        "セグメントメッセージ取得失敗"
-                    );
+                    ViewEntry::Next { at } => {
+                        tracing::info!(
+                            target: "mcv::plugin-nicolive",
+                            connection_id = %connection_id,
+                            at = at,
+                            "ReadyForNext 受信"
+                        );
+                        next_info = Some((Duration::ZERO, at.to_string()));
+                    }
+                    ViewEntry::Backward { segment_uri, .. } => {
+                        // snapshot_uri (/data/backward/v4/) は異なるフォーマットのためスキップ
+                        if let Some(uri) = segment_uri {
+                            if !fetched_uris.contains(&uri) {
+                                fetched_uris.insert(uri.clone());
+                                tracing::info!(
+                                    target: "mcv::plugin-nicolive",
+                                    connection_id = %connection_id,
+                                    uri = %uri,
+                                    "Backward segment 受信: 即時スポーン"
+                                );
+                                let client = client.clone();
+                                let ctx = ctx.clone();
+                                tokio::spawn(async move {
+                                    if let Err(e) = Self::fetch_segment_messages(
+                                        &client, &uri, connection_id, &ctx, logical_plugin_id,
+                                    )
+                                    .await
+                                    {
+                                        tracing::warn!(
+                                            target: "mcv::plugin-nicolive",
+                                            connection_id = %connection_id,
+                                            error = %e,
+                                            "Backward セグメント取得失敗"
+                                        );
+                                    }
+                                });
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -582,26 +591,30 @@ impl Connection {
             connection_id = %connection_id,
             entry_count = entry_count,
             has_next = next_info.is_some(),
-            "viewUri エントリ処理完了"
+            "viewUri ストリーミング処理完了"
         );
 
         Ok(next_info)
     }
 
     /// セグメント URI からコメント一覧を取得し CommentReceived を送信する。
+    ///
+    /// ストリーミング読み取りにより、HTTP チャンクが届くたびにデコードして即時送信する。
+    /// これにより、セグメント全体のダウンロード完了を待たずにコメントが表示される。
     async fn fetch_segment_messages(
-        client: &reqwest::Client,
+        client: &rquest::Client,
         segment_uri: &str,
         connection_id: Uuid,
         ctx: &PluginContext,
         logical_plugin_id: Uuid,
     ) -> Result<(), String> {
+        use prost::bytes::{Buf, BufMut, BytesMut};
+
         let response = client
             .get(segment_uri)
             .header("Accept", "*/*")
             .header("Origin", "https://live.nicovideo.jp")
             .header("Referer", "https://live.nicovideo.jp/")
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36")
             .send()
             .await
             .map_err(|e| format!("セグメント GET 失敗: {e}"))?;
@@ -610,62 +623,58 @@ impl Connection {
             return Err(format!("セグメント HTTP エラー: {}", response.status()));
         }
 
-        let bytes = response
-            .bytes()
-            .await
-            .map_err(|e| format!("セグメント読み取り失敗: {e}"))?;
+        // ストリーミング読み取り: チャンクが届くたびに ChunkedMessage をデコードして即時送信
+        let mut buf = BytesMut::new();
+        let mut stream = response.bytes_stream();
 
-        // 調査用: 生の ChunkedMessage をパースして nico_segment_data.txt に追記
-        {
-            let raw = decode_chunked_messages(&bytes);
-            if let Ok(mut f) = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open("nico_segment_data.txt")
-            {
-                for msg in &raw {
-                    let _ = writeln!(f, "{:#?}", msg);
-                    let _ = writeln!(f, "---");
+        while let Some(chunk_result) = stream.next().await {
+            let chunk = chunk_result.map_err(|e| format!("セグメント読み取りエラー: {e}"))?;
+            buf.put(chunk.as_ref());
+
+            // バッファから完全なメッセージが取り出せる限りデコード
+            let mut batch = Vec::new();
+            loop {
+                let (event_opt, consumed) = try_pop_segment_event(&buf);
+                if consumed == 0 {
+                    break; // データ不足、次のチャンクを待つ
+                }
+                buf.advance(consumed);
+                if let Some(event) = event_opt {
+                    if let Some(msg) = segment_event_to_provider_msg(event) {
+                        batch.push(msg);
+                    }
                 }
             }
-        }
 
-        let events = decode_segment_events(&bytes);
-
-        // 1セグメント HTTP レスポンス内の全イベントを ProviderMessage に変換して McvEnvelope にまとめる
-        let mut provider_messages = Vec::new();
-        for event in events {
-            if let Some(provider_msg) = segment_event_to_provider_msg(event) {
-                provider_messages.push(provider_msg);
+            // チャンクごとに溜まったメッセージをまとめて送信
+            if !batch.is_empty() {
+                tracing::info!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    comment_count = batch.len(),
+                    "コメントバッチ送信"
+                );
+                let envelope = McvEnvelope {
+                    event_id: Uuid::new_v4(),
+                    connection_id,
+                    messages: batch,
+                    received_at: chrono::Utc::now().timestamp(),
+                    raw_message: None,
+                };
+                let payload = CommentReceivedPayload {
+                    connection_id,
+                    envelope,
+                };
+                let mcv_msg = McvMessage::new_notification(
+                    MessageType::CommentReceived,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(&payload).unwrap_or_default(),
+                );
+                NicoLivePlugin::send_message(ctx.clone(), mcv_msg).await;
             }
-        }
-        if !provider_messages.is_empty() {
-            tracing::info!(
-                target: "mcv::plugin-nicolive",
-                connection_id = %connection_id,
-                comment_count = provider_messages.len(),
-                "コメント送信完了"
-            );
-            let envelope = McvEnvelope {
-                event_id: Uuid::new_v4(),
-                connection_id,
-                messages: provider_messages,
-                received_at: chrono::Utc::now().timestamp(),
-                raw_message: Some(STANDARD.encode(&bytes)),
-            };
-            let payload = CommentReceivedPayload {
-                connection_id,
-                envelope,
-            };
-            let mcv_msg = McvMessage::new_notification(
-                MessageType::CommentReceived,
-                MessageSource::Plugin {
-                    plugin_id: logical_plugin_id,
-                },
-                MessageDestination::Core,
-                serde_json::to_value(&payload).unwrap_or_default(),
-            );
-            NicoLivePlugin::send_message(ctx.clone(), mcv_msg).await;
         }
 
         Ok(())

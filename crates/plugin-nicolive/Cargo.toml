@@ -26,7 +26,7 @@ mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
 tracing = "0.1"
 plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
 regex = "1.12.3"
-reqwest = { version = "0.12", features = ["native-tls"] }
+rquest = { version = "1.5", features = ["stream"] }
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
 futures-util = "0.3"
 prost = "0.13"

@@ -14,10 +14,12 @@ impl Vid {
 pub struct Continuation {
     value: String,
     pub timeout_ms: Option<u64>,
+    /// true の場合、live_chatページを再取得してytcfg/continuationをリセットする必要がある
+    pub needs_reload: bool,
 }
 impl Continuation {
     pub fn new(value: String) -> Self {
-        Continuation { value, timeout_ms: None }
+        Continuation { value, timeout_ms: None, needs_reload: false }
     }
     pub fn value(&self) -> &str {
         &self.value
@@ -165,19 +167,12 @@ pub async fn get_live_chat_messages(
     let continuation = if let Some(k) = live_chat_continuation.get("continuations") {
         let c = k.as_array().unwrap();
         let c0 = &c[0];
-        if let Some(data) = c0.get("invalidationContinuationData") {
-            let con = get_string(c0, &["invalidationContinuationData", "continuation"])?;
-            let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
-            Some(Continuation { value: con, timeout_ms })
-        } else if let Some(data) = c0.get("timedContinuationData") {
-            let con = get_string(c0, &["timedContinuationData", "continuation"])?;
-            let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
-            Some(Continuation { value: con, timeout_ms })
-        } else {
-            return Err(mcv_tracing::capture_context!(
+        match try_parse_continuation(c0) {
+            Some(cont) => Some(cont),
+            None => return Err(mcv_tracing::capture_context!(
                 "No valid continuation type in get_live_chat_messages",
                 c0 = c0.to_string()
-            ).into());
+            ).into()),
         }
     } else {
         None
@@ -253,35 +248,11 @@ fn extract_yt_initial_data(
             )
         })?;
     let continuation_data = &continuations[0];
-    let continuation = if continuation_data
-        .as_object()
-        .ok_or_else(|| {
-            mcv_tracing::capture_context!("Missing continuation data", json = json.to_string())
-        })?
-        .contains_key("invalidationContinuationData")
-    {
-        get_string(
-            continuation_data,
-            &["invalidationContinuationData", "continuation"],
-        )?
-    } else if continuation_data
-        .as_object()
-        .ok_or_else(|| {
-            mcv_tracing::capture_context!("Missing continuation data", json = json.to_string())
-        })?
-        .contains_key("timedContinuationData")
-    {
-        get_string(
-            continuation_data,
-            &["timedContinuationData", "continuation"],
-        )?
-    } else {
-        return Err(mcv_tracing::capture_context!(
+    let continuation = try_parse_continuation(continuation_data)
+        .ok_or_else(|| mcv_tracing::capture_context!(
             "No valid continuation data",
             json = json.to_string()
-        )
-        .into());
-    };
+        ))?;
     //actionsを取得
     let actions = get_value(&json, &["contents", "liveChatRenderer", "actions"])?
         .as_array()
@@ -316,11 +287,35 @@ fn extract_yt_initial_data(
 
     let yt_initial_data = YtInitialData {
         actions: aabb,
-        continuation: Continuation::new(continuation),
+        continuation,
         raw: json_str.to_owned(),
     };
     Ok(yt_initial_data)
 }
+/// continuationオブジェクト（continuations配列の要素）から Continuation を取り出す。
+/// 対応する continuation タイプを優先順に試し、最初に見つかったものを返す。
+/// - invalidationContinuationData (ライブ中に最も多用)
+/// - timedContinuationData        (低速・待機時など)
+/// - reloadContinuationData       (live_chatページ再取得が必要)
+fn try_parse_continuation(obj: &serde_json::Value) -> Option<Continuation> {
+    // 通常の継続タイプ（needs_reload = false）
+    for key in &["invalidationContinuationData", "timedContinuationData"] {
+        if let Some(data) = obj.get(key) {
+            if let Some(con) = data.get("continuation").and_then(|v| v.as_str()) {
+                let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
+                return Some(Continuation { value: con.to_string(), timeout_ms, needs_reload: false });
+            }
+        }
+    }
+    // reloadContinuationData: live_chatページを再取得してytcfg/continuationをリセットする必要がある
+    if let Some(data) = obj.get("reloadContinuationData") {
+        if let Some(con) = data.get("continuation").and_then(|v| v.as_str()) {
+            return Some(Continuation { value: con.to_string(), timeout_ms: None, needs_reload: true });
+        }
+    }
+    None
+}
+
 pub fn get_string(
     value: &serde_json::Value,
     path: &[&str],

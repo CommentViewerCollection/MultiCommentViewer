@@ -272,7 +272,7 @@ impl Connection {
                     return;
                 }
             };
-            let ytcfg = match extract_ytcfg(&live_chat) {
+            let mut ytcfg = match extract_ytcfg(&live_chat) {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::error!(
@@ -324,6 +324,74 @@ impl Connection {
             let mut error_count = 0usize;
 
             loop {
+                // reloadContinuationDataが来た場合、live_chatページを再取得してytcfgとcontinuationをリセット
+                if next_continuation.needs_reload {
+                    tracing::info!(
+                        target: "mcv::plugin-youtube-live",
+                        connection_id = %connection_id,
+                        "reloadContinuationData received, reloading live_chat page"
+                    );
+                    let reload_ok = match get_live_chat(&vid).await {
+                        Ok(new_live_chat) => {
+                            let ytcfg_res = extract_ytcfg(&new_live_chat);
+                            let initial_res = get_yt_initial_data(&new_live_chat).await;
+                            match (ytcfg_res, initial_res) {
+                                (Ok(new_ytcfg), Ok(new_initial)) => {
+                                    ytcfg = new_ytcfg;
+                                    next_continuation = new_initial.continuation().to_owned();
+                                    true
+                                }
+                                (Err(e), _) => {
+                                    tracing::warn!(
+                                        target: "mcv::plugin-youtube-live",
+                                        connection_id = %connection_id,
+                                        error = %e,
+                                        "Failed to extract ytcfg on reload"
+                                    );
+                                    false
+                                }
+                                (_, Err(e)) => {
+                                    tracing::warn!(
+                                        target: "mcv::plugin-youtube-live",
+                                        connection_id = %connection_id,
+                                        error = %e,
+                                        "Failed to get ytInitialData on reload"
+                                    );
+                                    false
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                target: "mcv::plugin-youtube-live",
+                                connection_id = %connection_id,
+                                error = %e,
+                                "Failed to get live_chat on reload"
+                            );
+                            false
+                        }
+                    };
+                    if reload_ok {
+                        error_count = 0;
+                        continue;
+                    }
+                    error_count += 1;
+                    if error_count >= 3 {
+                        tracing::info!(
+                            target: "mcv::plugin-youtube-live",
+                            connection_id = %connection_id,
+                            "Too many consecutive reload errors. Stopping fetch loop."
+                        );
+                        break;
+                    }
+                    tokio::select! {
+                        _ = cancel_rx.changed() => { break; }
+                        _ = sleep(Duration::from_secs(5)) => {}
+                    }
+                    if *cancel_rx.borrow() { break; }
+                    continue;
+                }
+
                 // YouTubeのAPIが返すtimeoutMsを尊重する（デフォルト5秒、最低500ms〜最大8秒）
                 let sleep_ms = next_continuation.timeout_ms
                     .unwrap_or(5000)

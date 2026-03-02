@@ -13,10 +13,11 @@ impl Vid {
 #[derive(Clone)]
 pub struct Continuation {
     value: String,
+    pub timeout_ms: Option<u64>,
 }
 impl Continuation {
     pub fn new(value: String) -> Self {
-        Continuation { value }
+        Continuation { value, timeout_ms: None }
     }
     pub fn value(&self) -> &str {
         &self.value
@@ -164,8 +165,20 @@ pub async fn get_live_chat_messages(
     let continuation = if let Some(k) = live_chat_continuation.get("continuations") {
         let c = k.as_array().unwrap();
         let c0 = &c[0];
-        let con = get_string(c0, &["invalidationContinuationData", "continuation"])?;
-        Some(Continuation::new(con))
+        if let Some(data) = c0.get("invalidationContinuationData") {
+            let con = get_string(c0, &["invalidationContinuationData", "continuation"])?;
+            let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
+            Some(Continuation { value: con, timeout_ms })
+        } else if let Some(data) = c0.get("timedContinuationData") {
+            let con = get_string(c0, &["timedContinuationData", "continuation"])?;
+            let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
+            Some(Continuation { value: con, timeout_ms })
+        } else {
+            return Err(mcv_tracing::capture_context!(
+                "No valid continuation type in get_live_chat_messages",
+                c0 = c0.to_string()
+            ).into());
+        }
     } else {
         None
     };

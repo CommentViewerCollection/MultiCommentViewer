@@ -324,6 +324,10 @@ impl Connection {
             let mut error_count = 0usize;
 
             loop {
+                // YouTubeのAPIが返すtimeoutMsを尊重する（デフォルト5秒、最低500ms〜最大8秒）
+                let sleep_ms = next_continuation.timeout_ms
+                    .unwrap_or(5000)
+                    .clamp(500, 8000);
                 tokio::select! {
                     _ = cancel_rx.changed() => {
                         tracing::info!(
@@ -333,7 +337,7 @@ impl Connection {
                         );
                         break;
                     }
-                    _ = sleep(Duration::from_secs(5)) => {}
+                    _ = sleep(Duration::from_millis(sleep_ms)) => {}
                 }
 
                 if *cancel_rx.borrow() {

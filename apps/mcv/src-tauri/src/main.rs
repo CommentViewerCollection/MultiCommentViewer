@@ -1416,6 +1416,16 @@ fn main() {
                                     );
                                 }
                             }
+                            MessageType::RemoveBrowser => {
+                                tracing::trace!(target: "mcv::main", "Emitting browser-removed event");
+                                if let Err(e) = app_handle.emit("browser-removed", message.payload) {
+                                    tracing::error!(
+                                        target: "mcv::main",
+                                        error = %e,
+                                        "Failed to emit browser-removed event"
+                                    );
+                                }
+                            }
                             _ => {}
                         }
                     }

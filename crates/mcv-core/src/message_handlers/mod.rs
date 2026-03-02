@@ -57,6 +57,10 @@ pub fn handle_common_notification(
             site_browser::handle_add_browser(core, message, ctx);
             true
         }
+        MessageType::RemoveBrowser => {
+            site_browser::handle_remove_browser(core, message, ctx);
+            true
+        }
         MessageType::SetConnectionSite => {
             site_browser::handle_set_connection_site(core, message, ctx);
             true

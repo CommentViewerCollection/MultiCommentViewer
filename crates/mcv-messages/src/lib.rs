@@ -166,6 +166,7 @@ pub enum MessageType {
     AddSiteAck,
     AddBrowser,
     AddBrowserAck,
+    RemoveBrowser,
     SetConnectionSite,
     DiscardConnectionSite,
     UpdateConnectionSettings,
@@ -661,6 +662,12 @@ pub struct AddBrowserPayload {
 /// add-browser-ackのpayload (Core -> Plugin)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddBrowserAckPayload {
+    pub browser_id: BrowserId,
+}
+
+/// remove-browserのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoveBrowserPayload {
     pub browser_id: BrowserId,
 }
 

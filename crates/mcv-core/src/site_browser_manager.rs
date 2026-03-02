@@ -120,6 +120,19 @@ impl SiteAndBrowserManager {
         list
     }
 
+    /// ブラウザを削除（"なし"ブラウザは削除できない）
+    pub fn remove_browser(&mut self, browser_id: &BrowserId) -> bool {
+        if browser_id.is_none_browser() {
+            tracing::warn!(browser_id = %browser_id, "\"なし\" ブラウザは削除できません");
+            return false;
+        }
+        let removed = self.browsers.remove(browser_id).is_some();
+        if removed {
+            tracing::debug!(browser_id = %browser_id, "Browser removed from manager");
+        }
+        removed
+    }
+
     /// サイトIDからプラグインIDを取得
     pub fn get_plugin_id_for_site(&self, site_id: &SiteId) -> Option<Uuid> {
         self.sites.get(site_id).map(|s| s.plugin_id)

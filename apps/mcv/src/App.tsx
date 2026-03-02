@@ -440,6 +440,12 @@ function App() {
       setBrowsers((prev) => [...prev, event.payload])
     })
 
+    // ブラウザ削除イベントをリッスン
+    const unlistenBrowserRemoved = listen<{ browser_id: string }>('browser-removed', (event) => {
+      console.log('[Browser] Browser removed:', event.payload)
+      setBrowsers((prev) => prev.filter((b) => b.browser_id !== event.payload.browser_id))
+    })
+
     return () => {
       unlistenComment.then((fn) => fn())
       unlistenDeleteAll.then((fn) => fn())
@@ -447,6 +453,7 @@ function App() {
       unlistenDisconnected.then((fn) => fn())
       unlistenSiteAdded.then((fn) => fn())
       unlistenBrowserAdded.then((fn) => fn())
+      unlistenBrowserRemoved.then((fn) => fn())
       if (flushTimerRef.current !== null) {
         clearTimeout(flushTimerRef.current)
         flushTimerRef.current = null

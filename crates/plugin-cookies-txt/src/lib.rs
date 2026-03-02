@@ -6,7 +6,8 @@
 use mcv_messages::{
     AddBrowserAckPayload, AddBrowserPayload, BrowserId, Cookie as McvCookie, GetCookieAckPayload,
     GetCookiePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload, SettingsDataPayload, SettingsSchemaPayload, UpdateSettingsPayload,
+    PluginHelloPayload, RemoveBrowserPayload, SettingsDataPayload, SettingsSchemaPayload,
+    UpdateSettingsPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -482,7 +483,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
                             };
                             let data_msg = McvMessage::new_notification(
                                 MessageType::SettingsData,
-                                src,
+                                src.clone(),
                                 MessageDestination::Core,
                                 serde_json::to_value(SettingsDataPayload {
                                     target: self.logical_plugin_id.to_string(),
@@ -491,6 +492,17 @@ impl PluginImplV3Async for CookiesTxtPlugin {
                                 .unwrap(),
                             );
                             let _ = ctx.send_notification(data_msg).await;
+
+                            // RemoveBrowser を Core に送信してブラウザ一覧を更新する
+                            let browser_id = BrowserId::from_string(browser_id_str.to_string());
+                            let remove_msg = McvMessage::new_notification(
+                                MessageType::RemoveBrowser,
+                                src,
+                                MessageDestination::Core,
+                                serde_json::to_value(RemoveBrowserPayload { browser_id })
+                                    .unwrap(),
+                            );
+                            let _ = ctx.send_notification(remove_msg).await;
                         } else {
                             tracing::warn!(
                                 target: "mcv::plugin-cookies-txt",

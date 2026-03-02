@@ -113,10 +113,16 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           key={String(column.key)}
           style={{
             width: column.width || 100,
-            padding: '8px',
+            minWidth: column.width || 100,
+            maxWidth: column.width || 100,
+            padding: '2px 8px',
             position: 'relative',
             cursor: 'default',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
+          title={column.label}
           onContextMenu={(e) => {
             e.preventDefault();
             setRightClickedColumn(column);

@@ -3,12 +3,13 @@
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent,
-    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
+    MessageDestination, MessagePart, MessageSource, MessageType, Money, MonetaryInfo,
+    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
+    SystemKind,
 };
 use nicolive_lib::{
-    decode_chunked_messages, decode_segment_messages, decode_view_entries, extract_live_id,
-    fetch_websocket_url, ServerTimeCache, ViewEntry,
+    decode_chunked_messages, decode_segment_events, decode_view_entries, extract_live_id,
+    fetch_websocket_url, SegmentEvent, ServerTimeCache, ViewEntry,
 };
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use plugin_abi_helper::v3::prelude::*;
@@ -629,45 +630,14 @@ impl Connection {
             }
         }
 
-        let messages = decode_segment_messages(&bytes);
-        let mut file = std::fs::OpenOptions::new()
-            .create(true) // ファイルがなければ作成
-            .append(true) // 追記モード
-            .open("b.txt")
-            .unwrap();
+        let events = decode_segment_events(&bytes);
 
-        file.write_all(format!("{:?}", messages).as_bytes())
-            .unwrap();
-        file.write_all(b"\n").unwrap(); // 改行を追加したい場合
-
-        // 1セグメント HTTP レスポンス内の全コメントを収集して1つの McvEnvelope にまとめる
+        // 1セグメント HTTP レスポンス内の全イベントを ProviderMessage に変換して McvEnvelope にまとめる
         let mut provider_messages = Vec::new();
-        for chat in messages {
-            let timestamp = chat
-                .at_secs
-                .unwrap_or_else(|| chrono::Utc::now().timestamp());
-            let provider_msg = ProviderMessage {
-                id: chat.id.clone(),
-                platform_message_id: Some(chat.id),
-                service: ServiceId("nicolive".to_string()),
-                channel: ChannelId("".to_string()),
-                sender: ProviderSender {
-                    id: chat.user_id,
-                    display_name: vec![MessagePart::Text {
-                        text: chat.name.unwrap_or_default(),
-                    }],
-                    badges: vec![],
-                    role: None,
-                },
-                timestamp,
-                kind: ProviderMessageKind::Chat,
-                content: ProviderContent::Text {
-                    text: vec![MessagePart::Text { text: chat.content }],
-                },
-                reply_to: None,
-                metadata: serde_json::Value::Null,
-            };
-            provider_messages.push(provider_msg);
+        for event in events {
+            if let Some(provider_msg) = segment_event_to_provider_msg(event) {
+                provider_messages.push(provider_msg);
+            }
         }
         if !provider_messages.is_empty() {
             tracing::info!(
@@ -846,6 +816,149 @@ impl Connection {
         self.cancel_tx = None;
         self.task = None;
         self.running = false;
+    }
+}
+
+// ─── 変換ヘルパー ─────────────────────────────────────────────────────────────────
+
+/// `SegmentEvent` を `ProviderMessage` に変換する。
+/// 表示不要なイベントは `None` を返す。
+fn segment_event_to_provider_msg(event: SegmentEvent) -> Option<ProviderMessage> {
+    let now = || chrono::Utc::now().timestamp();
+
+    match event {
+        SegmentEvent::Chat(chat) | SegmentEvent::ForwardedChat { chat, .. } => {
+            let timestamp = chat.at_secs.unwrap_or_else(now);
+            Some(ProviderMessage {
+                id: chat.id.clone(),
+                platform_message_id: Some(chat.id),
+                service: ServiceId("nicolive".to_string()),
+                channel: ChannelId("".to_string()),
+                sender: ProviderSender {
+                    id: chat.user_id,
+                    display_name: vec![MessagePart::Text {
+                        text: chat.name.unwrap_or_default(),
+                    }],
+                    badges: vec![],
+                    role: None,
+                },
+                timestamp,
+                kind: ProviderMessageKind::Chat,
+                content: ProviderContent::Text {
+                    text: vec![MessagePart::Text { text: chat.content }],
+                },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
+
+        SegmentEvent::SimpleNotification { id, at_secs, text }
+        | SegmentEvent::SimpleNotificationV2 { id, at_secs, text } => {
+            let timestamp = at_secs.unwrap_or_else(now);
+            Some(ProviderMessage {
+                id: id.clone(),
+                platform_message_id: Some(id),
+                service: ServiceId("nicolive".to_string()),
+                channel: ChannelId("".to_string()),
+                sender: ProviderSender {
+                    id: "".to_string(),
+                    display_name: vec![],
+                    badges: vec![],
+                    role: None,
+                },
+                timestamp,
+                kind: ProviderMessageKind::System(SystemKind::Notice),
+                content: ProviderContent::Text {
+                    text: vec![MessagePart::Text { text }],
+                },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
+
+        SegmentEvent::Gift {
+            id,
+            at_secs,
+            advertiser_name,
+            advertiser_user_id,
+            point,
+            item_name,
+            message,
+        } => {
+            let timestamp = at_secs.unwrap_or_else(now);
+            let display_text = if message.is_empty() {
+                item_name.clone()
+            } else {
+                format!("{}: {}", item_name, message)
+            };
+            Some(ProviderMessage {
+                id: id.clone(),
+                platform_message_id: Some(id),
+                service: ServiceId("nicolive".to_string()),
+                channel: ChannelId("".to_string()),
+                sender: ProviderSender {
+                    id: advertiser_user_id
+                        .map(|u| u.to_string())
+                        .unwrap_or_default(),
+                    display_name: vec![MessagePart::Text {
+                        text: advertiser_name,
+                    }],
+                    badges: vec![],
+                    role: None,
+                },
+                timestamp,
+                kind: ProviderMessageKind::Monetary(MonetaryInfo {
+                    amount: Money {
+                        currency: "NCP".to_string(),
+                        value_minor: point,
+                    },
+                    tier: None,
+                    recurring: false,
+                }),
+                content: ProviderContent::Text {
+                    text: vec![MessagePart::Text { text: display_text }],
+                },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
+
+        SegmentEvent::Nicoad {
+            id,
+            at_secs,
+            advertiser,
+            point,
+            message,
+        } => {
+            let timestamp = at_secs.unwrap_or_else(now);
+            let display_text = message.unwrap_or_default();
+            Some(ProviderMessage {
+                id: id.clone(),
+                platform_message_id: Some(id),
+                service: ServiceId("nicolive".to_string()),
+                channel: ChannelId("".to_string()),
+                sender: ProviderSender {
+                    id: "".to_string(),
+                    display_name: vec![MessagePart::Text { text: advertiser }],
+                    badges: vec![],
+                    role: None,
+                },
+                timestamp,
+                kind: ProviderMessageKind::Monetary(MonetaryInfo {
+                    amount: Money {
+                        currency: "NCP".to_string(),
+                        value_minor: point,
+                    },
+                    tier: None,
+                    recurring: false,
+                }),
+                content: ProviderContent::Text {
+                    text: vec![MessagePart::Text { text: display_text }],
+                },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
     }
 }
 

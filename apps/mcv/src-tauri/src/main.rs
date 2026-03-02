@@ -45,6 +45,8 @@ struct CommentRow {
     is_visible: bool,
     /// 置き換え・削除対象の CommentRow の id
     replaces_id: Option<String>,
+    /// メッセージ種別: "chat" | "monetary" | "system"
+    kind: String,
 }
 
 /// "delete-all-by-user" イベントのペイロード
@@ -85,6 +87,13 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 _ => (true, None, extract_text(&msg.content)),
             };
 
+            let kind = match &msg.kind {
+                ProviderMessageKind::Chat => "chat",
+                ProviderMessageKind::Monetary(_) => "monetary",
+                _ => "system",
+            }
+            .to_string();
+
             CommentRow {
                 id: msg.id.clone(),
                 user_name: msg.sender.display_name.clone(),
@@ -94,6 +103,7 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 connection_id: envelope.connection_id.to_string(),
                 is_visible,
                 replaces_id,
+                kind,
             }
         })
         .collect()

@@ -26,6 +26,8 @@ interface CommentRow {
   connection_id: string
   is_visible: boolean
   replaces_id?: string
+  /** メッセージ種別: "chat" | "monetary" | "system" */
+  kind: string
 }
 
 // Display-friendly comment row (for DataGrid)
@@ -42,6 +44,8 @@ interface Comment {
   colorInfo?: ColorInfo
   is_visible: boolean
   replaces_id?: string
+  /** メッセージ種別: "chat" | "monetary" | "system" */
+  kind: string
 }
 
 
@@ -894,22 +898,37 @@ function App() {
     )
   }
 
+  const kindCellClass = (kind: string) => {
+    if (kind === 'monetary') return 'text-yellow-700 dark:text-yellow-300 italic'
+    if (kind === 'system') return 'text-gray-500 dark:text-gray-400 italic'
+    return ''
+  }
+
   const renderCell = (item: Comment, column: Column<Comment>) => {
+    const extraClass = kindCellClass(item.kind)
     if (column.key === 'timestamp') {
-      return <span>{formatTime(item.timestamp)}</span>
+      return <span className={extraClass}>{formatTime(item.timestamp)}</span>
     }
     if (column.key === 'connection_name') {
       // 接続名を動的に取得（名前変更に連動、空欄も許容）
       const conn = connections.find(c => c.connection_id === item.connection_id)
-      return <span>{conn?.name ?? ''}</span>
+      return <span className={extraClass}>{conn?.name ?? ''}</span>
     }
     if (column.key === 'user_name') {
-      return <RenderMessageParts parts={item.user_name} isUsername={true} />
+      return (
+        <span className={extraClass}>
+          <RenderMessageParts parts={item.user_name} isUsername={true} />
+        </span>
+      )
     }
     if (column.key === 'text') {
-      return <RenderMessageParts parts={item.text} isUsername={false} />
+      return (
+        <span className={extraClass}>
+          <RenderMessageParts parts={item.text} isUsername={false} />
+        </span>
+      )
     }
-    return <span>{String(item[column.key])}</span>
+    return <span className={extraClass}>{String(item[column.key])}</span>
   }
 
   const getStatusColor = (status: { type: string }) => {

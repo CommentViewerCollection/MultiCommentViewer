@@ -14,4 +14,4 @@ pub mod view;
 pub use time_cache::ServerTimeCache;
 pub use url::{extract_data_props, extract_live_id, fetch_websocket_url};
 pub use proto::ChunkedMessage;
-pub use view::{decode_chunked_messages, decode_segment_messages, decode_view_entries, ChatMessage, ViewEntry};
+pub use view::{decode_chunked_messages, decode_segment_events, decode_segment_messages, decode_view_entries, ChatMessage, SegmentEvent, ViewEntry};

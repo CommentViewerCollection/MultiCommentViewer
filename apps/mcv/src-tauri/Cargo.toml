@@ -26,6 +26,7 @@ tracing-subscriber = { version = "0.3", features = ["fmt"] }
 tokio-tungstenite = "0.28.0"
 futures-util = "0.3"
 zip = "2.2"
+rusqlite = { version = "0.30", features = ["bundled"] }
 
 [features]
 default = ["custom-protocol"]

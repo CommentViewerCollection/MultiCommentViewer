@@ -7,17 +7,20 @@ import { SettingsScreen } from './components/SettingsScreen'
 import { ColorInfo } from './utils/ColorInfo'
 import { TitleBar } from './components/TitleBar'
 import { type ThemeColors, PRESET_THEME_COLORS, applyThemeColors, resolveThemeColors } from './theme'
+import type { UserSettings } from './types/user'
+import { SearchTab } from './components/SearchTab'
+import { UserListTab } from './components/UserListTab'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
 
 // MessagePart type matching backend structure
-type MessagePart =
+export type MessagePart =
   | { type: 'text'; text: string }
   | { type: 'image'; url: string; width?: number; height?: number; alt?: string }
 
 // バッジ（ProviderBadge に対応）
-interface Badge {
+export interface Badge {
   id: string
   name: string
   image_url?: string
@@ -40,7 +43,7 @@ interface CommentRow {
 }
 
 // Display-friendly comment row (for DataGrid)
-interface Comment {
+export interface Comment {
   id: string
   user_name: MessagePart[]
   user_id: string
@@ -60,7 +63,7 @@ interface Comment {
 }
 
 
-interface ConnectionInfo {
+export interface ConnectionInfo {
   connection_id: string
   plugin_id?: string
   status: { type: string; message?: string }
@@ -120,7 +123,7 @@ interface InstalledPluginMeta {
 }
 
 
-type TabType = 'comments' | 'logs' | 'settings' | 'updates' | 'plugins'
+type TabType = 'comments' | 'logs' | 'settings' | 'updates' | 'plugins' | 'search' | 'users'
 
 // Render a single MessagePart (text or image)
 function RenderMessagePart({
@@ -205,6 +208,10 @@ function App() {
   const [selectedPluginId, setSelectedPluginId] = useState<string | null>(null)
   const [coreSettings, setCoreSettings] = useState<any>(null)
   const [currentThemeColors, setCurrentThemeColors] = useState<ThemeColors>(PRESET_THEME_COLORS['dark'])
+  const [userSettings, setUserSettings] = useState<Map<string, UserSettings>>(new Map())
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; comment: Comment } | null>(null)
+  const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
+  const [focusUserId, setFocusUserId] = useState<string | undefined>(undefined)
 
   // 新規: Ref を作成
   const coreSettingsRef = useRef<any>(null)
@@ -367,11 +374,26 @@ function App() {
     connectionMapRef.current = map
   }, [connections])
 
+  // ユーザー設定（ニックネーム・mcvNG）を読み込む
+  const loadUserSettings = async () => {
+    try {
+      const rawSettings = await invoke<Record<string, UserSettings> | null>(
+        'get_settings', { target: 'user_settings' }
+      )
+      if (rawSettings) {
+        setUserSettings(new Map(Object.entries(rawSettings)))
+      }
+    } catch (error) {
+      console.error('Failed to load user settings:', error)
+    }
+  }
+
   useEffect(() => {
     // 初回読み込み
     loadConnections()
     loadSitesAndBrowsers()
     loadCoreSettings()
+    loadUserSettings()
 
     // コメント受信イベントをリッスン（CommentRow[] を受け取る）
     // バッファに蓄積して一定間隔でまとめて反映することで UI フリーズを防ぐ
@@ -505,8 +527,12 @@ function App() {
   }, [activeTab])
 
   const visibleComments = useMemo(
-    () => comments.filter(c => c.is_visible !== false),
-    [comments]
+    () => comments.filter(c => {
+      if (c.is_visible === false) return false
+      if (userSettings.get(c.user_id)?.is_mcv_ng) return false
+      return true
+    }),
+    [comments, userSettings]
   )
 
   // AutoScroll ON に切り替わったら即座に末尾へ移動
@@ -528,6 +554,56 @@ function App() {
     })
     return () => cancelAnimationFrame(raf)
   }, [visibleComments.length, isAutoScrollEnabled])
+
+  // ユーザー設定の全体をJSONファイルに保存
+  const saveUserSettings = async (next: Map<string, UserSettings>) => {
+    try {
+      await invoke('update_settings', {
+        target: 'user_settings',
+        data: Object.fromEntries(next),
+      })
+    } catch (error) {
+      console.error('Failed to save user settings:', error)
+    }
+  }
+
+  const handleUserNicknameChange = (userId: string, nickname: string) => {
+    setUserSettings(prev => {
+      const next = new Map(prev)
+      const ex = next.get(userId) ?? { nickname: '', is_mcv_ng: false }
+      next.set(userId, { ...ex, nickname })
+      saveUserSettings(next)
+      return next
+    })
+  }
+
+  const handleUserMcvNgChange = (userId: string, isNg: boolean) => {
+    setUserSettings(prev => {
+      const next = new Map(prev)
+      const ex = next.get(userId) ?? { nickname: '', is_mcv_ng: false }
+      next.set(userId, { ...ex, is_mcv_ng: isNg })
+      saveUserSettings(next)
+      return next
+    })
+  }
+
+  const handleRowContextMenu = (comment: Comment, event: React.MouseEvent) => {
+    setContextMenu({ x: event.clientX, y: event.clientY, comment })
+  }
+
+  const handleContextMenuSearch = () => {
+    if (!contextMenu) return
+    setSearchQuery(contextMenu.comment.user_id)
+    setActiveTab('search')
+    setContextMenu(null)
+  }
+
+  const handleContextMenuViewUser = () => {
+    if (!contextMenu) return
+    setFocusUserId(contextMenu.comment.user_id)
+    setActiveTab('users')
+    setContextMenu(null)
+  }
 
   const handleAddConnection = async () => {
     try {
@@ -1003,7 +1079,10 @@ function App() {
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden">
+    <div
+      className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden"
+      onClick={() => contextMenu && setContextMenu(null)}
+    >
       <TitleBar themeColors={currentThemeColors} />
       <div className="flex-1 flex overflow-hidden min-h-0">
       {/* サイドバー: 接続一覧 */}
@@ -1301,6 +1380,26 @@ function App() {
             >
               設定
             </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'search'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('search')}
+            >
+              検索
+            </button>
+            <button
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'users'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+              onClick={() => setActiveTab('users')}
+            >
+              ユーザー
+            </button>
           </div>
         </div>
 
@@ -1325,6 +1424,7 @@ function App() {
                 onColumnResize={handleColumnResize}
                 onColumnVisibilityChange={handleColumnVisibilityChange}
                 defaultItemHeight={65}
+                onRowContextMenu={handleRowContextMenu}
               />
             </div>
 
@@ -1552,10 +1652,51 @@ function App() {
               loadCoreSettings()
             }} />
           )}
+
+          {activeTab === 'search' && (
+            <SearchTab
+              columns={columns}
+              renderCell={renderCell}
+              connections={connections}
+              themeColors={currentThemeColors}
+              externalQuery={searchQuery}
+            />
+          )}
+
+          {activeTab === 'users' && (
+            <UserListTab
+              userSettings={userSettings}
+              connections={connections}
+              onNicknameChange={handleUserNicknameChange}
+              onMcvNgChange={handleUserMcvNgChange}
+              focusUserId={focusUserId}
+            />
+          )}
         </div>
       </div>
       </div>
 
+      {/* コンテキストメニュー */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded shadow-lg py-1 text-sm"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={e => e.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            onClick={handleContextMenuSearch}
+          >
+            このユーザーのコメントを検索
+          </button>
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            onClick={handleContextMenuViewUser}
+          >
+            ユーザー情報を見る
+          </button>
+        </div>
+      )}
     </div>
   )
 }

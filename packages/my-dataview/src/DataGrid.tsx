@@ -24,6 +24,7 @@ export interface DataGridProps<T> {
   autoScrollEnabled?: boolean;
   onUserDetachedFromBottom?: () => void;
   onItemSelect?: (index: number, item: T) => void;
+  onRowContextMenu?: (item: T, event: React.MouseEvent) => void;
   onColumnResize?: (columnKey: keyof T, width: number) => void;
   onColumnVisibilityChange?: (columnKey: keyof T, visible: boolean) => void;
   defaultItemHeight?: number;
@@ -46,6 +47,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   autoScrollEnabled = true,
   onUserDetachedFromBottom,
   onItemSelect,
+  onRowContextMenu,
   onColumnResize,
   onColumnVisibilityChange,
   defaultItemHeight = 50,
@@ -244,6 +246,11 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
     onItemSelect?.(index, data[index]);
   }, [data, onItemSelect]);
 
+  const handleRowContextMenu = useCallback((item: T, event: React.MouseEvent) => {
+    event.preventDefault();
+    onRowContextMenu?.(item, event);
+  }, [onRowContextMenu]);
+
   const itemContent = useCallback((index: number, item: T) => {
     const isSelected = selectedIndex === index;
 
@@ -269,6 +276,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
     return (
       <div
         onClick={() => handleItemSelect(index)}
+        onContextMenu={(e) => handleRowContextMenu(item, e)}
         style={{
           display: 'flex',
           borderBottom: '1px solid #2a2a2a',
@@ -302,7 +310,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         })}
       </div>
     );
-  }, [visibleColumns, selectedIndex, handleItemSelect, renderCellFunc]);
+  }, [visibleColumns, selectedIndex, handleItemSelect, handleRowContextMenu, renderCellFunc]);
 
   const totalWidth = visibleColumns.reduce((sum, col) => sum + (col.width || 100), 0);
 

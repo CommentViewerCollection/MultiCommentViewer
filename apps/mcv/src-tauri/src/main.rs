@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod comment_store;
+
 use actix::prelude::*;
 use mcv_common::{BrowserId, SiteId};
 use mcv_core::{
@@ -27,14 +29,14 @@ use mcv_messages::{
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
 use zip::ZipArchive;
 
 /// McvEnvelope をフロントエンド表示用に変換した行
-#[derive(Debug, Clone, serde::Serialize)]
-struct CommentRow {
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub(crate) struct CommentRow {
     id: String,
     user_name: Vec<mcv_messages::MessagePart>,
     user_id: String,
@@ -120,6 +122,7 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
 struct AppState {
     core_addr: Addr<CoreActor>,
     plugin_manager: Arc<tokio::sync::Mutex<PluginManager>>,
+    comment_store: Arc<Mutex<comment_store::CommentStore>>,
 }
 
 // ヘルパー関数
@@ -1119,6 +1122,35 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoRespons
 }
 
 // ============================================================
+// コメント検索・ユーザー一覧コマンド
+// ============================================================
+
+#[tauri::command]
+fn search_comments(
+    query: String,
+    limit: u32,
+    offset: u32,
+    state: State<'_, AppState>,
+) -> Result<Vec<CommentRow>, String> {
+    let store = state.comment_store.lock().map_err(|e| e.to_string())?;
+    store
+        .search_comments(&query, limit as usize, offset as usize)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_users(
+    limit: u32,
+    offset: u32,
+    state: State<'_, AppState>,
+) -> Result<Vec<comment_store::UserInfo>, String> {
+    let store = state.comment_store.lock().map_err(|e| e.to_string())?;
+    store
+        .get_users(limit as usize, offset as usize)
+        .map_err(|e| e.to_string())
+}
+
+// ============================================================
 // ウィンドウ状態の保存・復元（settings/core.json に直接読み書き）
 // ============================================================
 
@@ -1293,12 +1325,19 @@ fn main() {
                 >,
             > = Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new()));
 
+            // コメントストアを作成
+            let comment_store = Arc::new(Mutex::new(
+                comment_store::CommentStore::new().expect("Failed to create comment store"),
+            ));
+
             // イベントコールバックを設定
             let app_handle_clone = app_handle.clone();
             let comment_timing_clone = comment_timing.clone();
+            let comment_store_for_callback = comment_store.clone();
             let event_callback = Arc::new(move |message: McvMessage| {
                 let app_handle_clone2 = app_handle_clone.clone();
                 let timing_clone = comment_timing_clone.clone();
+                let store_clone = comment_store_for_callback.clone();
                 actix::spawn(async move {
                     if let Some(app_handle) = app_handle_clone2.lock().await.as_ref() {
                         match message.message_type {
@@ -1324,6 +1363,10 @@ fn main() {
                                 // MessageDeleteAll を "delete-all-by-user" イベントとして即座に emit
                                 for msg in &payload.envelope.messages {
                                     if let ProviderMessageKind::System(SystemKind::MessageDeleteAll { user_id }) = &msg.kind {
+                                        // サイトNGフラグをストアに記録
+                                        if let Ok(store) = store_clone.lock() {
+                                            let _ = store.set_site_ng(user_id);
+                                        }
                                         let evt = DeleteAllByUserPayload {
                                             user_id: user_id.clone(),
                                             connection_id: payload.envelope.connection_id.to_string(),
@@ -1400,6 +1443,11 @@ fn main() {
                                             raw_message: None,
                                         };
                                         let rows = envelope_to_comment_rows(&single_envelope);
+                                        if let Ok(store) = store_clone.lock() {
+                                            for row in &rows {
+                                                let _ = store.insert_comment(row);
+                                            }
+                                        }
                                         if let Err(e) = ah.emit("comment-received", rows) {
                                             tracing::error!(
                                                 target: "mcv::main",
@@ -1431,6 +1479,11 @@ fn main() {
                                                 raw_message: None,
                                             };
                                             let rows = envelope_to_comment_rows(&single_envelope);
+                                            if let Ok(store) = store_clone.lock() {
+                                                for row in &rows {
+                                                    let _ = store.insert_comment(row);
+                                                }
+                                            }
                                             if let Err(e) = ah.emit("comment-received", rows) {
                                                 tracing::error!(
                                                     target: "mcv::main",
@@ -1572,6 +1625,7 @@ fn main() {
             let app_state = AppState {
                 core_addr,
                 plugin_manager: Arc::new(tokio::sync::Mutex::new(plugin_manager)),
+                comment_store,
             };
 
             tracing::debug!(target: "mcv::main", "Sending AppState to main thread");
@@ -1665,7 +1719,9 @@ fn main() {
             get_settings_schema,
             get_settings,
             update_settings,
-            get_plugins
+            get_plugins,
+            search_comments,
+            get_users
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

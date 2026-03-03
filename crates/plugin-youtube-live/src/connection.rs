@@ -10,7 +10,8 @@ use mcv_messages::{
     ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
 };
 use plugin_abi_helper::v3::prelude::*;
-use tokio::sync::watch;
+use std::sync::Arc;
+use tokio::sync::{watch, RwLock};
 use tokio::task::JoinHandle;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
@@ -18,6 +19,13 @@ use youtube_live_lib::{
     extract_ytcfg, get_live_chat, get_live_chat_messages, get_yt_initial_data, Action,
     Continuation, LiveChatPaidMessage, LiveChatTextMessage, MessagePart, Vid,
 };
+
+/// コメント投稿に必要なデータ（接続確立後に設定される）
+struct CommentPostingData {
+    cookies: Vec<youtube_live_lib::Cookie>,
+    ytcfg: youtube_live_lib::Ytcfg,
+    send_message_params: String,
+}
 
 use crate::video_id::extract_video_id;
 use crate::YouTubeLivePlugin;
@@ -293,6 +301,8 @@ pub(crate) struct Connection {
     pub(crate) cancel_tx: Option<watch::Sender<bool>>,
     pub(crate) task: Option<JoinHandle<()>>,
     pub(crate) running: bool,
+    /// 接続確立後に設定されるコメント投稿用データ
+    comment_posting: Arc<RwLock<Option<CommentPostingData>>>,
 }
 
 impl Connection {
@@ -302,6 +312,38 @@ impl Connection {
             cancel_tx: None,
             task: None,
             running: false,
+            comment_posting: Arc::new(RwLock::new(None)),
+        }
+    }
+
+    /// YouTube LiveにコメントをYouTube内部API経由で投稿する
+    pub(crate) async fn post_comment(&self, text: &str) {
+        let posting = self.comment_posting.read().await;
+        match posting.as_ref() {
+            None => {
+                tracing::warn!(
+                    target: "mcv::plugin-youtube-live",
+                    connection_id = %self.id,
+                    "コメント投稿不可: 未接続またはsend_message_params未取得"
+                );
+            }
+            Some(data) => {
+                if let Err(e) = youtube_live_lib::send_chat_message(
+                    &data.cookies,
+                    &data.ytcfg,
+                    &data.send_message_params,
+                    text,
+                )
+                .await
+                {
+                    tracing::error!(
+                        target: "mcv::plugin-youtube-live",
+                        connection_id = %self.id,
+                        error = %e,
+                        "コメント投稿に失敗"
+                    );
+                }
+            }
         }
     }
 
@@ -343,20 +385,28 @@ impl Connection {
             "vidの抽出に成功"
         );
 
+        // McvCookie → youtube_live_lib::Cookie に変換
+        let yt_cookies: Vec<youtube_live_lib::Cookie> = cookies
+            .iter()
+            .map(|c| youtube_live_lib::Cookie {
+                name: c.name.clone(),
+                value: c.value.clone(),
+            })
+            .collect();
+
         let (cancel_tx, mut cancel_rx) = watch::channel(false);
         let connection_id = self.id;
         let vid = Vid::new(vid);
-        let cookie_count = cookies.len();
+        let comment_posting = Arc::clone(&self.comment_posting);
 
         let task = tokio::spawn(async move {
             tracing::debug!(
                 target: "mcv::plugin-youtube-live",
                 connection_id = %connection_id,
-                cookie_count = cookie_count,
+                cookie_count = yt_cookies.len(),
                 "Connection started with resolved cookies"
             );
-            // TODO: youtube_live_libのHTTPリクエストへcookieを反映する
-            let live_chat = match get_live_chat(&vid).await {
+            let live_chat = match get_live_chat(&vid, &yt_cookies).await {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::error!(
@@ -394,6 +444,27 @@ impl Connection {
                     return;
                 }
             };
+
+            // コメント投稿用データを設定
+            if let Some(params) = yt_initial_data.send_message_params() {
+                let mut posting = comment_posting.write().await;
+                *posting = Some(CommentPostingData {
+                    cookies: yt_cookies.clone(),
+                    ytcfg: ytcfg.clone(),
+                    send_message_params: params,
+                });
+                tracing::info!(
+                    target: "mcv::plugin-youtube-live",
+                    connection_id = %connection_id,
+                    "コメント投稿の準備が完了しました"
+                );
+            } else {
+                tracing::warn!(
+                    target: "mcv::plugin-youtube-live",
+                    connection_id = %connection_id,
+                    "send_message_paramsが見つかりません（未ログイン・チャット制限の可能性）"
+                );
+            }
 
             // YtInitialData の全 actions をまとめて1つの McvEnvelope に収める
             let provider_messages: Vec<ProviderMessage> = yt_initial_data
@@ -441,7 +512,7 @@ impl Connection {
                         connection_id = %connection_id,
                         "reloadContinuationData received, reloading live_chat page"
                     );
-                    let reload_ok = match get_live_chat(&vid).await {
+                    let reload_ok = match get_live_chat(&vid, &yt_cookies).await {
                         Ok(new_live_chat) => {
                             let ytcfg_res = extract_ytcfg(&new_live_chat);
                             let initial_res = get_yt_initial_data(&new_live_chat).await;
@@ -593,6 +664,11 @@ impl Connection {
             }
 
             // ループを抜けた = 接続終了
+            // コメント投稿データをクリア
+            {
+                let mut posting = comment_posting.write().await;
+                *posting = None;
+            }
             // CoreにDisconnectedメッセージを送信
             let message = McvMessage::new_notification(
                 MessageType::Disconnected,

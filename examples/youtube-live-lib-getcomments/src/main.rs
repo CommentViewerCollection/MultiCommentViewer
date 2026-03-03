@@ -31,7 +31,7 @@ async fn get_comments(vid: &Vid) -> Result<()> {
     mcv_logger::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
         .expect("Failed to initialize logger");
 
-    let live_chat = get_live_chat(&vid).await?;
+    let live_chat = get_live_chat(&vid, &[]).await?;
     let yt_initial_data = get_yt_initial_data(&live_chat).await?;
     let continuation = yt_initial_data.continuation();
     let initial_actions = yt_initial_data.actions();

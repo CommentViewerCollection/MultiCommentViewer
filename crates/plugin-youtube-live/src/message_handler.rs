@@ -9,7 +9,7 @@ use std::time::Duration;
 use mcv_messages::{
     ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
     GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, SendCommentPayload,
     SetConnectionSitePayload,
 };
 use plugin_abi_helper::v3::prelude::*;
@@ -69,6 +69,18 @@ pub(crate) async fn on_message_impl(
             let removed: ConnectionRemovedPayload = parse_payload(&message.payload)?;
             if let Some(mut conn) = plugin.connections.remove(&removed.connection_id) {
                 conn.stop();
+            }
+        }
+        MessageType::SendComment => {
+            let payload: SendCommentPayload = parse_payload(&message.payload)?;
+            if let Some(conn) = plugin.connections.get(&payload.connection_id) {
+                conn.post_comment(&payload.text).await;
+            } else {
+                tracing::warn!(
+                    target: "mcv::plugin-youtube-live",
+                    connection_id = %payload.connection_id,
+                    "SendComment: connection not found"
+                );
             }
         }
         _ => {}

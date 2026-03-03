@@ -1,4 +1,13 @@
 use anyhow::Result;
+use sha1::{Digest, Sha1};
+
+/// YouTubeへのリクエストに使用するCookieの型
+#[derive(Debug, Clone)]
+pub struct Cookie {
+    pub name: String,
+    pub value: String,
+}
+
 pub struct Vid {
     value: String,
 }
@@ -19,7 +28,11 @@ pub struct Continuation {
 }
 impl Continuation {
     pub fn new(value: String) -> Self {
-        Continuation { value, timeout_ms: None, needs_reload: false }
+        Continuation {
+            value,
+            timeout_ms: None,
+            needs_reload: false,
+        }
     }
     pub fn value(&self) -> &str {
         &self.value
@@ -29,6 +42,7 @@ pub struct YtInitialData {
     actions: Vec<Action>,
     continuation: Continuation,
     raw: String,
+    send_message_params: Option<String>,
 }
 impl YtInitialData {
     pub fn actions(&self) -> &Vec<Action> {
@@ -39,6 +53,9 @@ impl YtInitialData {
     }
     pub fn raw(&self) -> &str {
         &self.raw
+    }
+    pub fn send_message_params(&self) -> Option<String> {
+        self.send_message_params.clone()
     }
 }
 pub struct LiveChat {
@@ -52,8 +69,11 @@ impl LiveChat {
         &self.value
     }
 }
+#[derive(Clone)]
 pub struct Ytcfg {
     client: serde_json::Value,
+    api_key: String,
+    visitor_data: Option<String>,
 }
 #[derive(Debug)]
 struct remove_chat_item_action {
@@ -65,13 +85,22 @@ impl remove_chat_item_action {
     }
 }
 
-pub async fn get_live_chat(vid: &Vid) -> Result<LiveChat, mcv_tracing::TracingError> {
+pub async fn get_live_chat(
+    vid: &Vid,
+    cookies: &[Cookie],
+) -> Result<LiveChat, mcv_tracing::TracingError> {
     let url = format!(
         "https://www.youtube.com/live_chat?&is_popout=1&v={}",
         vid.value()
     );
+    let cookie_header = cookies
+        .iter()
+        .map(|c| format!("{}={}", c.name, c.value))
+        .collect::<Vec<_>>()
+        .join("; ");
+
     let client = reqwest::Client::new();
-    let res = client
+    let mut req_builder = client
         .get(&url)
         .header(
             "User-Agent",
@@ -85,7 +114,11 @@ pub async fn get_live_chat(vid: &Vid) -> Result<LiveChat, mcv_tracing::TracingEr
         .header("Sec-Fetch-Site", "same-origin")
         .header("Sec-Fetch-Dest", "document")
         .header("Sec-Fetch-Mode", "navigate")
-        .header("Upgrade-Insecure-Requests", "1")
+        .header("Upgrade-Insecure-Requests", "1");
+    if !cookie_header.is_empty() {
+        req_builder = req_builder.header("Cookie", cookie_header);
+    }
+    let res = req_builder
         .send()
         .await
         .map_err(|_| mcv_tracing::capture_context!("live_chatの取得に失敗"))?;
@@ -169,10 +202,13 @@ pub async fn get_live_chat_messages(
         let c0 = &c[0];
         match try_parse_continuation(c0) {
             Some(cont) => Some(cont),
-            None => return Err(mcv_tracing::capture_context!(
-                "No valid continuation type in get_live_chat_messages",
-                c0 = c0.to_string()
-            ).into()),
+            None => {
+                return Err(mcv_tracing::capture_context!(
+                    "No valid continuation type in get_live_chat_messages",
+                    c0 = c0.to_string()
+                )
+                .into());
+            }
         }
     } else {
         None
@@ -204,9 +240,20 @@ pub fn extract_ytcfg(live_chat: &LiveChat) -> Result<Ytcfg, mcv_tracing::Tracing
         ctx
     })?;
     let client = get_value(&json, &["INNERTUBE_CONTEXT", "client"])?;
+    let api_key = json
+        .get("INNERTUBE_API_KEY")
+        .and_then(|v| v.as_str())
+        .unwrap_or("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")
+        .to_string();
+    let visitor_data = json
+        .get("VISITOR_DATA")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     Ok(Ytcfg {
         client: client.clone(),
+        api_key,
+        visitor_data,
     })
 }
 
@@ -248,11 +295,9 @@ fn extract_yt_initial_data(
             )
         })?;
     let continuation_data = &continuations[0];
-    let continuation = try_parse_continuation(continuation_data)
-        .ok_or_else(|| mcv_tracing::capture_context!(
-            "No valid continuation data",
-            json = json.to_string()
-        ))?;
+    let continuation = try_parse_continuation(continuation_data).ok_or_else(|| {
+        mcv_tracing::capture_context!("No valid continuation data", json = json.to_string())
+    })?;
     //actionsを取得
     let actions = get_value(&json, &["contents", "liveChatRenderer", "actions"])?
         .as_array()
@@ -285,10 +330,17 @@ fn extract_yt_initial_data(
 
     //emojiを取得
 
+    // コメント投稿用パラメータをinputFieldRendererから抽出
+    let send_message_params = json
+        .pointer("/contents/liveChatRenderer/actionPanel/liveChatMessageInputRenderer/sendButton/buttonRenderer/serviceEndpoint/sendLiveChatMessageEndpoint/params")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
     let yt_initial_data = YtInitialData {
         actions: aabb,
         continuation,
         raw: json_str.to_owned(),
+        send_message_params,
     };
     Ok(yt_initial_data)
 }
@@ -303,14 +355,22 @@ fn try_parse_continuation(obj: &serde_json::Value) -> Option<Continuation> {
         if let Some(data) = obj.get(key) {
             if let Some(con) = data.get("continuation").and_then(|v| v.as_str()) {
                 let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
-                return Some(Continuation { value: con.to_string(), timeout_ms, needs_reload: false });
+                return Some(Continuation {
+                    value: con.to_string(),
+                    timeout_ms,
+                    needs_reload: false,
+                });
             }
         }
     }
     // reloadContinuationData: live_chatページを再取得してytcfg/continuationをリセットする必要がある
     if let Some(data) = obj.get("reloadContinuationData") {
         if let Some(con) = data.get("continuation").and_then(|v| v.as_str()) {
-            return Some(Continuation { value: con.to_string(), timeout_ms: None, needs_reload: true });
+            return Some(Continuation {
+                value: con.to_string(),
+                timeout_ms: None,
+                needs_reload: true,
+            });
         }
     }
     None
@@ -556,8 +616,7 @@ fn parse_live_chat_text_message(renderer: &serde_json::Value) -> Option<LiveChat
 
 /// liveChatPaidMessageRenderer をパースして LiveChatPaidMessage を返す
 fn parse_live_chat_paid_message(renderer: &serde_json::Value) -> Option<LiveChatPaidMessage> {
-    let purchase_amount_text =
-        get_string(renderer, &["purchaseAmountText", "simpleText"]).ok()?;
+    let purchase_amount_text = get_string(renderer, &["purchaseAmountText", "simpleText"]).ok()?;
 
     // message フィールドはスーパーチャットでは省略可能
     let message_parts = renderer
@@ -568,8 +627,7 @@ fn parse_live_chat_paid_message(renderer: &serde_json::Value) -> Option<LiveChat
     let author_badges = parse_author_badges(renderer).ok()?;
     let author_name = get_string(renderer, &["authorName", "simpleText"]).ok()?;
     let timestamp_usec = get_string(renderer, &["timestampUsec"]).ok()?;
-    let author_external_channel_id =
-        get_string(renderer, &["authorExternalChannelId"]).ok()?;
+    let author_external_channel_id = get_string(renderer, &["authorExternalChannelId"]).ok()?;
     let author_photo_url = renderer
         .get("authorPhoto")
         .and_then(|v| v.get("thumbnails"))
@@ -687,11 +745,13 @@ fn parse_action(action: &serde_json::Value) -> Action {
                 None => return Action::ParseError(action.to_string()),
             }
         } else if item_map.contains_key("liveChatSponsorshipsGiftRedemptionAnnouncementRenderer") {
-            let renderer =
-                match get_value(item, &["liveChatSponsorshipsGiftRedemptionAnnouncementRenderer"]) {
-                    Ok(v) => v,
-                    Err(_) => return Action::ParseError(action.to_string()),
-                };
+            let renderer = match get_value(
+                item,
+                &["liveChatSponsorshipsGiftRedemptionAnnouncementRenderer"],
+            ) {
+                Ok(v) => v,
+                Err(_) => return Action::ParseError(action.to_string()),
+            };
             match parse_live_chat_text_message(renderer) {
                 Some(msg) => return Action::GiftAnnouncement(msg),
                 None => return Action::ParseError(action.to_string()),
@@ -708,11 +768,10 @@ fn parse_action(action: &serde_json::Value) -> Action {
     } else if obj.contains_key("updateLiveChatPollAction") {
         return Action::UpdatePoll;
     } else if obj.contains_key("replaceChatItemAction") {
-        let target_item_id =
-            match get_string(action, &["replaceChatItemAction", "targetItemId"]) {
-                Ok(s) => s,
-                Err(_) => return Action::ParseError(action.to_string()),
-            };
+        let target_item_id = match get_string(action, &["replaceChatItemAction", "targetItemId"]) {
+            Ok(s) => s,
+            Err(_) => return Action::ParseError(action.to_string()),
+        };
         let renderer = match get_value(
             action,
             &[
@@ -729,7 +788,7 @@ fn parse_action(action: &serde_json::Value) -> Action {
                 return Action::ReplaceChatItem(ReplaceChatItemAction {
                     target_item_id,
                     message,
-                })
+                });
             }
             None => return Action::ParseError(action.to_string()),
         }
@@ -759,6 +818,111 @@ fn parse_action(action: &serde_json::Value) -> Action {
     } else {
         return Action::ParseError(action.to_string());
     }
+}
+
+/// SAPISID cookieからYouTube認証用のSAPISIDHASHヘッダー値を生成する
+fn build_sapisid_hash(cookies: &[Cookie]) -> Option<String> {
+    let sapisid = cookies
+        .iter()
+        .find(|c| {
+            c.name == "SAPISID" || c.name == "__Secure-1PAPISID" || c.name == "__Secure-3PAPISID"
+        })
+        .map(|c| c.value.clone())?;
+
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+
+    let to_hash = format!("{} {} https://www.youtube.com", timestamp, sapisid);
+    let mut hasher = Sha1::new();
+    hasher.update(to_hash.as_bytes());
+    let result = hasher.finalize();
+    let hex = format!("{:x}", result);
+
+    Some(format!("SAPISIDHASH {}_{}", timestamp, hex))
+}
+
+/// YouTube LiveにコメントをYouTube内部API経由で投稿する
+///
+/// - `cookies`: 接続時に取得したCookieリスト（SAPISID等を含む）
+/// - `ytcfg`: ページから抽出したYouTube設定（APIキー、クライアントコンテキスト）
+/// - `send_message_params`: `inputFieldRenderer`から抽出したコメント投稿用パラメータ
+/// - `text`: 投稿するコメントテキスト
+pub async fn send_chat_message(
+    cookies: &[Cookie],
+    ytcfg: &Ytcfg,
+    send_message_params: &str,
+    text: &str,
+) -> Result<(), mcv_tracing::TracingError> {
+    let cookie_header = cookies
+        .iter()
+        .map(|c| format!("{}={}", c.name, c.value))
+        .collect::<Vec<_>>()
+        .join("; ");
+
+    let auth_header = build_sapisid_hash(cookies);
+    let client_message_id = uuid::Uuid::new_v4().to_string();
+
+    let body = serde_json::json!({
+        "context": {
+            "client": ytcfg.client
+        },
+        "params": send_message_params,
+        "clientMessageId": client_message_id,
+        "richMessage": {
+            "textSegments": [
+                { "text": text }
+            ]
+        }
+    });
+
+    let url = format!(
+        "https://www.youtube.com/youtubei/v1/live_chat/send_message?key={}",
+        ytcfg.api_key
+    );
+
+    let client = reqwest::Client::new();
+    let mut req_builder = client
+        .post(&url)
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+        )
+        .header("Origin", "https://www.youtube.com")
+        .header("Referer", "https://www.youtube.com/live_chat")
+        .header("X-Origin", "https://www.youtube.com")
+        .json(&body);
+
+    if !cookie_header.is_empty() {
+        req_builder = req_builder.header("Cookie", cookie_header);
+    }
+    if let Some(auth) = auth_header {
+        req_builder = req_builder.header("Authorization", auth);
+    }
+    if let Some(visitor_data) = &ytcfg.visitor_data {
+        req_builder = req_builder.header("X-Goog-Visitor-Id", visitor_data.clone());
+    }
+
+    let res = req_builder.send().await.map_err(|e| {
+        mcv_tracing::capture_context!(
+            "send_chat_message: HTTPリクエストの送信に失敗",
+            error = e.to_string()
+        )
+    })?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let body_text = res.text().await.unwrap_or_default();
+        return Err(mcv_tracing::capture_context!(
+            "send_chat_message: HTTPエラー",
+            status = status.as_u16(),
+            body = body_text
+        )
+        .into());
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

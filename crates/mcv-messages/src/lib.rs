@@ -481,6 +481,8 @@ pub enum SystemKind {
     MessageDeleteAll {
         user_id: String,
     },
+    /// プラットフォームが自動生成するアナウンス（ギフトメンバーシップ受け取り通知など）
+    GiftAnnouncement,
 }
 
 /// メッセージの種別

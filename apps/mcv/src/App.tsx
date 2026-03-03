@@ -40,6 +40,8 @@ interface CommentRow {
   /** メッセージ種別: "chat" | "history_chat" | "monetary" | "system" */
   kind: string
   avatar_url?: string
+  /** スーパーチャット等の金額テキスト（例: "¥8,000"）。monetary 種別のみ設定。 */
+  amount_text?: string
 }
 
 // Display-friendly comment row (for DataGrid)
@@ -60,6 +62,8 @@ export interface Comment {
   /** メッセージ種別: "chat" | "history_chat" | "monetary" | "system" */
   kind: string
   avatar_url?: string
+  /** スーパーチャット等の金額テキスト（例: "¥8,000"）。monetary 種別のみ設定。 */
+  amount_text?: string
 }
 
 
@@ -1037,6 +1041,14 @@ function App() {
       )
     }
     if (column.key === 'text') {
+      if (item.kind === 'monetary' && item.amount_text) {
+        return (
+          <span className={extraClass}>
+            <span className="font-bold mr-1">{item.amount_text}</span>
+            <RenderMessageParts parts={item.text} isUsername={false} />
+          </span>
+        )
+      }
       return (
         <span className={extraClass}>
           <RenderMessageParts parts={item.text} isUsername={false} />

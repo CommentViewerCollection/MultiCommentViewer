@@ -6,8 +6,8 @@
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
-    MessageType, ProviderBadge, ProviderContent, ProviderMessage, ProviderMessageKind,
-    ProviderSender, ServiceId, SystemKind,
+    MessageType, Money, MonetaryInfo, ProviderBadge, ProviderContent, ProviderMessage,
+    ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::sync::watch;
@@ -16,11 +16,51 @@ use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 use youtube_live_lib::{
     extract_ytcfg, get_live_chat, get_live_chat_messages, get_yt_initial_data, Action,
-    Continuation, LiveChatTextMessage, MessagePart, Vid,
+    Continuation, LiveChatPaidMessage, LiveChatTextMessage, MessagePart, Vid,
 };
 
 use crate::video_id::extract_video_id;
 use crate::YouTubeLivePlugin;
+
+/// 金額テキスト（例: "￥8,000"、"$10.00"）から Money 構造体を生成する
+fn parse_money(text: &str) -> Money {
+    let text = text.trim();
+    // 通貨記号を検出してISO 4217コードと数値文字列に分解
+    let (currency, rest): (&str, &str) = if text.starts_with('¥') || text.starts_with('￥') {
+        ("JPY", text.trim_start_matches(['¥', '￥']))
+    } else if text.starts_with("HK$") {
+        ("HKD", &text[3..])
+    } else if text.starts_with("NT$") {
+        ("TWD", &text[3..])
+    } else if text.starts_with("A$") {
+        ("AUD", &text[2..])
+    } else if text.starts_with("C$") {
+        ("CAD", &text[2..])
+    } else if text.starts_with('$') {
+        ("USD", text.trim_start_matches('$'))
+    } else if text.starts_with('€') {
+        ("EUR", text.trim_start_matches('€'))
+    } else if text.starts_with('£') {
+        ("GBP", text.trim_start_matches('£'))
+    } else if text.ends_with('₩') {
+        let numeric: String = text.trim_end_matches('₩').chars()
+            .filter(|c| c.is_ascii_digit())
+            .collect();
+        let value_minor = numeric.parse::<i64>().unwrap_or(0);
+        return Money { currency: "KRW".to_string(), value_minor };
+    } else {
+        ("", text)
+    };
+    // カンマ・空白を除去して数値をパース
+    let cleaned: String = rest.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
+    let value_minor = match currency {
+        // 少数部なし (JPY, KRW, TWD)
+        "JPY" | "TWD" => cleaned.parse::<i64>().unwrap_or(0),
+        // 少数2桁 (USD, EUR, GBP, AUD, CAD, HKD 等)
+        _ => cleaned.parse::<f64>().map(|v| (v * 100.0).round() as i64).unwrap_or(0),
+    };
+    Money { currency: currency.to_string(), value_minor }
+}
 
 /// LiveChatTextMessageをProviderMessageに変換
 fn convert_to_provider_message(msg: &LiveChatTextMessage) -> ProviderMessage {
@@ -84,13 +124,79 @@ fn convert_to_provider_message(msg: &LiveChatTextMessage) -> ProviderMessage {
     }
 }
 
+/// LiveChatPaidMessage をProviderMessageに変換
+fn convert_paid_message_to_provider_message(msg: &LiveChatPaidMessage) -> ProviderMessage {
+    let text = msg
+        .message_parts
+        .iter()
+        .filter_map(|part| match part {
+            MessagePart::Text(s) => Some(McvMessagePart::Text { text: s.clone() }),
+            MessagePart::Emoji(emoji) => emoji.thumbnails.first().map(|thumbnail| {
+                McvMessagePart::Image {
+                    url: thumbnail.url.clone(),
+                    width: Some(thumbnail.width as u32),
+                    height: Some(thumbnail.height as u32),
+                    alt: Some(emoji.label.clone()),
+                }
+            }),
+        })
+        .collect::<Vec<_>>();
+
+    let badges = msg
+        .author_badges
+        .iter()
+        .map(|badge| ProviderBadge {
+            id: badge.tooltip.clone(),
+            name: badge.tooltip.clone(),
+            image_url: badge.thumbnails.first().map(|t| t.url.clone()),
+        })
+        .collect::<Vec<_>>();
+
+    let timestamp = msg.timestamp_usec.parse::<i64>().unwrap_or(0) / 1_000_000;
+    let id = msg.timestamp_usec.clone();
+    let monetary_info = MonetaryInfo {
+        amount: parse_money(&msg.purchase_amount_text),
+        tier: None,
+        recurring: false,
+    };
+
+    ProviderMessage {
+        id: id.clone(),
+        platform_message_id: Some(id),
+        service: ServiceId("youtube".to_string()),
+        channel: ChannelId("".to_string()),
+        sender: ProviderSender {
+            id: msg.author_external_channel_id.clone(),
+            display_name: vec![McvMessagePart::Text {
+                text: msg.author_name.clone(),
+            }],
+            badges,
+            role: None,
+            avatar_url: msg.author_photo_url.clone(),
+        },
+        timestamp,
+        kind: ProviderMessageKind::Monetary(monetary_info),
+        content: ProviderContent::Text { text },
+        reply_to: None,
+        metadata: serde_json::Value::Null,
+    }
+}
+
 /// Action を ProviderMessage に変換する（変換不要なアクションは None を返す）
 fn convert_action_to_provider_message(
     action: &Action,
     connection_id: Uuid,
 ) -> Option<ProviderMessage> {
     match action {
-        Action::LiveChatTextMessage1(msg) => Some(convert_to_provider_message(msg)),
+        Action::TextMessage(msg) => Some(convert_to_provider_message(msg)),
+
+        Action::GiftAnnouncement(msg) => {
+            let mut provider_msg = convert_to_provider_message(msg);
+            provider_msg.kind = ProviderMessageKind::System(SystemKind::GiftAnnouncement);
+            Some(provider_msg)
+        }
+
+        Action::PaidMessage(msg) => Some(convert_paid_message_to_provider_message(msg)),
 
         // 承認待ちコメント: System(Placeholder) として追加
         Action::PlaceholderItem(placeholder) => {

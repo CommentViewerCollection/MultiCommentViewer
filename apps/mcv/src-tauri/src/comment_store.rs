@@ -34,7 +34,8 @@ impl CommentStore {
                 kind TEXT NOT NULL,
                 avatar_url TEXT,
                 badges_json TEXT NOT NULL DEFAULT '[]',
-                replaces_id TEXT
+                replaces_id TEXT,
+                amount_text TEXT
             );
             CREATE INDEX IF NOT EXISTS idx_comments_timestamp ON comments(timestamp DESC);
             CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
@@ -63,8 +64,8 @@ impl CommentStore {
         self.conn.execute(
             "INSERT OR REPLACE INTO comments
                 (id, user_id, user_name_json, text_json, timestamp, connection_id,
-                 is_visible, kind, avatar_url, badges_json, replaces_id)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                 is_visible, kind, avatar_url, badges_json, replaces_id, amount_text)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
                 row.id,
                 row.user_id,
@@ -77,6 +78,7 @@ impl CommentStore {
                 row.avatar_url,
                 badges_json,
                 row.replaces_id,
+                row.amount_text,
             ],
         )?;
 
@@ -123,13 +125,14 @@ impl CommentStore {
         let pattern = format!("%{}%", query);
         let mut stmt = self.conn.prepare(
             "SELECT id, user_id, user_name_json, text_json, timestamp, connection_id,
-                    is_visible, kind, avatar_url, badges_json, replaces_id
+                    is_visible, kind, avatar_url, badges_json, replaces_id, amount_text
              FROM comments
              WHERE user_name_json LIKE ?1
                 OR text_json LIKE ?1
                 OR user_id LIKE ?1
                 OR connection_id LIKE ?1
-             ORDER BY timestamp DESC
+                OR amount_text LIKE ?1
+             ORDER BY timestamp ASC
              LIMIT ?2 OFFSET ?3",
         )?;
 
@@ -151,6 +154,7 @@ impl CommentStore {
                 avatar_url: row.get(8)?,
                 badges: serde_json::from_str(&badges_json).unwrap_or_default(),
                 replaces_id: row.get(10)?,
+                amount_text: row.get(11)?,
             })
         })?
         .collect::<SqliteResult<Vec<_>>>()?;

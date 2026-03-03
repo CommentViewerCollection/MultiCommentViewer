@@ -24,8 +24,8 @@ use mcv_core::{
 use mcv_messages::{
     self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload, ConnectPayload, DisconnectPayload,
     DisconnectedPayload, InputInfo, Message as McvMessage, MessageDestination, MessageSource,
-    MessageType, ProviderContent, ProviderMessageKind, SendCommentPayload, SiteInfo as MsgSiteInfo,
-    SystemKind,
+    MessageType, Money, ProviderContent, ProviderMessageKind, SendCommentPayload,
+    SiteInfo as MsgSiteInfo, SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
@@ -53,6 +53,28 @@ pub(crate) struct CommentRow {
     /// ユーザーアイコン URL（省略可）
     #[serde(skip_serializing_if = "Option::is_none")]
     avatar_url: Option<String>,
+    /// 投げ銭・スーパーチャットの金額テキスト（例: "¥8,000"）。monetary 種別のみ設定。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    amount_text: Option<String>,
+}
+
+/// Money を表示用テキストに変換する（例: "¥8,000"、"$10.00"）
+fn format_money(money: &Money) -> String {
+    match money.currency.as_str() {
+        "JPY" => format!("¥{}", money.value_minor),
+        "KRW" => format!("₩{}", money.value_minor),
+        "TWD" => format!("NT${}", money.value_minor),
+        "USD" => format!("${:.2}", money.value_minor as f64 / 100.0),
+        "EUR" => format!("€{:.2}", money.value_minor as f64 / 100.0),
+        "GBP" => format!("£{:.2}", money.value_minor as f64 / 100.0),
+        "AUD" => format!("A${:.2}", money.value_minor as f64 / 100.0),
+        "CAD" => format!("C${:.2}", money.value_minor as f64 / 100.0),
+        "HKD" => format!("HK${:.2}", money.value_minor as f64 / 100.0),
+        _ if !money.currency.is_empty() => {
+            format!("{} {}", money.currency, money.value_minor)
+        }
+        _ => format!("{}", money.value_minor),
+    }
 }
 
 /// "delete-all-by-user" イベントのペイロード
@@ -93,13 +115,15 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 _ => (true, None, extract_text(&msg.content)),
             };
 
-            let kind = match &msg.kind {
-                ProviderMessageKind::Chat => "chat",
-                ProviderMessageKind::HistoryChat => "history_chat",
-                ProviderMessageKind::Monetary(_) => "monetary",
-                _ => "system",
-            }
-            .to_string();
+            let (kind, amount_text) = match &msg.kind {
+                ProviderMessageKind::Chat => ("chat", None),
+                ProviderMessageKind::HistoryChat => ("history_chat", None),
+                ProviderMessageKind::Monetary(info) => {
+                    ("monetary", Some(format_money(&info.amount)))
+                }
+                _ => ("system", None),
+            };
+            let kind = kind.to_string();
 
             CommentRow {
                 id: msg.id.clone(),
@@ -113,6 +137,7 @@ fn envelope_to_comment_rows(envelope: &mcv_messages::McvEnvelope) -> Vec<Comment
                 replaces_id,
                 kind,
                 avatar_url: msg.sender.avatar_url.clone(),
+                amount_text,
             }
         })
         .collect()

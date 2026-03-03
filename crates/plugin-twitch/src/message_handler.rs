@@ -7,10 +7,10 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
-    GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    SetConnectionSitePayload,
+    AccountInfo, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
+    FetchAccountInfoPayload, GetBrowserPluginAckPayload, GetBrowserPluginPayload,
+    GetCookieAckPayload, GetCookiePayload, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, SetConnectionSitePayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -93,6 +93,80 @@ pub(crate) async fn on_message_impl(
             let removed: ConnectionRemovedPayload = parse_payload(&message.payload)?;
             if let Some(mut conn) = plugin.connections.remove(&removed.connection_id) {
                 conn.stop();
+            }
+        }
+        MessageType::FetchAccountInfo => {
+            let payload: FetchAccountInfoPayload = parse_payload(&message.payload)?;
+            let conn_id = payload.connection_id;
+            let cookies =
+                fetch_cookies_for_connect(&ctx, plugin.logical_plugin_id, &payload.browser.id)
+                    .await;
+            let auth_token = cookies
+                .iter()
+                .find(|c| c.name == "auth_token")
+                .map(|c| c.value.clone());
+
+            if let Some(token) = auth_token {
+                match twitch_lib::auth_token::validate_token(&token).await {
+                    Ok(info) => {
+                        tracing::debug!(
+                            target: "mcv::plugin-twitch",
+                            login = %info.login,
+                            "FetchAccountInfo: Twitch ユーザー情報取得完了"
+                        );
+                        let account_msg = McvMessage::new_notification(
+                            MessageType::UpdateConnectionAccount,
+                            MessageSource::Plugin {
+                                plugin_id: plugin.logical_plugin_id,
+                            },
+                            MessageDestination::Core,
+                            serde_json::to_value(UpdateConnectionAccountPayload {
+                                connection_id: conn_id,
+                                account: Some(AccountInfo {
+                                    user_id: info.user_id,
+                                    display_name: info.login,
+                                    avatar_url: None,
+                                }),
+                            })
+                            .unwrap(),
+                        );
+                        TwitchPlugin::send_message(ctx, account_msg).await;
+                    }
+                    Err(e) => {
+                        tracing::debug!(
+                            target: "mcv::plugin-twitch",
+                            error = %e,
+                            "FetchAccountInfo: Twitch トークン検証に失敗（未ログインの可能性あり）"
+                        );
+                        let clear_msg = McvMessage::new_notification(
+                            MessageType::UpdateConnectionAccount,
+                            MessageSource::Plugin {
+                                plugin_id: plugin.logical_plugin_id,
+                            },
+                            MessageDestination::Core,
+                            serde_json::to_value(UpdateConnectionAccountPayload {
+                                connection_id: conn_id,
+                                account: None,
+                            })
+                            .unwrap(),
+                        );
+                        TwitchPlugin::send_message(ctx, clear_msg).await;
+                    }
+                }
+            } else {
+                let clear_msg = McvMessage::new_notification(
+                    MessageType::UpdateConnectionAccount,
+                    MessageSource::Plugin {
+                        plugin_id: plugin.logical_plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(UpdateConnectionAccountPayload {
+                        connection_id: conn_id,
+                        account: None,
+                    })
+                    .unwrap(),
+                );
+                TwitchPlugin::send_message(ctx, clear_msg).await;
             }
         }
         _ => {}
@@ -236,4 +310,3 @@ async fn fetch_cookies_for_connect(
         }
     }
 }
-

@@ -5,9 +5,10 @@
 
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
-    ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent,
-    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
+    AccountInfo, ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope,
+    Message as McvMessage, MessageDestination, MessagePart, MessageSource, MessageType,
+    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
+    UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::fs::{File, OpenOptions};
@@ -340,6 +341,21 @@ impl Connection {
                     );
                 }
 
+                // 切断前にアカウント情報をクリア
+                let clear_account = McvMessage::new_notification(
+                    MessageType::UpdateConnectionAccount,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(UpdateConnectionAccountPayload {
+                        connection_id,
+                        account: None,
+                    })
+                    .unwrap(),
+                );
+                TwitchPlugin::send_message(ctx.clone(), clear_account).await;
+
                 let message = McvMessage::new_notification(
                     MessageType::Disconnected,
                     MessageSource::Plugin {
@@ -432,6 +448,27 @@ impl Connection {
                         metadata: serde_json::Value::Null,
                     };
                     provider_messages.push(provider_msg);
+                }
+                TwitchEvent::GlobalUserState { display_name, user_id } => {
+                    if let Some(name) = display_name {
+                        let account_msg = McvMessage::new_notification(
+                            MessageType::UpdateConnectionAccount,
+                            MessageSource::Plugin {
+                                plugin_id: logical_plugin_id,
+                            },
+                            MessageDestination::Core,
+                            serde_json::to_value(UpdateConnectionAccountPayload {
+                                connection_id,
+                                account: Some(AccountInfo {
+                                    user_id: user_id.unwrap_or_default(),
+                                    display_name: name,
+                                    avatar_url: None,
+                                }),
+                            })
+                            .unwrap(),
+                        );
+                        TwitchPlugin::send_message(ctx.clone(), account_msg).await;
+                    }
                 }
                 TwitchEvent::Ping => {
                     if let Err(e) = Self::send_irc_line(write, "PONG").await {

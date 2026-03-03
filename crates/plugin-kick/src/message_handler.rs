@@ -7,10 +7,11 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    CommentReceivedPayload, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload,
-    DisconnectPayload, DisconnectedPayload, GetBrowserPluginAckPayload, GetBrowserPluginPayload,
-    GetCookieAckPayload, GetCookiePayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessageSource, MessageType, ProviderMessageKind, SetConnectionSitePayload,
+    AccountInfo, CommentReceivedPayload, ConnectPayload, ConnectedPayload,
+    ConnectionRemovedPayload, DisconnectPayload, DisconnectedPayload, FetchAccountInfoPayload,
+    GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
+    McvEnvelope, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    ProviderMessageKind, SetConnectionSitePayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -182,6 +183,43 @@ pub(crate) async fn on_message_impl(
             );
             KickPlugin::send_message(ctx.clone(), connected_msg).await;
 
+            // ログイン中のユーザー情報を取得して送信（Cookie がある場合のみ成功する）
+            match api::fetch_current_user(&cookie_header).await {
+                Ok(user) => {
+                    tracing::debug!(
+                        target: "mcv::plugin-kick",
+                        connection_id = %connect.connection_id,
+                        username = %user.username,
+                        "Kick ログインユーザー情報を取得"
+                    );
+                    let account_msg = McvMessage::new_notification(
+                        MessageType::UpdateConnectionAccount,
+                        MessageSource::Plugin {
+                            plugin_id: plugin.logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(UpdateConnectionAccountPayload {
+                            connection_id: connect.connection_id,
+                            account: Some(AccountInfo {
+                                user_id: user.id.to_string(),
+                                display_name: user.username,
+                                avatar_url: user.profile_pic,
+                            }),
+                        })
+                        .unwrap(),
+                    );
+                    KickPlugin::send_message(ctx.clone(), account_msg).await;
+                }
+                Err(e) => {
+                    tracing::debug!(
+                        target: "mcv::plugin-kick",
+                        connection_id = %connect.connection_id,
+                        error = %e,
+                        "Kick ログインユーザー情報の取得に失敗（未ログインの可能性あり）"
+                    );
+                }
+            }
+
             match api::fetch_chat_history(channel_id, &cookie_header).await {
                 Ok(history_items) => {
                     let mut provider_messages = history_items
@@ -263,6 +301,65 @@ pub(crate) async fn on_message_impl(
             let removed: ConnectionRemovedPayload = parse_payload(&message.payload)?;
             if let Some(mut conn) = plugin.connections.remove(&removed.connection_id) {
                 conn.stop();
+            }
+        }
+        MessageType::FetchAccountInfo => {
+            let payload: FetchAccountInfoPayload = parse_payload(&message.payload)?;
+            let conn_id = payload.connection_id;
+            let cookies =
+                fetch_cookies_for_connect(&ctx, plugin.logical_plugin_id, &payload.browser.id)
+                    .await;
+            let cookie_header = cookies
+                .iter()
+                .map(|c| format!("{}={}", c.name, c.value))
+                .collect::<Vec<_>>()
+                .join("; ");
+
+            match api::fetch_current_user(&cookie_header).await {
+                Ok(user) => {
+                    tracing::debug!(
+                        target: "mcv::plugin-kick",
+                        username = %user.username,
+                        "FetchAccountInfo: Kick ユーザー情報取得完了"
+                    );
+                    let account_msg = McvMessage::new_notification(
+                        MessageType::UpdateConnectionAccount,
+                        MessageSource::Plugin {
+                            plugin_id: plugin.logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(UpdateConnectionAccountPayload {
+                            connection_id: conn_id,
+                            account: Some(AccountInfo {
+                                user_id: user.id.to_string(),
+                                display_name: user.username,
+                                avatar_url: user.profile_pic,
+                            }),
+                        })
+                        .unwrap(),
+                    );
+                    KickPlugin::send_message(ctx, account_msg).await;
+                }
+                Err(e) => {
+                    tracing::debug!(
+                        target: "mcv::plugin-kick",
+                        error = %e,
+                        "FetchAccountInfo: Kick ユーザー情報の取得に失敗（未ログインの可能性あり）"
+                    );
+                    let clear_msg = McvMessage::new_notification(
+                        MessageType::UpdateConnectionAccount,
+                        MessageSource::Plugin {
+                            plugin_id: plugin.logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(UpdateConnectionAccountPayload {
+                            connection_id: conn_id,
+                            account: None,
+                        })
+                        .unwrap(),
+                    );
+                    KickPlugin::send_message(ctx, clear_msg).await;
+                }
             }
         }
         _ => {}

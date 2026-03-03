@@ -67,6 +67,12 @@ export interface Comment {
 }
 
 
+export interface AccountInfo {
+  user_id: string
+  display_name: string
+  avatar_url?: string
+}
+
 export interface ConnectionInfo {
   connection_id: string
   plugin_id?: string
@@ -82,6 +88,7 @@ export interface ConnectionInfo {
   }
   input_info: string
   name: string
+  account_info?: AccountInfo
 }
 
 interface SiteInfo {
@@ -217,6 +224,20 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
   const [focusUserId, setFocusUserId] = useState<string | undefined>(undefined)
 
+  const frontendTrace = (
+    level: 'trace' | 'debug' | 'info' | 'warn' | 'error',
+    message: string,
+    fields?: Record<string, unknown>
+  ) => {
+    invoke('frontend_trace', {
+      level,
+      message,
+      fields: fields ?? null,
+    }).catch(() => {
+      // フロント診断ログの転送失敗は通常フローを止めない
+    })
+  }
+
   // 新規: Ref を作成
   const coreSettingsRef = useRef<any>(null)
   const connectionMapRef = useRef<Map<string, ConnectionInfo>>(new Map())
@@ -300,7 +321,7 @@ function App() {
   ])
 
   // 接続一覧を読み込む
-  const loadConnections = async () => {
+  const loadConnections = async (): Promise<ConnectionInfo[]> => {
     try {
       const conns = await invoke<ConnectionInfo[]>('get_connections')
       setConnections(conns)
@@ -312,9 +333,43 @@ function App() {
         })
         return newEditingNames
       })
+      return conns
     } catch (error) {
       console.error('Failed to load connections:', error)
+      return []
     }
+  }
+
+  const prefetchAccountInfoForConnections = async (
+    conns: ConnectionInfo[],
+    reason: string
+  ) => {
+    const targets = conns.filter((c) => c.plugin_id && c.site_id && c.browser_id && !c.account_info)
+    frontendTrace('info', 'startup account-info prefetch check', {
+      reason,
+      connectionCount: conns.length,
+      targetCount: targets.length,
+    })
+    await Promise.allSettled(
+      targets.map((conn) =>
+        invoke('fetch_account_info', { connectionId: conn.connection_id })
+          .then(() =>
+            frontendTrace('info', 'fetch_account_info invoked from startup preload', {
+              reason,
+              connectionId: conn.connection_id,
+              siteId: conn.site_id,
+              browserId: conn.browser_id,
+            })
+          )
+          .catch((e) =>
+            frontendTrace('warn', 'fetch_account_info failed from startup preload', {
+              reason,
+              connectionId: conn.connection_id,
+              error: String(e),
+            })
+          )
+      )
+    )
   }
 
   // サイト/ブラウザ情報を読み込む
@@ -394,7 +449,19 @@ function App() {
 
   useEffect(() => {
     // 初回読み込み
-    loadConnections()
+    void (async () => {
+      const initialConnections = await loadConnections()
+      await prefetchAccountInfoForConnections(initialConnections, 'initial-load')
+    })()
+    // 起動直後は plugin_id が遅れて反映される場合があるため、短時間だけ再試行する
+    const startupRetryTimers = [1000, 3000, 5000].map((delayMs) =>
+      setTimeout(() => {
+        void (async () => {
+          const latest = await loadConnections()
+          await prefetchAccountInfoForConnections(latest, `startup-retry-${delayMs}ms`)
+        })()
+      }, delayMs)
+    )
     loadSitesAndBrowsers()
     loadCoreSettings()
     loadUserSettings()
@@ -470,7 +537,7 @@ function App() {
 
     // サイト追加イベントをリッスン
     const unlistenSiteAdded = listen<SiteInfo>('site-added', (event) => {
-      console.log('[Site] Site added:', event.payload)
+      frontendTrace('info', 'site-added event received', { payload: event.payload })
       setSites((prev) => [...prev, event.payload])
       // サイト登録完了後にPending接続がCreatedに変わっている可能性があるため再取得
       loadConnections()
@@ -478,14 +545,19 @@ function App() {
 
     // ブラウザ追加イベントをリッスン
     const unlistenBrowserAdded = listen<BrowserInfo>('browser-added', (event) => {
-      console.log('[Browser] Browser added:', event.payload)
+      frontendTrace('info', 'browser-added event received', { payload: event.payload })
       setBrowsers((prev) => [...prev, event.payload])
     })
 
     // ブラウザ削除イベントをリッスン
     const unlistenBrowserRemoved = listen<{ browser_id: string }>('browser-removed', (event) => {
-      console.log('[Browser] Browser removed:', event.payload)
+      frontendTrace('info', 'browser-removed event received', { payload: event.payload })
       setBrowsers((prev) => prev.filter((b) => b.browser_id !== event.payload.browser_id))
+    })
+
+    // アカウント情報更新イベントをリッスン
+    const unlistenAccountUpdated = listen('connection-account-updated', () => {
+      loadConnections()
     })
 
     return () => {
@@ -496,6 +568,8 @@ function App() {
       unlistenSiteAdded.then((fn) => fn())
       unlistenBrowserAdded.then((fn) => fn())
       unlistenBrowserRemoved.then((fn) => fn())
+      unlistenAccountUpdated.then((fn) => fn())
+      startupRetryTimers.forEach((timerId) => clearTimeout(timerId))
       if (flushTimerRef.current !== null) {
         clearTimeout(flushTimerRef.current)
         flushTimerRef.current = null
@@ -675,10 +749,27 @@ function App() {
   const handleSiteChange = async (connectionId: string, siteId: string) => {
     if (!siteId) return
     try {
-      console.log('[Connection] Setting site:', { connectionId, siteId })
+      frontendTrace('info', 'set_connection_site start', { connectionId, siteId })
       await invoke('set_connection_site', { connectionId, siteId })
-      await loadConnections()
+      const latest = await loadConnections()
+      const updatedConn = latest.find((c) => c.connection_id === connectionId)
+      frontendTrace('info', 'site changed, fetch-account precheck', {
+        connectionId,
+        siteId: updatedConn?.site_id,
+        browserId: updatedConn?.browser_id,
+        willFetch: !!(updatedConn?.site_id && updatedConn?.browser_id),
+      })
+      if (updatedConn?.site_id && updatedConn?.browser_id) {
+        invoke('fetch_account_info', { connectionId })
+          .then(() => frontendTrace('info', 'fetch_account_info invoked from site change', { connectionId }))
+          .catch((e) => frontendTrace('warn', 'fetch_account_info failed from site change', { connectionId, error: String(e) }))
+      }
     } catch (error) {
+      frontendTrace('error', 'set_connection_site failed', {
+        connectionId,
+        siteId,
+        error: String(error),
+      })
       console.error('[Connection] Failed to set site:', error)
       alert('サイトの設定に失敗しました')
     }
@@ -710,14 +801,32 @@ function App() {
 
   const handleBrowserChange = async (connectionId: string, browserId: string) => {
     try {
+      frontendTrace('info', 'update_connection_settings(browser) start', { connectionId, browserId })
       await invoke('update_connection_settings', {
         connectionId,
         url: null,
         browserId,
         advancedSettings: null,
       })
-      await loadConnections()
+      const latest = await loadConnections()
+      const updatedConn = latest.find((c) => c.connection_id === connectionId)
+      frontendTrace('info', 'browser changed, fetch-account precheck', {
+        connectionId,
+        siteId: updatedConn?.site_id,
+        browserId: updatedConn?.browser_id,
+        willFetch: !!(updatedConn?.site_id && updatedConn?.browser_id),
+      })
+      if (updatedConn?.site_id && updatedConn?.browser_id) {
+        invoke('fetch_account_info', { connectionId })
+          .then(() => frontendTrace('info', 'fetch_account_info invoked from browser change', { connectionId }))
+          .catch((e) => frontendTrace('warn', 'fetch_account_info failed from browser change', { connectionId, error: String(e) }))
+      }
     } catch (error) {
+      frontendTrace('error', 'update_connection_settings(browser) failed', {
+        connectionId,
+        browserId,
+        error: String(error),
+      })
       console.error('[Connection] Failed to set browser:', error)
       alert('ブラウザの設定に失敗しました')
     }
@@ -784,7 +893,10 @@ function App() {
         connectionId: selectedConnectionForCommand,
         text: commandInput.trim(),
       })
-      console.log('Comment result:', result)
+      frontendTrace('info', 'send_comment completed', {
+        connectionId: selectedConnectionForCommand,
+        result,
+      })
       setCommandInput('')
     } catch (error) {
       console.error('Failed to send comment:', error)
@@ -1151,6 +1263,26 @@ function App() {
                       </span>
                     </div>
                   </div>
+
+                  {/* アカウント情報 */}
+                  {conn.account_info && (
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-black/5 dark:bg-white/5">
+                      {conn.account_info.avatar_url ? (
+                        <img
+                          src={conn.account_info.avatar_url}
+                          alt=""
+                          className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs flex-shrink-0">
+                          {conn.account_info.display_name[0]}
+                        </div>
+                      )}
+                      <span className="text-xs truncate text-gray-700 dark:text-gray-300">
+                        {conn.account_info.display_name}
+                      </span>
+                    </div>
+                  )}
 
                   {/* サイト選択 + ブラウザ選択 */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>

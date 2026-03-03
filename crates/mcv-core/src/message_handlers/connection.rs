@@ -3,6 +3,7 @@ use mcv_common::LogicalPluginId;
 use mcv_messages::{
     ConnectPayload, ConnectedPayload, ConnectionAddedPayload, DisconnectPayload,
     DisconnectedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    UpdateConnectionAccountPayload,
 };
 use uuid::Uuid;
 
@@ -274,6 +275,65 @@ pub fn handle_disconnected(
     actor
         .connection_manager
         .update_status(&connection_id, ConnectionStatus::Disconnected);
+
+    // UIへイベント通知
+    if let Some(callback) = &actor.event_callback {
+        callback(message.clone());
+    }
+}
+
+/// update-connection-account メッセージのハンドラー
+///
+/// プラグインから接続中のログインアカウント情報を受け取り、ConnectionInfo に保存する。
+/// account が None の場合はアカウント情報をクリアする（切断時など）。
+pub fn handle_update_connection_account(
+    actor: &mut CoreActor,
+    message: &McvMessage,
+    _ctx: &mut Context<CoreActor>,
+) {
+    let payload: UpdateConnectionAccountPayload =
+        match serde_json::from_value(message.payload.clone()) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(
+                    target: "mcv::core::CoreActor",
+                    error = %e,
+                    message_type = "update-connection-account",
+                    "Failed to parse message payload"
+                );
+                return;
+            }
+        };
+
+    tracing::debug!(
+        connection_id = %payload.connection_id,
+        has_account = payload.account.is_some(),
+        "Updating connection account info"
+    );
+
+    // 送信元プラグインと現在の接続先プラグインが一致しない場合は破棄する。
+    // サイト切り替え直後に古いプラグインから遅延通知が届いても上書きしないためのガード。
+    let src_plugin_id = match message.src {
+        MessageSource::Plugin { plugin_id } => Some(plugin_id),
+        MessageSource::Core => None,
+    };
+    if let Some(current_conn) = actor.connection_manager.get_connection(&payload.connection_id) {
+        if let (Some(src), Some(current)) = (src_plugin_id, current_conn.plugin_id) {
+            if src != current {
+                tracing::warn!(
+                    connection_id = %payload.connection_id,
+                    source_plugin_id = %src,
+                    current_plugin_id = %current,
+                    "Ignore stale update-connection-account from non-current plugin"
+                );
+                return;
+            }
+        }
+    }
+
+    actor
+        .connection_manager
+        .update_account(&payload.connection_id, payload.account);
 
     // UIへイベント通知
     if let Some(callback) = &actor.event_callback {

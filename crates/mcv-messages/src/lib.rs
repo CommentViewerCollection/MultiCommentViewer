@@ -177,6 +177,10 @@ pub enum MessageType {
     GetSettings,
     SettingsData,
     UpdateSettings,
+
+    // Account関連
+    UpdateConnectionAccount,
+    FetchAccountInfo,
 }
 
 // ============================================================================
@@ -748,6 +752,33 @@ pub struct SettingsDataPayload {
 pub struct UpdateSettingsPayload {
     pub target: String,
     pub data: serde_json::Value,
+}
+
+/// ログイン中のアカウント情報（プラットフォーム非依存）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AccountInfo {
+    /// プラットフォーム上のユーザーID
+    pub user_id: String,
+    /// 表示名
+    pub display_name: String,
+    /// アバター画像URL（取得できない場合はNone）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar_url: Option<String>,
+}
+
+/// fetch-account-infoのpayload (Core → Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FetchAccountInfoPayload {
+    pub connection_id: Uuid,
+    pub browser: BrowserInfo,
+}
+
+/// update-connection-accountのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateConnectionAccountPayload {
+    pub connection_id: Uuid,
+    /// Noneの場合はアカウント情報をクリアする（切断時など）
+    pub account: Option<AccountInfo>,
 }
 
 // ============================================================================

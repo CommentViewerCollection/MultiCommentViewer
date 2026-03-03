@@ -4,10 +4,11 @@
 //! ライブチャットメッセージを定期的に取得します。
 
 use mcv_messages::{
-    ChannelId, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload, McvEnvelope,
-    Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
-    MessageType, Money, MonetaryInfo, ProviderBadge, ProviderContent, ProviderMessage,
-    ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
+    AccountInfo, ChannelId, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload,
+    McvEnvelope, Message as McvMessage, MessageDestination, MessagePart as McvMessagePart,
+    MessageSource, MessageType, Money, MonetaryInfo, ProviderBadge, ProviderContent,
+    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
+    UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use std::sync::Arc;
@@ -466,6 +467,34 @@ impl Connection {
                 );
             }
 
+            // ログイン中のアカウント情報を Core に通知
+            if let Some(name) = yt_initial_data.viewer_name() {
+                let account = AccountInfo {
+                    user_id: name.to_string(),
+                    display_name: name.to_string(),
+                    avatar_url: yt_initial_data.viewer_avatar_url().map(|s| s.to_string()),
+                };
+                tracing::info!(
+                    target: "mcv::plugin-youtube-live",
+                    connection_id = %connection_id,
+                    display_name = %name,
+                    "視聴者アカウント情報を取得しました"
+                );
+                let account_msg = McvMessage::new_notification(
+                    MessageType::UpdateConnectionAccount,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(UpdateConnectionAccountPayload {
+                        connection_id,
+                        account: Some(account),
+                    })
+                    .unwrap(),
+                );
+                YouTubeLivePlugin::send_message(ctx.clone(), account_msg).await;
+            }
+
             // YtInitialData の全 actions をまとめて1つの McvEnvelope に収める
             let provider_messages: Vec<ProviderMessage> = yt_initial_data
                 .actions()
@@ -669,6 +698,20 @@ impl Connection {
                 let mut posting = comment_posting.write().await;
                 *posting = None;
             }
+            // アカウント情報をクリア
+            let clear_account_msg = McvMessage::new_notification(
+                MessageType::UpdateConnectionAccount,
+                MessageSource::Plugin {
+                    plugin_id: logical_plugin_id,
+                },
+                MessageDestination::Core,
+                serde_json::to_value(UpdateConnectionAccountPayload {
+                    connection_id,
+                    account: None,
+                })
+                .unwrap(),
+            );
+            YouTubeLivePlugin::send_message(ctx.clone(), clear_account_msg).await;
             // CoreにDisconnectedメッセージを送信
             let message = McvMessage::new_notification(
                 MessageType::Disconnected,

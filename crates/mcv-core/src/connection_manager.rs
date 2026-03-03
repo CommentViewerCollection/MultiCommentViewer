@@ -33,6 +33,8 @@ pub struct ConnectionInfo {
     pub advanced_settings: Option<serde_json::Value>,
     pub input_info: String,
     pub name: String,
+    /// ログイン中のアカウント情報（接続後に取得できた場合のみ）
+    pub account_info: Option<mcv_messages::AccountInfo>,
 }
 
 /// Connection Manager
@@ -68,6 +70,7 @@ impl ConnectionManager {
             advanced_settings: None,
             input_info: "".to_string(),
             name,
+            account_info: None,
         };
         self.connections.insert(connection_id, info);
     }
@@ -75,6 +78,17 @@ impl ConnectionManager {
     /// 接続を削除
     pub fn remove_connection(&mut self, connection_id: &Uuid) -> Option<ConnectionInfo> {
         self.connections.shift_remove(connection_id)
+    }
+
+    /// アカウント情報を更新
+    pub fn update_account(
+        &mut self,
+        connection_id: &Uuid,
+        account: Option<mcv_messages::AccountInfo>,
+    ) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            info.account_info = account;
+        }
     }
 
     /// 接続のステータスを更新
@@ -232,6 +246,7 @@ impl ConnectionManager {
                 advanced_settings: conn.advanced_settings,
                 input_info: String::new(),
                 name: conn.name,
+                account_info: None,
             };
 
             self.connections.insert(info.connection_id, info);

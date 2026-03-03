@@ -8,6 +8,12 @@ pub struct Cookie {
     pub value: String,
 }
 
+pub struct YouTubeAccountInfo {
+    pub user_id: String,
+    pub display_name: String,
+    pub avatar_url: Option<String>,
+}
+
 pub struct Vid {
     value: String,
 }
@@ -43,6 +49,8 @@ pub struct YtInitialData {
     continuation: Continuation,
     raw: String,
     send_message_params: Option<String>,
+    viewer_name: Option<String>,
+    viewer_avatar_url: Option<String>,
 }
 impl YtInitialData {
     pub fn actions(&self) -> &Vec<Action> {
@@ -56,6 +64,12 @@ impl YtInitialData {
     }
     pub fn send_message_params(&self) -> Option<String> {
         self.send_message_params.clone()
+    }
+    pub fn viewer_name(&self) -> Option<&str> {
+        self.viewer_name.as_deref()
+    }
+    pub fn viewer_avatar_url(&self) -> Option<&str> {
+        self.viewer_avatar_url.as_deref()
     }
 }
 pub struct LiveChat {
@@ -216,19 +230,26 @@ pub async fn get_live_chat_messages(
     Ok((continuation, aabb, body))
 }
 fn extract_ytcfg_raw<'a>(live_chat: &'a LiveChat) -> Option<&'a str> {
+    extract_ytcfg_raw_from_html(live_chat.value())
+}
+
+fn extract_ytcfg_raw_from_html<'a>(body: &'a str) -> Option<&'a str> {
     let before_part = "ytcfg.set({";
     let after_part = "});";
-    let start = live_chat.value().find(before_part)?;
-    let end = live_chat.value()[start..].find(after_part)?;
-    let json_str = &live_chat.value()[start + before_part.len() - 1..start + end + 1];
+    let start = body.find(before_part)?;
+    let end = body[start..].find(after_part)?;
+    let json_str = &body[start + before_part.len() - 1..start + end + 1];
     Some(json_str)
 }
-pub fn extract_ytcfg(live_chat: &LiveChat) -> Result<Ytcfg, mcv_tracing::TracingError> {
-    let json_str = match extract_ytcfg_raw(live_chat) {
+
+fn extract_ytcfg_from_html(body: &str) -> Result<Ytcfg, mcv_tracing::TracingError> {
+    let json_str = match extract_ytcfg_raw_from_html(body) {
         Some(s) => s,
         None => {
-            let ctx = mcv_tracing::capture_context!("", body = live_chat.value().to_owned());
-            return Err(ctx.into());
+            return Err(mcv_tracing::capture_context!(
+                "Failed to extract ytcfg from html"
+            )
+            .into())
         }
     };
     let json: serde_json::Value = serde_json::from_str(json_str).map_err(|e| {
@@ -255,6 +276,10 @@ pub fn extract_ytcfg(live_chat: &LiveChat) -> Result<Ytcfg, mcv_tracing::Tracing
         api_key,
         visitor_data,
     })
+}
+
+pub fn extract_ytcfg(live_chat: &LiveChat) -> Result<Ytcfg, mcv_tracing::TracingError> {
+    extract_ytcfg_from_html(live_chat.value())
 }
 
 fn extract_yt_initial_data_raw<'a>(body: &'a str) -> Option<&'a str> {
@@ -336,11 +361,26 @@ fn extract_yt_initial_data(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    // ログイン中の視聴者名を抽出（ログイン済みの場合のみ存在）
+    let viewer_name = json
+        .pointer("/contents/liveChatRenderer/viewerName")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    // 視聴者アバターURLを複数のパスから試みる
+    let viewer_avatar_url = json
+        .pointer("/contents/liveChatRenderer/header/liveChatHeaderRenderer/profileImage/thumbnails/0/url")
+        .or_else(|| json.pointer("/header/liveChatHeaderRenderer/profileImage/thumbnails/0/url"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
     let yt_initial_data = YtInitialData {
         actions: aabb,
         continuation,
         raw: json_str.to_owned(),
         send_message_params,
+        viewer_name,
+        viewer_avatar_url,
     };
     Ok(yt_initial_data)
 }
@@ -923,6 +963,192 @@ pub async fn send_chat_message(
     }
 
     Ok(())
+}
+
+fn get_simple_text(value: &serde_json::Value) -> Option<String> {
+    value
+        .get("simpleText")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .or_else(|| {
+            value
+                .get("runs")
+                .and_then(|v| v.as_array())
+                .and_then(|runs| runs.first())
+                .and_then(|run| run.get("text"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+        })
+}
+
+/// YouTube トップページからログインアカウント情報を取得する。
+///
+/// 取得できない場合（未ログイン、レスポンス形式変更など）は `Ok(None)` を返す。
+pub async fn fetch_account_info_from_home(
+    cookies: &[Cookie],
+) -> Result<Option<YouTubeAccountInfo>, mcv_tracing::TracingError> {
+    tracing::info!(
+        target: "mcv::youtube-live-lib",
+        cookie_count = cookies.len(),
+        "fetch_account_info_from_home: start"
+    );
+    let cookie_header = cookies
+        .iter()
+        .map(|c| format!("{}={}", c.name, c.value))
+        .collect::<Vec<_>>()
+        .join("; ");
+
+    let client = reqwest::Client::new();
+    let mut home_req = client
+        .get("https://www.youtube.com/")
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0",
+        )
+        .header(
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        );
+    if !cookie_header.is_empty() {
+        home_req = home_req.header("Cookie", cookie_header.clone());
+    }
+
+    let home_html = home_req
+        .send()
+        .await
+        .map_err(|e| {
+            mcv_tracing::capture_context!("Failed to fetch youtube top page", error = e.to_string())
+        })?
+        .text()
+        .await
+        .map_err(|e| {
+            mcv_tracing::capture_context!("Failed to read youtube top page body", error = e.to_string())
+        })?;
+    tracing::debug!(
+        target: "mcv::youtube-live-lib",
+        body_len = home_html.len(),
+        "fetch_account_info_from_home: top page loaded"
+    );
+
+    let ytcfg = match extract_ytcfg_from_html(&home_html) {
+        Ok(v) => v,
+        Err(_) => {
+            tracing::warn!(
+                target: "mcv::youtube-live-lib",
+                "fetch_account_info_from_home: ytcfg not found on top page"
+            );
+            return Ok(None);
+        }
+    };
+    tracing::debug!(
+        target: "mcv::youtube-live-lib",
+        has_visitor_data = ytcfg.visitor_data.is_some(),
+        "fetch_account_info_from_home: ytcfg extracted"
+    );
+
+    let auth_header = build_sapisid_hash(cookies);
+    let body = serde_json::json!({
+        "context": {
+            "client": ytcfg.client
+        }
+    });
+
+    let account_menu_url = format!(
+        "https://www.youtube.com/youtubei/v1/account/account_menu?key={}&prettyPrint=false",
+        ytcfg.api_key
+    );
+    let mut account_req = client
+        .post(account_menu_url)
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+        )
+        .header("Origin", "https://www.youtube.com")
+        .header("Referer", "https://www.youtube.com/")
+        .header("X-Origin", "https://www.youtube.com")
+        .json(&body);
+
+    if !cookie_header.is_empty() {
+        account_req = account_req.header("Cookie", cookie_header);
+    }
+    if let Some(auth) = auth_header {
+        account_req = account_req.header("Authorization", auth);
+    }
+    if let Some(visitor_data) = &ytcfg.visitor_data {
+        account_req = account_req.header("X-Goog-Visitor-Id", visitor_data.clone());
+    }
+
+    let response = account_req.send().await.map_err(|e| {
+        mcv_tracing::capture_context!(
+            "Failed to fetch account menu",
+            error = e.to_string()
+        )
+    })?;
+    tracing::info!(
+        target: "mcv::youtube-live-lib",
+        status = %response.status(),
+        "fetch_account_info_from_home: account_menu response received"
+    );
+
+    if !response.status().is_success() {
+        tracing::warn!(
+            target: "mcv::youtube-live-lib",
+            status = %response.status(),
+            "fetch_account_info_from_home: account_menu returned non-success"
+        );
+        return Ok(None);
+    }
+
+    let json: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| {
+            mcv_tracing::capture_context!(
+                "Failed to parse account menu JSON",
+                error = e.to_string()
+            )
+        })?;
+
+    let header = match json.pointer(
+        "/actions/0/openPopupAction/popup/multiPageMenuRenderer/header/activeAccountHeaderRenderer",
+    ) {
+        Some(v) => v,
+        None => {
+            tracing::warn!(
+                target: "mcv::youtube-live-lib",
+                "fetch_account_info_from_home: activeAccountHeaderRenderer not found"
+            );
+            return Ok(None);
+        }
+    };
+
+    let display_name = header
+        .get("accountName")
+        .and_then(get_simple_text)
+        .or_else(|| header.get("channelHandle").and_then(get_simple_text));
+
+    let Some(display_name) = display_name else {
+        tracing::warn!(
+            target: "mcv::youtube-live-lib",
+            "fetch_account_info_from_home: display_name not found"
+        );
+        return Ok(None);
+    };
+
+    let user_id = header
+        .get("channelHandle")
+        .and_then(get_simple_text)
+        .unwrap_or_else(|| display_name.clone());
+    let avatar_url = header
+        .pointer("/accountPhoto/thumbnails/0/url")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    Ok(Some(YouTubeAccountInfo {
+        user_id,
+        display_name,
+        avatar_url,
+    }))
 }
 
 #[cfg(test)]

@@ -7,7 +7,7 @@ use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
     MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent, ProviderMessage,
-    ProviderMessageKind, ProviderSender, ServiceId,
+    ProviderMessageKind, ProviderSender, ServiceId, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::Deserialize;
@@ -339,6 +339,21 @@ impl Connection {
                         "Kick タスクがエラーにより終了"
                     );
                 }
+
+                // 切断前にアカウント情報をクリア
+                let clear_account = McvMessage::new_notification(
+                    MessageType::UpdateConnectionAccount,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(UpdateConnectionAccountPayload {
+                        connection_id,
+                        account: None,
+                    })
+                    .unwrap(),
+                );
+                KickPlugin::send_message(ctx.clone(), clear_account).await;
 
                 // タスク終了時に必ず Disconnected を送信
                 let message = McvMessage::new_notification(

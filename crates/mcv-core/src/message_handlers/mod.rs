@@ -73,6 +73,10 @@ pub fn handle_common_notification(
             plugin_hello::handle_plugin_removed(core, message, ctx);
             true
         }
+        MessageType::UpdateConnectionAccount => {
+            connection::handle_update_connection_account(core, message, ctx);
+            true
+        }
         _ => false,
     }
 }

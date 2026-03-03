@@ -7,10 +7,11 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
+    AccountInfo, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
+    FetchAccountInfoPayload,
     GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, SendCommentPayload,
-    SetConnectionSitePayload,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, SendCommentPayload, SetConnectionSitePayload,
+    UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -81,6 +82,100 @@ pub(crate) async fn on_message_impl(
                     connection_id = %payload.connection_id,
                     "SendComment: connection not found"
                 );
+            }
+        }
+        MessageType::FetchAccountInfo => {
+            let payload: FetchAccountInfoPayload = parse_payload(&message.payload)?;
+            tracing::info!(
+                target: "mcv::plugin-youtube-live",
+                connection_id = %payload.connection_id,
+                browser_id = %payload.browser.id,
+                "FetchAccountInfo received"
+            );
+            let cookies =
+                fetch_cookies_for_connect(&ctx, plugin.logical_plugin_id, &payload.browser.id)
+                    .await;
+            tracing::info!(
+                target: "mcv::plugin-youtube-live",
+                connection_id = %payload.connection_id,
+                cookie_count = cookies.len(),
+                "FetchAccountInfo: browser cookie fetch completed"
+            );
+            let yt_cookies = cookies
+                .iter()
+                .map(|c| youtube_live_lib::Cookie {
+                    name: c.name.clone(),
+                    value: c.value.clone(),
+                })
+                .collect::<Vec<_>>();
+
+            match youtube_live_lib::fetch_account_info_from_home(&yt_cookies).await {
+                Ok(Some(info)) => {
+                    tracing::info!(
+                        target: "mcv::plugin-youtube-live",
+                        connection_id = %payload.connection_id,
+                        display_name = %info.display_name,
+                        "FetchAccountInfo: YouTube ユーザー情報取得完了"
+                    );
+                    let account_msg = McvMessage::new_notification(
+                        MessageType::UpdateConnectionAccount,
+                        MessageSource::Plugin {
+                            plugin_id: plugin.logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(UpdateConnectionAccountPayload {
+                            connection_id: payload.connection_id,
+                            account: Some(AccountInfo {
+                                user_id: info.user_id,
+                                display_name: info.display_name,
+                                avatar_url: info.avatar_url,
+                            }),
+                        })
+                        .unwrap(),
+                    );
+                    YouTubeLivePlugin::send_message(ctx, account_msg).await;
+                }
+                Ok(None) => {
+                    tracing::warn!(
+                        target: "mcv::plugin-youtube-live",
+                        connection_id = %payload.connection_id,
+                        "FetchAccountInfo: YouTube ログインユーザー情報なし"
+                    );
+                    let clear_msg = McvMessage::new_notification(
+                        MessageType::UpdateConnectionAccount,
+                        MessageSource::Plugin {
+                            plugin_id: plugin.logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(UpdateConnectionAccountPayload {
+                            connection_id: payload.connection_id,
+                            account: None,
+                        })
+                        .unwrap(),
+                    );
+                    YouTubeLivePlugin::send_message(ctx, clear_msg).await;
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        target: "mcv::plugin-youtube-live",
+                        connection_id = %payload.connection_id,
+                        error = %e,
+                        "FetchAccountInfo: YouTube ユーザー情報取得失敗"
+                    );
+                    let clear_msg = McvMessage::new_notification(
+                        MessageType::UpdateConnectionAccount,
+                        MessageSource::Plugin {
+                            plugin_id: plugin.logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(UpdateConnectionAccountPayload {
+                            connection_id: payload.connection_id,
+                            account: None,
+                        })
+                        .unwrap(),
+                    );
+                    YouTubeLivePlugin::send_message(ctx, clear_msg).await;
+                }
             }
         }
         _ => {}

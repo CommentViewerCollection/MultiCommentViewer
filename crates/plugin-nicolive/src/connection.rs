@@ -5,6 +5,7 @@ use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
     MessageDestination, MessagePart, MessageSource, MessageType, MonetaryInfo, Money,
     ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
+    UpdateConnectionAccountPayload,
 };
 use nicolive_lib::{
     extract_live_id, fetch_websocket_url, try_pop_segment_event, try_pop_view_entry, SegmentEvent,
@@ -146,6 +147,21 @@ impl Connection {
                     &mut cancel_rx,
                 )
                 .await;
+
+                // 切断前にアカウント情報をクリア
+                let clear_account = McvMessage::new_notification(
+                    MessageType::UpdateConnectionAccount,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id,
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(UpdateConnectionAccountPayload {
+                        connection_id,
+                        account: None,
+                    })
+                    .unwrap(),
+                );
+                NicoLivePlugin::send_message(ctx.clone(), clear_account).await;
 
                 let msg = McvMessage::new_notification(
                     MessageType::Disconnected,
@@ -993,8 +1009,10 @@ impl Connection {
         extract_live_id(url)
     }
 
-    /// ニコ生ページから WebSocket URL を取得する。`nicolive_lib::fetch_websocket_url` に委譲。
-    pub(crate) async fn fetch_websocket_url(live_id: &str) -> Result<String, String> {
+    /// ニコ生ページから WebSocket URL と視聴者情報を取得する。`nicolive_lib::fetch_websocket_url` に委譲。
+    pub(crate) async fn fetch_websocket_url(
+        live_id: &str,
+    ) -> Result<nicolive_lib::NicoLiveConnectionData, String> {
         fetch_websocket_url(live_id).await
     }
 

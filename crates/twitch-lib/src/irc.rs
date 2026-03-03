@@ -25,6 +25,10 @@ pub enum TwitchEvent {
         message: String,
         tags: HashMap<String, String>,
     },
+    GlobalUserState {
+        display_name: Option<String>,
+        user_id: Option<String>,
+    },
     Ping,
     Pong,
     Other(IrcMessage),
@@ -105,6 +109,11 @@ pub fn to_twitch_event(msg: IrcMessage) -> TwitchEvent {
                 tags: msg.tags,
             }
         }
+
+        "GLOBALUSERSTATE" => TwitchEvent::GlobalUserState {
+            display_name: msg.tags.get("display-name").cloned(),
+            user_id: msg.tags.get("user-id").cloned(),
+        },
 
         _ => TwitchEvent::Other(msg),
     }

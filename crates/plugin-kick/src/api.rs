@@ -168,6 +168,42 @@ fn extract_history_array(root: &Value) -> Option<&Vec<Value>> {
         .or_else(|| root.get("data").and_then(Value::as_array))
 }
 
+/// `GET https://kick.com/api/v1/user` のレスポンス（ログイン中のユーザー情報）
+#[derive(Debug, Deserialize)]
+pub struct KickCurrentUserResponse {
+    pub id: u64,
+    pub username: String,
+    pub profile_pic: Option<String>,
+}
+
+/// 現在ログイン中の Kick ユーザー情報を取得する
+///
+/// `cookie_header` にブラウザ Cookie を渡すことでログイン状態で取得できる。
+/// 未ログイン・取得失敗時は `Err` を返す。
+pub async fn fetch_current_user(
+    cookie_header: &str,
+) -> Result<KickCurrentUserResponse, FetchChannelError> {
+    let client = build_client().map_err(FetchChannelError::Http)?;
+
+    let req = client
+        .get("https://kick.com/api/v1/user")
+        .header("Accept-Language", "ja")
+        .header("Priority", "u=0, i");
+    let req = apply_cookie_header(req, cookie_header);
+
+    let response = req.send().await.map_err(FetchChannelError::Http)?;
+    let status = response.status().as_u16();
+    let body = response.text().await.map_err(FetchChannelError::Http)?;
+
+    serde_json::from_str::<KickCurrentUserResponse>(&body).map_err(|e| {
+        FetchChannelError::Parse {
+            status,
+            body: body.chars().take(500).collect(),
+            error: e.to_string(),
+        }
+    })
+}
+
 /// Kick チャンネル情報を取得する
 ///
 /// Chrome 131 の TLS/HTTP2 フィンガープリントで接続することで

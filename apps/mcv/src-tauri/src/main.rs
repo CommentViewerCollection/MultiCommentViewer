@@ -23,9 +23,9 @@ use mcv_core::{
 };
 use mcv_messages::{
     self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload, ConnectPayload, DisconnectPayload,
-    DisconnectedPayload, InputInfo, Message as McvMessage, MessageDestination, MessageSource,
-    MessageType, Money, ProviderContent, ProviderMessageKind, SendCommentPayload,
-    SiteInfo as MsgSiteInfo, SystemKind,
+    DisconnectedPayload, FetchAccountInfoPayload, InputInfo, Message as McvMessage,
+    MessageDestination, MessageSource, MessageType, Money, ProviderContent, ProviderMessageKind,
+    SendCommentPayload, SiteInfo as MsgSiteInfo, SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
@@ -460,6 +460,135 @@ async fn send_comment(
         .map_err(|e| e.to_string())?;
 
     Ok("Comment sent".to_string())
+}
+
+/// サイト＋ブラウザ選択時にアカウント情報をプリフェッチ
+///
+/// サイト（plugin_id）とブラウザ（browser_id）が両方設定されている場合のみ、
+/// プラグインに FetchAccountInfo メッセージを送信する。
+/// どちらか未設定の場合はエラーにせず Ok(()) を返す。
+#[tauri::command]
+async fn fetch_account_info(
+    state: State<'_, AppState>,
+    connection_id: String,
+) -> Result<(), String> {
+    tracing::info!(
+        target: "mcv::main",
+        connection_id = %connection_id,
+        "fetch_account_info command called"
+    );
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
+    let conn_info = get_connection_info(&state, conn_id).await?;
+
+    let plugin_id = match conn_info.plugin_id {
+        Some(id) => id,
+        None => {
+            tracing::debug!(
+                target: "mcv::main",
+                connection_id = %connection_id,
+                "fetch_account_info skipped: plugin_id is not set"
+            );
+            return Ok(());
+        } // サイト未選択は無視
+    };
+    let browser_id = match conn_info.browser_id {
+        Some(id) => id,
+        None => {
+            tracing::debug!(
+                target: "mcv::main",
+                connection_id = %connection_id,
+                "fetch_account_info skipped: browser_id is not set"
+            );
+            return Ok(());
+        } // ブラウザ未選択は無視
+    };
+    tracing::info!(
+        target: "mcv::main",
+        connection_id = %connection_id,
+        plugin_id = %plugin_id,
+        browser_id = %browser_id,
+        "Sending FetchAccountInfo message to plugin"
+    );
+
+    let message = McvMessage::new_notification(
+        MessageType::FetchAccountInfo,
+        MessageSource::Core,
+        MessageDestination::Plugin { plugin_id },
+        serde_json::to_value(FetchAccountInfoPayload {
+            connection_id: conn_id,
+            browser: MsgBrowserInfo {
+                name: browser_id.as_str().to_string(),
+                id: browser_id,
+            },
+        })
+        .map_err(|e| format!("Failed to serialize FetchAccountInfoPayload: {}", e))?,
+    );
+
+    let _ = state
+        .core_addr
+        .send(SendRequest { message })
+        .await
+        .map_err(|e| e.to_string())?;
+
+    tracing::debug!(
+        target: "mcv::main",
+        connection_id = %connection_id,
+        "FetchAccountInfo message dispatched"
+    );
+
+    Ok(())
+}
+
+/// フロントエンド診断ログを tracing に転送する
+#[tauri::command]
+async fn frontend_trace(
+    level: String,
+    message: String,
+    fields: Option<serde_json::Value>,
+) -> Result<(), String> {
+    match level.to_ascii_lowercase().as_str() {
+        "trace" => {
+            tracing::trace!(
+                target: "mcv::frontend",
+                frontend_message = %message,
+                fields = ?fields,
+                "frontend-trace"
+            );
+        }
+        "debug" => {
+            tracing::debug!(
+                target: "mcv::frontend",
+                frontend_message = %message,
+                fields = ?fields,
+                "frontend-trace"
+            );
+        }
+        "warn" => {
+            tracing::warn!(
+                target: "mcv::frontend",
+                frontend_message = %message,
+                fields = ?fields,
+                "frontend-trace"
+            );
+        }
+        "error" => {
+            tracing::error!(
+                target: "mcv::frontend",
+                frontend_message = %message,
+                fields = ?fields,
+                "frontend-trace"
+            );
+        }
+        _ => {
+            tracing::info!(
+                target: "mcv::frontend",
+                frontend_message = %message,
+                fields = ?fields,
+                "frontend-trace"
+            );
+        }
+    }
+    Ok(())
 }
 
 /// mcv本体の更新をチェック
@@ -1578,6 +1707,16 @@ fn main() {
                                     );
                                 }
                             }
+                            MessageType::UpdateConnectionAccount => {
+                                tracing::debug!(target: "mcv::main", "Emitting connection-account-updated event");
+                                if let Err(e) = app_handle.emit("connection-account-updated", message.payload) {
+                                    tracing::error!(
+                                        target: "mcv::main",
+                                        error = %e,
+                                        "Failed to emit connection-account-updated event"
+                                    );
+                                }
+                            }
                             _ => {}
                         }
                     }
@@ -1731,6 +1870,8 @@ fn main() {
             set_connection_site,
             update_connection_settings,
             send_comment,
+            fetch_account_info,
+            frontend_trace,
             check_for_updates,
             get_current_version,
             list_registry_plugins,

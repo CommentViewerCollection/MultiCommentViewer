@@ -44,6 +44,14 @@ struct InstallArgs {
     #[arg(long)]
     dir: PathBuf,
 
+    /// リリースビルド（省略時はデバッグビルド）
+    #[arg(long)]
+    release: bool,
+
+    /// 配布チャンネル
+    #[arg(long, default_value = "alpha", value_parser = ["stable", "beta", "alpha"])]
+    channel: String,
+
     /// インストールするプラグインの ID（複数指定可、plugins.json に定義）
     #[arg(long = "plugin")]
     plugins: Vec<String>,
@@ -129,7 +137,7 @@ fn main() -> Result<()> {
 fn build(args: BuildArgs) -> Result<()> {
     let profile = if args.release { "release" } else { "debug" };
     build_non_tauri(profile)?;
-    build_tauri(profile)?;
+    build_tauri(profile, None)?;
     Ok(())
 }
 
@@ -138,28 +146,47 @@ fn build(args: BuildArgs) -> Result<()> {
 // =========================================================
 
 fn install(args: InstallArgs) -> Result<()> {
-    // ワークスペース全体をデバッグビルド（Tauri 含む）
-    build_non_tauri("debug")?;
-    build_tauri("debug")?;
+    let channel = args.channel.as_str();
+    let profile = if args.release { "release" } else { "debug" };
+    let target_dir = PathBuf::from(format!("target/{}", profile));
+
+    // mcv 本体のみをビルド（Tauri）
+    let mcv_manifest_dir = PathBuf::from("apps/mcv/src-tauri");
+    println!(
+        "== Build MultiCommentViewer (channel: {}, profile: {}) ==",
+        channel, profile
+    );
+    build_tauri_app(&mcv_manifest_dir, profile, Some(channel), true)?;
 
     let plugins = read_plugins_json()?;
-    let target_debug = PathBuf::from("target/debug");
 
-    // 指定プラグインをデバッグビルドしてデプロイ
+    // 指定プラグインをビルドしてデプロイ
     for plugin_id in &args.plugins {
         let info = find_plugin(&plugins, plugin_id)?;
         println!("== Install plugin: {} ==", info.id);
 
-        // プラグイン個別ビルド
-        // EXE プラグイン（Tauri アプリ等）は cargo xtask build で別途ビルド済みを前提とする
-        if !is_exe(info) {
+        // プラグイン個別ビルド（指定されたもののみ）
+        if is_exe(info) {
+            build_tauri_app(
+                Path::new(&info.path),
+                profile,
+                if info.has_channel_feature {
+                    Some(channel)
+                } else {
+                    None
+                },
+                false,
+            )?;
+        } else {
             let mut cmd = Command::new("cargo");
             cmd.arg("build")
                 .arg("--manifest-path")
                 .arg(format!("{}/Cargo.toml", info.path));
+            if args.release {
+                cmd.arg("--release");
+            }
             if info.has_channel_feature {
-                // デバッグ用には alpha を使用
-                cmd.arg("--features").arg("alpha");
+                cmd.arg("--features").arg(channel);
             }
             run(cmd)?;
         }
@@ -168,24 +195,16 @@ fn install(args: InstallArgs) -> Result<()> {
         let dest_dir = args.dir.join("plugins").join(&info.id);
         fs::create_dir_all(&dest_dir)?;
 
-        let src = target_debug.join(&info.entry);
+        let src = target_dir.join(&info.entry);
         if !src.exists() {
-            if is_exe(info) {
-                eprintln!(
-                    "  ⚠ {} が見つかりません（先に cargo xtask build を実行してください）",
-                    src.display()
-                );
-                continue;
-            } else {
-                bail!("{} が見つかりません", src.display());
-            }
+            bail!("{} が見つかりません", src.display());
         }
         fs::copy(&src, dest_dir.join(&info.entry))?;
 
         // PDB のコピー（DLL のみ）
         if !is_exe(info) {
             let pdb_name = info.entry.replace(".dll", ".pdb");
-            let pdb_src = target_debug.join(&pdb_name);
+            let pdb_src = target_dir.join(&pdb_name);
             if pdb_src.exists() {
                 fs::copy(&pdb_src, dest_dir.join(&pdb_name))?;
             }
@@ -193,14 +212,12 @@ fn install(args: InstallArgs) -> Result<()> {
 
         // 新形式 plugin.json (id 付き)
         let version = get_crate_version(&info.path).unwrap_or_else(|_| "0.0.0".to_string());
-        // install コマンドは has_channel_feature=true の場合 alpha でビルドするため "alpha" を使用
-        let channel = if info.has_channel_feature { "alpha" } else { "stable" };
         write_plugin_json_v2(&dest_dir, info, &version, channel)?;
         println!("  -> {:?}", dest_dir);
     }
 
     // mcv 本体 (MultiCommentViewer.exe) をコピー
-    let exe_src = target_debug.join("MultiCommentViewer.exe");
+    let exe_src = target_dir.join("MultiCommentViewer.exe");
     if exe_src.exists() {
         fs::copy(&exe_src, args.dir.join("MultiCommentViewer.exe"))?;
         println!("  -> {:?}", args.dir.join("MultiCommentViewer.exe"));
@@ -450,7 +467,7 @@ fn build_non_tauri(profile: &str) -> Result<()> {
     run(cmd)
 }
 
-fn build_tauri(profile: &str) -> Result<()> {
+fn build_tauri(profile: &str, channel: Option<&str>) -> Result<()> {
     let metadata = MetadataCommand::new().exec()?;
 
     for pkg in metadata.packages {
@@ -459,7 +476,8 @@ fn build_tauri(profile: &str) -> Result<()> {
 
             build_frontend_if_needed(&manifest_dir)?;
 
-            if !should_build_tauri(&pkg, &manifest_dir, profile) {
+            // チャンネル指定時は feature 切り替え差分を確実に反映するため常にビルドする
+            if channel.is_none() && !should_build_tauri(&pkg, &manifest_dir, profile) {
                 continue;
             }
 
@@ -469,6 +487,9 @@ fn build_tauri(profile: &str) -> Result<()> {
             if profile == "debug" {
                 cmd.arg("--debug");
             }
+            if let Some(ch) = channel {
+                cmd.arg("--features").arg(ch);
+            }
 
             cmd.current_dir(&manifest_dir);
             cmd.envs(std::env::vars());
@@ -477,6 +498,29 @@ fn build_tauri(profile: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn build_tauri_app(
+    manifest_dir: &Path,
+    profile: &str,
+    channel: Option<&str>,
+    build_frontend: bool,
+) -> Result<()> {
+    if build_frontend {
+        build_frontend_if_needed(manifest_dir)?;
+    }
+
+    let mut cmd = Command::new("cargo");
+    cmd.arg("tauri").arg("build");
+    if profile == "debug" {
+        cmd.arg("--debug");
+    }
+    if let Some(ch) = channel {
+        cmd.arg("--features").arg(ch);
+    }
+    cmd.current_dir(manifest_dir);
+    cmd.envs(std::env::vars());
+    run(cmd)
 }
 
 /// フロントエンドの依存関係・ソースを確認し、必要に応じて npm install / npm run build を実行する
@@ -566,11 +610,7 @@ fn npm_command() -> Command {
 }
 
 /// ソースの最新更新日時と出力 exe の更新日時を比較し、ビルドが必要かどうかを返す
-fn should_build_tauri(
-    pkg: &cargo_metadata::Package,
-    manifest_dir: &Path,
-    profile: &str,
-) -> bool {
+fn should_build_tauri(pkg: &cargo_metadata::Package, manifest_dir: &Path, profile: &str) -> bool {
     let exe_path = PathBuf::from("target")
         .join(profile)
         .join(format!("{}.exe", pkg.name));

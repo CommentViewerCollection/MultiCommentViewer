@@ -27,21 +27,22 @@ Tauri アプリを含むワークスペース全体をビルドする。
 ### install — ローカルデバッグインストール
 
 ```
-cargo xtask install --dir PATH [--plugin ID ...]
+cargo xtask install --dir PATH [--channel alpha|beta|stable] [--plugin ID ...]
 ```
 
-ワークスペース全体（Tauri アプリ含む）をデバッグビルドし、mcv 本体と指定プラグインを `--dir` に配置する。
+`apps/mcv` 本体と `--plugin` で指定したプラグインのみをデバッグビルドし、`--dir` に配置する。
 プラグインは `{dir}/plugins/{id}/` 形式でデプロイされる（`get_dir_dll_plugin_path` 方式）。
 
 | オプション     | 説明                                                          |
 |--------------|---------------------------------------------------------------|
 | `--dir PATH`  | インストール先ディレクトリ（例: `%LOCALAPPDATA%\MultiCommentViewer`） |
+| `--channel`   | 配布チャンネル（デフォルト: `alpha`）                           |
 | `--plugin ID` | インストールするプラグインの ID（複数指定可、省略可）             |
 
 **例:**
 
 ```
-cargo xtask install --dir "C:/Users/user/AppData/Local/MultiCommentViewer" --plugin bouyomi --plugin twitch
+cargo xtask install --dir "C:/Users/user/AppData/Local/MultiCommentViewer" --channel beta --plugin bouyomi --plugin twitch
 ```
 
 ---

@@ -1,10 +1,12 @@
-# apps/mcv と全プラグインをデバッグビルドしてローカルにインストールする
+# apps/mcv と全プラグインをリリースビルドしてローカルにインストールする
 #
 # cargo xtask install がフルビルド（Tauri 含む）とデプロイを一括で行う。
 
 $ErrorActionPreference = "Stop"
 
 cargo xtask install `
+  --channel alpha `
+  --release `
   --dir "$env:LOCALAPPDATA\MultiCommentViewer" `
   --plugin youtubelive `
   --plugin chrome-cookie `
@@ -15,3 +17,4 @@ cargo xtask install `
   --plugin exe-manager-v3 `
   --plugin nicolive `
   --plugin exe-plugin-sample
+

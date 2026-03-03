@@ -54,7 +54,7 @@ cargo xtask pack --plugin ID [--channel alpha|beta|stable]
 ```
 
 指定プラグインをリリースビルドし、`output/` に ZIP ファイルを生成する。
-ZIP 内には新形式の `plugin.json`（`id`, `name`, `description`, `version`, `channel`, `entry`, `api` フィールド）が含まれる。
+ZIP 内には新形式の `plugin.json`（`id`, `name`, `description`, `version`, `channel`, `entry` フィールド）が含まれる。
 
 | オプション      | 説明                                          |
 |---------------|-----------------------------------------------|

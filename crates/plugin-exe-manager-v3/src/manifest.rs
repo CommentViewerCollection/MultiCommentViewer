@@ -17,7 +17,14 @@ pub enum ManifestError {
 /// plugin.jsonのシンプルなスキーマ
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginManifest {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    #[serde(default)]
     pub path: String,
+    pub entry: String,
+    #[serde(default)]
+    pub has_channel_feature: bool,
 }
 
 impl PluginManifest {
@@ -36,8 +43,24 @@ impl PluginManifest {
 
     /// plugin.jsonのバリデーション
     fn validate(&self) -> Result<(), ManifestError> {
-        if self.path.is_empty() {
-            return Err(ManifestError::Invalid("path is empty".to_string()));
+        if self.id.trim().is_empty() {
+            return Err(ManifestError::Invalid("id is empty".to_string()));
+        }
+
+        if self.name.trim().is_empty() {
+            return Err(ManifestError::Invalid("name is empty".to_string()));
+        }
+
+        if self.description.trim().is_empty() {
+            return Err(ManifestError::Invalid("description is empty".to_string()));
+        }
+
+        if self.entry.trim().is_empty() {
+            return Err(ManifestError::Invalid("entry is empty".to_string()));
+        }
+
+        if self.path.contains("..") {
+            return Err(ManifestError::Invalid("path traversal is not allowed".to_string()));
         }
 
         Ok(())
@@ -48,8 +71,7 @@ impl PluginManifest {
     /// # Arguments
     /// * `manifest_dir` - plugin.jsonが配置されているディレクトリ
     pub fn get_executable_path<P: AsRef<Path>>(&self, manifest_dir: P) -> PathBuf {
-        let manifest_dir = manifest_dir.as_ref();
-        manifest_dir.join(&self.path)
+        self.get_working_directory(manifest_dir).join(&self.entry)
     }
 
     /// 作業ディレクトリの絶対パスを取得（plugin.jsonと同じディレクトリ）
@@ -57,26 +79,23 @@ impl PluginManifest {
     /// # Arguments
     /// * `manifest_dir` - plugin.jsonが配置されているディレクトリ
     pub fn get_working_directory<P: AsRef<Path>>(&self, manifest_dir: P) -> PathBuf {
-        manifest_dir.as_ref().to_path_buf()
+        let manifest_dir = manifest_dir.as_ref();
+        if self.path.is_empty() {
+            manifest_dir.to_path_buf()
+        } else {
+            manifest_dir.join(&self.path)
+        }
     }
 
-    /// プラグインIDを生成（ディレクトリ名から）
+    /// プラグインIDを取得
     pub fn get_plugin_id<P: AsRef<Path>>(&self, manifest_dir: P) -> String {
-        manifest_dir
-            .as_ref()
-            .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or("unknown")
-            .to_string()
+        let _ = manifest_dir;
+        self.id.clone()
     }
 
-    /// プラグイン名を生成（実行ファイル名から）
+    /// プラグイン名を取得
     pub fn get_plugin_name(&self) -> String {
-        PathBuf::from(&self.path)
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("Unknown Plugin")
-            .to_string()
+        self.name.clone()
     }
 }
 
@@ -90,17 +109,26 @@ mod tests {
     #[test]
     fn test_manifest_deserialization() {
         let json = r#"{
-            "path": "exe-plugin-sample.exe"
+            "id": "exe-plugin-sample",
+            "name": "EXEプラグインサンプル",
+            "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+            "path": "apps/exe-plugin-sample/src-tauri",
+            "entry": "exe-plugin-sample.exe",
+            "has_channel_feature": false
         }"#;
 
         let manifest: PluginManifest = serde_json::from_str(json).unwrap();
-        assert_eq!(manifest.path, "exe-plugin-sample.exe");
+        assert_eq!(manifest.id, "exe-plugin-sample");
+        assert_eq!(manifest.entry, "exe-plugin-sample.exe");
     }
 
     #[test]
     fn test_manifest_validation() {
         let json = r#"{
-            "path": ""
+            "id": "exe-plugin-sample",
+            "name": "EXEプラグインサンプル",
+            "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+            "entry": ""
         }"#;
 
         let manifest: PluginManifest = serde_json::from_str(json).unwrap();
@@ -113,23 +141,61 @@ mod tests {
         let manifest_path = temp_dir.path().join("plugin.json");
 
         let json = r#"{
-            "path": "test.exe"
+            "id": "exe-plugin-sample",
+            "name": "EXEプラグインサンプル",
+            "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+            "entry": "test.exe"
         }"#;
 
         let mut file = fs::File::create(&manifest_path).unwrap();
         file.write_all(json.as_bytes()).unwrap();
 
         let manifest = PluginManifest::load(&manifest_path).unwrap();
-        assert_eq!(manifest.path, "test.exe");
+        assert_eq!(manifest.entry, "test.exe");
     }
 
     #[test]
     fn test_get_plugin_name() {
         let json = r#"{
-            "path": "exe-plugin-sample.exe"
+            "id": "exe-plugin-sample",
+            "name": "EXEプラグインサンプル",
+            "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+            "entry": "exe-plugin-sample.exe"
         }"#;
 
         let manifest: PluginManifest = serde_json::from_str(json).unwrap();
-        assert_eq!(manifest.get_plugin_name(), "exe-plugin-sample");
+        assert_eq!(manifest.get_plugin_name(), "EXEプラグインサンプル");
+    }
+
+    #[test]
+    fn test_path_optional() {
+        let json = r#"{
+            "id": "exe-plugin-sample",
+            "name": "EXEプラグインサンプル",
+            "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+            "entry": "exe-plugin-sample.exe",
+            "has_channel_feature": false
+        }"#;
+        let manifest: PluginManifest = serde_json::from_str(json).unwrap();
+        assert_eq!(manifest.path, "");
+    }
+
+    #[test]
+    fn test_get_executable_path_uses_entry() {
+        let json = r#"{
+            "id": "exe-plugin-sample",
+            "name": "EXEプラグインサンプル",
+            "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+            "path": "bin",
+            "entry": "exe-plugin-sample.exe",
+            "has_channel_feature": false
+        }"#;
+
+        let manifest: PluginManifest = serde_json::from_str(json).unwrap();
+        let dir = PathBuf::from("C:/plugins/sample");
+        assert_eq!(
+            manifest.get_executable_path(&dir),
+            PathBuf::from("C:/plugins/sample/bin/exe-plugin-sample.exe")
+        );
     }
 }

@@ -91,7 +91,6 @@ struct PluginInfo {
     name: String,
     description: String,
     entry: String,
-    api: String,
     has_channel_feature: bool,
 }
 
@@ -417,7 +416,7 @@ fn get_crate_version(path: &str) -> Result<String> {
         .ok_or_else(|| anyhow::anyhow!("パス '{}' のクレートが見つかりません", path))
 }
 
-/// 新形式 plugin.json を書く（id, name, description, version, channel, entry, api）
+/// 新形式 plugin.json を書く（id, name, description, version, channel, entry）
 fn write_plugin_json_v2(
     dest: &Path,
     plugin: &PluginInfo,
@@ -431,7 +430,6 @@ fn write_plugin_json_v2(
         "version":     version,
         "channel":     channel,
         "entry":       plugin.entry,
-        "api":         plugin.api,
     });
     let json = serde_json::to_string_pretty(&manifest)?;
     fs::write(dest.join("plugin.json"), json + "\n")?;

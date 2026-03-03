@@ -1,6 +1,8 @@
 use anyhow::Result;
 use sha1::{Digest, Sha1};
 
+pub mod domain_state_machine;
+
 /// YouTubeへのリクエストに使用するCookieの型
 #[derive(Debug, Clone)]
 pub struct Cookie {

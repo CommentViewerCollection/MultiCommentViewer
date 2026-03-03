@@ -9,6 +9,7 @@ cargo xtask install `
   --release `
   --dir "$env:LOCALAPPDATA\MultiCommentViewer" `
   --plugin youtubelive `
+  --plugin youtubelive-state-machine `
   --plugin chrome-cookie `
   --plugin bouyomi `
   --plugin twitch `
@@ -17,4 +18,3 @@ cargo xtask install `
   --plugin exe-manager-v3 `
   --plugin nicolive `
   --plugin exe-plugin-sample
-

@@ -56,6 +56,14 @@
     "has_channel_feature": true
   },
   {
+    "path": "crates/plugin-youtube-live-state-machine",
+    "id": "youtubelive-state-machine",
+    "name": "YouTubeLive (StateMachine)",
+    "description": "YouTubeLiveのステートマシン実験プラグインです",
+    "entry": "plugin_youtube_live_state_machine.dll",
+    "has_channel_feature": true
+  },
+  {
     "path": "crates/plugin-dummy",
     "id": "dummy",
     "name": "ダミープラグイン",

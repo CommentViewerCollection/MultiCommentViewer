@@ -391,6 +391,39 @@ fn handle_core_request_message(
 ) -> Result<McvMessage, String> {
     // UI向けのrequestハンドラ。Plugin起点requestはhandle_plugin_request_message()で扱う。
 
+    // 0) UI(Core) から特定プラグイン宛て通知はそのまま転送する
+    if matches!(message.src, MessageSource::Core)
+        && matches!(message.dst, MessageDestination::Plugin { .. })
+        && message.request_id.is_none()
+    {
+        let destination_plugin_id = match message.dst {
+            MessageDestination::Plugin { plugin_id } => plugin_id,
+            _ => unreachable!(),
+        };
+        let logical_plugin_id = LogicalPluginId::from_uuid(destination_plugin_id);
+        if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+            plugin_info
+                .host_addr
+                .do_send(crate::plugin_host_actor::SendMessageToPlugin {
+                    message: message.clone(),
+                });
+            tracing::debug!(
+                target: "mcv::core::CoreActor",
+                message_type = ?message.message_type,
+                destination_plugin_id = %destination_plugin_id,
+                "Forwarded UI notification to plugin"
+            );
+        } else {
+            tracing::warn!(
+                target: "mcv::core::CoreActor",
+                message_type = ?message.message_type,
+                destination_plugin_id = %destination_plugin_id,
+                "Failed to forward UI notification: destination plugin not found"
+            );
+        }
+        return Ok(message.clone());
+    }
+
     // ① レスポンスが必要なメッセージ（early return）
     match message.message_type {
         MessageType::GetSettingsSchema => {

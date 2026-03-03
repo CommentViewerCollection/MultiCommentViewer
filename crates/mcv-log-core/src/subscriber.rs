@@ -68,18 +68,14 @@ where
             tracing::Level::ERROR => LogLevel::Error,
         };
 
-        // メタデータからソース情報を取得
+        // メタデータからソース情報を取得（必要に応じて frontend_trace が上書き）
         let metadata = event.metadata();
-        let source = SourceLocation {
-            file: metadata.file().unwrap_or("unknown").to_string(),
-            line: metadata.line().unwrap_or(0),
-            column: None,
-            module_path: metadata.module_path().unwrap_or("unknown").to_string(),
-        };
 
         // メッセージとフィールドを抽出
         let mut visitor = MessageVisitor::default();
         event.record(&mut visitor);
+
+        let source = extract_source_location(metadata, &mut visitor.fields);
 
         // スタックトレースをキャプチャ（エラーレベルのみ）
         let stacktrace = if level == LogLevel::Error {
@@ -116,6 +112,49 @@ where
                 crate::invoke_log_insert_callback(&entry);
             }
         }
+    }
+}
+
+fn extract_source_location(
+    metadata: &tracing::Metadata<'_>,
+    fields: &mut std::collections::HashMap<String, serde_json::Value>,
+) -> SourceLocation {
+    // 通常ログは metadata を使い、frontend_trace が送った source があればそちらを優先する。
+    let fallback = SourceLocation {
+        file: metadata.file().unwrap_or("unknown").to_string(),
+        line: metadata.line().unwrap_or(0),
+        column: None,
+        module_path: metadata.module_path().unwrap_or("unknown").to_string(),
+    };
+
+    let file = fields
+        .remove("frontend_source_file")
+        .and_then(|v| v.as_str().map(|s| s.to_string()));
+    let line = fields.remove("frontend_source_line").and_then(as_u32_json);
+    let column = fields
+        .remove("frontend_source_column")
+        .and_then(as_u32_json);
+    let module_path = fields
+        .remove("frontend_source_module")
+        .and_then(|v| v.as_str().map(|s| s.to_string()));
+
+    if file.is_none() && line.is_none() && column.is_none() && module_path.is_none() {
+        return fallback;
+    }
+
+    SourceLocation {
+        file: file.unwrap_or(fallback.file),
+        line: line.unwrap_or(fallback.line),
+        column,
+        module_path: module_path.unwrap_or(fallback.module_path),
+    }
+}
+
+fn as_u32_json(v: serde_json::Value) -> Option<u32> {
+    match v {
+        serde_json::Value::Number(n) => n.as_u64().map(|x| x as u32),
+        serde_json::Value::String(s) => s.parse::<u32>().ok(),
+        _ => None,
     }
 }
 

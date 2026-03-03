@@ -329,7 +329,7 @@ fn dist(args: DistArgs) -> Result<()> {
 
     // フロントエンドビルド
     let mcv_manifest_dir = PathBuf::from("apps/mcv/src-tauri");
-    build_frontend_if_needed(&mcv_manifest_dir)?;
+    build_frontend_if_needed(&mcv_manifest_dir, Some(channel))?;
 
     // mcv 本体リリースビルド
     println!("== Build MultiCommentViewer (channel: {}) ==", channel);
@@ -474,7 +474,7 @@ fn build_tauri(profile: &str, channel: Option<&str>) -> Result<()> {
         if let Some(manifest_dir) = tauri_project_dir(&pkg) {
             println!("== Tauri build: {} ==", pkg.name);
 
-            build_frontend_if_needed(&manifest_dir)?;
+            build_frontend_if_needed(&manifest_dir, channel)?;
 
             // チャンネル指定時は feature 切り替え差分を確実に反映するため常にビルドする
             if channel.is_none() && !should_build_tauri(&pkg, &manifest_dir, profile) {
@@ -489,6 +489,7 @@ fn build_tauri(profile: &str, channel: Option<&str>) -> Result<()> {
             }
             if let Some(ch) = channel {
                 cmd.arg("--features").arg(ch);
+                cmd.env("MCV_CHANNEL", ch);
             }
 
             cmd.current_dir(&manifest_dir);
@@ -507,7 +508,7 @@ fn build_tauri_app(
     build_frontend: bool,
 ) -> Result<()> {
     if build_frontend {
-        build_frontend_if_needed(manifest_dir)?;
+        build_frontend_if_needed(manifest_dir, channel)?;
     }
 
     let mut cmd = Command::new("cargo");
@@ -517,6 +518,7 @@ fn build_tauri_app(
     }
     if let Some(ch) = channel {
         cmd.arg("--features").arg(ch);
+        cmd.env("MCV_CHANNEL", ch);
     }
     cmd.current_dir(manifest_dir);
     cmd.envs(std::env::vars());
@@ -524,7 +526,7 @@ fn build_tauri_app(
 }
 
 /// フロントエンドの依存関係・ソースを確認し、必要に応じて npm install / npm run build を実行する
-fn build_frontend_if_needed(manifest_dir: &Path) -> Result<()> {
+fn build_frontend_if_needed(manifest_dir: &Path, channel: Option<&str>) -> Result<()> {
     // manifest_dir = apps/mcv/src-tauri/  →  parent = apps/mcv/
     let frontend_dir = match manifest_dir.parent() {
         Some(p) => p,
@@ -557,7 +559,7 @@ fn build_frontend_if_needed(manifest_dir: &Path) -> Result<()> {
         Some(m) => m,
         None => {
             println!("  フロントエンド: dist/ が存在しないため npm run build を実行");
-            return run_npm_build(frontend_dir);
+            return run_npm_build(frontend_dir, channel);
         }
     };
 
@@ -576,7 +578,7 @@ fn build_frontend_if_needed(manifest_dir: &Path) -> Result<()> {
 
     if needs_build {
         println!("  フロントエンドに変更あり → npm run build を実行");
-        run_npm_build(frontend_dir)?;
+        run_npm_build(frontend_dir, channel)?;
     } else {
         println!("  フロントエンド: 変更なし (スキップ)");
     }
@@ -591,10 +593,13 @@ fn run_npm_install(dir: &Path) -> Result<()> {
     run(cmd)
 }
 
-fn run_npm_build(dir: &Path) -> Result<()> {
+fn run_npm_build(dir: &Path, channel: Option<&str>) -> Result<()> {
     let mut cmd = npm_command();
     cmd.arg("run").arg("build");
     cmd.current_dir(dir);
+    if let Some(ch) = channel {
+        cmd.env("MCV_CHANNEL", ch);
+    }
     run(cmd)
 }
 

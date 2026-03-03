@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const isAlphaChannel = process.env.MCV_CHANNEL === 'alpha'
+
 export default defineConfig({
   plugins: [react()],
   clearScreen: false,
@@ -11,7 +13,7 @@ export default defineConfig({
   envPrefix: ['VITE_', 'TAURI_'],
   build: {
     target: ['es2021', 'chrome100', 'safari13'],
-    minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
-    sourcemap: !!process.env.TAURI_DEBUG,
+    minify: !process.env.TAURI_DEBUG && !isAlphaChannel ? 'esbuild' : false,
+    sourcemap: !!process.env.TAURI_DEBUG || isAlphaChannel,
   },
 })

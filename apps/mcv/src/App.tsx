@@ -224,18 +224,142 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
   const [focusUserId, setFocusUserId] = useState<string | undefined>(undefined)
 
+  type FrontendTraceSource = {
+    file: string
+    line: number
+    column: number
+    function?: string
+  }
+
+  const sourceMapRef = useRef<Map<string, Promise<any | null>>>(new Map())
+
+  // frontend_trace の呼び出し元を推定するため、JS stack から file/line/column を取り出す。
+  const parseStackSource = (): FrontendTraceSource | null => {
+    const stack = new Error().stack
+    if (!stack) return null
+
+    const lines = stack.split('\n').slice(2)
+    for (const line of lines) {
+      const trimmed = line.trim()
+
+      let fnName: string | undefined
+      let filePart: string | undefined
+      let lineNum: number | undefined
+      let colNum: number | undefined
+
+      let m = trimmed.match(/^at\s+(.*?)\s+\((.*):(\d+):(\d+)\)$/)
+      if (m) {
+        fnName = m[1]
+        filePart = m[2]
+        lineNum = Number(m[3])
+        colNum = Number(m[4])
+      } else {
+        m = trimmed.match(/^at\s+(.*):(\d+):(\d+)$/)
+        if (m) {
+          filePart = m[1]
+          lineNum = Number(m[2])
+          colNum = Number(m[3])
+        }
+      }
+
+      if (!filePart || !lineNum || !colNum) continue
+
+      let normalized = filePart
+      if (normalized.includes('://')) {
+        try {
+          normalized = decodeURIComponent(new URL(normalized).pathname)
+        } catch {
+          // URL パースできない場合はそのまま使う
+        }
+      }
+
+      if (/^\/[A-Za-z]:\//.test(normalized)) {
+        normalized = normalized.slice(1)
+      }
+      const srcIdx = normalized.indexOf('/src/')
+      if (srcIdx >= 0) {
+        normalized = normalized.slice(srcIdx + 1)
+      }
+
+      return {
+        file: normalized,
+        line: lineNum,
+        column: colNum,
+        function: fnName,
+      }
+    }
+
+    return null
+  }
+
+  const resolveSourceMap = async (
+    source: FrontendTraceSource | null
+  ): Promise<FrontendTraceSource | null> => {
+    if (!source) return null
+    if (source.file.startsWith('/src/') || source.file.startsWith('src/')) {
+      return source
+    }
+    if (!source.file.startsWith('/assets/') || !source.file.endsWith('.js')) {
+      return source
+    }
+
+    const mapUrl = `${source.file}.map`
+    let mapPromise = sourceMapRef.current.get(mapUrl)
+    if (!mapPromise) {
+      mapPromise = (async () => {
+        try {
+          // 本番ビルドでは /assets/*.js になるため、sourcemap で元の src/*.tsx 位置へ戻す。
+          const res = await fetch(mapUrl)
+          if (!res.ok) return null
+          const raw = await res.json()
+          const { TraceMap } = await import('@jridgewell/trace-mapping')
+          return new TraceMap(raw, mapUrl)
+        } catch {
+          return null
+        }
+      })()
+      sourceMapRef.current.set(mapUrl, mapPromise)
+    }
+
+    const traceMap = await mapPromise
+    if (!traceMap) return source
+
+    try {
+      const { originalPositionFor } = await import('@jridgewell/trace-mapping')
+      const pos = originalPositionFor(traceMap, {
+        line: source.line,
+        column: Math.max(source.column - 1, 0),
+      })
+      if (!pos.source || !pos.line) return source
+      return {
+        file: pos.source,
+        line: pos.line,
+        column: (pos.column ?? 0) + 1,
+        function: pos.name || source.function,
+      }
+    } catch {
+      return source
+    }
+  }
+
   const frontendTrace = (
     level: 'trace' | 'debug' | 'info' | 'warn' | 'error',
     message: string,
     fields?: Record<string, unknown>
   ) => {
-    invoke('frontend_trace', {
-      level,
-      message,
-      fields: fields ?? null,
-    }).catch(() => {
-      // フロント診断ログの転送失敗は通常フローを止めない
-    })
+    const rawSource = parseStackSource()
+    void (async () => {
+      // backend 側で SourceLocation を上書きできるよう、解決後の source を明示的に渡す。
+      const source = await resolveSourceMap(rawSource)
+      invoke('frontend_trace', {
+        level,
+        message,
+        fields: fields ?? null,
+        source,
+      }).catch(() => {
+        // フロント診断ログの転送失敗は通常フローを止めない
+      })
+    })()
   }
 
   // 新規: Ref を作成

@@ -142,9 +142,7 @@ pub async fn get_live_chat(
         .map_err(|_| mcv_tracing::capture_context!("live_chatの取得に失敗"))?;
     Ok(LiveChat::new(body))
 }
-pub async fn get_yt_initial_data(
-    live_chat: &LiveChat,
-) -> Result<YtInitialData, mcv_tracing::TracingError> {
+pub fn get_yt_initial_data(live_chat: &LiveChat) -> Result<YtInitialData, mcv_tracing::TracingError> {
     let yt_initial_data = extract_yt_initial_data(&live_chat).map_err(|inner| {
         mcv_tracing::capture_context!(
             inner.to_string(),

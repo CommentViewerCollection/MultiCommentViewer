@@ -32,7 +32,7 @@ async fn get_comments(vid: &Vid) -> Result<()> {
         .expect("Failed to initialize logger");
 
     let live_chat = get_live_chat(&vid, &[]).await?;
-    let yt_initial_data = get_yt_initial_data(&live_chat).await?;
+    let yt_initial_data = get_yt_initial_data(&live_chat)?;
     let continuation = yt_initial_data.continuation();
     let initial_actions = yt_initial_data.actions();
     let ytcfg = extract_ytcfg(&live_chat)?;

@@ -420,7 +420,7 @@ impl Connection {
                     return;
                 }
             };
-            let yt_initial_data = match get_yt_initial_data(&live_chat).await {
+            let yt_initial_data = match get_yt_initial_data(&live_chat) {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::error!(
@@ -544,7 +544,7 @@ impl Connection {
                     let reload_ok = match get_live_chat(&vid, &yt_cookies).await {
                         Ok(new_live_chat) => {
                             let ytcfg_res = extract_ytcfg(&new_live_chat);
-                            let initial_res = get_yt_initial_data(&new_live_chat).await;
+                            let initial_res = get_yt_initial_data(&new_live_chat);
                             match (ytcfg_res, initial_res) {
                                 (Ok(new_ytcfg), Ok(new_initial)) => {
                                     ytcfg = new_ytcfg;

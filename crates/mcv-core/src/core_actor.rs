@@ -435,6 +435,14 @@ fn handle_core_request_message(
         MessageType::UpdateSettings => {
             return message_handlers::settings::handle_update_settings(core, message, ctx);
         }
+        MessageType::GetConnectionInputSchema => {
+            return message_handlers::connection::handle_get_connection_input_schema(
+                core, message, ctx,
+            );
+        }
+        MessageType::GetSendCommentSchema => {
+            return message_handlers::comment::handle_get_send_comment_schema(core, message, ctx);
+        }
         MessageType::GetPlugins => {
             let plugins = core
                 .logical_plugins

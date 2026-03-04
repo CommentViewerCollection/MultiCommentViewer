@@ -15,6 +15,12 @@ pub struct PersistedConnection {
     #[serde(default)]
     pub browser_id: Option<BrowserId>,
     pub advanced_settings: Option<serde_json::Value>,
+    /// 接続時入力フォームの最後の値（URL以外のサイト固有入力も含む）
+    #[serde(default)]
+    pub input_state: Option<serde_json::Value>,
+    /// コメント投稿フォームの最後の値（text 以外のサイト固有入力を想定）
+    #[serde(default)]
+    pub comment_state: Option<serde_json::Value>,
     pub name: String,
 }
 
@@ -29,7 +35,7 @@ impl ConnectionsStorage {
     /// 空のストレージを作成
     pub fn new() -> Self {
         Self {
-            schema_version: "1.0".to_string(),
+            schema_version: "1.1".to_string(),
             connections: Vec::new(),
         }
     }
@@ -117,7 +123,7 @@ impl ConnectionsStorage {
     pub fn from_connection_manager(manager: &ConnectionManager) -> Self {
         let connections = manager.export_for_persistence();
         Self {
-            schema_version: "1.0".to_string(),
+            schema_version: "1.1".to_string(),
             connections,
         }
     }
@@ -142,7 +148,7 @@ mod tests {
 
         // 保存
         let storage = ConnectionsStorage {
-            schema_version: "1.0".to_string(),
+            schema_version: "1.1".to_string(),
             connections: vec![PersistedConnection {
                 connection_id: Uuid::new_v4(),
                 site_id: Some(SiteId::new(
@@ -152,6 +158,8 @@ mod tests {
                 url: Some("https://example.com".to_string()),
                 browser_id: Some(BrowserId::new("Chrome", "00000000-0000-0000-0000-000000000002")),
                 advanced_settings: Some(serde_json::json!({"key": "value"})),
+                input_state: Some(serde_json::json!({"url": "https://example.com/live"})),
+                comment_state: Some(serde_json::json!({"emote": "smile"})),
                 name: "Test Connection".to_string(),
             }],
         };
@@ -161,7 +169,7 @@ mod tests {
         // 読み込み
         let loaded = ConnectionsStorage::load_from_file(path).unwrap();
 
-        assert_eq!(loaded.schema_version, "1.0");
+        assert_eq!(loaded.schema_version, "1.1");
         assert_eq!(loaded.connections.len(), 1);
         assert_eq!(loaded.connections[0].name, "Test Connection");
         assert_eq!(
@@ -198,7 +206,7 @@ mod tests {
     #[test]
     fn test_default() {
         let storage = ConnectionsStorage::default();
-        assert_eq!(storage.schema_version, "1.0");
+        assert_eq!(storage.schema_version, "1.1");
         assert_eq!(storage.connections.len(), 0);
     }
 }

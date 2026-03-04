@@ -23,9 +23,10 @@ use mcv_core::{
 };
 use mcv_messages::{
     self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload, ConnectPayload, DisconnectPayload,
-    DisconnectedPayload, FetchAccountInfoPayload, InputInfo, Message as McvMessage,
+    ConnectionInputSchemaPayload, DisconnectedPayload, FetchAccountInfoPayload,
+    GetConnectionInputSchemaPayload, GetSendCommentSchemaPayload, InputInfo, Message as McvMessage,
     MessageDestination, MessageSource, MessageType, Money, ProviderContent, ProviderMessageKind,
-    SendCommentPayload, SiteInfo as MsgSiteInfo, SystemKind,
+    SendCommentPayload, SendCommentSchemaPayload, SiteInfo as MsgSiteInfo, SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
@@ -174,6 +175,60 @@ async fn get_connection_info(
         .ok_or_else(|| "Connection not found".to_string())
 }
 
+async fn get_connection_input_schema(
+    state: &State<'_, AppState>,
+    connection_id: Uuid,
+) -> Result<ConnectionInputSchemaPayload, String> {
+    let request = McvMessage::new_request(
+        MessageType::GetConnectionInputSchema,
+        MessageSource::Core,
+        MessageDestination::Core,
+        serde_json::to_value(GetConnectionInputSchemaPayload { connection_id })
+            .map_err(|e| format!("Failed to serialize GetConnectionInputSchemaPayload: {}", e))?,
+    );
+    let response = state
+        .core_addr
+        .send(SendRequest { message: request })
+        .await
+        .map_err(|e| format!("Failed to send get-connection-input-schema: {}", e))?
+        .map_err(|e| format!("Core get-connection-input-schema error: {}", e))?;
+    if response.message_type != MessageType::ConnectionInputSchema {
+        return Err(format!(
+            "Unexpected response type for get-connection-input-schema: {:?}",
+            response.message_type
+        ));
+    }
+    serde_json::from_value::<ConnectionInputSchemaPayload>(response.payload)
+        .map_err(|e| format!("Invalid connection-input-schema payload: {}", e))
+}
+
+async fn get_send_comment_schema(
+    state: &State<'_, AppState>,
+    connection_id: Uuid,
+) -> Result<SendCommentSchemaPayload, String> {
+    let request = McvMessage::new_request(
+        MessageType::GetSendCommentSchema,
+        MessageSource::Core,
+        MessageDestination::Core,
+        serde_json::to_value(GetSendCommentSchemaPayload { connection_id })
+            .map_err(|e| format!("Failed to serialize GetSendCommentSchemaPayload: {}", e))?,
+    );
+    let response = state
+        .core_addr
+        .send(SendRequest { message: request })
+        .await
+        .map_err(|e| format!("Failed to send get-send-comment-schema: {}", e))?
+        .map_err(|e| format!("Core get-send-comment-schema error: {}", e))?;
+    if response.message_type != MessageType::SendCommentSchema {
+        return Err(format!(
+            "Unexpected response type for get-send-comment-schema: {:?}",
+            response.message_type
+        ));
+    }
+    serde_json::from_value::<SendCommentSchemaPayload>(response.payload)
+        .map_err(|e| format!("Invalid send-comment-schema payload: {}", e))
+}
+
 /// 接続を追加
 #[tauri::command]
 async fn add_connection(state: State<'_, AppState>) -> Result<String, String> {
@@ -242,6 +297,7 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
 
     // 接続情報を取得
     let conn_info = get_connection_info(&state, conn_id).await?;
+    let input_schema = get_connection_input_schema(&state, conn_id).await?;
 
     // サイトが選択されていない場合はエラー
     let plugin_id = conn_info.plugin_id.ok_or("サイトが選択されていません")?;
@@ -255,6 +311,15 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
         "Connecting to site"
     );
 
+    let mut input_extra = input_schema
+        .initial_data
+        .and_then(|v| v.as_object().cloned())
+        .unwrap_or_default();
+    input_extra.insert("url".to_string(), serde_json::Value::String(url));
+    if let Some(settings) = conn_info.advanced_settings.clone() {
+        input_extra.insert("advanced_settings".to_string(), settings);
+    }
+
     // connectメッセージを送信
     let message = McvMessage::new_request(
         MessageType::Connect,
@@ -267,11 +332,8 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
                 id: site_id.clone(),
             },
             input: InputInfo {
-                input_type: site_id.to_string(),
-                extra: serde_json::json!({
-                    "url": url,
-                    "advanced_settings": conn_info.advanced_settings,
-                }),
+                input_type: "url".to_string(),
+                extra: serde_json::Value::Object(input_extra),
             },
             browser: MsgBrowserInfo {
                 name: conn_info
@@ -433,6 +495,7 @@ async fn send_comment(
     text: String,
 ) -> Result<String, String> {
     let conn_id = parse_uuid(&connection_id, "connection_id")?;
+    let comment_schema = get_send_comment_schema(&state, conn_id).await?;
 
     // 接続情報を取得してplugin_idを取得
     let conn_info = get_connection_info(&state, conn_id).await?;
@@ -440,6 +503,14 @@ async fn send_comment(
     let plugin_id = conn_info
         .plugin_id
         .ok_or("Plugin not assigned to this connection")?;
+
+    let mut schema_data = comment_schema
+        .initial_data
+        .and_then(|v| v.as_object().cloned())
+        .unwrap_or_default();
+    schema_data.insert("text".to_string(), serde_json::Value::String(text.clone()));
+    let mut extra_map = schema_data;
+    extra_map.remove("text");
 
     // send-commentメッセージを送信
     let message = McvMessage::new_request(
@@ -449,6 +520,11 @@ async fn send_comment(
         serde_json::to_value(SendCommentPayload {
             connection_id: conn_id,
             text,
+            extra: if extra_map.is_empty() {
+                serde_json::Value::Null
+            } else {
+                serde_json::Value::Object(extra_map)
+            },
         })
         .map_err(|e| format!("Failed to serialize SendCommentPayload: {}", e))?,
     );

@@ -1,8 +1,10 @@
 use actix::Context;
 use mcv_common::LogicalPluginId;
 use mcv_messages::{
-    ConnectPayload, ConnectedPayload, ConnectionAddedPayload, DisconnectPayload,
-    DisconnectedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    BrowserInfo as MsgBrowserInfo, ConnectPayload, ConnectedPayload, ConnectionAddedPayload,
+    ConnectionInputSchemaPayload, DisconnectPayload, DisconnectedPayload,
+    GetConnectionInputSchemaPayload, InputInfo, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, SiteInfo as MsgSiteInfo,
     UpdateConnectionAccountPayload,
 };
 use uuid::Uuid;
@@ -11,6 +13,69 @@ use crate::connection_manager::ConnectionStatus;
 use crate::core_actor::CoreActor;
 use crate::message_handlers;
 use crate::plugin_host_actor::SendMessageToPlugin;
+
+fn effective_connect_payload(actor: &CoreActor, incoming: ConnectPayload) -> ConnectPayload {
+    let Some(conn) = actor.connection_manager.get_connection(&incoming.connection_id) else {
+        return incoming;
+    };
+
+    let site = match &conn.site_id {
+        Some(site_id) => MsgSiteInfo {
+            name: actor
+                .site_browser_manager
+                .get_site(site_id)
+                .map(|s| s.display_name.clone())
+                .unwrap_or_else(|| site_id.to_string()),
+            id: site_id.clone(),
+        },
+        None => incoming.site,
+    };
+
+    let browser = match &conn.browser_id {
+        Some(browser_id) => MsgBrowserInfo {
+            name: actor
+                .site_browser_manager
+                .get_browser(browser_id)
+                .map(|b| b.display_name.clone())
+                .unwrap_or_else(|| browser_id.as_str().to_string()),
+            id: browser_id.clone(),
+        },
+        None => incoming.browser,
+    };
+
+    let mut normalized_input = conn.input_state.clone().unwrap_or_else(|| {
+        if incoming.input.extra.is_null() {
+            serde_json::json!({})
+        } else {
+            incoming.input.extra.clone()
+        }
+    });
+    if !normalized_input.is_object() {
+        normalized_input = serde_json::json!({});
+    }
+    if let Some(obj) = normalized_input.as_object_mut() {
+        if !obj.contains_key("url") {
+            if let Some(url) = &conn.url {
+                obj.insert("url".to_string(), serde_json::Value::String(url.clone()));
+            }
+        }
+        if !obj.contains_key("advanced_settings") {
+            if let Some(settings) = &conn.advanced_settings {
+                obj.insert("advanced_settings".to_string(), settings.clone());
+            }
+        }
+    }
+
+    ConnectPayload {
+        connection_id: incoming.connection_id,
+        site,
+        input: InputInfo {
+            input_type: "url".to_string(),
+            extra: normalized_input,
+        },
+        browser,
+    }
+}
 
 /// デフォルトの接続名を生成
 pub fn generate_connection_default_name(actor: &CoreActor) -> String {
@@ -99,11 +164,15 @@ pub fn handle_connect(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut Co
         }
     };
 
-    let connection_id = payload.connection_id;
+    let effective_payload = effective_connect_payload(actor, payload);
+    let connection_id = effective_payload.connection_id;
 
     // Connection Managerから接続情報を取得してplugin_idを取得
     let plugins = actor.logical_plugins.clone();
-    let msg = message.clone();
+    let mut msg = message.clone();
+    if let Ok(v) = serde_json::to_value(&effective_payload) {
+        msg.payload = v;
+    }
 
     actor
         .connection_manager
@@ -160,6 +229,34 @@ pub fn handle_connect(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut Co
             "Connection not found"
         );
     }
+}
+
+/// get-connection-input-schema メッセージのハンドラー（現状はURL入力のみ）
+pub fn handle_get_connection_input_schema(
+    _actor: &mut CoreActor,
+    message: &McvMessage,
+    _ctx: &mut Context<CoreActor>,
+) -> Result<McvMessage, String> {
+    let payload: GetConnectionInputSchemaPayload =
+        serde_json::from_value(message.payload.clone())
+            .map_err(|e| format!("Failed to parse GetConnectionInputSchemaPayload: {}", e))?;
+    let schema = serde_json::json!({
+        "type": "object",
+        "properties": {
+            "url": { "type": "string", "title": "URL" }
+        },
+        "required": ["url"]
+    });
+    Ok(message.create_response(
+        MessageType::ConnectionInputSchema,
+        serde_json::to_value(ConnectionInputSchemaPayload {
+            connection_id: payload.connection_id,
+            schema,
+            ui_schema: None,
+            initial_data: None,
+        })
+        .map_err(|e| format!("Failed to serialize ConnectionInputSchemaPayload: {}", e))?,
+    ))
 }
 
 /// connected メッセージのハンドラー

@@ -31,6 +31,12 @@ pub struct ConnectionInfo {
     pub url: Option<String>,
     pub browser_id: Option<BrowserId>,
     pub advanced_settings: Option<serde_json::Value>,
+    /// 接続時入力フォームの最後の値（URL以外のサイト固有入力も含む）
+    #[serde(default)]
+    pub input_state: Option<serde_json::Value>,
+    /// コメント投稿フォームの最後の値（text 以外のサイト固有入力を想定）
+    #[serde(default)]
+    pub comment_state: Option<serde_json::Value>,
     pub input_info: String,
     pub name: String,
     /// ログイン中のアカウント情報（接続後に取得できた場合のみ）
@@ -45,6 +51,18 @@ pub struct ConnectionManager {
 }
 
 impl ConnectionManager {
+    fn url_from_input_state(state: &Option<serde_json::Value>) -> Option<String> {
+        state
+            .as_ref()
+            .and_then(|v| v.get("url"))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+    }
+
+    fn input_state_from_url(url: &str) -> serde_json::Value {
+        serde_json::json!({ "url": url })
+    }
+
     /// 新しいConnection Managerを作成
     pub fn new() -> Self {
         Self {
@@ -68,6 +86,8 @@ impl ConnectionManager {
             url: None,
             browser_id: None,
             advanced_settings: None,
+            input_state: None,
+            comment_state: None,
             input_info: "".to_string(),
             name,
             account_info: None,
@@ -147,7 +167,31 @@ impl ConnectionManager {
                 url = ?url,
                 "Connection URL updated"
             );
-            info.url = url;
+            info.url = url.clone();
+            info.input_state = url.as_deref().map(Self::input_state_from_url);
+        }
+    }
+
+    /// 接続入力フォーム状態を更新する（現状はURLのみを正規化して保持）
+    pub fn update_input_state(
+        &mut self,
+        connection_id: &Uuid,
+        input_state: Option<serde_json::Value>,
+    ) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            info.url = Self::url_from_input_state(&input_state);
+            info.input_state = input_state;
+        }
+    }
+
+    /// コメント投稿フォーム状態を更新する（現状はtextのみ想定）
+    pub fn update_comment_state(
+        &mut self,
+        connection_id: &Uuid,
+        comment_state: Option<serde_json::Value>,
+    ) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            info.comment_state = comment_state;
         }
     }
 
@@ -191,6 +235,8 @@ impl ConnectionManager {
                 url: conn.url.clone(),
                 browser_id: conn.browser_id.clone(),
                 advanced_settings: conn.advanced_settings.clone(),
+                input_state: conn.input_state.clone(),
+                comment_state: conn.comment_state.clone(),
                 name: conn.name.clone(),
             })
             .collect()
@@ -207,6 +253,17 @@ impl ConnectionManager {
         let skipped = Vec::new();
 
         for conn in persisted {
+            let mut input_state = conn.input_state;
+            let mut url = conn.url;
+            if input_state.is_none() {
+                if let Some(u) = url.as_ref() {
+                    input_state = Some(Self::input_state_from_url(u));
+                }
+            }
+            if url.is_none() {
+                url = Self::url_from_input_state(&input_state);
+            }
+
             // site_idから現在のplugin_idを取得
             let (site_id, plugin_id) = if let Some(ref site_id) = conn.site_id {
                 match site_browser_manager.get_site(site_id) {
@@ -241,9 +298,11 @@ impl ConnectionManager {
                 plugin_id,
                 status,
                 site_id,
-                url: conn.url,
+                url,
                 browser_id,
                 advanced_settings: conn.advanced_settings,
+                input_state,
+                comment_state: conn.comment_state,
                 input_info: String::new(),
                 name: conn.name,
                 account_info: None,
@@ -456,6 +515,41 @@ mod tests {
         assert_eq!(
             manager.get_connection(&conn_id).unwrap().plugin_id,
             Some(plugin_id)
+        );
+    }
+
+    #[test]
+    fn test_update_input_state_syncs_url() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+        manager.add_connection(conn_id, "#1".to_string());
+
+        manager.update_input_state(
+            &conn_id,
+            Some(serde_json::json!({"url": "https://example.com/live"})),
+        );
+
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.url.as_deref(), Some("https://example.com/live"));
+        assert_eq!(
+            conn.input_state,
+            Some(serde_json::json!({"url": "https://example.com/live"}))
+        );
+    }
+
+    #[test]
+    fn test_update_url_syncs_input_state() {
+        let mut manager = ConnectionManager::new();
+        let conn_id = Uuid::new_v4();
+        manager.add_connection(conn_id, "#1".to_string());
+
+        manager.update_url(&conn_id, Some("https://example.com/watch?v=abc".to_string()));
+
+        let conn = manager.get_connection(&conn_id).unwrap();
+        assert_eq!(conn.url.as_deref(), Some("https://example.com/watch?v=abc"));
+        assert_eq!(
+            conn.input_state,
+            Some(serde_json::json!({"url": "https://example.com/watch?v=abc"}))
         );
     }
 

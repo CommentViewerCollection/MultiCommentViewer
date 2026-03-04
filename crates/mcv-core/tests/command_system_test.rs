@@ -38,6 +38,7 @@ async fn test_send_comment_message_routing() {
         serde_json::to_value(SendCommentPayload {
             connection_id,
             text: "pause".to_string(),
+            extra: serde_json::Value::Null,
         })
         .unwrap(),
     );

@@ -236,9 +236,10 @@ pub fn handle_update_connection_settings(
     );
 
     if let Some(url) = payload.url {
-        actor
-            .connection_manager
-            .update_url(&payload.connection_id, Some(url));
+        actor.connection_manager.update_input_state(
+            &payload.connection_id,
+            Some(serde_json::json!({ "url": url })),
+        );
     }
 
     if let Some(browser_id) = payload.browser_id {

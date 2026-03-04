@@ -5,7 +5,8 @@ use mcv_log_core::{
     StackFrame as LoggerStackFrame, SystemInfo as LoggerSystemInfo,
 };
 use mcv_messages::{
-    LogEntryPayload, Message as McvMessage, MessageDestination, MessageSource, SendCommentPayload,
+    GetSendCommentSchemaPayload, LogEntryPayload, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, SendCommentPayload, SendCommentSchemaPayload,
 };
 use uuid::Uuid;
 
@@ -56,8 +57,18 @@ pub fn handle_send_comment(
         }
     };
 
-    // 該当する接続のプラグインへコメントを転送
     let connection_id = payload.connection_id;
+
+    actor.connection_manager.update_comment_state(
+        &connection_id,
+        Some(serde_json::json!({
+            "text": payload.text,
+            "extra": payload.extra,
+        })),
+    );
+    let _ = actor.save_connections();
+
+    // 該当する接続のプラグインへコメントを転送
     let plugins = actor.logical_plugins.clone();
     let msg = message.clone();
 
@@ -71,6 +82,33 @@ pub fn handle_send_comment(
             }
         }
     }
+}
+
+/// get-send-comment-schema メッセージのハンドラー（現状はtext入力のみ）
+pub fn handle_get_send_comment_schema(
+    _actor: &mut CoreActor,
+    message: &McvMessage,
+    _ctx: &mut Context<CoreActor>,
+) -> Result<McvMessage, String> {
+    let payload: GetSendCommentSchemaPayload = serde_json::from_value(message.payload.clone())
+        .map_err(|e| format!("Failed to parse GetSendCommentSchemaPayload: {}", e))?;
+    let schema = serde_json::json!({
+        "type": "object",
+        "properties": {
+            "text": { "type": "string", "title": "コメント" }
+        },
+        "required": ["text"]
+    });
+    Ok(message.create_response(
+        MessageType::SendCommentSchema,
+        serde_json::to_value(SendCommentSchemaPayload {
+            connection_id: payload.connection_id,
+            schema,
+            ui_schema: None,
+            initial_data: None,
+        })
+        .map_err(|e| format!("Failed to serialize SendCommentSchemaPayload: {}", e))?,
+    ))
 }
 
 /// log-entry メッセージのハンドラー（プラグインからのログメッセージ）

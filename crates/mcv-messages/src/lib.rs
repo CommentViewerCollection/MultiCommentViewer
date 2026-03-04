@@ -147,10 +147,14 @@ pub enum MessageType {
     Disconnected,
     DisconnectFailed,
     GetConnectionStatus,
+    GetConnectionInputSchema,
+    ConnectionInputSchema,
 
     // Comment関連
     CommentReceived,
     SendComment,
+    GetSendCommentSchema,
+    SendCommentSchema,
 
     // Logging関連
     LogEntry,
@@ -355,6 +359,23 @@ pub struct DisconnectFailedPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetConnectionStatusPayload {
     pub connection_id: Uuid,
+}
+
+/// get-connection-input-schemaのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetConnectionInputSchemaPayload {
+    pub connection_id: Uuid,
+}
+
+/// connection-input-schemaのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionInputSchemaPayload {
+    pub connection_id: Uuid,
+    pub schema: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ui_schema: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub initial_data: Option<serde_json::Value>,
 }
 
 /// メッセージパーツ（テキストまたは画像）
@@ -626,6 +647,26 @@ fn extract_message_parts_text(parts: &[MessagePart]) -> String {
 pub struct SendCommentPayload {
     pub connection_id: Uuid,
     pub text: String,
+    /// プラットフォーム固有の追加入力（emote / visibility / metadata など）
+    #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
+    pub extra: serde_json::Value,
+}
+
+/// get-send-comment-schemaのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetSendCommentSchemaPayload {
+    pub connection_id: Uuid,
+}
+
+/// send-comment-schemaのpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SendCommentSchemaPayload {
+    pub connection_id: Uuid,
+    pub schema: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ui_schema: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub initial_data: Option<serde_json::Value>,
 }
 
 /// log-entryのpayload（プラグインからCoreへログ送信）
@@ -919,6 +960,7 @@ mod tests {
         let payload = SendCommentPayload {
             connection_id,
             text: "テストコメント".to_string(),
+            extra: serde_json::Value::Null,
         };
 
         let json = serde_json::to_value(&payload).unwrap();
@@ -950,6 +992,7 @@ mod tests {
             serde_json::to_value(SendCommentPayload {
                 connection_id,
                 text: "pause".to_string(),
+                extra: serde_json::Value::Null,
             })
             .unwrap(),
         );

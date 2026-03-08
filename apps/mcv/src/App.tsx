@@ -205,6 +205,7 @@ function App() {
   const dataGridRef = useRef<DataGridRef>(null)
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true)
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
+  const [connectingIds, setConnectingIds] = useState<Set<string>>(new Set())
   const [selectedConnectionForCommand, setSelectedConnectionForCommand] = useState<string>('')
   const [commandInput, setCommandInput] = useState('')
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
@@ -650,12 +651,22 @@ function App() {
     )
 
     // 接続完了イベントをリッスン
-    const unlistenConnected = listen('connected', () => {
+    const unlistenConnected = listen<{ connection_id: string }>('connected', (event) => {
+      setConnectingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(event.payload.connection_id)
+        return next
+      })
       loadConnections()
     })
 
     // 切断完了イベントをリッスン
-    const unlistenDisconnected = listen('disconnected', () => {
+    const unlistenDisconnected = listen<{ connection_id: string }>('disconnected', (event) => {
+      setConnectingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(event.payload.connection_id)
+        return next
+      })
       loadConnections()
     })
 
@@ -853,11 +864,17 @@ function App() {
   }
 
   const handleConnect = async (connectionId: string) => {
+    setConnectingIds((prev) => new Set(prev).add(connectionId))
     try {
       await invoke('connect', { connectionId })
       // loadConnections()はconnectedイベントで自動実行される
     } catch (error) {
       console.error('Failed to connect:', error)
+      setConnectingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(connectionId)
+        return next
+      })
     }
   }
 
@@ -1387,6 +1404,7 @@ function App() {
             connections.map((conn) => {
               const isConnected = conn.status.type === 'Connected'
               const isDisconnected = conn.status.type === 'Disconnected' || conn.status.type === 'Created'
+              const isConnecting = connectingIds.has(conn.connection_id)
               const canModify = isDisconnected
               const canModifyUrl = true  // URLは常に編集可能
               const canModifyColors = true  // 色は常に編集可能
@@ -1571,7 +1589,7 @@ function App() {
                         e.stopPropagation()
                         handleConnect(conn.connection_id)
                       }}
-                      disabled={isConnected || !canConnect}
+                      disabled={isConnected || isConnecting || !canConnect}
                       className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       接続
@@ -1581,7 +1599,7 @@ function App() {
                         e.stopPropagation()
                         handleDisconnect(conn.connection_id)
                       }}
-                      disabled={isDisconnected}
+                      disabled={isDisconnected || isConnecting}
                       className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       切断

@@ -17,7 +17,7 @@ use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::connection::Connection;
-use crate::video_id::extract_video_id;
+use crate::video_id::extract_video_id_from_url;
 use crate::YouTubeLivePlugin;
 
 /// 受信メッセージの処理を行う
@@ -181,7 +181,7 @@ pub(crate) async fn on_message_impl(
         }
         MessageType::CanHandleUrl => {
             let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
-            let supported = extract_video_id(&payload.url).is_some();
+            let supported = extract_video_id_from_url(&payload.url).is_some();
             let site_id = supported.then(|| {
                 mcv_common::SiteId::new(
                     "YouTubeLive",

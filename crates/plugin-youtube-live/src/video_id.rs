@@ -19,7 +19,14 @@ pub fn extract_video_id(input: &str) -> Option<String> {
         return Some(input.to_string());
     }
 
-    // 2. URLから抽出
+    extract_video_id_from_url(input)
+}
+
+/// URLからのみYouTube動画IDを抽出する（ID単体は不可）
+///
+/// URL自動検出用。ドメインが含まれないと意図しない文字列に誤反応するため、
+/// `extract_video_id` とは異なりID単体の入力は受け付けない。
+pub fn extract_video_id_from_url(input: &str) -> Option<String> {
     static URL_RE: Lazy<Regex> = Lazy::new(|| {
         Regex::new(r"(?:v=|youtu\.be/|studio\.youtube\.com/video/)([A-Za-z0-9_-]{11})").unwrap()
     });

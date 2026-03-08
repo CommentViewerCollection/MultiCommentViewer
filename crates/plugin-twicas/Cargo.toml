@@ -15,6 +15,7 @@ stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
 mcv-common = { path = "../../crates/mcv-common" }
 mcv-messages = { path = "../../crates/mcv-messages" }
 mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
+twicas-lib = { path = "../../crates/twicas-lib" }
 async-trait = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -30,8 +31,3 @@ regex = "1.12.3"
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
 futures-util = "0.3"
 reqwest = { version = "0.12", features = ["json", "multipart"] }
-sha2 = "0.10"
-scraper = "0.25.0"
-hex = "0.4"
-url = "*"
-html-escape = "*"

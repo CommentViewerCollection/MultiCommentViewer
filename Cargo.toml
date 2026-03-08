@@ -36,6 +36,7 @@ members = [
     "crates/plugin-kick",
     "crates/plugin-nicolive",
     "crates/nicolive-lib",
+    "crates/twicas-lib",
 ]
 resolver = "2"
 

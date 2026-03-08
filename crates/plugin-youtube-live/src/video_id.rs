@@ -9,6 +9,7 @@ use regex::Regex;
 /// 対応:
 /// - watch?v=ID(順不同)
 /// — youtu.be/ID
+/// - studio.youtube.com/video/ID/...
 /// - ID単体
 pub fn extract_video_id(input: &str) -> Option<String> {
     // 1. ID単体(11文字)
@@ -19,8 +20,9 @@ pub fn extract_video_id(input: &str) -> Option<String> {
     }
 
     // 2. URLから抽出
-    static URL_RE: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})").unwrap());
+    static URL_RE: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"(?:v=|youtu\.be/|studio\.youtube\.com/video/)([A-Za-z0-9_-]{11})").unwrap()
+    });
 
     URL_RE
         .captures(input)
@@ -84,5 +86,11 @@ mod tests {
     fn empty_string() {
         let input = "";
         assert_eq!(extract_video_id(input), None);
+    }
+
+    #[test]
+    fn studio_url() {
+        let url = "https://studio.youtube.com/video/bp_xG58XtLQ/livestreaming";
+        assert_eq!(extract_video_id(url), Some("bp_xG58XtLQ".to_string()));
     }
 }

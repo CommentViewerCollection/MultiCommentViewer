@@ -37,6 +37,8 @@ members = [
     "crates/plugin-nicolive",
     "crates/nicolive-lib",
     "crates/twicas-lib",
+    "crates/twicas-secret-extractor",
+    "tools/extract-secret",
 ]
 resolver = "2"
 

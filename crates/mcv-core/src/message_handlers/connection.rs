@@ -1,11 +1,10 @@
 use actix::Context;
 use mcv_common::LogicalPluginId;
 use mcv_messages::{
-    BrowserInfo as MsgBrowserInfo, ConnectPayload, ConnectedPayload, ConnectionAddedPayload,
-    ConnectionInputSchemaPayload, DisconnectPayload, DisconnectedPayload,
+    BrowserInfo as MsgBrowserInfo, ConnectFailedPayload, ConnectPayload, ConnectedPayload,
+    ConnectionAddedPayload, ConnectionInputSchemaPayload, DisconnectPayload, DisconnectedPayload,
     GetConnectionInputSchemaPayload, InputInfo, Message as McvMessage, MessageDestination,
-    MessageSource, MessageType, SiteInfo as MsgSiteInfo,
-    UpdateConnectionAccountPayload,
+    MessageSource, MessageType, SiteInfo as MsgSiteInfo, UpdateConnectionAccountPayload,
 };
 use uuid::Uuid;
 
@@ -299,6 +298,40 @@ pub fn handle_connected(
     message_handlers::plugin_hello::broadcast_to_all_logical_plugins(actor, broadcast_msg);
 
     // UIへイベント通知
+    if let Some(callback) = &actor.event_callback {
+        callback(message.clone());
+    }
+}
+
+/// connect-failed メッセージのハンドラー
+pub fn handle_connect_failed(
+    actor: &mut CoreActor,
+    message: &McvMessage,
+    _ctx: &mut Context<CoreActor>,
+) {
+    let payload: ConnectFailedPayload = match serde_json::from_value(message.payload.clone()) {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!(
+                target: "mcv::core::CoreActor",
+                error = %e,
+                message_type = "connect-failed",
+                "Failed to parse message payload"
+            );
+            return;
+        }
+    };
+
+    tracing::warn!(
+        connection_id = %payload.connection_id,
+        reason = %payload.reason,
+        "Connection failed"
+    );
+
+    actor
+        .connection_manager
+        .update_status(&payload.connection_id, ConnectionStatus::Disconnected);
+
     if let Some(callback) = &actor.event_callback {
         callback(message.clone());
     }

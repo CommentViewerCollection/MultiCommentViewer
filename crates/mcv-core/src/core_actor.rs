@@ -1095,6 +1095,7 @@ pub struct UpdateConnectionSettings {
     pub url: Option<String>,
     pub browser_id: Option<BrowserId>,
     pub advanced_settings: Option<serde_json::Value>,
+    pub input_state: Option<serde_json::Value>,
 }
 
 impl Handler<UpdateConnectionSettings> for CoreActor {
@@ -1110,6 +1111,7 @@ impl Handler<UpdateConnectionSettings> for CoreActor {
                 url: msg.url,
                 browser_id: msg.browser_id,
                 advanced_settings: msg.advanced_settings,
+                input_state: msg.input_state,
             })
             .unwrap(),
         );

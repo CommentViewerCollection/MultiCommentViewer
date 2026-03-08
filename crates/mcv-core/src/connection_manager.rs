@@ -184,6 +184,31 @@ impl ConnectionManager {
         }
     }
 
+    /// 既存の input_state に `patch` オブジェクトをマージする
+    ///
+    /// - `patch` のキーが既存 state に追加・上書きされる
+    /// - `patch` の値が `null` の場合はそのキーを削除する
+    /// - url が変化した場合は `self.url` も同期する
+    pub fn merge_input_state(&mut self, connection_id: &Uuid, patch: serde_json::Value) {
+        if let Some(info) = self.connections.get_mut(connection_id) {
+            let mut state = info
+                .input_state
+                .take()
+                .unwrap_or_else(|| serde_json::json!({}));
+            if let (Some(obj), Some(patch_obj)) = (state.as_object_mut(), patch.as_object()) {
+                for (k, v) in patch_obj {
+                    if v.is_null() {
+                        obj.remove(k);
+                    } else {
+                        obj.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+            info.url = Self::url_from_input_state(&Some(state.clone()));
+            info.input_state = Some(state);
+        }
+    }
+
     /// コメント投稿フォーム状態を更新する（現状はtextのみ想定）
     pub fn update_comment_state(
         &mut self,

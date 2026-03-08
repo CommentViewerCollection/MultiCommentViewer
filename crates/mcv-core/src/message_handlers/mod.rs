@@ -29,6 +29,10 @@ pub fn handle_common_notification(
             connection::handle_connect(core, message, ctx);
             true
         }
+        MessageType::ConnectFailed => {
+            connection::handle_connect_failed(core, message, ctx);
+            true
+        }
         MessageType::Connected => {
             connection::handle_connected(core, message, ctx);
             true

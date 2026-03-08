@@ -236,10 +236,16 @@ pub fn handle_update_connection_settings(
     );
 
     if let Some(url) = payload.url {
-        actor.connection_manager.update_input_state(
+        actor.connection_manager.merge_input_state(
             &payload.connection_id,
-            Some(serde_json::json!({ "url": url })),
+            serde_json::json!({ "url": url }),
         );
+    }
+
+    if let Some(patch) = payload.input_state {
+        actor
+            .connection_manager
+            .merge_input_state(&payload.connection_id, patch);
     }
 
     if let Some(browser_id) = payload.browser_id {

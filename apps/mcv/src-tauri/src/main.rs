@@ -23,8 +23,8 @@ use mcv_core::{
     UpdateConnectionSettings,
 };
 use mcv_messages::{
-    self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload, ConnectPayload, DisconnectPayload,
-    ConnectionInputSchemaPayload, DisconnectedPayload, FetchAccountInfoPayload,
+    self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload, ConnectPayload,
+    ConnectionInputSchemaPayload, DisconnectPayload, DisconnectedPayload, FetchAccountInfoPayload,
     GetConnectionInputSchemaPayload, GetSendCommentSchemaPayload, InputInfo, Message as McvMessage,
     MessageDestination, MessageSource, MessageType, Money, ProviderContent, ProviderMessageKind,
     SendCommentPayload, SendCommentSchemaPayload, SiteInfo as MsgSiteInfo, SystemKind,
@@ -460,6 +460,7 @@ async fn update_connection_settings(
     url: Option<String>,
     browser_id: Option<String>,
     advanced_settings: Option<serde_json::Value>,
+    input_state: Option<serde_json::Value>,
 ) -> Result<(), String> {
     let conn_id = parse_uuid(&connection_id, "connection_id")?;
 
@@ -470,6 +471,7 @@ async fn update_connection_settings(
         has_url = url.is_some(),
         has_browser = b_id.is_some(),
         has_settings = advanced_settings.is_some(),
+        has_input_state = input_state.is_some(),
         "Updating connection settings"
     );
 
@@ -480,6 +482,7 @@ async fn update_connection_settings(
             url,
             browser_id: b_id,
             advanced_settings,
+            input_state,
         })
         .await
         .map_err(|e| format!("Failed to update connection settings: {}", e))?
@@ -1788,6 +1791,16 @@ fn main() {
                                         target: "mcv::main",
                                         error = %e,
                                         "Failed to emit connected event"
+                                    );
+                                }
+                            }
+                            MessageType::ConnectFailed => {
+                                tracing::debug!(target: "mcv::main","Emitting connect-failed event");
+                                if let Err(e) = app_handle.emit("connect-failed", message.payload) {
+                                    tracing::error!(
+                                        target: "mcv::main",
+                                        error = %e,
+                                        "Failed to emit connect-failed event"
                                     );
                                 }
                             }

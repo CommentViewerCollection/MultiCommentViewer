@@ -30,4 +30,4 @@ plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
 regex = "1.12.3"
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
 futures-util = "0.3"
-reqwest = { version = "0.12", features = ["json", "multipart"] }
+reqwest = { version = "0.12", features = ["json", "multipart", "cookies"] }

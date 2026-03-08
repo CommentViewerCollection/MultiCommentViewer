@@ -23,13 +23,25 @@ pub fn get_tc_variable(html: &str, key: &str) -> Option<String> {
     }
 }
 
+/// HTMLの `data-movie-id` 属性から movie_id を取得する
+///
+/// ログイン済みユーザーには `tc-page-variables` が存在せず `web-authorize-session-id` が
+/// 取得できないため、`fetch_latest_movie` を迂回する際に movie_id の代替取得手段として使う。
+///
+/// 例: `<div data-movie-id="832168580">` → `Some(832168580)`
+pub fn extract_movie_id_from_html(html: &str) -> Option<i64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("[data-movie-id]").ok()?;
+    let element = document.select(&selector).next()?;
+    element.value().attr("data-movie-id")?.parse::<i64>().ok()
+}
+
 /// HTMLのパスワードフォームから `cs_session_id` を取得する
 ///
 /// `<input type="hidden" name="cs_session_id" value="...">` を探す
 pub fn extract_cs_session_id(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
-    let selector =
-        Selector::parse(r#"input[type="hidden"][name="cs_session_id"]"#).ok()?;
+    let selector = Selector::parse(r#"input[type="hidden"][name="cs_session_id"]"#).ok()?;
     let element = document.select(&selector).next()?;
     element.value().attr("value").map(|s| s.to_string())
 }
@@ -63,5 +75,16 @@ mod tests {
     #[test]
     fn test_extract_cs_session_id_missing() {
         assert!(extract_cs_session_id("<html></html>").is_none());
+    }
+
+    #[test]
+    fn test_extract_movie_id_from_html() {
+        let html = r#"<div data-movie-id="832168580"></div>"#;
+        assert_eq!(extract_movie_id_from_html(html), Some(832168580i64));
+    }
+
+    #[test]
+    fn test_extract_movie_id_from_html_missing() {
+        assert!(extract_movie_id_from_html("<html></html>").is_none());
     }
 }

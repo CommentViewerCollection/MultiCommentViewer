@@ -1,0 +1,12 @@
+[package]
+name = "extract-secret"
+version = "0.1.0"
+edition = "2021"
+description = "PlayerPage2.js から TwitCasting の認証キー生成 SECRET を抽出するツール"
+
+[[bin]]
+name = "extract-secret"
+path = "src/main.rs"
+
+[dependencies]
+twicas-secret-extractor = { path = "../../crates/twicas-secret-extractor" }

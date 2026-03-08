@@ -74,11 +74,19 @@ impl PluginImplV3Async for TwicasPlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
         let logical_plugin_id = Uuid::new_v4();
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
+        #[cfg(feature = "alpha")]
+        let log_level = "trace";
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        let log_level = "info";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
+        let log_level = "error";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
+        let log_level = "trace";
         let result_init_tracing = mcv_plugin_telemetry::init_tracing(
             logical_plugin_id,
             adapter,
             env!("CARGO_PKG_VERSION"),
-            "info",
+            log_level,
         );
         if result_init_tracing.is_ok() {
             tracing::trace!(target:"mcv::plugin-twicas::TwicasPlugin", "init_tracing() success");
@@ -91,6 +99,14 @@ impl PluginImplV3Async for TwicasPlugin {
             plugin_id: self.logical_plugin_id,
             role: vec!["ツイキャス".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
+            send_comment_schema: Some(serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "text": { "type": "string", "title": "コメント" },
+                    "anonymous": { "type": "boolean", "title": "匿名", "default": false }
+                },
+                "required": ["text"]
+            })),
         };
         self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
             .await;
@@ -100,7 +116,18 @@ impl PluginImplV3Async for TwicasPlugin {
             display_name: "ツイキャス".to_owned(),
             options_schema: serde_json::from_str("{}").unwrap(),
         };
-        self.send_add_site(ctx, add_site, self.logical_plugin_id)
+        self.send_add_site(ctx.clone(), add_site, self.logical_plugin_id)
+            .await;
+
+        let add_site_private = AddSitePayload {
+            site_id: SiteId::new(
+                "ツイキャス（プライベート）",
+                "6f3a9f72-9b0c-4e2f-8a1d-5c7e3b4d2f9a",
+            ),
+            display_name: "ツイキャス（プライベート）".to_owned(),
+            options_schema: serde_json::from_str("{}").unwrap(),
+        };
+        self.send_add_site(ctx, add_site_private, self.logical_plugin_id)
             .await;
     }
 

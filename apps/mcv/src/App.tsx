@@ -87,10 +87,17 @@ export interface ConnectionInfo {
     textColor?: string    // 新規: 接続毎の文字色
     [key: string]: any
   }
+  input_state?: {
+    url?: string
+    password?: string
+    [key: string]: any
+  }
   input_info: string
   name: string
   account_info?: AccountInfo
 }
+
+const TWICAS_PRIVATE_SITE_ID = 'ツイキャス（プライベート）_6f3a9f72-9b0c-4e2f-8a1d-5c7e3b4d2f9a'
 
 interface SiteInfo {
   site_id: string
@@ -207,6 +214,7 @@ function App() {
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true)
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
   const [connectingIds, setConnectingIds] = useState<Set<string>>(new Set())
+  const [showPasswordIds, setShowPasswordIds] = useState<Set<string>>(new Set())
   const [selectedConnectionForCommand, setSelectedConnectionForCommand] = useState<string>('')
   const [commentFormSchema, setCommentFormSchema] = useState<RJSFSchema | null>(null)
   const [commentFormData, setCommentFormData] = useState<Record<string, unknown>>({ text: '' })
@@ -672,6 +680,30 @@ function App() {
       loadConnections()
     })
 
+    // 接続失敗イベントをリッスン
+    const unlistenConnectFailed = listen<{ connection_id: string; reason: string }>('connect-failed', (event) => {
+      const { connection_id, reason } = event.payload
+      setConnectingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(connection_id)
+        return next
+      })
+      loadConnections()
+      // エラーをコメント欄にシステムメッセージとして表示
+      const errorComment: Comment = {
+        id: `connect-failed-${connection_id}-${Date.now()}`,
+        user_name: [{ type: 'text', text: 'システム' }],
+        user_id: '',
+        badges: [],
+        text: [{ type: 'text', text: `接続に失敗しました: ${reason}` }],
+        timestamp: Date.now(),
+        connection_id,
+        is_visible: true,
+        kind: 'system',
+      }
+      setComments((prev) => [...prev, errorComment])
+    })
+
     // サイト追加イベントをリッスン
     const unlistenSiteAdded = listen<SiteInfo>('site-added', (event) => {
       frontendTrace('info', 'site-added event received', { payload: event.payload })
@@ -702,6 +734,7 @@ function App() {
       unlistenDeleteAll.then((fn) => fn())
       unlistenConnected.then((fn) => fn())
       unlistenDisconnected.then((fn) => fn())
+      unlistenConnectFailed.then((fn) => fn())
       unlistenSiteAdded.then((fn) => fn())
       unlistenBrowserAdded.then((fn) => fn())
       unlistenBrowserRemoved.then((fn) => fn())
@@ -934,6 +967,8 @@ function App() {
     const input = e.currentTarget
     // onPaste 時点では input.value にペースト後の値がまだ反映されていないため
     // 1tick待ってから取得する
+    // 既にサイトが選択されている場合はURL自動検出でサイトを上書きしない
+    const hasSite = connections.find((c) => c.connection_id === connectionId)?.site_id
     setTimeout(async () => {
       const url = input.value
       try {
@@ -943,7 +978,7 @@ function App() {
           browserId: null,
           advancedSettings: null,
         })
-        if (url) {
+        if (url && !hasSite) {
           const detectedSiteId = await invoke<string | null>('detect_url', { url })
           if (detectedSiteId) {
             await invoke('set_connection_site', { connectionId, siteId: detectedSiteId })
@@ -968,6 +1003,32 @@ function App() {
       })
     } catch (error) {
       console.error('[Connection] Failed to update URL:', error)
+    }
+  }
+
+  const handlePasswordChange = (connectionId: string, password: string) => {
+    setConnections((prev) =>
+      prev.map((conn) =>
+        conn.connection_id === connectionId
+          ? { ...conn, input_state: { ...conn.input_state, password } }
+          : conn
+      )
+    )
+  }
+
+  const handlePasswordBlur = async (connectionId: string) => {
+    const conn = connections.find((c) => c.connection_id === connectionId)
+    if (!conn) return
+    try {
+      await invoke('update_connection_settings', {
+        connectionId,
+        url: null,
+        browserId: null,
+        advancedSettings: null,
+        inputState: { password: conn.input_state?.password ?? null },
+      })
+    } catch (error) {
+      console.error('[Connection] Failed to update password:', error)
     }
   }
 
@@ -1533,6 +1594,46 @@ function App() {
                       className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
                     />
                   </div>
+
+                  {/* 合言葉入力（ツイキャス（プライベート）のみ） */}
+                  {conn.site_id === TWICAS_PRIVATE_SITE_ID && (
+                    <div>
+                      <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">合言葉</label>
+                      <div className="relative">
+                        <input
+                          type={showPasswordIds.has(conn.connection_id) ? 'text' : 'password'}
+                          value={conn.input_state?.password ?? ''}
+                          onChange={(e) => handlePasswordChange(conn.connection_id, e.target.value)}
+                          onBlur={() => handlePasswordBlur(conn.connection_id)}
+                          placeholder=""
+                          className="w-full px-2 py-1 pr-7 text-xs bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordIds((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(conn.connection_id)) next.delete(conn.connection_id)
+                            else next.add(conn.connection_id)
+                            return next
+                          })}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                          tabIndex={-1}
+                        >
+                          {showPasswordIds.has(conn.connection_id) ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                              <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.064 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* 接続毎の色設定（color_mode="connection" の時のみ表示） */}
                   {coreSettings?.enable_color_by_plugin_or_connection &&

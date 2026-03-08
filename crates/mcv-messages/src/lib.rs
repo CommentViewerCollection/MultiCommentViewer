@@ -768,6 +768,10 @@ pub struct UpdateConnectionSettingsPayload {
     pub url: Option<String>,
     pub browser_id: Option<BrowserId>,
     pub advanced_settings: Option<serde_json::Value>,
+    /// URL以外のサイト固有入力値（例: `{"password": "..."}` ）。
+    /// 既存の input_state に対してマージされる。
+    #[serde(default)]
+    pub input_state: Option<serde_json::Value>,
 }
 
 /// get-settings-schemaのpayload (UI → Core/Plugin)

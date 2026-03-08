@@ -922,10 +922,10 @@ function App() {
         browserId: null,
         advancedSettings: null,
       })
-      // サイト未選択かつURLが入力されている場合のみ自動検出
-      if (!conn.site_id && conn.url) {
+      // URLが入力されている場合に自動検出（現在のサイトと異なる場合のみ更新）
+      if (conn.url) {
         const detectedSiteId = await invoke<string | null>('detect_url', { url: conn.url })
-        if (detectedSiteId) {
+        if (detectedSiteId && detectedSiteId !== conn.site_id) {
           await invoke('set_connection_site', { connectionId, siteId: detectedSiteId })
           await loadConnections()
         }

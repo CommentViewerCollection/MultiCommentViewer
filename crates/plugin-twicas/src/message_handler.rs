@@ -3,8 +3,9 @@
 use std::any::type_name;
 
 use mcv_messages::{
-    ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, SetConnectionSitePayload,
+    CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectPayload, ConnectedPayload,
+    ConnectionRemovedPayload, DisconnectPayload, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, SetConnectionSitePayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -79,6 +80,18 @@ pub(crate) async fn on_message_impl(
             if let Some(mut conn) = plugin.connections.remove(&removed.connection_id) {
                 conn.stop();
             }
+        }
+        MessageType::CanHandleUrl => {
+            let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
+            let supported = Connection::extract_user_name(&payload.url).is_some();
+            let site_id = supported.then(|| {
+                mcv_common::SiteId::new("ツイキャス", "8cb52621-4f4f-4337-b6a7-8b4a436d91d7")
+            });
+            let response = message.create_response(
+                MessageType::CanHandleUrlResult,
+                serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),
+            );
+            TwicasPlugin::send_message(ctx, response).await;
         }
         _ => {}
     }

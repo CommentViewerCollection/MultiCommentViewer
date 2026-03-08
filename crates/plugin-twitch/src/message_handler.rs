@@ -7,10 +7,11 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    AccountInfo, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
-    FetchAccountInfoPayload, GetBrowserPluginAckPayload, GetBrowserPluginPayload,
-    GetCookieAckPayload, GetCookiePayload, Message as McvMessage, MessageDestination,
-    MessageSource, MessageType, SetConnectionSitePayload, UpdateConnectionAccountPayload,
+    AccountInfo, CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectPayload, ConnectedPayload,
+    ConnectionRemovedPayload, DisconnectPayload, FetchAccountInfoPayload,
+    GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    SetConnectionSitePayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -168,6 +169,18 @@ pub(crate) async fn on_message_impl(
                 );
                 TwitchPlugin::send_message(ctx, clear_msg).await;
             }
+        }
+        MessageType::CanHandleUrl => {
+            let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
+            let supported = Connection::extract_channel_id(&payload.url).is_some();
+            let site_id = supported.then(|| {
+                mcv_common::SiteId::new("Twitch", "f3c2a1d7-6e4b-4f8c-9a21-5d7b3e2c9f64")
+            });
+            let response = message.create_response(
+                MessageType::CanHandleUrlResult,
+                serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),
+            );
+            TwitchPlugin::send_message(ctx, response).await;
         }
         _ => {}
     }

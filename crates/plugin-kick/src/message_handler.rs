@@ -7,11 +7,12 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    AccountInfo, CommentReceivedPayload, ConnectPayload, ConnectedPayload,
-    ConnectionRemovedPayload, DisconnectPayload, DisconnectedPayload, FetchAccountInfoPayload,
-    GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    McvEnvelope, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    ProviderMessageKind, SetConnectionSitePayload, UpdateConnectionAccountPayload,
+    AccountInfo, CanHandleUrlPayload, CanHandleUrlResultPayload, CommentReceivedPayload,
+    ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
+    DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
+    GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload, McvEnvelope,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, ProviderMessageKind,
+    SetConnectionSitePayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -361,6 +362,18 @@ pub(crate) async fn on_message_impl(
                     KickPlugin::send_message(ctx, clear_msg).await;
                 }
             }
+        }
+        MessageType::CanHandleUrl => {
+            let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
+            let supported = extract_channel_slug(&payload.url).is_some();
+            let site_id = supported.then(|| {
+                mcv_common::SiteId::new("Kick", "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+            });
+            let response = message.create_response(
+                MessageType::CanHandleUrlResult,
+                serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),
+            );
+            KickPlugin::send_message(ctx, response).await;
         }
         _ => {}
     }

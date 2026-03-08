@@ -8,6 +8,7 @@ use mcv_core::{
     BrowserInfo as CoreBrowserInfo, // mcv-coreから明示的にインポート
     ConnectionInfo,
     CoreActor,
+    DetectUrl,
     GetBrowsers,
     GetConnections,
     GetLogicalPlugins,
@@ -485,6 +486,24 @@ async fn update_connection_settings(
         .map_err(|e| e)?;
 
     Ok(())
+}
+
+/// URLを処理できるサイトを検出
+#[tauri::command]
+async fn detect_url(
+    state: tauri::State<'_, AppState>,
+    url: String,
+) -> Result<Option<String>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel::<Option<SiteId>>();
+    state
+        .core_addr
+        .do_send(DetectUrl { url, tx });
+    match tokio::time::timeout(std::time::Duration::from_secs(10), rx).await {
+        Ok(Ok(Some(site_id))) => Ok(Some(site_id.into_string())),
+        Ok(Ok(None)) => Ok(None),
+        Ok(Err(_)) => Err("URL検出チャンネルが閉じました".to_string()),
+        Err(_) => Ok(None),
+    }
 }
 
 /// コメントを送信
@@ -2000,7 +2019,8 @@ fn main() {
             update_settings,
             get_plugins,
             search_comments,
-            get_users
+            get_users,
+            detect_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

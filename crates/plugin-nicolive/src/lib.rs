@@ -90,7 +90,7 @@ impl PluginImplV3Async for NicoLivePlugin {
         let hello_payload = PluginHelloPayload {
             name: "NicoLive".to_string(),
             plugin_id: self.logical_plugin_id,
-            role: vec!["nicolive".to_string()],
+            role: vec!["nicolive".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
         };
         self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)

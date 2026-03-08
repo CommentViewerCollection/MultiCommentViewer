@@ -89,7 +89,7 @@ impl PluginImplV3Async for TwicasPlugin {
         let hello_payload = PluginHelloPayload {
             name: "ツイキャス".to_string(),
             plugin_id: self.logical_plugin_id,
-            role: vec!["ツイキャス".to_string()],
+            role: vec!["ツイキャス".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
         };
         self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)

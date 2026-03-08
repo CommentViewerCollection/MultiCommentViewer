@@ -563,7 +563,7 @@ impl Connection {
         }
     }
 
-    fn extract_channel_id(url: &str) -> Option<String> {
+    pub(crate) fn extract_channel_id(url: &str) -> Option<String> {
         let trimmed = url.trim();
         let path = if let Some(rest) = trimmed.strip_prefix("https://www.twitch.tv/") {
             rest

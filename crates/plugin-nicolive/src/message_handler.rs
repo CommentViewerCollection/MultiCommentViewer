@@ -7,10 +7,11 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    AccountInfo, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
-    FetchAccountInfoPayload, GetBrowserPluginAckPayload, GetBrowserPluginPayload,
-    GetCookieAckPayload, GetCookiePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    SetConnectionSitePayload, UpdateConnectionAccountPayload,
+    AccountInfo, CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectPayload, ConnectedPayload,
+    ConnectionRemovedPayload, DisconnectPayload, FetchAccountInfoPayload,
+    GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, SetConnectionSitePayload,
+    UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -217,6 +218,18 @@ pub(crate) async fn on_message_impl(
                     NicoLivePlugin::send_message(ctx, clear_msg).await;
                 }
             }
+        }
+        MessageType::CanHandleUrl => {
+            let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
+            let supported = nicolive_lib::extract_live_id(&payload.url).is_some();
+            let site_id = supported.then(|| {
+                mcv_common::SiteId::new("NicoLive", "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
+            });
+            let response = message.create_response(
+                MessageType::CanHandleUrlResult,
+                serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),
+            );
+            NicoLivePlugin::send_message(ctx, response).await;
         }
         _ => {}
     }

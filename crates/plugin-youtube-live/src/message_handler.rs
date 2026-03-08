@@ -7,16 +7,17 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    AccountInfo, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
-    FetchAccountInfoPayload,
+    AccountInfo, CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectPayload, ConnectedPayload,
+    ConnectionRemovedPayload, DisconnectPayload, FetchAccountInfoPayload,
     GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, SendCommentPayload, SetConnectionSitePayload,
-    UpdateConnectionAccountPayload,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, SendCommentPayload,
+    SetConnectionSitePayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::connection::Connection;
+use crate::video_id::extract_video_id;
 use crate::YouTubeLivePlugin;
 
 /// 受信メッセージの処理を行う
@@ -177,6 +178,21 @@ pub(crate) async fn on_message_impl(
                     YouTubeLivePlugin::send_message(ctx, clear_msg).await;
                 }
             }
+        }
+        MessageType::CanHandleUrl => {
+            let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
+            let supported = extract_video_id(&payload.url).is_some();
+            let site_id = supported.then(|| {
+                mcv_common::SiteId::new(
+                    "YouTubeLive",
+                    "7a3b5c9d-1e2f-4a5b-8c7d-9e0f1a2b3c4d",
+                )
+            });
+            let response = message.create_response(
+                MessageType::CanHandleUrlResult,
+                serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),
+            );
+            YouTubeLivePlugin::send_message(ctx, response).await;
         }
         _ => {}
     }

@@ -185,6 +185,10 @@ pub enum MessageType {
     // Account関連
     UpdateConnectionAccount,
     FetchAccountInfo,
+
+    // URL自動検出関連
+    CanHandleUrl,
+    CanHandleUrlResult,
 }
 
 // ============================================================================
@@ -820,6 +824,19 @@ pub struct UpdateConnectionAccountPayload {
     pub connection_id: Uuid,
     /// Noneの場合はアカウント情報をクリアする（切断時など）
     pub account: Option<AccountInfo>,
+}
+
+/// can-handle-urlのpayload (Core → Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CanHandleUrlPayload {
+    pub url: String,
+}
+
+/// can-handle-url-resultのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CanHandleUrlResultPayload {
+    pub supported: bool,
+    pub site_id: Option<SiteId>,
 }
 
 // ============================================================================

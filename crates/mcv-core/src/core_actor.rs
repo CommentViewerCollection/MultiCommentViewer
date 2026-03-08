@@ -6,6 +6,7 @@ use mcv_settings_core::SettingsStorage;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
 use crate::connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
@@ -32,6 +33,20 @@ pub struct LogicalPluginInfo {
 /// 後方互換性のため
 pub type PluginInfo = LogicalPluginInfo;
 
+/// URL検出: 個々の CanHandleUrl リクエスト（request_id → グループ紐付け）
+struct UrlCheckEntry {
+    group_id: Uuid,
+    order: usize,
+}
+
+/// URL検出: リクエスト全体の状態
+struct UrlCheckGroup {
+    total: usize,
+    responded: usize,
+    best_match: Option<(usize, SiteId)>,
+    tx: oneshot::Sender<Option<SiteId>>,
+}
+
 /// Core Actor
 ///
 /// システムの中心となるActor
@@ -53,6 +68,10 @@ pub struct CoreActor {
     pub(crate) connections_file_path: Option<PathBuf>,
     /// ログディレクトリのパス（EXEプラグインの保存先通知用）
     pub(crate) logs_dir: Option<PathBuf>,
+    /// URL自動検出: 個々のリクエスト (request_id → entry)
+    url_check_entries: HashMap<Uuid, UrlCheckEntry>,
+    /// URL自動検出: グループ状態 (group_id → group)
+    url_check_groups: HashMap<Uuid, UrlCheckGroup>,
 }
 
 impl CoreActor {
@@ -68,6 +87,8 @@ impl CoreActor {
             settings_storage: None,
             connections_file_path: None,
             logs_dir: None,
+            url_check_entries: HashMap::new(),
+            url_check_groups: HashMap::new(),
         }
     }
 
@@ -702,6 +723,16 @@ impl Handler<SendMessageToCore> for CoreActor {
             return;
         }
 
+        // CanHandleUrlResult: CoreからのCanHandleUrlに対する応答を先に捕捉
+        if message.message_type == MessageType::CanHandleUrlResult {
+            if let Some(request_id) = message.request_id {
+                if self.url_check_entries.contains_key(&request_id) {
+                    handle_can_handle_url_result(self, request_id, message);
+                    return;
+                }
+            }
+        }
+
         if message.request_id.is_some()
             && matches!(message.dst, MessageDestination::Core)
             && matches!(message.src, MessageSource::Plugin { .. })
@@ -1116,6 +1147,103 @@ impl Handler<ScanAndLoadNewPlugins> for CoreActor {
             }
             .into_actor(self),
         )
+    }
+}
+
+/// CanHandleUrlResult 応答を処理する
+fn handle_can_handle_url_result(core: &mut CoreActor, request_id: Uuid, message: McvMessage) {
+    let entry = match core.url_check_entries.remove(&request_id) {
+        Some(e) => e,
+        None => return,
+    };
+
+    let result: CanHandleUrlResultPayload = serde_json::from_value(message.payload)
+        .unwrap_or(CanHandleUrlResultPayload {
+            supported: false,
+            site_id: None,
+        });
+
+    let group = match core.url_check_groups.get_mut(&entry.group_id) {
+        Some(g) => g,
+        None => return,
+    };
+
+    group.responded += 1;
+
+    if result.supported {
+        if let Some(site_id) = result.site_id {
+            let is_better = group
+                .best_match
+                .as_ref()
+                .map_or(true, |(best_order, _)| entry.order < *best_order);
+            if is_better {
+                group.best_match = Some((entry.order, site_id));
+            }
+        }
+    }
+
+    if group.responded == group.total {
+        if let Some(group) = core.url_check_groups.remove(&entry.group_id) {
+            let _ = group.tx.send(group.best_match.map(|(_, sid)| sid));
+        }
+    }
+}
+
+/// URL自動検出: 全 comment-provider プラグインに並列照会する
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct DetectUrl {
+    pub url: String,
+    pub tx: oneshot::Sender<Option<SiteId>>,
+}
+
+impl Handler<DetectUrl> for CoreActor {
+    type Result = ();
+
+    fn handle(&mut self, msg: DetectUrl, _ctx: &mut Self::Context) {
+        let providers: Vec<(Uuid, PluginHostAddr)> = self
+            .logical_plugins
+            .values()
+            .filter(|p| p.role.contains(&"comment-provider".to_string()))
+            .map(|p| (p.logical_plugin_id.inner(), p.host_addr.clone()))
+            .collect();
+
+        if providers.is_empty() {
+            let _ = msg.tx.send(None);
+            return;
+        }
+
+        let group_id = Uuid::new_v4();
+        self.url_check_groups.insert(
+            group_id,
+            UrlCheckGroup {
+                total: providers.len(),
+                responded: 0,
+                best_match: None,
+                tx: msg.tx,
+            },
+        );
+
+        for (order, (plugin_id, host_addr)) in providers.into_iter().enumerate() {
+            let request_id = Uuid::new_v4();
+            self.url_check_entries
+                .insert(request_id, UrlCheckEntry { group_id, order });
+
+            let check_msg = McvMessage {
+                message_type: MessageType::CanHandleUrl,
+                src: MessageSource::Core,
+                dst: MessageDestination::Plugin { plugin_id },
+                request_id: Some(request_id),
+                timestamp: chrono::Utc::now().timestamp(),
+                payload: serde_json::to_value(CanHandleUrlPayload {
+                    url: msg.url.clone(),
+                })
+                .unwrap_or_default(),
+            };
+            host_addr.do_send(crate::plugin_host_actor::SendMessageToPlugin {
+                message: check_msg,
+            });
+        }
     }
 }
 

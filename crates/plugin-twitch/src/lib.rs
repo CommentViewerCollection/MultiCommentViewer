@@ -98,7 +98,7 @@ impl PluginImplV3Async for TwitchPlugin {
         let hello_payload = PluginHelloPayload {
             name: "Twitch".to_string(),
             plugin_id: self.logical_plugin_id,
-            role: vec!["twitch".to_string()],
+            role: vec!["twitch".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
         };
         self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)

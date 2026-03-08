@@ -120,7 +120,7 @@ impl PluginImplV3Async for YouTubeLivePlugin {
         let hello_payload = PluginHelloPayload {
             name: "YouTubeLive".to_string(),
             plugin_id: self.logical_plugin_id,
-            role: vec!["youtubelive".to_string()],
+            role: vec!["youtubelive".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
         };
         if let Err(e) = self

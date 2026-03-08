@@ -12,10 +12,10 @@ pub mod site_browser_manager;
 pub use connection_manager::{ConnectionInfo, ConnectionManager, ConnectionStatus};
 pub use connection_persistence::{ConnectionsStorage, PersistedConnection};
 pub use core_actor::{
-    CoreActor, CreateConnection, GetBrowsers, GetConnections, GetLogicalPlugins, GetPhysicalPlugins,
-    GetSites, LogicalPluginInfo, PluginInfo, RegisterPhysicalPlugin, RemoveConnection,
-    RenameConnection, ScanAndLoadNewPlugins, SendMessageToCore, SendRequest, SetConnectionSite,
-    UpdateConnectionSettings,
+    CoreActor, CreateConnection, DetectUrl, GetBrowsers, GetConnections, GetLogicalPlugins,
+    GetPhysicalPlugins, GetSites, LogicalPluginInfo, PluginInfo, RegisterPhysicalPlugin,
+    RemoveConnection, RenameConnection, ScanAndLoadNewPlugins, SendMessageToCore, SendRequest,
+    SetConnectionSite, UpdateConnectionSettings,
 };
 pub use plugin_host_actor::{PhysicalPluginHostActor, SendMessageToPlugin, ShutdownPlugin};
 pub use plugin_loader_strategy::{

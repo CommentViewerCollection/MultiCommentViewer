@@ -904,12 +904,37 @@ function App() {
   }
 
   const handleUrlChange = (connectionId: string, url: string) => {
-    // ローカルステートのみ更新
     setConnections((prev) =>
       prev.map((conn) =>
         conn.connection_id === connectionId ? { ...conn, url } : conn
       )
     )
+  }
+
+  const handleUrlPaste = (connectionId: string, e: React.ClipboardEvent<HTMLInputElement>) => {
+    const input = e.currentTarget
+    // onPaste 時点では input.value にペースト後の値がまだ反映されていないため
+    // 1tick待ってから取得する
+    setTimeout(async () => {
+      const url = input.value
+      try {
+        await invoke('update_connection_settings', {
+          connectionId,
+          url: url || null,
+          browserId: null,
+          advancedSettings: null,
+        })
+        if (url) {
+          const detectedSiteId = await invoke<string | null>('detect_url', { url })
+          if (detectedSiteId) {
+            await invoke('set_connection_site', { connectionId, siteId: detectedSiteId })
+            await loadConnections()
+          }
+        }
+      } catch (error) {
+        console.error('[Connection] Failed to detect URL:', error)
+      }
+    }, 0)
   }
 
   const handleUrlBlur = async (connectionId: string) => {
@@ -922,14 +947,6 @@ function App() {
         browserId: null,
         advancedSettings: null,
       })
-      // URLが入力されている場合に自動検出（現在のサイトと異なる場合のみ更新）
-      if (conn.url) {
-        const detectedSiteId = await invoke<string | null>('detect_url', { url: conn.url })
-        if (detectedSiteId && detectedSiteId !== conn.site_id) {
-          await invoke('set_connection_site', { connectionId, siteId: detectedSiteId })
-          await loadConnections()
-        }
-      }
     } catch (error) {
       console.error('[Connection] Failed to update URL:', error)
     }
@@ -1463,6 +1480,7 @@ function App() {
                       type="text"
                       value={conn.url || ''}
                       onChange={(e) => handleUrlChange(conn.connection_id, e.target.value)}
+                      onPaste={(e) => handleUrlPaste(conn.connection_id, e)}
                       onBlur={() => handleUrlBlur(conn.connection_id)}
                       disabled={!canModifyUrl}
                       placeholder="https://..."

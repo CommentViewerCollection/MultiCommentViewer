@@ -498,7 +498,7 @@ async fn detect_url(
     state
         .core_addr
         .do_send(DetectUrl { url, tx });
-    match tokio::time::timeout(std::time::Duration::from_secs(10), rx).await {
+    match tokio::time::timeout(std::time::Duration::from_secs(1), rx).await {
         Ok(Ok(Some(site_id))) => Ok(Some(site_id.into_string())),
         Ok(Ok(None)) => Ok(None),
         Ok(Err(_)) => Err("URL検出チャンネルが閉じました".to_string()),

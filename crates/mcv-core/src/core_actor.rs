@@ -1200,13 +1200,16 @@ pub struct DetectUrl {
 impl Handler<DetectUrl> for CoreActor {
     type Result = ();
 
-    fn handle(&mut self, msg: DetectUrl, _ctx: &mut Self::Context) {
-        let providers: Vec<(Uuid, PluginHostAddr)> = self
+    fn handle(&mut self, msg: DetectUrl, ctx: &mut Self::Context) {
+        let mut providers: Vec<(Uuid, PluginHostAddr)> = self
             .logical_plugins
             .values()
             .filter(|p| p.role.contains(&"comment-provider".to_string()))
             .map(|p| (p.logical_plugin_id.inner(), p.host_addr.clone()))
             .collect();
+
+        // 複数プラグインが対応する場合の選択を決定論的にするためソート
+        providers.sort_by_key(|(id, _)| id.to_string());
 
         if providers.is_empty() {
             let _ = msg.tx.send(None);
@@ -1244,6 +1247,14 @@ impl Handler<DetectUrl> for CoreActor {
                 message: check_msg,
             });
         }
+
+        // Tauriタイムアウト(1秒)より長い2秒後にリソースをクリーンアップ
+        ctx.run_later(std::time::Duration::from_secs(2), move |act, _ctx| {
+            if let Some(group) = act.url_check_groups.remove(&group_id) {
+                act.url_check_entries.retain(|_, e| e.group_id != group_id);
+                let _ = group.tx.send(None);
+            }
+        });
     }
 }
 

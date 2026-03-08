@@ -875,15 +875,19 @@ function App() {
     try {
       frontendTrace('info', 'set_connection_site start', { connectionId, siteId })
       await invoke('set_connection_site', { connectionId, siteId })
-      const latest = await loadConnections()
-      const updatedConn = latest.find((c) => c.connection_id === connectionId)
+      // loadConnections() はURLなどのローカル編集を上書きするため使わず、
+      // site_id のみをローカルステートに反映する
+      const browserId = connections.find((c) => c.connection_id === connectionId)?.browser_id
+      setConnections((prev) =>
+        prev.map((c) => (c.connection_id === connectionId ? { ...c, site_id: siteId } : c))
+      )
       frontendTrace('info', 'site changed, fetch-account precheck', {
         connectionId,
-        siteId: updatedConn?.site_id,
-        browserId: updatedConn?.browser_id,
-        willFetch: !!(updatedConn?.site_id && updatedConn?.browser_id),
+        siteId,
+        browserId,
+        willFetch: !!(siteId && browserId),
       })
-      if (updatedConn?.site_id && updatedConn?.browser_id) {
+      if (siteId && browserId) {
         invoke('fetch_account_info', { connectionId })
           .then(() => frontendTrace('info', 'fetch_account_info invoked from site change', { connectionId }))
           .catch((e) => frontendTrace('warn', 'fetch_account_info failed from site change', { connectionId, error: String(e) }))

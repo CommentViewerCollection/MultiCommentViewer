@@ -568,7 +568,10 @@ mod tests {
         let conn_id = Uuid::new_v4();
         manager.add_connection(conn_id, "#1".to_string());
 
-        manager.update_url(&conn_id, Some("https://example.com/watch?v=abc".to_string()));
+        manager.update_url(
+            &conn_id,
+            Some("https://example.com/watch?v=abc".to_string()),
+        );
 
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.url.as_deref(), Some("https://example.com/watch?v=abc"));

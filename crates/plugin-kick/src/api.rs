@@ -43,7 +43,11 @@ impl KickLivestream {
 #[derive(Debug)]
 pub enum FetchChannelError {
     Http(rquest::Error),
-    Parse { status: u16, body: String, error: String },
+    Parse {
+        status: u16,
+        body: String,
+        error: String,
+    },
 }
 
 impl std::fmt::Display for FetchChannelError {
@@ -62,7 +66,11 @@ impl std::error::Error for FetchChannelError {}
 #[derive(Debug)]
 pub enum FetchChatHistoryError {
     Http(rquest::Error),
-    Parse { status: u16, body: String, error: String },
+    Parse {
+        status: u16,
+        body: String,
+        error: String,
+    },
 }
 
 impl std::fmt::Display for FetchChatHistoryError {
@@ -82,7 +90,11 @@ impl std::error::Error for FetchChatHistoryError {}
 #[derive(Debug)]
 pub enum FetchEmotesError {
     Http(rquest::Error),
-    Parse { status: u16, body: String, error: String },
+    Parse {
+        status: u16,
+        body: String,
+        error: String,
+    },
 }
 
 impl std::fmt::Display for FetchEmotesError {
@@ -150,10 +162,7 @@ fn build_client() -> Result<rquest::Client, rquest::Error> {
         .build()
 }
 
-fn apply_cookie_header(
-    req: rquest::RequestBuilder,
-    cookie_header: &str,
-) -> rquest::RequestBuilder {
+fn apply_cookie_header(req: rquest::RequestBuilder, cookie_header: &str) -> rquest::RequestBuilder {
     if cookie_header.is_empty() {
         req
     } else {
@@ -195,12 +204,10 @@ pub async fn fetch_current_user(
     let status = response.status().as_u16();
     let body = response.text().await.map_err(FetchChannelError::Http)?;
 
-    serde_json::from_str::<KickCurrentUserResponse>(&body).map_err(|e| {
-        FetchChannelError::Parse {
-            status,
-            body: body.chars().take(500).collect(),
-            error: e.to_string(),
-        }
+    serde_json::from_str::<KickCurrentUserResponse>(&body).map_err(|e| FetchChannelError::Parse {
+        status,
+        body: body.chars().take(500).collect(),
+        error: e.to_string(),
     })
 }
 
@@ -258,17 +265,13 @@ pub async fn fetch_chat_history(
 
     let response = req.send().await.map_err(FetchChatHistoryError::Http)?;
     let status = response.status().as_u16();
-    let body = response
-        .text()
-        .await
-        .map_err(FetchChatHistoryError::Http)?;
+    let body = response.text().await.map_err(FetchChatHistoryError::Http)?;
 
-    let root: Value =
-        serde_json::from_str(&body).map_err(|e| FetchChatHistoryError::Parse {
-            status,
-            body: body.chars().take(500).collect(),
-            error: format!("root parse failed: {e}"),
-        })?;
+    let root: Value = serde_json::from_str(&body).map_err(|e| FetchChatHistoryError::Parse {
+        status,
+        body: body.chars().take(500).collect(),
+        error: format!("root parse failed: {e}"),
+    })?;
 
     let raw_items = extract_history_array(&root).ok_or_else(|| FetchChatHistoryError::Parse {
         status,

@@ -693,10 +693,8 @@ impl Handler<SendMessageToCore> for CoreActor {
                 };
                 let response = message.create_response(
                     MessageType::GetCookieAck,
-                    serde_json::to_value(mcv_messages::GetCookieAckPayload {
-                        cookies: vec![],
-                    })
-                    .unwrap_or_default(),
+                    serde_json::to_value(mcv_messages::GetCookieAckPayload { cookies: vec![] })
+                        .unwrap_or_default(),
                 );
                 tracing::debug!(
                     target: "mcv::core::CoreActor",
@@ -1161,8 +1159,8 @@ fn handle_can_handle_url_result(core: &mut CoreActor, request_id: Uuid, message:
         None => return,
     };
 
-    let result: CanHandleUrlResultPayload = serde_json::from_value(message.payload)
-        .unwrap_or(CanHandleUrlResultPayload {
+    let result: CanHandleUrlResultPayload =
+        serde_json::from_value(message.payload).unwrap_or(CanHandleUrlResultPayload {
             supported: false,
             site_id: None,
         });
@@ -1247,9 +1245,7 @@ impl Handler<DetectUrl> for CoreActor {
                 })
                 .unwrap_or_default(),
             };
-            host_addr.do_send(crate::plugin_host_actor::SendMessageToPlugin {
-                message: check_msg,
-            });
+            host_addr.do_send(crate::plugin_host_actor::SendMessageToPlugin { message: check_msg });
         }
 
         // Tauriタイムアウト(1秒)より長い2秒後にリソースをクリーンアップ
@@ -1444,8 +1440,7 @@ mod tests {
 
         // テスト用プラグインを論理プラグインとして CoreActor に登録
         let host_addr = PluginHostAddr::Test(
-            test_actor_addr
-                .recipient::<crate::plugin_host_actor::SendMessageToPlugin>(),
+            test_actor_addr.recipient::<crate::plugin_host_actor::SendMessageToPlugin>(),
         );
         core_addr
             .send(RegisterTestLogicalPlugin {

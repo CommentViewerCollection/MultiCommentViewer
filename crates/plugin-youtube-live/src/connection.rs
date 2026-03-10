@@ -6,7 +6,7 @@
 use mcv_messages::{
     AccountInfo, ChannelId, CommentReceivedPayload, Cookie as McvCookie, DisconnectedPayload,
     McvEnvelope, Message as McvMessage, MessageDestination, MessagePart as McvMessagePart,
-    MessageSource, MessageType, Money, MonetaryInfo, ProviderBadge, ProviderContent,
+    MessageSource, MessageType, MonetaryInfo, Money, ProviderBadge, ProviderContent,
     ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
     UpdateConnectionAccountPayload,
 };
@@ -52,23 +52,37 @@ fn parse_money(text: &str) -> Money {
     } else if text.starts_with('£') {
         ("GBP", text.trim_start_matches('£'))
     } else if text.ends_with('₩') {
-        let numeric: String = text.trim_end_matches('₩').chars()
+        let numeric: String = text
+            .trim_end_matches('₩')
+            .chars()
             .filter(|c| c.is_ascii_digit())
             .collect();
         let value_minor = numeric.parse::<i64>().unwrap_or(0);
-        return Money { currency: "KRW".to_string(), value_minor };
+        return Money {
+            currency: "KRW".to_string(),
+            value_minor,
+        };
     } else {
         ("", text)
     };
     // カンマ・空白を除去して数値をパース
-    let cleaned: String = rest.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
+    let cleaned: String = rest
+        .chars()
+        .filter(|c| c.is_ascii_digit() || *c == '.')
+        .collect();
     let value_minor = match currency {
         // 少数部なし (JPY, KRW, TWD)
         "JPY" | "TWD" => cleaned.parse::<i64>().unwrap_or(0),
         // 少数2桁 (USD, EUR, GBP, AUD, CAD, HKD 等)
-        _ => cleaned.parse::<f64>().map(|v| (v * 100.0).round() as i64).unwrap_or(0),
+        _ => cleaned
+            .parse::<f64>()
+            .map(|v| (v * 100.0).round() as i64)
+            .unwrap_or(0),
     };
-    Money { currency: currency.to_string(), value_minor }
+    Money {
+        currency: currency.to_string(),
+        value_minor,
+    }
 }
 
 /// LiveChatTextMessageをProviderMessageに変換
@@ -140,14 +154,17 @@ fn convert_paid_message_to_provider_message(msg: &LiveChatPaidMessage) -> Provid
         .iter()
         .filter_map(|part| match part {
             MessagePart::Text(s) => Some(McvMessagePart::Text { text: s.clone() }),
-            MessagePart::Emoji(emoji) => emoji.thumbnails.first().map(|thumbnail| {
-                McvMessagePart::Image {
-                    url: thumbnail.url.clone(),
-                    width: Some(thumbnail.width as u32),
-                    height: Some(thumbnail.height as u32),
-                    alt: Some(emoji.label.clone()),
-                }
-            }),
+            MessagePart::Emoji(emoji) => {
+                emoji
+                    .thumbnails
+                    .first()
+                    .map(|thumbnail| McvMessagePart::Image {
+                        url: thumbnail.url.clone(),
+                        width: Some(thumbnail.width as u32),
+                        height: Some(thumbnail.height as u32),
+                        alt: Some(emoji.label.clone()),
+                    })
+            }
         })
         .collect::<Vec<_>>();
 
@@ -598,12 +615,15 @@ impl Connection {
                         _ = cancel_rx.changed() => { break; }
                         _ = sleep(Duration::from_secs(5)) => {}
                     }
-                    if *cancel_rx.borrow() { break; }
+                    if *cancel_rx.borrow() {
+                        break;
+                    }
                     continue;
                 }
 
                 // YouTubeのAPIが返すtimeoutMsを尊重する（デフォルト5秒、最低500ms〜最大8秒）
-                let sleep_ms = next_continuation.timeout_ms
+                let sleep_ms = next_continuation
+                    .timeout_ms
                     .unwrap_or(5000)
                     .clamp(500, 8000);
                 tokio::select! {

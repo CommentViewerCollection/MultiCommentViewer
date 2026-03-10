@@ -527,7 +527,11 @@ impl Connection {
                             let ctx = ctx.clone();
                             tokio::spawn(async move {
                                 if let Err(e) = Self::fetch_segment_messages(
-                                    &client, &uri, connection_id, &ctx, logical_plugin_id,
+                                    &client,
+                                    &uri,
+                                    connection_id,
+                                    &ctx,
+                                    logical_plugin_id,
                                 )
                                 .await
                                 {
@@ -589,7 +593,10 @@ impl Connection {
                         );
                         next_info = Some((Duration::ZERO, at.to_string()));
                     }
-                    ViewEntry::Backward { segment_uri, snapshot_uri } => {
+                    ViewEntry::Backward {
+                        segment_uri,
+                        snapshot_uri,
+                    } => {
                         // snapshot_uri: 調査用に取得・ログ出力
                         if let Some(snap_uri) = snapshot_uri {
                             if !fetched_uris.contains(&snap_uri) {
@@ -602,7 +609,12 @@ impl Connection {
                                 );
                                 let client = client.clone();
                                 tokio::spawn(async move {
-                                    Self::investigate_backward_snapshot(&client, &snap_uri, connection_id).await;
+                                    Self::investigate_backward_snapshot(
+                                        &client,
+                                        &snap_uri,
+                                        connection_id,
+                                    )
+                                    .await;
                                 });
                             }
                         }
@@ -700,7 +712,9 @@ impl Connection {
                 use nicolive_lib::decode_chunked_messages;
 
                 // 先頭40バイトを hex でログ（フォーマット特定用）
-                let hex_head: String = bytes.iter().take(40)
+                let hex_head: String = bytes
+                    .iter()
+                    .take(40)
                     .map(|b| format!("{:02X}", b))
                     .collect::<Vec<_>>()
                     .join(" ");

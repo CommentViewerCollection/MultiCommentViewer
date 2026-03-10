@@ -10,8 +10,8 @@ use mcv_messages::{
     AccountInfo, CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectPayload, ConnectedPayload,
     ConnectionRemovedPayload, DisconnectPayload, FetchAccountInfoPayload,
     GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, SetConnectionSitePayload,
-    UpdateConnectionAccountPayload,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    SetConnectionSitePayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -36,16 +36,17 @@ pub(crate) async fn on_message_impl(
             let connect: ConnectPayload = parse_payload(&message.payload)?;
             let conn = match plugin.connections.get_mut(&connect.connection_id) {
                 Some(a) => a,
-                None => Err(mcv_plugin_telemetry::capture_context!("connection not found"))?,
+                None => Err(mcv_plugin_telemetry::capture_context!(
+                    "connection not found"
+                ))?,
             };
 
-            let input_extra: Input =
-                serde_json::from_value(connect.input.extra).map_err(|e| {
-                    mcv_plugin_telemetry::capture_context!(
-                        "Connect input.extra parse failed",
-                        error = e.to_string()
-                    )
-                })?;
+            let input_extra: Input = serde_json::from_value(connect.input.extra).map_err(|e| {
+                mcv_plugin_telemetry::capture_context!(
+                    "Connect input.extra parse failed",
+                    error = e.to_string()
+                )
+            })?;
 
             let live_id = Connection::extract_live_id(&input_extra.url).ok_or_else(|| {
                 mcv_plugin_telemetry::capture_context!(

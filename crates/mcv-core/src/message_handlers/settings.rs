@@ -197,7 +197,14 @@ pub fn handle_update_settings(
             // Rust/ドラッグで管理するフィールド（ウィンドウ状態・サイドバー幅）を既存データから引き継ぐ
             let mut data = payload.data;
             if let Ok(Some(existing)) = storage.get_settings("core") {
-                for key in ["window_maximized", "window_x", "window_y", "window_width", "window_height", "sidebar_width"] {
+                for key in [
+                    "window_maximized",
+                    "window_x",
+                    "window_y",
+                    "window_width",
+                    "window_height",
+                    "sidebar_width",
+                ] {
                     if let Some(v) = existing.data.get(key) {
                         if data.get(key).is_none() {
                             data[key] = v.clone();

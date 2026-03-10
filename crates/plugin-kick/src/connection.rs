@@ -16,9 +16,7 @@ use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tokio::time::{timeout, Duration};
 use tokio_tungstenite::{
-    connect_async,
-    tungstenite::Message as WsMessage,
-    MaybeTlsStream, WebSocketStream,
+    connect_async, tungstenite::Message as WsMessage, MaybeTlsStream, WebSocketStream,
 };
 use uuid::Uuid;
 

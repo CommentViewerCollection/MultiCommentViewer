@@ -14,7 +14,10 @@ use crate::message_handlers;
 use crate::plugin_host_actor::SendMessageToPlugin;
 
 fn effective_connect_payload(actor: &CoreActor, incoming: ConnectPayload) -> ConnectPayload {
-    let Some(conn) = actor.connection_manager.get_connection(&incoming.connection_id) else {
+    let Some(conn) = actor
+        .connection_manager
+        .get_connection(&incoming.connection_id)
+    else {
         return incoming;
     };
 
@@ -236,9 +239,8 @@ pub fn handle_get_connection_input_schema(
     message: &McvMessage,
     _ctx: &mut Context<CoreActor>,
 ) -> Result<McvMessage, String> {
-    let payload: GetConnectionInputSchemaPayload =
-        serde_json::from_value(message.payload.clone())
-            .map_err(|e| format!("Failed to parse GetConnectionInputSchemaPayload: {}", e))?;
+    let payload: GetConnectionInputSchemaPayload = serde_json::from_value(message.payload.clone())
+        .map_err(|e| format!("Failed to parse GetConnectionInputSchemaPayload: {}", e))?;
     let schema = serde_json::json!({
         "type": "object",
         "properties": {
@@ -447,7 +449,10 @@ pub fn handle_update_connection_account(
         MessageSource::Plugin { plugin_id } => Some(plugin_id),
         MessageSource::Core => None,
     };
-    if let Some(current_conn) = actor.connection_manager.get_connection(&payload.connection_id) {
+    if let Some(current_conn) = actor
+        .connection_manager
+        .get_connection(&payload.connection_id)
+    {
         if let (Some(src), Some(current)) = (src_plugin_id, current_conn.plugin_id) {
             if src != current {
                 tracing::warn!(

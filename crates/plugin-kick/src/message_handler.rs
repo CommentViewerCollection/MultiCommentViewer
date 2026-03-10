@@ -41,13 +41,12 @@ pub(crate) async fn on_message_impl(
                 None => Err(mcv_plugin_telemetry::capture_context!(""))?,
             };
 
-            let input_extra: Input =
-                serde_json::from_value(connect.input.extra).map_err(|e| {
-                    mcv_plugin_telemetry::capture_context!(
-                        "Connect input.extra parse failed",
-                        error = e.to_string()
-                    )
-                })?;
+            let input_extra: Input = serde_json::from_value(connect.input.extra).map_err(|e| {
+                mcv_plugin_telemetry::capture_context!(
+                    "Connect input.extra parse failed",
+                    error = e.to_string()
+                )
+            })?;
 
             // URL から channelSlug を抽出
             let channel_slug = extract_channel_slug(&input_extra.url).ok_or_else(|| {
@@ -83,7 +82,11 @@ pub(crate) async fn on_message_impl(
             // Kick API でチャンネル情報を取得
             let channel_info = match api::fetch_channel(&channel_slug, &cookie_header).await {
                 Ok(info) => info,
-                Err(api::FetchChannelError::Parse { status, body, error }) => {
+                Err(api::FetchChannelError::Parse {
+                    status,
+                    body,
+                    error,
+                }) => {
                     tracing::error!(
                         target: "mcv::plugin-kick",
                         connection_id = %connect.connection_id,
@@ -366,9 +369,8 @@ pub(crate) async fn on_message_impl(
         MessageType::CanHandleUrl => {
             let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
             let supported = extract_channel_slug(&payload.url).is_some();
-            let site_id = supported.then(|| {
-                mcv_common::SiteId::new("Kick", "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-            });
+            let site_id = supported
+                .then(|| mcv_common::SiteId::new("Kick", "a1b2c3d4-e5f6-7890-abcd-ef1234567890"));
             let response = message.create_response(
                 MessageType::CanHandleUrlResult,
                 serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),

@@ -22,7 +22,8 @@ impl ServerTimeCache {
     /// serverTime を受信したときに呼ぶ。
     pub fn update(&self, server_secs: i64) {
         let local_secs = chrono::Utc::now().timestamp();
-        self.server_secs_at_recv.store(server_secs, Ordering::Relaxed);
+        self.server_secs_at_recv
+            .store(server_secs, Ordering::Relaxed);
         self.local_secs_at_recv.store(local_secs, Ordering::Relaxed);
         self.received.store(true, Ordering::Relaxed);
     }

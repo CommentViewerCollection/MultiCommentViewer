@@ -214,7 +214,10 @@ mod tests {
 
     #[test]
     fn test_extract_live_id_invalid() {
-        assert_eq!(extract_live_id("https://www.nicovideo.jp/watch/sm12345"), None);
+        assert_eq!(
+            extract_live_id("https://www.nicovideo.jp/watch/sm12345"),
+            None
+        );
         assert_eq!(extract_live_id("https://example.com/"), None);
         assert_eq!(extract_live_id(""), None);
     }

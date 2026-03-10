@@ -9,13 +9,13 @@ use std::{
 use mcv_common::SiteId;
 use mcv_messages::{
     AccountInfo, AddSiteAckPayload, AddSitePayload, ChannelId, CommentReceivedPayload,
-    ConnectPayload, ConnectedPayload, FetchAccountInfoPayload, MessagePart as McvMessagePart,
-    Money, MonetaryInfo, ProviderBadge, ProviderContent, ProviderSender, SendCommentPayload,
-    ServiceId, SetConnectionSitePayload, SystemKind, UpdateConnectionAccountPayload,
-    ConnectionRemovedPayload, DisconnectPayload, DisconnectedPayload, GetBrowserPluginAckPayload,
+    ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
+    DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
     GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload, McvEnvelope,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloAckPayload,
-    PluginHelloPayload, ProviderMessage, ProviderMessageKind,
+    Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
+    MessageType, MonetaryInfo, Money, PluginHelloAckPayload, PluginHelloPayload, ProviderBadge,
+    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, SendCommentPayload,
+    ServiceId, SetConnectionSitePayload, SystemKind, UpdateConnectionAccountPayload,
 };
 use once_cell::sync::Lazy;
 use plugin_abi_helper::v3::prelude::*;
@@ -27,9 +27,7 @@ use tokio::{
     time::sleep,
 };
 use uuid::Uuid;
-use youtube_live_lib::{
-    Action, LiveChatPaidMessage, LiveChatTextMessage, MessagePart, Vid,
-};
+use youtube_live_lib::{Action, LiveChatPaidMessage, LiveChatTextMessage, MessagePart, Vid};
 
 use youtube_live_lib::domain_state_machine::{
     DomainCommand, DomainEvent, LiveChatServer, ReqwestServer, YoutubeLiveStateMachine,
@@ -123,19 +121,23 @@ impl Connection {
 
                     for command in commands {
                         match command {
-                            DomainCommand::FetchLiveChat => match server.get_live_chat(&vid).await {
-                                Ok(live_chat) => queue.push_back(DomainEvent::LiveChat(live_chat)),
-                                Err(e) => {
-                                    tracing::warn!(
-                                        target: "mcv::plugin-youtube-live-state-machine",
-                                        connection_id = %connection_id,
-                                        error = %e,
-                                        "fetch live chat failed"
-                                    );
-                                    sleep(Duration::from_secs(5)).await;
-                                    queue.push_back(DomainEvent::Start);
+                            DomainCommand::FetchLiveChat => {
+                                match server.get_live_chat(&vid).await {
+                                    Ok(live_chat) => {
+                                        queue.push_back(DomainEvent::LiveChat(live_chat))
+                                    }
+                                    Err(e) => {
+                                        tracing::warn!(
+                                            target: "mcv::plugin-youtube-live-state-machine",
+                                            connection_id = %connection_id,
+                                            error = %e,
+                                            "fetch live chat failed"
+                                        );
+                                        sleep(Duration::from_secs(5)).await;
+                                        queue.push_back(DomainEvent::Start);
+                                    }
                                 }
-                            },
+                            }
                             DomainCommand::FetchMessages {
                                 ytcfg,
                                 continuation,
@@ -227,8 +229,11 @@ impl Connection {
                                     })
                                     .unwrap(),
                                 );
-                                YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), account_msg)
-                                    .await;
+                                YouTubeLiveStateMachinePlugin::send_message(
+                                    ctx.clone(),
+                                    account_msg,
+                                )
+                                .await;
                             }
                             DomainCommand::SendChat {
                                 ytcfg,
@@ -256,8 +261,11 @@ impl Connection {
                                     serde_json::to_value(DisconnectedPayload { connection_id })
                                         .unwrap(),
                                 );
-                                YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), disconnected)
-                                    .await;
+                                YouTubeLiveStateMachinePlugin::send_message(
+                                    ctx.clone(),
+                                    disconnected,
+                                )
+                                .await;
                                 disconnected_sent = true;
                                 break;
                             }
@@ -441,7 +449,8 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
 
         match message.message_type {
             MessageType::SetConnectionSite => {
-                if let Ok(payload) = serde_json::from_value::<SetConnectionSitePayload>(message.payload)
+                if let Ok(payload) =
+                    serde_json::from_value::<SetConnectionSitePayload>(message.payload)
                 {
                     if let Some(conn) = self.connections.get_mut(&payload.connection_id) {
                         conn.stop();
@@ -487,14 +496,15 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                     return;
                 };
                 let browser_id = payload.browser.id.clone();
-                let yt_cookies = fetch_cookies_for_connect(&ctx, self.logical_plugin_id, &browser_id)
-                    .await
-                    .iter()
-                    .map(|c| youtube_live_lib::Cookie {
-                        name: c.name.clone(),
-                        value: c.value.clone(),
-                    })
-                    .collect::<Vec<_>>();
+                let yt_cookies =
+                    fetch_cookies_for_connect(&ctx, self.logical_plugin_id, &browser_id)
+                        .await
+                        .iter()
+                        .map(|c| youtube_live_lib::Cookie {
+                            name: c.name.clone(),
+                            value: c.value.clone(),
+                        })
+                        .collect::<Vec<_>>();
 
                 let browser_changed = {
                     let conn = self
@@ -549,10 +559,15 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                 }
             }
             MessageType::FetchAccountInfo => {
-                if let Ok(payload) = serde_json::from_value::<FetchAccountInfoPayload>(message.payload) {
-                    let cookies =
-                        fetch_cookies_for_connect(&ctx, self.logical_plugin_id, &payload.browser.id)
-                            .await;
+                if let Ok(payload) =
+                    serde_json::from_value::<FetchAccountInfoPayload>(message.payload)
+                {
+                    let cookies = fetch_cookies_for_connect(
+                        &ctx,
+                        self.logical_plugin_id,
+                        &payload.browser.id,
+                    )
+                    .await;
                     let yt_cookies = cookies
                         .iter()
                         .map(|c| youtube_live_lib::Cookie {
@@ -561,14 +576,15 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                         })
                         .collect::<Vec<_>>();
 
-                    let account = match youtube_live_lib::fetch_account_info_from_home(&yt_cookies).await {
-                        Ok(Some(info)) => Some(AccountInfo {
-                            user_id: info.user_id,
-                            display_name: info.display_name,
-                            avatar_url: info.avatar_url,
-                        }),
-                        _ => None,
-                    };
+                    let account =
+                        match youtube_live_lib::fetch_account_info_from_home(&yt_cookies).await {
+                            Ok(Some(info)) => Some(AccountInfo {
+                                user_id: info.user_id,
+                                display_name: info.display_name,
+                                avatar_url: info.avatar_url,
+                            }),
+                            _ => None,
+                        };
                     let account_msg = McvMessage::new_notification(
                         MessageType::UpdateConnectionAccount,
                         MessageSource::Plugin {
@@ -720,14 +736,17 @@ fn convert_to_provider_message(msg: &LiveChatTextMessage) -> ProviderMessage {
         .iter()
         .filter_map(|part| match part {
             MessagePart::Text(s) => Some(McvMessagePart::Text { text: s.clone() }),
-            MessagePart::Emoji(emoji) => emoji.thumbnails.first().map(|thumbnail| {
-                McvMessagePart::Image {
-                    url: thumbnail.url.clone(),
-                    width: Some(thumbnail.width as u32),
-                    height: Some(thumbnail.height as u32),
-                    alt: Some(emoji.label.clone()),
-                }
-            }),
+            MessagePart::Emoji(emoji) => {
+                emoji
+                    .thumbnails
+                    .first()
+                    .map(|thumbnail| McvMessagePart::Image {
+                        url: thumbnail.url.clone(),
+                        width: Some(thumbnail.width as u32),
+                        height: Some(thumbnail.height as u32),
+                        alt: Some(emoji.label.clone()),
+                    })
+            }
         })
         .collect::<Vec<_>>();
 
@@ -772,14 +791,17 @@ fn convert_paid_message_to_provider_message(msg: &LiveChatPaidMessage) -> Provid
         .iter()
         .filter_map(|part| match part {
             MessagePart::Text(s) => Some(McvMessagePart::Text { text: s.clone() }),
-            MessagePart::Emoji(emoji) => emoji.thumbnails.first().map(|thumbnail| {
-                McvMessagePart::Image {
-                    url: thumbnail.url.clone(),
-                    width: Some(thumbnail.width as u32),
-                    height: Some(thumbnail.height as u32),
-                    alt: Some(emoji.label.clone()),
-                }
-            }),
+            MessagePart::Emoji(emoji) => {
+                emoji
+                    .thumbnails
+                    .first()
+                    .map(|thumbnail| McvMessagePart::Image {
+                        url: thumbnail.url.clone(),
+                        width: Some(thumbnail.width as u32),
+                        height: Some(thumbnail.height as u32),
+                        alt: Some(emoji.label.clone()),
+                    })
+            }
         })
         .collect::<Vec<_>>();
 
@@ -958,7 +980,9 @@ mod tests {
     use super::*;
     use std::collections::VecDeque;
     use tokio::sync::Mutex;
-    use youtube_live_lib::domain_state_machine::{DomainCommand, DomainError, DomainEvent, LiveChatServer};
+    use youtube_live_lib::domain_state_machine::{
+        DomainCommand, DomainError, DomainEvent, LiveChatServer,
+    };
     use youtube_live_lib::{Continuation, LiveChat, Ytcfg};
 
     const LIVE_CHAT_HTML: &str = r#"<html><script>ytcfg.set({"INNERTUBE_CONTEXT":{"client":{"clientName":"WEB","clientVersion":"2.20250101.00.00"}},"INNERTUBE_API_KEY":"test_api_key","VISITOR_DATA":"visitor"});window["ytInitialData"] = {"contents":{"liveChatRenderer":{"continuations":[{"timedContinuationData":{"continuation":"CONT_1","timeoutMs":1000}}],"actions":[]}}};</script></html>"#;
@@ -1014,23 +1038,26 @@ mod tests {
         assert!(matches!(cmds.first(), Some(DomainCommand::FetchLiveChat)));
 
         let cmds = machine
-            .on_event(DomainEvent::LiveChat(LiveChat::new(LIVE_CHAT_HTML.to_string())))
+            .on_event(DomainEvent::LiveChat(LiveChat::new(
+                LIVE_CHAT_HTML.to_string(),
+            )))
             .expect("live chat must succeed");
-        assert!(
-            cmds.iter()
-                .any(|c| matches!(c, DomainCommand::FetchMessages { .. }))
-        );
+        assert!(cmds
+            .iter()
+            .any(|c| matches!(c, DomainCommand::FetchMessages { .. })));
     }
 
     #[tokio::test]
     async fn live_chat_in_polling_state_returns_error() {
         let mut machine = YoutubeLiveStateMachine::new();
         let _ = machine
-            .on_event(DomainEvent::LiveChat(LiveChat::new(LIVE_CHAT_HTML.to_string())))
+            .on_event(DomainEvent::LiveChat(LiveChat::new(
+                LIVE_CHAT_HTML.to_string(),
+            )))
             .expect("initial live_chat must be accepted");
-        let err = match machine
-            .on_event(DomainEvent::LiveChat(LiveChat::new(LIVE_CHAT_HTML.to_string())))
-        {
+        let err = match machine.on_event(DomainEvent::LiveChat(LiveChat::new(
+            LIVE_CHAT_HTML.to_string(),
+        ))) {
             Ok(_) => panic!("second live_chat in polling state must fail"),
             Err(e) => e,
         };
@@ -1043,4 +1070,3 @@ mod tests {
         );
     }
 }
-

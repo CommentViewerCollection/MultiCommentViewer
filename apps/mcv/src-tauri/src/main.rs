@@ -498,9 +498,7 @@ async fn detect_url(
     url: String,
 ) -> Result<Option<String>, String> {
     let (tx, rx) = tokio::sync::oneshot::channel::<Option<SiteId>>();
-    state
-        .core_addr
-        .do_send(DetectUrl { url, tx });
+    state.core_addr.do_send(DetectUrl { url, tx });
     match tokio::time::timeout(std::time::Duration::from_secs(1), rx).await {
         Ok(Ok(Some(site_id))) => Ok(Some(site_id.into_string())),
         Ok(Ok(None)) => Ok(None),

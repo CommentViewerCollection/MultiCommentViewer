@@ -183,10 +183,7 @@ pub(crate) async fn on_message_impl(
             let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
             let supported = extract_video_id_from_url(&payload.url).is_some();
             let site_id = supported.then(|| {
-                mcv_common::SiteId::new(
-                    "YouTubeLive",
-                    "7a3b5c9d-1e2f-4a5b-8c7d-9e0f1a2b3c4d",
-                )
+                mcv_common::SiteId::new("YouTubeLive", "7a3b5c9d-1e2f-4a5b-8c7d-9e0f1a2b3c4d")
             });
             let response = message.create_response(
                 MessageType::CanHandleUrlResult,

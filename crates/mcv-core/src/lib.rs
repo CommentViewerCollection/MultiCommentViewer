@@ -109,11 +109,20 @@ impl PluginManager {
 
         // 絶対パスおよびパストラバーサルを拒否
         if dll_rel.is_absolute() || dll_rel.has_root() {
-            tracing::error!("plugin.json: absolute path is not allowed: {}", manifest.path);
+            tracing::error!(
+                "plugin.json: absolute path is not allowed: {}",
+                manifest.path
+            );
             return None;
         }
-        if dll_rel.components().any(|c| c == std::path::Component::ParentDir) {
-            tracing::error!("plugin.json: path traversal is not allowed: {}", manifest.path);
+        if dll_rel
+            .components()
+            .any(|c| c == std::path::Component::ParentDir)
+        {
+            tracing::error!(
+                "plugin.json: path traversal is not allowed: {}",
+                manifest.path
+            );
             return None;
         }
 

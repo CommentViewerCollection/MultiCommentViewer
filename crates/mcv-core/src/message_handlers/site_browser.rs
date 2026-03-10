@@ -168,7 +168,9 @@ pub fn handle_remove_browser(
         }
     };
 
-    let removed = actor.site_browser_manager.remove_browser(&payload.browser_id);
+    let removed = actor
+        .site_browser_manager
+        .remove_browser(&payload.browser_id);
     if !removed {
         return;
     }
@@ -236,10 +238,9 @@ pub fn handle_update_connection_settings(
     );
 
     if let Some(url) = payload.url {
-        actor.connection_manager.merge_input_state(
-            &payload.connection_id,
-            serde_json::json!({ "url": url }),
-        );
+        actor
+            .connection_manager
+            .merge_input_state(&payload.connection_id, serde_json::json!({ "url": url }));
     }
 
     if let Some(patch) = payload.input_state {

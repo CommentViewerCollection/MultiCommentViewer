@@ -228,7 +228,6 @@ async fn handle_message_state_update(
                         .insert(connection_id, connection_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, name = %name, "Connection added to state");
                     let _ = app.emit("connections-updated", ());
-
                 } else {
                     tracing::error!(target: "mcv::exe-plugin-sample", payload = ?payload, "connection-added: failed to parse required fields");
                 }
@@ -384,8 +383,7 @@ async fn handle_message_state_update(
                 serde_json::from_value::<CommentReceivedPayload>(message.payload.clone())
             {
                 let envelope = &payload.envelope;
-                let messages_json =
-                    serde_json::to_string(&envelope.messages).unwrap_or_default();
+                let messages_json = serde_json::to_string(&envelope.messages).unwrap_or_default();
                 let db_clone = Arc::clone(&db);
                 let (eid, cid, rat, raw) = (
                     envelope.event_id.to_string(),

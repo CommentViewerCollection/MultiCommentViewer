@@ -156,7 +156,10 @@ mod tests {
                     "00000000-0000-0000-0000-000000000001",
                 )),
                 url: Some("https://example.com".to_string()),
-                browser_id: Some(BrowserId::new("Chrome", "00000000-0000-0000-0000-000000000002")),
+                browser_id: Some(BrowserId::new(
+                    "Chrome",
+                    "00000000-0000-0000-0000-000000000002",
+                )),
                 advanced_settings: Some(serde_json::json!({"key": "value"})),
                 input_state: Some(serde_json::json!({"url": "https://example.com/live"})),
                 comment_state: Some(serde_json::json!({"emote": "smile"})),

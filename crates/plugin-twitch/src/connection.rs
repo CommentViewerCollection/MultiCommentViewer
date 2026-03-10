@@ -430,9 +430,7 @@ impl Connection {
                         channel: ChannelId(channel.clone()),
                         sender: ProviderSender {
                             id: user.clone(),
-                            display_name: vec![MessagePart::Text {
-                                text: user.clone(),
-                            }],
+                            display_name: vec![MessagePart::Text { text: user.clone() }],
                             badges: vec![],
                             role: None,
                             avatar_url: None,
@@ -449,7 +447,10 @@ impl Connection {
                     };
                     provider_messages.push(provider_msg);
                 }
-                TwitchEvent::GlobalUserState { display_name, user_id } => {
+                TwitchEvent::GlobalUserState {
+                    display_name,
+                    user_id,
+                } => {
                     if let Some(name) = display_name {
                         let account_msg = McvMessage::new_notification(
                             MessageType::UpdateConnectionAccount,

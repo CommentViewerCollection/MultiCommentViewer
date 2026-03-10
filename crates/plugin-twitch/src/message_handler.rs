@@ -173,9 +173,8 @@ pub(crate) async fn on_message_impl(
         MessageType::CanHandleUrl => {
             let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
             let supported = Connection::extract_channel_id(&payload.url).is_some();
-            let site_id = supported.then(|| {
-                mcv_common::SiteId::new("Twitch", "f3c2a1d7-6e4b-4f8c-9a21-5d7b3e2c9f64")
-            });
+            let site_id = supported
+                .then(|| mcv_common::SiteId::new("Twitch", "f3c2a1d7-6e4b-4f8c-9a21-5d7b3e2c9f64"));
             let response = message.create_response(
                 MessageType::CanHandleUrlResult,
                 serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),

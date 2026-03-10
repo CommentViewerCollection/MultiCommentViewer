@@ -60,7 +60,9 @@ impl PluginManifest {
         }
 
         if self.path.contains("..") {
-            return Err(ManifestError::Invalid("path traversal is not allowed".to_string()));
+            return Err(ManifestError::Invalid(
+                "path traversal is not allowed".to_string(),
+            ));
         }
 
         Ok(())

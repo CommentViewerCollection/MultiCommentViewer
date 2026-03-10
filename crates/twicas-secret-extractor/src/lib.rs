@@ -38,7 +38,7 @@ pub fn fetch_player_js() -> std::result::Result<String, Box<dyn std::error::Erro
 fn twc_decode(encoded: &str) -> String {
     let mut bytes: Vec<u8> = Vec::new();
     let mut i: usize = 0; // base64 グループ内の位置カウンタ
-    let mut n: u64 = 0;   // ビット蓄積バッファ
+    let mut n: u64 = 0; // ビット蓄積バッファ
 
     for &byte in encoded.as_bytes() {
         let r = match CUSTOM_ALPHA.iter().position(|&b| b == byte) {
@@ -47,7 +47,11 @@ fn twc_decode(encoded: &str) -> String {
         };
         let old_i = i;
         // グループ先頭なら n をリセット、それ以外は下位ビットとして追記
-        n = if old_i % 4 == 0 { r as u64 } else { 64 * n + r as u64 };
+        n = if old_i % 4 == 0 {
+            r as u64
+        } else {
+            64 * n + r as u64
+        };
         i += 1;
         if old_i % 4 != 0 {
             // JS の -2*i & 6 (i は increment 後の値) に相当するシフト量
@@ -147,12 +151,11 @@ pub fn extract_secret(src: &str, verbose: bool) -> std::result::Result<String, S
         .or_else(|| before_target.rfind("if("))
         .ok_or("チェックサム if 文が見つかりません")?;
 
-    let checksum_expr = extract_if_body(&ctx[if_start..])
-        .ok_or("チェックサム式の括弧が対応していません")?;
+    let checksum_expr =
+        extract_if_body(&ctx[if_start..]).ok_or("チェックサム式の括弧が対応していません")?;
 
     // チェックサム式中の lookup 関数名 (例: i, n, r など 1 文字の変数名)
-    let fn_name_re = Regex::new(r"parseInt\(([a-zA-Z])\(\d+\)\)")
-        .map_err(|e| e.to_string())?;
+    let fn_name_re = Regex::new(r"parseInt\(([a-zA-Z])\(\d+\)\)").map_err(|e| e.to_string())?;
     let fn_name = fn_name_re
         .captures(&checksum_expr)
         .ok_or("チェックサム関数名が見つかりません")?[1]
@@ -223,10 +226,7 @@ pub fn extract_secret(src: &str, verbose: bool) -> std::result::Result<String, S
             ));
 
             // fn(SALT_IDX): 短い英字識別子 (プロパティ名らしい)
-            let is_identifier = decoded1
-                .chars()
-                .next()
-                .map_or(false, |c| c.is_alphabetic())
+            let is_identifier = decoded1.chars().next().map_or(false, |c| c.is_alphabetic())
                 && decoded1
                     .chars()
                     .all(|c| c.is_alphanumeric() || c == '_' || c == '$')
@@ -246,8 +246,8 @@ pub fn extract_secret(src: &str, verbose: bool) -> std::result::Result<String, S
         }
     }
 
-    let idx = secret_index
-        .ok_or_else(|| "SECRET インデックスが特定できませんでした".to_string())?;
+    let idx =
+        secret_index.ok_or_else(|| "SECRET インデックスが特定できませんでした".to_string())?;
     let secret = lookup(&arr, idx, base_offset);
 
     log(&format!("SECRET インデックス: {idx}"));

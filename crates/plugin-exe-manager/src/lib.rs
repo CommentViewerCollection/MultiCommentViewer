@@ -101,8 +101,7 @@ impl ExePluginManager {
                 | MessageType::ConnectionAdded
                 | MessageType::ConnectionRemoved
                 | MessageType::Connected
-                | MessageType::Disconnected
-            // CommentReceived は comment-processor ロールへの role-based routing を使用
+                | MessageType::Disconnected // CommentReceived は comment-processor ロールへの role-based routing を使用
         )
     }
 }

@@ -144,7 +144,9 @@ pub async fn get_live_chat(
         .map_err(|_| mcv_tracing::capture_context!("live_chatの取得に失敗"))?;
     Ok(LiveChat::new(body))
 }
-pub fn get_yt_initial_data(live_chat: &LiveChat) -> Result<YtInitialData, mcv_tracing::TracingError> {
+pub fn get_yt_initial_data(
+    live_chat: &LiveChat,
+) -> Result<YtInitialData, mcv_tracing::TracingError> {
     let yt_initial_data = extract_yt_initial_data(&live_chat).map_err(|inner| {
         mcv_tracing::capture_context!(
             inner.to_string(),
@@ -246,10 +248,7 @@ fn extract_ytcfg_from_html(body: &str) -> Result<Ytcfg, mcv_tracing::TracingErro
     let json_str = match extract_ytcfg_raw_from_html(body) {
         Some(s) => s,
         None => {
-            return Err(mcv_tracing::capture_context!(
-                "Failed to extract ytcfg from html"
-            )
-            .into())
+            return Err(mcv_tracing::capture_context!("Failed to extract ytcfg from html").into());
         }
     };
     let json: serde_json::Value = serde_json::from_str(json_str).map_err(|e| {
@@ -1022,7 +1021,10 @@ pub async fn fetch_account_info_from_home(
         .text()
         .await
         .map_err(|e| {
-            mcv_tracing::capture_context!("Failed to read youtube top page body", error = e.to_string())
+            mcv_tracing::capture_context!(
+                "Failed to read youtube top page body",
+                error = e.to_string()
+            )
         })?;
     tracing::debug!(
         target: "mcv::youtube-live-lib",
@@ -1079,10 +1081,7 @@ pub async fn fetch_account_info_from_home(
     }
 
     let response = account_req.send().await.map_err(|e| {
-        mcv_tracing::capture_context!(
-            "Failed to fetch account menu",
-            error = e.to_string()
-        )
+        mcv_tracing::capture_context!("Failed to fetch account menu", error = e.to_string())
     })?;
     tracing::info!(
         target: "mcv::youtube-live-lib",
@@ -1099,15 +1098,9 @@ pub async fn fetch_account_info_from_home(
         return Ok(None);
     }
 
-    let json: serde_json::Value = response
-        .json()
-        .await
-        .map_err(|e| {
-            mcv_tracing::capture_context!(
-                "Failed to parse account menu JSON",
-                error = e.to_string()
-            )
-        })?;
+    let json: serde_json::Value = response.json().await.map_err(|e| {
+        mcv_tracing::capture_context!("Failed to parse account menu JSON", error = e.to_string())
+    })?;
 
     let header = match json.pointer(
         "/actions/0/openPopupAction/popup/multiPageMenuRenderer/header/activeAccountHeaderRenderer",

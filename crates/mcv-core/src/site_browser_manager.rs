@@ -7,8 +7,7 @@ use uuid::{uuid, Uuid};
 ///
 /// デバッグログで識別しやすくするため nil ではなく固定値を使う。
 /// mcv-core 内部でのみ使用し、外部には公開しない。
-pub(crate) const NONE_BROWSER_PLUGIN_ID: Uuid =
-    uuid!("faceb00c-0000-0000-0000-000000000000");
+pub(crate) const NONE_BROWSER_PLUGIN_ID: Uuid = uuid!("faceb00c-0000-0000-0000-000000000000");
 
 /// "なし"ブラウザの文字列ID（mcv-core 内部用）
 const NONE_BROWSER_ID_STR: &str = "none_00000000-0000-0000-0000-000000000000";
@@ -116,7 +115,13 @@ impl SiteAndBrowserManager {
     /// ブラウザ一覧を取得（"なし"ブラウザを先頭に返す）
     pub fn list_browsers(&self) -> Vec<BrowserInfo> {
         let mut list: Vec<BrowserInfo> = self.browsers.values().cloned().collect();
-        list.sort_by_key(|b| if b.browser_id.is_none_browser() { 0u8 } else { 1u8 });
+        list.sort_by_key(|b| {
+            if b.browser_id.is_none_browser() {
+                0u8
+            } else {
+                1u8
+            }
+        });
         list
     }
 
@@ -137,7 +142,6 @@ impl SiteAndBrowserManager {
     pub fn get_plugin_id_for_site(&self, site_id: &SiteId) -> Option<Uuid> {
         self.sites.get(site_id).map(|s| s.plugin_id)
     }
-
 }
 
 impl Default for SiteAndBrowserManager {
@@ -253,10 +257,7 @@ mod tests {
         });
 
         let list = manager.list_browsers();
-        assert!(
-            !list.is_empty(),
-            "ブラウザリストは空でないべき"
-        );
+        assert!(!list.is_empty(), "ブラウザリストは空でないべき");
         assert!(
             list[0].browser_id.is_none_browser(),
             "\"なし\" ブラウザはリストの先頭に返ってくるべき"
@@ -269,8 +270,7 @@ mod tests {
         let none_browser = manager.get_browser(&none_browser_id()).unwrap();
 
         assert_eq!(
-            none_browser.plugin_id,
-            NONE_BROWSER_PLUGIN_ID,
+            none_browser.plugin_id, NONE_BROWSER_PLUGIN_ID,
             "\"なし\" ブラウザの plugin_id は固定UUID (NONE_BROWSER_PLUGIN_ID) であるべき"
         );
     }

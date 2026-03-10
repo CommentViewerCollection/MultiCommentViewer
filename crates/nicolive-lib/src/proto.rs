@@ -397,7 +397,10 @@ pub struct OperatorComment {
 /// dwango.nicolive.chat.data.SimpleNotification
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SimpleNotification {
-    #[prost(oneof = "simple_notification::Message", tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10")]
+    #[prost(
+        oneof = "simple_notification::Message",
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10"
+    )]
     pub message: Option<simple_notification::Message>,
 }
 

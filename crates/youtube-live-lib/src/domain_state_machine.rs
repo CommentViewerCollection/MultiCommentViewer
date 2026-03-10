@@ -2,8 +2,8 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    extract_ytcfg, get_live_chat, get_live_chat_messages, get_yt_initial_data, send_chat_message,
-    Action, Continuation, Cookie, LiveChat, Vid, Ytcfg,
+    Action, Continuation, Cookie, LiveChat, Vid, Ytcfg, extract_ytcfg, get_live_chat,
+    get_live_chat_messages, get_yt_initial_data, send_chat_message,
 };
 
 /// ドメイン層で扱うエラー。
@@ -334,10 +334,9 @@ impl YoutubeLiveStateMachine {
                     ytcfg,
                     continuation,
                     ..
-                } => Ok(vec![self.next_fetch_command(
-                    ytcfg.clone(),
-                    continuation.clone(),
-                )]),
+                } => Ok(vec![
+                    self.next_fetch_command(ytcfg.clone(), continuation.clone()),
+                ]),
                 DomainState::Stopped => Err(DomainError::InvalidTransition {
                     state: self.state_name(),
                     event: "Start",
@@ -365,10 +364,7 @@ impl YoutubeLiveStateMachine {
                 }
 
                 if let Some(next) = output.continuation {
-                    commands.push(self.next_fetch_command(
-                        self.poll_context()?.0.clone(),
-                        next,
-                    ));
+                    commands.push(self.next_fetch_command(self.poll_context()?.0.clone(), next));
                 } else {
                     commands.push(DomainCommand::EmitDisconnected);
                 }
@@ -389,10 +385,7 @@ impl YoutubeLiveStateMachine {
                     });
                 }
                 if let Some(next) = output.continuation {
-                    commands.push(self.next_fetch_command(
-                        self.poll_context()?.0.clone(),
-                        next,
-                    ));
+                    commands.push(self.next_fetch_command(self.poll_context()?.0.clone(), next));
                 } else {
                     commands.push(DomainCommand::EmitDisconnected);
                 }
@@ -472,8 +465,10 @@ impl YoutubeLiveStateMachine {
             }
         }
 
-        let ytcfg = extract_ytcfg(&live_chat).map_err(|e| DomainError::ParseFailed(e.to_string()))?;
-        let initial = get_yt_initial_data(&live_chat).map_err(|e| DomainError::ParseFailed(e.to_string()))?;
+        let ytcfg =
+            extract_ytcfg(&live_chat).map_err(|e| DomainError::ParseFailed(e.to_string()))?;
+        let initial =
+            get_yt_initial_data(&live_chat).map_err(|e| DomainError::ParseFailed(e.to_string()))?;
 
         let continuation = initial.continuation().clone();
         // reload要求後は既存パラメータを再利用しない。
@@ -655,14 +650,11 @@ where
                     .server
                     .get_live_chat_messages(&self.vid, ytcfg, continuation)
                     .await?;
-                let cmds = self
-                    .machine
-                    .on_event(DomainEvent::Messages {
-                        continuation: next,
-                        actions,
-                        raw,
-                    })
-                    ?;
+                let cmds = self.machine.on_event(DomainEvent::Messages {
+                    continuation: next,
+                    actions,
+                    raw,
+                })?;
                 Ok(cmds.iter().map(ReplayCommand::from).collect())
             }
             NextStep::Halted => Ok(vec![]),
@@ -733,11 +725,13 @@ mod tests {
     async fn second_live_chat_in_polling_is_invalid() {
         let mut machine = YoutubeLiveStateMachine::new();
         machine
-            .on_event(DomainEvent::LiveChat(LiveChat::new(LIVE_CHAT_HTML.to_string())))
+            .on_event(DomainEvent::LiveChat(LiveChat::new(
+                LIVE_CHAT_HTML.to_string(),
+            )))
             .expect("first live chat");
-        let err = match machine
-            .on_event(DomainEvent::LiveChat(LiveChat::new(LIVE_CHAT_HTML.to_string())))
-        {
+        let err = match machine.on_event(DomainEvent::LiveChat(LiveChat::new(
+            LIVE_CHAT_HTML.to_string(),
+        ))) {
             Ok(_) => panic!("second live chat must fail"),
             Err(e) => e,
         };
@@ -754,7 +748,9 @@ mod tests {
     async fn send_chat_event_generates_send_command_when_params_exist() {
         let mut machine = YoutubeLiveStateMachine::new();
         machine
-            .on_event(DomainEvent::LiveChat(LiveChat::new(LIVE_CHAT_HTML.to_string())))
+            .on_event(DomainEvent::LiveChat(LiveChat::new(
+                LIVE_CHAT_HTML.to_string(),
+            )))
             .expect("live chat");
         let cmds = machine
             .on_event(DomainEvent::SendChat {
@@ -775,7 +771,9 @@ mod tests {
         };
         let mut machine = YoutubeLiveStateMachine::with_config(config);
         machine
-            .on_event(DomainEvent::LiveChat(LiveChat::new(LIVE_CHAT_HTML.to_string())))
+            .on_event(DomainEvent::LiveChat(LiveChat::new(
+                LIVE_CHAT_HTML.to_string(),
+            )))
             .expect("live chat");
 
         let mut c = Continuation::new("CONT_NEXT".to_string());
@@ -787,9 +785,9 @@ mod tests {
                 raw: "{}".to_string(),
             })
             .expect("messages");
-        assert!(cmds.iter().any(|cmd| matches!(
-            cmd,
-            DomainCommand::FetchMessages { delay_ms: 200, .. }
-        )));
+        assert!(
+            cmds.iter()
+                .any(|cmd| matches!(cmd, DomainCommand::FetchMessages { delay_ms: 200, .. }))
+        );
     }
 }

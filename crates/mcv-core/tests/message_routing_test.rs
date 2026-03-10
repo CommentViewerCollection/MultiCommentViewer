@@ -10,7 +10,11 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-fn make_test_comment_payload(connection_id: Uuid, user: &str, text: &str) -> CommentReceivedPayload {
+fn make_test_comment_payload(
+    connection_id: Uuid,
+    user: &str,
+    text: &str,
+) -> CommentReceivedPayload {
     let msg = ProviderMessage {
         id: Uuid::new_v4().to_string(),
         platform_message_id: None,
@@ -18,7 +22,9 @@ fn make_test_comment_payload(connection_id: Uuid, user: &str, text: &str) -> Com
         channel: ChannelId("test".to_string()),
         sender: ProviderSender {
             id: user.to_string(),
-            display_name: vec![MessagePart::Text { text: user.to_string() }],
+            display_name: vec![MessagePart::Text {
+                text: user.to_string(),
+            }],
             badges: vec![],
             role: None,
             avatar_url: None,
@@ -26,7 +32,9 @@ fn make_test_comment_payload(connection_id: Uuid, user: &str, text: &str) -> Com
         timestamp: chrono::Utc::now().timestamp(),
         kind: ProviderMessageKind::Chat,
         content: ProviderContent::Text {
-            text: vec![MessagePart::Text { text: text.to_string() }],
+            text: vec![MessagePart::Text {
+                text: text.to_string(),
+            }],
         },
         reply_to: None,
         metadata: serde_json::Value::Null,
@@ -38,7 +46,10 @@ fn make_test_comment_payload(connection_id: Uuid, user: &str, text: &str) -> Com
         received_at: chrono::Utc::now().timestamp(),
         raw_message: None,
     };
-    CommentReceivedPayload { connection_id, envelope }
+    CommentReceivedPayload {
+        connection_id,
+        envelope,
+    }
 }
 
 /// メッセージルーティングの統合テスト
@@ -69,8 +80,12 @@ async fn test_event_callback_routing() {
         MessageType::CommentReceived,
         MessageSource::Plugin { plugin_id },
         MessageDestination::Core,
-        serde_json::to_value(make_test_comment_payload(connection_id, "TestUser", "Test comment"))
-            .unwrap(),
+        serde_json::to_value(make_test_comment_payload(
+            connection_id,
+            "TestUser",
+            "Test comment",
+        ))
+        .unwrap(),
     );
 
     let _ = core_addr
@@ -208,13 +223,21 @@ async fn test_multiple_event_routing() {
         ),
         (
             MessageType::CommentReceived,
-            serde_json::to_value(make_test_comment_payload(connection_id, "User1", "Comment 1"))
-                .unwrap(),
+            serde_json::to_value(make_test_comment_payload(
+                connection_id,
+                "User1",
+                "Comment 1",
+            ))
+            .unwrap(),
         ),
         (
             MessageType::CommentReceived,
-            serde_json::to_value(make_test_comment_payload(connection_id, "User2", "Comment 2"))
-                .unwrap(),
+            serde_json::to_value(make_test_comment_payload(
+                connection_id,
+                "User2",
+                "Comment 2",
+            ))
+            .unwrap(),
         ),
         (
             MessageType::Disconnected,

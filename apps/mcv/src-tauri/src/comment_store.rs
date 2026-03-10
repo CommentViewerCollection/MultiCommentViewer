@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Result as SqliteResult, params};
+use rusqlite::{params, Connection, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 
 use crate::CommentRow;
@@ -22,7 +22,8 @@ pub struct CommentStore {
 impl CommentStore {
     pub fn new() -> SqliteResult<Self> {
         let conn = Connection::open_in_memory()?;
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             CREATE TABLE IF NOT EXISTS comments (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
@@ -51,7 +52,8 @@ impl CommentStore {
                 last_seen INTEGER NOT NULL DEFAULT 0,
                 is_site_ng INTEGER NOT NULL DEFAULT 0
             );
-        ")?;
+        ",
+        )?;
         Ok(Self { conn })
     }
 
@@ -136,28 +138,29 @@ impl CommentStore {
              LIMIT ?2 OFFSET ?3",
         )?;
 
-        let rows = stmt.query_map(params![pattern, limit as i64, offset as i64], |row| {
-            let user_name_json: String = row.get(2)?;
-            let text_json: String = row.get(3)?;
-            let badges_json: String = row.get(9)?;
-            let is_visible: i64 = row.get(6)?;
+        let rows = stmt
+            .query_map(params![pattern, limit as i64, offset as i64], |row| {
+                let user_name_json: String = row.get(2)?;
+                let text_json: String = row.get(3)?;
+                let badges_json: String = row.get(9)?;
+                let is_visible: i64 = row.get(6)?;
 
-            Ok(CommentRow {
-                id: row.get(0)?,
-                user_id: row.get(1)?,
-                user_name: serde_json::from_str(&user_name_json).unwrap_or_default(),
-                text: serde_json::from_str(&text_json).unwrap_or_default(),
-                timestamp: row.get(4)?,
-                connection_id: row.get(5)?,
-                is_visible: is_visible != 0,
-                kind: row.get(7)?,
-                avatar_url: row.get(8)?,
-                badges: serde_json::from_str(&badges_json).unwrap_or_default(),
-                replaces_id: row.get(10)?,
-                amount_text: row.get(11)?,
-            })
-        })?
-        .collect::<SqliteResult<Vec<_>>>()?;
+                Ok(CommentRow {
+                    id: row.get(0)?,
+                    user_id: row.get(1)?,
+                    user_name: serde_json::from_str(&user_name_json).unwrap_or_default(),
+                    text: serde_json::from_str(&text_json).unwrap_or_default(),
+                    timestamp: row.get(4)?,
+                    connection_id: row.get(5)?,
+                    is_visible: is_visible != 0,
+                    kind: row.get(7)?,
+                    avatar_url: row.get(8)?,
+                    badges: serde_json::from_str(&badges_json).unwrap_or_default(),
+                    replaces_id: row.get(10)?,
+                    amount_text: row.get(11)?,
+                })
+            })?
+            .collect::<SqliteResult<Vec<_>>>()?;
 
         Ok(rows)
     }
@@ -172,23 +175,24 @@ impl CommentStore {
              LIMIT ?1 OFFSET ?2",
         )?;
 
-        let users = stmt.query_map(params![limit as i64, offset as i64], |row| {
-            let display_name_json: String = row.get(1)?;
-            let badges_json: String = row.get(3)?;
-            let is_site_ng: i64 = row.get(7)?;
+        let users = stmt
+            .query_map(params![limit as i64, offset as i64], |row| {
+                let display_name_json: String = row.get(1)?;
+                let badges_json: String = row.get(3)?;
+                let is_site_ng: i64 = row.get(7)?;
 
-            Ok(UserInfo {
-                user_id: row.get(0)?,
-                display_name: serde_json::from_str(&display_name_json).unwrap_or_default(),
-                avatar_url: row.get(2)?,
-                badges: serde_json::from_str(&badges_json).unwrap_or_default(),
-                connection_id: row.get(4)?,
-                comment_count: row.get(5)?,
-                last_seen: row.get(6)?,
-                is_site_ng: is_site_ng != 0,
-            })
-        })?
-        .collect::<SqliteResult<Vec<_>>>()?;
+                Ok(UserInfo {
+                    user_id: row.get(0)?,
+                    display_name: serde_json::from_str(&display_name_json).unwrap_or_default(),
+                    avatar_url: row.get(2)?,
+                    badges: serde_json::from_str(&badges_json).unwrap_or_default(),
+                    connection_id: row.get(4)?,
+                    comment_count: row.get(5)?,
+                    last_seen: row.get(6)?,
+                    is_site_ng: is_site_ng != 0,
+                })
+            })?
+            .collect::<SqliteResult<Vec<_>>>()?;
 
         Ok(users)
     }

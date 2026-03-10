@@ -146,14 +146,10 @@ impl CookiesTxtPlugin {
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
         );
-        let result = ctx
-            .send_request(message, Duration::from_secs(10))
-            .await;
+        let result = ctx.send_request(message, Duration::from_secs(10)).await;
         if let Ok(response) = result {
             if response.message_type == MessageType::AddBrowserAck {
-                if let Ok(_ack) =
-                    serde_json::from_value::<AddBrowserAckPayload>(response.payload)
-                {
+                if let Ok(_ack) = serde_json::from_value::<AddBrowserAckPayload>(response.payload) {
                     tracing::info!(
                         target: "mcv::plugin-cookies-txt",
                         browser_id = %entry.browser_id,
@@ -246,9 +242,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),
         );
-        let _ = ctx
-            .send_request(message, Duration::from_secs(10))
-            .await;
+        let _ = ctx.send_request(message, Duration::from_secs(10)).await;
 
         tracing::info!(
             target: "mcv::plugin-cookies-txt",
@@ -395,14 +389,8 @@ impl PluginImplV3Async for CookiesTxtPlugin {
 
                 match action {
                     "add" => {
-                        let name = payload.data["name"]
-                            .as_str()
-                            .unwrap_or("")
-                            .to_string();
-                        let path = payload.data["path"]
-                            .as_str()
-                            .unwrap_or("")
-                            .to_string();
+                        let name = payload.data["name"].as_str().unwrap_or("").to_string();
+                        let path = payload.data["path"].as_str().unwrap_or("").to_string();
 
                         if path.is_empty() {
                             tracing::warn!(
@@ -462,8 +450,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
                     }
 
                     "remove" => {
-                        let browser_id_str =
-                            payload.data["browser_id"].as_str().unwrap_or("");
+                        let browser_id_str = payload.data["browser_id"].as_str().unwrap_or("");
 
                         let before = self.entries.len();
                         self.entries
@@ -500,8 +487,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
                                 MessageType::RemoveBrowser,
                                 src,
                                 MessageDestination::Core,
-                                serde_json::to_value(RemoveBrowserPayload { browser_id })
-                                    .unwrap(),
+                                serde_json::to_value(RemoveBrowserPayload { browser_id }).unwrap(),
                             );
                             let _ = ctx.send_notification(remove_msg).await;
                         } else {

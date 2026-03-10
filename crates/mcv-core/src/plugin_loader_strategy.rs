@@ -43,10 +43,7 @@ impl PluginHostAddr {
     /// プラグインに SendMessageToPlugin を送信する（型特化版）。
     ///
     /// `do_send` の代わりにこちらを使うことで、テスト用の `Test` バリアントもサポートできる。
-    pub(crate) fn send_plugin_message(
-        &self,
-        msg: crate::plugin_host_actor::SendMessageToPlugin,
-    ) {
+    pub(crate) fn send_plugin_message(&self, msg: crate::plugin_host_actor::SendMessageToPlugin) {
         match self {
             PluginHostAddr::V2(addr) => addr.do_send(msg),
             PluginHostAddr::V3(addr) => addr.do_send(msg),
@@ -137,7 +134,9 @@ impl PluginLoaderRegistry {
                     dll_path = %dll_path.display(),
                     "Detected plugin ABI version"
                 );
-                return strategy.load_plugin(dll_path, physical_plugin_id, core_addr).await;
+                return strategy
+                    .load_plugin(dll_path, physical_plugin_id, core_addr)
+                    .await;
             }
         }
 

@@ -3,7 +3,7 @@ use futures_util::{FutureExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
     MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent, ProviderMessage,
-    ProviderMessageKind, ProviderSender, ServiceId,
+    ProviderMessageKind, ProviderSender, ServiceId, StreamMetadataPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use reqwest::cookie::CookieStore as _;
@@ -17,7 +17,10 @@ use tokio::sync::{watch, RwLock};
 use tokio::task::JoinHandle;
 use tokio::time::{timeout, Duration};
 use tokio_tungstenite::{connect_async, tungstenite::Message as WsMessage};
-use twicas_lib::{fetch_event_pubsub_url, fetch_latest_movie, fetch_session_ids, MovieInfo};
+use twicas_lib::{
+    fetch_event_pubsub_url, fetch_latest_movie, fetch_movie_info, fetch_movie_token,
+    fetch_session_ids, fetch_viewer_status, MovieInfo,
+};
 
 /// JS の PlayerPage から抽出したシークレット（r(333) = "ngg71ob7okuk3ngk"）
 const SECRET: &str = "ngg71ob7okuk3ngk";
@@ -257,6 +260,8 @@ impl Connection {
                         None
                     };
                     let effective_wpass = wpass.as_deref().or(wpass_from_jar.as_deref());
+                    let effective_wpass_owned: Option<String> =
+                        effective_wpass.map(|s| s.to_string());
 
                     {
                         let jar_cookies = session_jar
@@ -319,6 +324,19 @@ impl Connection {
                         Ok(Ok(v)) => v,
                     };
 
+                    // メタデータポーリングタスクを起動
+                    let metadata_cancel_rx = cancel_rx.clone();
+                    let metadata_handle = tokio::spawn(metadata_polling_loop(
+                        ctx.clone(),
+                        logical_plugin_id,
+                        connection_id,
+                        Arc::clone(&client),
+                        movie.id,
+                        effective_wpass_owned,
+                        session_id.clone(),
+                        metadata_cancel_rx,
+                    ));
+
                     let (_write, mut read) = ws_stream.split();
                     loop {
                         tokio::select! {
@@ -373,6 +391,8 @@ impl Connection {
                             }
                         }
                     }
+
+                    metadata_handle.abort();
 
                     Ok(())
                 }
@@ -593,6 +613,135 @@ async fn handle_text_message(
             .unwrap(),
         );
         TwicasPlugin::send_message(ctx, message).await;
+    }
+}
+
+async fn send_stream_metadata(
+    ctx: PluginContext,
+    logical_plugin_id: Uuid,
+    payload: StreamMetadataPayload,
+) {
+    let message = McvMessage::new_notification(
+        MessageType::StreamMetadata,
+        MessageSource::Plugin {
+            plugin_id: logical_plugin_id,
+        },
+        MessageDestination::Core,
+        serde_json::to_value(payload).unwrap(),
+    );
+    TwicasPlugin::send_message(ctx, message).await;
+}
+
+async fn metadata_polling_loop(
+    ctx: PluginContext,
+    logical_plugin_id: Uuid,
+    connection_id: Uuid,
+    client: Arc<reqwest::Client>,
+    movie_id: i64,
+    wpass: Option<String>,
+    session_id: String,
+    mut cancel_rx: watch::Receiver<bool>,
+) {
+    // トークン取得
+    let token: Option<String> = match fetch_movie_token(
+        &client,
+        movie_id,
+        wpass.as_deref().unwrap_or(""),
+        &session_id,
+        SECRET,
+    )
+    .await
+    {
+        Ok(t) => Some(t.token),
+        Err(e) => {
+            tracing::warn!(
+                target: "mcv::plugin-twicas",
+                connection_id = %connection_id,
+                error = %e,
+                "fetch_movie_token failed"
+            );
+            None
+        }
+    };
+
+    // 配信開始時刻を取得して即時送信
+    match fetch_movie_info(&client, movie_id, token.as_deref(), &session_id, SECRET).await {
+        Ok(info) => {
+            send_stream_metadata(
+                ctx.clone(),
+                logical_plugin_id,
+                StreamMetadataPayload {
+                    connection_id,
+                    title: None,
+                    viewer_count: None,
+                    total_viewer_count: None,
+                    start_time: Some(info.started_at),
+                    others: None,
+                },
+            )
+            .await;
+        }
+        Err(e) => {
+            tracing::warn!(
+                target: "mcv::plugin-twicas",
+                connection_id = %connection_id,
+                error = %e,
+                "fetch_movie_info failed"
+            );
+        }
+    }
+
+    // 視聴者数ポーリングループ
+    loop {
+        if *cancel_rx.borrow() {
+            break;
+        }
+
+        let interval_secs = match fetch_viewer_status(
+            &client,
+            movie_id,
+            token.as_deref(),
+            "ja",
+            &session_id,
+            SECRET,
+        )
+        .await
+        {
+            Ok(status) => {
+                send_stream_metadata(
+                    ctx.clone(),
+                    logical_plugin_id,
+                    StreamMetadataPayload {
+                        connection_id,
+                        title: Some(status.movie.title),
+                        viewer_count: Some(status.movie.viewers.current),
+                        total_viewer_count: Some(status.movie.viewers.total),
+                        start_time: None,
+                        others: None,
+                    },
+                )
+                .await;
+                status.update_interval_sec as u64
+            }
+            Err(e) => {
+                tracing::warn!(
+                    target: "mcv::plugin-twicas",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "fetch_viewer_status failed"
+                );
+                30 // エラー時は30秒後にリトライ
+            }
+        };
+
+        tokio::select! {
+            _ = tokio::time::sleep(Duration::from_secs(interval_secs)) => {}
+            result = cancel_rx.changed() => {
+                if result.is_err() || *cancel_rx.borrow() {
+                    break;
+                }
+            }
+        }
     }
 }
 

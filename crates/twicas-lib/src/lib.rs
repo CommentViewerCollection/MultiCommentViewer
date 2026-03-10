@@ -15,8 +15,8 @@ pub use api::{
     fetch_movie_token, fetch_session_id, fetch_session_ids, fetch_viewer_status, post_comment,
     resolve_wpass, BroadcasterInfo, ContinueInfo, Cookie, Item, ItemBoxResponse, ItemBoxStatus,
     LatestMovieResponse, MovieInfo, MovieInfoResponse, MovieTokenResponse, PostCommentError,
-    PostCommentResponse, RequestBody, ViewerCount, ViewerMovieInfo, ViewerStatusResponse,
-    VisibilityInfo, WpassError,
+    PostCommentResponse, RequestBody, TwicasApiError, ViewerCount, ViewerMovieInfo,
+    ViewerStatusResponse, VisibilityInfo, WpassError,
 };
 pub use auth::generate_authorize_key;
 pub use html::{

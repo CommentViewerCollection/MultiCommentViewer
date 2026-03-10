@@ -14,6 +14,15 @@ fn user_agent() -> &'static str {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
 }
 
+/// ヘッダーマップを改行区切りの文字列にフォーマットする
+fn fmt_headers(headers: &reqwest::header::HeaderMap) -> String {
+    headers
+        .iter()
+        .map(|(name, value)| format!("{}: {}", name, value.to_str().unwrap_or("(invalid utf-8)")))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// レスポンスの Set-Cookie ヘッダーをログ出力する
 fn log_response_cookies(label: &str, response: &reqwest::Response) {
     let cookies: Vec<String> = response
@@ -45,6 +54,19 @@ pub enum RequestBody {
     UrlEncoded(String),
     /// ボディなし（GET など）
     None,
+}
+
+/// API 呼び出し時のエラー
+#[derive(Debug, thiserror::Error)]
+pub enum TwicasApiError {
+    #[error("HTTP error: {0}")]
+    Http(#[from] reqwest::Error),
+    #[error("JSON decode error: {source}\nBody: {body}")]
+    Json {
+        #[source]
+        source: serde_json::Error,
+        body: String,
+    },
 }
 
 /// URL から `twitcasting.tv` 以降のパス部分を切り出す
@@ -243,7 +265,7 @@ pub async fn fetch_latest_movie(
     secret: &str,
     user_name: &str,
     pass: Option<&str>,
-) -> Result<LatestMovieResponse, reqwest::Error> {
+) -> Result<LatestMovieResponse, TwicasApiError> {
     let now_ms = chrono::Utc::now().timestamp_millis();
     let url = match pass {
         Some(p) => format!(
@@ -265,8 +287,7 @@ pub async fn fetch_latest_movie(
         (Some(session_id), Some(secret))
     };
 
-    tracing::debug!(target: "mcv::twicas-lib", url = %url, has_session_id = !session_id.is_empty(), "fetch_latest_movie GET");
-    let response = send_request(
+    let (response, req_headers) = send_request_inner(
         client,
         "GET",
         &url,
@@ -278,17 +299,29 @@ pub async fn fetch_latest_movie(
     .await?;
 
     let status = response.status();
-    tracing::debug!(target: "mcv::twicas-lib", status = %status, "fetch_latest_movie レスポンス");
-    log_response_cookies("fetch_latest_movie レスポンス", &response);
-    if let Err(e) = response.error_for_status_ref() {
-        let body = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "(読み取り不可)".to_string());
-        tracing::debug!(target: "mcv::twicas-lib", status = %status, body = %body, "fetch_latest_movie エラーボディ");
-        return Err(e);
+    let req_headers_str = fmt_headers(&req_headers);
+    let resp_headers_str = fmt_headers(response.headers());
+    let http_error = response.error_for_status_ref().err();
+    let body = response.text().await?;
+
+    tracing::debug!(
+        target: "mcv::twicas-lib",
+        url = %url,
+        user_name = %user_name,
+        has_session_id = !session_id.is_empty(),
+        request_headers = %req_headers_str,
+        response_status = %status,
+        response_headers = %resp_headers_str,
+        response_body = %body,
+        "fetch_latest_movie"
+    );
+
+    if let Some(e) = http_error {
+        return Err(TwicasApiError::Http(e));
     }
-    response.json().await
+
+    serde_json::from_str::<LatestMovieResponse>(&body)
+        .map_err(|e| TwicasApiError::Json { source: e, body })
 }
 
 // ---------------------------------------------------------------------------
@@ -305,23 +338,21 @@ pub async fn fetch_event_pubsub_url(
     client: &reqwest::Client,
     movie_id: i64,
     pass: Option<&str>,
-) -> Result<String, reqwest::Error> {
+) -> Result<String, TwicasApiError> {
     let now_ms = chrono::Utc::now().timestamp_millis();
     let fields = vec![
         ("movie_id".to_string(), movie_id.to_string()),
         ("__n".to_string(), now_ms.to_string()),
         ("password".to_string(), pass.unwrap_or("").to_string()),
     ];
+    let req_body_log = format!(
+        "movie_id={}&password={}",
+        movie_id,
+        urlencoding::encode(pass.unwrap_or(""))
+    );
 
     let url = format!("{}/eventpubsuburl.php", TWICAS_ORIGIN);
-    tracing::debug!(
-        target: "mcv::twicas-lib",
-        url = %url,
-        movie_id = movie_id,
-        has_pass = pass.is_some(),
-        "fetch_event_pubsub_url POST"
-    );
-    let response = send_request(
+    let (response, req_headers) = send_request_inner(
         client,
         "POST",
         &url,
@@ -333,24 +364,30 @@ pub async fn fetch_event_pubsub_url(
     .await?;
 
     let status = response.status();
-    tracing::debug!(target: "mcv::twicas-lib", status = %status, "fetch_event_pubsub_url レスポンス");
-    log_response_cookies("fetch_event_pubsub_url レスポンス", &response);
+    let req_headers_str = fmt_headers(&req_headers);
+    let resp_headers_str = fmt_headers(response.headers());
+    let http_error = response.error_for_status_ref().err();
+    let body = response.text().await?;
 
-    if let Err(e) = response.error_for_status_ref() {
-        let body = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "(読み取り不可)".to_string());
-        tracing::debug!(
-            target: "mcv::twicas-lib",
-            status = %status,
-            body = %body,
-            "fetch_event_pubsub_url エラーボディ"
-        );
-        return Err(e);
+    tracing::debug!(
+        target: "mcv::twicas-lib",
+        url = %url,
+        movie_id = movie_id,
+        has_pass = pass.is_some(),
+        request_body = %req_body_log,
+        request_headers = %req_headers_str,
+        response_status = %status,
+        response_headers = %resp_headers_str,
+        response_body = %body,
+        "fetch_event_pubsub_url"
+    );
+
+    if let Some(e) = http_error {
+        return Err(TwicasApiError::Http(e));
     }
 
-    let resp: EventPubSubUrlResponse = response.json().await?;
+    let resp: EventPubSubUrlResponse =
+        serde_json::from_str(&body).map_err(|e| TwicasApiError::Json { source: e, body })?;
     Ok(resp.url)
 }
 
@@ -366,28 +403,61 @@ pub struct MovieTokenResponse {
 
 /// プライベート配信用トークンを取得する
 ///
-/// * `pass` - 配信パスワード（空文字でも可）
+/// * `pass`       - 配信パスワード（空文字でも可）
+/// * `session_id` - `fetch_session_ids` で取得したセッションID（空文字の場合は認証ヘッダー省略）
+/// * `secret`     - 認証キー生成用シークレット
 pub async fn fetch_movie_token(
     client: &reqwest::Client,
     movie_id: i64,
     pass: &str,
-) -> Result<MovieTokenResponse, reqwest::Error> {
+    session_id: &str,
+    secret: &str,
+) -> Result<MovieTokenResponse, TwicasApiError> {
     let url = format!("{}/movies/{}/token", FRONTEND_API, movie_id);
     let fields = vec![("password".to_string(), pass.to_string())];
+    let req_body_log = format!("password={}", urlencoding::encode(pass));
 
-    send_request(
+    let (sid_opt, sec_opt) = if session_id.is_empty() {
+        (None, None)
+    } else {
+        (Some(session_id), Some(secret))
+    };
+
+    let (response, req_headers) = send_request_inner(
         client,
         "POST",
         &url,
         RequestBody::Multipart(fields),
         vec![],
-        None,
-        None,
+        sid_opt,
+        sec_opt,
     )
-    .await?
-    .error_for_status()?
-    .json()
-    .await
+    .await?;
+
+    let status = response.status();
+    let req_headers_str = fmt_headers(&req_headers);
+    let resp_headers_str = fmt_headers(response.headers());
+    let http_error = response.error_for_status_ref().err();
+    let body = response.text().await?;
+
+    tracing::debug!(
+        target: "mcv::twicas-lib",
+        url = %url,
+        movie_id = movie_id,
+        request_body = %req_body_log,
+        request_headers = %req_headers_str,
+        response_status = %status,
+        response_headers = %resp_headers_str,
+        response_body = %body,
+        "fetch_movie_token"
+    );
+
+    if let Some(e) = http_error {
+        return Err(TwicasApiError::Http(e));
+    }
+
+    serde_json::from_str::<MovieTokenResponse>(&body)
+        .map_err(|e| TwicasApiError::Json { source: e, body })
 }
 
 // ---------------------------------------------------------------------------
@@ -419,12 +489,16 @@ pub struct VisibilityInfo {
 
 /// ライブ情報を取得する
 ///
-/// * `token` - `fetch_movie_token` で取得したトークン（公開配信なら `None`）
+/// * `token`      - `fetch_movie_token` で取得したトークン（公開配信なら `None`）
+/// * `session_id` - `fetch_session_ids` で取得したセッションID（空文字の場合は認証ヘッダー省略）
+/// * `secret`     - 認証キー生成用シークレット
 pub async fn fetch_movie_info(
     client: &reqwest::Client,
     movie_id: i64,
     token: Option<&str>,
-) -> Result<MovieInfoResponse, reqwest::Error> {
+    session_id: &str,
+    secret: &str,
+) -> Result<MovieInfoResponse, TwicasApiError> {
     let now_ms = chrono::Utc::now().timestamp_millis();
     let url = match token {
         Some(t) => format!(
@@ -437,11 +511,47 @@ pub async fn fetch_movie_info(
         None => format!("{}/movies/{}/info?__n={}", FRONTEND_API, movie_id, now_ms),
     };
 
-    send_request(client, "GET", &url, RequestBody::None, vec![], None, None)
-        .await?
-        .error_for_status()?
-        .json()
-        .await
+    let (sid_opt, sec_opt) = if session_id.is_empty() {
+        (None, None)
+    } else {
+        (Some(session_id), Some(secret))
+    };
+
+    let (response, req_headers) = send_request_inner(
+        client,
+        "GET",
+        &url,
+        RequestBody::None,
+        vec![],
+        sid_opt,
+        sec_opt,
+    )
+    .await?;
+
+    let status = response.status();
+    let req_headers_str = fmt_headers(&req_headers);
+    let resp_headers_str = fmt_headers(response.headers());
+    let http_error = response.error_for_status_ref().err();
+    let body = response.text().await?;
+
+    tracing::debug!(
+        target: "mcv::twicas-lib",
+        url = %url,
+        movie_id = movie_id,
+        has_token = token.is_some(),
+        request_headers = %req_headers_str,
+        response_status = %status,
+        response_headers = %resp_headers_str,
+        response_body = %body,
+        "fetch_movie_info"
+    );
+
+    if let Some(e) = http_error {
+        return Err(TwicasApiError::Http(e));
+    }
+
+    serde_json::from_str::<MovieInfoResponse>(&body)
+        .map_err(|e| TwicasApiError::Json { source: e, body })
 }
 
 // ---------------------------------------------------------------------------
@@ -471,14 +581,18 @@ pub struct ViewerCount {
 
 /// 視聴者ステータスを取得する
 ///
-/// * `token` - `fetch_movie_token` で取得したトークン（公開配信なら `None`）
-/// * `hl`    - 言語コード（例: "ja"）
+/// * `token`      - `fetch_movie_token` で取得したトークン（公開配信なら `None`）
+/// * `hl`         - 言語コード（例: "ja"）
+/// * `session_id` - `fetch_session_ids` で取得したセッションID（空文字の場合は認証ヘッダー省略）
+/// * `secret`     - 認証キー生成用シークレット
 pub async fn fetch_viewer_status(
     client: &reqwest::Client,
     movie_id: i64,
     token: Option<&str>,
     hl: &str,
-) -> Result<ViewerStatusResponse, reqwest::Error> {
+    session_id: &str,
+    secret: &str,
+) -> Result<ViewerStatusResponse, TwicasApiError> {
     let now_ms = chrono::Utc::now().timestamp_millis();
     let url = match token {
         Some(t) => format!(
@@ -495,11 +609,47 @@ pub async fn fetch_viewer_status(
         ),
     };
 
-    send_request(client, "GET", &url, RequestBody::None, vec![], None, None)
-        .await?
-        .error_for_status()?
-        .json()
-        .await
+    let (sid_opt, sec_opt) = if session_id.is_empty() {
+        (None, None)
+    } else {
+        (Some(session_id), Some(secret))
+    };
+
+    let (response, req_headers) = send_request_inner(
+        client,
+        "GET",
+        &url,
+        RequestBody::None,
+        vec![],
+        sid_opt,
+        sec_opt,
+    )
+    .await?;
+
+    let status = response.status();
+    let req_headers_str = fmt_headers(&req_headers);
+    let resp_headers_str = fmt_headers(response.headers());
+    let http_error = response.error_for_status_ref().err();
+    let body = response.text().await?;
+
+    tracing::debug!(
+        target: "mcv::twicas-lib",
+        url = %url,
+        movie_id = movie_id,
+        has_token = token.is_some(),
+        request_headers = %req_headers_str,
+        response_status = %status,
+        response_headers = %resp_headers_str,
+        response_body = %body,
+        "fetch_viewer_status"
+    );
+
+    if let Some(e) = http_error {
+        return Err(TwicasApiError::Http(e));
+    }
+
+    serde_json::from_str::<ViewerStatusResponse>(&body)
+        .map_err(|e| TwicasApiError::Json { source: e, body })
 }
 
 // ---------------------------------------------------------------------------
@@ -548,14 +698,35 @@ pub struct ItemBoxResponse {
 pub async fn fetch_item_box(
     client: &reqwest::Client,
     user_name: &str,
-) -> Result<ItemBoxResponse, reqwest::Error> {
+) -> Result<ItemBoxResponse, TwicasApiError> {
     let url = format!("{}/item_box/{}", FRONTEND_API, user_name);
 
-    send_request(client, "GET", &url, RequestBody::None, vec![], None, None)
-        .await?
-        .error_for_status()?
-        .json()
-        .await
+    let (response, req_headers) =
+        send_request_inner(client, "GET", &url, RequestBody::None, vec![], None, None).await?;
+
+    let status = response.status();
+    let req_headers_str = fmt_headers(&req_headers);
+    let resp_headers_str = fmt_headers(response.headers());
+    let http_error = response.error_for_status_ref().err();
+    let body = response.text().await?;
+
+    tracing::debug!(
+        target: "mcv::twicas-lib",
+        url = %url,
+        user_name = %user_name,
+        request_headers = %req_headers_str,
+        response_status = %status,
+        response_headers = %resp_headers_str,
+        response_body = %body,
+        "fetch_item_box"
+    );
+
+    if let Some(e) = http_error {
+        return Err(TwicasApiError::Http(e));
+    }
+
+    serde_json::from_str::<ItemBoxResponse>(&body)
+        .map_err(|e| TwicasApiError::Json { source: e, body })
 }
 
 // ---------------------------------------------------------------------------

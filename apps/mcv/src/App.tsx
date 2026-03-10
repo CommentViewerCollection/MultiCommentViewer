@@ -97,6 +97,27 @@ export interface ConnectionInfo {
   account_info?: AccountInfo
 }
 
+// プラグインから送られてくる配信メタデータ
+interface StreamMetadataPayload {
+  connection_id: string
+  title?: string
+  viewer_count?: number
+  total_viewer_count?: number
+  start_time?: number
+  others?: string
+}
+
+// メタデータビュー用の行データ
+interface MetadataRow {
+  connection_id: string
+  connection_name: string
+  title: string
+  elapsed_time: string
+  viewer_count: string
+  total_viewer_count: string
+  others: string
+}
+
 const TWICAS_PRIVATE_SITE_ID = 'ツイキャス（プライベート）_6f3a9f72-9b0c-4e2f-8a1d-5c7e3b4d2f9a'
 
 interface SiteInfo {
@@ -234,6 +255,9 @@ function App() {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; comment: Comment } | null>(null)
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
   const [focusUserId, setFocusUserId] = useState<string | undefined>(undefined)
+  const [metadataMap, setMetadataMap] = useState<Map<string, StreamMetadataPayload>>(new Map())
+  const [elapsedTick, setElapsedTick] = useState(0)
+  const [metadataHeight, setMetadataHeight] = useState(150)
 
   type FrontendTraceSource = {
     file: string
@@ -387,8 +411,20 @@ function App() {
   const sidebarWidthRef = useRef(sidebarWidth)
   const sidebarWidthInitialized = useRef(false)
 
+  const isResizingMetadata = useRef(false)
+  const metadataResizeStartY = useRef(0)
+  const metadataResizeStartHeight = useRef(0)
+  const metadataHeightRef = useRef(150)
+  const metadataHeightInitialized = useRef(false)
+
   // 新規: forceUpdate のための useReducer
   const [, forceUpdate] = useReducer(x => x + 1, 0)
+
+  // 経過時間を1秒ごとに再計算するタイマー
+  useEffect(() => {
+    const timer = setInterval(() => setElapsedTick(t => t + 1), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   // sidebarWidthRef を sidebarWidth と同期
   useEffect(() => {
@@ -403,6 +439,18 @@ function App() {
       if (typeof saved === 'number' && saved >= 200 && saved <= 600) {
         setSidebarWidth(saved)
         sidebarWidthRef.current = saved
+      }
+    }
+  }, [coreSettings])
+
+  // coreSettings が初めてロードされたとき、metadata_height を反映（以降は変更しない）
+  useEffect(() => {
+    if (coreSettings && !metadataHeightInitialized.current) {
+      metadataHeightInitialized.current = true
+      const saved = coreSettings.metadata_height
+      if (typeof saved === 'number' && saved >= 60 && saved <= 600) {
+        setMetadataHeight(saved)
+        metadataHeightRef.current = saved
       }
     }
   }, [coreSettings])
@@ -437,6 +485,36 @@ function App() {
     }
   }, [])
 
+  // メタデータビュー高さリサイズ: グローバルマウスイベント
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingMetadata.current) return
+      const delta = e.clientY - metadataResizeStartY.current
+      const newHeight = Math.max(60, Math.min(600, metadataResizeStartHeight.current + delta))
+      setMetadataHeight(newHeight)
+      metadataHeightRef.current = newHeight
+    }
+    const handleMouseUp = () => {
+      if (!isResizingMetadata.current) return
+      isResizingMetadata.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      invoke('update_settings', {
+        target: 'core',
+        data: { ...coreSettingsRef.current, metadata_height: metadataHeightRef.current },
+      }).catch(console.error)
+      if (coreSettingsRef.current) {
+        coreSettingsRef.current = { ...coreSettingsRef.current, metadata_height: metadataHeightRef.current }
+      }
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
+
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     isResizing.current = true
     resizeStartX.current = e.clientX
@@ -460,6 +538,15 @@ function App() {
     try {
       const conns = await invoke<ConnectionInfo[]>('get_connections')
       setConnections(conns)
+      // 削除された接続のメタデータをクリア
+      setMetadataMap(prev => {
+        const connIdSet = new Set(conns.map(c => c.connection_id))
+        const next = new Map(prev)
+        for (const key of next.keys()) {
+          if (!connIdSet.has(key)) next.delete(key)
+        }
+        return next
+      })
       // 編集中の名前を初期化（既に編集中のものは保持）
       setEditingNames((prev) => {
         const newEditingNames: { [key: string]: string } = {}
@@ -729,6 +816,17 @@ function App() {
       loadConnections()
     })
 
+    // 配信メタデータ更新イベントをリッスン
+    const unlistenStreamMetadata = listen<StreamMetadataPayload>('stream-metadata', (event) => {
+      const p = event.payload
+      setMetadataMap(prev => {
+        const next = new Map(prev)
+        const existing = next.get(p.connection_id) ?? {}
+        next.set(p.connection_id, { ...existing, ...p })
+        return next
+      })
+    })
+
     return () => {
       unlistenComment.then((fn) => fn())
       unlistenDeleteAll.then((fn) => fn())
@@ -739,6 +837,7 @@ function App() {
       unlistenBrowserAdded.then((fn) => fn())
       unlistenBrowserRemoved.then((fn) => fn())
       unlistenAccountUpdated.then((fn) => fn())
+      unlistenStreamMetadata.then((fn) => fn())
       startupRetryTimers.forEach((timerId) => clearTimeout(timerId))
       if (flushTimerRef.current !== null) {
         clearTimeout(flushTimerRef.current)
@@ -773,6 +872,43 @@ function App() {
       loadRegistryPlugins()
     }
   }, [activeTab])
+
+  const metadataRows = useMemo<MetadataRow[]>(() => {
+    const formatElapsed = (startTime?: number): string => {
+      if (startTime == null) return '-'
+      const elapsed = Math.max(0, Math.floor(Date.now() / 1000) - startTime)
+      const h = Math.floor(elapsed / 3600)
+      const m = Math.floor((elapsed % 3600) / 60)
+      const s = elapsed % 60
+      if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+      return `${m}:${String(s).padStart(2, '0')}`
+    }
+    return connections.map(conn => {
+      const meta = metadataMap.get(conn.connection_id)
+      return {
+        connection_id: conn.connection_id,
+        connection_name: conn.name,
+        title: meta?.title ?? '-',
+        elapsed_time: formatElapsed(meta?.start_time),
+        viewer_count: meta?.viewer_count != null ? String(meta.viewer_count) : '-',
+        total_viewer_count: meta?.total_viewer_count != null ? String(meta.total_viewer_count) : '-',
+        others: meta?.others ?? '-',
+      }
+    })
+  }, [connections, metadataMap, elapsedTick])
+
+  const metadataColumns: Column<MetadataRow>[] = [
+    { key: 'connection_name',   label: '接続名',   width: 120, visible: true, resizable: true },
+    { key: 'title',             label: 'タイトル', width: 300, visible: true, resizable: true },
+    { key: 'elapsed_time',      label: '経過時間', width: 90,  visible: true, resizable: true },
+    { key: 'viewer_count',      label: '視聴者数', width: 90,  visible: true, resizable: true },
+    { key: 'total_viewer_count',label: '総視聴者数', width: 100, visible: true, resizable: true },
+    { key: 'others',            label: 'その他',   width: 200, visible: true, resizable: true },
+  ]
+
+  const renderMetadataCell = (item: MetadataRow, column: Column<MetadataRow>) => (
+    <span>{String(item[column.key as keyof MetadataRow])}</span>
+  )
 
   const visibleComments = useMemo(
     () => comments.filter(c => {
@@ -1852,6 +1988,41 @@ function App() {
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* コメントタブ - 常にレンダリング、CSS で表示/非表示 */}
           <div className={activeTab === 'comments' ? 'flex-1 overflow-hidden flex flex-col' : 'hidden'}>
+            {/* メタデータビュー */}
+            {connections.length > 0 && (
+              <>
+                <div
+                  className="shrink-0"
+                  style={{ height: `${metadataHeight}px` }}
+                >
+                  <DataGridComponent
+                    data={metadataRows}
+                    columns={metadataColumns}
+                    renderCell={renderMetadataCell}
+                    height="100%"
+                    backgroundColor={currentThemeColors.bg_sidebar}
+                    headerBackgroundColor={currentThemeColors.bg_main}
+                    border={`1px solid ${currentThemeColors.border}`}
+                    defaultItemHeight={44}
+                    alwaysShowScrollbar
+                  />
+                </div>
+                {/* 高さリサイズハンドル */}
+                <div
+                  className="shrink-0 border-b border-gray-200 dark:border-gray-700"
+                  style={{ height: '6px', cursor: 'row-resize', flexShrink: 0 }}
+                  onMouseDown={(e) => {
+                    isResizingMetadata.current = true
+                    metadataResizeStartY.current = e.clientY
+                    metadataResizeStartHeight.current = metadataHeightRef.current
+                    document.body.style.cursor = 'row-resize'
+                    document.body.style.userSelect = 'none'
+                    e.preventDefault()
+                  }}
+                />
+              </>
+            )}
+
             {/* コメント表示 */}
             <div className="flex-1 p-4">
               <DataGridComponent

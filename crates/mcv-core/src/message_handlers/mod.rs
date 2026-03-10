@@ -81,6 +81,10 @@ pub fn handle_common_notification(
             connection::handle_update_connection_account(core, message, ctx);
             true
         }
+        MessageType::StreamMetadata => {
+            comment::handle_stream_metadata(core, message, ctx);
+            true
+        }
         _ => false,
     }
 }

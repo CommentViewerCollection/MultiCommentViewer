@@ -13,6 +13,17 @@ use uuid::Uuid;
 use crate::core_actor::CoreActor;
 use crate::plugin_host_actor::SendMessageToPlugin;
 
+/// stream-metadata メッセージのハンドラー（Plugin → Core → UI 転送）
+pub fn handle_stream_metadata(
+    actor: &mut CoreActor,
+    message: &McvMessage,
+    _ctx: &mut Context<CoreActor>,
+) {
+    if let Some(callback) = &actor.event_callback {
+        callback(message.clone());
+    }
+}
+
 /// comment-received メッセージのハンドラー
 pub fn handle_comment_received(
     actor: &mut CoreActor,

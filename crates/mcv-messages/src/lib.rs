@@ -155,6 +155,7 @@ pub enum MessageType {
     SendComment,
     GetSendCommentSchema,
     SendCommentSchema,
+    StreamMetadata,
 
     // Logging関連
     LogEntry,
@@ -675,6 +676,27 @@ pub struct SendCommentSchemaPayload {
     pub ui_schema: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub initial_data: Option<serde_json::Value>,
+}
+
+/// stream-metadata のペイロード（Plugin → Core → UI）
+///
+/// 全フィールドは Option — None の場合はフロントエンドで "-" 表示。
+/// `others` にプラグインが任意の表示文字列を設定できる。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StreamMetadataPayload {
+    pub connection_id: Uuid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub viewer_count: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_viewer_count: Option<u64>,
+    /// 配信開始時刻（Unix 秒）。フロントエンドが経過時間を計算する。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub start_time: Option<i64>,
+    /// その他：プラグインが任意の表示文字列を設定する。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub others: Option<String>,
 }
 
 /// log-entryのpayload（プラグインからCoreへログ送信）

@@ -1782,6 +1782,16 @@ fn main() {
                                     }); // actix::spawn for timing loop
                                 } // if history or timed messages exist
                             }
+                            MessageType::StreamMetadata => {
+                                tracing::debug!(target: "mcv::main", "Emitting stream-metadata event");
+                                if let Err(e) = app_handle.emit("stream-metadata", message.payload) {
+                                    tracing::error!(
+                                        target: "mcv::main",
+                                        error = %e,
+                                        "Failed to emit stream-metadata event"
+                                    );
+                                }
+                            }
                             MessageType::Connected => {
                                 tracing::debug!(target: "mcv::main","Emitting connected event");
                                 if let Err(e) = app_handle.emit("connected", message.payload) {

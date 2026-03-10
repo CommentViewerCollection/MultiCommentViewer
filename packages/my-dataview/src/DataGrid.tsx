@@ -28,6 +28,7 @@ export interface DataGridProps<T> {
   onColumnResize?: (columnKey: keyof T, width: number) => void;
   onColumnVisibilityChange?: (columnKey: keyof T, visible: boolean) => void;
   defaultItemHeight?: number;
+  alwaysShowScrollbar?: boolean;
 }
 
 export interface DataGridRef {
@@ -51,6 +52,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   onColumnResize,
   onColumnVisibilityChange,
   defaultItemHeight = 50,
+  alwaysShowScrollbar = false,
 }: DataGridProps<T>, ref: React.Ref<DataGridRef>) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -423,7 +425,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           }}
           atBottomThreshold={60}
           initialTopMostItemIndex={0}
-          style={{ flex: 1 }}
+          style={{ flex: 1, overflowY: alwaysShowScrollbar ? 'scroll' : undefined }}
         />
       </div>
     </div>

@@ -750,11 +750,19 @@ impl Plugin for DummyPlugin {
         );
 
         // プラグイン tracing を初期化
+        #[cfg(feature = "alpha")]
+        let log_level = "trace";
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        let log_level = "info";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
+        let log_level = "error";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
+        let log_level = "trace";
         mcv_plugin_telemetry::init_tracing(
             self.plugin_id,
             Arc::clone(&host),
             env!("CARGO_PKG_VERSION"),
-            "info",
+            log_level,
         )
         .map_err(|e| PluginError::InitializationFailed(format!("Failed to init tracing: {}", e)))?;
 

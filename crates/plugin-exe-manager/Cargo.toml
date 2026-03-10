@@ -6,6 +6,11 @@ edition = "2024"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+alpha = []
+beta = []
+stable = []
+
 [dependencies]
 # Core dependencies
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }

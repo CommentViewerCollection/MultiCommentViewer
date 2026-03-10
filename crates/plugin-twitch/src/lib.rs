@@ -81,11 +81,19 @@ impl PluginImplV3Async for TwitchPlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
         let logical_plugin_id = Uuid::new_v4();
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
+        #[cfg(feature = "alpha")]
+        let log_level = "trace";
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        let log_level = "info";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
+        let log_level = "error";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
+        let log_level = "trace";
         let result_init_tracing = mcv_plugin_telemetry::init_tracing(
             logical_plugin_id,
             adapter,
             env!("CARGO_PKG_VERSION"),
-            "info",
+            log_level,
         );
         match result_init_tracing {
             Ok(_) => {

@@ -170,11 +170,19 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
             ctx.clone(),
             self.logical_plugin_id,
         ));
+        #[cfg(feature = "alpha")]
+        let log_level = "trace";
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        let log_level = "info";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
+        let log_level = "error";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
+        let log_level = "trace";
         if let Err(e) = mcv_plugin_telemetry::init_tracing(
             self.logical_plugin_id,
             adapter.clone(),
             env!("CARGO_PKG_VERSION"),
-            "trace",
+            log_level,
         ) {
             tracing::error!(error = %e, "Failed to init tracing");
             return;

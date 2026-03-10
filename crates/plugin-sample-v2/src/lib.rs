@@ -31,6 +31,7 @@ impl Plugin for SamplePlugin {
             plugin_id: self.plugin_id,
             role: vec!["sample".into()],
             api_version: "v2".into(),
+            send_comment_schema: None,
         };
 
         let msg = McvMessage::new_request(

@@ -10,6 +10,7 @@ import { type ThemeColors, PRESET_THEME_COLORS, applyThemeColors, resolveThemeCo
 import type { UserSettings } from './types/user'
 import { SearchTab } from './components/SearchTab'
 import { UserListTab } from './components/UserListTab'
+import type { RJSFSchema } from '@rjsf/utils'
 
 // @ts-ignore - Type compatibility issue with React versions
 const DataGridComponent = DataGrid as any
@@ -207,7 +208,8 @@ function App() {
   const [editingNames, setEditingNames] = useState<{ [key: string]: string }>({})
   const [connectingIds, setConnectingIds] = useState<Set<string>>(new Set())
   const [selectedConnectionForCommand, setSelectedConnectionForCommand] = useState<string>('')
-  const [commandInput, setCommandInput] = useState('')
+  const [commentFormSchema, setCommentFormSchema] = useState<RJSFSchema | null>(null)
+  const [commentFormData, setCommentFormData] = useState<Record<string, unknown>>({ text: '' })
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [downloadingUpdate, setDownloadingUpdate] = useState(false)
@@ -1053,26 +1055,52 @@ function App() {
       alert('接続を選択してください')
       return
     }
-    if (!commandInput.trim()) {
+    const text = (commentFormData.text as string | undefined)?.trim() ?? ''
+    if (!text) {
       alert('コメントを入力してください')
       return
     }
 
+    // text 以外のフィールドを extra として送信
+    const { text: _text, ...extra } = commentFormData
+
     try {
       const result = await invoke<string>('send_comment', {
         connectionId: selectedConnectionForCommand,
-        text: commandInput.trim(),
+        text,
+        extra: Object.keys(extra).length > 0 ? extra : null,
       })
       frontendTrace('info', 'send_comment completed', {
         connectionId: selectedConnectionForCommand,
         result,
       })
-      setCommandInput('')
+      // テキストだけリセット（anonymous 等の設定は保持）
+      setCommentFormData(prev => ({ ...prev, text: '' }))
     } catch (error) {
       console.error('Failed to send comment:', error)
       alert(`コメント送信失敗: ${error}`)
     }
   }
+
+  // 接続が変わったらコメントフォームスキーマを取得
+  useEffect(() => {
+    if (!selectedConnectionForCommand) {
+      setCommentFormSchema(null)
+      setCommentFormData({ text: '' })
+      return
+    }
+    invoke<{ schema: RJSFSchema }>('get_comment_schema', {
+      connectionId: selectedConnectionForCommand,
+    })
+      .then(payload => {
+        setCommentFormSchema(payload.schema)
+        setCommentFormData({ text: '' })
+      })
+      .catch(() => {
+        setCommentFormSchema(null)
+        setCommentFormData({ text: '' })
+      })
+  }, [selectedConnectionForCommand])
 
   const handleCheckForUpdates = async () => {
     setCheckingUpdate(true)
@@ -1745,14 +1773,14 @@ function App() {
             </div>
 
             {/* コメント投稿セクション */}
-            <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex gap-2 items-end">
+            <div className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2 items-center">
                 <div className="flex-shrink-0">
-                  <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">接続選択</label>
+                  <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-300">接続選択</label>
                   <select
                     value={selectedConnectionForCommand}
                     onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
-                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white"
+                    className="px-2 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white"
                   >
                     <option value="">選択してください</option>
                     {connections.map((conn) => (
@@ -1763,25 +1791,44 @@ function App() {
                   </select>
                 </div>
 
+                {/* テキスト入力（スキーマ有無にかかわらず共通） */}
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">コメント</label>
                   <input
                     type="text"
-                    value={commandInput}
-                    onChange={(e) => setCommandInput(e.target.value)}
+                    value={(commentFormData.text as string) ?? ''}
+                    onChange={(e) => setCommentFormData(prev => ({ ...prev, text: e.target.value }))}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSendComment()
-                      }
+                      if (e.key === 'Enter') handleSendComment()
                     }}
-                    placeholder="例: disconnect, pause, resume, rate 3, comment 太郎 こんにちは"
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                    placeholder="コメントを入力してください"
+                    className="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
 
+                {/* スキーマで定義された追加フィールド（text 以外）をインラインで表示 */}
+                {commentFormSchema && Object.keys((commentFormSchema.properties as Record<string, unknown>) ?? {})
+                  .filter(key => key !== 'text')
+                  .map(key => {
+                    const fieldDef = (commentFormSchema.properties as Record<string, { type?: string; title?: string }>)[key]
+                    if (fieldDef?.type === 'boolean') {
+                      return (
+                        <label key={key} className="flex-shrink-0 flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={(commentFormData[key] as boolean) ?? false}
+                            onChange={(e) => setCommentFormData(prev => ({ ...prev, [key]: e.target.checked }))}
+                            className="w-4 h-4 accent-blue-600"
+                          />
+                          {fieldDef.title ?? key}
+                        </label>
+                      )
+                    }
+                    return null
+                  })}
+
                 <button
                   onClick={handleSendComment}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+                  className="flex-shrink-0 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold transition-colors text-white"
                 >
                   送信
                 </button>

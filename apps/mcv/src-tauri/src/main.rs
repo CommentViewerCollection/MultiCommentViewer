@@ -512,9 +512,9 @@ async fn send_comment(
     state: State<'_, AppState>,
     connection_id: String,
     text: String,
+    extra: serde_json::Value,
 ) -> Result<String, String> {
     let conn_id = parse_uuid(&connection_id, "connection_id")?;
-    let comment_schema = get_send_comment_schema(&state, conn_id).await?;
 
     // 接続情報を取得してplugin_idを取得
     let conn_info = get_connection_info(&state, conn_id).await?;
@@ -522,14 +522,6 @@ async fn send_comment(
     let plugin_id = conn_info
         .plugin_id
         .ok_or("Plugin not assigned to this connection")?;
-
-    let mut schema_data = comment_schema
-        .initial_data
-        .and_then(|v| v.as_object().cloned())
-        .unwrap_or_default();
-    schema_data.insert("text".to_string(), serde_json::Value::String(text.clone()));
-    let mut extra_map = schema_data;
-    extra_map.remove("text");
 
     // send-commentメッセージを送信
     let message = McvMessage::new_request(
@@ -539,11 +531,7 @@ async fn send_comment(
         serde_json::to_value(SendCommentPayload {
             connection_id: conn_id,
             text,
-            extra: if extra_map.is_empty() {
-                serde_json::Value::Null
-            } else {
-                serde_json::Value::Object(extra_map)
-            },
+            extra,
         })
         .map_err(|e| format!("Failed to serialize SendCommentPayload: {}", e))?,
     );
@@ -555,6 +543,16 @@ async fn send_comment(
         .map_err(|e| e.to_string())?;
 
     Ok("Comment sent".to_string())
+}
+
+/// コメント投稿フォームスキーマを取得
+#[tauri::command]
+async fn get_comment_schema(
+    state: State<'_, AppState>,
+    connection_id: String,
+) -> Result<SendCommentSchemaPayload, String> {
+    let conn_id = parse_uuid(&connection_id, "connection_id")?;
+    get_send_comment_schema(&state, conn_id).await
 }
 
 /// サイト＋ブラウザ選択時にアカウント情報をプリフェッチ
@@ -2002,6 +2000,7 @@ fn main() {
             set_connection_site,
             update_connection_settings,
             send_comment,
+            get_comment_schema,
             fetch_account_info,
             frontend_trace,
             check_for_updates,

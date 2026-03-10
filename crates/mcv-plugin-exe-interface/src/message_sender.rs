@@ -19,6 +19,7 @@ pub(crate) fn build_plugin_hello_message(
         plugin_id,
         role: roles.iter().map(|s| s.to_string()).collect(),
         api_version: "v2".to_string(),
+        send_comment_schema: None,
     };
 
     Ok(McvMessage::new_request(

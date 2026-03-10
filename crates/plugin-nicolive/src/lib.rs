@@ -92,6 +92,7 @@ impl PluginImplV3Async for NicoLivePlugin {
             plugin_id: self.logical_plugin_id,
             role: vec!["nicolive".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
+            send_comment_schema: None,
         };
         self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
             .await;

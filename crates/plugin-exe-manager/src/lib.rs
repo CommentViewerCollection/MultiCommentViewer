@@ -143,6 +143,7 @@ impl Plugin for ExePluginManager {
             plugin_id: self.plugin_id,
             role: vec!["exe-plugin-manager".to_string()],
             api_version: "v2".to_string(),
+            send_comment_schema: None,
         };
 
         let message = McvMessage::new_request(

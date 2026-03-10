@@ -236,6 +236,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
             plugin_id: self.logical_plugin_id,
             role: vec!["browser-cookie".to_string()],
             api_version: "v3".to_string(),
+            send_comment_schema: None,
         };
         let message = McvMessage::new_request(
             MessageType::PluginHello,

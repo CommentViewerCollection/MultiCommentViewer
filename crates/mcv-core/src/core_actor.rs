@@ -28,6 +28,8 @@ pub struct LogicalPluginInfo {
     pub settings_schema: Option<serde_json::Value>,
     /// プラグインの現在の設定値（キャッシュ）
     pub settings_data: Option<serde_json::Value>,
+    /// プラグインのコメント投稿フォームスキーマ（キャッシュ）。None のときは Core デフォルトを使用。
+    pub send_comment_schema: Option<serde_json::Value>,
 }
 
 /// 後方互換性のため
@@ -1285,6 +1287,7 @@ impl Handler<RegisterTestLogicalPlugin> for CoreActor {
             host_addr: msg.host_addr,
             settings_schema: None,
             settings_data: None,
+            send_comment_schema: None,
         };
         self.logical_plugins.insert(msg.logical_plugin_id, info);
     }

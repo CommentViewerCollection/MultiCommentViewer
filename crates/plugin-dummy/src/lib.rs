@@ -772,6 +772,7 @@ impl Plugin for DummyPlugin {
                 plugin_id: self.plugin_id,
                 role: vec!["dummy".to_string()],
                 api_version: "v2".to_string(),
+                send_comment_schema: None,
             })
             .unwrap(),
         );

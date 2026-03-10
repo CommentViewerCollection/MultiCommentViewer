@@ -202,6 +202,10 @@ pub struct PluginHelloPayload {
     pub plugin_id: Uuid,
     pub role: Vec<String>,
     pub api_version: String,
+    /// このプラグインのコメント投稿フォームスキーマ（省略可）。
+    /// None の場合は Core のデフォルト（text のみ）を使用する。
+    #[serde(default)]
+    pub send_comment_schema: Option<serde_json::Value>,
 }
 
 /// plugin-hello-ackのpayload

@@ -122,6 +122,7 @@ impl PluginImplV3Async for YouTubeLivePlugin {
             plugin_id: self.logical_plugin_id,
             role: vec!["youtubelive".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
+            send_comment_schema: None,
         };
         if let Err(e) = self
             .send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)

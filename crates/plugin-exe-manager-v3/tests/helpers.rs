@@ -39,6 +39,7 @@ impl MockExePlugin {
             name: name.to_string(),
             role: vec!["test".to_string()],
             api_version: "v2".to_string(),
+            send_comment_schema: None,
         };
 
         let message = McvMessage::new_request(

@@ -85,6 +85,7 @@ pub fn handle_plugin_hello(
         host_addr: physical_plugin_host_addr,
         settings_schema: None,
         settings_data: None,
+        send_comment_schema: payload.send_comment_schema.clone(),
     };
 
     // 論理プラグインとして登録

@@ -84,21 +84,38 @@ pub fn handle_send_comment(
     }
 }
 
-/// get-send-comment-schema メッセージのハンドラー（現状はtext入力のみ）
+/// get-send-comment-schema メッセージのハンドラー
+///
+/// 接続に対応するプラグインが `send_comment_schema` を登録していればそれを返す。
+/// 登録がない場合は text のみのデフォルトスキーマを返す。
 pub fn handle_get_send_comment_schema(
-    _actor: &mut CoreActor,
+    actor: &mut CoreActor,
     message: &McvMessage,
     _ctx: &mut Context<CoreActor>,
 ) -> Result<McvMessage, String> {
     let payload: GetSendCommentSchemaPayload = serde_json::from_value(message.payload.clone())
         .map_err(|e| format!("Failed to parse GetSendCommentSchemaPayload: {}", e))?;
-    let schema = serde_json::json!({
-        "type": "object",
-        "properties": {
-            "text": { "type": "string", "title": "コメント" }
-        },
-        "required": ["text"]
-    });
+
+    // 接続に対応するプラグインの send_comment_schema を探す
+    let schema = actor
+        .connection_manager
+        .get_connection(&payload.connection_id)
+        .and_then(|conn| conn.plugin_id)
+        .and_then(|plugin_uuid| {
+            let logical_id = mcv_common::LogicalPluginId::from_uuid(plugin_uuid);
+            actor.logical_plugins.get(&logical_id)
+        })
+        .and_then(|plugin_info| plugin_info.send_comment_schema.clone())
+        .unwrap_or_else(|| {
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "text": { "type": "string", "title": "コメント" }
+                },
+                "required": ["text"]
+            })
+        });
+
     Ok(message.create_response(
         MessageType::SendCommentSchema,
         serde_json::to_value(SendCommentSchemaPayload {

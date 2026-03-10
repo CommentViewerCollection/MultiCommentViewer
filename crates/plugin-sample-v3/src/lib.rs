@@ -26,6 +26,7 @@ impl PluginImplV3Async for SamplePlugin {
             plugin_id: self.logical_plugin_id,
             role: vec![],
             api_version: "v3".to_string(),
+            send_comment_schema: None,
         };
         let message = McvMessage::new_request(
             MessageType::PluginHello,

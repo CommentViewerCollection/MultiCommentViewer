@@ -396,8 +396,8 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   }, [markUserIntent]);
 
   return (
-    <div style={{ height, width: '100%', backgroundColor, border, position: 'relative', overflowX: 'auto' }}>
-      <div style={{ width: totalWidth, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height, width: '100%', backgroundColor, border, position: 'relative', overflowX: 'auto', overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: totalWidth, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {renderHeader()}
         <Virtuoso
           ref={virtuosoRef}

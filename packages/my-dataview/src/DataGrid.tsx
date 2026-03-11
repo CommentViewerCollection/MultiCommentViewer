@@ -396,8 +396,27 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   }, [markUserIntent]);
 
   return (
-    <div style={{ height, width: '100%', backgroundColor, border, position: 'relative', overflowX: 'auto', overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ width: totalWidth, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        height,
+        width: '100%',
+        backgroundColor,
+        border,
+        position: 'relative',
+        overflowX: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div
+        style={{
+          width: totalWidth,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0, // 重要
+        }}
+      >
         {renderHeader()}
         <Virtuoso
           ref={virtuosoRef}
@@ -425,7 +444,11 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           }}
           atBottomThreshold={60}
           initialTopMostItemIndex={0}
-          style={{ flex: 1, overflowY: alwaysShowScrollbar ? 'scroll' : undefined }}
+          style={{
+            flex: 1,
+            minHeight: 0, // 重要
+            overflowY: alwaysShowScrollbar ? 'scroll' : undefined
+          }}
         />
       </div>
     </div>

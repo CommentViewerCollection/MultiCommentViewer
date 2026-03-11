@@ -12,19 +12,20 @@ beta = ["mcv-plugin-telemetry/beta", "plugin-abi-helper/beta"]
 stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
 
 [dependencies]
-mcv-common = { path = "../../crates/mcv-common" }
-mcv-messages = { path = "../../crates/mcv-messages" }
-mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
 async-trait = { workspace = true }
+chrono = { workspace = true }
+mcv-common = { path = "../mcv-common" }
+mcv-messages = { path = "../mcv-messages" }
+mcv-plugin-telemetry = { path = "../mcv-plugin-telemetry" }
+once_cell = "1.20"
+plugin-abi-helper = { path = "../plugin-abi-helper" }
+regex = "1.12.3"
 serde = { workspace = true }
 serde_json = { workspace = true }
-uuid = { workspace = true }
-chrono = { workspace = true }
 tokio = { workspace = true }
-rand = "0.8"
-once_cell = "1.20"
-youtube-live-lib = { path = "../../crates/youtube-live-lib"}
-mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
 tracing = "0.1"
-plugin-abi-helper = {path = "../../crates/plugin-abi-helper"}
-regex = "1.12.3"
+uuid = { workspace = true }
+youtube-live-lib = { path = "../youtube-live-lib" }
+
+[dev-dependencies]
+tokio = { workspace = true }

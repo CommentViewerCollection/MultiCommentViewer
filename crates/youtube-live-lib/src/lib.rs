@@ -1144,6 +1144,166 @@ pub async fn fetch_account_info_from_home(
     }))
 }
 
+pub struct UpdatedMetadata {
+    pub title: Option<String>,
+    pub viewer_count: Option<u64>,
+    pub timeout_ms: u64,
+}
+
+/// `updated_metadata` API を呼び出してライブ配信のメタデータ（視聴者数・タイトル）を取得する。
+pub async fn fetch_updated_metadata(
+    vid: &Vid,
+    ytcfg: &Ytcfg,
+    cookies: &[Cookie],
+) -> Result<UpdatedMetadata, mcv_tracing::TracingError> {
+    let cookie_header = cookies
+        .iter()
+        .map(|c| format!("{}={}", c.name, c.value))
+        .collect::<Vec<_>>()
+        .join("; ");
+
+    let body = serde_json::json!({
+        "context": {
+            "client": ytcfg.client
+        },
+        "videoId": vid.value()
+    });
+
+    let url = "https://www.youtube.com/youtubei/v1/updated_metadata?prettyPrint=false";
+
+    tracing::debug!(
+        target: "mcv::youtube-live-lib",
+        video_id = vid.value(),
+        has_cookies = !cookie_header.is_empty(),
+        cookie_names = cookies.iter().map(|c| c.name.as_str()).collect::<Vec<_>>().join(", "),
+        has_visitor_data = ytcfg.visitor_data.is_some(),
+        request_payload = %body,
+        "fetch_updated_metadata: リクエスト送信"
+    );
+
+    let client = reqwest::Client::new();
+    let mut req_builder = client
+        .post(url)
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0",
+        )
+        .header("Origin", "https://www.youtube.com")
+        .header("Referer", "https://www.youtube.com/")
+        .json(&body);
+
+    if !cookie_header.is_empty() {
+        req_builder = req_builder.header("Cookie", cookie_header);
+    }
+    if let Some(visitor_data) = &ytcfg.visitor_data {
+        req_builder = req_builder.header("X-Goog-Visitor-Id", visitor_data.clone());
+    }
+
+    let res = req_builder.send().await.map_err(|e| {
+        tracing::warn!(
+            target: "mcv::youtube-live-lib",
+            video_id = vid.value(),
+            error = %e,
+            "fetch_updated_metadata: ネットワークエラー"
+        );
+        mcv_tracing::capture_context!("fetch_updated_metadata: リクエスト失敗", error = e.to_string())
+    })?;
+
+    let status = res.status();
+    let res_headers: Vec<(String, String)> = res
+        .headers()
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("(invalid)").to_string()))
+        .collect();
+
+    tracing::debug!(
+        target: "mcv::youtube-live-lib",
+        video_id = vid.value(),
+        status_code = status.as_u16(),
+        response_headers = ?res_headers,
+        "fetch_updated_metadata: レスポンス受信"
+    );
+
+    let body_text = res.text().await.map_err(|e| {
+        mcv_tracing::capture_context!("fetch_updated_metadata: レスポンスボディ読み取り失敗", error = e.to_string())
+    })?;
+
+    if !status.is_success() {
+        tracing::warn!(
+            target: "mcv::youtube-live-lib",
+            video_id = vid.value(),
+            status_code = status.as_u16(),
+            response_body = %body_text,
+            "fetch_updated_metadata: HTTPエラー"
+        );
+        return Err(mcv_tracing::capture_context!(
+            "fetch_updated_metadata: HTTPエラー",
+            status = status.as_u16(),
+            body = body_text
+        )
+        .into());
+    }
+
+    tracing::debug!(
+        target: "mcv::youtube-live-lib",
+        video_id = vid.value(),
+        response_body = %body_text,
+        "fetch_updated_metadata: レスポンスボディ"
+    );
+
+    let json: serde_json::Value = serde_json::from_str(&body_text).map_err(|e| {
+        mcv_tracing::capture_context!(
+            "fetch_updated_metadata: JSONパース失敗",
+            error = e.to_string(),
+            body = body_text
+        )
+    })?;
+
+    let mut title: Option<String> = None;
+    let mut viewer_count: Option<u64> = None;
+
+    if let Some(actions) = json.get("actions").and_then(|v| v.as_array()) {
+        for action in actions {
+            if title.is_none() {
+                if let Some(t) = action
+                    .pointer("/updateTitleAction/title/runs/0/text")
+                    .and_then(|v| v.as_str())
+                {
+                    title = Some(t.to_string());
+                }
+            }
+            if viewer_count.is_none() {
+                if let Some(count_str) = action
+                    .pointer("/updateViewershipAction/viewCount/videoViewCountRenderer/originalViewCount")
+                    .and_then(|v| v.as_str())
+                {
+                    viewer_count = count_str.parse::<u64>().ok();
+                }
+            }
+        }
+    }
+
+    let timeout_ms = json
+        .pointer("/continuation/timedContinuationData/timeoutMs")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(30_000);
+
+    tracing::info!(
+        target: "mcv::youtube-live-lib",
+        video_id = vid.value(),
+        title = ?title,
+        viewer_count = ?viewer_count,
+        next_poll_ms = timeout_ms,
+        "fetch_updated_metadata: 完了"
+    );
+
+    Ok(UpdatedMetadata {
+        title,
+        viewer_count,
+        timeout_ms,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

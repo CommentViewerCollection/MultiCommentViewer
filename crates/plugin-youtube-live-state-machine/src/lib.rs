@@ -15,7 +15,8 @@ use mcv_messages::{
     Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
     MessageType, MonetaryInfo, Money, PluginHelloAckPayload, PluginHelloPayload, ProviderBadge,
     ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, SendCommentPayload,
-    ServiceId, SetConnectionSitePayload, SystemKind, UpdateConnectionAccountPayload,
+    ServiceId, SetConnectionSitePayload, StreamMetadataPayload, SystemKind,
+    UpdateConnectionAccountPayload,
 };
 use once_cell::sync::Lazy;
 use plugin_abi_helper::v3::prelude::*;
@@ -47,6 +48,7 @@ struct Connection {
     running: bool,
     browser_id: Option<mcv_messages::BrowserId>,
     event_tx: Option<mpsc::UnboundedSender<DomainEvent>>,
+    metadata_cancel_tx: Option<watch::Sender<bool>>,
 }
 
 impl Connection {
@@ -58,6 +60,7 @@ impl Connection {
             running: false,
             browser_id: None,
             event_tx: None,
+            metadata_cancel_tx: None,
         }
     }
 
@@ -84,11 +87,27 @@ impl Connection {
         let (event_tx, mut event_rx) = mpsc::unbounded_channel::<DomainEvent>();
         let connection_id = self.id;
         let mut machine = YoutubeLiveStateMachine::new();
-        let vid = Vid::new(video_id);
-        let server = ReqwestServer::new(cookies);
+        let vid = Vid::new(video_id.clone());
+        let server = ReqwestServer::new(cookies.clone());
+
+        // メタデータポーリングタスク用
+        let (metadata_cancel_tx, metadata_cancel_rx) = watch::channel(false);
+        let (ytcfg_tx, ytcfg_rx) =
+            watch::channel::<Option<youtube_live_lib::Ytcfg>>(None);
+        tokio::spawn(metadata_polling_loop(
+            ctx.clone(),
+            logical_plugin_id,
+            connection_id,
+            video_id,
+            cookies,
+            ytcfg_rx,
+            metadata_cancel_rx,
+        ));
+
         let task = tokio::spawn(async move {
             let mut queue = VecDeque::from([DomainEvent::Start]);
             let mut disconnected_sent = false;
+            let mut ytcfg_notified = false;
 
             while !disconnected_sent {
                 if queue.is_empty() {
@@ -143,6 +162,10 @@ impl Connection {
                                 continuation,
                                 delay_ms,
                             } => {
+                                if !ytcfg_notified {
+                                    let _ = ytcfg_tx.send(Some(ytcfg.clone()));
+                                    ytcfg_notified = true;
+                                }
                                 sleep(Duration::from_millis(delay_ms)).await;
                                 match server
                                     .get_live_chat_messages(&vid, &ytcfg, &continuation)
@@ -284,6 +307,7 @@ impl Connection {
         self.running = true;
         self.browser_id = Some(browser_id);
         self.event_tx = Some(event_tx);
+        self.metadata_cancel_tx = Some(metadata_cancel_tx);
     }
 
     fn stop(&mut self) {
@@ -293,10 +317,155 @@ impl Connection {
         if let Some(tx) = &self.cancel_tx {
             let _ = tx.send(true);
         }
+        if let Some(tx) = &self.metadata_cancel_tx {
+            let _ = tx.send(true);
+        }
         self.event_tx = None;
         self.cancel_tx = None;
+        self.metadata_cancel_tx = None;
         self.task = None;
         self.running = false;
+    }
+}
+
+async fn metadata_polling_loop(
+    ctx: PluginContext,
+    logical_plugin_id: Uuid,
+    connection_id: Uuid,
+    video_id: String,
+    cookies: Vec<youtube_live_lib::Cookie>,
+    mut ytcfg_rx: watch::Receiver<Option<youtube_live_lib::Ytcfg>>,
+    mut cancel_rx: watch::Receiver<bool>,
+) {
+    tracing::info!(
+        target: "mcv::plugin-youtube-live-state-machine",
+        connection_id = %connection_id,
+        video_id = %video_id,
+        cookie_count = cookies.len(),
+        "metadata_polling_loop: 起動、ytcfg 待機中"
+    );
+
+    // ytcfg が確定するまで待機
+    let ytcfg = loop {
+        tokio::select! {
+            result = ytcfg_rx.changed() => {
+                if result.is_err() {
+                    tracing::warn!(
+                        target: "mcv::plugin-youtube-live-state-machine",
+                        connection_id = %connection_id,
+                        "metadata_polling_loop: ytcfg チャンネルがクローズ、終了"
+                    );
+                    return;
+                }
+                if let Some(cfg) = ytcfg_rx.borrow().clone() {
+                    tracing::info!(
+                        target: "mcv::plugin-youtube-live-state-machine",
+                        connection_id = %connection_id,
+                        "metadata_polling_loop: ytcfg 受信、ポーリング開始"
+                    );
+                    break cfg;
+                }
+            }
+            result = cancel_rx.changed() => {
+                if result.is_err() || *cancel_rx.borrow() {
+                    tracing::info!(
+                        target: "mcv::plugin-youtube-live-state-machine",
+                        connection_id = %connection_id,
+                        "metadata_polling_loop: ytcfg 待機中にキャンセル、終了"
+                    );
+                    return;
+                }
+            }
+        }
+    };
+
+    let vid = youtube_live_lib::Vid::new(video_id);
+    let mut poll_count: u64 = 0;
+
+    loop {
+        if *cancel_rx.borrow() {
+            tracing::info!(
+                target: "mcv::plugin-youtube-live-state-machine",
+                connection_id = %connection_id,
+                poll_count,
+                "metadata_polling_loop: キャンセル受信、終了"
+            );
+            break;
+        }
+
+        poll_count += 1;
+        tracing::debug!(
+            target: "mcv::plugin-youtube-live-state-machine",
+            connection_id = %connection_id,
+            poll_count,
+            "metadata_polling_loop: fetch_updated_metadata 呼び出し"
+        );
+
+        let interval_ms =
+            match youtube_live_lib::fetch_updated_metadata(&vid, &ytcfg, &cookies).await {
+                Ok(meta) => {
+                    tracing::info!(
+                        target: "mcv::plugin-youtube-live-state-machine",
+                        connection_id = %connection_id,
+                        poll_count,
+                        title = ?meta.title,
+                        viewer_count = ?meta.viewer_count,
+                        next_poll_ms = meta.timeout_ms,
+                        "metadata_polling_loop: メタデータ取得成功、StreamMetadata 送信"
+                    );
+                    let payload = StreamMetadataPayload {
+                        connection_id,
+                        title: meta.title,
+                        viewer_count: meta.viewer_count,
+                        total_viewer_count: None,
+                        start_time: None,
+                        others: None,
+                    };
+                    let msg = McvMessage::new_notification(
+                        MessageType::StreamMetadata,
+                        MessageSource::Plugin {
+                            plugin_id: logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(payload).unwrap(),
+                    );
+                    YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), msg).await;
+                    meta.timeout_ms.clamp(5_000, 120_000)
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        target: "mcv::plugin-youtube-live-state-machine",
+                        connection_id = %connection_id,
+                        poll_count,
+                        error = %e,
+                        "metadata_polling_loop: fetch_updated_metadata 失敗、30秒後にリトライ"
+                    );
+                    30_000
+                }
+            };
+
+        tracing::debug!(
+            target: "mcv::plugin-youtube-live-state-machine",
+            connection_id = %connection_id,
+            poll_count,
+            interval_ms,
+            "metadata_polling_loop: 次回ポーリングまで待機"
+        );
+
+        tokio::select! {
+            _ = tokio::time::sleep(Duration::from_millis(interval_ms)) => {}
+            result = cancel_rx.changed() => {
+                if result.is_err() || *cancel_rx.borrow() {
+                    tracing::info!(
+                        target: "mcv::plugin-youtube-live-state-machine",
+                        connection_id = %connection_id,
+                        poll_count,
+                        "metadata_polling_loop: 待機中にキャンセル受信、終了"
+                    );
+                    break;
+                }
+            }
+        }
     }
 }
 

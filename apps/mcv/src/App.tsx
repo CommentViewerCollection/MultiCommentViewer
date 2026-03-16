@@ -2041,6 +2041,7 @@ function App() {
                 onColumnVisibilityChange={handleColumnVisibilityChange}
                 defaultItemHeight={65}
                 onRowContextMenu={handleRowContextMenu}
+                alwaysShowScrollbar
               />
             </div>
 

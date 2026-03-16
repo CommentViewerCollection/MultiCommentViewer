@@ -1,14 +1,15 @@
-//! YouTube Live接続管理
+//! Twitch 接続管理
 //!
-//! 個々のYouTube Live配信への接続を管理し、
-//! ライブチャットメッセージを定期的に取得します。
+//! 個々の Twitch チャンネルへの接続を管理し、
+//! IRC 経由でコメントを取得します。
+//! また、定期的にストリームメタデータ（視聴者数・配信開始時刻）を取得します。
 
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     AccountInfo, ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart, MessageSource, MessageType,
     ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
-    UpdateConnectionAccountPayload,
+    StreamMetadataPayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::fs::{File, OpenOptions};
@@ -28,10 +29,12 @@ use uuid::Uuid;
 
 use crate::TwitchPlugin;
 
-/// YouTube Live配信への接続を表す構造体
+/// Twitch チャンネルへの接続を表す構造体
 pub(crate) struct Connection {
     pub(crate) id: Uuid,
     pub(crate) cancel_tx: Option<watch::Sender<bool>>,
+    /// メタデータポーリングタスク用キャンセル送信側
+    pub(crate) metadata_cancel_tx: Option<watch::Sender<bool>>,
     pub(crate) task: Option<JoinHandle<()>>,
     pub(crate) running: bool,
 }
@@ -43,6 +46,7 @@ impl Connection {
         Self {
             id: id.clone(),
             cancel_tx: None,
+            metadata_cancel_tx: None,
             task: None,
             running: false,
         }
@@ -69,7 +73,7 @@ impl Connection {
             );
             return;
         }
-        let channel_id = match Self::extract_channel_id(url) {
+        let channel_login = match Self::extract_channel_id(url) {
             Some(channel) => channel,
             None => {
                 tracing::debug!(
@@ -82,21 +86,21 @@ impl Connection {
         };
         tracing::trace!(
             target: "mcv::plugin-twitch",
-            channel_id = channel_id,
+            channel_id = channel_login,
             "channel_idの抽出に成功"
         );
 
         let (cancel_tx, cancel_rx) = watch::channel(false);
         let connection_id = self.id;
-        let url = "wss://irc-ws.chat.twitch.tv/";
+        let ws_url = "wss://irc-ws.chat.twitch.tv/";
         let username = username.to_string();
-        let password = auth_token.map(|a| format!("oauth:{}", a.value()));
-        let join_command = format!("JOIN #{channel_id}");
+        let password = auth_token.as_ref().map(|a| format!("oauth:{}", a.value()));
+        let join_command = format!("JOIN #{channel_login}");
         let task = match Self::start_connection_task(
-            ctx,
+            ctx.clone(),
             logical_plugin_id,
             connection_id,
-            url.to_string(),
+            ws_url.to_string(),
             username,
             password,
             join_command,
@@ -106,7 +110,19 @@ impl Connection {
             None => return,
         };
 
+        // メタデータポーリングタスクを起動
+        let (metadata_cancel_tx, metadata_cancel_rx) = watch::channel(false);
+        Self::start_metadata_polling_task(
+            ctx,
+            logical_plugin_id,
+            connection_id,
+            channel_login,
+            auth_token,
+            metadata_cancel_rx,
+        );
+
         self.cancel_tx = Some(cancel_tx);
+        self.metadata_cancel_tx = Some(metadata_cancel_tx);
         self.task = Some(task);
         self.running = true;
     }
@@ -389,6 +405,37 @@ impl Connection {
         Some(task)
     }
 
+    fn start_metadata_polling_task(
+        ctx: PluginContext,
+        logical_plugin_id: Uuid,
+        connection_id: Uuid,
+        channel_login: String,
+        auth_token: Option<AuthToken>,
+        cancel_rx: watch::Receiver<bool>,
+    ) {
+        let runtime_handle = match tokio::runtime::Handle::try_current() {
+            Ok(handle) => handle,
+            Err(e) => {
+                tracing::warn!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "Tokio runtime is not available; cannot spawn metadata polling task"
+                );
+                return;
+            }
+        };
+
+        runtime_handle.spawn(metadata_polling_loop(
+            ctx,
+            logical_plugin_id,
+            connection_id,
+            channel_login,
+            auth_token,
+            cancel_rx,
+        ));
+    }
+
     async fn send_irc_line(write: &mut WsWrite, line: &str) -> Result<(), WsError> {
         let payload = format!("{line}\r\n");
         write.send(WsMessage::Text(payload.into())).await
@@ -602,11 +649,116 @@ impl Connection {
         if let Some(tx) = &self.cancel_tx {
             let _ = tx.send(true);
         }
+        if let Some(tx) = &self.metadata_cancel_tx {
+            let _ = tx.send(true);
+        }
         // abort()を使わず、cancel_txでタスクを正常終了させる
         // これにより、loopを抜けた後のDisconnectedメッセージ送信が実行される
         self.cancel_tx = None;
+        self.metadata_cancel_tx = None;
         self.task = None;
         self.running = false;
+    }
+}
+
+/// Twitch ストリームメタデータ（視聴者数・配信開始時刻・タイトル）を定期的に取得して Core に送信する
+async fn metadata_polling_loop(
+    ctx: PluginContext,
+    logical_plugin_id: Uuid,
+    connection_id: Uuid,
+    channel_login: String,
+    auth_token: Option<AuthToken>,
+    mut cancel_rx: watch::Receiver<bool>,
+) {
+    const POLL_INTERVAL: Duration = Duration::from_secs(60);
+    const RETRY_INTERVAL: Duration = Duration::from_secs(30);
+
+    tracing::info!(
+        target: "mcv::plugin-twitch",
+        connection_id = %connection_id,
+        channel = %channel_login,
+        "メタデータポーリング開始"
+    );
+
+    let mut poll_count: u64 = 0;
+
+    loop {
+        if *cancel_rx.borrow() {
+            tracing::info!(
+                target: "mcv::plugin-twitch",
+                connection_id = %connection_id,
+                poll_count,
+                "メタデータポーリング: キャンセル受信、終了"
+            );
+            break;
+        }
+
+        poll_count += 1;
+        tracing::debug!(
+            target: "mcv::plugin-twitch",
+            connection_id = %connection_id,
+            poll_count,
+            "メタデータポーリング: fetch_stream_info 呼び出し"
+        );
+
+        let sleep_duration =
+            match twitch_lib::fetch_stream_info(&channel_login, auth_token.as_ref()).await {
+                Ok(info) => {
+                    tracing::info!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        poll_count,
+                        title = ?info.title,
+                        viewer_count = ?info.viewer_count,
+                        start_time = ?info.start_time,
+                        "メタデータポーリング: 取得成功、StreamMetadata 送信"
+                    );
+                    let payload = StreamMetadataPayload {
+                        connection_id,
+                        title: info.title,
+                        viewer_count: info.viewer_count,
+                        total_viewer_count: None,
+                        start_time: info.start_time,
+                        others: None,
+                    };
+                    let msg = McvMessage::new_notification(
+                        MessageType::StreamMetadata,
+                        MessageSource::Plugin {
+                            plugin_id: logical_plugin_id,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(payload).unwrap(),
+                    );
+                    TwitchPlugin::send_message(ctx.clone(), msg).await;
+                    POLL_INTERVAL
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        poll_count,
+                        error = %e,
+                        "メタデータポーリング: 取得失敗、{}秒後にリトライ",
+                        RETRY_INTERVAL.as_secs()
+                    );
+                    RETRY_INTERVAL
+                }
+            };
+
+        tokio::select! {
+            _ = tokio::time::sleep(sleep_duration) => {}
+            result = cancel_rx.changed() => {
+                if result.is_err() || *cancel_rx.borrow() {
+                    tracing::info!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        poll_count,
+                        "メタデータポーリング: 待機中にキャンセル受信、終了"
+                    );
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -622,6 +774,7 @@ mod tests {
         assert_eq!(conn.id, id);
         assert!(!conn.running);
         assert!(conn.cancel_tx.is_none());
+        assert!(conn.metadata_cancel_tx.is_none());
         assert!(conn.task.is_none());
     }
 
@@ -635,6 +788,7 @@ mod tests {
 
         assert!(!conn.running);
         assert!(conn.cancel_tx.is_none());
+        assert!(conn.metadata_cancel_tx.is_none());
         assert!(conn.task.is_none());
     }
 

@@ -1,17 +1,23 @@
 use crate::auth_token::AuthToken;
 use crate::client_id::ClientId;
-use crate::utils::{get_string, get_value, send_graphql_query};
+use crate::utils::send_graphql_query;
 use anyhow::Result;
-use serde_json::Value;
+use chrono::DateTime;
+
+/// Twitch ストリームのメタデータ
+pub struct TwitchStreamInfo {
+    pub title: Option<String>,
+    pub viewer_count: Option<u64>,
+    /// 配信開始時刻（Unix 秒）
+    pub start_time: Option<i64>,
+}
 
 struct StreamMetadata {
-    user_id: String,
-    last_broadcast_id: Option<String>,
     last_broadcast_title: Option<String>,
-    stream_type: Option<String>,
     stream_created_at: Option<String>,
 }
 
+/// GQL Persisted Query で配信タイトルと開始時刻を取得する（認証不要）
 async fn get_stream_metadata(
     channel_login: &str,
     client_id: &ClientId,
@@ -72,63 +78,93 @@ async fn get_stream_metadata(
         }}"#,
         channel_login
     );
-    //send query and parse response
     let json = send_graphql_query(&query, client_id, auth_token).await?;
     let data = &json["data"]["user"];
-    let user_id = data["id"].as_str().unwrap_or("").to_string();
-    let last_broadcast_id = data["lastBroadcast"]["id"].as_str().map(|s| s.to_string());
     let last_broadcast_title = data["lastBroadcast"]["title"]
         .as_str()
         .map(|s| s.to_string());
-    let stream_type = data["stream"]["type"].as_str().map(|s| s.to_string());
     let stream_created_at = data["stream"]["createdAt"].as_str().map(|s| s.to_string());
 
-    let metadata = StreamMetadata {
-        user_id,
-        last_broadcast_id,
+    Ok(StreamMetadata {
         last_broadcast_title,
-        stream_type,
         stream_created_at,
+    })
+}
+
+/// Helix API で視聴者数を取得する（OAuth トークン必要）
+///
+/// `GET https://api.twitch.tv/helix/streams?user_login={channel_login}`
+async fn get_viewer_count_helix(
+    channel_login: &str,
+    client_id: &ClientId,
+    auth_token: &AuthToken,
+) -> Result<Option<u64>> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(format!(
+            "https://api.twitch.tv/helix/streams?user_login={}",
+            channel_login
+        ))
+        .header("Client-ID", client_id.value())
+        .header("Authorization", format!("Bearer {}", auth_token.value()))
+        .send()
+        .await?;
+    let json: serde_json::Value = resp.json().await?;
+    let viewer_count = json["data"][0]["viewer_count"].as_u64();
+    Ok(viewer_count)
+}
+
+/// Twitch チャンネルのストリームメタデータ（タイトル・視聴者数・開始時刻）を取得する。
+///
+/// - タイトル・開始時刻: GQL Persisted Query（認証不要）
+/// - 視聴者数: Helix API（`auth_token` がある場合のみ取得、ない場合は `None`）
+pub async fn fetch_stream_info(
+    channel_login: &str,
+    auth_token: Option<&AuthToken>,
+) -> Result<TwitchStreamInfo> {
+    let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
+
+    let gql_meta = get_stream_metadata(channel_login, &client_id, auth_token)
+        .await
+        .map_err(|e| anyhow::anyhow!("StreamMetadata GQL failed: {e}"))?;
+
+    let start_time = gql_meta
+        .stream_created_at
+        .as_deref()
+        .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.timestamp());
+
+    let title = gql_meta.last_broadcast_title;
+
+    let viewer_count = if let Some(token) = auth_token {
+        get_viewer_count_helix(channel_login, &client_id, token)
+            .await
+            .unwrap_or(None)
+    } else {
+        None
     };
-    Ok(metadata)
+
+    Ok(TwitchStreamInfo {
+        title,
+        viewer_count,
+        start_time,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[tokio::test]
-    async fn test_get_stream_metadata() {
-        let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
+    async fn test_fetch_stream_info() {
         let channel_login = "amauta_sau";
-        let auth_token = None;
-        match get_stream_metadata(channel_login, &client_id, auth_token).await {
-            Ok(metadata) => {
-                println!("User ID: {}", metadata.user_id);
-                println!(
-                    "Last Broadcast ID: {}",
-                    metadata
-                        .last_broadcast_id
-                        .unwrap_or_else(|| "none".to_string())
-                );
-                println!(
-                    "Last Broadcast Title: {}",
-                    metadata
-                        .last_broadcast_title
-                        .unwrap_or_else(|| "none".to_string())
-                );
-                println!(
-                    "Stream Type: {}",
-                    metadata.stream_type.unwrap_or_else(|| "none".to_string())
-                );
-                println!(
-                    "Stream Created At: {}",
-                    metadata
-                        .stream_created_at
-                        .unwrap_or_else(|| "none".to_string())
-                );
+        match fetch_stream_info(channel_login, None).await {
+            Ok(info) => {
+                println!("Title: {:?}", info.title);
+                println!("Viewer Count: {:?}", info.viewer_count);
+                println!("Start Time: {:?}", info.start_time);
             }
             Err(e) => {
-                eprintln!("Error fetching stream metadata: {}", e);
+                eprintln!("Error fetching stream info: {}", e);
             }
         }
     }

@@ -9,7 +9,9 @@ mod get_display_name;
 mod integrity;
 pub mod irc;
 mod message_buffer_chat_history;
-mod stream_metadata;
+pub mod stream_metadata;
 mod utils;
 mod video_id;
 mod videocomments_by_offset_or_cursor;
+
+pub use stream_metadata::{fetch_stream_info, TwitchStreamInfo};

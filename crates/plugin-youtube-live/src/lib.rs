@@ -8,8 +8,9 @@ use std::{
 
 use mcv_common::SiteId;
 use mcv_messages::{
-    AccountInfo, AddSiteAckPayload, AddSitePayload, ChannelId, CommentReceivedPayload,
-    ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
+    AccountInfo, AddSiteAckPayload, AddSitePayload, CanHandleUrlPayload, CanHandleUrlResultPayload,
+    ChannelId, CommentReceivedPayload, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload,
+    DisconnectPayload,
     DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
     GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
@@ -571,7 +572,7 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
         let hello_payload = PluginHelloPayload {
             name: "YouTubeLive".to_string(),
             plugin_id: self.logical_plugin_id.clone(),
-            role: vec!["youtubelive".to_string()],
+            role: vec!["youtubelive".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
         };
@@ -786,6 +787,22 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                     }
                     self.clear_connection_account(ctx.clone(), payload.connection_id)
                         .await;
+                }
+            }
+            MessageType::CanHandleUrl => {
+                if let Ok(payload) =
+                    serde_json::from_value::<CanHandleUrlPayload>(message.payload.clone())
+                {
+                    let supported = extract_video_id(&payload.url).is_some();
+                    let site_id = supported.then(|| {
+                        SiteId::new("YouTubeLive", "9f4f0528-9cf4-43d1-b6d4-9e6e19464481")
+                    });
+                    let response = message.create_response(
+                        MessageType::CanHandleUrlResult,
+                        serde_json::to_value(CanHandleUrlResultPayload { supported, site_id })
+                            .unwrap_or_default(),
+                    );
+                    Self::send_message(ctx, response).await;
                 }
             }
             _ => {}
@@ -1069,8 +1086,9 @@ fn extract_video_id(input: &str) -> Option<String> {
     if ID_ONLY.is_match(input) {
         return Some(input.to_string());
     }
-    static URL_RE: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})").unwrap());
+    static URL_RE: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"(?:v=|youtu\.be/|youtube\.com/video/)([A-Za-z0-9_-]{11})").unwrap()
+    });
     URL_RE
         .captures(input)
         .and_then(|caps| caps.get(1))

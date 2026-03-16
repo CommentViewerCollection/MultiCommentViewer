@@ -127,7 +127,7 @@ pub(crate) async fn on_message_impl(
                 NicoLivePlugin::send_message(ctx.clone(), account_msg).await;
             }
 
-            conn.connect(ctx, plugin.logical_plugin_id, &conn_data.ws_url);
+            conn.connect(ctx, plugin.logical_plugin_id, &conn_data.ws_url, conn_data.title, conn_data.start_time);
         }
         MessageType::Disconnect => {
             let disconnect: DisconnectPayload = parse_payload(&message.payload)?;

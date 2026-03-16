@@ -4,8 +4,8 @@ use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
     MessageDestination, MessagePart, MessageSource, MessageType, MonetaryInfo, Money,
-    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId, SystemKind,
-    UpdateConnectionAccountPayload,
+    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
+    StreamMetadataPayload, SystemKind, UpdateConnectionAccountPayload,
 };
 use nicolive_lib::{
     extract_live_id, fetch_websocket_url, try_pop_segment_event, try_pop_view_entry, SegmentEvent,
@@ -67,6 +67,9 @@ enum MessageAction {
     StartViewPolling {
         view_uri: String,
     },
+    Statistics {
+        viewers: u64,
+    },
 }
 
 // ─── Connection ──────────────────────────────────────────────────────────────────
@@ -89,7 +92,14 @@ impl Connection {
         }
     }
 
-    pub(crate) fn connect(&mut self, ctx: PluginContext, logical_plugin_id: Uuid, ws_url: &str) {
+    pub(crate) fn connect(
+        &mut self,
+        ctx: PluginContext,
+        logical_plugin_id: Uuid,
+        ws_url: &str,
+        title: Option<String>,
+        start_time: Option<i64>,
+    ) {
         if self.running {
             tracing::debug!(
                 target: "mcv::plugin-nicolive",
@@ -106,6 +116,8 @@ impl Connection {
             logical_plugin_id,
             connection_id,
             ws_url.to_string(),
+            title,
+            start_time,
             cancel_rx,
         ) {
             Some(t) => t,
@@ -122,6 +134,8 @@ impl Connection {
         logical_plugin_id: Uuid,
         connection_id: Uuid,
         ws_url: String,
+        title: Option<String>,
+        start_time: Option<i64>,
         mut cancel_rx: watch::Receiver<bool>,
     ) -> Option<JoinHandle<()>> {
         let runtime_handle = match tokio::runtime::Handle::try_current() {
@@ -144,6 +158,8 @@ impl Connection {
                     logical_plugin_id,
                     connection_id,
                     &ws_url,
+                    title,
+                    start_time,
                     &mut cancel_rx,
                 )
                 .await;
@@ -202,6 +218,8 @@ impl Connection {
         logical_plugin_id: Uuid,
         connection_id: Uuid,
         initial_ws_url: &str,
+        title: Option<String>,
+        start_time: Option<i64>,
         cancel_rx: &mut watch::Receiver<bool>,
     ) {
         let mut current_url = initial_ws_url.to_string();
@@ -212,6 +230,8 @@ impl Connection {
                 logical_plugin_id,
                 connection_id,
                 &current_url,
+                title.clone(),
+                start_time,
                 cancel_rx,
             )
             .await;
@@ -253,6 +273,8 @@ impl Connection {
         logical_plugin_id: Uuid,
         connection_id: Uuid,
         ws_url: &str,
+        title: Option<String>,
+        start_time: Option<i64>,
         cancel_rx: &mut watch::Receiver<bool>,
     ) -> Option<(String, u64)> {
         tracing::info!(
@@ -296,6 +318,27 @@ impl Connection {
             return None;
         }
         tracing::info!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "startWatching 送信完了");
+
+        // 初回 StreamMetadata 送信（視聴者数なし、タイトル・開始時刻のみ）
+        if title.is_some() || start_time.is_some() {
+            let payload = StreamMetadataPayload {
+                connection_id,
+                title: title.clone(),
+                viewer_count: None,
+                total_viewer_count: None,
+                start_time,
+                others: None,
+            };
+            let msg = McvMessage::new_notification(
+                MessageType::StreamMetadata,
+                MessageSource::Plugin {
+                    plugin_id: logical_plugin_id,
+                },
+                MessageDestination::Core,
+                serde_json::to_value(payload).unwrap(),
+            );
+            NicoLivePlugin::send_message(ctx.clone(), msg).await;
+        }
 
         let mut keep_seat_interval: Option<Interval> = None;
         let mut reconnect_result: Option<(String, u64)> = None;
@@ -347,6 +390,31 @@ impl Connection {
                                             ctx_poll, logical_plugin_id,
                                         ))
                                     ));
+                                }
+                                MessageAction::Statistics { viewers } => {
+                                    tracing::debug!(
+                                        target: "mcv::plugin-nicolive",
+                                        connection_id = %connection_id,
+                                        viewers,
+                                        "statistics 受信: StreamMetadata 送信"
+                                    );
+                                    let payload = StreamMetadataPayload {
+                                        connection_id,
+                                        title: title.clone(),
+                                        viewer_count: Some(viewers),
+                                        total_viewer_count: None,
+                                        start_time,
+                                        others: None,
+                                    };
+                                    let msg = McvMessage::new_notification(
+                                        MessageType::StreamMetadata,
+                                        MessageSource::Plugin {
+                                            plugin_id: logical_plugin_id,
+                                        },
+                                        MessageDestination::Core,
+                                        serde_json::to_value(payload).unwrap(),
+                                    );
+                                    NicoLivePlugin::send_message(ctx.clone(), msg).await;
                                 }
                             }
                         }
@@ -991,6 +1059,16 @@ impl Connection {
                         }
                     }
                 }
+            }
+            "statistics" => {
+                let viewers = json["data"]["viewers"].as_u64().unwrap_or(0);
+                tracing::debug!(
+                    target: "mcv::plugin-nicolive",
+                    connection_id = %connection_id,
+                    viewers,
+                    "statistics 受信"
+                );
+                return MessageAction::Statistics { viewers };
             }
             "error" => {
                 let code = json["data"]["code"].as_str().unwrap_or("unknown");

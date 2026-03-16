@@ -41,6 +41,10 @@ pub struct NicoLiveConnectionData {
     pub viewer_id: Option<String>,
     pub viewer_name: Option<String>,
     pub viewer_icon_url: Option<String>,
+    /// 配信タイトル
+    pub title: Option<String>,
+    /// 配信開始時刻（Unix 秒）
+    pub start_time: Option<i64>,
 }
 
 pub struct NicoLiveAccountInfo {
@@ -91,11 +95,29 @@ pub async fn fetch_websocket_url(live_id: &str) -> Result<NicoLiveConnectionData
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    // 配信タイトル・開始時刻を抽出
+    let title = json
+        .pointer("/program/title")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    // beginTime は整数 Unix 秒、または ISO 8601 文字列に対応
+    let start_time = json
+        .pointer("/program/beginTime")
+        .and_then(|v| v.as_i64())
+        .or_else(|| {
+            json.pointer("/program/beginTime")
+                .and_then(|v| v.as_str())
+                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+                .map(|dt| dt.timestamp())
+        });
+
     Ok(NicoLiveConnectionData {
         ws_url,
         viewer_id,
         viewer_name,
         viewer_icon_url,
+        title,
+        start_time,
     })
 }
 

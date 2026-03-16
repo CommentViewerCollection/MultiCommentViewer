@@ -58,6 +58,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [atBottom, setAtBottom] = useState(true);
   const scrollerRef = useRef<HTMLElement | null>(null);
+  const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const userScrollIntentRef = useRef(false);
   const userDetachedCandidateRef = useRef(false);
   const userUpwardScrollPxRef = useRef(0);
@@ -397,6 +398,10 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
 
   return (
     <div
+      ref={(el: HTMLElement | null) => {
+        scrollerRef.current = el;
+        setScrollParent(el ?? undefined);
+      }}
       style={{
         height,
         width: '100%',
@@ -404,23 +409,22 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         border,
         position: 'relative',
         overflowX: 'auto',
-        overflowY: 'hidden',
+        overflowY: alwaysShowScrollbar ? 'scroll' : 'auto',
       }}
     >
       <div
         style={{
           width: totalWidth,
-          height: '100%',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        {renderHeader()}
+        <div style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+          {renderHeader()}
+        </div>
         <Virtuoso
           ref={virtuosoRef}
-          scrollerRef={(el) => {
-            scrollerRef.current = el instanceof HTMLElement ? el : null;
-          }}
+          customScrollParent={scrollParent}
           data={data}
           itemContent={itemContent}
           defaultItemHeight={defaultItemHeight}
@@ -442,11 +446,6 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           }}
           atBottomThreshold={60}
           initialTopMostItemIndex={0}
-          style={{
-            flex: 1,
-            minHeight: 0, // 重要
-            overflowY: alwaysShowScrollbar ? 'scroll' : undefined
-          }}
         />
       </div>
     </div>

@@ -13,14 +13,13 @@ reqwest = { version = "0.11", features = ["json", "gzip", "stream", "deflate"] }
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-mcv-tracing = { path = "../../crates/mcv-tracing" }
+mcv-log-core = { path = "../../crates/mcv-log-core" }
 tracing = "0.1"
 tracing-subscriber = "0.3"
-mcv-logger = { path = "../../crates/mcv-logger" }
 youtube-live-lib = { path = "../../crates/youtube-live-lib" }
 clap = { version = "4.0", features = ["derive"] }
 
 [features]
-alpha = ["mcv-logger/alpha", "mcv-tracing/alpha", "youtube-live-lib/alpha"]
-beta = ["mcv-logger/beta", "mcv-tracing/beta", "youtube-live-lib/beta"]
-stable = ["mcv-logger/stable", "mcv-tracing/stable", "youtube-live-lib/stable"]
+alpha = ["mcv-log-core/alpha", "youtube-live-lib/alpha"]
+beta = ["mcv-log-core/beta", "youtube-live-lib/beta"]
+stable = ["mcv-log-core/stable", "youtube-live-lib/stable"]

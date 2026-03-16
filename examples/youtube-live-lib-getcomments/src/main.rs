@@ -28,7 +28,7 @@ async fn get_comments(vid: &Vid) -> Result<()> {
         std::fs::create_dir_all(parent).expect("Failed to create log directory");
     }
 
-    mcv_logger::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
+    mcv_log_core::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
         .expect("Failed to initialize logger");
 
     let live_chat = get_live_chat(&vid, &[]).await?;

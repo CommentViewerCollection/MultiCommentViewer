@@ -10,8 +10,7 @@ use mcv_common::SiteId;
 use mcv_messages::{
     AccountInfo, AddSiteAckPayload, AddSitePayload, CanHandleUrlPayload, CanHandleUrlResultPayload,
     ChannelId, CommentReceivedPayload, ConnectPayload, ConnectedPayload, ConnectionRemovedPayload,
-    DisconnectPayload,
-    DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
+    DisconnectPayload, DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
     GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
     MessageType, MonetaryInfo, Money, PluginHelloAckPayload, PluginHelloPayload, PluginId,
@@ -134,6 +133,16 @@ impl Connection {
                                 error = %e,
                                 "state transition failed"
                             );
+                            if let Some(err_ctx) = e.error_context() {
+                                let log_msg =
+                                    mcv_plugin_telemetry::TracingError::new(err_ctx.clone())
+                                        .to_log_message(
+                                            &logical_plugin_id,
+                                            env!("CARGO_PKG_VERSION"),
+                                        );
+                                YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), log_msg)
+                                    .await;
+                            }
                             continue;
                         }
                     };
@@ -152,6 +161,20 @@ impl Connection {
                                             error = %e,
                                             "fetch live chat failed"
                                         );
+                                        if let Some(err_ctx) = e.error_context() {
+                                            let log_msg = mcv_plugin_telemetry::TracingError::new(
+                                                err_ctx.clone(),
+                                            )
+                                            .to_log_message(
+                                                &logical_plugin_id,
+                                                env!("CARGO_PKG_VERSION"),
+                                            );
+                                            YouTubeLiveStateMachinePlugin::send_message(
+                                                ctx.clone(),
+                                                log_msg,
+                                            )
+                                            .await;
+                                        }
                                         sleep(Duration::from_secs(5)).await;
                                         queue.push_back(DomainEvent::Start);
                                     }
@@ -185,6 +208,20 @@ impl Connection {
                                             error = %e,
                                             "fetch messages failed"
                                         );
+                                        if let Some(err_ctx) = e.error_context() {
+                                            let log_msg = mcv_plugin_telemetry::TracingError::new(
+                                                err_ctx.clone(),
+                                            )
+                                            .to_log_message(
+                                                &logical_plugin_id,
+                                                env!("CARGO_PKG_VERSION"),
+                                            );
+                                            YouTubeLiveStateMachinePlugin::send_message(
+                                                ctx.clone(),
+                                                log_msg,
+                                            )
+                                            .await;
+                                        }
                                         sleep(Duration::from_secs(5)).await;
                                         queue.push_back(DomainEvent::Start);
                                     }
@@ -272,6 +309,20 @@ impl Connection {
                                         error = %e,
                                         "send chat failed"
                                     );
+                                    if let Some(err_ctx) = e.error_context() {
+                                        let log_msg = mcv_plugin_telemetry::TracingError::new(
+                                            err_ctx.clone(),
+                                        )
+                                        .to_log_message(
+                                            &logical_plugin_id,
+                                            env!("CARGO_PKG_VERSION"),
+                                        );
+                                        YouTubeLiveStateMachinePlugin::send_message(
+                                            ctx.clone(),
+                                            log_msg,
+                                        )
+                                        .await;
+                                    }
                                 }
                             }
                             DomainCommand::EmitDisconnected => {
@@ -1202,9 +1253,11 @@ mod tests {
             _continuation: &Continuation,
         ) -> Result<(Option<Continuation>, Vec<Action>, String), DomainError> {
             let mut guard = self.poll_responses.lock().await;
-            guard
-                .pop_front()
-                .ok_or_else(|| DomainError::ServerFailed("no fake response".to_string()))
+            guard.pop_front().ok_or_else(|| {
+                DomainError::ServerFailed(mcv_plugin_telemetry::capture_context!(
+                    "no fake response"
+                ))
+            })
         }
 
         async fn send_chat(

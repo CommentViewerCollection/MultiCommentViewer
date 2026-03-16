@@ -46,6 +46,22 @@ impl TracingError {
     pub fn context(&self) -> &ErrorContext {
         &self.context
     }
+
+    /// エラーコンテキストを LogEntry メッセージに変換する。
+    /// 各プラグインが on_message_impl エラー時に使用する。
+    pub fn to_log_message(&self, plugin_id: &PluginId, plugin_version: &str) -> Message {
+        let mut payload = self.context.to_log_entry_payload();
+        payload.plugin_version = Some(plugin_version.to_string());
+        payload.plugin_build_profile = Some(get_build_profile());
+        Message::new_notification(
+            MessageType::LogEntry,
+            MessageSource::Plugin {
+                plugin_id: plugin_id.clone(),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(payload).unwrap_or(serde_json::Value::Null),
+        )
+    }
 }
 
 impl std::fmt::Display for TracingError {

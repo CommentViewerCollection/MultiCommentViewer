@@ -404,8 +404,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         border,
         position: 'relative',
         overflowX: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
+        overflowY: 'hidden',
       }}
     >
       <div
@@ -414,7 +413,6 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 0, // 重要
         }}
       >
         {renderHeader()}

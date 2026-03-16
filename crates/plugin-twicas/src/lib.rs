@@ -157,12 +157,9 @@ impl PluginImplV3Async for TwicasPlugin {
             }
         };
 
-        if let Err(e) = on_message_impl(self, ctx, message).await {
-            tracing::error!(
-                target: "mcv::plugin-twicas",
-                error = %e,
-                "on_message_impl failed"
-            );
+        if let Err(e) = on_message_impl(self, ctx.clone(), message).await {
+            let log_msg = e.to_log_message(&self.logical_plugin_id, env!("CARGO_PKG_VERSION"));
+            ctx.send_notification(log_msg).await.ok();
         }
     }
 

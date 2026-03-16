@@ -1,5 +1,5 @@
 use actix::Context;
-use mcv_common::{LogicalPluginId, PhysicalPluginId};
+use mcv_common::{PhysicalPluginId, PluginId};
 use mcv_messages::{
     ConnectionAddedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
     PluginAddedPayload, PluginHelloPayload, PluginRemovedPayload,
@@ -24,27 +24,27 @@ pub fn handle_plugin_hello(
         }
     };
 
-    // payload.plugin_id（Uuid）をLogicalPluginIdに変換
-    let logical_plugin_id = LogicalPluginId::from_uuid(payload.plugin_id);
+    // payload.plugin_id（PluginId）をそのまま使用
+    let plugin_id = payload.plugin_id.clone();
 
     // 既に論理プラグインとして登録済みか確認
-    if actor.logical_plugins.contains_key(&logical_plugin_id) {
+    if actor.logical_plugins.contains_key(&plugin_id) {
         tracing::debug!(
             target: "mcv::core::CoreActor",
-            logical_plugin_id = %logical_plugin_id,
+            plugin_id = %plugin_id,
             "Logical plugin already registered, broadcasting plugin-added to all"
         );
 
         // 既に登録済みの場合でも、plugin-addedをブロードキャスト
         // ユニキャストは不要（送信元も含めて全員がブロードキャストで受信する）
-        if let Some(plugin_info) = actor.logical_plugins.get(&logical_plugin_id) {
+        if let Some(plugin_info) = actor.logical_plugins.get(&plugin_id) {
             let response = McvMessage::new_notification(
                 MessageType::PluginAdded,
                 MessageSource::Core,
                 MessageDestination::Broadcast,
                 serde_json::to_value(PluginAddedPayload {
                     name: plugin_info.name.clone(),
-                    plugin_id: logical_plugin_id.inner(),
+                    plugin_id: plugin_id.clone(),
                     role: plugin_info.role.clone(),
                     api_version: plugin_info.api_version.clone(),
                 })
@@ -64,7 +64,7 @@ pub fn handle_plugin_hello(
             tracing::trace!(
                 target: "mcv::core::CoreActor",
                 physical_plugin_id = %physical_plugin_id,
-                logical_plugin_id = %logical_plugin_id,
+                plugin_id = %plugin_id,
                 "Found physical plugin host for DLL logical plugin"
             );
             addr.clone()
@@ -77,7 +77,7 @@ pub fn handle_plugin_hello(
 
     // LogicalPluginInfoを作成
     let logical_plugin_info = LogicalPluginInfo {
-        logical_plugin_id,
+        plugin_id: plugin_id.clone(),
         physical_plugin_id: physical_plugin_id.clone(),
         name: payload.name.clone(),
         role: payload.role.clone(),
@@ -91,14 +91,14 @@ pub fn handle_plugin_hello(
     // 論理プラグインとして登録
     actor
         .logical_plugins
-        .insert(logical_plugin_id, logical_plugin_info);
+        .insert(plugin_id.clone(), logical_plugin_info);
 
     tracing::info!(
         target: "mcv::core::CoreActor",
         physical_plugin_id = %physical_plugin_id,
-        logical_plugin_id = %logical_plugin_id,
+        plugin_id = %plugin_id,
         logical_plugin_name = %payload.name,
-        "Logical plugin registered (physical_plugin_id → logical_plugin_id mapping created)"
+        "Logical plugin registered (physical_plugin_id → plugin_id mapping created)"
     );
 
     // plugin-addedを全論理プラグインにブロードキャスト
@@ -108,7 +108,7 @@ pub fn handle_plugin_hello(
         MessageDestination::Broadcast,
         serde_json::to_value(PluginAddedPayload {
             name: payload.name.clone(),
-            plugin_id: logical_plugin_id.inner(),
+            plugin_id: plugin_id.clone(),
             role: payload.role.clone(),
             api_version: payload.api_version.clone(),
         })
@@ -120,43 +120,48 @@ pub fn handle_plugin_hello(
 
     tracing::info!(
         target: "mcv::core::CoreActor",
-        logical_plugin_id = %logical_plugin_id,
+        plugin_id = %plugin_id,
         logical_plugins_count = actor.logical_plugins.len(),
         "Logical plugin registered and plugin-added broadcasted to all logical plugins"
     );
 
     // そのプラグインに関連する全接続のConnectionAddedをユニキャスト
-    send_connection_added_for_plugin(actor, logical_plugin_id);
+    send_connection_added_for_plugin(actor, plugin_id);
     Ok(())
 }
 
 /// プラグインに関連する全接続のConnectionAddedをユニキャスト
-fn send_connection_added_for_plugin(actor: &CoreActor, logical_plugin_id: LogicalPluginId) {
+fn send_connection_added_for_plugin(actor: &CoreActor, plugin_id: PluginId) {
     let connections = actor.connection_manager.get_connections();
-    let plugin_uuid = logical_plugin_id.inner();
+    let plugin_id_str = plugin_id.as_str();
 
-    // このプラグインに関連する接続をフィルター
+    // このプラグインに関連する接続をフィルター（ConnectionInfo.plugin_id は Option<PluginId>）
     let related_connections: Vec<_> = connections
         .iter()
-        .filter(|conn| conn.plugin_id == Some(plugin_uuid))
+        .filter(|conn| {
+            conn.plugin_id
+                .as_ref()
+                .map(|pid| pid.as_str() == plugin_id_str)
+                .unwrap_or(false)
+        })
         .collect();
 
     if related_connections.is_empty() {
         tracing::debug!(
             target: "mcv::core::CoreActor",
-            logical_plugin_id = %logical_plugin_id,
+            plugin_id = %plugin_id,
             "No connections related to this plugin"
         );
         return;
     }
 
     // プラグイン情報を取得
-    let plugin_info = match actor.logical_plugins.get(&logical_plugin_id) {
+    let plugin_info = match actor.logical_plugins.get(&plugin_id) {
         Some(info) => info,
         None => {
             tracing::error!(
                 target: "mcv::core::CoreActor",
-                logical_plugin_id = %logical_plugin_id,
+                plugin_id = %plugin_id,
                 "Plugin info not found"
             );
             return;
@@ -171,7 +176,7 @@ fn send_connection_added_for_plugin(actor: &CoreActor, logical_plugin_id: Logica
             MessageType::ConnectionAdded,
             MessageSource::Core,
             MessageDestination::Plugin {
-                plugin_id: plugin_uuid,
+                plugin_id: plugin_id.clone(),
             },
             serde_json::to_value(ConnectionAddedPayload {
                 connection_id: conn.connection_id,
@@ -188,14 +193,14 @@ fn send_connection_added_for_plugin(actor: &CoreActor, logical_plugin_id: Logica
             target: "mcv::core::CoreActor",
             connection_id = %conn.connection_id,
             connection_name = %conn.name,
-            logical_plugin_id = %logical_plugin_id,
+            plugin_id = %plugin_id,
             "Sent ConnectionAdded to plugin"
         );
     }
 
     tracing::info!(
         target: "mcv::core::CoreActor",
-        logical_plugin_id = %logical_plugin_id,
+        plugin_id = %plugin_id,
         connection_count = connection_count,
         "Sent all related ConnectionAdded messages to plugin"
     );
@@ -221,23 +226,23 @@ pub fn handle_plugin_removed(
         }
     };
 
-    let logical_plugin_id = LogicalPluginId::from_uuid(payload.plugin_id);
+    let plugin_id = payload.plugin_id.clone();
 
     // 既に削除済みなら警告して終了（二重送信への冪等対応）
-    if !actor.logical_plugins.contains_key(&logical_plugin_id) {
+    if !actor.logical_plugins.contains_key(&plugin_id) {
         tracing::warn!(
             target: "mcv::core::CoreActor",
-            logical_plugin_id = %logical_plugin_id,
+            plugin_id = %plugin_id,
             "PluginRemoved: plugin already removed (idempotent)"
         );
         return;
     }
 
-    actor.logical_plugins.remove(&logical_plugin_id);
+    actor.logical_plugins.remove(&plugin_id);
 
     tracing::info!(
         target: "mcv::core::CoreActor",
-        logical_plugin_id = %logical_plugin_id,
+        plugin_id = %plugin_id,
         "Logical plugin removed"
     );
 
@@ -255,7 +260,7 @@ pub fn handle_plugin_removed(
 
     tracing::info!(
         target: "mcv::core::CoreActor",
-        logical_plugin_id = %logical_plugin_id,
+        plugin_id = %plugin_id,
         "plugin-removed broadcasted to all logical plugins"
     );
 }
@@ -291,22 +296,22 @@ pub fn handle_get_plugins(
     tracing::info!(
         target: "mcv::core::CoreActor",
         physical_plugin_id = %physical_plugin_id,
-        logical_plugin_id = %requester_logical_plugin_info.logical_plugin_id,
+        plugin_id = %requester_logical_plugin_info.plugin_id,
         logical_plugins_count = actor.logical_plugins.len(),
         "Processing get-plugins request from logical plugin"
     );
 
     // 全論理プラグインの情報をplugin-addedメッセージとして送信
-    for (logical_plugin_id, logical_plugin_info) in &actor.logical_plugins {
+    for (plugin_id, logical_plugin_info) in &actor.logical_plugins {
         let plugin_added_message = McvMessage::new_notification(
             MessageType::PluginAdded,
             MessageSource::Core,
             MessageDestination::Plugin {
-                plugin_id: requester_logical_plugin_info.logical_plugin_id.inner(),
+                plugin_id: requester_logical_plugin_info.plugin_id.clone(),
             },
             serde_json::to_value(PluginAddedPayload {
                 name: logical_plugin_info.name.clone(),
-                plugin_id: logical_plugin_id.inner(),
+                plugin_id: plugin_id.clone(),
                 role: logical_plugin_info.role.clone(),
                 api_version: logical_plugin_info.api_version.clone(),
             })
@@ -322,7 +327,7 @@ pub fn handle_get_plugins(
 
         tracing::debug!(
             target: "mcv::core::CoreActor",
-            logical_plugin_id = %logical_plugin_id,
+            plugin_id = %plugin_id,
             logical_plugin_name = %logical_plugin_info.name,
             "Sent plugin-added for logical plugin in response to get-plugins"
         );
@@ -330,7 +335,7 @@ pub fn handle_get_plugins(
 
     tracing::info!(
         target: "mcv::core::CoreActor",
-        requester_logical_plugin_id = %requester_logical_plugin_info.logical_plugin_id,
+        requester_plugin_id = %requester_logical_plugin_info.plugin_id,
         "get-plugins request completed, sent all logical plugin info"
     );
 }
@@ -341,11 +346,11 @@ pub fn handle_get_plugins(
 /// これにより、EXE Plugin Managerなど同じhost_addrを共有するプラグインが
 /// 自分宛てのメッセージのみを処理できるようになります。
 pub fn broadcast_to_all_logical_plugins(actor: &CoreActor, message: McvMessage) {
-    for (logical_plugin_id, logical_plugin_info) in &actor.logical_plugins {
+    for (plugin_id, logical_plugin_info) in &actor.logical_plugins {
         // dstを個別のプラグインIDに変更
         let mut personalized_message = message.clone();
         personalized_message.dst = MessageDestination::Plugin {
-            plugin_id: logical_plugin_id.inner(),
+            plugin_id: plugin_id.clone(),
         };
 
         logical_plugin_info.host_addr.do_send(SendMessageToPlugin {

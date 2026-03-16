@@ -17,7 +17,7 @@ use connection::Connection;
 use mcv_common::SiteId;
 use mcv_messages::{
     AddSitePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload,
+    PluginHelloPayload, PluginId,
 };
 use message_handler::on_message_impl;
 use plugin_abi_helper::v3::prelude::*;
@@ -26,12 +26,12 @@ use uuid::Uuid;
 
 #[derive(Default)]
 struct TwitchPlugin {
-    logical_plugin_id: Uuid, //現在の実装ではplugin-helloは1回しか送らないから1つで良い。
+    logical_plugin_id: PluginId, //現在の実装ではplugin-helloは1回しか送らないから1つで良い。
     is_initialized: bool,
     connections: HashMap<Uuid, Connection>,
 }
 impl TwitchPlugin {
-    pub fn initialize(&mut self, logical_plugin_id: Uuid) {
+    pub fn initialize(&mut self, logical_plugin_id: PluginId) {
         if self.is_initialized {
             return;
         }
@@ -51,24 +51,25 @@ impl TwitchPlugin {
         &self,
         ctx: PluginContext,
         payload: PluginHelloPayload,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
     ) {
         let message = McvMessage::new_notification(
             MessageType::PluginHello,
-            MessageSource::Plugin {
-                plugin_id: plugin_id,
-            },
+            MessageSource::Plugin { plugin_id },
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
         );
         Self::send_message(ctx, message).await;
     }
-    async fn send_add_site(&self, ctx: PluginContext, payload: AddSitePayload, plugin_id: Uuid) {
+    async fn send_add_site(
+        &self,
+        ctx: PluginContext,
+        payload: AddSitePayload,
+        plugin_id: PluginId,
+    ) {
         let message = McvMessage::new_notification(
             MessageType::AddSite,
-            MessageSource::Plugin {
-                plugin_id: plugin_id,
-            },
+            MessageSource::Plugin { plugin_id },
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
         );
@@ -79,7 +80,8 @@ impl TwitchPlugin {
 #[async_trait::async_trait]
 impl PluginImplV3Async for TwitchPlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        let logical_plugin_id = Uuid::new_v4();
+        let uuid = Uuid::new_v4();
+        let logical_plugin_id = PluginId::new(format!("Twitch_logical_{}", uuid));
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
         #[cfg(feature = "alpha")]
         let log_level = "trace";
@@ -89,12 +91,8 @@ impl PluginImplV3Async for TwitchPlugin {
         let log_level = "error";
         #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
         let log_level = "trace";
-        let result_init_tracing = mcv_plugin_telemetry::init_tracing(
-            logical_plugin_id,
-            adapter,
-            env!("CARGO_PKG_VERSION"),
-            log_level,
-        );
+        let result_init_tracing =
+            mcv_plugin_telemetry::init_tracing(uuid, adapter, env!("CARGO_PKG_VERSION"), log_level);
         match result_init_tracing {
             Ok(_) => {
                 tracing::trace!(target:"mcv::plugin-twitch::TwitchPlugin", "init_tracing() success");
@@ -105,12 +103,12 @@ impl PluginImplV3Async for TwitchPlugin {
         // plugin-hello送信
         let hello_payload = PluginHelloPayload {
             name: "Twitch".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec!["twitch".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
         };
-        self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
+        self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id.clone())
             .await;
 
         let add_site = AddSitePayload {
@@ -118,7 +116,7 @@ impl PluginImplV3Async for TwitchPlugin {
             display_name: "Twitch".to_owned(),
             options_schema: serde_json::from_str("{}").unwrap(),
         };
-        self.send_add_site(ctx.clone(), add_site, self.logical_plugin_id)
+        self.send_add_site(ctx.clone(), add_site, self.logical_plugin_id.clone())
             .await;
     }
     async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {

@@ -1,13 +1,18 @@
 use mcv_common::{BrowserId, SiteId};
+use mcv_messages::PluginId;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use uuid::{uuid, Uuid};
 
-/// "なし"ブラウザ専用の plugin_id（固定UUID）
+/// "なし"ブラウザ専用の plugin_id 文字列（固定値）
 ///
 /// デバッグログで識別しやすくするため nil ではなく固定値を使う。
 /// mcv-core 内部でのみ使用し、外部には公開しない。
-pub(crate) const NONE_BROWSER_PLUGIN_ID: Uuid = uuid!("faceb00c-0000-0000-0000-000000000000");
+pub(crate) const NONE_BROWSER_PLUGIN_ID_STR: &str = "faceb00c-0000-0000-0000-000000000000";
+
+/// "なし"ブラウザ専用の plugin_id を返す
+pub(crate) fn none_browser_plugin_id() -> PluginId {
+    PluginId::new(NONE_BROWSER_PLUGIN_ID_STR)
+}
 
 /// "なし"ブラウザの文字列ID（mcv-core 内部用）
 const NONE_BROWSER_ID_STR: &str = "none_00000000-0000-0000-0000-000000000000";
@@ -33,7 +38,7 @@ impl BrowserIdNoneExt for BrowserId {
 pub struct SiteInfo {
     pub site_id: SiteId,
     pub display_name: String,
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
     pub options_schema: serde_json::Value,
 }
 
@@ -43,7 +48,7 @@ pub struct BrowserInfo {
     pub browser_id: BrowserId,
     pub browser_name: String,
     pub display_name: String,
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
 }
 
 /// Site And Browser Manager
@@ -63,7 +68,7 @@ impl SiteAndBrowserManager {
             browser_id: none_browser_id(),
             browser_name: "none".to_string(),
             display_name: "なし".to_string(),
-            plugin_id: NONE_BROWSER_PLUGIN_ID,
+            plugin_id: none_browser_plugin_id(),
         };
         browsers.insert(none_browser_id(), none_browser);
         Self {
@@ -139,8 +144,8 @@ impl SiteAndBrowserManager {
     }
 
     /// サイトIDからプラグインIDを取得
-    pub fn get_plugin_id_for_site(&self, site_id: &SiteId) -> Option<Uuid> {
-        self.sites.get(site_id).map(|s| s.plugin_id)
+    pub fn get_plugin_id_for_site(&self, site_id: &SiteId) -> Option<PluginId> {
+        self.sites.get(site_id).map(|s| s.plugin_id.clone())
     }
 }
 
@@ -158,12 +163,12 @@ mod tests {
     fn test_site_management() {
         let mut manager = SiteAndBrowserManager::new();
         let site_id = SiteId::new("test-site", "00000000-0000-0000-0000-000000000001");
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("TestPlugin_logical_test");
 
         let site_info = SiteInfo {
             site_id: site_id.clone(),
             display_name: "Test Site".to_string(),
-            plugin_id,
+            plugin_id: plugin_id.clone(),
             options_schema: serde_json::json!({}),
         };
 
@@ -178,7 +183,7 @@ mod tests {
     fn test_browser_management() {
         let mut manager = SiteAndBrowserManager::new();
         let browser_id = BrowserId::new("chrome", "00000000-0000-0000-0000-000000000001");
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("ChromePlugin_logical_test");
 
         let browser_info = BrowserInfo {
             browser_id: browser_id.clone(),
@@ -197,7 +202,7 @@ mod tests {
     #[test]
     fn test_multiple_sites_and_browsers() {
         let mut manager = SiteAndBrowserManager::new();
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("TestPlugin_logical_multi");
 
         // 複数のサイトを追加
         for i in 0..3 {
@@ -207,7 +212,7 @@ mod tests {
                     &format!("00000000-0000-0000-0000-00000000000{}", i),
                 ),
                 display_name: format!("Site {}", i),
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 options_schema: serde_json::json!({}),
             };
             manager.add_site(site_info);
@@ -222,7 +227,7 @@ mod tests {
                 ),
                 browser_name: format!("browser-{}", i),
                 display_name: format!("Browser {}", i),
-                plugin_id,
+                plugin_id: plugin_id.clone(),
             };
             manager.add_browser(browser_info);
         }
@@ -246,7 +251,7 @@ mod tests {
     #[test]
     fn test_none_browser_is_first_in_list() {
         let mut manager = SiteAndBrowserManager::new();
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("ChromePlugin_logical_test");
 
         // 別のブラウザを追加
         manager.add_browser(BrowserInfo {
@@ -270,8 +275,9 @@ mod tests {
         let none_browser = manager.get_browser(&none_browser_id()).unwrap();
 
         assert_eq!(
-            none_browser.plugin_id, NONE_BROWSER_PLUGIN_ID,
-            "\"なし\" ブラウザの plugin_id は固定UUID (NONE_BROWSER_PLUGIN_ID) であるべき"
+            none_browser.plugin_id.as_str(),
+            NONE_BROWSER_PLUGIN_ID_STR,
+            "\"なし\" ブラウザの plugin_id は固定値 (NONE_BROWSER_PLUGIN_ID_STR) であるべき"
         );
     }
 }

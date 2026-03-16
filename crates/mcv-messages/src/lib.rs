@@ -1,4 +1,5 @@
 pub use mcv_common::BrowserId;
+pub use mcv_common::PluginId;
 pub use mcv_common::SiteId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -19,7 +20,7 @@ pub struct Message {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MessageSource {
     Core,
-    Plugin { plugin_id: Uuid },
+    Plugin { plugin_id: PluginId },
 }
 
 impl Serialize for MessageSource {
@@ -29,7 +30,7 @@ impl Serialize for MessageSource {
     {
         match self {
             MessageSource::Core => serializer.serialize_str("core"),
-            MessageSource::Plugin { plugin_id } => serializer.serialize_str(&plugin_id.to_string()),
+            MessageSource::Plugin { plugin_id } => serializer.serialize_str(plugin_id.as_str()),
         }
     }
 }
@@ -43,9 +44,9 @@ impl<'de> Deserialize<'de> for MessageSource {
         if s == "core" {
             Ok(MessageSource::Core)
         } else {
-            let plugin_id = Uuid::parse_str(&s)
-                .map_err(|_| serde::de::Error::custom(format!("Invalid UUID: {}", s)))?;
-            Ok(MessageSource::Plugin { plugin_id })
+            Ok(MessageSource::Plugin {
+                plugin_id: PluginId::new(s),
+            })
         }
     }
 }
@@ -56,7 +57,7 @@ impl MessageSource {
         match self {
             MessageSource::Core => MessageDestination::Core,
             MessageSource::Plugin { plugin_id } => MessageDestination::Plugin {
-                plugin_id: *plugin_id,
+                plugin_id: plugin_id.clone(),
             },
         }
     }
@@ -66,7 +67,7 @@ impl MessageSource {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MessageDestination {
     Core,
-    Plugin { plugin_id: Uuid },
+    Plugin { plugin_id: PluginId },
     Broadcast,
 }
 
@@ -78,7 +79,7 @@ impl Serialize for MessageDestination {
         match self {
             MessageDestination::Core => serializer.serialize_str("core"),
             MessageDestination::Plugin { plugin_id } => {
-                serializer.serialize_str(&plugin_id.to_string())
+                serializer.serialize_str(plugin_id.as_str())
             }
             MessageDestination::Broadcast => serializer.serialize_str("broadcast"),
         }
@@ -94,11 +95,9 @@ impl<'de> Deserialize<'de> for MessageDestination {
         match s.as_str() {
             "core" => Ok(MessageDestination::Core),
             "broadcast" => Ok(MessageDestination::Broadcast),
-            _ => {
-                let plugin_id = Uuid::parse_str(&s)
-                    .map_err(|_| serde::de::Error::custom(format!("Invalid UUID: {}", s)))?;
-                Ok(MessageDestination::Plugin { plugin_id })
-            }
+            _ => Ok(MessageDestination::Plugin {
+                plugin_id: PluginId::new(s),
+            }),
         }
     }
 }
@@ -110,7 +109,7 @@ impl MessageDestination {
         match self {
             MessageDestination::Core => MessageSource::Core,
             MessageDestination::Plugin { plugin_id } => MessageSource::Plugin {
-                plugin_id: *plugin_id,
+                plugin_id: plugin_id.clone(),
             },
             MessageDestination::Broadcast => MessageSource::Core,
         }
@@ -200,7 +199,7 @@ pub enum MessageType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginHelloPayload {
     pub name: String,
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
     pub role: Vec<String>,
     pub api_version: String,
     /// このプラグインのコメント投稿フォームスキーマ（省略可）。
@@ -212,14 +211,14 @@ pub struct PluginHelloPayload {
 /// plugin-hello-ackのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginHelloAckPayload {
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
 }
 
 /// plugin-addedのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginAddedPayload {
     pub name: String,
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
     pub role: Vec<String>,
     pub api_version: String,
 }
@@ -227,7 +226,7 @@ pub struct PluginAddedPayload {
 /// plugin-removedのpayload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginRemovedPayload {
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
 }
 
 /// get-plugins(response)のpayload
@@ -246,7 +245,7 @@ pub struct GetBrowserPluginPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetBrowserPluginAckPayload {
     pub browser_id: BrowserId,
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
 }
 
 /// get-cookieのpayload
@@ -927,14 +926,16 @@ mod tests {
 
     #[test]
     fn test_message_serialization() {
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("TestPlugin_logical_550e8400-e29b-41d4-a716-446655440000");
         let message = Message::new_request(
             MessageType::PluginHello,
-            MessageSource::Plugin { plugin_id },
+            MessageSource::Plugin {
+                plugin_id: plugin_id.clone(),
+            },
             MessageDestination::Core,
             serde_json::json!({
                 "name": "Test Plugin",
-                "plugin_id": plugin_id,
+                "plugin_id": plugin_id.as_str(),
                 "role": ["test"],
                 "api_version": "v2"
             }),
@@ -1035,7 +1036,9 @@ mod tests {
         let message = Message::new_request(
             MessageType::SendComment,
             MessageSource::Core,
-            MessageDestination::Plugin { plugin_id },
+            MessageDestination::Plugin {
+                plugin_id: PluginId::new(plugin_id.to_string()),
+            },
             serde_json::to_value(SendCommentPayload {
                 connection_id,
                 text: "pause".to_string(),
@@ -1062,12 +1065,14 @@ mod tests {
         assert_eq!(core, deserialized);
 
         // Test Plugin serialization
-        let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
+        let plugin_id = PluginId::new("TestPlugin_logical_10000000-2000-3000-4000-500000000000");
         let plugin = MessageSource::Plugin { plugin_id };
         let json = serde_json::to_value(&plugin).unwrap();
         assert_eq!(
             json,
-            serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string())
+            serde_json::Value::String(
+                "TestPlugin_logical_10000000-2000-3000-4000-500000000000".to_string()
+            )
         );
 
         let deserialized: MessageSource = serde_json::from_value(json).unwrap();
@@ -1085,12 +1090,14 @@ mod tests {
         assert_eq!(core, deserialized);
 
         // Test Plugin serialization
-        let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
+        let plugin_id = PluginId::new("TestPlugin_logical_10000000-2000-3000-4000-500000000000");
         let plugin = MessageDestination::Plugin { plugin_id };
         let json = serde_json::to_value(&plugin).unwrap();
         assert_eq!(
             json,
-            serde_json::Value::String("10000000-2000-3000-4000-500000000000".to_string())
+            serde_json::Value::String(
+                "TestPlugin_logical_10000000-2000-3000-4000-500000000000".to_string()
+            )
         );
 
         let deserialized: MessageDestination = serde_json::from_value(json).unwrap();
@@ -1107,14 +1114,16 @@ mod tests {
 
     #[test]
     fn test_message_serialization_new_format() {
-        let plugin_id = Uuid::parse_str("10000000-2000-3000-4000-500000000000").unwrap();
+        let plugin_id = PluginId::new("TestPlugin_logical_10000000-2000-3000-4000-500000000000");
         let message = Message::new_request(
             MessageType::PluginHello,
-            MessageSource::Plugin { plugin_id },
+            MessageSource::Plugin {
+                plugin_id: plugin_id.clone(),
+            },
             MessageDestination::Core,
             serde_json::json!({
                 "name": "Test Plugin",
-                "plugin_id": plugin_id,
+                "plugin_id": plugin_id.as_str(),
                 "role": ["test"],
                 "api_version": "v2"
             }),
@@ -1122,8 +1131,8 @@ mod tests {
 
         let json = serde_json::to_string(&message).unwrap();
 
-        // 新しいフォーマットでは "src": "uuid", "dst": "core" となることを確認
-        assert!(json.contains(r#""src":"10000000-2000-3000-4000-500000000000""#));
+        // PluginId フォーマットでは "src": "{name}_logical_{uuid}", "dst": "core" となることを確認
+        assert!(json.contains(r#""src":"TestPlugin_logical_10000000-2000-3000-4000-500000000000""#));
         assert!(json.contains(r#""dst":"core""#));
 
         // デシリアライズが正常に動作することを確認

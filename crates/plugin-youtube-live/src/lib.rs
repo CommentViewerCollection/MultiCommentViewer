@@ -13,9 +13,9 @@ use mcv_messages::{
     DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
     GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart as McvMessagePart, MessageSource,
-    MessageType, MonetaryInfo, Money, PluginHelloAckPayload, PluginHelloPayload, ProviderBadge,
-    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, SendCommentPayload,
-    ServiceId, SetConnectionSitePayload, StreamMetadataPayload, SystemKind,
+    MessageType, MonetaryInfo, Money, PluginHelloAckPayload, PluginHelloPayload, PluginId,
+    ProviderBadge, ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender,
+    SendCommentPayload, ServiceId, SetConnectionSitePayload, StreamMetadataPayload, SystemKind,
     UpdateConnectionAccountPayload,
 };
 use once_cell::sync::Lazy;
@@ -36,7 +36,7 @@ use youtube_live_lib::domain_state_machine::{
 
 #[derive(Default)]
 struct YouTubeLiveStateMachinePlugin {
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     is_initialized: bool,
     connections: HashMap<Uuid, Connection>,
 }
@@ -75,7 +75,7 @@ impl Connection {
     fn connect(
         &mut self,
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         video_id: String,
         cookies: Vec<youtube_live_lib::Cookie>,
         browser_id: mcv_messages::BrowserId,
@@ -95,7 +95,7 @@ impl Connection {
         let (ytcfg_tx, ytcfg_rx) = watch::channel::<Option<youtube_live_lib::Ytcfg>>(None);
         tokio::spawn(metadata_polling_loop(
             ctx.clone(),
-            logical_plugin_id,
+            logical_plugin_id.clone(),
             connection_id,
             video_id,
             cookies,
@@ -224,7 +224,7 @@ impl Connection {
                                 let msg = McvMessage::new_notification(
                                     MessageType::CommentReceived,
                                     MessageSource::Plugin {
-                                        plugin_id: logical_plugin_id,
+                                        plugin_id: logical_plugin_id.clone(),
                                     },
                                     MessageDestination::Core,
                                     serde_json::to_value(payload).unwrap(),
@@ -238,7 +238,7 @@ impl Connection {
                                 let account_msg = McvMessage::new_notification(
                                     MessageType::UpdateConnectionAccount,
                                     MessageSource::Plugin {
-                                        plugin_id: logical_plugin_id,
+                                        plugin_id: logical_plugin_id.clone(),
                                     },
                                     MessageDestination::Core,
                                     serde_json::to_value(UpdateConnectionAccountPayload {
@@ -277,7 +277,7 @@ impl Connection {
                                 let disconnected = McvMessage::new_notification(
                                     MessageType::Disconnected,
                                     MessageSource::Plugin {
-                                        plugin_id: logical_plugin_id,
+                                        plugin_id: logical_plugin_id.clone(),
                                     },
                                     MessageDestination::Core,
                                     serde_json::to_value(DisconnectedPayload { connection_id })
@@ -329,7 +329,7 @@ impl Connection {
 
 async fn metadata_polling_loop(
     ctx: PluginContext,
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     connection_id: Uuid,
     video_id: String,
     cookies: Vec<youtube_live_lib::Cookie>,
@@ -423,7 +423,7 @@ async fn metadata_polling_loop(
                     let msg = McvMessage::new_notification(
                         MessageType::StreamMetadata,
                         MessageSource::Plugin {
-                            plugin_id: logical_plugin_id,
+                            plugin_id: logical_plugin_id.clone(),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(payload).unwrap(),
@@ -469,7 +469,7 @@ async fn metadata_polling_loop(
 }
 
 impl YouTubeLiveStateMachinePlugin {
-    fn initialize(&mut self, logical_plugin_id: Uuid) {
+    fn initialize(&mut self, logical_plugin_id: PluginId) {
         if self.is_initialized {
             return;
         }
@@ -491,7 +491,7 @@ impl YouTubeLiveStateMachinePlugin {
         &self,
         ctx: PluginContext,
         payload: PluginHelloPayload,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
     ) -> Result<PluginHelloAckPayload, RequestError> {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
@@ -514,7 +514,7 @@ impl YouTubeLiveStateMachinePlugin {
         &self,
         ctx: PluginContext,
         payload: AddSitePayload,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
     ) -> Result<AddSiteAckPayload, RequestError> {
         let message = McvMessage::new_request(
             MessageType::AddSite,
@@ -537,7 +537,7 @@ impl YouTubeLiveStateMachinePlugin {
         let clear_account = McvMessage::new_notification(
             MessageType::UpdateConnectionAccount,
             MessageSource::Plugin {
-                plugin_id: self.logical_plugin_id,
+                plugin_id: self.logical_plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(UpdateConnectionAccountPayload {
@@ -553,7 +553,8 @@ impl YouTubeLiveStateMachinePlugin {
 #[async_trait::async_trait]
 impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        let logical_plugin_id = Uuid::new_v4();
+        let uuid = Uuid::new_v4();
+        let logical_plugin_id = PluginId::new(format!("YouTubeLive_logical_{}", uuid));
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
         #[cfg(feature = "alpha")]
         let log_level = "trace";
@@ -563,23 +564,19 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
         let log_level = "error";
         #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
         let log_level = "trace";
-        let _ = mcv_plugin_telemetry::init_tracing(
-            logical_plugin_id,
-            adapter,
-            env!("CARGO_PKG_VERSION"),
-            log_level,
-        );
+        let _ =
+            mcv_plugin_telemetry::init_tracing(uuid, adapter, env!("CARGO_PKG_VERSION"), log_level);
         self.initialize(logical_plugin_id);
 
         let hello_payload = PluginHelloPayload {
             name: "YouTubeLive".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec!["youtubelive".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
         };
         if let Err(e) = self
-            .send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
+            .send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id.clone())
             .await
         {
             tracing::error!(
@@ -596,7 +593,7 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
             options_schema: serde_json::from_str("{}").unwrap(),
         };
         if let Err(e) = self
-            .send_add_site(ctx, add_site, self.logical_plugin_id)
+            .send_add_site(ctx, add_site, self.logical_plugin_id.clone())
             .await
         {
             tracing::error!(
@@ -670,7 +667,7 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                 };
                 let browser_id = payload.browser.id.clone();
                 let yt_cookies =
-                    fetch_cookies_for_connect(&ctx, self.logical_plugin_id, &browser_id)
+                    fetch_cookies_for_connect(&ctx, self.logical_plugin_id.clone(), &browser_id)
                         .await
                         .iter()
                         .map(|c| youtube_live_lib::Cookie {
@@ -705,7 +702,7 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                     .or_insert_with(|| Connection::new(payload.connection_id));
                 conn.connect(
                     ctx.clone(),
-                    self.logical_plugin_id,
+                    self.logical_plugin_id.clone(),
                     vid,
                     yt_cookies,
                     browser_id,
@@ -714,7 +711,7 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                 let connected = McvMessage::new_notification(
                     MessageType::Connected,
                     MessageSource::Plugin {
-                        plugin_id: self.logical_plugin_id,
+                        plugin_id: self.logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(ConnectedPayload {
@@ -737,7 +734,7 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                 {
                     let cookies = fetch_cookies_for_connect(
                         &ctx,
-                        self.logical_plugin_id,
+                        self.logical_plugin_id.clone(),
                         &payload.browser.id,
                     )
                     .await;
@@ -761,7 +758,7 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                     let account_msg = McvMessage::new_notification(
                         MessageType::UpdateConnectionAccount,
                         MessageSource::Plugin {
-                            plugin_id: self.logical_plugin_id,
+                            plugin_id: self.logical_plugin_id.clone(),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(UpdateConnectionAccountPayload {
@@ -1089,13 +1086,13 @@ export_plugin_v3_async!(YouTubeLiveStateMachinePlugin);
 
 async fn fetch_cookies_for_connect(
     ctx: &PluginContext,
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     browser_id: &mcv_messages::BrowserId,
 ) -> Vec<mcv_messages::Cookie> {
     let get_browser_plugin_message = McvMessage::new_request(
         MessageType::GetBrowserPlugin,
         MessageSource::Plugin {
-            plugin_id: logical_plugin_id,
+            plugin_id: logical_plugin_id.clone(),
         },
         MessageDestination::Core,
         serde_json::to_value(GetBrowserPluginPayload {

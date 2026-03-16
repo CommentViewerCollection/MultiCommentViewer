@@ -5,7 +5,9 @@ extern crate plugin_exe_manager_v3;
 mod helpers;
 
 use helpers::MockExePlugin;
-use mcv_messages::{Message as McvMessage, MessageDestination, MessageSource, MessageType};
+use mcv_messages::{
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginId,
+};
 use mcv_plugin_interface::{PluginError, PluginHost};
 use plugin_exe_manager_v3::websocket_server::WebSocketServer;
 use std::sync::Arc;
@@ -271,7 +273,7 @@ async fn test_no_double_send_to_requester_bug2() {
     let broadcast_msg = McvMessage::new_notification(
         MessageType::ConnectionAdded,
         MessageSource::Plugin {
-            plugin_id: plugin1.logical_plugin_id(),
+            plugin_id: PluginId::new(plugin1.logical_plugin_id().to_string()),
         },
         MessageDestination::Broadcast,
         serde_json::json!({"connection_id": Uuid::new_v4()}),

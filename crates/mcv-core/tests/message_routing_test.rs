@@ -2,8 +2,8 @@ use actix::prelude::*;
 use mcv_core::*;
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, ConnectedPayload, DisconnectedPayload, McvEnvelope, Message,
-    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent, ProviderMessage,
-    ProviderMessageKind, ProviderSender, ServiceId,
+    MessageDestination, MessagePart, MessageSource, MessageType, PluginId, ProviderContent,
+    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
 };
 use std::sync::Arc;
 use std::time::Duration;
@@ -78,7 +78,9 @@ async fn test_event_callback_routing() {
     // comment-received メッセージを送信（UIへのイベント通知対象）
     let comment_message = Message::new_request(
         MessageType::CommentReceived,
-        MessageSource::Plugin { plugin_id },
+        MessageSource::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         MessageDestination::Core,
         serde_json::to_value(make_test_comment_payload(
             connection_id,
@@ -128,7 +130,9 @@ async fn test_connected_event_routing() {
     // connected メッセージを送信
     let connected_message = Message::new_request(
         MessageType::Connected,
-        MessageSource::Plugin { plugin_id },
+        MessageSource::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         MessageDestination::Core,
         serde_json::to_value(ConnectedPayload { connection_id }).unwrap(),
     );
@@ -173,7 +177,9 @@ async fn test_disconnected_event_routing() {
     // disconnected メッセージを送信
     let disconnected_message = Message::new_request(
         MessageType::Disconnected,
-        MessageSource::Plugin { plugin_id },
+        MessageSource::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         MessageDestination::Core,
         serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
     );
@@ -248,7 +254,9 @@ async fn test_multiple_event_routing() {
     for (msg_type, payload) in messages_to_send {
         let message = Message::new_request(
             msg_type,
-            MessageSource::Plugin { plugin_id },
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(plugin_id.to_string()),
+            },
             MessageDestination::Core,
             payload,
         );

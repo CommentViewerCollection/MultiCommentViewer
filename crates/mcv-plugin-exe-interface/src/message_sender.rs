@@ -1,22 +1,23 @@
 use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
+    PluginId,
 };
 use uuid::Uuid;
 
 /// plugin-helloメッセージを構築
 ///
 /// # Arguments
-/// * `plugin_id` - プラグインID
+/// * `plugin_id` - プラグインID (PluginId)
 /// * `name` - プラグイン名
 /// * `roles` - プラグインのロール
 pub(crate) fn build_plugin_hello_message(
-    plugin_id: Uuid,
+    plugin_id: PluginId,
     name: &str,
     roles: Vec<&str>,
 ) -> Result<McvMessage, serde_json::Error> {
     let payload = PluginHelloPayload {
         name: name.to_string(),
-        plugin_id,
+        plugin_id: plugin_id.clone(),
         role: roles.iter().map(|s| s.to_string()).collect(),
         api_version: "v2".to_string(),
         send_comment_schema: None,
@@ -37,7 +38,9 @@ pub(crate) fn build_plugin_hello_message(
 pub(crate) fn build_get_plugins_message(plugin_id: Uuid) -> McvMessage {
     McvMessage::new_request(
         MessageType::GetPlugins,
-        MessageSource::Plugin { plugin_id },
+        MessageSource::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         MessageDestination::Core,
         serde_json::json!({}),
     )

@@ -5,10 +5,11 @@ pub mod websocket_server;
 
 use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
+    PluginId,
 };
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 use plugin_abi_helper::v2 as abi;
-use std::ffi::{CString, c_void};
+use std::ffi::{c_void, CString};
 use std::os::raw::c_char;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -145,9 +146,11 @@ impl Plugin for ExePluginManager {
         println!("=== ExePluginManager: Initialization completed ===");
 
         // plugin-helloを送信
+        let logical_plugin_id =
+            PluginId::new(format!("EXEPluginManager_logical_{}", self.plugin_id));
         let hello_payload = PluginHelloPayload {
             name: "EXE Plugin Manager".to_string(),
-            plugin_id: self.plugin_id,
+            plugin_id: logical_plugin_id.clone(),
             role: vec!["exe-plugin-manager".to_string()],
             api_version: "v2".to_string(),
             send_comment_schema: None,
@@ -156,7 +159,7 @@ impl Plugin for ExePluginManager {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: logical_plugin_id,
             },
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),
@@ -220,7 +223,8 @@ impl Plugin for ExePluginManager {
                     .map_err(|e| PluginError::ConnectionError(e.to_string()))?;
             } else {
                 // ユニキャスト: 特定のプラグインへ送信
-                match &message.dst {
+                // ボロー競合を避けるため、plugin_idを先にクローンしてからmessageを転送する
+                let unicast_target = match &message.dst {
                     MessageDestination::Plugin { plugin_id } => {
                         tracing::debug!(
                             target: "mcv::plugin_exe_manager",
@@ -228,19 +232,24 @@ impl Plugin for ExePluginManager {
                             message_type = ?message.message_type,
                             "Routing message to specific EXE plugin"
                         );
-                        router
-                            .route_to_plugin(*plugin_id, message)
-                            .await
-                            .map_err(|e| PluginError::ConnectionError(e.to_string()))?;
+                        Some(plugin_id.clone())
                     }
                     MessageDestination::Core => {
                         // Coreへのメッセージはルーティングしない
                         tracing::debug!(target: "mcv::plugin_exe_manager","Message to Core, not routing to EXE plugins");
+                        None
                     }
                     MessageDestination::Broadcast => {
                         // ブロードキャストは既に上でハンドリングされているはず
                         tracing::warn!(target: "mcv::plugin_exe_manager","Broadcast message reached unicast branch");
+                        None
                     }
+                };
+                if let Some(target_plugin_id) = unicast_target {
+                    router
+                        .route_to_plugin(target_plugin_id, message)
+                        .await
+                        .map_err(|e| PluginError::ConnectionError(e.to_string()))?;
                 }
             }
         }

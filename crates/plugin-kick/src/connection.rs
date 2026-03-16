@@ -6,8 +6,9 @@
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent, ProviderMessage,
-    ProviderMessageKind, ProviderSender, ServiceId, UpdateConnectionAccountPayload,
+    MessageDestination, MessagePart, MessageSource, MessageType, PluginId, ProviderContent,
+    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
+    UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::Deserialize;
@@ -342,7 +343,7 @@ impl Connection {
                 let clear_account = McvMessage::new_notification(
                     MessageType::UpdateConnectionAccount,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: PluginId::new(logical_plugin_id.to_string()),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(UpdateConnectionAccountPayload {
@@ -357,7 +358,7 @@ impl Connection {
                 let message = McvMessage::new_notification(
                     MessageType::Disconnected,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: PluginId::new(logical_plugin_id.to_string()),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
@@ -471,7 +472,7 @@ impl Connection {
                 let comment_message = McvMessage::new_notification(
                     MessageType::CommentReceived,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: PluginId::new(logical_plugin_id.to_string()),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(CommentReceivedPayload {

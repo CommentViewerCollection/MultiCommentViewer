@@ -11,8 +11,8 @@ use mcv_messages::{
     ConnectPayload, ConnectedPayload, ConnectionRemovedPayload, DisconnectPayload,
     DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
     GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload, McvEnvelope,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, ProviderMessageKind,
-    SetConnectionSitePayload, UpdateConnectionAccountPayload,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginId,
+    ProviderMessageKind, SetConnectionSitePayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -98,7 +98,7 @@ pub(crate) async fn on_message_impl(
                     let msg = McvMessage::new_notification(
                         MessageType::Disconnected,
                         MessageSource::Plugin {
-                            plugin_id: plugin.logical_plugin_id,
+                            plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(DisconnectedPayload {
@@ -119,7 +119,7 @@ pub(crate) async fn on_message_impl(
                     let msg = McvMessage::new_notification(
                         MessageType::Disconnected,
                         MessageSource::Plugin {
-                            plugin_id: plugin.logical_plugin_id,
+                            plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(DisconnectedPayload {
@@ -151,7 +151,7 @@ pub(crate) async fn on_message_impl(
                 let msg = McvMessage::new_notification(
                     MessageType::Disconnected,
                     MessageSource::Plugin {
-                        plugin_id: plugin.logical_plugin_id,
+                        plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(DisconnectedPayload {
@@ -177,7 +177,7 @@ pub(crate) async fn on_message_impl(
             let connected_msg = McvMessage::new_notification(
                 MessageType::Connected,
                 MessageSource::Plugin {
-                    plugin_id: plugin.logical_plugin_id,
+                    plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                 },
                 MessageDestination::Core,
                 serde_json::to_value(ConnectedPayload {
@@ -199,7 +199,7 @@ pub(crate) async fn on_message_impl(
                     let account_msg = McvMessage::new_notification(
                         MessageType::UpdateConnectionAccount,
                         MessageSource::Plugin {
-                            plugin_id: plugin.logical_plugin_id,
+                            plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(UpdateConnectionAccountPayload {
@@ -255,7 +255,7 @@ pub(crate) async fn on_message_impl(
                         let history_message = McvMessage::new_notification(
                             MessageType::CommentReceived,
                             MessageSource::Plugin {
-                                plugin_id: plugin.logical_plugin_id,
+                                plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                             },
                             MessageDestination::Core,
                             serde_json::to_value(CommentReceivedPayload {
@@ -329,7 +329,7 @@ pub(crate) async fn on_message_impl(
                     let account_msg = McvMessage::new_notification(
                         MessageType::UpdateConnectionAccount,
                         MessageSource::Plugin {
-                            plugin_id: plugin.logical_plugin_id,
+                            plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(UpdateConnectionAccountPayload {
@@ -353,7 +353,7 @@ pub(crate) async fn on_message_impl(
                     let clear_msg = McvMessage::new_notification(
                         MessageType::UpdateConnectionAccount,
                         MessageSource::Plugin {
-                            plugin_id: plugin.logical_plugin_id,
+                            plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(UpdateConnectionAccountPayload {
@@ -436,7 +436,7 @@ async fn fetch_cookies_for_connect(
     let get_browser_plugin_message = McvMessage::new_request(
         MessageType::GetBrowserPlugin,
         MessageSource::Plugin {
-            plugin_id: logical_plugin_id,
+            plugin_id: PluginId::new(logical_plugin_id.to_string()),
         },
         MessageDestination::Core,
         serde_json::to_value(GetBrowserPluginPayload {
@@ -488,7 +488,7 @@ async fn fetch_cookies_for_connect(
     let get_cookie_message = McvMessage::new_request(
         MessageType::GetCookie,
         MessageSource::Plugin {
-            plugin_id: logical_plugin_id,
+            plugin_id: PluginId::new(logical_plugin_id.to_string()),
         },
         MessageDestination::Plugin {
             plugin_id: browser_plugin_id,

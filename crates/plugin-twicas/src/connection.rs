@@ -2,8 +2,8 @@ use crate::TwicasPlugin;
 use futures_util::{FutureExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType, ProviderContent, ProviderMessage,
-    ProviderMessageKind, ProviderSender, ServiceId, StreamMetadataPayload,
+    MessageDestination, MessagePart, MessageSource, MessageType, PluginId, ProviderContent,
+    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId, StreamMetadataPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use reqwest::cookie::CookieStore as _;
@@ -58,7 +58,7 @@ impl Connection {
     pub(crate) fn connect(
         &mut self,
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         user_name: &str,
         wpass: Option<&str>,
         // resolve_wpass で取得した cs_session_id（プライベート配信用フォールバック）
@@ -328,7 +328,7 @@ impl Connection {
                     let metadata_cancel_rx = cancel_rx.clone();
                     let metadata_handle = tokio::spawn(metadata_polling_loop(
                         ctx.clone(),
-                        logical_plugin_id,
+                        logical_plugin_id.clone(),
                         connection_id,
                         Arc::clone(&client),
                         movie.id,
@@ -355,7 +355,7 @@ impl Connection {
                                     Some(Ok(WsMessage::Text(text))) => {
                                         handle_text_message(
                                             ctx.clone(),
-                                            logical_plugin_id,
+                                            logical_plugin_id.clone(),
                                             connection_id,
                                             &text,
                                         ).await;
@@ -419,7 +419,7 @@ impl Connection {
                 let message = McvMessage::new_notification(
                     MessageType::Disconnected,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
@@ -535,7 +535,7 @@ struct TwicasAuthor {
 
 async fn handle_text_message(
     ctx: PluginContext,
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     connection_id: Uuid,
     raw_text: &str,
 ) {
@@ -618,7 +618,7 @@ async fn handle_text_message(
 
 async fn send_stream_metadata(
     ctx: PluginContext,
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     payload: StreamMetadataPayload,
 ) {
     let message = McvMessage::new_notification(
@@ -634,7 +634,7 @@ async fn send_stream_metadata(
 
 async fn metadata_polling_loop(
     ctx: PluginContext,
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     connection_id: Uuid,
     client: Arc<reqwest::Client>,
     movie_id: i64,
@@ -669,7 +669,7 @@ async fn metadata_polling_loop(
         Ok(info) => {
             send_stream_metadata(
                 ctx.clone(),
-                logical_plugin_id,
+                logical_plugin_id.clone(),
                 StreamMetadataPayload {
                     connection_id,
                     title: None,
@@ -710,7 +710,7 @@ async fn metadata_polling_loop(
             Ok(status) => {
                 send_stream_metadata(
                     ctx.clone(),
-                    logical_plugin_id,
+                    logical_plugin_id.clone(),
                     StreamMetadataPayload {
                         connection_id,
                         title: Some(status.movie.title),

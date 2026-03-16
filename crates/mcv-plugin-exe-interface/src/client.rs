@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::connection::setup_websocket_loops;
 use crate::message_sender::{build_get_plugins_message, build_plugin_hello_message};
 use crate::ExePluginError;
-use mcv_messages::Message as McvMessage;
+use mcv_messages::{Message as McvMessage, PluginId};
 use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio_tungstenite::connect_async;
 use tungstenite::Message as WsMessage;
@@ -55,7 +55,8 @@ impl ExePluginClient {
         name: &str,
         roles: Vec<&str>,
     ) -> Result<(), ExePluginError> {
-        let message = build_plugin_hello_message(self.plugin_id, name, roles)?;
+        let plugin_id = PluginId::new(self.plugin_id.to_string());
+        let message = build_plugin_hello_message(plugin_id, name, roles)?;
         self.send_message(message)
     }
 

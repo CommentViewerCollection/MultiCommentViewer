@@ -1,15 +1,14 @@
 use crate::routing::{ClientInfo, MessageRouter};
 use futures_util::{SinkExt, StreamExt};
-use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload};
+use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload, PluginId};
 use mcv_plugin_interface::PluginHost;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 use tokio_tungstenite::tungstenite::Message as WsMessage;
-use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum WebSocketError {
@@ -20,7 +19,7 @@ pub enum WebSocketError {
     WebSocket(String),
 
     #[error("Plugin not found: {0}")]
-    PluginNotFound(Uuid),
+    PluginNotFound(String),
 
     #[error("Send error: {0}")]
     SendError(String),
@@ -29,7 +28,7 @@ pub enum WebSocketError {
 /// WebSocketサーバー
 pub struct WebSocketServer {
     port: u16,
-    clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+    clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
     router: Arc<MessageRouter>,
     #[allow(dead_code)]
     host: Arc<dyn PluginHost>,
@@ -84,7 +83,7 @@ impl WebSocketServer {
     /// サーバーループ
     async fn server_loop(
         listener: TcpListener,
-        clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+        clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
         mut shutdown_rx: mpsc::Receiver<()>,
     ) {
@@ -121,7 +120,7 @@ impl WebSocketServer {
     /// クライアント接続を処理
     async fn handle_connection(
         stream: TcpStream,
-        clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+        clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
     ) -> Result<(), WebSocketError> {
         let ws_stream = tokio_tungstenite::accept_async(stream)
@@ -136,7 +135,7 @@ impl WebSocketServer {
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
         let (tx, mut rx) = mpsc::unbounded_channel::<McvMessage>();
 
-        let mut plugin_id: Option<Uuid> = None;
+        let mut plugin_id: Option<PluginId> = None;
 
         // 送信タスク
         let send_task = tokio::spawn(async move {
@@ -176,15 +175,18 @@ impl WebSocketServer {
                                 if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
                                     mcv_message.payload.clone(),
                                 ) {
-                                    plugin_id = Some(payload.plugin_id);
+                                    plugin_id = Some(payload.plugin_id.clone());
 
                                     let client = ClientInfo {
-                                        plugin_id: payload.plugin_id,
+                                        plugin_id: payload.plugin_id.clone(),
                                         sender: tx.clone(),
                                         roles: payload.role.clone(),
                                     };
 
-                                    clients.write().await.insert(payload.plugin_id, client);
+                                    clients
+                                        .write()
+                                        .await
+                                        .insert(payload.plugin_id.clone(), client);
 
                                     println!(
                                         "=== WebSocketServer: EXE plugin registered, id: {}, name: {} ===",
@@ -281,7 +283,7 @@ impl WebSocketServer {
     /// EXEプラグインへメッセージを送信（レガシー互換性のため残す）
     pub async fn send_to_plugin(
         &self,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
         message: McvMessage,
     ) -> Result<(), WebSocketError> {
         self.router
@@ -317,12 +319,13 @@ mod tests {
     #[test]
     fn test_websocket_client_creation() {
         let (tx, _rx) = mpsc::unbounded_channel();
+        let plugin_id = PluginId::new("test_plugin_logical_001");
         let client = ClientInfo {
-            plugin_id: Uuid::new_v4(),
+            plugin_id: plugin_id.clone(),
             sender: tx,
             roles: vec!["test".to_string()],
         };
 
-        assert!(!client.plugin_id.is_nil());
+        assert_eq!(client.plugin_id, plugin_id);
     }
 }

@@ -1,9 +1,9 @@
 use futures_util::{SinkExt, StreamExt};
-use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload};
+use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload, PluginId};
 use std::error::Error;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
-    MaybeTlsStream, WebSocketStream, connect_async, tungstenite::protocol::Message as WsMessage,
+    connect_async, tungstenite::protocol::Message as WsMessage, MaybeTlsStream, WebSocketStream,
 };
 use uuid::Uuid;
 
@@ -35,7 +35,7 @@ impl MockExePlugin {
     /// plugin-helloを送信してプラグインを登録
     pub async fn send_plugin_hello(&mut self, name: &str) -> Result<(), Box<dyn Error>> {
         let payload = PluginHelloPayload {
-            plugin_id: self.plugin_id, // internal_physical_plugin_id
+            plugin_id: PluginId::new(self.plugin_id.to_string()), // internal_physical_plugin_id
             name: name.to_string(),
             role: vec!["test".to_string()],
             api_version: "v2".to_string(),
@@ -45,7 +45,7 @@ impl MockExePlugin {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
             mcv_messages::MessageSource::Plugin {
-                plugin_id: self.logical_plugin_id, // srcにlogical_plugin_idを設定
+                plugin_id: PluginId::new(self.logical_plugin_id.to_string()), // srcにlogical_plugin_idを設定
             },
             mcv_messages::MessageDestination::Core,
             serde_json::to_value(payload)?,

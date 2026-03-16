@@ -7,7 +7,7 @@
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     AccountInfo, ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope,
-    Message as McvMessage, MessageDestination, MessagePart, MessageSource, MessageType,
+    Message as McvMessage, MessageDestination, MessagePart, MessageSource, MessageType, PluginId,
     ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
     StreamMetadataPayload, UpdateConnectionAccountPayload,
 };
@@ -55,7 +55,7 @@ impl Connection {
     pub(crate) fn connect(
         &mut self,
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         url: &str,
         username: &str,
         auth_token: Option<AuthToken>,
@@ -98,7 +98,7 @@ impl Connection {
         let join_command = format!("JOIN #{channel_login}");
         let task = match Self::start_connection_task(
             ctx.clone(),
-            logical_plugin_id,
+            logical_plugin_id.clone(),
             connection_id,
             ws_url.to_string(),
             username,
@@ -129,7 +129,7 @@ impl Connection {
 
     fn start_connection_task(
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         connection_id: Uuid,
         url: String,
         username: String,
@@ -277,7 +277,7 @@ impl Connection {
                                     Some(Ok(WsMessage::Text(text))) => {
                                         let should_continue = Self::handle_text_message(
                                             ctx.clone(),
-                                            logical_plugin_id,
+                                            logical_plugin_id.clone(),
                                             connection_id,
                                             &mut write,
                                             text.to_string(),
@@ -361,7 +361,7 @@ impl Connection {
                 let clear_account = McvMessage::new_notification(
                     MessageType::UpdateConnectionAccount,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(UpdateConnectionAccountPayload {
@@ -375,7 +375,7 @@ impl Connection {
                 let message = McvMessage::new_notification(
                     MessageType::Disconnected,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
@@ -407,7 +407,7 @@ impl Connection {
 
     fn start_metadata_polling_task(
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         connection_id: Uuid,
         channel_login: String,
         auth_token: Option<AuthToken>,
@@ -443,7 +443,7 @@ impl Connection {
 
     async fn handle_text_message(
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         connection_id: Uuid,
         write: &mut WsWrite,
         raw_text: String,
@@ -502,7 +502,7 @@ impl Connection {
                         let account_msg = McvMessage::new_notification(
                             MessageType::UpdateConnectionAccount,
                             MessageSource::Plugin {
-                                plugin_id: logical_plugin_id,
+                                plugin_id: logical_plugin_id.clone(),
                             },
                             MessageDestination::Core,
                             serde_json::to_value(UpdateConnectionAccountPayload {
@@ -543,7 +543,7 @@ impl Connection {
             let comment_message = McvMessage::new_notification(
                 MessageType::CommentReceived,
                 MessageSource::Plugin {
-                    plugin_id: logical_plugin_id,
+                    plugin_id: logical_plugin_id.clone(),
                 },
                 MessageDestination::Core,
                 serde_json::to_value(CommentReceivedPayload {
@@ -559,7 +559,7 @@ impl Connection {
 
     async fn send_comment_if_privmsg(
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         connection_id: Uuid,
         line: &str,
     ) {
@@ -598,7 +598,7 @@ impl Connection {
             let comment_message = McvMessage::new_notification(
                 MessageType::CommentReceived,
                 MessageSource::Plugin {
-                    plugin_id: logical_plugin_id,
+                    plugin_id: logical_plugin_id.clone(),
                 },
                 MessageDestination::Core,
                 serde_json::to_value(CommentReceivedPayload {
@@ -664,7 +664,7 @@ impl Connection {
 /// Twitch ストリームメタデータ（視聴者数・配信開始時刻・タイトル）を定期的に取得して Core に送信する
 async fn metadata_polling_loop(
     ctx: PluginContext,
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     connection_id: Uuid,
     channel_login: String,
     auth_token: Option<AuthToken>,
@@ -724,7 +724,7 @@ async fn metadata_polling_loop(
                     let msg = McvMessage::new_notification(
                         MessageType::StreamMetadata,
                         MessageSource::Plugin {
-                            plugin_id: logical_plugin_id,
+                            plugin_id: logical_plugin_id.clone(),
                         },
                         MessageDestination::Core,
                         serde_json::to_value(payload).unwrap(),

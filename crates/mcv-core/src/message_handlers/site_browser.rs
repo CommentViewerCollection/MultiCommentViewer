@@ -1,8 +1,8 @@
 use actix::Context;
 use mcv_messages::{
     AddBrowserPayload, AddSitePayload, ConnectionAddedPayload, Message as McvMessage,
-    MessageDestination, MessageSource, MessageType, RemoveBrowserPayload, SetConnectionSitePayload,
-    UpdateConnectionSettingsPayload,
+    MessageDestination, MessageSource, MessageType, PluginId, RemoveBrowserPayload,
+    SetConnectionSitePayload, UpdateConnectionSettingsPayload,
 };
 
 use crate::core_actor::CoreActor;
@@ -18,8 +18,8 @@ pub fn handle_add_site(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut C
         }
     };
 
-    let plugin_id = match &message.src {
-        MessageSource::Plugin { plugin_id } => *plugin_id,
+    let plugin_id: PluginId = match &message.src {
+        MessageSource::Plugin { plugin_id } => plugin_id.clone(),
         _ => {
             tracing::error!(target: "mcv::core::CoreActor","AddSite must come from a plugin");
             return;
@@ -36,7 +36,7 @@ pub fn handle_add_site(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut C
     tracing::info!(
         target: "mcv::core::CoreActor",
         site_id = %payload.site_id,
-        plugin_id_from_message_src = %plugin_id,
+        plugin_id_from_message_src = %site_info.plugin_id,
         "Registering site (plugin_id is from message.src)"
     );
 
@@ -57,14 +57,14 @@ pub fn handle_add_site(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut C
     tracing::info!(
         target: "mcv::core::CoreActor",
         site_id = %payload.site_id,
-        plugin_id = %plugin_id,
+        plugin_id = %site_info.plugin_id,
         "Site registered"
     );
 
     // サイト登録完了後、Pending接続を確認して有効化
     let activated_connections = actor
         .connection_manager
-        .activate_pending_connections_by_site(&site_info.site_id, plugin_id);
+        .activate_pending_connections_by_site(&site_info.site_id, site_info.plugin_id.clone());
 
     if !activated_connections.is_empty() {
         tracing::info!(
@@ -117,8 +117,8 @@ pub fn handle_add_browser(
         }
     };
 
-    let plugin_id = match &message.src {
-        MessageSource::Plugin { plugin_id } => *plugin_id,
+    let plugin_id: PluginId = match &message.src {
+        MessageSource::Plugin { plugin_id } => plugin_id.clone(),
         _ => {
             tracing::error!(target: "mcv::core::CoreActor","AddBrowser must come from a plugin");
             return;
@@ -149,7 +149,7 @@ pub fn handle_add_browser(
     tracing::info!(
         target: "mcv::core::CoreActor",
         browser_name = %payload.browser_name,
-        plugin_id = %plugin_id,
+        plugin_id = %browser_info.plugin_id,
         "Browser registered"
     );
 }

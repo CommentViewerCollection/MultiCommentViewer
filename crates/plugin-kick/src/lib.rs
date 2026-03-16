@@ -17,7 +17,7 @@ use connection::Connection;
 use mcv_common::SiteId;
 use mcv_messages::{
     AddSitePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload,
+    PluginHelloPayload, PluginId,
 };
 use message_handler::on_message_impl;
 use plugin_abi_helper::v3::prelude::*;
@@ -58,7 +58,9 @@ impl KickPlugin {
     ) {
         let message = McvMessage::new_notification(
             MessageType::PluginHello,
-            MessageSource::Plugin { plugin_id },
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(plugin_id.to_string()),
+            },
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
         );
@@ -68,7 +70,9 @@ impl KickPlugin {
     async fn send_add_site(&self, ctx: PluginContext, payload: AddSitePayload, plugin_id: Uuid) {
         let message = McvMessage::new_notification(
             MessageType::AddSite,
-            MessageSource::Plugin { plugin_id },
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(plugin_id.to_string()),
+            },
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
         );
@@ -105,7 +109,7 @@ impl PluginImplV3Async for KickPlugin {
 
         let hello_payload = PluginHelloPayload {
             name: "Kick".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: PluginId::new(self.logical_plugin_id.to_string()),
             role: vec!["kick".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,

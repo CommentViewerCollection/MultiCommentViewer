@@ -5,7 +5,8 @@
 
 use mcv_messages::{
     CommentReceivedPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload, SettingsDataPayload, SettingsSchemaPayload, UpdateSettingsPayload,
+    PluginHelloPayload, PluginId, SettingsDataPayload, SettingsSchemaPayload,
+    UpdateSettingsPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -238,7 +239,7 @@ async fn send_to_bouyomi(
 
 #[derive(Default)]
 struct BouyomiPlugin {
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     settings: BouyomiSettings,
 }
 
@@ -283,12 +284,12 @@ impl BouyomiPlugin {
 #[async_trait]
 impl PluginImplV3Async for BouyomiPlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        self.logical_plugin_id = Uuid::new_v4();
+        self.logical_plugin_id = PluginId::new(format!("Bouyomi_logical_{}", Uuid::new_v4()));
         tracing::info!(plugin_id = %self.logical_plugin_id, "BouyomiPlugin loaded");
 
         let hello_payload = PluginHelloPayload {
             name: "棒読みちゃん連携".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec!["comment-processor".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
@@ -296,7 +297,7 @@ impl PluginImplV3Async for BouyomiPlugin {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.logical_plugin_id,
+                plugin_id: self.logical_plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),
@@ -307,7 +308,7 @@ impl PluginImplV3Async for BouyomiPlugin {
 
         // 設定スキーマを Core にキャッシュ登録
         let src = MessageSource::Plugin {
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
         };
         let schema_message = McvMessage::new_notification(
             MessageType::SettingsSchema,

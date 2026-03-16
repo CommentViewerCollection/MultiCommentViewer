@@ -1,5 +1,5 @@
 use actix::Context;
-use mcv_common::LogicalPluginId;
+use mcv_common::PluginId;
 use mcv_log_core::{
     LogEntry as LoggerEntry, LogLevel, SourceLocation as LoggerSourceLocation,
     StackFrame as LoggerStackFrame, SystemInfo as LoggerSystemInfo,
@@ -36,11 +36,11 @@ pub fn handle_comment_received(
     }
 
     // "comment-processor" ロールを持つプラグインへ転送
-    for (logical_plugin_id, plugin_info) in &actor.logical_plugins {
+    for (plugin_id, plugin_info) in &actor.logical_plugins {
         if plugin_info.role.contains(&"comment-processor".to_string()) {
             let mut forwarded = message.clone();
             forwarded.dst = MessageDestination::Plugin {
-                plugin_id: logical_plugin_id.inner(),
+                plugin_id: plugin_id.clone(),
             };
             plugin_info
                 .host_addr
@@ -84,9 +84,8 @@ pub fn handle_send_comment(
     let msg = message.clone();
 
     if let Some(conn_info) = actor.connection_manager.get_connection(&connection_id) {
-        if let Some(plugin_id_uuid) = conn_info.plugin_id {
-            let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-            if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
+        if let Some(plugin_id) = &conn_info.plugin_id {
+            if let Some(plugin_info) = plugins.get(plugin_id) {
                 plugin_info
                     .host_addr
                     .do_send(SendMessageToPlugin { message: msg });
@@ -111,11 +110,8 @@ pub fn handle_get_send_comment_schema(
     let schema = actor
         .connection_manager
         .get_connection(&payload.connection_id)
-        .and_then(|conn| conn.plugin_id)
-        .and_then(|plugin_uuid| {
-            let logical_id = mcv_common::LogicalPluginId::from_uuid(plugin_uuid);
-            actor.logical_plugins.get(&logical_id)
-        })
+        .and_then(|conn| conn.plugin_id.as_ref().cloned())
+        .and_then(|plugin_id| actor.logical_plugins.get(&plugin_id))
         .and_then(|plugin_info| plugin_info.send_comment_schema.clone())
         .unwrap_or_else(|| {
             serde_json::json!({
@@ -159,8 +155,8 @@ pub fn handle_log_entry(
     };
 
     // プラグインIDを取得
-    let plugin_id = match message.src {
-        MessageSource::Plugin { plugin_id } => plugin_id,
+    let plugin_id = match &message.src {
+        MessageSource::Plugin { plugin_id } => plugin_id.clone(),
         _ => {
             tracing::warn!(
                 target: "mcv::core::CoreActor",

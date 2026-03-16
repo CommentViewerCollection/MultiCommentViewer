@@ -1,5 +1,7 @@
 use mcv_log_schema::{get_build_profile, MessageVisitor, SourceLocation, StackFrame};
-use mcv_messages::{LogEntryPayload, Message, MessageDestination, MessageSource, MessageType};
+use mcv_messages::{
+    LogEntryPayload, Message, MessageDestination, MessageSource, MessageType, PluginId,
+};
 use mcv_plugin_interface::PluginHost;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -218,10 +220,11 @@ pub fn init_tracing(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let plugin_version = plugin_version.to_string();
     let plugin_build_profile = get_build_profile();
+    let logical_plugin_id = PluginId::new(plugin_id.to_string());
 
     // カスタムレイヤーを作成
     let mcv_layer = McvTracingLayer {
-        plugin_id,
+        plugin_id: logical_plugin_id,
         plugin_host,
         plugin_version,
         plugin_build_profile,
@@ -243,7 +246,7 @@ pub fn init_tracing(
 
 /// カスタム tracing Layer
 struct McvTracingLayer {
-    plugin_id: Uuid,
+    plugin_id: PluginId,
     plugin_host: Arc<dyn PluginHost>,
     plugin_version: String,
     plugin_build_profile: String,
@@ -311,7 +314,7 @@ where
         let message = Message::new_notification(
             MessageType::LogEntry,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: self.plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(payload).unwrap_or(serde_json::Value::Null),

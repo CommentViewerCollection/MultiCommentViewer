@@ -17,7 +17,7 @@ use base64::Engine;
 use mcv_messages::{
     AddBrowserAckPayload, AddBrowserPayload, BrowserId, Cookie as McvCookie, GetCookieAckPayload,
     GetCookiePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloAckPayload, PluginHelloPayload,
+    PluginHelloAckPayload, PluginHelloPayload, PluginId,
 };
 use plugin_abi_helper::v3::prelude::*;
 use rusqlite::Connection;
@@ -25,7 +25,7 @@ use uuid::Uuid;
 
 #[derive(Default)]
 struct ChromeCookiePlugin {
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     is_initialized: bool,
 }
 
@@ -198,7 +198,7 @@ fn load_cookies(browser_id: &BrowserId, domain: &str) -> Vec<McvCookie> {
 }
 
 impl ChromeCookiePlugin {
-    fn initialize(&mut self, logical_plugin_id: Uuid) {
+    fn initialize(&mut self, logical_plugin_id: PluginId) {
         if self.is_initialized {
             return;
         }
@@ -210,7 +210,7 @@ impl ChromeCookiePlugin {
         &self,
         ctx: PluginContext,
         payload: PluginHelloPayload,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
     ) -> Result<PluginHelloAckPayload, RequestError> {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
@@ -233,7 +233,7 @@ impl ChromeCookiePlugin {
         &self,
         ctx: PluginContext,
         payload: AddBrowserPayload,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
     ) -> Result<AddBrowserAckPayload, RequestError> {
         let message = McvMessage::new_request(
             MessageType::AddBrowser,
@@ -256,7 +256,8 @@ impl ChromeCookiePlugin {
 #[async_trait]
 impl PluginImplV3Async for ChromeCookiePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        let logical_plugin_id = Uuid::new_v4();
+        let uuid = Uuid::new_v4();
+        let logical_plugin_id = PluginId::new(format!("ChromeCookiePlugin_logical_{}", uuid));
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
         #[cfg(feature = "alpha")]
         let log_level = "trace";
@@ -266,12 +267,8 @@ impl PluginImplV3Async for ChromeCookiePlugin {
         let log_level = "error";
         #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
         let log_level = "trace";
-        let result_init_tracing = mcv_plugin_telemetry::init_tracing(
-            logical_plugin_id,
-            adapter,
-            env!("CARGO_PKG_VERSION"),
-            log_level,
-        );
+        let result_init_tracing =
+            mcv_plugin_telemetry::init_tracing(uuid, adapter, env!("CARGO_PKG_VERSION"), log_level);
         match result_init_tracing {
             Ok(_) => {
                 tracing::trace!(
@@ -287,13 +284,13 @@ impl PluginImplV3Async for ChromeCookiePlugin {
         // plugin-hello 送信
         let hello_payload = PluginHelloPayload {
             name: "Chrome Cookie".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec!["browser-cookie".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
         };
         if let Err(e) = self
-            .send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
+            .send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id.clone())
             .await
         {
             tracing::error!(
@@ -327,7 +324,7 @@ impl PluginImplV3Async for ChromeCookiePlugin {
                 display_name,
             };
             if let Err(e) = self
-                .send_add_browser(ctx.clone(), add_browser, self.logical_plugin_id)
+                .send_add_browser(ctx.clone(), add_browser, self.logical_plugin_id.clone())
                 .await
             {
                 tracing::error!(

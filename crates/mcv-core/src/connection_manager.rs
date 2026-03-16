@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use mcv_common::{BrowserId, SiteId};
+use mcv_messages::PluginId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -25,7 +26,7 @@ pub enum ConnectionStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionInfo {
     pub connection_id: Uuid,
-    pub plugin_id: Option<Uuid>,
+    pub plugin_id: Option<PluginId>,
     pub status: ConnectionStatus,
     pub site_id: Option<SiteId>,
     pub url: Option<String>,
@@ -146,7 +147,7 @@ impl ConnectionManager {
     }
 
     /// サイトを設定
-    pub fn set_site(&mut self, connection_id: &Uuid, site_id: SiteId, plugin_id: Uuid) {
+    pub fn set_site(&mut self, connection_id: &Uuid, site_id: SiteId, plugin_id: PluginId) {
         if let Some(info) = self.connections.get_mut(connection_id) {
             tracing::debug!(
                 connection_id = %connection_id,
@@ -292,7 +293,7 @@ impl ConnectionManager {
             // site_idから現在のplugin_idを取得
             let (site_id, plugin_id) = if let Some(ref site_id) = conn.site_id {
                 match site_browser_manager.get_site(site_id) {
-                    Some(site_info) => (Some(site_id.clone()), Some(site_info.plugin_id)),
+                    Some(site_info) => (Some(site_id.clone()), Some(site_info.plugin_id.clone())),
                     None => {
                         // プラグイン未到着 → Pending状態で復元
                         tracing::warn!(
@@ -344,7 +345,7 @@ impl ConnectionManager {
     pub fn activate_pending_connections_by_site(
         &mut self,
         site_id: &SiteId,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
     ) -> Vec<Uuid> {
         let mut activated = Vec::new();
 
@@ -357,7 +358,7 @@ impl ConnectionManager {
                     "Activating pending connection"
                 );
 
-                conn.plugin_id = Some(plugin_id);
+                conn.plugin_id = Some(plugin_id.clone());
                 conn.status = ConnectionStatus::Created;
                 activated.push(conn.connection_id);
             }
@@ -408,7 +409,7 @@ mod tests {
         let mut manager = ConnectionManager::new();
         let conn_id = Uuid::new_v4();
         let site_id = SiteId::new("test-site", "00000000-0000-0000-0000-000000000001");
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("TestPlugin_logical_test");
 
         // 接続を追加（サイト未選択）
         manager.add_connection(conn_id, "#1".to_string());
@@ -418,7 +419,7 @@ mod tests {
         assert_eq!(conn.site_id, None);
 
         // サイトを設定
-        manager.set_site(&conn_id, site_id.clone(), plugin_id);
+        manager.set_site(&conn_id, site_id.clone(), plugin_id.clone());
 
         let conn = manager.get_connection(&conn_id).unwrap();
         assert_eq!(conn.plugin_id, Some(plugin_id));
@@ -531,12 +532,12 @@ mod tests {
         let mut manager = ConnectionManager::new();
         let conn_id = Uuid::new_v4();
         let site_id = SiteId::new("YouTube", "00000000-0000-0000-0000-000000000002");
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("TestPlugin_logical_set_site");
 
         manager.add_connection(conn_id, "#1".to_string());
         assert_eq!(manager.get_connection(&conn_id).unwrap().plugin_id, None);
 
-        manager.set_site(&conn_id, site_id, plugin_id);
+        manager.set_site(&conn_id, site_id, plugin_id.clone());
         assert_eq!(
             manager.get_connection(&conn_id).unwrap().plugin_id,
             Some(plugin_id)

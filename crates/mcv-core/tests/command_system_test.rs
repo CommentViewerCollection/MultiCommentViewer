@@ -1,6 +1,8 @@
 use actix::prelude::*;
 use mcv_core::*;
-use mcv_messages::{Message, MessageDestination, MessageSource, MessageType, SendCommentPayload};
+use mcv_messages::{
+    Message, MessageDestination, MessageSource, MessageType, PluginId, SendCommentPayload,
+};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -34,7 +36,9 @@ async fn test_send_comment_message_routing() {
     let message = Message::new_request(
         MessageType::SendComment,
         MessageSource::Core,
-        MessageDestination::Plugin { plugin_id },
+        MessageDestination::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         serde_json::to_value(SendCommentPayload {
             connection_id,
             text: "pause".to_string(),

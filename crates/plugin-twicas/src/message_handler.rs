@@ -71,7 +71,7 @@ pub(crate) async fn on_message_impl(
                 let get_browser_plugin_msg = McvMessage::new_request(
                     MessageType::GetBrowserPlugin,
                     MessageSource::Plugin {
-                        plugin_id: plugin.logical_plugin_id,
+                        plugin_id: plugin.logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(GetBrowserPluginPayload {
@@ -96,7 +96,7 @@ pub(crate) async fn on_message_impl(
                     let get_cookie_msg = McvMessage::new_request(
                         MessageType::GetCookie,
                         MessageSource::Plugin {
-                            plugin_id: plugin.logical_plugin_id,
+                            plugin_id: plugin.logical_plugin_id.clone(),
                         },
                         MessageDestination::Plugin { plugin_id: bp_id },
                         serde_json::to_value(GetCookiePayload {
@@ -199,7 +199,7 @@ pub(crate) async fn on_message_impl(
                                 let failed_msg = McvMessage::new_notification(
                                     MessageType::ConnectFailed,
                                     MessageSource::Plugin {
-                                        plugin_id: plugin.logical_plugin_id,
+                                        plugin_id: plugin.logical_plugin_id.clone(),
                                     },
                                     MessageDestination::Core,
                                     serde_json::to_value(ConnectFailedPayload {
@@ -228,7 +228,7 @@ pub(crate) async fn on_message_impl(
             let connected = McvMessage::new_notification(
                 MessageType::Connected,
                 MessageSource::Plugin {
-                    plugin_id: plugin.logical_plugin_id,
+                    plugin_id: plugin.logical_plugin_id.clone(),
                 },
                 MessageDestination::Core,
                 serde_json::to_value(ConnectedPayload {
@@ -240,7 +240,7 @@ pub(crate) async fn on_message_impl(
 
             conn.connect(
                 ctx,
-                plugin.logical_plugin_id,
+                plugin.logical_plugin_id.clone(),
                 &user_name,
                 wpass.as_deref(),
                 cs_session_id_from_wpass,

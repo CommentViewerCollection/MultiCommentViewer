@@ -211,7 +211,9 @@ impl DummyPlugin {
 
                 let message = Message::new_notification(
                     MessageType::CommentReceived,
-                    MessageSource::Plugin { plugin_id },
+                    MessageSource::Plugin {
+                        plugin_id: PluginId::new(plugin_id.to_string()),
+                    },
                     MessageDestination::Core,
                     serde_json::to_value(CommentReceivedPayload {
                         connection_id,
@@ -339,7 +341,7 @@ impl DummyPlugin {
         let message = Message::new_notification(
             MessageType::Disconnected,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
             },
             MessageDestination::Core,
             serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
@@ -435,7 +437,7 @@ impl DummyPlugin {
         let message = Message::new_notification(
             MessageType::CommentReceived,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
             },
             MessageDestination::Core,
             serde_json::to_value(CommentReceivedPayload {
@@ -468,7 +470,7 @@ impl DummyPlugin {
         let message = Message::new_notification(
             MessageType::LogEntry,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
             },
             MessageDestination::Core,
             serde_json::to_value(LogEntryPayload {
@@ -531,7 +533,7 @@ impl DummyPlugin {
                 let message = Message::new_notification(
                     MessageType::LogEntry,
                     MessageSource::Plugin {
-                        plugin_id: self.plugin_id,
+                        plugin_id: PluginId::new(self.plugin_id.to_string()),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(payload).unwrap(),
@@ -610,7 +612,7 @@ impl DummyPlugin {
                 let message = Message::new_notification(
                     MessageType::LogEntry,
                     MessageSource::Plugin {
-                        plugin_id: self.plugin_id,
+                        plugin_id: PluginId::new(self.plugin_id.to_string()),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(payload).unwrap(),
@@ -769,15 +771,16 @@ impl Plugin for DummyPlugin {
         tracing::info!("Dummy plugin loaded");
 
         // plugin-helloを送信
+        let logical_plugin_id = PluginId::new(format!("DummyPlugin_logical_{}", self.plugin_id));
         let message = Message::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: logical_plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(PluginHelloPayload {
                 name: "Dummy Plugin".to_string(),
-                plugin_id: self.plugin_id,
+                plugin_id: logical_plugin_id,
                 role: vec!["dummy".to_string()],
                 api_version: "v2".to_string(),
                 send_comment_schema: None,
@@ -794,7 +797,7 @@ impl Plugin for DummyPlugin {
         let dummy_site_message = Message::new_notification(
             MessageType::AddSite,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
             },
             MessageDestination::Core,
             serde_json::to_value(AddSitePayload {
@@ -821,7 +824,7 @@ impl Plugin for DummyPlugin {
         let dummy_browser_message = Message::new_notification(
             MessageType::AddBrowser,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
             },
             MessageDestination::Core,
             serde_json::to_value(AddBrowserPayload {

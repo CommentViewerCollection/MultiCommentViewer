@@ -1,10 +1,9 @@
 use crate::core_actor::CoreActor;
 use crate::plugin_host_actor::SendMessageToPlugin;
 use actix::Context;
-use mcv_common::LogicalPluginId;
+use mcv_common::PluginId;
 use mcv_messages::*;
 use mcv_settings_core::SettingsEntry;
-use uuid::Uuid;
 
 /// get-settings-schema メッセージハンドラ
 pub fn handle_get_settings_schema(
@@ -30,9 +29,7 @@ pub fn handle_get_settings_schema(
         ))
     } else {
         // プラグインの設定スキーマを取得（プラグインに転送）
-        let plugin_id = Uuid::parse_str(&payload.target)
-            .map_err(|e| format!("Invalid plugin_id format: {}", e))?;
-        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
+        let logical_plugin_id = PluginId::new(&payload.target);
 
         if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
             // キャッシュがあればそれを返す
@@ -54,7 +51,7 @@ pub fn handle_get_settings_schema(
                 MessageType::GetSettingsSchema,
                 message.src.clone(),
                 MessageDestination::Plugin {
-                    plugin_id: logical_plugin_id.inner(),
+                    plugin_id: logical_plugin_id.clone(),
                 },
                 message.payload.clone(),
             );
@@ -133,9 +130,7 @@ pub fn handle_get_settings(
         ))
     } else {
         // プラグインの設定を取得（プラグインに転送）
-        let plugin_id = Uuid::parse_str(&payload.target)
-            .map_err(|e| format!("Invalid plugin_id format: {}", e))?;
-        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
+        let logical_plugin_id = PluginId::new(&payload.target);
 
         if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
             // キャッシュがあればそれを返す
@@ -157,7 +152,7 @@ pub fn handle_get_settings(
                 MessageType::GetSettings,
                 message.src.clone(),
                 MessageDestination::Plugin {
-                    plugin_id: logical_plugin_id.inner(),
+                    plugin_id: logical_plugin_id.clone(),
                 },
                 message.payload.clone(),
             );
@@ -235,9 +230,7 @@ pub fn handle_update_settings(
         }
     } else {
         // プラグインの設定を更新（プラグインに転送）
-        let plugin_id = Uuid::parse_str(&payload.target)
-            .map_err(|e| format!("Invalid plugin_id format: {}", e))?;
-        let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
+        let logical_plugin_id = PluginId::new(&payload.target);
 
         if let Some(plugin_info) = core.logical_plugins.get_mut(&logical_plugin_id) {
             // 設定データをキャッシュに保存（次回 get-settings でキャッシュから返す）
@@ -248,7 +241,7 @@ pub fn handle_update_settings(
                 MessageType::UpdateSettings,
                 message.src.clone(),
                 MessageDestination::Plugin {
-                    plugin_id: logical_plugin_id.inner(),
+                    plugin_id: logical_plugin_id.clone(),
                 },
                 message.payload.clone(),
             );

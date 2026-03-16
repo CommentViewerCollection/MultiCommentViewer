@@ -4,6 +4,7 @@
 
 use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
+    PluginId,
 };
 use plugin_abi_helper::v3::prelude::*;
 use std::time::Duration;
@@ -11,19 +12,20 @@ use uuid::Uuid;
 #[derive(Default)]
 struct SamplePlugin {
     message_count: u32,
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
 }
 
 #[async_trait]
 impl PluginImplV3Async for SamplePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        self.logical_plugin_id = Uuid::new_v4();
+        let uuid = Uuid::new_v4();
+        self.logical_plugin_id = PluginId::new(format!("SamplePluginV3_logical_{}", uuid));
         tracing::info!("SamplePlugin v3 loaded, ID: {}", self.logical_plugin_id);
 
         // plugin-helloを送信
         let hello_payload = PluginHelloPayload {
             name: "Sample Plugin v3".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec![],
             api_version: "v3".to_string(),
             send_comment_schema: None,
@@ -31,7 +33,7 @@ impl PluginImplV3Async for SamplePlugin {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.logical_plugin_id,
+                plugin_id: self.logical_plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),

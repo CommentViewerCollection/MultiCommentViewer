@@ -1,14 +1,13 @@
-use mcv_messages::{Message as McvMessage, MessageDestination};
+use mcv_messages::{Message as McvMessage, MessageDestination, PluginId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::{RwLock, mpsc};
-use uuid::Uuid;
+use tokio::sync::{mpsc, RwLock};
 
 #[derive(Debug, Error)]
 pub enum RoutingError {
     #[error("Plugin not found: {0}")]
-    PluginNotFound(Uuid),
+    PluginNotFound(String),
 
     #[error("Send error: {0}")]
     SendError(String),
@@ -19,7 +18,7 @@ pub enum RoutingError {
 
 /// WebSocketクライアント情報（routing用）
 pub struct ClientInfo {
-    pub plugin_id: Uuid,
+    pub plugin_id: PluginId,
     pub sender: mpsc::UnboundedSender<McvMessage>,
     pub roles: Vec<String>,
 }
@@ -28,19 +27,19 @@ pub struct ClientInfo {
 ///
 /// Core ↔ EXEプラグイン間のメッセージをルーティングする
 pub struct MessageRouter {
-    clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+    clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
 }
 
 impl MessageRouter {
     /// 新しいメッセージルーターを作成
-    pub fn new(clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>) -> Self {
+    pub fn new(clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>) -> Self {
         Self { clients }
     }
 
     /// 特定のEXEプラグインへメッセージを送信（ユニキャスト）
     pub async fn route_to_plugin(
         &self,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
         message: McvMessage,
     ) -> Result<(), RoutingError> {
         tracing::debug!(
@@ -53,7 +52,7 @@ impl MessageRouter {
         let clients = self.clients.read().await;
         let client = clients
             .get(&plugin_id)
-            .ok_or(RoutingError::PluginNotFound(plugin_id))?;
+            .ok_or(RoutingError::PluginNotFound(plugin_id.to_string()))?;
 
         client
             .sender
@@ -156,7 +155,7 @@ impl MessageRouter {
     }
 
     /// 特定のプラグインが接続しているか確認
-    pub async fn is_connected(&self, plugin_id: Uuid) -> bool {
+    pub async fn is_connected(&self, plugin_id: PluginId) -> bool {
         let clients = self.clients.read().await;
         clients.contains_key(&plugin_id)
     }
@@ -181,12 +180,12 @@ mod tests {
         assert_eq!(router.client_count().await, 0);
 
         // クライアントを追加
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_001");
         let (tx, _rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -200,15 +199,15 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
-        assert!(!router.is_connected(plugin_id).await);
+        let plugin_id = PluginId::new("test_plugin_logical_002");
+        assert!(!router.is_connected(plugin_id.clone()).await);
 
         // クライアントを追加
         let (tx, _rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -222,13 +221,13 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_003");
         let (tx, mut rx) = mpsc::unbounded_channel();
 
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -237,7 +236,9 @@ mod tests {
         let message = McvMessage::new_request(
             MessageType::Connected,
             MessageSource::Core,
-            MessageDestination::Plugin { plugin_id },
+            MessageDestination::Plugin {
+                plugin_id: plugin_id.clone(),
+            },
             serde_json::json!({}),
         );
 
@@ -257,25 +258,25 @@ mod tests {
         let router = MessageRouter::new(Arc::clone(&clients));
 
         // 2つのクライアントを追加
-        let plugin_id_1 = Uuid::new_v4();
-        let plugin_id_2 = Uuid::new_v4();
+        let plugin_id_1 = PluginId::new("test_plugin_logical_004");
+        let plugin_id_2 = PluginId::new("test_plugin_logical_005");
 
         let (tx1, mut rx1) = mpsc::unbounded_channel();
         let (tx2, mut rx2) = mpsc::unbounded_channel();
 
         clients.write().await.insert(
-            plugin_id_1,
+            plugin_id_1.clone(),
             ClientInfo {
-                plugin_id: plugin_id_1,
+                plugin_id: plugin_id_1.clone(),
                 sender: tx1,
                 roles: vec!["test".to_string()],
             },
         );
 
         clients.write().await.insert(
-            plugin_id_2,
+            plugin_id_2.clone(),
             ClientInfo {
-                plugin_id: plugin_id_2,
+                plugin_id: plugin_id_2.clone(),
                 sender: tx2,
                 roles: vec!["test".to_string()],
             },
@@ -305,12 +306,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_006");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -333,12 +334,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_007");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -361,12 +362,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_008");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -389,12 +390,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_009");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -417,12 +418,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_010");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -445,12 +446,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_011");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -475,12 +476,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_012");
         let (tx, rx) = mpsc::unbounded_channel::<McvMessage>();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -523,11 +524,13 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(clients);
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_013");
         let message = McvMessage::new_request(
             MessageType::Connected,
             MessageSource::Core,
-            MessageDestination::Plugin { plugin_id },
+            MessageDestination::Plugin {
+                plugin_id: plugin_id.clone(),
+            },
             serde_json::json!({}),
         );
 
@@ -541,12 +544,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_014");
         let (tx, rx) = mpsc::unbounded_channel::<McvMessage>();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -558,7 +561,9 @@ mod tests {
         let message = McvMessage::new_request(
             MessageType::Connected,
             MessageSource::Core,
-            MessageDestination::Plugin { plugin_id },
+            MessageDestination::Plugin {
+                plugin_id: plugin_id.clone(),
+            },
             serde_json::json!({}),
         );
 
@@ -574,12 +579,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = MessageRouter::new(Arc::clone(&clients));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_015");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -611,13 +616,13 @@ mod tests {
         let mut receivers = vec![];
 
         // 50個のクライアントを追加
-        for _ in 0..50 {
-            let plugin_id = Uuid::new_v4();
+        for i in 0..50 {
+            let plugin_id = PluginId::new(format!("test_plugin_logical_many_{}", i));
             let (tx, rx) = mpsc::unbounded_channel();
             clients.write().await.insert(
-                plugin_id,
+                plugin_id.clone(),
                 ClientInfo {
-                    plugin_id,
+                    plugin_id: plugin_id.clone(),
                     sender: tx,
                     roles: vec!["test".to_string()],
                 },
@@ -646,12 +651,12 @@ mod tests {
         let clients = Arc::new(RwLock::new(HashMap::new()));
         let router = Arc::new(MessageRouter::new(Arc::clone(&clients)));
 
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_016");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["test".to_string()],
             },
@@ -693,24 +698,24 @@ mod tests {
         let router = MessageRouter::new(Arc::clone(&clients));
 
         // role "comment-provider" のクライアント
-        let plugin_id_1 = Uuid::new_v4();
+        let plugin_id_1 = PluginId::new("test_plugin_logical_017");
         let (tx1, mut rx1) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id_1,
+            plugin_id_1.clone(),
             ClientInfo {
-                plugin_id: plugin_id_1,
+                plugin_id: plugin_id_1.clone(),
                 sender: tx1,
                 roles: vec!["comment-provider".to_string()],
             },
         );
 
         // role "other" のクライアント
-        let plugin_id_2 = Uuid::new_v4();
+        let plugin_id_2 = PluginId::new("test_plugin_logical_018");
         let (tx2, mut rx2) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id_2,
+            plugin_id_2.clone(),
             ClientInfo {
-                plugin_id: plugin_id_2,
+                plugin_id: plugin_id_2.clone(),
                 sender: tx2,
                 roles: vec!["other".to_string()],
             },
@@ -744,12 +749,12 @@ mod tests {
         let router = MessageRouter::new(Arc::clone(&clients));
 
         // role "other" のクライアントのみ
-        let plugin_id = Uuid::new_v4();
+        let plugin_id = PluginId::new("test_plugin_logical_019");
         let (tx, mut rx) = mpsc::unbounded_channel();
         clients.write().await.insert(
-            plugin_id,
+            plugin_id.clone(),
             ClientInfo {
-                plugin_id,
+                plugin_id: plugin_id.clone(),
                 sender: tx,
                 roles: vec!["other".to_string()],
             },

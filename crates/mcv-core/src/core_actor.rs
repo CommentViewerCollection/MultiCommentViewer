@@ -1,5 +1,5 @@
 use actix::prelude::*;
-use mcv_common::{LogicalPluginId, PhysicalPluginId, SiteId};
+use mcv_common::{PhysicalPluginId, PluginId, SiteId};
 use mcv_log_core::LogStorage;
 use mcv_messages::{Message as McvMessage, MessageSource, MessageType, *};
 use mcv_settings_core::SettingsStorage;
@@ -18,7 +18,7 @@ use crate::site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 /// 論理プラグイン情報（ユーザーから見えるプラグイン単位）
 #[derive(Debug, Clone)]
 pub struct LogicalPluginInfo {
-    pub logical_plugin_id: LogicalPluginId,
+    pub plugin_id: PluginId,
     pub physical_plugin_id: PhysicalPluginId,
     pub name: String,
     pub role: Vec<String>,
@@ -57,7 +57,7 @@ pub struct CoreActor {
     pub(crate) connection_manager: ConnectionManager,
     pub(crate) site_browser_manager: SiteAndBrowserManager,
     /// 論理プラグイン（ユーザーから見えるプラグイン）
-    pub(crate) logical_plugins: HashMap<LogicalPluginId, LogicalPluginInfo>,
+    pub(crate) logical_plugins: HashMap<PluginId, LogicalPluginInfo>,
     /// 物理プラグイン（DLLファイル）
     pub(crate) physical_plugin_hosts: HashMap<PhysicalPluginId, PluginHostAddr>,
     /// UIへのイベント送信用コールバック
@@ -204,25 +204,29 @@ impl CoreActor {
         let old_plugin_id = self
             .connection_manager
             .get_connection(&connection_id)
-            .and_then(|c| c.plugin_id);
+            .and_then(|c| c.plugin_id.clone());
 
         // 新しいサイト情報を取得
         if let Some(site_info) = self.site_browser_manager.get_site(&site_id) {
             // ConnectionManagerを更新
-            self.connection_manager
-                .set_site(&connection_id, site_id.clone(), site_info.plugin_id);
+            self.connection_manager.set_site(
+                &connection_id,
+                site_id.clone(),
+                site_info.plugin_id.clone(),
+            );
 
             let plugins = self.logical_plugins.clone();
 
             // 前のプラグインにDiscardConnectionSiteを送信（プラグインが変わった場合）
             if let Some(old_pid) = old_plugin_id {
                 if old_pid != site_info.plugin_id {
-                    let old_logical_plugin_id = LogicalPluginId::from_uuid(old_pid);
-                    if let Some(old_plugin) = plugins.get(&old_logical_plugin_id) {
+                    if let Some(old_plugin) = plugins.get(&old_pid) {
                         let discard_msg = McvMessage::new_notification(
                             MessageType::DiscardConnectionSite,
                             MessageSource::Core,
-                            MessageDestination::Plugin { plugin_id: old_pid },
+                            MessageDestination::Plugin {
+                                plugin_id: old_pid.clone(),
+                            },
                             serde_json::to_value(DiscardConnectionSitePayload {
                                 connection_id,
                                 site_id: site_id.clone(),
@@ -239,13 +243,12 @@ impl CoreActor {
             }
 
             // 新しいプラグインにSetConnectionSiteを送信
-            let new_logical_plugin_id = LogicalPluginId::from_uuid(site_info.plugin_id);
-            if let Some(new_plugin) = plugins.get(&new_logical_plugin_id) {
+            if let Some(new_plugin) = plugins.get(&site_info.plugin_id) {
                 let set_msg = McvMessage::new_notification(
                     MessageType::SetConnectionSite,
                     MessageSource::Core,
                     MessageDestination::Plugin {
-                        plugin_id: site_info.plugin_id,
+                        plugin_id: site_info.plugin_id.clone(),
                     },
                     serde_json::to_value(SetConnectionSitePayload {
                         connection_id,
@@ -419,12 +422,11 @@ fn handle_core_request_message(
         && matches!(message.dst, MessageDestination::Plugin { .. })
         && message.request_id.is_none()
     {
-        let destination_plugin_id = match message.dst {
-            MessageDestination::Plugin { plugin_id } => plugin_id,
+        let destination_plugin_id = match &message.dst {
+            MessageDestination::Plugin { plugin_id } => plugin_id.clone(),
             _ => unreachable!(),
         };
-        let logical_plugin_id = LogicalPluginId::from_uuid(destination_plugin_id);
-        if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+        if let Some(plugin_info) = core.logical_plugins.get(&destination_plugin_id) {
             plugin_info
                 .host_addr
                 .do_send(crate::plugin_host_actor::SendMessageToPlugin {
@@ -472,7 +474,7 @@ fn handle_core_request_message(
                 .values()
                 .map(|info| PluginAddedPayload {
                     name: info.name.clone(),
-                    plugin_id: info.logical_plugin_id.inner(),
+                    plugin_id: info.plugin_id.clone(),
                     role: info.role.clone(),
                     api_version: info.api_version.clone(),
                 })
@@ -576,7 +578,7 @@ fn handle_plugin_request_message(
                 .values()
                 .map(|info| PluginAddedPayload {
                     name: info.name.clone(),
-                    plugin_id: info.logical_plugin_id.inner(),
+                    plugin_id: info.plugin_id.clone(),
                     role: info.role.clone(),
                     api_version: info.api_version.clone(),
                 })
@@ -599,7 +601,7 @@ fn handle_plugin_request_message(
                 MessageType::GetBrowserPluginAck,
                 serde_json::to_value(GetBrowserPluginAckPayload {
                     browser_id: payload.browser_id,
-                    plugin_id: browser.plugin_id,
+                    plugin_id: browser.plugin_id.clone(),
                 })
                 .unwrap(),
             ))
@@ -624,12 +626,11 @@ fn handle_plugin_request_message(
 
 fn send_response_to_plugin(
     core: &CoreActor,
-    plugin_id: Uuid,
+    plugin_id: PluginId,
     physical_plugin_id: PhysicalPluginId,
     response: McvMessage,
 ) {
-    let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id);
-    if let Some(plugin_info) = core.logical_plugins.get(&logical_plugin_id) {
+    if let Some(plugin_info) = core.logical_plugins.get(&plugin_id) {
         plugin_info
             .host_addr
             .send_plugin_message(crate::plugin_host_actor::SendMessageToPlugin {
@@ -678,17 +679,18 @@ impl Handler<SendMessageToCore> for CoreActor {
         {
             //プラグイン間通信
 
-            let destination_plugin_id = match message.dst {
-                MessageDestination::Plugin { plugin_id } => plugin_id,
+            let destination_plugin_id = match &message.dst {
+                MessageDestination::Plugin { plugin_id } => plugin_id.clone(),
                 _ => unreachable!(),
             };
 
             // "なし" ブラウザ宛ての GetCookie を intercept して空クッキーを返す
-            if destination_plugin_id == crate::site_browser_manager::NONE_BROWSER_PLUGIN_ID
+            if destination_plugin_id.as_str()
+                == crate::site_browser_manager::NONE_BROWSER_PLUGIN_ID_STR
                 && message.message_type == MessageType::GetCookie
             {
-                let src_plugin_id = match message.src {
-                    MessageSource::Plugin { plugin_id } => plugin_id,
+                let src_plugin_id = match &message.src {
+                    MessageSource::Plugin { plugin_id } => plugin_id.clone(),
                     _ => unreachable!(),
                 };
                 let response = message.create_response(
@@ -705,8 +707,7 @@ impl Handler<SendMessageToCore> for CoreActor {
                 return;
             }
 
-            let destination_logical_id = LogicalPluginId::from_uuid(destination_plugin_id);
-            if let Some(plugin_info) = self.logical_plugins.get(&destination_logical_id) {
+            if let Some(plugin_info) = self.logical_plugins.get(&destination_plugin_id) {
                 plugin_info
                     .host_addr
                     .do_send(crate::plugin_host_actor::SendMessageToPlugin {
@@ -739,8 +740,8 @@ impl Handler<SendMessageToCore> for CoreActor {
         {
             // pluginからのrequest_id付きメッセージはrequest/responseとして処理する。
 
-            let requester = match message.src {
-                MessageSource::Plugin { plugin_id } => plugin_id,
+            let requester = match &message.src {
+                MessageSource::Plugin { plugin_id } => plugin_id.clone(),
                 MessageSource::Core => {
                     tracing::warn!(
                         target: "mcv::core::CoreActor",
@@ -808,11 +809,9 @@ impl Handler<SendMessageToCore> for CoreActor {
                 if let Ok(payload) =
                     serde_json::from_value::<SettingsSchemaPayload>(message.payload.clone())
                 {
-                    if let Ok(plugin_uuid) = Uuid::parse_str(&payload.target) {
-                        let logical_id = LogicalPluginId::from_uuid(plugin_uuid);
-                        if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
-                            info.settings_schema = Some(payload.schema);
-                        }
+                    let logical_id = PluginId::new(&payload.target);
+                    if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
+                        info.settings_schema = Some(payload.schema);
                     }
                 }
                 if let Some(ref callback) = self.event_callback {
@@ -825,11 +824,9 @@ impl Handler<SendMessageToCore> for CoreActor {
                 if let Ok(payload) =
                     serde_json::from_value::<SettingsDataPayload>(message.payload.clone())
                 {
-                    if let Ok(plugin_uuid) = Uuid::parse_str(&payload.target) {
-                        let logical_id = LogicalPluginId::from_uuid(plugin_uuid);
-                        if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
-                            info.settings_data = Some(payload.data);
-                        }
+                    let logical_id = PluginId::new(&payload.target);
+                    if let Some(info) = self.logical_plugins.get_mut(&logical_id) {
+                        info.settings_data = Some(payload.data);
                     }
                 }
                 if let Some(ref callback) = self.event_callback {
@@ -1203,11 +1200,11 @@ impl Handler<DetectUrl> for CoreActor {
     type Result = ();
 
     fn handle(&mut self, msg: DetectUrl, ctx: &mut Self::Context) {
-        let mut providers: Vec<(Uuid, PluginHostAddr)> = self
+        let mut providers: Vec<(PluginId, PluginHostAddr)> = self
             .logical_plugins
             .values()
             .filter(|p| p.role.contains(&"comment-provider".to_string()))
-            .map(|p| (p.logical_plugin_id.inner(), p.host_addr.clone()))
+            .map(|p| (p.plugin_id.clone(), p.host_addr.clone()))
             .collect();
 
         // 複数プラグインが対応する場合の選択を決定論的にするためソート
@@ -1237,7 +1234,9 @@ impl Handler<DetectUrl> for CoreActor {
             let check_msg = McvMessage {
                 message_type: MessageType::CanHandleUrl,
                 src: MessageSource::Core,
-                dst: MessageDestination::Plugin { plugin_id },
+                dst: MessageDestination::Plugin {
+                    plugin_id: plugin_id.clone(),
+                },
                 request_id: Some(request_id),
                 timestamp: chrono::Utc::now().timestamp(),
                 payload: serde_json::to_value(CanHandleUrlPayload {
@@ -1266,7 +1265,7 @@ impl Handler<DetectUrl> for CoreActor {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct RegisterTestLogicalPlugin {
-    pub logical_plugin_id: LogicalPluginId,
+    pub plugin_id: PluginId,
     pub physical_plugin_id: PhysicalPluginId,
     pub host_addr: crate::plugin_loader_strategy::PluginHostAddr,
 }
@@ -1277,7 +1276,7 @@ impl Handler<RegisterTestLogicalPlugin> for CoreActor {
 
     fn handle(&mut self, msg: RegisterTestLogicalPlugin, _ctx: &mut Self::Context) {
         let info = LogicalPluginInfo {
-            logical_plugin_id: msg.logical_plugin_id,
+            plugin_id: msg.plugin_id.clone(),
             physical_plugin_id: msg.physical_plugin_id,
             name: "test-plugin".to_string(),
             role: vec![],
@@ -1287,7 +1286,7 @@ impl Handler<RegisterTestLogicalPlugin> for CoreActor {
             settings_data: None,
             send_comment_schema: None,
         };
-        self.logical_plugins.insert(msg.logical_plugin_id, info);
+        self.logical_plugins.insert(msg.plugin_id, info);
     }
 }
 
@@ -1412,7 +1411,7 @@ mod tests {
     async fn test_none_browser_get_cookie_returns_empty_ack() {
         use crate::internal_message::InternalMessage;
         use crate::plugin_loader_strategy::PluginHostAddr;
-        use crate::site_browser_manager::NONE_BROWSER_PLUGIN_ID;
+        use crate::site_browser_manager::NONE_BROWSER_PLUGIN_ID_STR;
         use mcv_common::PhysicalPluginId;
         use mcv_messages::{
             GetCookieAckPayload, GetCookiePayload, MessageDestination, MessageSource, MessageType,
@@ -1434,9 +1433,9 @@ mod tests {
         let test_actor_addr = test_actor.start();
 
         // プラグイン ID を決める
-        let src_plugin_id = Uuid::new_v4();
+        let src_plugin_id_uuid = Uuid::new_v4();
+        let src_plugin_id = PluginId::new(src_plugin_id_uuid.to_string());
         let src_physical_plugin_id = PhysicalPluginId::from_id(&format!("test-{}", Uuid::new_v4()));
-        let logical_id = LogicalPluginId::from_uuid(src_plugin_id);
 
         // テスト用プラグインを論理プラグインとして CoreActor に登録
         let host_addr = PluginHostAddr::Test(
@@ -1444,7 +1443,7 @@ mod tests {
         );
         core_addr
             .send(RegisterTestLogicalPlugin {
-                logical_plugin_id: logical_id,
+                plugin_id: src_plugin_id.clone(),
                 physical_plugin_id: src_physical_plugin_id.clone(),
                 host_addr,
             })
@@ -1458,10 +1457,10 @@ mod tests {
         let get_cookie_msg = McvMessage::new_request(
             MessageType::GetCookie,
             MessageSource::Plugin {
-                plugin_id: src_plugin_id,
+                plugin_id: src_plugin_id.clone(),
             },
             MessageDestination::Plugin {
-                plugin_id: NONE_BROWSER_PLUGIN_ID,
+                plugin_id: PluginId::new(NONE_BROWSER_PLUGIN_ID_STR),
             },
             serde_json::to_value(GetCookiePayload {
                 browser_id: crate::site_browser_manager::none_browser_id(),

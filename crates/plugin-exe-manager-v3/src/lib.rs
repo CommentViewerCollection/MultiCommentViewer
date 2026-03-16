@@ -5,6 +5,7 @@ pub mod websocket_server;
 
 use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
+    PluginId,
 };
 use mcv_plugin_interface::{PluginError, PluginHost};
 use plugin_abi_helper::v3::prelude::*;
@@ -46,18 +47,21 @@ impl PluginHost for PluginContextAdapter {
 ///
 /// WebSocketサーバーを起動し、EXEプラグインとの通信を仲介する
 pub struct ExePluginManagerV3Impl {
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
+    logical_plugin_uuid: Uuid, // init_tracing 用の UUID
     websocket_server: Option<Arc<WebSocketServer>>,
     process_manager: Option<Arc<RwLock<ProcessManager>>>,
     /// ルーティングテーブル: logical_plugin_id → internal_physical_plugin_id
     /// Coreから送られてきたメッセージのdstに基づいて、対応するEXEプラグインに転送する
-    routing_table: Arc<RwLock<HashMap<Uuid, Uuid>>>,
+    routing_table: Arc<RwLock<HashMap<PluginId, PluginId>>>,
 }
 
 impl ExePluginManagerV3Impl {
     pub fn new() -> Self {
+        let uuid = Uuid::new_v4();
         Self {
-            logical_plugin_id: Uuid::new_v4(), // on_loadedで設定される
+            logical_plugin_id: PluginId::new(format!("EXEPluginManager_logical_{}", uuid)),
+            logical_plugin_uuid: uuid,
             websocket_server: None,
             process_manager: None,
             routing_table: Arc::new(RwLock::new(HashMap::new())),
@@ -69,7 +73,7 @@ impl ExePluginManagerV3Impl {
         // PluginContextAdapterを作成
         let adapter = Arc::new(PluginContextAdapter::new(
             ctx.clone(),
-            self.logical_plugin_id,
+            self.logical_plugin_uuid,
         ));
 
         // WebSocketサーバーを起動（ポート競合時は自動的に次のポートを試行）
@@ -117,7 +121,10 @@ impl ExePluginManagerV3Impl {
                 // 非同期コンテキストで実行する必要があるため、tokio::spawnを使用
                 let routing_table = Arc::clone(&routing_table_clone);
                 tokio::spawn(async move {
-                    routing_table.write().await.insert(logical_id, internal_id);
+                    routing_table
+                        .write()
+                        .await
+                        .insert(logical_id.clone(), internal_id.clone());
                     tracing::debug!(
                         logical_plugin_id = %logical_id,
                         internal_physical_plugin_id = %internal_id,
@@ -168,7 +175,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         // mcv-tracing初期化
         let adapter = Arc::new(PluginContextAdapter::new(
             ctx.clone(),
-            self.logical_plugin_id,
+            self.logical_plugin_uuid,
         ));
         #[cfg(feature = "alpha")]
         let log_level = "trace";
@@ -179,7 +186,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
         let log_level = "trace";
         if let Err(e) = mcv_plugin_telemetry::init_tracing(
-            self.logical_plugin_id,
+            self.logical_plugin_uuid,
             adapter.clone(),
             env!("CARGO_PKG_VERSION"),
             log_level,
@@ -197,7 +204,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         // plugin-hello送信
         let hello_payload = PluginHelloPayload {
             name: "EXE Plugin Manager".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec!["exe-plugin-manager".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
@@ -206,7 +213,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.logical_plugin_id,
+                plugin_id: self.logical_plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),
@@ -242,10 +249,11 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         };
 
         // dstに基づいてルーティング
-        match message.dst {
+        // ボロー競合を避けるため、まずルーティングキーを取り出してからmessageを転送する
+        let routing_key = match &message.dst {
             MessageDestination::Plugin { plugin_id } => {
                 // 自分宛てかチェック
-                if plugin_id == self.logical_plugin_id {
+                if plugin_id == &self.logical_plugin_id {
                     // EXE Plugin Manager自身宛てのメッセージ
                     // 現在は何もしない（将来の拡張用）
                     tracing::trace!(
@@ -254,33 +262,7 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
                     );
                     return;
                 }
-
-                // ルーティングテーブルを引いてEXEプラグインに転送
-                if let Some(websocket_server) = &self.websocket_server {
-                    let routing_table = self.routing_table.read().await;
-                    if let Some(internal_physical_plugin_id) = routing_table.get(&plugin_id) {
-                        let internal_physical_plugin_id = *internal_physical_plugin_id;
-                        drop(routing_table); // ロック解放
-
-                        let router = websocket_server.get_router();
-                        if let Err(e) = router
-                            .route_to_plugin(internal_physical_plugin_id, message)
-                            .await
-                        {
-                            tracing::error!(
-                                error = %e,
-                                logical_plugin_id = %plugin_id,
-                                internal_physical_plugin_id = %internal_physical_plugin_id,
-                                "Failed to route message to EXE plugin"
-                            );
-                        }
-                    } else {
-                        tracing::warn!(
-                            plugin_id = %plugin_id,
-                            "Received message for unknown EXE plugin (not in routing table)"
-                        );
-                    }
-                }
+                plugin_id.clone()
             }
             MessageDestination::Core => {
                 // Coreへのメッセージ（通常は発生しない）
@@ -288,12 +270,41 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
                     target: "mcv::plugin_exe_manager",
                     "Received message destined for Core (unexpected)"
                 );
+                return;
             }
             MessageDestination::Broadcast => {
                 // Broadcastはbroadcast_to_all_logical_pluginsでPlugin{plugin_id}に変換されるはず
                 tracing::warn!(
                     target: "mcv::plugin_exe_manager",
                     "Received Broadcast message (should have been converted to Plugin)"
+                );
+                return;
+            }
+        };
+
+        // ルーティングテーブルを引いてEXEプラグインに転送
+        if let Some(websocket_server) = &self.websocket_server {
+            let routing_table = self.routing_table.read().await;
+            if let Some(internal_physical_plugin_id) = routing_table.get(&routing_key) {
+                let internal_physical_plugin_id = internal_physical_plugin_id.clone();
+                drop(routing_table); // ロック解放
+
+                let router = websocket_server.get_router();
+                if let Err(e) = router
+                    .route_to_plugin(internal_physical_plugin_id.clone(), message)
+                    .await
+                {
+                    tracing::error!(
+                        error = %e,
+                        logical_plugin_id = %routing_key,
+                        internal_physical_plugin_id = %internal_physical_plugin_id,
+                        "Failed to route message to EXE plugin"
+                    );
+                }
+            } else {
+                tracing::warn!(
+                    plugin_id = %routing_key,
+                    "Received message for unknown EXE plugin (not in routing table)"
                 );
             }
         }

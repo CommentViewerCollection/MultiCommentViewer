@@ -9,7 +9,7 @@ use connection::Connection;
 use mcv_common::SiteId;
 use mcv_messages::{
     AddSitePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload,
+    PluginHelloPayload, PluginId,
 };
 use message_handler::on_message_impl;
 use plugin_abi_helper::v3::prelude::*;
@@ -18,13 +18,13 @@ use uuid::Uuid;
 
 #[derive(Default)]
 pub(crate) struct NicoLivePlugin {
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     is_initialized: bool,
     connections: HashMap<Uuid, Connection>,
 }
 
 impl NicoLivePlugin {
-    pub fn initialize(&mut self, logical_plugin_id: Uuid) {
+    pub fn initialize(&mut self, logical_plugin_id: PluginId) {
         if self.is_initialized {
             return;
         }
@@ -46,7 +46,7 @@ impl NicoLivePlugin {
         &self,
         ctx: PluginContext,
         payload: PluginHelloPayload,
-        plugin_id: Uuid,
+        plugin_id: PluginId,
     ) {
         let message = McvMessage::new_notification(
             MessageType::PluginHello,
@@ -57,7 +57,12 @@ impl NicoLivePlugin {
         Self::send_message(ctx, message).await;
     }
 
-    async fn send_add_site(&self, ctx: PluginContext, payload: AddSitePayload, plugin_id: Uuid) {
+    async fn send_add_site(
+        &self,
+        ctx: PluginContext,
+        payload: AddSitePayload,
+        plugin_id: PluginId,
+    ) {
         let message = McvMessage::new_notification(
             MessageType::AddSite,
             MessageSource::Plugin { plugin_id },
@@ -71,7 +76,8 @@ impl NicoLivePlugin {
 #[async_trait::async_trait]
 impl PluginImplV3Async for NicoLivePlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        let logical_plugin_id = Uuid::new_v4();
+        let uuid = Uuid::new_v4();
+        let logical_plugin_id = PluginId::new(format!("NicoLive_logical_{}", uuid));
         let adapter = Arc::new(PluginContextAdapter::new(ctx.clone()));
         #[cfg(feature = "alpha")]
         let log_level = "trace";
@@ -81,12 +87,8 @@ impl PluginImplV3Async for NicoLivePlugin {
         let log_level = "error";
         #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
         let log_level = "trace";
-        let result_init_tracing = mcv_plugin_telemetry::init_tracing(
-            logical_plugin_id,
-            adapter,
-            env!("CARGO_PKG_VERSION"),
-            log_level,
-        );
+        let result_init_tracing =
+            mcv_plugin_telemetry::init_tracing(uuid, adapter, env!("CARGO_PKG_VERSION"), log_level);
         match result_init_tracing {
             Ok(_) => {
                 tracing::trace!(target: "mcv::plugin-nicolive", "init_tracing() success");
@@ -97,12 +99,12 @@ impl PluginImplV3Async for NicoLivePlugin {
 
         let hello_payload = PluginHelloPayload {
             name: "NicoLive".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec!["nicolive".to_string(), "comment-provider".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
         };
-        self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id)
+        self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id.clone())
             .await;
 
         let add_site = AddSitePayload {
@@ -110,7 +112,7 @@ impl PluginImplV3Async for NicoLivePlugin {
             display_name: "ニコニコ生放送".to_owned(),
             options_schema: serde_json::from_str("{}").unwrap(),
         };
-        self.send_add_site(ctx.clone(), add_site, self.logical_plugin_id)
+        self.send_add_site(ctx.clone(), add_site, self.logical_plugin_id.clone())
             .await;
     }
 

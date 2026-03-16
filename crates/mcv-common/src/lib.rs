@@ -10,7 +10,7 @@ pub mod plugin_id;
 pub mod site_id;
 
 pub use browser_id::BrowserId;
-pub use plugin_id::{LogicalPluginId, PhysicalPluginId};
+pub use plugin_id::{PhysicalPluginId, PluginId};
 pub use site_id::SiteId;
 
 pub const APP_NAME: &str = "MultiCommentViewer";

@@ -44,7 +44,9 @@ async fn start_mock_server() -> String {
                                         // get-pluginsに対するレスポンスとしてエコーバック
                                         let plugin_id = match mcv_msg.src {
                                             MessageSource::Plugin { plugin_id } => plugin_id,
-                                            _ => uuid::Uuid::nil(),
+                                            _ => mcv_messages::PluginId::new(
+                                                uuid::Uuid::nil().to_string(),
+                                            ),
                                         };
                                         let response = McvMessage::new_request(
                                             MessageType::PluginAdded,

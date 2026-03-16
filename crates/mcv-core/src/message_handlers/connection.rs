@@ -1,5 +1,4 @@
 use actix::Context;
-use mcv_common::LogicalPluginId;
 use mcv_messages::{
     BrowserInfo as MsgBrowserInfo, ConnectFailedPayload, ConnectPayload, ConnectedPayload,
     ConnectionAddedPayload, ConnectionInputSchemaPayload, DisconnectPayload, DisconnectedPayload,
@@ -182,25 +181,23 @@ pub fn handle_connect(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut Co
 
     // plugin_idを取得
     if let Some(conn_info) = actor.connection_manager.get_connection(&connection_id) {
-        if let Some(plugin_id_uuid) = conn_info.plugin_id {
-            let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-
+        if let Some(plugin_id) = &conn_info.plugin_id {
             // デバッグ: 登録されている全plugin_idをログ出力
             let registered_plugin_ids: Vec<String> =
                 plugins.keys().map(|id| id.to_string()).collect();
             tracing::debug!(
                 target: "mcv::core::CoreActor",
                 connection_id = %connection_id,
-                plugin_id_from_connection = %plugin_id_uuid,
+                plugin_id_from_connection = %plugin_id,
                 registered_plugin_ids = ?registered_plugin_ids,
                 "Attempting to find plugin for connection"
             );
 
             // プラグインへconnectメッセージを転送
-            if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
+            if let Some(plugin_info) = plugins.get(plugin_id) {
                 tracing::debug!(
                     target: "mcv::core::CoreActor",
-                    plugin_id = %plugin_id_uuid,
+                    plugin_id = %plugin_id,
                     plugin_name = %plugin_info.name,
                     connection_id = %connection_id,
                     "Found plugin, forwarding connect message"
@@ -211,7 +208,7 @@ pub fn handle_connect(actor: &mut CoreActor, message: &McvMessage, _ctx: &mut Co
             } else {
                 tracing::error!(
                     target: "mcv::core::CoreActor",
-                    plugin_id = %plugin_id_uuid,
+                    plugin_id = %plugin_id,
                     connection_id = %connection_id,
                     registered_plugin_count = plugins.len(),
                     "Plugin not found - plugin_id mismatch detected"
@@ -366,9 +363,8 @@ pub fn handle_disconnect(
         let msg = message.clone();
 
         if let Some(conn_info) = actor.connection_manager.get_connection(&connection_id) {
-            if let Some(plugin_id_uuid) = conn_info.plugin_id {
-                let logical_plugin_id = LogicalPluginId::from_uuid(plugin_id_uuid);
-                if let Some(plugin_info) = plugins.get(&logical_plugin_id) {
+            if let Some(plugin_id) = &conn_info.plugin_id {
+                if let Some(plugin_info) = plugins.get(plugin_id) {
                     plugin_info
                         .host_addr
                         .do_send(SendMessageToPlugin { message: msg });
@@ -445,15 +441,15 @@ pub fn handle_update_connection_account(
 
     // 送信元プラグインと現在の接続先プラグインが一致しない場合は破棄する。
     // サイト切り替え直後に古いプラグインから遅延通知が届いても上書きしないためのガード。
-    let src_plugin_id = match message.src {
-        MessageSource::Plugin { plugin_id } => Some(plugin_id),
+    let src_plugin_id = match &message.src {
+        MessageSource::Plugin { plugin_id } => Some(plugin_id.clone()),
         MessageSource::Core => None,
     };
     if let Some(current_conn) = actor
         .connection_manager
         .get_connection(&payload.connection_id)
     {
-        if let (Some(src), Some(current)) = (src_plugin_id, current_conn.plugin_id) {
+        if let (Some(src), Some(current)) = (src_plugin_id, current_conn.plugin_id.clone()) {
             if src != current {
                 tracing::warn!(
                     connection_id = %payload.connection_id,

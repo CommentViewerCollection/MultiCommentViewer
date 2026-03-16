@@ -6,7 +6,7 @@
 use mcv_messages::{
     AddBrowserAckPayload, AddBrowserPayload, BrowserId, Cookie as McvCookie, GetCookieAckPayload,
     GetCookiePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload, RemoveBrowserPayload, SettingsDataPayload, SettingsSchemaPayload,
+    PluginHelloPayload, PluginId, RemoveBrowserPayload, SettingsDataPayload, SettingsSchemaPayload,
     UpdateSettingsPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
@@ -36,7 +36,7 @@ struct CookiesTxtEntry {
 /// プラグイン本体
 #[derive(Default)]
 struct CookiesTxtPlugin {
-    logical_plugin_id: Uuid,
+    logical_plugin_id: PluginId,
     entries: Vec<CookiesTxtEntry>,
 }
 
@@ -141,7 +141,7 @@ impl CookiesTxtPlugin {
         let message = McvMessage::new_request(
             MessageType::AddBrowser,
             MessageSource::Plugin {
-                plugin_id: self.logical_plugin_id,
+                plugin_id: self.logical_plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(&payload).unwrap(),
@@ -218,7 +218,7 @@ impl CookiesTxtPlugin {
 #[async_trait]
 impl PluginImplV3Async for CookiesTxtPlugin {
     async fn on_loaded(&mut self, ctx: PluginContext) {
-        self.logical_plugin_id = Uuid::new_v4();
+        self.logical_plugin_id = PluginId::new(format!("CookiesTxt_logical_{}", Uuid::new_v4()));
 
         tracing::info!(
             target: "mcv::plugin-cookies-txt",
@@ -229,7 +229,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
         // plugin-hello を Core に送信
         let hello_payload = PluginHelloPayload {
             name: "cookie.txt読み込み".to_string(),
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
             role: vec!["browser-cookie".to_string()],
             api_version: "v3".to_string(),
             send_comment_schema: None,
@@ -237,7 +237,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
         let message = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.logical_plugin_id,
+                plugin_id: self.logical_plugin_id.clone(),
             },
             MessageDestination::Core,
             serde_json::to_value(&hello_payload).unwrap(),
@@ -260,7 +260,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
 
         // 設定スキーマ・データを Core にキャッシュ登録
         let src = MessageSource::Plugin {
-            plugin_id: self.logical_plugin_id,
+            plugin_id: self.logical_plugin_id.clone(),
         };
 
         let schema_msg = McvMessage::new_notification(
@@ -431,7 +431,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
                         // Core のキャッシュをアクションJSONではなく正しい entries データで更新する
                         // （Core の handle_update_settings はアクションJSONをキャッシュに保存してしまうため）
                         let src = MessageSource::Plugin {
-                            plugin_id: self.logical_plugin_id,
+                            plugin_id: self.logical_plugin_id.clone(),
                         };
                         let data_msg = McvMessage::new_notification(
                             MessageType::SettingsData,
@@ -467,7 +467,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
 
                             // Core のキャッシュを更新
                             let src = MessageSource::Plugin {
-                                plugin_id: self.logical_plugin_id,
+                                plugin_id: self.logical_plugin_id.clone(),
                             };
                             let data_msg = McvMessage::new_notification(
                                 MessageType::SettingsData,

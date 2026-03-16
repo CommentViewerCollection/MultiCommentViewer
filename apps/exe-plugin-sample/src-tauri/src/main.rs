@@ -4,8 +4,8 @@
 mod ws_tracing;
 use mcv_messages::{
     AddSitePayload, CommentReceivedPayload, GetLogsDirPayload, LogsDirAckPayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginRemovedPayload,
-    SiteId,
+    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginId,
+    PluginRemovedPayload, SiteId,
 };
 
 /// リプレイ専用サイトの静的 ID（"replay_{uuid}" 形式）
@@ -21,7 +21,7 @@ use uuid::Uuid;
 /// プラグイン情報
 #[derive(Clone, serde::Serialize, Debug)]
 struct PluginInfo {
-    plugin_id: Uuid,
+    plugin_id: String,
     name: String,
     roles: Vec<String>,
     api_version: String,
@@ -62,7 +62,7 @@ struct AppState {
     plugin_id: Arc<RwLock<Option<Uuid>>>,
     connected: Arc<RwLock<bool>>,
     // 状態管理用フィールド
-    plugins: Arc<RwLock<HashMap<Uuid, PluginInfo>>>,
+    plugins: Arc<RwLock<HashMap<String, PluginInfo>>>,
     connections: Arc<RwLock<HashMap<Uuid, ConnectionInfo>>>,
     sites: Arc<RwLock<HashMap<Uuid, SiteInfo>>>,
     browsers: Arc<RwLock<HashMap<Uuid, BrowserInfo>>>,
@@ -77,7 +77,7 @@ struct AppState {
 #[allow(clippy::too_many_arguments)]
 async fn handle_message_state_update(
     message: &McvMessage,
-    plugins: Arc<RwLock<HashMap<Uuid, PluginInfo>>>,
+    plugins: Arc<RwLock<HashMap<String, PluginInfo>>>,
     connections: Arc<RwLock<HashMap<Uuid, ConnectionInfo>>>,
     _sites: Arc<RwLock<HashMap<Uuid, SiteInfo>>>,
     _browsers: Arc<RwLock<HashMap<Uuid, BrowserInfo>>>,
@@ -100,7 +100,7 @@ async fn handle_message_state_update(
                 let plugin_id = payload
                     .get("plugin_id")
                     .and_then(|v| v.as_str())
-                    .and_then(|s| Uuid::parse_str(s).ok());
+                    .map(|s| s.to_string());
                 let name = payload.get("name").and_then(|v| v.as_str());
                 let roles = payload.get("role").and_then(|v| v.as_array());
                 let api_version = payload.get("api_version").and_then(|v| v.as_str());
@@ -123,7 +123,7 @@ async fn handle_message_state_update(
                     (plugin_id, name, roles, api_version)
                 {
                     let plugin_info = PluginInfo {
-                        plugin_id,
+                        plugin_id: plugin_id.clone(),
                         name: name.to_string(),
                         roles: roles
                             .iter()
@@ -131,15 +131,15 @@ async fn handle_message_state_update(
                             .collect(),
                         api_version: api_version.to_string(),
                     };
-                    plugins.write().await.insert(plugin_id, plugin_info);
+                    plugins.write().await.insert(plugin_id.clone(), plugin_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, name = %name, "Plugin added to state");
                     let _ = app.emit("plugins-updated", ());
 
                     // 自分自身の PluginAdded なら replay サイトを AddSite で登録
-                    if plugin_id == self_pid {
+                    if plugin_id == self_pid.to_string() {
                         let add_site_msg = McvMessage::new_request(
                             MessageType::AddSite,
-                            MessageSource::Plugin { plugin_id: self_pid },
+                            MessageSource::Plugin { plugin_id: PluginId::new(self_pid.to_string()) },
                             MessageDestination::Core,
                             serde_json::to_value(AddSitePayload {
                                 site_id: SiteId::from_string(REPLAY_SITE_ID.to_string()),
@@ -319,7 +319,7 @@ async fn handle_message_state_update(
                 let plugin_id = payload
                     .get("plugin_id")
                     .and_then(|v| v.as_str())
-                    .and_then(|s| Uuid::parse_str(s).ok());
+                    .map(|s| s.to_string());
 
                 // 欠落フィールドをチェック
                 if plugin_id.is_none() {
@@ -342,14 +342,14 @@ async fn handle_message_state_update(
             {
                 let mut plugins_guard = plugins.write().await;
                 for plugin_added in payload.plugins {
-                    let plugin_id = plugin_added.plugin_id;
+                    let plugin_id = plugin_added.plugin_id.to_string();
                     let plugin_info = PluginInfo {
-                        plugin_id,
+                        plugin_id: plugin_id.clone(),
                         name: plugin_added.name,
                         roles: plugin_added.role,
                         api_version: plugin_added.api_version,
                     };
-                    plugins_guard.insert(plugin_id, plugin_info);
+                    plugins_guard.insert(plugin_id.clone(), plugin_info);
                     tracing::info!(target: "mcv::exe-plugin-sample", plugin_id = %plugin_id, "Plugin added to state via get-plugins response");
                 }
                 drop(plugins_guard);
@@ -525,7 +525,9 @@ async fn handle_message_state_update(
                         // Connected を即座に送信（apps/mcv の接続ボタンを更新）
                         let connected_msg = McvMessage::new_notification(
                             MessageType::Connected,
-                            MessageSource::Plugin { plugin_id },
+                            MessageSource::Plugin {
+                                plugin_id: PluginId::new(plugin_id.to_string()),
+                            },
                             MessageDestination::Core,
                             serde_json::to_value(mcv_messages::ConnectedPayload {
                                 connection_id: trigger_conn_id,
@@ -678,7 +680,9 @@ async fn run_replay_simple(
 
         let msg = McvMessage::new_notification(
             MessageType::CommentReceived,
-            MessageSource::Plugin { plugin_id },
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(plugin_id.to_string()),
+            },
             MessageDestination::Core,
             serde_json::to_value(payload).unwrap(),
         );
@@ -696,7 +700,9 @@ async fn run_replay_simple(
     if let Some(tcid) = trigger_conn_id {
         let disconnect_msg = McvMessage::new_notification(
             MessageType::Disconnected,
-            MessageSource::Plugin { plugin_id },
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(plugin_id.to_string()),
+            },
             MessageDestination::Core,
             serde_json::to_value(mcv_messages::DisconnectedPayload {
                 connection_id: tcid,
@@ -769,7 +775,9 @@ async fn connect_to_mcv(
     // GetLogsDir リクエストを送信（LogsDirAck でセッション DB を作成する）
     let get_logs_dir_msg = McvMessage::new_request(
         MessageType::GetLogsDir,
-        MessageSource::Plugin { plugin_id },
+        MessageSource::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         MessageDestination::Core,
         serde_json::to_value(GetLogsDirPayload {}).unwrap(),
     );
@@ -855,9 +863,8 @@ async fn get_plugin(
     plugin_id: String,
     state: State<'_, AppState>,
 ) -> Result<Option<PluginInfo>, String> {
-    let uuid = Uuid::parse_str(&plugin_id).map_err(|e| format!("Invalid UUID: {}", e))?;
     let plugins = state.plugins.read().await;
-    Ok(plugins.get(&uuid).cloned())
+    Ok(plugins.get(&plugin_id).cloned())
 }
 
 /// 接続一覧を取得
@@ -917,9 +924,14 @@ async fn disconnect_from_mcv(state: State<'_, AppState>) -> Result<(), String> {
         if let Some(pid) = *plugin_id_guard {
             let msg = McvMessage::new_notification(
                 MessageType::PluginRemoved,
-                MessageSource::Plugin { plugin_id: pid },
+                MessageSource::Plugin {
+                    plugin_id: PluginId::new(pid.to_string()),
+                },
                 MessageDestination::Core,
-                serde_json::to_value(PluginRemovedPayload { plugin_id: pid }).unwrap(),
+                serde_json::to_value(PluginRemovedPayload {
+                    plugin_id: PluginId::new(pid.to_string()),
+                })
+                .unwrap(),
             );
             let _ = client.send_message(msg);
             tracing::info!(target:"mcv::exe-plugin-sample", plugin_id = %pid, "Sent PluginRemoved before disconnect");

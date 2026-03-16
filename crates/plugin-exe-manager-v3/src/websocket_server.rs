@@ -2,7 +2,7 @@ use crate::routing::{ClientInfo, MessageRouter};
 use futures_util::{SinkExt, StreamExt};
 use mcv_messages::{
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
-    PluginRemovedPayload,
+    PluginId, PluginRemovedPayload,
 };
 use mcv_plugin_interface::PluginHost;
 use std::collections::HashMap;
@@ -11,9 +11,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 use tokio_tungstenite::tungstenite::Message as WsMessage;
-use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum WebSocketError {
@@ -24,7 +23,7 @@ pub enum WebSocketError {
     WebSocket(String),
 
     #[error("Plugin not found: {0}")]
-    PluginNotFound(Uuid),
+    PluginNotFound(String),
 
     #[error("Send error: {0}")]
     SendError(String),
@@ -33,13 +32,13 @@ pub enum WebSocketError {
 /// WebSocketサーバー
 pub struct WebSocketServer {
     port: u16,
-    clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+    clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
     router: Arc<MessageRouter>,
     shutdown_tx: Option<mpsc::Sender<()>>,
     /// plugin-hello受信時のコールバック (internal_physical_plugin_id, logical_plugin_id)
-    on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
+    on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(PluginId, PluginId) + Send + Sync>>>>,
     /// プラグイン切断時のコールバック (logical_plugin_id)
-    on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(Uuid) + Send + Sync>>>>,
+    on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(PluginId) + Send + Sync>>>>,
 }
 
 impl WebSocketServer {
@@ -103,10 +102,10 @@ impl WebSocketServer {
     /// サーバーループ
     async fn server_loop(
         listener: TcpListener,
-        clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+        clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
-        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
-        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(Uuid) + Send + Sync>>>>,
+        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(PluginId, PluginId) + Send + Sync>>>>,
+        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(PluginId) + Send + Sync>>>>,
         mut shutdown_rx: mpsc::Receiver<()>,
     ) {
         loop {
@@ -150,10 +149,10 @@ impl WebSocketServer {
     /// クライアント接続を処理
     async fn handle_connection(
         stream: TcpStream,
-        clients: Arc<RwLock<HashMap<Uuid, ClientInfo>>>,
+        clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
-        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(Uuid, Uuid) + Send + Sync>>>>,
-        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(Uuid) + Send + Sync>>>>,
+        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(PluginId, PluginId) + Send + Sync>>>>,
+        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(PluginId) + Send + Sync>>>>,
     ) -> Result<(), WebSocketError> {
         let ws_stream = tokio_tungstenite::accept_async(stream)
             .await
@@ -167,8 +166,8 @@ impl WebSocketServer {
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
         let (tx, mut rx) = mpsc::unbounded_channel::<McvMessage>();
 
-        let mut plugin_id: Option<Uuid> = None;
-        let mut logical_plugin_id: Option<Uuid> = None;
+        let mut plugin_id: Option<PluginId> = None;
+        let mut logical_plugin_id: Option<PluginId> = None;
 
         // 30秒ごとのハートビートタイマー
         let mut heartbeat = tokio::time::interval(Duration::from_secs(30));
@@ -222,19 +221,19 @@ impl WebSocketServer {
                                         if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
                                             mcv_message.payload.clone(),
                                         ) {
-                                            let internal_physical_plugin_id = payload.plugin_id;
+                                            let internal_physical_plugin_id = payload.plugin_id.clone();
 
                                             // mcv_messageのsrcからlogical_plugin_idを取得
                                             let log_pid = match &mcv_message.src {
-                                                mcv_messages::MessageSource::Plugin { plugin_id: pid } => *pid,
-                                                _ => payload.plugin_id, // フォールバック
+                                                mcv_messages::MessageSource::Plugin { plugin_id: pid } => pid.clone(),
+                                                _ => payload.plugin_id.clone(), // フォールバック
                                             };
 
-                                            plugin_id = Some(internal_physical_plugin_id);
-                                            logical_plugin_id = Some(log_pid);
+                                            plugin_id = Some(internal_physical_plugin_id.clone());
+                                            logical_plugin_id = Some(log_pid.clone());
 
                                             let client = ClientInfo {
-                                                plugin_id: internal_physical_plugin_id,
+                                                plugin_id: internal_physical_plugin_id.clone(),
                                                 sender: tx.clone(),
                                                 roles: payload.role.clone(),
                                             };
@@ -242,7 +241,7 @@ impl WebSocketServer {
                                             clients
                                                 .write()
                                                 .await
-                                                .insert(internal_physical_plugin_id, client);
+                                                .insert(internal_physical_plugin_id.clone(), client);
 
                                             println!(
                                                 "=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
@@ -365,9 +364,14 @@ impl WebSocketServer {
 
             let msg = McvMessage::new_notification(
                 MessageType::PluginRemoved,
-                MessageSource::Plugin { plugin_id: log_pid },
+                MessageSource::Plugin {
+                    plugin_id: log_pid.clone(),
+                },
                 MessageDestination::Core,
-                serde_json::to_value(PluginRemovedPayload { plugin_id: log_pid }).unwrap(),
+                serde_json::to_value(PluginRemovedPayload {
+                    plugin_id: log_pid.clone(),
+                })
+                .unwrap(),
             );
 
             if let Err(e) = host.send_message(msg).await {
@@ -402,7 +406,7 @@ impl WebSocketServer {
     /// plugin-hello受信時のコールバックを設定
     pub async fn set_on_plugin_registered<F>(&self, callback: F)
     where
-        F: Fn(Uuid, Uuid) + Send + Sync + 'static,
+        F: Fn(PluginId, PluginId) + Send + Sync + 'static,
     {
         let mut cb = self.on_plugin_registered.write().await;
         *cb = Some(Arc::new(callback));
@@ -411,7 +415,7 @@ impl WebSocketServer {
     /// プラグイン切断時のコールバックを設定
     pub async fn set_on_plugin_disconnected<F>(&self, callback: F)
     where
-        F: Fn(Uuid) + Send + Sync + 'static,
+        F: Fn(PluginId) + Send + Sync + 'static,
     {
         let mut cb = self.on_plugin_disconnected.write().await;
         *cb = Some(Arc::new(callback));
@@ -444,12 +448,13 @@ mod tests {
     #[test]
     fn test_websocket_client_creation() {
         let (tx, _rx) = mpsc::unbounded_channel();
+        let plugin_id = PluginId::new("test_plugin_logical_001");
         let client = ClientInfo {
-            plugin_id: Uuid::new_v4(),
+            plugin_id: plugin_id.clone(),
             sender: tx,
             roles: vec!["test".to_string()],
         };
 
-        assert!(!client.plugin_id.is_nil());
+        assert_eq!(client.plugin_id, plugin_id);
     }
 }

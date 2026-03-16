@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 /// 物理プラグインID（plugin.json の id フィールドに対応する文字列）
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -21,25 +20,23 @@ impl std::fmt::Display for PhysicalPluginId {
     }
 }
 
-/// 論理プラグインID（plugin-helloで登録）
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct LogicalPluginId(Uuid);
+/// 論理プラグインID（plugin-hello で送信するランタイム識別子）
+///
+/// 値は一意であれば何でも良い。推奨形式: "{PluginName}_logical_{uuid}"
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub struct PluginId(String);
 
-impl LogicalPluginId {
-    pub fn new() -> Self {
-        Self(Uuid::new_v4())
+impl PluginId {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
     }
 
-    pub fn inner(&self) -> Uuid {
-        self.0
-    }
-
-    pub fn from_uuid(uuid: Uuid) -> Self {
-        Self(uuid)
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
-impl std::fmt::Display for LogicalPluginId {
+impl std::fmt::Display for PluginId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -63,17 +60,18 @@ mod tests {
     }
 
     #[test]
-    fn test_logical_plugin_id() {
-        let id1 = LogicalPluginId::new();
-        let id2 = LogicalPluginId::new();
+    fn test_plugin_id() {
+        let id1 = PluginId::new("DummyPlugin_logical_550e8400-e29b-41d4-a716-446655440000");
+        let id2 = PluginId::new("DummyPlugin_logical_661f9511-f3ac-52e5-b827-557766551111");
         assert_ne!(id1, id2);
 
-        let uuid = Uuid::new_v4();
-        let id3 = LogicalPluginId::from_uuid(uuid);
-        assert_eq!(id3.inner(), uuid);
+        let id3 = PluginId::new("DummyPlugin_logical_550e8400-e29b-41d4-a716-446655440000");
+        assert_eq!(id1, id3);
 
-        let id_str = id1.to_string();
-        assert!(!id_str.is_empty());
+        assert_eq!(
+            id1.as_str(),
+            "DummyPlugin_logical_550e8400-e29b-41d4-a716-446655440000"
+        );
     }
 
     #[test]
@@ -83,9 +81,9 @@ mod tests {
         let deserialized: PhysicalPluginId = serde_json::from_str(&json).unwrap();
         assert_eq!(physical_id, deserialized);
 
-        let logical_id = LogicalPluginId::new();
-        let json = serde_json::to_string(&logical_id).unwrap();
-        let deserialized: LogicalPluginId = serde_json::from_str(&json).unwrap();
-        assert_eq!(logical_id, deserialized);
+        let plugin_id = PluginId::new("DummyPlugin_logical_test-uuid");
+        let json = serde_json::to_string(&plugin_id).unwrap();
+        let deserialized: PluginId = serde_json::from_str(&json).unwrap();
+        assert_eq!(plugin_id, deserialized);
     }
 }

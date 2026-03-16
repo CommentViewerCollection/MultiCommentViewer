@@ -3,7 +3,7 @@
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType, MonetaryInfo, Money,
+    MessageDestination, MessagePart, MessageSource, MessageType, MonetaryInfo, Money, PluginId,
     ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
     StreamMetadataPayload, SystemKind, UpdateConnectionAccountPayload,
 };
@@ -95,7 +95,7 @@ impl Connection {
     pub(crate) fn connect(
         &mut self,
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         ws_url: &str,
         title: Option<String>,
         start_time: Option<i64>,
@@ -131,7 +131,7 @@ impl Connection {
 
     fn start_connection_task(
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         connection_id: Uuid,
         ws_url: String,
         title: Option<String>,
@@ -155,7 +155,7 @@ impl Connection {
                 let ctx_loop = ctx.clone();
                 Self::run_websocket_loop(
                     ctx_loop,
-                    logical_plugin_id,
+                    logical_plugin_id.clone(),
                     connection_id,
                     &ws_url,
                     title,
@@ -168,7 +168,7 @@ impl Connection {
                 let clear_account = McvMessage::new_notification(
                     MessageType::UpdateConnectionAccount,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(UpdateConnectionAccountPayload {
@@ -215,7 +215,7 @@ impl Connection {
     // ── 外側ループ: reconnect メッセージで新 URL に切り替える ──────────────────
     async fn run_websocket_loop(
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         connection_id: Uuid,
         initial_ws_url: &str,
         title: Option<String>,
@@ -227,7 +227,7 @@ impl Connection {
         'outer: loop {
             let reconnect = Self::run_single_connection(
                 ctx.clone(),
-                logical_plugin_id,
+                logical_plugin_id.clone(),
                 connection_id,
                 &current_url,
                 title.clone(),
@@ -270,7 +270,7 @@ impl Connection {
     // ── 内側ループ: 単一 WebSocket セッション ────────────────────────────────
     async fn run_single_connection(
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         connection_id: Uuid,
         ws_url: &str,
         title: Option<String>,
@@ -332,7 +332,7 @@ impl Connection {
             let msg = McvMessage::new_notification(
                 MessageType::StreamMetadata,
                 MessageSource::Plugin {
-                    plugin_id: logical_plugin_id,
+                    plugin_id: logical_plugin_id.clone(),
                 },
                 MessageDestination::Core,
                 serde_json::to_value(payload).unwrap(),
@@ -387,7 +387,7 @@ impl Connection {
                                     view_poll_guard = Some(AbortGuard(
                                         tokio::spawn(Self::poll_view_uri(
                                             view_uri, connection_id,
-                                            ctx_poll, logical_plugin_id,
+                                            ctx_poll, logical_plugin_id.clone(),
                                         ))
                                     ));
                                 }
@@ -409,7 +409,7 @@ impl Connection {
                                     let msg = McvMessage::new_notification(
                                         MessageType::StreamMetadata,
                                         MessageSource::Plugin {
-                                            plugin_id: logical_plugin_id,
+                                            plugin_id: logical_plugin_id.clone(),
                                         },
                                         MessageDestination::Core,
                                         serde_json::to_value(payload).unwrap(),
@@ -452,7 +452,7 @@ impl Connection {
         view_uri: String,
         connection_id: Uuid,
         ctx: PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
     ) {
         tracing::info!(
             target: "mcv::plugin-nicolive",
@@ -483,7 +483,7 @@ impl Connection {
                 &at_param,
                 connection_id,
                 &ctx,
-                logical_plugin_id,
+                logical_plugin_id.clone(),
                 &mut fetched_uris,
             )
             .await
@@ -525,7 +525,7 @@ impl Connection {
         at_param: &str,
         connection_id: Uuid,
         ctx: &PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
         fetched_uris: &mut std::collections::HashSet<String>,
     ) -> Result<Option<(Duration, String)>, String> {
         use prost::bytes::{Buf, BufMut, BytesMut};
@@ -593,6 +593,7 @@ impl Connection {
                             );
                             let client = client.clone();
                             let ctx = ctx.clone();
+                            let logical_plugin_id = logical_plugin_id.clone();
                             tokio::spawn(async move {
                                 if let Err(e) = Self::fetch_segment_messages(
                                     &client,
@@ -632,6 +633,7 @@ impl Connection {
                             // 受け取った瞬間にスポーン（full レスポンスを待たない）
                             let client = client.clone();
                             let ctx = ctx.clone();
+                            let logical_plugin_id = logical_plugin_id.clone();
                             tokio::spawn(async move {
                                 if let Err(e) = Self::fetch_segment_messages(
                                     &client,
@@ -697,6 +699,7 @@ impl Connection {
                                 );
                                 let client = client.clone();
                                 let ctx = ctx.clone();
+                                let logical_plugin_id = logical_plugin_id.clone();
                                 tokio::spawn(async move {
                                     if let Err(e) = Self::fetch_segment_messages(
                                         &client,
@@ -874,7 +877,7 @@ impl Connection {
         segment_uri: &str,
         connection_id: Uuid,
         ctx: &PluginContext,
-        logical_plugin_id: Uuid,
+        logical_plugin_id: PluginId,
     ) -> Result<(), String> {
         use prost::bytes::{Buf, BufMut, BytesMut};
 
@@ -936,7 +939,7 @@ impl Connection {
                 let mcv_msg = McvMessage::new_notification(
                     MessageType::CommentReceived,
                     MessageSource::Plugin {
-                        plugin_id: logical_plugin_id,
+                        plugin_id: logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
                     serde_json::to_value(&payload).unwrap_or_default(),

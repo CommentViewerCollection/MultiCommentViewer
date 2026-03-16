@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use mcv_messages::PluginId;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -26,9 +27,10 @@ impl SamplePlugin {
 #[async_trait]
 impl Plugin for SamplePlugin {
     async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
+        let logical_plugin_id = PluginId::new(format!("SamplePluginV2_logical_{}", self.plugin_id));
         let hello = PluginHelloPayload {
             name: "Sample Plugin".into(),
-            plugin_id: self.plugin_id,
+            plugin_id: logical_plugin_id.clone(),
             role: vec!["sample".into()],
             api_version: "v2".into(),
             send_comment_schema: None,
@@ -37,7 +39,7 @@ impl Plugin for SamplePlugin {
         let msg = McvMessage::new_request(
             MessageType::PluginHello,
             MessageSource::Plugin {
-                plugin_id: self.plugin_id,
+                plugin_id: logical_plugin_id,
             },
             MessageDestination::Core,
             serde_json::to_value(hello).unwrap(),

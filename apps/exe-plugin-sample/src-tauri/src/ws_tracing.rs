@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcv_messages::{LogEntryPayload, Message};
+use mcv_messages::{LogEntryPayload, Message, PluginId};
 use mcv_plugin_exe_interface::ExePluginClient;
 use tracing::field::{Field, Visit};
 use tracing::{Event, Subscriber};
@@ -132,7 +132,9 @@ where
         };
         let log = Message {
             message_type: mcv_messages::MessageType::LogEntry,
-            src: mcv_messages::MessageSource::Plugin { plugin_id },
+            src: mcv_messages::MessageSource::Plugin {
+                plugin_id: PluginId::new(plugin_id.to_string()),
+            },
             dst: mcv_messages::MessageDestination::Core,
             request_id: None,
             timestamp: 0,

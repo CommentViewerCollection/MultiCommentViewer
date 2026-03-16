@@ -26,8 +26,9 @@ use mcv_messages::{
     self, BrowserInfo as MsgBrowserInfo, CommentReceivedPayload, ConnectPayload,
     ConnectionInputSchemaPayload, DisconnectPayload, DisconnectedPayload, FetchAccountInfoPayload,
     GetConnectionInputSchemaPayload, GetSendCommentSchemaPayload, InputInfo, Message as McvMessage,
-    MessageDestination, MessageSource, MessageType, Money, ProviderContent, ProviderMessageKind,
-    SendCommentPayload, SendCommentSchemaPayload, SiteInfo as MsgSiteInfo, SystemKind,
+    MessageDestination, MessageSource, MessageType, Money, PluginId, ProviderContent,
+    ProviderMessageKind, SendCommentPayload, SendCommentSchemaPayload, SiteInfo as MsgSiteInfo,
+    SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
@@ -325,7 +326,9 @@ async fn connect(state: tauri::State<'_, AppState>, connection_id: String) -> Re
     let message = McvMessage::new_request(
         MessageType::Connect,
         MessageSource::Core,
-        MessageDestination::Plugin { plugin_id },
+        MessageDestination::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         serde_json::to_value(ConnectPayload {
             connection_id: conn_id,
             site: MsgSiteInfo {
@@ -528,7 +531,9 @@ async fn send_comment(
     let message = McvMessage::new_request(
         MessageType::SendComment,
         MessageSource::Core,
-        MessageDestination::Plugin { plugin_id },
+        MessageDestination::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         serde_json::to_value(SendCommentPayload {
             connection_id: conn_id,
             text,
@@ -607,7 +612,9 @@ async fn fetch_account_info(
     let message = McvMessage::new_notification(
         MessageType::FetchAccountInfo,
         MessageSource::Core,
-        MessageDestination::Plugin { plugin_id },
+        MessageDestination::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
         serde_json::to_value(FetchAccountInfoPayload {
             connection_id: conn_id,
             browser: MsgBrowserInfo {
@@ -1400,7 +1407,7 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoRespons
     Ok(plugins
         .into_iter()
         .map(|p| PluginInfoResponse {
-            plugin_id: p.logical_plugin_id.inner().to_string(),
+            plugin_id: p.plugin_id.to_string(),
             name: p.name,
         })
         .collect())

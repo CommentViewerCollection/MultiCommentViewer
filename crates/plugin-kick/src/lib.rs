@@ -150,11 +150,9 @@ impl PluginImplV3Async for KickPlugin {
             }
         };
         if let Err(e) = on_message_impl(&mut self, ctx.clone(), message).await {
-            tracing::error!(
-                target: "mcv::plugin-kick",
-                error = %e,
-                "on_message_impl failed"
-            );
+            let plugin_id = PluginId::new(self.logical_plugin_id.to_string());
+            let log_msg = e.to_log_message(&plugin_id, env!("CARGO_PKG_VERSION"));
+            ctx.send_notification(log_msg).await.ok();
         }
     }
 

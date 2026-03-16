@@ -140,11 +140,8 @@ impl PluginImplV3Async for NicoLivePlugin {
             }
         };
         if let Err(e) = on_message_impl(self, ctx.clone(), message).await {
-            tracing::error!(
-                target: "mcv::plugin-nicolive",
-                error = %e,
-                "on_message_impl failed"
-            );
+            let log_msg = e.to_log_message(&self.logical_plugin_id, env!("CARGO_PKG_VERSION"));
+            ctx.send_notification(log_msg).await.ok();
         }
     }
 

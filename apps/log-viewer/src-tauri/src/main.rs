@@ -14,6 +14,91 @@ struct SearchFields {
     stacktrace: bool,
 }
 
+enum SearchMode {
+    And,
+    Or,
+}
+
+struct ParsedSearch {
+    terms: Vec<String>,
+    mode: SearchMode,
+}
+
+fn parse_search(search: &str) -> ParsedSearch {
+    if search.contains(" OR ") {
+        let terms = search
+            .split(" OR ")
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty())
+            .collect();
+        ParsedSearch {
+            terms,
+            mode: SearchMode::Or,
+        }
+    } else {
+        // 全角スペースを半角に正規化してから分割
+        let normalized = search.replace('\u{3000}', " ");
+        let terms = normalized
+            .split(' ')
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty())
+            .collect();
+        ParsedSearch {
+            terms,
+            mode: SearchMode::And,
+        }
+    }
+}
+
+fn build_search_sql(
+    parsed: &ParsedSearch,
+    fields: &SearchFields,
+    params_vec: &mut Vec<Box<dyn rusqlite::ToSql>>,
+) -> Option<String> {
+    if parsed.terms.is_empty() {
+        return None;
+    }
+
+    let term_groups: Vec<String> = parsed
+        .terms
+        .iter()
+        .map(|term| {
+            let pattern = format!("%{}%", term);
+            let mut field_clauses = Vec::new();
+
+            if fields.message {
+                field_clauses.push("message LIKE ?".to_string());
+                params_vec.push(Box::new(pattern.clone()));
+            }
+            if fields.source_location {
+                field_clauses.push("(file LIKE ? OR module_path LIKE ?)".to_string());
+                params_vec.push(Box::new(pattern.clone()));
+                params_vec.push(Box::new(pattern.clone()));
+            }
+            if fields.context {
+                field_clauses.push("context LIKE ?".to_string());
+                params_vec.push(Box::new(pattern.clone()));
+            }
+            if fields.stacktrace {
+                field_clauses.push("stacktrace LIKE ?".to_string());
+                params_vec.push(Box::new(pattern.clone()));
+            }
+
+            if field_clauses.is_empty() {
+                "1=0".to_string()
+            } else {
+                format!("({})", field_clauses.join(" OR "))
+            }
+        })
+        .collect();
+
+    let joiner = match parsed.mode {
+        SearchMode::And => " AND ",
+        SearchMode::Or => " OR ",
+    };
+    Some(format!("({})", term_groups.join(joiner)))
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct LogQueryFilters {
     level: Option<String>,
@@ -62,7 +147,6 @@ async fn get_local_logs(
     }
 
     if let Some(search) = &filters.search {
-        // デフォルトは全フィールド検索(後方互換性)
         let default_fields = SearchFields {
             message: true,
             source_location: true,
@@ -70,37 +154,9 @@ async fn get_local_logs(
             stacktrace: true,
         };
         let fields = filters.search_fields.as_ref().unwrap_or(&default_fields);
-
-        let mut search_clauses = Vec::new();
-        let search_pattern = format!("%{}%", search);
-
-        // Message検索
-        if fields.message {
-            search_clauses.push("message LIKE ?".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        // Source Location検索 (file OR module_path)
-        if fields.source_location {
-            search_clauses.push("(file LIKE ? OR module_path LIKE ?)".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        // Context検索 (JSON文字列をLIKE検索)
-        if fields.context {
-            search_clauses.push("context LIKE ?".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        // Stacktrace検索 (JSON文字列をLIKE検索)
-        if fields.stacktrace {
-            search_clauses.push("stacktrace LIKE ?".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        if !search_clauses.is_empty() {
-            where_clauses.push(format!("({})", search_clauses.join(" OR ")));
+        let parsed = parse_search(search);
+        if let Some(sql) = build_search_sql(&parsed, fields, &mut params_vec) {
+            where_clauses.push(sql);
         }
     }
 
@@ -333,7 +389,6 @@ async fn export_local_logs(
         params_vec.push(Box::new(to));
     }
     if let Some(search) = &filters.search {
-        // デフォルトは全フィールド検索(後方互換性)
         let default_fields = SearchFields {
             message: true,
             source_location: true,
@@ -341,37 +396,9 @@ async fn export_local_logs(
             stacktrace: true,
         };
         let fields = filters.search_fields.as_ref().unwrap_or(&default_fields);
-
-        let mut search_clauses = Vec::new();
-        let search_pattern = format!("%{}%", search);
-
-        // Message検索
-        if fields.message {
-            search_clauses.push("message LIKE ?".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        // Source Location検索 (file OR module_path)
-        if fields.source_location {
-            search_clauses.push("(file LIKE ? OR module_path LIKE ?)".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        // Context検索 (JSON文字列をLIKE検索)
-        if fields.context {
-            search_clauses.push("context LIKE ?".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        // Stacktrace検索 (JSON文字列をLIKE検索)
-        if fields.stacktrace {
-            search_clauses.push("stacktrace LIKE ?".to_string());
-            params_vec.push(Box::new(search_pattern.clone()));
-        }
-
-        if !search_clauses.is_empty() {
-            where_clauses.push(format!("({})", search_clauses.join(" OR ")));
+        let parsed = parse_search(search);
+        if let Some(sql) = build_search_sql(&parsed, fields, &mut params_vec) {
+            where_clauses.push(sql);
         }
     }
 

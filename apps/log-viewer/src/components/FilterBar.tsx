@@ -86,7 +86,7 @@ export default function FilterBar({ filters, onFiltersChange, onExport, exportLo
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            placeholder="Enter search keyword..."
+            placeholder="Keywords (AND: space-separated, OR: 'abc OR xyz')"
           />
 
           {/* 検索対象選択チェックボックス */}

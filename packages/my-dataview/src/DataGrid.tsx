@@ -422,31 +422,33 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         <div style={{ position: 'sticky', top: 0, zIndex: 1 }}>
           {renderHeader()}
         </div>
-        <Virtuoso
-          ref={virtuosoRef}
-          customScrollParent={scrollParent}
-          data={data}
-          itemContent={itemContent}
-          defaultItemHeight={defaultItemHeight}
-          atBottomStateChange={(atBottom) => {
-            setAtBottom(atBottom);
-            onAtBottomChange?.(atBottom);
-            if (
-              !atBottom &&
-              autoScrollEnabled &&
-              userDetachedCandidateRef.current &&
-              userScrollIntentRef.current &&
-              !programmaticScrollRef.current
-            ) {
-              onUserDetachedFromBottom?.();
-              userDetachedCandidateRef.current = false;
-              userScrollIntentRef.current = false;
-              userUpwardScrollPxRef.current = 0;
-            }
-          }}
-          atBottomThreshold={60}
-          initialTopMostItemIndex={0}
-        />
+        {scrollParent !== undefined && (
+          <Virtuoso
+            ref={virtuosoRef}
+            customScrollParent={scrollParent}
+            data={data}
+            itemContent={itemContent}
+            defaultItemHeight={defaultItemHeight}
+            atBottomStateChange={(atBottom) => {
+              setAtBottom(atBottom);
+              onAtBottomChange?.(atBottom);
+              if (
+                !atBottom &&
+                autoScrollEnabled &&
+                userDetachedCandidateRef.current &&
+                userScrollIntentRef.current &&
+                !programmaticScrollRef.current
+              ) {
+                onUserDetachedFromBottom?.();
+                userDetachedCandidateRef.current = false;
+                userScrollIntentRef.current = false;
+                userUpwardScrollPxRef.current = 0;
+              }
+            }}
+            atBottomThreshold={60}
+            initialTopMostItemIndex={0}
+          />
+        )}
       </div>
     </div>
   );

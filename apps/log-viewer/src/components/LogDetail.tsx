@@ -1,3 +1,4 @@
+import { useState } from "react";
 import StackTrace from "./StackTrace";
 import type { LogEntry } from "../types/log";
 
@@ -20,21 +21,44 @@ function formatTimestamp(timestamp: number): string {
 }
 
 export default function LogDetail({ log, onDelete }: LogDetailProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(JSON.stringify(log, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-gray-800">Log Details</h2>
-        <button
-          onClick={() => {
-            if (confirm("Are you sure you want to delete this log entry?")) {
-              onDelete();
-            }
-          }}
-          className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
-        >
-          Delete
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              onClick={handleCopy}
+              className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+            >
+              Copy
+            </button>
+            {copied && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap pointer-events-none">
+                Copied!
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              if (confirm("Are you sure you want to delete this log entry?")) {
+                onDelete();
+              }
+            }}
+            className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       {/* Level and Timestamp */}

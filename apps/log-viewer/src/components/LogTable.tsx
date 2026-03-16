@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import type { LogEntry } from "../types/log";
 
@@ -32,6 +33,15 @@ export default function LogTable({
   onSelectLog,
   onDeleteLog,
 }: LogTableProps) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (e: React.MouseEvent, log: LogEntry) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(JSON.stringify(log, null, 2));
+    setCopiedId(log.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   return (
     <div className="flex-1 overflow-hidden">
       <Virtuoso
@@ -68,6 +78,21 @@ export default function LogTable({
             <span className="text-xs text-gray-500 w-48 truncate">
               {log.source.file}:{log.source.line}
             </span>
+
+            {/* Copy Button */}
+            <div className="relative">
+              <button
+                onClick={(e) => handleCopy(e, log)}
+                className="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Copy
+              </button>
+              {copiedId === log.id && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap pointer-events-none">
+                  Copied!
+                </div>
+              )}
+            </div>
 
             {/* Delete Button */}
             <button

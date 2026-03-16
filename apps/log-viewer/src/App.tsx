@@ -57,6 +57,10 @@ function App() {
     setOffset((prev) => prev + limit);
   };
 
+  const handleLoadPrev = () => {
+    setOffset((prev) => Math.max(0, prev - limit));
+  };
+
   const handleReset = () => {
     setOffset(0);
     handleRefresh();
@@ -117,7 +121,10 @@ function App() {
       {/* Filter Bar */}
       <FilterBar
         filters={filters}
-        onFiltersChange={setFilters}
+        onFiltersChange={(newFilters) => {
+          setFilters(newFilters);
+          setOffset(0);
+        }}
         onExport={handleExport}
         exportLoading={exportLoading}
       />
@@ -151,14 +158,22 @@ function App() {
                   Showing {offset + 1} - {Math.min(offset + limit, total)} of{" "}
                   {total} logs
                 </div>
-                {offset + limit < total && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleLoadPrev}
+                    disabled={offset === 0}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
                   <button
                     onClick={handleLoadMore}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm"
+                    disabled={offset + limit >= total}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Load More
                   </button>
-                )}
+                </div>
               </div>
             </>
           )}

@@ -322,11 +322,9 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
       if (data.length === 0) return;
       markProgrammaticScroll();
       const behavior = opts?.behavior === 'smooth' ? 'smooth' : 'auto';
-      virtuosoRef.current?.scrollToIndex({
-        index: data.length - 1,
-        align: 'end',
-        behavior,
-      });
+      if (scrollerRef.current) {
+        scrollerRef.current.scrollTo({ top: scrollerRef.current.scrollHeight, behavior });
+      }
     },
   }), [data.length, markProgrammaticScroll]);
 

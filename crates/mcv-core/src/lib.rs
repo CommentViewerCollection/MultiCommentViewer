@@ -303,6 +303,15 @@ impl PluginManager {
         // ① サブディレクトリ形式を先に処理
         for entry in &dir_entries {
             if let Some((dll_path, plugin_id)) = Self::get_dir_plugin(entry) {
+                if loaded_ids.contains(&plugin_id) {
+                    tracing::warn!(
+                        target: "mcv::core::PluginManager",
+                        id = %plugin_id,
+                        dll = %dll_path.display(),
+                        "Directory plugin already loaded (duplicate plugin.json id), skipping"
+                    );
+                    continue;
+                }
                 let physical_plugin_id = PhysicalPluginId::from_id(&plugin_id);
                 tracing::info!(
                     target: "mcv::core::PluginManager",

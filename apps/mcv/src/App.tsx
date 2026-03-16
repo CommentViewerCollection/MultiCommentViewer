@@ -794,7 +794,12 @@ function App() {
     // サイト追加イベントをリッスン
     const unlistenSiteAdded = listen<SiteInfo>('site-added', (event) => {
       frontendTrace('info', 'site-added event received', { payload: event.payload })
-      setSites((prev) => [...prev, event.payload])
+      setSites((prev) => {
+        if (prev.some((s) => s.site_id === event.payload.site_id)) {
+          return prev
+        }
+        return [...prev, event.payload]
+      })
       // サイト登録完了後にPending接続がCreatedに変わっている可能性があるため再取得
       loadConnections()
     })
@@ -802,7 +807,12 @@ function App() {
     // ブラウザ追加イベントをリッスン
     const unlistenBrowserAdded = listen<BrowserInfo>('browser-added', (event) => {
       frontendTrace('info', 'browser-added event received', { payload: event.payload })
-      setBrowsers((prev) => [...prev, event.payload])
+      setBrowsers((prev) => {
+        if (prev.some((b) => b.browser_id === event.payload.browser_id)) {
+          return prev
+        }
+        return [...prev, event.payload]
+      })
     })
 
     // ブラウザ削除イベントをリッスン

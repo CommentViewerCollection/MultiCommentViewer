@@ -11,14 +11,43 @@ use crate::{
 /// 設計意図:
 /// - 状態遷移違反 (`InvalidTransition`) と、外部依存失敗 (`Parse/Server`) を分離する。
 /// - 呼び出し側が「ロジックバグ」か「入力/通信失敗」かを判定しやすくする。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum DomainError {
     InvalidTransition {
         state: &'static str,
         event: &'static str,
     },
-    ParseFailed(String),
-    ServerFailed(String),
+    ParseFailed(mcv_plugin_telemetry::ErrorContext),
+    ServerFailed(mcv_plugin_telemetry::ErrorContext),
+}
+
+impl PartialEq for DomainError {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (
+                Self::InvalidTransition {
+                    state: s1,
+                    event: e1,
+                },
+                Self::InvalidTransition {
+                    state: s2,
+                    event: e2,
+                },
+            ) => s1 == s2 && e1 == e2,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for DomainError {}
+
+impl DomainError {
+    pub fn error_context(&self) -> Option<&mcv_plugin_telemetry::ErrorContext> {
+        match self {
+            Self::ParseFailed(ctx) | Self::ServerFailed(ctx) => Some(ctx),
+            Self::InvalidTransition { .. } => None,
+        }
+    }
 }
 
 impl std::fmt::Display for DomainError {
@@ -27,8 +56,8 @@ impl std::fmt::Display for DomainError {
             Self::InvalidTransition { state, event } => {
                 write!(f, "invalid transition: state={state}, event={event}")
             }
-            Self::ParseFailed(msg) => write!(f, "parse failed: {msg}"),
-            Self::ServerFailed(msg) => write!(f, "server failed: {msg}"),
+            Self::ParseFailed(ctx) => write!(f, "parse failed: {}", ctx.message),
+            Self::ServerFailed(ctx) => write!(f, "server failed: {}", ctx.message),
         }
     }
 }
@@ -466,9 +495,9 @@ impl YoutubeLiveStateMachine {
         }
 
         let ytcfg =
-            extract_ytcfg(&live_chat).map_err(|e| DomainError::ParseFailed(e.to_string()))?;
-        let initial =
-            get_yt_initial_data(&live_chat).map_err(|e| DomainError::ParseFailed(e.to_string()))?;
+            extract_ytcfg(&live_chat).map_err(|e| DomainError::ParseFailed(e.context().clone()))?;
+        let initial = get_yt_initial_data(&live_chat)
+            .map_err(|e| DomainError::ParseFailed(e.context().clone()))?;
 
         let continuation = initial.continuation().clone();
         // reload要求後は既存パラメータを再利用しない。
@@ -682,7 +711,7 @@ impl LiveChatServer for ReqwestServer {
     async fn get_live_chat(&self, vid: &Vid) -> Result<LiveChat, DomainError> {
         get_live_chat(vid, &self.cookies)
             .await
-            .map_err(|e| DomainError::ServerFailed(e.to_string()))
+            .map_err(|e| DomainError::ServerFailed(e.context().clone()))
     }
 
     async fn get_live_chat_messages(
@@ -693,7 +722,7 @@ impl LiveChatServer for ReqwestServer {
     ) -> Result<(Option<Continuation>, Vec<Action>, String), DomainError> {
         get_live_chat_messages(vid, ytcfg, continuation)
             .await
-            .map_err(|e| DomainError::ServerFailed(e.to_string()))
+            .map_err(|e| DomainError::ServerFailed(e.context().clone()))
     }
 
     async fn send_chat(
@@ -704,7 +733,7 @@ impl LiveChatServer for ReqwestServer {
     ) -> Result<(), DomainError> {
         send_chat_message(&self.cookies, ytcfg, send_message_params, text)
             .await
-            .map_err(|e| DomainError::ServerFailed(e.to_string()))
+            .map_err(|e| DomainError::ServerFailed(e.context().clone()))
     }
 }
 

@@ -125,6 +125,21 @@ impl PluginLoaderRegistry {
         physical_plugin_id: PhysicalPluginId,
         core_addr: Addr<CoreActor>,
     ) -> Result<LoadedPluginInfo, PluginLoaderError> {
+        // .exe ファイルは EXE プラグインマネージャーが扱うため DLL ローダーではスキップ
+        if dll_path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("exe"))
+            .unwrap_or(false)
+        {
+            tracing::debug!(
+                target: "mcv::core::PluginLoaderRegistry",
+                dll_path = %dll_path.display(),
+                ".exe は DLL ローダー対象外のためスキップ"
+            );
+            return Err(PluginLoaderError::NotApplicable);
+        }
+
         // 各戦略を試す（最後に登録されたものから = 新しいバージョン優先）
         for strategy in self.strategies.iter().rev() {
             if strategy.can_load(dll_path) {

@@ -27,6 +27,7 @@ pub use site_browser_manager::{BrowserInfo, SiteAndBrowserManager, SiteInfo};
 
 use actix::prelude::*;
 use mcv_common::PhysicalPluginId;
+use mcv_plugin_loader::PluginLoaderError;
 use std::{
     collections::HashSet,
     fs::{DirEntry, File},
@@ -329,6 +330,7 @@ impl PluginManager {
                         loaded_ids.insert(plugin_id);
                         loaded_plugins.push(info);
                     }
+                    Err(PluginLoaderError::NotApplicable) => {}
                     Err(e) => {
                         tracing::error!(
                             target: "mcv::core::PluginManager",
@@ -370,6 +372,7 @@ impl PluginManager {
                         loaded_ids.insert(plugin_id);
                         loaded_plugins.push(info);
                     }
+                    Err(PluginLoaderError::NotApplicable) => {}
                     Err(e) => {
                         tracing::error!(
                             target: "mcv::core::PluginManager",

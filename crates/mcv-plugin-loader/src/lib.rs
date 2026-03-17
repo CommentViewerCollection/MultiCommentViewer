@@ -37,6 +37,10 @@ pub enum PluginLoaderError {
 
     #[error("Unsupported ABI version")]
     UnsupportedAbiVersion,
+
+    /// DLL ローダーの対象外ファイル（.exe など）。エラーではなくスキップ扱い。
+    #[error("Not applicable for DLL loader")]
+    NotApplicable,
 }
 
 /// メッセージコールバック関数の型（userdata対応）

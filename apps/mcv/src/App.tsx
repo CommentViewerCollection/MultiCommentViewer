@@ -1508,6 +1508,10 @@ function App() {
     )
   }
 
+  const handleColumnOrderChange = (newColumns: Column<Comment>[]) => {
+    setColumns(newColumns)
+  }
+
   const kindCellClass = (kind: string) => {
     if (kind === 'monetary') return 'text-yellow-700 dark:text-yellow-300 italic'
     if (kind === 'system') return 'text-gray-500 dark:text-gray-400 italic'
@@ -2050,6 +2054,7 @@ function App() {
                 onUserDetachedFromBottom={() => setIsAutoScrollEnabled(false)}
                 onColumnResize={handleColumnResize}
                 onColumnVisibilityChange={handleColumnVisibilityChange}
+                onColumnOrderChange={handleColumnOrderChange}
                 defaultItemHeight={65}
                 onRowContextMenu={handleRowContextMenu}
                 alwaysShowScrollbar

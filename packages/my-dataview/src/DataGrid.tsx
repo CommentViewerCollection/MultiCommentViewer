@@ -27,6 +27,7 @@ export interface DataGridProps<T> {
   onRowContextMenu?: (item: T, event: React.MouseEvent) => void;
   onColumnResize?: (columnKey: keyof T, width: number) => void;
   onColumnVisibilityChange?: (columnKey: keyof T, visible: boolean) => void;
+  onColumnOrderChange?: (columns: Column<T>[]) => void;
   defaultItemHeight?: number;
   alwaysShowScrollbar?: boolean;
 }
@@ -51,6 +52,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   onRowContextMenu,
   onColumnResize,
   onColumnVisibilityChange,
+  onColumnOrderChange,
   defaultItemHeight = 50,
   alwaysShowScrollbar = false,
 }: DataGridProps<T>, ref: React.Ref<DataGridRef>) {
@@ -66,6 +68,122 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   const programmaticScrollRef = useRef(false);
   const userIntentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const visibleColumns = columns.filter(col => col.visible !== false);
+
+  // ---- 列並び替え（ポインターイベントベース） ----
+  const [draggedKey, setDraggedKey] = useState<keyof T | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<keyof T | null>(null);
+  const dragSourceKeyRef = useRef<keyof T | null>(null);
+  const dragOverKeyRef = useRef<keyof T | null>(null);
+  // columns は render ごとに新しい参照になるため ref で最新値を保持
+  const columnsRef = useRef(columns);
+  React.useEffect(() => { columnsRef.current = columns; }, [columns]);
+
+  // ゴースト要素（ドラッグ中にカーソルに追随するラベル）
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+
+  const createGhost = useCallback((label: string, x: number, y: number) => {
+    const ghost = document.createElement('div');
+    ghost.textContent = label;
+    ghost.style.cssText = [
+      'position:fixed',
+      'pointer-events:none',
+      'z-index:99999',
+      'background:rgba(74,158,255,0.92)',
+      'color:#fff',
+      'padding:3px 10px',
+      'border-radius:4px',
+      'font-size:12px',
+      'font-weight:bold',
+      'white-space:nowrap',
+      'box-shadow:0 2px 8px rgba(0,0,0,0.45)',
+      'user-select:none',
+      `left:${x + 14}px`,
+      `top:${y - 14}px`,
+    ].join(';');
+    document.body.appendChild(ghost);
+    ghostRef.current = ghost;
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  const moveGhost = useCallback((x: number, y: number) => {
+    if (!ghostRef.current) return;
+    ghostRef.current.style.left = `${x + 14}px`;
+    ghostRef.current.style.top = `${y - 14}px`;
+  }, []);
+
+  const removeGhost = useCallback(() => {
+    ghostRef.current?.remove();
+    ghostRef.current = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  // アンマウント時のゴースト残留防止
+  React.useEffect(() => () => removeGhost(), [removeGhost]);
+
+  const handleDragHandlePointerDown = useCallback((e: React.PointerEvent, key: keyof T) => {
+    // リサイズハンドル領域（右端 8px）はリサイズに譲る
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    if (e.clientX >= rect.right - 8) return;
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dragSourceKeyRef.current = key;
+    dragOverKeyRef.current = key;
+    setDraggedKey(key);
+    setDragOverKey(key);
+    const col = columnsRef.current.find(c => c.key === key);
+    createGhost(col?.label ?? String(key), e.clientX, e.clientY);
+  }, [createGhost]);
+
+  const handleDragHandlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragSourceKeyRef.current) return;
+    moveGhost(e.clientX, e.clientY);
+    const elements = document.elementsFromPoint(e.clientX, e.clientY);
+    let foundKey: keyof T | null = null;
+    for (const el of elements) {
+      const colKey = (el as HTMLElement).dataset?.columnKey;
+      if (colKey !== undefined) {
+        foundKey = colKey as keyof T;
+        break;
+      }
+    }
+    if (foundKey !== dragOverKeyRef.current) {
+      dragOverKeyRef.current = foundKey;
+      setDragOverKey(foundKey);
+    }
+  }, [moveGhost]);
+
+  const handleDragHandlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!dragSourceKeyRef.current) return;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    removeGhost();
+    const sourceKey = dragSourceKeyRef.current;
+    const targetKey = dragOverKeyRef.current;
+    dragSourceKeyRef.current = null;
+    dragOverKeyRef.current = null;
+    setDraggedKey(null);
+    setDragOverKey(null);
+    if (sourceKey && targetKey && sourceKey !== targetKey) {
+      const newColumns = [...columnsRef.current];
+      const fromIdx = newColumns.findIndex(c => c.key === sourceKey);
+      const toIdx = newColumns.findIndex(c => c.key === targetKey);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const [removed] = newColumns.splice(fromIdx, 1);
+        newColumns.splice(toIdx, 0, removed);
+        onColumnOrderChange?.(newColumns);
+      }
+    }
+  }, [removeGhost, onColumnOrderChange]);
+
+  const handleDragHandlePointerCancel = useCallback(() => {
+    removeGhost();
+    dragSourceKeyRef.current = null;
+    dragOverKeyRef.current = null;
+    setDraggedKey(null);
+    setDragOverKey(null);
+  }, [removeGhost]);
+  // ---- 列並び替えここまで ----
 
   const markProgrammaticScroll = useCallback(() => {
     programmaticScrollRef.current = true;
@@ -101,6 +219,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const [rightClickedColumn, setRightClickedColumn] = useState<Column<T> | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [resizeHoverKey, setResizeHoverKey] = useState<keyof T | null>(null);
 
   const renderHeader = () => (
     <div
@@ -116,16 +235,24 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
       {visibleColumns.map((column) => (
         <div
           key={String(column.key)}
+          data-column-key={String(column.key)}
           style={{
             width: column.width || 100,
             minWidth: column.width || 100,
             maxWidth: column.width || 100,
             padding: '2px 8px',
             position: 'relative',
-            cursor: 'default',
+            cursor: draggedKey === column.key ? 'grabbing' : 'grab',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            opacity: draggedKey === column.key ? 0.4 : 1,
+            outline: dragOverKey === column.key && draggedKey !== column.key ? '2px solid #4a9eff' : 'none',
+            outlineOffset: '-2px',
+            display: 'flex',
+            alignItems: 'center',
+            userSelect: 'none',
+            touchAction: 'none',
           }}
           title={column.label}
           onContextMenu={(e) => {
@@ -133,8 +260,22 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
             setRightClickedColumn(column);
             setMenuPosition({ x: e.clientX, y: e.clientY });
           }}
+          onPointerDown={(e) => handleDragHandlePointerDown(e, column.key)}
+          onPointerMove={handleDragHandlePointerMove}
+          onPointerUp={handleDragHandlePointerUp}
+          onPointerCancel={handleDragHandlePointerCancel}
         >
-          {column.label}
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+              pointerEvents: 'none',
+            }}
+          >
+            {column.label}
+          </span>
           {column.resizable !== false && (
             <div
               style={{
@@ -142,13 +283,31 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
                 right: 0,
                 top: 0,
                 bottom: 0,
-                width: '5px',
+                width: '8px',
                 cursor: 'col-resize',
-                backgroundColor: 'transparent',
                 zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
+              onMouseEnter={() => setResizeHoverKey(column.key)}
+              onMouseLeave={() => setResizeHoverKey(null)}
               onMouseDown={(e) => handleResizeStart(e, column)}
-            />
+            >
+              <div
+                style={{
+                  width: '2px',
+                  height: '60%',
+                  borderRadius: '1px',
+                  backgroundColor:
+                    resizing?.column.key === column.key || resizeHoverKey === column.key
+                      ? '#4a9eff'
+                      : 'rgba(255,255,255,0.2)',
+                  transition: 'background-color 0.15s',
+                  pointerEvents: 'none',
+                }}
+              />
+            </div>
           )}
         </div>
       ))}
@@ -165,6 +324,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
             zIndex: 1000,
             minWidth: '150px',
           }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div style={{ marginBottom: '8px', fontSize: '12px', color: '#ccc' }}>
             列の表示設定

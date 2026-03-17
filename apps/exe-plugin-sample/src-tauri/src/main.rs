@@ -3,9 +3,9 @@
 
 mod ws_tracing;
 use mcv_messages::{
-    AddSitePayload, CommentReceivedPayload, GetLogsDirPayload, LogsDirAckPayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginId,
-    PluginRemovedPayload, SiteId,
+    AddSitePayload, CommentReceivedPayload, GetConnectionsPayload, GetLogsDirPayload,
+    LogsDirAckPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    PluginId, PluginRemovedPayload, SiteId,
 };
 
 /// リプレイ専用サイトの静的 ID（"replay_{uuid}" 形式）
@@ -356,6 +356,34 @@ async fn handle_message_state_update(
                 let _ = app.emit("plugins-updated", ());
             } else {
                 tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "get-plugins: failed to parse GetPluginsPayload");
+            }
+        }
+        MessageType::GetConnections => {
+            // get-connectionsレスポンス: GetConnectionsPayload を処理してstate.connectionsに一括登録
+            if let Ok(payload) =
+                serde_json::from_value::<GetConnectionsPayload>(message.payload.clone())
+            {
+                let mut connections_guard = connections.write().await;
+                for conn_added in payload.connections {
+                    let connection_id = conn_added.connection_id;
+                    connections_guard.entry(connection_id).or_insert_with(|| {
+                        tracing::info!(target: "mcv::exe-plugin-sample", connection_id = %connection_id, name = %conn_added.name, "Connection added to state via get-connections response");
+                        ConnectionInfo {
+                            connection_id,
+                            plugin_id: None,
+                            name: conn_added.name,
+                            site_id: None,
+                            site_name: None,
+                            url: None,
+                            browser_id: None,
+                            status: "disconnected".to_string(),
+                        }
+                    });
+                }
+                drop(connections_guard);
+                let _ = app.emit("connections-updated", ());
+            } else {
+                tracing::error!(target: "mcv::exe-plugin-sample", payload = ?message.payload, "get-connections: failed to parse GetConnectionsPayload");
             }
         }
         MessageType::LogEntry => {
@@ -771,6 +799,14 @@ async fn connect_to_mcv(
         .map_err(|e| format!("Failed to send get-plugins: {}", e))?;
 
     tracing::info!(target:"mcv::exe-plugin-sample","Sent get-plugins request");
+
+    // get-connectionsを送信して既存接続情報を取得
+    client
+        .send_get_connections()
+        .await
+        .map_err(|e| format!("Failed to send get-connections: {}", e))?;
+
+    tracing::info!(target:"mcv::exe-plugin-sample","Sent get-connections request");
 
     // GetLogsDir リクエストを送信（LogsDirAck でセッション DB を作成する）
     let get_logs_dir_msg = McvMessage::new_request(

@@ -45,3 +45,18 @@ pub(crate) fn build_get_plugins_message(plugin_id: Uuid) -> McvMessage {
         serde_json::json!({}),
     )
 }
+
+/// get-connectionsメッセージを構築
+///
+/// # Arguments
+/// * `plugin_id` - プラグインID
+pub(crate) fn build_get_connections_message(plugin_id: Uuid) -> McvMessage {
+    McvMessage::new_request(
+        MessageType::GetConnections,
+        MessageSource::Plugin {
+            plugin_id: PluginId::new(plugin_id.to_string()),
+        },
+        MessageDestination::Core,
+        serde_json::json!({}),
+    )
+}

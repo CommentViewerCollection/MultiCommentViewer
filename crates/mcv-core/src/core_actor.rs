@@ -485,6 +485,22 @@ fn handle_core_request_message(
                 serde_json::to_value(GetPluginsPayload { plugins }).unwrap(),
             ));
         }
+        MessageType::GetConnections => {
+            let connections = core
+                .connection_manager
+                .list_connections()
+                .into_iter()
+                .map(|conn| ConnectionAddedPayload {
+                    connection_id: conn.connection_id,
+                    name: conn.name.clone(),
+                })
+                .collect::<Vec<_>>();
+
+            return Ok(message.create_response(
+                MessageType::GetConnections,
+                serde_json::to_value(GetConnectionsPayload { connections }).unwrap(),
+            ));
+        }
         _ => {}
     }
 
@@ -519,6 +535,7 @@ fn is_supported_plugin_request_type(message_type: &MessageType) -> bool {
             | MessageType::AddSite
             | MessageType::AddBrowser
             | MessageType::GetPlugins
+            | MessageType::GetConnections
             | MessageType::GetBrowserPlugin
             | MessageType::GetLogsDir
     )
@@ -586,6 +603,21 @@ fn handle_plugin_request_message(
             Ok(message.create_response(
                 MessageType::GetPlugins,
                 serde_json::to_value(GetPluginsPayload { plugins }).unwrap(),
+            ))
+        }
+        MessageType::GetConnections => {
+            let connections = core
+                .connection_manager
+                .list_connections()
+                .into_iter()
+                .map(|conn| ConnectionAddedPayload {
+                    connection_id: conn.connection_id,
+                    name: conn.name.clone(),
+                })
+                .collect::<Vec<_>>();
+            Ok(message.create_response(
+                MessageType::GetConnections,
+                serde_json::to_value(GetConnectionsPayload { connections }).unwrap(),
             ))
         }
         MessageType::GetBrowserPlugin => {

@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use crate::connection::setup_websocket_loops;
-use crate::message_sender::{build_get_plugins_message, build_plugin_hello_message};
+use crate::message_sender::{
+    build_get_connections_message, build_get_plugins_message, build_plugin_hello_message,
+};
 use crate::ExePluginError;
 use mcv_messages::{Message as McvMessage, PluginId};
 use tokio::sync::mpsc::{self, UnboundedSender};
@@ -65,6 +67,14 @@ impl ExePluginClient {
     /// 既存のプラグイン一覧を取得する
     pub async fn send_get_plugins(&self) -> Result<(), ExePluginError> {
         let message = build_get_plugins_message(self.plugin_id);
+        self.send_message(message)
+    }
+
+    /// get-connectionsメッセージを送信
+    ///
+    /// 既存の接続一覧を取得する
+    pub async fn send_get_connections(&self) -> Result<(), ExePluginError> {
+        let message = build_get_connections_message(self.plugin_id);
         self.send_message(message)
     }
 

@@ -189,6 +189,9 @@ pub enum MessageType {
     // URL自動検出関連
     CanHandleUrl,
     CanHandleUrlResult,
+
+    // 接続一覧取得
+    GetConnections,
 }
 
 // ============================================================================
@@ -233,6 +236,12 @@ pub struct PluginRemovedPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetPluginsPayload {
     pub plugins: Vec<PluginAddedPayload>,
+}
+
+/// get-connections(response)のpayload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetConnectionsPayload {
+    pub connections: Vec<ConnectionAddedPayload>,
 }
 
 /// get-browser-pluginのpayload

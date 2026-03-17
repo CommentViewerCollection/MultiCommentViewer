@@ -9,7 +9,7 @@ use mcv_messages::{
 };
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 use plugin_abi_helper::v2 as abi;
-use std::ffi::{c_void, CString};
+use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -31,7 +31,6 @@ pub struct ExePluginManager {
 impl ExePluginManager {
     pub fn new() -> Self {
         let plugin_id = Uuid::new_v4();
-        println!("ExePluginManager plugin_id: {plugin_id}");
         Self {
             plugin_id,
             websocket_server: None,
@@ -116,11 +115,6 @@ impl Default for ExePluginManager {
 #[async_trait::async_trait]
 impl Plugin for ExePluginManager {
     async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
-        println!(
-            "=== ExePluginManager::on_loaded called, plugin_id: {} ===",
-            self.plugin_id
-        );
-
         // トレーシングを初期化し、Core への LogEntry 自動転送を有効にする
         #[cfg(feature = "alpha")]
         let log_level = "trace";
@@ -138,12 +132,10 @@ impl Plugin for ExePluginManager {
         )
         .map_err(|e| PluginError::InitializationFailed(format!("Failed to init tracing: {}", e)))?;
 
-        tracing::info!("ExePluginManager::on_loaded called");
+        tracing::info!(target: "mcv::plugin_exe_manager", plugin_id = %self.plugin_id, "ExePluginManager::on_loaded");
 
         // 初期化
-        println!("=== ExePluginManager: Starting initialization ===");
         self.initialize(Arc::clone(&host)).await?;
-        println!("=== ExePluginManager: Initialization completed ===");
 
         // plugin-helloを送信
         let logical_plugin_id =
@@ -165,14 +157,14 @@ impl Plugin for ExePluginManager {
             serde_json::to_value(&hello_payload).unwrap(),
         );
 
-        tracing::trace!(
+        tracing::debug!(
             target: "mcv::plugin_exe_manager",
-            "Sending plugin-hello message"
+            "plugin-hello 送信中"
         );
         host.send_message(message).await?;
-        tracing::trace!(
+        tracing::info!(
             target: "mcv::plugin_exe_manager",
-            "ExePluginManager plugin-hello sent"
+            "plugin-hello 送信完了"
         );
 
         Ok(())
@@ -186,11 +178,7 @@ impl Plugin for ExePluginManager {
         tracing::trace!(
             target: "mcv::plugin_exe_manager",
             message_type = ?message.message_type,
-            "ExePluginManager received message: {:?}", message
-        );
-        eprintln!(
-            "=== ExePluginManager::on_message called, message_type: {:?} ===",
-            message.message_type
+            "メッセージ受信"
         );
 
         // EXEプラグインへメッセージをルーティング
@@ -258,7 +246,7 @@ impl Plugin for ExePluginManager {
     }
 
     async fn on_shutdown(&mut self) -> Result<(), PluginError> {
-        tracing::info!("ExePluginManager::on_shutdown called");
+        tracing::info!(target: "mcv::plugin_exe_manager", "ExePluginManager::on_shutdown");
 
         // プロセスマネージャーをシャットダウン
         if let Some(process_manager) = &self.process_manager {
@@ -276,7 +264,7 @@ impl Plugin for ExePluginManager {
                 .map_err(|e| PluginError::Other(e.to_string()))?;
         }
 
-        tracing::info!("ExePluginManager shutdown completed");
+        tracing::info!(target: "mcv::plugin_exe_manager", "ExePluginManager シャットダウン完了");
 
         Ok(())
     }

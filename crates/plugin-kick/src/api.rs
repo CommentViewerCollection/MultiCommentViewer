@@ -45,7 +45,10 @@ pub struct KickLivestream {
     pub id: u64,
     pub is_live: Option<bool>,
     pub session_title: Option<String>,
-    pub viewers: Option<u64>,
+    /// 現在の視聴者数（API フィールド名: viewer_count）
+    pub viewer_count: Option<u64>,
+    /// 配信開始日時（例: "2026-03-17 05:12:57"、UTC）
+    pub start_time: Option<String>,
 }
 
 impl KickLivestream {

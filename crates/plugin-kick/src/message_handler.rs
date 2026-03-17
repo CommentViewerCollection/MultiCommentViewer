@@ -12,7 +12,8 @@ use mcv_messages::{
     DisconnectedPayload, FetchAccountInfoPayload, GetBrowserPluginAckPayload,
     GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginId,
-    ProviderMessageKind, SetConnectionSitePayload, UpdateConnectionAccountPayload,
+    ProviderMessageKind, SetConnectionSitePayload, StreamMetadataPayload,
+    UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -187,6 +188,32 @@ pub(crate) async fn on_message_impl(
             );
             KickPlugin::send_message(ctx.clone(), connected_msg).await;
 
+            // 初回のストリームメタデータ（タイトル・視聴者数・開始時刻）を送信
+            if let Some(ls) = &channel_info.livestream {
+                let start_time = ls.start_time.as_deref().and_then(|s| {
+                    chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+                        .ok()
+                        .map(|dt| dt.and_utc().timestamp())
+                });
+                let metadata_msg = McvMessage::new_notification(
+                    MessageType::StreamMetadata,
+                    MessageSource::Plugin {
+                        plugin_id: PluginId::new(plugin.logical_plugin_id.to_string()),
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(StreamMetadataPayload {
+                        connection_id: connect.connection_id,
+                        title: ls.session_title.clone(),
+                        viewer_count: ls.viewer_count,
+                        total_viewer_count: None,
+                        start_time,
+                        others: None,
+                    })
+                    .unwrap(),
+                );
+                KickPlugin::send_message(ctx.clone(), metadata_msg).await;
+            }
+
             // ログイン中のユーザー情報を取得して送信（Cookie がある場合のみ成功する）
             match api::fetch_current_user(&cookie_header).await {
                 Ok(user) => {
@@ -313,6 +340,8 @@ pub(crate) async fn on_message_impl(
                 plugin.logical_plugin_id,
                 chatroom_id,
                 channel_info.subscriber_badges,
+                channel_slug.clone(),
+                cookie_header.clone(),
             );
         }
         MessageType::Disconnect => {

@@ -8,7 +8,7 @@ use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
     MessageDestination, MessagePart, MessageSource, MessageType, PluginId, ProviderBadge,
     ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
-    UpdateConnectionAccountPayload,
+    StreamMetadataPayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::Deserialize;
@@ -75,6 +75,13 @@ fn parse_timestamp(created_at: &str) -> i64 {
     chrono::DateTime::parse_from_rfc3339(created_at)
         .map(|dt| dt.timestamp())
         .unwrap_or_else(|_| chrono::Utc::now().timestamp())
+}
+
+/// "2026-03-17 05:12:57" 形式（UTC）の文字列を Unix 秒に変換する
+fn parse_kick_start_time(s: &str) -> Option<i64> {
+    chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        .ok()
+        .map(|dt| dt.and_utc().timestamp())
 }
 
 fn push_text_part(parts: &mut Vec<MessagePart>, text: &str) {
@@ -226,6 +233,8 @@ impl Connection {
         logical_plugin_id: Uuid,
         chatroom_id: u64,
         subscriber_badges: Vec<crate::api::KickSubscriberBadge>,
+        channel_slug: String,
+        cookie_header: String,
     ) {
         if self.running {
             tracing::debug!(
@@ -246,6 +255,8 @@ impl Connection {
             chatroom_id,
             cancel_rx,
             subscriber_badges,
+            channel_slug,
+            cookie_header,
         ) {
             Some(task) => task,
             None => return,
@@ -263,6 +274,8 @@ impl Connection {
         chatroom_id: u64,
         mut cancel_rx: watch::Receiver<bool>,
         subscriber_badges: Vec<crate::api::KickSubscriberBadge>,
+        channel_slug: String,
+        cookie_header: String,
     ) -> Option<JoinHandle<()>> {
         let runtime_handle = match tokio::runtime::Handle::try_current() {
             Ok(handle) => handle,
@@ -317,6 +330,11 @@ impl Connection {
                     );
 
                     let (mut write, mut read) = ws_stream.split();
+
+                    // 初回は 60 秒後、以降 60 秒ごとにメタデータをポーリング
+                    let meta_start = tokio::time::Instant::now() + Duration::from_secs(60);
+                    let mut metadata_interval =
+                        tokio::time::interval_at(meta_start, Duration::from_secs(60));
 
                     loop {
                         tokio::select! {
@@ -374,6 +392,15 @@ impl Connection {
                                         break;
                                     }
                                 }
+                            }
+                            _ = metadata_interval.tick() => {
+                                fetch_and_send_metadata(
+                                    ctx.clone(),
+                                    logical_plugin_id,
+                                    connection_id,
+                                    &channel_slug,
+                                    &cookie_header,
+                                ).await;
                             }
                         }
                     }
@@ -586,6 +613,51 @@ impl Connection {
         self.cancel_tx = None;
         self.task = None;
         self.running = false;
+    }
+}
+
+/// チャンネル情報を取得して StreamMetadata を Core に送信する
+async fn fetch_and_send_metadata(
+    ctx: PluginContext,
+    logical_plugin_id: Uuid,
+    connection_id: Uuid,
+    channel_slug: &str,
+    cookie_header: &str,
+) {
+    match crate::api::fetch_channel(channel_slug, cookie_header).await {
+        Ok(info) => {
+            if let Some(ls) = &info.livestream {
+                if !ls.is_live() {
+                    return;
+                }
+                let start_time = ls.start_time.as_deref().and_then(parse_kick_start_time);
+                let payload = StreamMetadataPayload {
+                    connection_id,
+                    title: ls.session_title.clone(),
+                    viewer_count: ls.viewer_count,
+                    total_viewer_count: None,
+                    start_time,
+                    others: None,
+                };
+                let msg = McvMessage::new_notification(
+                    MessageType::StreamMetadata,
+                    MessageSource::Plugin {
+                        plugin_id: PluginId::new(logical_plugin_id.to_string()),
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+                KickPlugin::send_message(ctx, msg).await;
+            }
+        }
+        Err(e) => {
+            tracing::debug!(
+                target: "mcv::plugin-kick",
+                connection_id = %connection_id,
+                error = %e,
+                "StreamMetadata ポーリング中に API 取得失敗"
+            );
+        }
     }
 }
 

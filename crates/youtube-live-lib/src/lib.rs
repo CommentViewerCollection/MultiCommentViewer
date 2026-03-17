@@ -882,6 +882,8 @@ fn parse_action(action: &serde_json::Value) -> Action {
         return Action::RemoveChatItemByAuthor(RemoveChatItemByAuthorAction {
             external_channel_id,
         });
+    } else if obj.contains_key("addBannerToLiveChatCommand") {
+        return Action::IgnoreAction;
     } else if obj.contains_key("addLiveChatTickerItemAction") {
         return Action::IgnoreAction;
     } else {

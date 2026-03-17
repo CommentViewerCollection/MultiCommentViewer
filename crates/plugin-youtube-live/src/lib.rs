@@ -955,6 +955,72 @@ fn convert_action_to_provider_message(
             metadata: serde_json::Value::Null,
         }),
 
+        Action::ViewerEngagementMessage(msg) => {
+            let text = msg
+                .message_parts
+                .iter()
+                .filter_map(|part| match part {
+                    MessagePart::Text(s) => Some(McvMessagePart::Text { text: s.clone() }),
+                    MessagePart::Emoji(emoji) => {
+                        emoji.thumbnails.first().map(|tn| McvMessagePart::Image {
+                            url: tn.url.clone(),
+                            width: Some(tn.width as u32),
+                            height: Some(tn.height as u32),
+                            alt: Some(emoji.label.clone()),
+                        })
+                    }
+                })
+                .collect::<Vec<_>>();
+            let timestamp = msg.timestamp_usec.parse::<i64>().unwrap_or(0) / 1_000_000;
+            Some(ProviderMessage {
+                id: msg.id.clone(),
+                platform_message_id: Some(msg.id.clone()),
+                service: ServiceId("youtube".to_string()),
+                channel: ChannelId("".to_string()),
+                sender: ProviderSender {
+                    id: String::new(),
+                    display_name: vec![],
+                    badges: vec![],
+                    role: None,
+                    avatar_url: None,
+                },
+                timestamp,
+                kind: ProviderMessageKind::System(SystemKind::Notice),
+                content: ProviderContent::Text { text },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
+
+        Action::UpdatePoll(poll) => {
+            let mut parts = vec![McvMessagePart::Text {
+                text: poll.question.clone(),
+            }];
+            for choice in &poll.choices {
+                parts.push(McvMessagePart::Text {
+                    text: format!(" {} {}", choice.text, choice.vote_percentage),
+                });
+            }
+            Some(ProviderMessage {
+                id: poll.poll_id.clone(),
+                platform_message_id: Some(poll.poll_id.clone()),
+                service: ServiceId("youtube".to_string()),
+                channel: ChannelId("".to_string()),
+                sender: ProviderSender {
+                    id: String::new(),
+                    display_name: vec![],
+                    badges: vec![],
+                    role: None,
+                    avatar_url: None,
+                },
+                timestamp: chrono::Utc::now().timestamp(),
+                kind: ProviderMessageKind::System(SystemKind::Notice),
+                content: ProviderContent::Text { text: parts },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
+
         Action::ParseError(raw) => {
             tracing::error!(
                 target: "mcv::plugin-youtube-live",

@@ -614,11 +614,33 @@ pub enum Action {
     RemoveChatItem(RemoveChatItemAction),
     RemoveChatItemByAuthor(RemoveChatItemByAuthorAction),
     ReplaceChatItem(ReplaceChatItemAction),
-    UpdatePoll,
+    UpdatePoll(PollAction),
     ReportModerationState,
-    ViewerEngagementMessage,
+    ViewerEngagementMessage(ViewerEngagementAction),
     IgnoreAction,
     ParseError(String),
+}
+
+/// YouTube システム通知（チャンネル登録者限定モード等）
+#[derive(Debug, Clone, PartialEq)]
+pub struct ViewerEngagementAction {
+    pub id: String,
+    pub timestamp_usec: String,
+    pub message_parts: Vec<MessagePart>,
+}
+
+/// YouTube ライブチャットアンケート
+#[derive(Debug, Clone, PartialEq)]
+pub struct PollAction {
+    pub poll_id: String,
+    pub question: String,
+    pub choices: Vec<PollChoice>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PollChoice {
+    pub text: String,
+    pub vote_percentage: String,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct LiveChatTextMessage {
@@ -716,6 +738,121 @@ fn parse_live_chat_paid_message(renderer: &serde_json::Value) -> Option<LiveChat
         author_external_channel_id,
         author_photo_url,
         purchase_amount_text,
+    })
+}
+
+/// liveChatViewerEngagementMessageRenderer をパースして ViewerEngagementAction を返す
+fn parse_viewer_engagement_message(renderer: &serde_json::Value) -> Option<ViewerEngagementAction> {
+    let id = get_string(renderer, &["id"]).ok()?;
+    let timestamp_usec = get_string(renderer, &["timestampUsec"]).ok()?;
+    let message_parts = renderer
+        .get("message")
+        .and_then(|m| parse_message(m).ok())
+        .unwrap_or_default();
+    Some(ViewerEngagementAction {
+        id,
+        timestamp_usec,
+        message_parts,
+    })
+}
+
+/// updateLiveChatPollAction をパースして PollAction を返す
+fn parse_poll_action(action: &serde_json::Value) -> Option<PollAction> {
+    let renderer =
+        get_value(action, &["updateLiveChatPollAction", "pollToUpdate", "pollRenderer"]).ok()?;
+    let poll_id = get_string(renderer, &["liveChatPollId"]).ok()?;
+    let question = renderer
+        .pointer("/header/pollHeaderRenderer/pollQuestion/runs")
+        .and_then(|v| v.as_array())
+        .map(|runs| {
+            runs.iter()
+                .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+                .collect::<String>()
+        })
+        .unwrap_or_default();
+    let choices = renderer
+        .get("choices")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|c| {
+                    let text = c
+                        .pointer("/text/runs")
+                        .and_then(|v| v.as_array())
+                        .map(|runs| {
+                            runs.iter()
+                                .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+                                .collect::<String>()
+                        })?;
+                    let vote_percentage = c
+                        .pointer("/votePercentage/simpleText")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("0%")
+                        .to_string();
+                    Some(PollChoice {
+                        text,
+                        vote_percentage,
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    Some(PollAction {
+        poll_id,
+        question,
+        choices,
+    })
+}
+
+/// showLiveChatActionPanelAction 内の pollRenderer をパースして PollAction を返す
+fn parse_show_action_panel_poll(action: &serde_json::Value) -> Option<PollAction> {
+    let renderer = get_value(
+        action,
+        &[
+            "showLiveChatActionPanelAction",
+            "panelToShow",
+            "liveChatActionPanelRenderer",
+            "contents",
+            "pollRenderer",
+        ],
+    )
+    .ok()?;
+    let poll_id = get_string(renderer, &["liveChatPollId"]).ok()?;
+    let question = renderer
+        .pointer("/header/pollHeaderRenderer/pollQuestion/runs")
+        .and_then(|v| v.as_array())
+        .map(|runs| {
+            runs.iter()
+                .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+                .collect::<String>()
+        })
+        .unwrap_or_default();
+    let choices = renderer
+        .get("choices")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|c| {
+                    let text = c
+                        .pointer("/text/runs")
+                        .and_then(|v| v.as_array())
+                        .map(|runs| {
+                            runs.iter()
+                                .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+                                .collect::<String>()
+                        })?;
+                    Some(PollChoice {
+                        text,
+                        vote_percentage: String::new(),
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    Some(PollAction {
+        poll_id,
+        question,
+        choices,
     })
 }
 
@@ -828,16 +965,26 @@ fn parse_action(action: &serde_json::Value) -> Action {
                 None => return Action::ParseError(action.to_string()),
             }
         } else if item_map.contains_key("liveChatMembershipItemRenderer") {
-            return Action::Membership;
+            return Action::ParseError(action.to_string());
         } else if item_map.contains_key("liveChatViewerEngagementMessageRenderer") {
-            return Action::ViewerEngagementMessage;
+            let renderer = match get_value(item, &["liveChatViewerEngagementMessageRenderer"]) {
+                Ok(v) => v,
+                Err(_) => return Action::ParseError(action.to_string()),
+            };
+            match parse_viewer_engagement_message(renderer) {
+                Some(msg) => return Action::ViewerEngagementMessage(msg),
+                None => return Action::ParseError(action.to_string()),
+            }
         } else {
             return Action::ParseError(action.to_string());
         }
     } else if obj.contains_key("liveChatReportModerationStateCommand") {
-        return Action::ReportModerationState;
+        return Action::IgnoreAction;
     } else if obj.contains_key("updateLiveChatPollAction") {
-        return Action::UpdatePoll;
+        match parse_poll_action(action) {
+            Some(poll) => return Action::UpdatePoll(poll),
+            None => return Action::ParseError(action.to_string()),
+        }
     } else if obj.contains_key("replaceChatItemAction") {
         let target_item_id = match get_string(action, &["replaceChatItemAction", "targetItemId"]) {
             Ok(s) => s,
@@ -888,6 +1035,11 @@ fn parse_action(action: &serde_json::Value) -> Action {
         return Action::IgnoreAction;
     } else if obj.contains_key("addLiveChatTickerItemAction") {
         return Action::IgnoreAction;
+    } else if obj.contains_key("showLiveChatActionPanelAction") {
+        match parse_show_action_panel_poll(action) {
+            Some(poll) => return Action::UpdatePoll(poll),
+            None => return Action::IgnoreAction,
+        }
     } else {
         return Action::ParseError(action.to_string());
     }
@@ -902,6 +1054,7 @@ fn action_timestamp_usec(action: &Action) -> Option<u64> {
         Action::PaidMessage(msg) => msg.timestamp_usec.parse::<u64>().ok(),
         Action::PlaceholderItem(item) => item.timestamp_usec.parse::<u64>().ok(),
         Action::ReplaceChatItem(item) => item.message.timestamp_usec.parse::<u64>().ok(),
+        Action::ViewerEngagementMessage(msg) => msg.timestamp_usec.parse::<u64>().ok(),
         _ => None,
     }
 }
@@ -1391,7 +1544,7 @@ mod tests {
         "#.trim();
         let action_json: serde_json::Value = serde_json::from_str(sample_action).unwrap();
         let a = parse_action(&action_json);
-        assert_eq!(Action::UpdatePoll, a);
+        assert!(matches!(a, Action::UpdatePoll(_)));
         Ok(())
     }
     #[tokio::test]
@@ -1407,7 +1560,7 @@ mod tests {
         let sample_action = r#"{"addChatItemAction":{"item":{"liveChatViewerEngagementMessageRenderer":{"actionButton":{"buttonRenderer":{"accessibilityData":{"accessibilityData":{"label":"詳細"}},"isDisabled":false,"navigationEndpoint":{"clickTrackingParams":"CBsQ8FsiEwjU9vbuzqmSAxX1sukFHUgVE2XKAQQu9Zrw","commandMetadata":{"webCommandMetadata":{"rootVe":83769,"url":"//support.google.com/youtube/?p=subs_only_chat_viewer&hl=ja","webPageType":"WEB_PAGE_TYPE_UNKNOWN"}},"urlEndpoint":{"target":"TARGET_NEW_WINDOW","url":"//support.google.com/youtube/?p=subs_only_chat_viewer&hl=ja"}},"size":"SIZE_DEFAULT","style":"STYLE_BLUE_TEXT","text":{"simpleText":"詳細"},"trackingParams":"CBsQ8FsiEwjU9vbuzqmSAxX1sukFHUgVE2U="}},"icon":{"iconType":"YOUTUBE_ROUND"},"id":"Ci0KK1NVQlNDUklCRVJTX09OTFlfVkVNMjAyNi8wMS8yNi0wODoyMzozNy4zNjQ%3D","message":{"runs":[{"text":"チャンネル登録者のみモード。このチャンネルの登録期間が "},{"text":"24 時間"},{"text":" 以上のユーザーからのメッセージが表示されます。"}]},"timestampUsec":"1769444617364806","trackingParams":"CAEQl98BIhMI1Pb27s6pkgMV9bLpBR1IFRNl"}}},"clickTrackingParams":"CAEQl98BIhMI1Pb27s6pkgMV9bLpBR1IFRNlygEELvWa8A=="}"#.trim();
         let action_json: serde_json::Value = serde_json::from_str(sample_action).unwrap();
         let result = parse_action(&action_json);
-        assert!(matches!(result, Action::ViewerEngagementMessage));
+        assert!(matches!(result, Action::ViewerEngagementMessage(_)));
         Ok(())
     }
     #[tokio::test]

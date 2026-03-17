@@ -214,7 +214,21 @@ pub(crate) async fn on_message_impl(
                     );
                     KickPlugin::send_message(ctx.clone(), account_msg).await;
                 }
-                Err(e) => {
+                Err(api::FetchChannelError::Parse {
+                    status,
+                    body,
+                    error,
+                }) => {
+                    tracing::debug!(
+                        target: "mcv::plugin-kick",
+                        connection_id = %connect.connection_id,
+                        http_status = status,
+                        response_body = %body,
+                        parse_error = %error,
+                        "Kick ログインユーザー情報の取得に失敗（未ログインの可能性あり）"
+                    );
+                }
+                Err(api::FetchChannelError::Http(e)) => {
                     tracing::debug!(
                         target: "mcv::plugin-kick",
                         connection_id = %connect.connection_id,
@@ -237,6 +251,7 @@ pub(crate) async fn on_message_impl(
                                 &item.content,
                                 &item.created_at,
                                 ProviderMessageKind::HistoryChat,
+                                vec![],
                             )
                         })
                         .collect::<Vec<_>>();
@@ -293,7 +308,12 @@ pub(crate) async fn on_message_impl(
                 }
             }
 
-            conn.connect(ctx, plugin.logical_plugin_id, chatroom_id);
+            conn.connect(
+                ctx,
+                plugin.logical_plugin_id,
+                chatroom_id,
+                channel_info.subscriber_badges,
+            );
         }
         MessageType::Disconnect => {
             let disconnect: DisconnectPayload = parse_payload(&message.payload)?;

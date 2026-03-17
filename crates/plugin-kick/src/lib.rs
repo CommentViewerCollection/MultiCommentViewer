@@ -8,6 +8,7 @@
 //! - `message_handler`: メッセージハンドリングとペイロード解析
 
 mod api;
+mod badge_svgs;
 mod connection;
 mod message_handler;
 

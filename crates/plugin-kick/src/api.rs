@@ -14,6 +14,22 @@ pub struct KickChannelResponse {
     pub livestream: Option<KickLivestream>,
     pub user_id: Option<u64>,
     pub followers_count: Option<u64>,
+    #[serde(default)]
+    pub subscriber_badges: Vec<KickSubscriberBadge>,
+}
+
+/// チャンネルのサブスクライバーバッジ情報
+#[derive(Debug, Clone, Deserialize)]
+pub struct KickSubscriberBadge {
+    #[allow(dead_code)]
+    pub id: u64,
+    pub months: u32,
+    pub badge_image: KickBadgeImage,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct KickBadgeImage {
+    pub src: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -6,8 +6,8 @@
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope, Message as McvMessage,
-    MessageDestination, MessagePart, MessageSource, MessageType, PluginId, ProviderContent,
-    ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
+    MessageDestination, MessagePart, MessageSource, MessageType, PluginId, ProviderBadge,
+    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
     UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
@@ -47,11 +47,28 @@ struct KickChatEvent {
 }
 
 #[derive(Deserialize)]
+struct KickIdentity {
+    #[allow(dead_code)]
+    color: Option<String>,
+    #[serde(default)]
+    badges: Vec<KickBadge>,
+}
+
+#[derive(Deserialize)]
+struct KickBadge {
+    #[serde(rename = "type")]
+    badge_type: String,
+    text: String,
+    count: Option<u32>,
+}
+
+#[derive(Deserialize)]
 struct KickEventSender {
     id: u64,
     username: String,
     #[allow(dead_code)]
     slug: String,
+    identity: Option<KickIdentity>,
 }
 
 fn parse_timestamp(created_at: &str) -> i64 {
@@ -122,6 +139,35 @@ pub(crate) fn parse_kick_message_parts(content: &str) -> Vec<MessagePart> {
     parts
 }
 
+fn kick_badges_to_provider(
+    kick_badges: &[KickBadge],
+    subscriber_badges: &[crate::api::KickSubscriberBadge],
+) -> Vec<ProviderBadge> {
+    kick_badges
+        .iter()
+        .map(|badge| {
+            let image_url = if badge.badge_type == "subscriber" {
+                // チャンネル固有のサブスクライバーバッジ画像を months で検索
+                let months = badge.count.unwrap_or(1);
+                let channel_url = subscriber_badges
+                    .iter()
+                    .filter(|sb| sb.months <= months)
+                    .max_by_key(|sb| sb.months)
+                    .map(|sb| sb.badge_image.src.clone());
+                // チャンネル固有 URL がなければ汎用 SVG にフォールバック
+                channel_url.or_else(|| crate::badge_svgs::badge_image_url("subscriber"))
+            } else {
+                crate::badge_svgs::badge_image_url(&badge.badge_type)
+            };
+            ProviderBadge {
+                id: badge.badge_type.clone(),
+                name: badge.text.clone(),
+                image_url,
+            }
+        })
+        .collect()
+}
+
 pub(crate) fn build_provider_message(
     channel_id: &str,
     platform_message_id: String,
@@ -130,6 +176,7 @@ pub(crate) fn build_provider_message(
     content: &str,
     created_at: &str,
     kind: ProviderMessageKind,
+    badges: Vec<ProviderBadge>,
 ) -> ProviderMessage {
     ProviderMessage {
         id: Uuid::new_v4().to_string(),
@@ -141,7 +188,7 @@ pub(crate) fn build_provider_message(
             display_name: vec![MessagePart::Text {
                 text: sender_username,
             }],
-            badges: vec![],
+            badges,
             role: None,
             avatar_url: None,
         },
@@ -178,6 +225,7 @@ impl Connection {
         ctx: PluginContext,
         logical_plugin_id: Uuid,
         chatroom_id: u64,
+        subscriber_badges: Vec<crate::api::KickSubscriberBadge>,
     ) {
         if self.running {
             tracing::debug!(
@@ -197,6 +245,7 @@ impl Connection {
             connection_id,
             chatroom_id,
             cancel_rx,
+            subscriber_badges,
         ) {
             Some(task) => task,
             None => return,
@@ -213,6 +262,7 @@ impl Connection {
         connection_id: Uuid,
         chatroom_id: u64,
         mut cancel_rx: watch::Receiver<bool>,
+        subscriber_badges: Vec<crate::api::KickSubscriberBadge>,
     ) -> Option<JoinHandle<()>> {
         let runtime_handle = match tokio::runtime::Handle::try_current() {
             Ok(handle) => handle,
@@ -290,6 +340,7 @@ impl Connection {
                                             chatroom_id,
                                             &mut write,
                                             text.to_string(),
+                                            &subscriber_badges,
                                         ).await;
                                         if !should_continue {
                                             break;
@@ -396,6 +447,7 @@ impl Connection {
         chatroom_id: u64,
         write: &mut WsWrite,
         raw_text: String,
+        subscriber_badges: &[crate::api::KickSubscriberBadge],
     ) -> bool {
         let pusher_msg: PusherMessage = match serde_json::from_str(&raw_text) {
             Ok(m) => m,
@@ -438,6 +490,12 @@ impl Connection {
                 }
             }
             "App\\Events\\ChatMessageEvent" => {
+                tracing::trace!(
+                    target: "mcv::plugin-kick",
+                    connection_id = %connection_id,
+                    raw_data = %pusher_msg.data,
+                    "ChatMessageEvent raw data"
+                );
                 let chat_event: KickChatEvent = match serde_json::from_str(&pusher_msg.data) {
                     Ok(e) => e,
                     Err(e) => {
@@ -445,11 +503,35 @@ impl Connection {
                             target: "mcv::plugin-kick",
                             connection_id = %connection_id,
                             error = %e,
+                            raw_data = %pusher_msg.data,
                             "ChatMessageEvent のパースに失敗"
                         );
                         return true;
                     }
                 };
+
+                let kick_badges = chat_event
+                    .sender
+                    .identity
+                    .as_ref()
+                    .map(|id| id.badges.as_slice())
+                    .unwrap_or_default();
+                tracing::debug!(
+                    target: "mcv::plugin-kick",
+                    connection_id = %connection_id,
+                    sender = %chat_event.sender.username,
+                    has_identity = chat_event.sender.identity.is_some(),
+                    kick_badge_count = kick_badges.len(),
+                    kick_badge_types = ?kick_badges.iter().map(|b| &b.badge_type).collect::<Vec<_>>(),
+                    "ChatMessageEvent バッジ解析"
+                );
+                let badges = kick_badges_to_provider(kick_badges, subscriber_badges);
+                tracing::debug!(
+                    target: "mcv::plugin-kick",
+                    connection_id = %connection_id,
+                    provider_badge_count = badges.len(),
+                    "ProviderBadge 生成完了"
+                );
 
                 let provider_msg = build_provider_message(
                     &chatroom_id.to_string(),
@@ -459,6 +541,7 @@ impl Connection {
                     &chat_event.content,
                     &chat_event.created_at,
                     ProviderMessageKind::Chat,
+                    badges,
                 );
 
                 let envelope = McvEnvelope {

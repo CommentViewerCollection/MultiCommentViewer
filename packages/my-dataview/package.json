@@ -9,8 +9,10 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "react": "^19.1.0",
     "react-virtuoso": "^4.18.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.8",

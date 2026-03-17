@@ -105,7 +105,7 @@ impl LogStorage {
         )?;
 
         let entries = stmt
-            .query_map([limit], |row| {
+            .query_map([limit as i64], |row| {
                 Ok(LogEntry {
                     id: row.get(0)?,
                     level: row.get::<_, String>(1)?.parse().unwrap(),
@@ -156,26 +156,26 @@ impl LogStorage {
             "DELETE FROM logs WHERE id NOT IN (
                 SELECT id FROM logs ORDER BY timestamp DESC LIMIT ?1
             )",
-            [max_count],
+            [max_count as i64],
         )
     }
 
     /// ログの総数を取得
     pub fn count(&self) -> SqliteResult<usize> {
-        let count: usize = self
+        let count: i64 = self
             .conn
             .query_row("SELECT COUNT(*) FROM logs", [], |row| row.get(0))?;
-        Ok(count)
+        Ok(count as usize)
     }
 
     /// 未送信ログの数を取得
     pub fn count_unsent(&self) -> SqliteResult<usize> {
-        let count: usize =
+        let count: i64 =
             self.conn
                 .query_row("SELECT COUNT(*) FROM logs WHERE sent = 0", [], |row| {
                     row.get(0)
                 })?;
-        Ok(count)
+        Ok(count as usize)
     }
 
     /// フィルタを使用してログを検索

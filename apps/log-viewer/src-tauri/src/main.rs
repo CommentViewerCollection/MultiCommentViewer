@@ -175,8 +175,10 @@ async fn get_local_logs(
 
         let params_refs: Vec<&dyn rusqlite::ToSql> =
             params_vec.iter().map(|b| b.as_ref()).collect();
-        stmt.query_row(params_refs.as_slice(), |row| row.get(0))
-            .map_err(|e| format!("Failed to get count: {}", e))?
+        let count: i64 = stmt
+            .query_row(params_refs.as_slice(), |row| row.get(0))
+            .map_err(|e| format!("Failed to get count: {}", e))?;
+        count as usize
     };
 
     // Get logs

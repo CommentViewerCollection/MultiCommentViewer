@@ -21,9 +21,9 @@ serde_json = { workspace = true }
 uuid = { workspace = true, features = ["v5"] }
 tokio = { workspace = true }
 mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
-tracing = "0.1"
+tracing = { workspace = true }
 plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
-rusqlite = { version = "0.30", features = ["bundled"] }
+rusqlite = { workspace = true }
 base64 = "0.22"
 aes-gcm = "0.10"
 

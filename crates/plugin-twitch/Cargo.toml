@@ -22,11 +22,11 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 tokio = { workspace = true }
 rand = "0.8"
-once_cell = "1.20"
-twitch-lib = { path = "../../crates/twitch-lib"}
+once_cell = { workspace = true }
+twitch-lib = { path = "../../crates/twitch-lib" }
 mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
-tracing = "0.1"
-plugin-abi-helper = {path = "../../crates/plugin-abi-helper"}
-regex = "1.12.3"
+tracing = { workspace = true }
+plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
+regex = { workspace = true }
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
-futures-util = "0.3"
+futures-util = { workspace = true }

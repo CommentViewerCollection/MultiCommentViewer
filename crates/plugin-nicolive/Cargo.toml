@@ -23,11 +23,11 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 tokio = { workspace = true }
 mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
-tracing = "0.1"
+tracing = { workspace = true }
 plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
-regex = "1.12.3"
+regex = { workspace = true }
 rquest = { version = "1.5", features = ["stream"] }
 tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
-futures-util = "0.3"
+futures-util = { workspace = true }
 prost = "0.13"
 base64 = "0.22"

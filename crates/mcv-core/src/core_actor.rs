@@ -699,13 +699,6 @@ impl Handler<SendMessageToCore> for CoreActor {
             message,
         } = msg.internal_message;
 
-        tracing::trace!(
-            target: "mcv::core::CoreActor",
-            physical_plugin_id = %physical_plugin_id,
-            message_type = ?message.message_type,
-            "CoreActor received message from plugin"
-        );
-
         if matches!(message.src, MessageSource::Plugin { .. })
             && matches!(message.dst, MessageDestination::Plugin { .. })
         {

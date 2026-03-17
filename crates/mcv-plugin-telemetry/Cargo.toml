@@ -6,8 +6,8 @@ edition = "2021"
 [dependencies]
 mcv-log-schema = { path = "../mcv-log-schema" }
 # Tracing ecosystem
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["json"] }
 
 # Local crates
 mcv-messages = { path = "../mcv-messages" }
@@ -30,7 +30,7 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 
 # Stacktrace
-backtrace = "0.3"
+backtrace = { workspace = true }
 
 [features]
 alpha = ["mcv-log-schema/alpha"]

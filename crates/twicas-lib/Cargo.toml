@@ -16,4 +16,4 @@ scraper = "0.25.0"
 html-escape = "*"
 thiserror = { workspace = true }
 urlencoding = "2"
-tracing = "0.1"
+tracing = { workspace = true }

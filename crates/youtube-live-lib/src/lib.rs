@@ -191,14 +191,26 @@ pub async fn get_live_chat_messages(
             body = body.to_owned()
         )
     })?;
-    let live_chat_continuation = get_value(
-        &json,
-        &[
-            // "responseContext",
-            "continuationContents",
-            "liveChatContinuation",
-        ],
-    )?;
+    // liveChatContinuation がない場合、配信終了の messageRenderer を確認する
+    let live_chat_continuation = match json.pointer("/continuationContents/liveChatContinuation") {
+        Some(v) => v,
+        None => {
+            // contents.messageRenderer がある場合は配信終了として正常終了扱い
+            if json.pointer("/contents/messageRenderer").is_some() {
+                tracing::info!(
+                    target: "mcv::youtube-live-lib",
+                    "配信終了を検出 (messageRenderer): 接続を終了します"
+                );
+                return Ok((None, vec![], body));
+            }
+            return Err(mcv_plugin_telemetry::capture_context!(
+                "Missing continuationContents.liveChatContinuation",
+                path = "continuationContents.liveChatContinuation",
+                value = json.to_string()
+            )
+            .into());
+        }
+    };
 
     let mut aabb = Vec::new();
     match live_chat_continuation.get("actions") {
@@ -452,7 +464,7 @@ pub fn get_value<'a>(
         .try_fold(value, |acc, key| acc.get(key))
         .ok_or_else(|| {
             mcv_plugin_telemetry::capture_context!(
-                format!("Missing value {}", value.to_string()),
+                "Missing value",
                 path = path.join("."),
                 value = value.to_string()
             )

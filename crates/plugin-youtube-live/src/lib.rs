@@ -883,6 +883,12 @@ fn convert_action_to_provider_message(
             Some(provider_msg)
         }
 
+        Action::Membership(msg) => {
+            let mut provider_msg = convert_to_provider_message(msg);
+            provider_msg.kind = ProviderMessageKind::System(SystemKind::Membership);
+            Some(provider_msg)
+        }
+
         Action::PaidMessage(msg) => Some(convert_paid_message_to_provider_message(msg)),
 
         Action::PaidSticker(msg) => Some(convert_paid_sticker_to_provider_message(msg)),

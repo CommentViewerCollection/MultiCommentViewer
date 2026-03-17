@@ -611,7 +611,7 @@ pub enum Action {
     PaidMessage(LiveChatPaidMessage),
     PaidSticker(LiveChatPaidSticker),
     PlaceholderItem(PlaceholderItemAction),
-    Membership,
+    Membership(LiveChatTextMessage),
     RemoveChatItem(RemoveChatItemAction),
     RemoveChatItemByAuthor(RemoveChatItemByAuthorAction),
     ReplaceChatItem(ReplaceChatItemAction),
@@ -713,6 +713,42 @@ fn parse_live_chat_text_message(renderer: &serde_json::Value) -> Option<LiveChat
         .and_then(|tn| tn.get("url"))
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
+
+    Some(LiveChatTextMessage {
+        author_name,
+        message_parts,
+        timestamp_usec,
+        author_badges,
+        author_external_channel_id,
+        author_photo_url,
+    })
+}
+
+/// liveChatMembershipItemRenderer をパースして LiveChatTextMessage を返す
+///
+/// `message` フィールドがあれば本文として使用し、なければ `headerSubtext` を使用する。
+fn parse_membership_item(renderer: &serde_json::Value) -> Option<LiveChatTextMessage> {
+    let author_name = get_string(renderer, &["authorName", "simpleText"]).ok()?;
+    let timestamp_usec = get_string(renderer, &["timestampUsec"]).ok()?;
+    let author_external_channel_id = get_string(renderer, &["authorExternalChannelId"]).ok()?;
+    let author_badges = parse_author_badges(renderer).ok()?;
+    let author_photo_url = renderer
+        .get("authorPhoto")
+        .and_then(|v| v.get("thumbnails"))
+        .and_then(|v| v.as_array())
+        .and_then(|arr| arr.first())
+        .and_then(|tn| tn.get("url"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    // message があれば使用、なければ headerSubtext を表示テキストとして使用
+    let message_parts = if let Some(msg) = renderer.get("message") {
+        parse_message(msg).unwrap_or_default()
+    } else if let Some(subtext) = renderer.get("headerSubtext") {
+        parse_message(subtext).unwrap_or_default()
+    } else {
+        vec![]
+    };
 
     Some(LiveChatTextMessage {
         author_name,
@@ -1050,7 +1086,14 @@ fn parse_action(action: &serde_json::Value) -> Action {
                 None => return Action::ParseError(action.to_string()),
             }
         } else if item_map.contains_key("liveChatMembershipItemRenderer") {
-            return Action::ParseError(action.to_string());
+            let renderer = match get_value(item, &["liveChatMembershipItemRenderer"]) {
+                Ok(v) => v,
+                Err(_) => return Action::ParseError(action.to_string()),
+            };
+            match parse_membership_item(renderer) {
+                Some(msg) => return Action::Membership(msg),
+                None => return Action::ParseError(action.to_string()),
+            }
         } else if item_map.contains_key("liveChatViewerEngagementMessageRenderer") {
             let renderer = match get_value(item, &["liveChatViewerEngagementMessageRenderer"]) {
                 Ok(v) => v,
@@ -1694,7 +1737,7 @@ mod tests {
         let sample_action = r#"{"addChatItemAction":{"clientId":"CLuzoPzkzJIDFXnBwgQd72o66g","item":{"liveChatMembershipItemRenderer":{"authorBadges":[{"liveChatAuthorBadgeRenderer":{"accessibility":{"accessibilityData":{"label":"メンバー（6 か月）"}},"customThumbnail":{"thumbnails":[{"height":16,"url":"https://yt3.ggpht.com/xRSwAO3CwSvSWwCJuilRdGYb-ds4jn7X3_fToTq3tIqTmhcKHDXD4lEebUotUNzSS2swL6NB=s16-c-k","width":16},{"height":32,"url":"https://yt3.ggpht.com/xRSwAO3CwSvSWwCJuilRdGYb-ds4jn7X3_fToTq3tIqTmhcKHDXD4lEebUotUNzSS2swL6NB=s32-c-k","width":32}]},"tooltip":"メンバー（6 か月）"}}],"authorExternalChannelId":"UCVXpwoUHh1v7VcfyseIpTEg","authorName":{"simpleText":"@K41-z1e"},"authorPhoto":{"thumbnails":[{"height":32,"url":"https://yt4.ggpht.com/4otcpEywmhlyWMmF0kbipBTbixC2jQQI2CINMJKl7QupQBfpnS9OQc0qshtDoj1I9maenb1jJg=s32-c-k-c0x00ffffff-no-rj","width":32},{"height":64,"url":"https://yt4.ggpht.com/4otcpEywmhlyWMmF0kbipBTbixC2jQQI2CINMJKl7QupQBfpnS9OQc0qshtDoj1I9maenb1jJg=s64-c-k-c0x00ffffff-no-rj","width":64}]},"contextMenuAccessibility":{"accessibilityData":{"label":"チャットの操作"}},"contextMenuEndpoint":{"clickTrackingParams":"CAUQ4P0GIhMIqdvi_uTMkgMVWoSmAx2dDDykygEEo6F3mw==","commandMetadata":{"webCommandMetadata":{"ignoreNavigation":true}},"liveChatItemContextMenuEndpoint":{"params":"Q2g0S0hBb2FRMHgxZW05UWVtdDZTa2xFUmxodVFuZG5VV1EzTW04Mk5tY2FLU29uQ2hoVlEyeFRNMk51U1ZWTk9YbDZjMEpRVVhwbGVWaGZPRkVTQzFoTlUwSkpVVzFMVkRsM0lBSW9CRElhQ2hoVlExWlljSGR2VlVob01YWTNWbU5tZVhObFNYQlVSV2M0QWtnQVVBUSUzRA=="}},"headerSubtext":{"runs":[{"text":"トレーナーさん"},{"text":" へようこそ！"}]},"id":"ChwKGkNMdXpvUHprekpJREZYbkJ3Z1FkNzJvNjZn","timestampUsec":"1770653141704914","trackingParams":"CAUQ4P0GIhMIqdvi_uTMkgMVWoSmAx2dDDyk"}}},"clickTrackingParams":"CAEQl98BIhMIqdvi_uTMkgMVWoSmAx2dDDykygEEo6F3mw=="}"#.trim();
         let action_json: serde_json::Value = serde_json::from_str(sample_action).unwrap();
         let result = parse_action(&action_json);
-        assert!(matches!(result, Action::Membership));
+        assert!(matches!(result, Action::Membership(_)));
         Ok(())
     }
 }

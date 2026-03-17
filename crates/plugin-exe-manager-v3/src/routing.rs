@@ -1,4 +1,4 @@
-use mcv_messages::{Message as McvMessage, MessageDestination, PluginId};
+use mcv_messages::{Message as McvMessage, PluginId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;

@@ -483,6 +483,7 @@ impl Connection {
                     target: "mcv::plugin-kick",
                     connection_id = %connection_id,
                     error = %e,
+                    raw = raw_text,
                     "Pusher メッセージのパースに失敗"
                 );
                 return true;

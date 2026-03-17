@@ -16,4 +16,5 @@ cargo xtask install `
   --plugin twicas `
   --plugin exe-manager-v3 `
   --plugin nicolive `
-  --plugin exe-plugin-sample
+  --plugin exe-plugin-sample `
+  --plugin kick

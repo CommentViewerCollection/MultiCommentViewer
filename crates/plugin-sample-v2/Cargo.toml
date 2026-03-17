@@ -13,7 +13,7 @@ mcv-messages = { path = "../mcv-messages" }
 async-trait = { workspace = true }
 uuid = { workspace = true }
 serde_json = { workspace = true }
-libc = "0.2.180"
+libc = { workspace = true }
 
 [features]
 alpha = []

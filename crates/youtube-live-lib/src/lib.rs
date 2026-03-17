@@ -91,13 +91,15 @@ pub struct Ytcfg {
     api_key: String,
     visitor_data: Option<String>,
 }
+#[allow(dead_code)]
 #[derive(Debug)]
-struct remove_chat_item_action {
+struct RemoveChatItemAction {
     target_item_id: String,
 }
-impl remove_chat_item_action {
+#[allow(dead_code)]
+impl RemoveChatItemAction {
     fn new(target_item_id: String) -> Self {
-        remove_chat_item_action { target_item_id }
+        RemoveChatItemAction { target_item_id }
     }
 }
 
@@ -157,7 +159,7 @@ pub fn get_yt_initial_data(
     Ok(yt_initial_data)
 }
 pub async fn get_live_chat_messages(
-    vid: &Vid,
+    _vid: &Vid,
     ytcfg: &Ytcfg,
     continuation: &Continuation,
 ) -> Result<(Option<Continuation>, Vec<Action>, String), mcv_plugin_telemetry::TracingError> {
@@ -247,6 +249,7 @@ pub async fn get_live_chat_messages(
     };
     Ok((continuation, aabb, body))
 }
+#[allow(dead_code)]
 fn extract_ytcfg_raw<'a>(live_chat: &'a LiveChat) -> Option<&'a str> {
     extract_ytcfg_raw_from_html(live_chat.value())
 }

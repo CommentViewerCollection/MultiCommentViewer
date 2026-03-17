@@ -74,6 +74,7 @@ struct DomainOutput {
     pub actions: Vec<Action>,
     pub continuation: Option<Continuation>,
     pub raw: Option<String>,
+    #[allow(dead_code)]
     pub send_message_params: Option<String>,
     pub viewer_name: Option<String>,
     pub viewer_avatar_url: Option<String>,

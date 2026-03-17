@@ -6,4 +6,4 @@ description = "TwitCasting PlayerPage2.js から x-web-authorizekey 生成に使
 
 [dependencies]
 reqwest = { version = "0.12", features = ["blocking"] }
-regex = "1"
+regex = { workspace = true }

@@ -228,6 +228,7 @@ pub async fn get_live_chat_messages(
         }
         None => {}
     };
+    aabb.sort_by_key(|a| action_timestamp_usec(a).unwrap_or(u64::MAX));
     let continuation = if let Some(k) = live_chat_continuation.get("continuations") {
         let c = k.as_array().unwrap();
         let c0 = &c[0];
@@ -375,6 +376,7 @@ fn extract_yt_initial_data(
             aabb.push(ret);
         }
     }
+    aabb.sort_by_key(|a| action_timestamp_usec(a).unwrap_or(u64::MAX));
 
     //emojiを取得
 
@@ -888,6 +890,19 @@ fn parse_action(action: &serde_json::Value) -> Action {
         return Action::IgnoreAction;
     } else {
         return Action::ParseError(action.to_string());
+    }
+}
+
+/// Action から timestamp_usec を取り出す（ソート用）
+fn action_timestamp_usec(action: &Action) -> Option<u64> {
+    match action {
+        Action::TextMessage(msg) | Action::GiftAnnouncement(msg) => {
+            msg.timestamp_usec.parse::<u64>().ok()
+        }
+        Action::PaidMessage(msg) => msg.timestamp_usec.parse::<u64>().ok(),
+        Action::PlaceholderItem(item) => item.timestamp_usec.parse::<u64>().ok(),
+        Action::ReplaceChatItem(item) => item.message.timestamp_usec.parse::<u64>().ok(),
+        _ => None,
     }
 }
 

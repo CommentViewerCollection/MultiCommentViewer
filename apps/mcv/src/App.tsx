@@ -530,7 +530,7 @@ function App() {
     { key: 'connection_name', label: '接続', width: 150, visible: true, resizable: true },
     { key: 'avatar_url', label: 'サムネ', width: 48, visible: true, resizable: true },
     { key: 'user_name', label: 'ユーザー名', width: 150, visible: true, resizable: true },
-    { key: 'text', label: 'コメント', width: 400, visible: true, resizable: true, wrap: true },
+    { key: 'text', label: 'コメント', width: 400, visible: true, resizable: true, wrap: true, hideable: false },
     { key: 'timestamp', label: '時刻', width: 150, visible: true, resizable: true },
   ])
 

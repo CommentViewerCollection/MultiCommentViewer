@@ -27,4 +27,4 @@ tracing = "0.1"
 plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
 tokio-tungstenite = { version = "0.28", features = ["native-tls"] }
 futures-util = "0.3"
-rquest = { version = "1.5" }
+kick-lib = { path = "../../crates/kick-lib" }

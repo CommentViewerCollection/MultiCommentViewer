@@ -32,6 +32,7 @@ members = [
     "crates/plugin-bouyomi",
     "crates/plugin-twitch",
     "crates/plugin-twicas",
+    "crates/kick-lib",
     "crates/plugin-kick",
     "crates/plugin-nicolive",
     "crates/nicolive-lib",

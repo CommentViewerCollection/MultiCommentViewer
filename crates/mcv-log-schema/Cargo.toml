@@ -6,8 +6,8 @@ edition = "2021"
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-tracing = "0.1"
-backtrace = "0.3"
+tracing = { workspace = true }
+backtrace = { workspace = true }
 chrono = { workspace = true }
 
 [features]

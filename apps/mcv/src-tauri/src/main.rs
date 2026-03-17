@@ -1538,6 +1538,47 @@ fn restore_window_state(window: &tauri::WebviewWindow, settings_dir: &std::path:
     }
 }
 
+// ============================================================
+// 列設定の保存・復元（settings/core.json に直接読み書き）
+// ============================================================
+
+/// 列設定（順序・幅・表示状態）
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+struct ColumnSettings {
+    order: Vec<String>,
+    widths: std::collections::HashMap<String, u32>,
+    visibility: std::collections::HashMap<String, bool>,
+}
+
+/// settings_dir を Tauri コマンドへ渡すための管理状態
+struct SettingsDirState {
+    settings_dir: std::path::PathBuf,
+}
+
+/// core.json から列設定を読み込む
+#[tauri::command]
+fn get_column_settings(state: tauri::State<'_, SettingsDirState>) -> Option<ColumnSettings> {
+    let core_json = state.settings_dir.join("core.json");
+    let data: serde_json::Value = std::fs::read_to_string(&core_json)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())?;
+    serde_json::from_value(data.get("columns")?.clone()).ok()
+}
+
+/// 列設定を core.json にマージ保存する
+#[tauri::command]
+fn save_column_settings(settings: ColumnSettings, state: tauri::State<'_, SettingsDirState>) {
+    let core_json = state.settings_dir.join("core.json");
+    let mut data: serde_json::Value = std::fs::read_to_string(&core_json)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or(serde_json::json!({}));
+    data["columns"] = serde_json::to_value(&settings).unwrap_or(serde_json::json!({}));
+    if let Ok(json) = serde_json::to_string_pretty(&data) {
+        let _ = std::fs::write(&core_json, json);
+    }
+}
+
 fn main() {
     // ロガーを初期化
     let local_app_data = std::env::var("LOCALAPPDATA").expect("Failed to get LOCALAPPDATA");
@@ -1966,6 +2007,7 @@ fn main() {
     tracing::info!(target: "mcv::main", "Received AppState, starting Tauri");
 
     // Tauriアプリを起動
+    let settings_dir_for_manage = settings_dir_for_tauri.clone();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
@@ -2016,6 +2058,7 @@ fn main() {
             Ok(())
         })
         .manage(app_state)
+        .manage(SettingsDirState { settings_dir: settings_dir_for_manage })
         .invoke_handler(tauri::generate_handler![
             add_connection,
             remove_connection,
@@ -2047,7 +2090,9 @@ fn main() {
             get_plugins,
             search_comments,
             get_users,
-            detect_url
+            detect_url,
+            get_column_settings,
+            save_column_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

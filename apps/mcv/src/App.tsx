@@ -534,6 +534,42 @@ function App() {
     { key: 'timestamp', label: '時刻', width: 150, visible: true, resizable: true },
   ])
 
+  // 列設定の保存・復元
+  interface ColumnSettings {
+    order: string[]
+    widths: Record<string, number>
+    visibility: Record<string, boolean>
+  }
+
+  const saveColumnSettings = (cols: Column<Comment>[]) => {
+    const settings: ColumnSettings = {
+      order: cols.map(c => String(c.key)),
+      widths: Object.fromEntries(cols.map(c => [String(c.key), c.width ?? 100])),
+      visibility: Object.fromEntries(cols.map(c => [String(c.key), c.visible !== false])),
+    }
+    invoke('save_column_settings', { settings })
+  }
+
+  // 起動時に列設定を復元
+  useEffect(() => {
+    invoke<ColumnSettings | null>('get_column_settings').then((saved) => {
+      if (saved) {
+        setColumns((prev) => {
+          const keyMap = new Map(prev.map(c => [String(c.key), c]))
+          const ordered = saved.order
+            .map(k => keyMap.get(k))
+            .filter((c): c is Column<Comment> => c !== undefined)
+          const remaining = prev.filter(c => !saved.order.includes(String(c.key)))
+          return [...ordered, ...remaining].map(c => ({
+            ...c,
+            width: saved.widths[String(c.key)] ?? c.width,
+            visible: saved.visibility[String(c.key)] ?? c.visible,
+          }))
+        })
+      }
+    }).catch(() => {})
+  }, [])
+
   // 接続一覧を読み込む
   const loadConnections = async (): Promise<ConnectionInfo[]> => {
     try {
@@ -1497,19 +1533,20 @@ function App() {
   }
 
   const handleColumnResize = (columnKey: string, width: number) => {
-    setColumns((prev) =>
-      prev.map((col) => (col.key === columnKey ? { ...col, width } : col))
-    )
+    const newCols = columns.map((col) => (col.key === columnKey ? { ...col, width } : col))
+    setColumns(newCols)
+    saveColumnSettings(newCols)
   }
 
   const handleColumnVisibilityChange = (columnKey: string, visible: boolean) => {
-    setColumns((prev) =>
-      prev.map((col) => (col.key === columnKey ? { ...col, visible } : col))
-    )
+    const newCols = columns.map((col) => (col.key === columnKey ? { ...col, visible } : col))
+    setColumns(newCols)
+    saveColumnSettings(newCols)
   }
 
   const handleColumnOrderChange = (newColumns: Column<Comment>[]) => {
     setColumns(newColumns)
+    saveColumnSettings(newColumns)
   }
 
   const kindCellClass = (kind: string) => {

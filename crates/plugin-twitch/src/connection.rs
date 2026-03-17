@@ -104,6 +104,8 @@ impl Connection {
             username,
             password,
             join_command,
+            channel_login.clone(),
+            auth_token.clone(),
             cancel_rx,
         ) {
             Some(task) => task,
@@ -135,6 +137,8 @@ impl Connection {
         username: String,
         password: Option<String>,
         join_command: String,
+        channel_login: String,
+        auth_token: Option<AuthToken>,
         mut cancel_rx: watch::Receiver<bool>,
     ) -> Option<JoinHandle<()>> {
         let runtime_handle = match tokio::runtime::Handle::try_current() {
@@ -238,6 +242,81 @@ impl Connection {
                         connection_id = %connection_id,
                         "Connected to Twitch IRC and initialized session"
                     );
+
+                    // 直近の過去コメント履歴を取得して送信
+                    let client_id = twitch_lib::ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
+                    match twitch_lib::fetch_recent_chat_messages(
+                        &channel_login,
+                        &client_id,
+                        auth_token.as_ref(),
+                    )
+                    .await
+                    {
+                        Ok(history) => {
+                            let provider_messages: Vec<ProviderMessage> = history
+                                .into_iter()
+                                .filter(|msg| msg.deleted_at.is_none())
+                                .map(|msg| {
+                                    let timestamp =
+                                        chrono::DateTime::parse_from_rfc3339(&msg.sent_at)
+                                            .map(|dt| dt.timestamp())
+                                            .unwrap_or_else(|_| chrono::Utc::now().timestamp());
+                                    ProviderMessage {
+                                        id: Uuid::new_v4().to_string(),
+                                        platform_message_id: Some(msg.message_id),
+                                        service: ServiceId("twitch".to_string()),
+                                        channel: ChannelId(channel_login.clone()),
+                                        sender: ProviderSender {
+                                            id: msg.sender_id,
+                                            display_name: vec![MessagePart::Text {
+                                                text: msg.sender_display_name,
+                                            }],
+                                            badges: vec![],
+                                            role: None,
+                                            avatar_url: None,
+                                        },
+                                        timestamp,
+                                        kind: ProviderMessageKind::Chat,
+                                        content: ProviderContent::Text {
+                                            text: vec![MessagePart::Text { text: msg.text }],
+                                        },
+                                        reply_to: None,
+                                        metadata: serde_json::Value::Null,
+                                    }
+                                })
+                                .collect();
+                            if !provider_messages.is_empty() {
+                                let envelope = McvEnvelope {
+                                    event_id: Uuid::new_v4(),
+                                    connection_id,
+                                    messages: provider_messages,
+                                    received_at: chrono::Utc::now().timestamp(),
+                                    raw_message: None,
+                                };
+                                let history_msg = McvMessage::new_notification(
+                                    MessageType::CommentReceived,
+                                    MessageSource::Plugin {
+                                        plugin_id: logical_plugin_id.clone(),
+                                    },
+                                    MessageDestination::Core,
+                                    serde_json::to_value(CommentReceivedPayload {
+                                        connection_id,
+                                        envelope,
+                                    })
+                                    .unwrap(),
+                                );
+                                TwitchPlugin::send_message(ctx.clone(), history_msg).await;
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                error = %e,
+                                "直近コメント履歴の取得に失敗"
+                            );
+                        }
+                    }
 
                     let mut ping_interval = interval(Duration::from_secs(300));
 

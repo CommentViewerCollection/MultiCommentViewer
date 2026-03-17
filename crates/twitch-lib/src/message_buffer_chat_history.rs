@@ -5,28 +5,30 @@ use anyhow::Result;
 use serde_json::Value;
 
 #[derive(Debug)]
-struct RecentChatMessageFragment {
-    text: String,
-    content: Option<String>,
+pub struct RecentChatMessageFragment {
+    pub text: String,
+    pub content: Option<String>,
 }
-struct SenderBadge {
-    set_id: String,
-    version: String,
-    id: String,
+#[derive(Debug)]
+pub struct SenderBadge {
+    pub set_id: String,
+    pub version: String,
+    pub id: String,
 }
 
-struct RecentChatMessage {
-    message_id: String,
-    deleted_at: Option<String>,
-    sent_at: String,
-    text: String,
-    fragments: Vec<RecentChatMessageFragment>,
-    parent_message: Option<String>,
-    thread_parent_message: Option<String>,
-    sender_id: String,
-    sender_login: String,
-    sender_display_name: String,
-    sender_badges: Vec<SenderBadge>,
+#[derive(Debug)]
+pub struct RecentChatMessage {
+    pub message_id: String,
+    pub deleted_at: Option<String>,
+    pub sent_at: String,
+    pub text: String,
+    pub fragments: Vec<RecentChatMessageFragment>,
+    pub parent_message: Option<String>,
+    pub thread_parent_message: Option<String>,
+    pub sender_id: String,
+    pub sender_login: String,
+    pub sender_display_name: String,
+    pub sender_badges: Vec<SenderBadge>,
 }
 impl RecentChatMessage {
     fn parse(v: &Value) -> Result<Self> {
@@ -87,7 +89,7 @@ impl RecentChatMessage {
         })
     }
 }
-async fn get_recent_chat_messages(
+pub async fn fetch_recent_chat_messages(
     channel_login: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
@@ -119,17 +121,16 @@ async fn get_recent_chat_messages(
     }
     Ok(messages)
 }
+
 #[cfg(test)]
 mod chat_tests {
-    use crate::utils::get_auth_token_from_env;
-
     use super::*;
     #[tokio::test]
     async fn test_get_recent_chat_messages() {
         let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
-        let channel_login = "kyoyu_shiroya";
-        let auth_token = AuthToken::new(&get_auth_token_from_env().unwrap());
-        match get_recent_chat_messages(channel_login, &client_id, Some(&auth_token)).await {
+        let channel_login = "stray_channel";
+        let auth_token = AuthToken::new("ypp1z781ywsilphtfyo2jyfo7aqtw7");
+        match fetch_recent_chat_messages(channel_login, &client_id, Some(&auth_token)).await {
             Ok(messages) => {
                 for message in messages {
                     println!("Message ID: {}", message.message_id);

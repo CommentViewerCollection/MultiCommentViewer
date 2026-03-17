@@ -8,10 +8,12 @@ mod comscore_streaming_query;
 mod get_display_name;
 mod integrity;
 pub mod irc;
-mod message_buffer_chat_history;
+pub mod message_buffer_chat_history;
 pub mod stream_metadata;
 mod utils;
 mod video_id;
 mod videocomments_by_offset_or_cursor;
 
-pub use stream_metadata::{fetch_stream_info, TwitchStreamInfo};
+pub use client_id::ClientId;
+pub use message_buffer_chat_history::{RecentChatMessage, fetch_recent_chat_messages};
+pub use stream_metadata::{TwitchStreamInfo, fetch_stream_info};

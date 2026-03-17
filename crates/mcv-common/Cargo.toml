@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-uuid = { version = "1.11.0", features = ["v4", "serde"] }
-serde = { version = "1", features = ["derive"] }
+uuid = { workspace = true }
+serde = { workspace = true }
 
 [dev-dependencies]
-serde_json = "1"
+serde_json = { workspace = true }

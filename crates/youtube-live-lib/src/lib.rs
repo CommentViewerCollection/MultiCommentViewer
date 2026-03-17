@@ -203,12 +203,12 @@ pub async fn get_live_chat_messages(
                 );
                 return Ok((None, vec![], body));
             }
-            return Err(mcv_plugin_telemetry::capture_context!(
-                "Missing continuationContents.liveChatContinuation",
-                path = "continuationContents.liveChatContinuation",
-                value = json.to_string()
-            )
-            .into());
+            // continuationContents がない場合も配信終了として扱う
+            tracing::info!(
+                target: "mcv::youtube-live-lib",
+                "配信終了を検出 (continuation なし): 接続を終了します"
+            );
+            return Ok((None, vec![], body));
         }
     };
 
@@ -758,8 +758,11 @@ fn parse_viewer_engagement_message(renderer: &serde_json::Value) -> Option<Viewe
 
 /// updateLiveChatPollAction をパースして PollAction を返す
 fn parse_poll_action(action: &serde_json::Value) -> Option<PollAction> {
-    let renderer =
-        get_value(action, &["updateLiveChatPollAction", "pollToUpdate", "pollRenderer"]).ok()?;
+    let renderer = get_value(
+        action,
+        &["updateLiveChatPollAction", "pollToUpdate", "pollRenderer"],
+    )
+    .ok()?;
     let poll_id = get_string(renderer, &["liveChatPollId"]).ok()?;
     let question = renderer
         .pointer("/header/pollHeaderRenderer/pollQuestion/runs")

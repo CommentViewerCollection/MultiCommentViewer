@@ -190,6 +190,7 @@ function RenderMessagePart({
     <img
       src={part.url}
       alt={part.alt || ''}
+      title={part.alt || undefined}
       width={part.width || size}
       height={part.height || size}
       onError={() => setError(true)}

@@ -28,7 +28,9 @@ use tokio::{
     time::sleep,
 };
 use uuid::Uuid;
-use youtube_live_lib::{Action, LiveChatPaidMessage, LiveChatTextMessage, MessagePart, Vid};
+use youtube_live_lib::{
+    Action, LiveChatPaidMessage, LiveChatPaidSticker, LiveChatTextMessage, MessagePart, Vid,
+};
 
 use youtube_live_lib::domain_state_machine::{
     DomainCommand, DomainEvent, LiveChatServer, ReqwestServer, YoutubeLiveStateMachine,
@@ -883,6 +885,8 @@ fn convert_action_to_provider_message(
 
         Action::PaidMessage(msg) => Some(convert_paid_message_to_provider_message(msg)),
 
+        Action::PaidSticker(msg) => Some(convert_paid_sticker_to_provider_message(msg)),
+
         Action::PlaceholderItem(placeholder) => {
             let timestamp = placeholder.timestamp_usec.parse::<i64>().unwrap_or(0) / 1_000_000;
             Some(ProviderMessage {
@@ -1144,6 +1148,54 @@ fn convert_paid_message_to_provider_message(msg: &LiveChatPaidMessage) -> Provid
         timestamp,
         kind: ProviderMessageKind::Monetary(monetary_info),
         content: ProviderContent::Text { text },
+        reply_to: None,
+        metadata: serde_json::Value::Null,
+    }
+}
+
+fn convert_paid_sticker_to_provider_message(msg: &LiveChatPaidSticker) -> ProviderMessage {
+    let badges = msg
+        .author_badges
+        .iter()
+        .map(|badge| ProviderBadge {
+            id: badge.tooltip.clone(),
+            name: badge.tooltip.clone(),
+            image_url: badge.thumbnails.first().map(|t| t.url.clone()),
+        })
+        .collect::<Vec<_>>();
+
+    let timestamp = msg.timestamp_usec.parse::<i64>().unwrap_or(0) / 1_000_000;
+    let id = msg.timestamp_usec.clone();
+    let monetary_info = MonetaryInfo {
+        amount: parse_money(&msg.purchase_amount_text),
+        tier: None,
+        recurring: false,
+    };
+
+    ProviderMessage {
+        id: id.clone(),
+        platform_message_id: Some(id),
+        service: ServiceId("youtube".to_string()),
+        channel: ChannelId("".to_string()),
+        sender: ProviderSender {
+            id: msg.author_external_channel_id.clone(),
+            display_name: vec![McvMessagePart::Text {
+                text: msg.author_name.clone(),
+            }],
+            badges,
+            role: None,
+            avatar_url: msg.author_photo_url.clone(),
+        },
+        timestamp,
+        kind: ProviderMessageKind::Monetary(monetary_info),
+        content: ProviderContent::Text {
+            text: vec![McvMessagePart::Image {
+                url: msg.sticker_url.clone(),
+                width: Some(msg.sticker_width),
+                height: Some(msg.sticker_height),
+                alt: Some(msg.sticker_alt.clone()),
+            }],
+        },
         reply_to: None,
         metadata: serde_json::Value::Null,
     }

@@ -609,6 +609,7 @@ pub enum Action {
     TextMessage(LiveChatTextMessage),
     GiftAnnouncement(LiveChatTextMessage),
     PaidMessage(LiveChatPaidMessage),
+    PaidSticker(LiveChatPaidSticker),
     PlaceholderItem(PlaceholderItemAction),
     Membership,
     RemoveChatItem(RemoveChatItemAction),
@@ -650,6 +651,22 @@ pub struct LiveChatTextMessage {
     pub author_badges: Vec<AuthorBadge>,
     pub author_external_channel_id: String,
     pub author_photo_url: Option<String>,
+}
+
+/// YouTube スーパーステッカー（liveChatPaidStickerRenderer）
+#[derive(Debug, Clone, PartialEq)]
+pub struct LiveChatPaidSticker {
+    pub author_name: String,
+    pub timestamp_usec: String,
+    pub author_badges: Vec<AuthorBadge>,
+    pub author_external_channel_id: String,
+    pub author_photo_url: Option<String>,
+    /// 金額テキスト（例: "￥200"）
+    pub purchase_amount_text: String,
+    pub sticker_url: String,
+    pub sticker_alt: String,
+    pub sticker_width: u32,
+    pub sticker_height: u32,
 }
 
 /// 承認待ちコメント（liveChatPlaceholderItemRenderer）
@@ -704,6 +721,62 @@ fn parse_live_chat_text_message(renderer: &serde_json::Value) -> Option<LiveChat
         author_badges,
         author_external_channel_id,
         author_photo_url,
+    })
+}
+
+/// liveChatPaidStickerRenderer をパースして LiveChatPaidSticker を返す
+fn parse_live_chat_paid_sticker(renderer: &serde_json::Value) -> Option<LiveChatPaidSticker> {
+    let purchase_amount_text = get_string(renderer, &["purchaseAmountText", "simpleText"]).ok()?;
+    let author_name = get_string(renderer, &["authorName", "simpleText"]).ok()?;
+    let timestamp_usec = get_string(renderer, &["timestampUsec"]).ok()?;
+    let author_external_channel_id = get_string(renderer, &["authorExternalChannelId"]).ok()?;
+    let author_badges = parse_author_badges(renderer).ok()?;
+    let author_photo_url = renderer
+        .get("authorPhoto")
+        .and_then(|v| v.get("thumbnails"))
+        .and_then(|v| v.as_array())
+        .and_then(|arr| arr.first())
+        .and_then(|tn| tn.get("url"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let sticker = renderer.get("sticker")?;
+    let sticker_alt = sticker
+        .pointer("/accessibility/accessibilityData/label")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    // より大きいサムネイルを優先（2枚目 = 144px、なければ1枚目）
+    let thumbnails = sticker.get("thumbnails").and_then(|v| v.as_array())?;
+    let thumbnail = thumbnails.get(1).or_else(|| thumbnails.first())?;
+    let raw_url = thumbnail.get("url").and_then(|v| v.as_str())?;
+    // プロトコル相対 URL を正規化
+    let sticker_url = if raw_url.starts_with("//") {
+        format!("https:{}", raw_url)
+    } else {
+        raw_url.to_string()
+    };
+    let sticker_width = thumbnail
+        .get("width")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(72) as u32;
+    let sticker_height = thumbnail
+        .get("height")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(72) as u32;
+
+    Some(LiveChatPaidSticker {
+        author_name,
+        timestamp_usec,
+        author_badges,
+        author_external_channel_id,
+        author_photo_url,
+        purchase_amount_text,
+        sticker_url,
+        sticker_alt,
+        sticker_width,
+        sticker_height,
     })
 }
 
@@ -943,6 +1016,15 @@ fn parse_action(action: &serde_json::Value) -> Action {
                 Some(msg) => return Action::PaidMessage(msg),
                 None => return Action::ParseError(action.to_string()),
             }
+        } else if item_map.contains_key("liveChatPaidStickerRenderer") {
+            let renderer = match get_value(item, &["liveChatPaidStickerRenderer"]) {
+                Ok(v) => v,
+                Err(_) => return Action::ParseError(action.to_string()),
+            };
+            match parse_live_chat_paid_sticker(renderer) {
+                Some(msg) => return Action::PaidSticker(msg),
+                None => return Action::ParseError(action.to_string()),
+            }
         } else if item_map.contains_key("liveChatSponsorshipsGiftPurchaseAnnouncementRenderer") {
             let renderer = match get_value(
                 item,
@@ -1055,6 +1137,7 @@ fn action_timestamp_usec(action: &Action) -> Option<u64> {
             msg.timestamp_usec.parse::<u64>().ok()
         }
         Action::PaidMessage(msg) => msg.timestamp_usec.parse::<u64>().ok(),
+        Action::PaidSticker(msg) => msg.timestamp_usec.parse::<u64>().ok(),
         Action::PlaceholderItem(item) => item.timestamp_usec.parse::<u64>().ok(),
         Action::ReplaceChatItem(item) => item.message.timestamp_usec.parse::<u64>().ok(),
         Action::ViewerEngagementMessage(msg) => msg.timestamp_usec.parse::<u64>().ok(),

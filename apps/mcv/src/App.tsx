@@ -801,6 +801,15 @@ function App() {
         next.delete(event.payload.connection_id)
         return next
       })
+      setMetadataMap((prev) => {
+        const next = new Map(prev)
+        const existing = next.get(event.payload.connection_id)
+        if (existing) {
+          const { start_time: _, ...rest } = existing
+          next.set(event.payload.connection_id, rest)
+        }
+        return next
+      })
       loadConnections()
     })
 

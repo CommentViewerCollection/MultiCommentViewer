@@ -24,44 +24,37 @@ where
     tokio::spawn(async move {
         let mut write = write;
         while let Some(msg) = rx.recv().await {
-            println!("sending message: {}", msg);
             let _ = write.send(msg).await;
         }
     });
 
     // Read loop: WebSocketからメッセージを受信してチャネルに送信
     tokio::spawn(async move {
-        tracing::info!(target: "mcv::plugin_exe_interface", "Starting read loop task");
+        tracing::debug!(target: "mcv::plugin_exe_interface", "WebSocket 読み取りループ開始");
         loop {
-            tracing::trace!(target: "mcv::plugin_exe_interface", "Waiting for next message...");
             let msg = read.next().await;
             if msg.is_none() {
-                tracing::warn!(target: "mcv::plugin_exe_interface", "WebSocket connection closed");
+                tracing::warn!(target: "mcv::plugin_exe_interface", "WebSocket 接続が閉じられた");
                 break;
             }
             let msg = msg.unwrap();
             match msg {
                 Ok(WsMessage::Text(text)) => {
-                    tracing::info!(target: "mcv::plugin_exe_interface", message_text = %text, "Received WebSocket text message");
+                    tracing::trace!(target: "mcv::plugin_exe_interface", message_text = %text, "WebSocket テキストメッセージ受信");
                     match serde_json::from_str::<McvMessage>(&text) {
                         Ok(mcv_message) => {
-                            tracing::info!(target: "mcv::plugin_exe_interface", message_type = ?mcv_message.message_type, "Parsed message successfully");
-                            match message_tx.send(mcv_message) {
-                                Ok(_) => {
-                                    tracing::info!(target: "mcv::plugin_exe_interface", "Message sent to handler channel successfully");
-                                }
-                                Err(e) => {
-                                    tracing::error!(target: "mcv::plugin_exe_interface", error = %e, "Failed to send message to handler channel");
-                                }
+                            tracing::trace!(target: "mcv::plugin_exe_interface", message_type = ?mcv_message.message_type, "メッセージパース成功");
+                            if let Err(e) = message_tx.send(mcv_message) {
+                                tracing::error!(target: "mcv::plugin_exe_interface", error = %e, "ハンドラチャネルへの送信失敗");
                             }
                         }
                         Err(e) => {
-                            tracing::error!(target: "mcv::plugin_exe_interface", error = %e, text = %text, "Failed to parse message");
+                            tracing::error!(target: "mcv::plugin_exe_interface", error = %e, text = %text, "メッセージパース失敗");
                         }
                     }
                 }
                 Ok(WsMessage::Close(_)) => {
-                    tracing::info!(target: "mcv::plugin_exe_interface", "WebSocket closed");
+                    tracing::debug!(target: "mcv::plugin_exe_interface", "WebSocket 切断");
                     break;
                 }
                 Ok(WsMessage::Ping(data)) => {

@@ -99,42 +99,34 @@ impl ExePluginClient {
     where
         F: Fn(McvMessage) + Send + Sync + 'static,
     {
-        tracing::info!(target: "mcv::plugin_exe_interface", "Registering message handler");
+        tracing::debug!(target: "mcv::plugin_exe_interface", "メッセージハンドラ登録中");
 
         let handler = Arc::new(handler);
         let mut rx_guard = self.message_rx.lock().await;
 
         // receiverの所有権を取得（一度のみ）
         let mut rx = match rx_guard.take() {
-            Some(rx) => {
-                tracing::info!(target: "mcv::plugin_exe_interface", "Message receiver acquired successfully");
-                rx
-            }
+            Some(rx) => rx,
             None => {
-                tracing::error!(target: "mcv::plugin_exe_interface", "Message handler already registered");
+                tracing::error!(target: "mcv::plugin_exe_interface", "メッセージハンドラは既に登録済み");
                 return;
             }
         };
 
         // ハンドラータスクをspawn
-        tracing::info!(target: "mcv::plugin_exe_interface", "Spawning handler task");
         tokio::spawn(async move {
-            tracing::info!(target: "mcv::plugin_exe_interface", "Handler task started, waiting for messages...");
-            let mut count = 0;
+            tracing::debug!(target: "mcv::plugin_exe_interface", "メッセージハンドラタスク開始");
             while let Some(message) = rx.recv().await {
-                count += 1;
-                tracing::info!(target: "mcv::plugin_exe_interface", count = count, message_type = ?message.message_type, "Received message from channel, spawning handler");
+                tracing::trace!(target: "mcv::plugin_exe_interface", message_type = ?message.message_type, "メッセージ受信、ハンドラ実行");
                 let handler_clone = handler.clone();
                 // ハンドラーを別タスクで実行（ブロッキングを避ける）
                 tokio::spawn(async move {
-                    tracing::info!(target: "mcv::plugin_exe_interface", "Executing handler");
                     handler_clone(message);
-                    tracing::info!(target: "mcv::plugin_exe_interface", "Handler executed successfully");
                 });
             }
-            tracing::warn!(target: "mcv::plugin_exe_interface", "Handler task terminated (channel closed)");
+            tracing::warn!(target: "mcv::plugin_exe_interface", "メッセージハンドラタスク終了 (チャネルクローズ)");
         });
-        tracing::info!(target: "mcv::plugin_exe_interface", "Message handler registration complete");
+        tracing::debug!(target: "mcv::plugin_exe_interface", "メッセージハンドラ登録完了");
     }
 }
 

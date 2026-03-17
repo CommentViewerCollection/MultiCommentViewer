@@ -2,7 +2,7 @@ use mcv_messages::{Message as McvMessage, MessageDestination, PluginId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{RwLock, mpsc};
 
 #[derive(Debug, Error)]
 pub enum RoutingError {

@@ -170,6 +170,21 @@ impl ProcessManager {
         let exe_path = manifest.get_executable_path(manifest_dir);
         let working_dir = manifest.get_working_directory(manifest_dir);
 
+        // .exe 以外のファイル（DLL など）はEXEプラグインマネージャーの対象外
+        let is_exe = exe_path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("exe"))
+            .unwrap_or(false);
+        if !is_exe {
+            tracing::debug!(
+                target: "mcv::plugin_exe_manager",
+                exe_path = %exe_path.display(),
+                ".exe 以外のファイルは EXE プラグインマネージャー対象外のためスキップ"
+            );
+            return Ok(());
+        }
+
         // 実行ファイルの存在チェック
         if !exe_path.exists() {
             return Err(ProcessManagerError::SpawnError(format!(

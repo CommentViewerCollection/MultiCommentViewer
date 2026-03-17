@@ -3,7 +3,7 @@ use mcv_messages::{Message as McvMessage, MessageType, PluginHelloPayload, Plugi
 use std::error::Error;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
-    connect_async, tungstenite::protocol::Message as WsMessage, MaybeTlsStream, WebSocketStream,
+    MaybeTlsStream, WebSocketStream, connect_async, tungstenite::protocol::Message as WsMessage,
 };
 use uuid::Uuid;
 

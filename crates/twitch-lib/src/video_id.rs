@@ -1,6 +1,8 @@
+#[allow(dead_code)]
 pub struct VideoId {
     value: String,
 }
+#[allow(dead_code)]
 impl VideoId {
     pub fn new(value: &str) -> Self {
         VideoId {

@@ -36,6 +36,7 @@ pub fn get_value<'a>(
         .try_fold(value, |acc, key| acc.get(key))
         .ok_or_else(|| anyhow::anyhow!("Missing value"))
 }
+#[allow(dead_code)]
 pub fn get_auth_token_from_env() -> Option<String> {
     dotenvy::dotenv().ok()?;
     std::env::var("AUTH_TOKEN").ok()

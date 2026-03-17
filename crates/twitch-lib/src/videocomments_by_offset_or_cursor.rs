@@ -1,22 +1,25 @@
 use crate::{
     auth_token::AuthToken,
     client_id::ClientId,
-    integrity::{Integrity, get_integrity},
+    integrity::Integrity,
     utils::{get_string, get_value},
     video_id::VideoId,
 };
 use anyhow::Result;
 
+#[allow(dead_code)]
 pub enum OffsetOrCursor {
     Offset(u32),
     Cursor(String),
 }
+#[allow(dead_code)]
 struct VideoComments {
     video_id: String,
     creator_id: String,
     comments: Vec<VideoCommentEdge>,
     has_next_page: bool,
 }
+#[allow(dead_code)]
 struct VideoCommentEdge {
     cursor: String,
     id: String,
@@ -30,17 +33,21 @@ struct VideoCommentEdge {
     has_next_page: bool,
     has_previous_page: bool,
 }
+#[allow(dead_code)]
 struct MessageFragment {
     text: String,
     emotes: Vec<Emote>,
 }
+#[allow(dead_code)]
 struct Emote {}
+#[allow(dead_code)]
 struct UserBadge {
     id: String,
     set_id: String,
     version: String,
 }
-async fn get_video_Comments(
+#[allow(dead_code)]
+async fn get_video_comments(
     video_id: &VideoId,
     offset_or_cursor: OffsetOrCursor,
     auth_token: &AuthToken,
@@ -52,7 +59,7 @@ async fn get_video_Comments(
 
     let mut next_offset_or_cursor = offset_or_cursor;
     loop {
-        let comments = get_video_Comments_by_offset_or_cursor(
+        let comments = get_video_comments_by_offset_or_cursor(
             video_id,
             next_offset_or_cursor,
             auth_token,
@@ -81,7 +88,8 @@ async fn get_video_Comments(
     }
     Ok(all_comments)
 }
-async fn get_video_Comments_by_offset_or_cursor(
+#[allow(dead_code)]
+async fn get_video_comments_by_offset_or_cursor(
     video_id: &VideoId,
     offset_or_cursor: OffsetOrCursor,
     auth_token: &AuthToken,
@@ -204,7 +212,7 @@ mod tests {
         let auth_token = AuthToken::new(&get_auth_token_from_env().unwrap());
         let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
         let offset_or_cursor = OffsetOrCursor::Offset(13649);
-        let result = get_video_Comments_by_offset_or_cursor(
+        let result = get_video_comments_by_offset_or_cursor(
             &video_id,
             offset_or_cursor,
             &auth_token,
@@ -230,7 +238,7 @@ mod tests {
 
         let integrity = get_integrity(&client_id, &auth_token).await.unwrap();
 
-        let result = get_video_Comments(
+        let result = get_video_comments(
             &video_id,
             offset_or_cursor,
             &auth_token,

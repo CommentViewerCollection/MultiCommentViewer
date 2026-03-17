@@ -1,11 +1,13 @@
 use crate::{auth_token::AuthToken, client_id::ClientId};
 use anyhow::Result;
 
+#[allow(dead_code)]
 pub struct Integrity {
     client_id: String,
     auth_token: String,
     token: String,
 }
+#[allow(dead_code)]
 impl Integrity {
     fn new(client_id: &str, auth_token: &str, token: &str) -> Self {
         Integrity {
@@ -18,6 +20,7 @@ impl Integrity {
         &self.token
     }
 }
+#[allow(dead_code)]
 pub async fn get_integrity(client_id: &ClientId, auth_token: &AuthToken) -> Result<Integrity> {
     let url = "https://gql.twitch.tv/integrity";
 

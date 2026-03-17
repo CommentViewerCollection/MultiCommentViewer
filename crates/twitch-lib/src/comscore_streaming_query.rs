@@ -3,6 +3,7 @@ use crate::video_id::VideoId;
 use crate::{auth_token::AuthToken, client_id::ClientId};
 use anyhow::Result;
 
+#[allow(dead_code)]
 struct ComscoreStreamingQueryVideo {
     broadcast_type: String,
     created_at: String,
@@ -12,6 +13,7 @@ struct ComscoreStreamingQueryVideo {
     owner_display_name: String,
     owner_id: String,
 }
+#[allow(dead_code)]
 async fn get_comscore_streaming_query(
     video_id: &VideoId,
     client_id: &ClientId,

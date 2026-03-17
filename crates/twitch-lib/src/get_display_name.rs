@@ -2,6 +2,7 @@ use crate::utils::{get_string, send_graphql_query};
 use crate::{auth_token::AuthToken, client_id::ClientId};
 use anyhow::Result;
 
+#[allow(dead_code)]
 async fn get_display_name(
     channel_login: &str,
     client_id: &ClientId,

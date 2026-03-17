@@ -1591,6 +1591,19 @@ fn main() {
     mcv_log_core::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
         .expect("Failed to initialize logger");
 
+    // 前回クラッシュ時の panic.log を SQLite にリカバリ
+    let panic_log_path = app_data_dir.join("panic.log");
+    if mcv_log_core::recover_panic_log(&panic_log_path) {
+        tracing::warn!(
+            target: "mcv::main",
+            panic_log_path = %panic_log_path.display(),
+            "前回のクラッシュ情報を panic.log から SQLite へ復旧しました"
+        );
+    }
+
+    // パニックフックをインストール（SQLite 書き込み失敗時は panic.log へフォールバック）
+    mcv_log_core::install_panic_hook(panic_log_path, env!("CARGO_PKG_VERSION").to_string());
+
     tracing::info!(
         target: "mcv::main",
         version = env!("CARGO_PKG_VERSION"),

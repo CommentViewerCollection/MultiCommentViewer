@@ -13,7 +13,7 @@ tauri-plugin-dialog = "2"
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
-rusqlite = { version = "0.30", features = ["bundled"] }
+rusqlite = { workspace = true }
 chrono = { workspace = true }
 reqwest = { version = "0.11", features = ["json"] }
 urlencoding = "2.1"

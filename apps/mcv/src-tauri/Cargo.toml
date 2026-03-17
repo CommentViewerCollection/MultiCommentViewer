@@ -21,12 +21,12 @@ serde_json = { workspace = true }
 actix = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["fmt"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["fmt"] }
 tokio-tungstenite = "0.28.0"
-futures-util = "0.3"
-zip = "2.2"
-rusqlite = { version = "0.30", features = ["bundled"] }
+futures-util = { workspace = true }
+zip = { workspace = true }
+rusqlite = { workspace = true }
 
 [features]
 default = ["custom-protocol"]

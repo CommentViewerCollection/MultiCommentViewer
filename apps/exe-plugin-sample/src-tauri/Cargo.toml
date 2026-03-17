@@ -8,31 +8,31 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # Tauri
-tauri = { version = "2", features = ["devtools"] }
+tauri = { workspace = true, features = ["devtools"] }
 tauri-plugin-shell = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 # MCV dependencies
 mcv-plugin-exe-interface = { path = "../../../crates/mcv-plugin-exe-interface" }
 mcv-messages = { path = "../../../crates/mcv-messages" }
 
 # Async runtime
-tokio = { version = "1.42", features = ["full"] }
+tokio = { workspace = true }
 
 # UUID
-uuid = { version = "1.11", features = ["v4", "serde"] }
+uuid = { workspace = true }
 
 # Logging
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 # Error handling
-anyhow = "1.0"
-thiserror = "2.0"
+anyhow = { workspace = true }
+thiserror = { workspace = true }
 
-chrono = "0.4"
-rusqlite = { version = "0.30", features = ["bundled"] }
+chrono = { workspace = true }
+rusqlite = { workspace = true }
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-cli = "2"

@@ -12,7 +12,7 @@ use mcv_messages::{
     StreamMetadataPayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
-use tokio::fs::{File, OpenOptions};
+use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::watch;
@@ -547,7 +547,7 @@ impl Connection {
                     channel,
                     user,
                     text,
-                    tags,
+                    tags: _,
                 } => {
                     let provider_msg = ProviderMessage {
                         id: Uuid::new_v4().to_string(),
@@ -636,6 +636,7 @@ impl Connection {
         true
     }
 
+    #[allow(dead_code)]
     async fn send_comment_if_privmsg(
         ctx: PluginContext,
         logical_plugin_id: PluginId,
@@ -717,6 +718,7 @@ impl Connection {
         Some(channel.to_string())
     }
 
+    #[allow(dead_code)]
     fn extract_privmsg_text(line: &str) -> Option<&str> {
         let privmsg_index = line.find(" PRIVMSG ")?;
         let after_privmsg = &line[privmsg_index..];

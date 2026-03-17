@@ -34,13 +34,13 @@ async fn get_comments(vid: &Vid) -> Result<()> {
     let live_chat = get_live_chat(&vid, &[]).await?;
     let yt_initial_data = get_yt_initial_data(&live_chat)?;
     let continuation = yt_initial_data.continuation();
-    let initial_actions = yt_initial_data.actions();
+    let _initial_actions = yt_initial_data.actions();
     let ytcfg = extract_ytcfg(&live_chat)?;
 
     let mut next_continuation: Continuation = continuation.to_owned();
     loop {
         match get_live_chat_messages(&vid, &ytcfg, &next_continuation).await {
-            Ok((g, actions, _raw_body)) => {
+            Ok((g, _actions, _raw_body)) => {
                 if let Some(c) = g {
                     next_continuation = c;
                 } else {

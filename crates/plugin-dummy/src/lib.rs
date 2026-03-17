@@ -168,7 +168,7 @@ impl DummyPlugin {
             ];
 
             let mut rng = StdRng::from_entropy();
-            tracing::info!(connection_id = %connection_id, "Comment generation started");
+            tracing::info!(target: "mcv::plugin-dummy", connection_id = %connection_id, "コメント生成開始");
 
             while is_running.load(Ordering::SeqCst) {
                 // rateに基づいた間隔（デフォルトは1-5秒のランダム）
@@ -195,10 +195,11 @@ impl DummyPlugin {
                 let provider_msg = make_dummy_provider_message(&user_name, &text);
 
                 tracing::debug!(
+                    target: "mcv::plugin-dummy",
                     connection_id = %connection_id,
                     user_name = %user_name,
                     text = %text,
-                    "Generated comment"
+                    "コメント生成"
                 );
 
                 let envelope = McvEnvelope {
@@ -223,12 +224,12 @@ impl DummyPlugin {
                 );
 
                 if sender.send(message).is_err() {
-                    tracing::error!(connection_id = %connection_id, "Failed to send comment - receiver dropped");
+                    tracing::error!(target: "mcv::plugin-dummy", connection_id = %connection_id, "コメント送信失敗 (receiver dropped)");
                     break;
                 }
             }
 
-            tracing::info!(connection_id = %connection_id, "Comment generation stopped");
+            tracing::info!(target: "mcv::plugin-dummy", connection_id = %connection_id, "コメント生成停止");
         });
     }
 }
@@ -746,11 +747,6 @@ impl DummyPlugin {
 #[async_trait]
 impl Plugin for DummyPlugin {
     async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
-        println!(
-            "=== DummyPlugin::on_loaded called, plugin_id: {} ===",
-            self.plugin_id
-        );
-
         // プラグイン tracing を初期化
         #[cfg(feature = "alpha")]
         let log_level = "trace";
@@ -768,7 +764,7 @@ impl Plugin for DummyPlugin {
         )
         .map_err(|e| PluginError::InitializationFailed(format!("Failed to init tracing: {}", e)))?;
 
-        tracing::info!("Dummy plugin loaded");
+        tracing::info!(target: "mcv::plugin-dummy", plugin_id = %self.plugin_id, "Dummy プラグイン初期化完了");
 
         // plugin-helloを送信
         let logical_plugin_id = PluginId::new(format!("DummyPlugin_logical_{}", self.plugin_id));
@@ -788,12 +784,12 @@ impl Plugin for DummyPlugin {
             .unwrap(),
         );
 
-        tracing::debug!("Sending plugin-hello message");
+        tracing::debug!(target: "mcv::plugin-dummy", "plugin-hello 送信中");
         host.send_message(message).await?;
-        tracing::info!("Plugin-hello message sent successfully");
+        tracing::info!(target: "mcv::plugin-dummy", "plugin-hello 送信完了");
 
         // ダミーサイトを登録
-        tracing::info!("Registering dummy site and browser");
+        tracing::debug!(target: "mcv::plugin-dummy", "ダミーサイト・ブラウザ登録中");
         let dummy_site_message = Message::new_notification(
             MessageType::AddSite,
             MessageSource::Plugin {
@@ -843,7 +839,7 @@ impl Plugin for DummyPlugin {
         );
         host.send_message(dummy_browser_message).await?;
 
-        tracing::info!("Dummy site and browser registered successfully");
+        tracing::info!(target: "mcv::plugin-dummy", "ダミーサイト・ブラウザ登録完了");
 
         Ok(())
     }
@@ -853,11 +849,11 @@ impl Plugin for DummyPlugin {
         message: Message,
         host: Arc<dyn PluginHost>,
     ) -> Result<(), PluginError> {
-        tracing::debug!(message_type = ?message.message_type, "Received message");
+        tracing::debug!(target: "mcv::plugin-dummy", message_type = ?message.message_type, "メッセージ受信");
 
         match message.message_type {
             MessageType::PluginAdded => {
-                tracing::info!("Plugin added successfully");
+                tracing::info!(target: "mcv::plugin-dummy", "plugin-added 受信");
             }
             MessageType::Connect => {
                 // connectメッセージからconnection_idを取得
@@ -871,7 +867,7 @@ impl Plugin for DummyPlugin {
 
                 let conn_id = payload.connection_id;
 
-                println!("Starting comment generation for connection: {}", conn_id);
+                tracing::info!(target: "mcv::plugin-dummy", connection_id = %conn_id, "コメント生成タスク開始");
 
                 // この接続用のフラグを作成
                 let is_running = Arc::new(AtomicBool::new(true));
@@ -911,9 +907,8 @@ impl Plugin for DummyPlugin {
                 let host_clone = host.clone();
                 tokio::spawn(async move {
                     while let Some(msg) = rx.recv().await {
-                        println!("Sending comment message: {:?}", msg.message_type);
                         if let Err(e) = host_clone.send_message(msg).await {
-                            eprintln!("Failed to send comment message: {}", e);
+                            tracing::error!(target: "mcv::plugin-dummy", error = %e, "コメントメッセージ送信失敗");
                             break;
                         }
                     }
@@ -933,7 +928,7 @@ impl Plugin for DummyPlugin {
 
                 // この接続のis_runningフラグを停止
                 if let Some(is_running) = self.connections.get(&conn_id) {
-                    println!("Stopping comment generation for connection: {}", conn_id);
+                    tracing::info!(target: "mcv::plugin-dummy", connection_id = %conn_id, "コメント生成停止");
                     is_running.store(false, Ordering::SeqCst);
                     self.connections.remove(&conn_id);
                     self.paused.remove(&conn_id);
@@ -965,33 +960,35 @@ impl Plugin for DummyPlugin {
                 let conn_id = payload.connection_id;
                 let command = payload.text.trim();
 
-                println!("Received command for connection {}: {}", conn_id, command);
+                tracing::debug!(target: "mcv::plugin-dummy", connection_id = %conn_id, command = %command, "send-comment コマンド受信");
 
                 // コマンドをパースして実行（結果は既存のメッセージタイプで通知される）
                 let result = self.handle_command(conn_id, command, host.clone()).await;
 
                 if let Err(e) = result {
-                    eprintln!("Command execution failed: {}", e);
+                    tracing::warn!(target: "mcv::plugin-dummy", connection_id = %conn_id, error = %e, "コマンド実行エラー");
                 }
             }
             MessageType::SetConnectionSite => {
                 tracing::debug!(
+                    target: "mcv::plugin-dummy",
                     connection_id = ?message.payload.get("connection_id"),
                     site_id = ?message.payload.get("site_id"),
-                    "SetConnectionSite received"
+                    "SetConnectionSite 受信"
                 );
                 // DummyPluginは特に準備処理不要
             }
             MessageType::DiscardConnectionSite => {
                 tracing::debug!(
+                    target: "mcv::plugin-dummy",
                     connection_id = ?message.payload.get("connection_id"),
                     site_id = ?message.payload.get("site_id"),
-                    "DiscardConnectionSite received"
+                    "DiscardConnectionSite 受信"
                 );
                 // DummyPluginは特にクリーンアップ不要
             }
             MessageType::GetSettingsSchema => {
-                tracing::debug!("GetSettingsSchema received");
+                tracing::debug!(target: "mcv::plugin-dummy", "GetSettingsSchema 受信");
 
                 // スキーマを取得して応答
                 if let Some(schema) = self.get_settings_schema().await {
@@ -1008,7 +1005,7 @@ impl Plugin for DummyPlugin {
                 }
             }
             MessageType::GetSettings => {
-                tracing::debug!("GetSettings received");
+                tracing::debug!(target: "mcv::plugin-dummy", "GetSettings 受信");
 
                 // 設定値を取得して応答
                 if let Some(data) = self.get_settings().await {
@@ -1025,7 +1022,7 @@ impl Plugin for DummyPlugin {
                 }
             }
             MessageType::UpdateSettings => {
-                tracing::debug!("UpdateSettings received");
+                tracing::debug!(target: "mcv::plugin-dummy", "UpdateSettings 受信");
 
                 // ペイロードから設定データを取得
                 let payload: UpdateSettingsPayload =
@@ -1039,10 +1036,10 @@ impl Plugin for DummyPlugin {
                 // 設定を更新
                 self.update_settings(payload.data).await?;
 
-                tracing::info!("Settings updated via message");
+                tracing::info!(target: "mcv::plugin-dummy", "設定を更新 (UpdateSettings)");
             }
             _ => {
-                println!("Unhandled message type: {:?}", message.message_type);
+                tracing::debug!(target: "mcv::plugin-dummy", message_type = ?message.message_type, "未処理のメッセージタイプ");
             }
         }
 
@@ -1050,10 +1047,10 @@ impl Plugin for DummyPlugin {
     }
 
     async fn on_shutdown(&mut self) -> Result<(), PluginError> {
-        tracing::info!("Shutting down dummy plugin");
+        tracing::info!(target: "mcv::plugin-dummy", "Dummy プラグインシャットダウン開始");
         // 全ての接続を停止
         for (conn_id, is_running) in &self.connections {
-            tracing::info!(connection_id = %conn_id, "Stopping connection");
+            tracing::info!(target: "mcv::plugin-dummy", connection_id = %conn_id, "接続停止");
             is_running.store(false, Ordering::SeqCst);
         }
         self.connections.clear();
@@ -1078,7 +1075,7 @@ impl Plugin for DummyPlugin {
         let mut settings = self.settings.write().await;
         *settings = new_settings;
 
-        tracing::info!("Settings updated successfully");
+        tracing::info!(target: "mcv::plugin-dummy", "設定更新完了");
         Ok(())
     }
 }

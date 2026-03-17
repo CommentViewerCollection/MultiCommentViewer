@@ -91,15 +91,15 @@ pub struct Ytcfg {
     api_key: String,
     visitor_data: Option<String>,
 }
-#[allow(dead_code)]
+#[allow(dead_code, non_camel_case_types)]
 #[derive(Debug)]
-struct RemoveChatItemAction {
+struct remove_chat_item_action {
     target_item_id: String,
 }
 #[allow(dead_code)]
-impl RemoveChatItemAction {
+impl remove_chat_item_action {
     fn new(target_item_id: String) -> Self {
-        RemoveChatItemAction { target_item_id }
+        remove_chat_item_action { target_item_id }
     }
 }
 

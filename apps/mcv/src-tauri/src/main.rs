@@ -1907,6 +1907,9 @@ fn main() {
             // ログディレクトリパスを設定（GetLogsDir への応答用）
             core_actor.set_logs_dir(logs_dir);
 
+            // プラグインディレクトリパスを設定（GetPluginsDir への応答用）
+            core_actor.set_plugins_dir(get_plugin_dir());
+
             // 接続を復元（プラグイン読み込み前に実行）
             tracing::info!(
                 target: "mcv::main",

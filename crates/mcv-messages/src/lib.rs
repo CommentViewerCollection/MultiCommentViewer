@@ -164,6 +164,8 @@ pub enum MessageType {
     GetAppVersion,
     GetLogsDir,
     LogsDirAck,
+    GetPluginsDir,
+    PluginsDirAck,
 
     // Site/Browser管理関連
     AddSite,
@@ -740,6 +742,16 @@ pub struct GetLogsDirPayload {}
 /// logs-dir-ackのpayload (Core → Plugin)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogsDirAckPayload {
+    pub path: String,
+}
+
+/// get-plugins-dirのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetPluginsDirPayload {}
+
+/// plugins-dir-ackのpayload (Core → Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginsDirAckPayload {
     pub path: String,
 }
 

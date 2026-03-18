@@ -1675,9 +1675,15 @@ fn main() {
                 >,
             > = Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new()));
 
-            // コメントストアを作成
+            // コメントストアを作成（exe と同じディレクトリに session.db を配置）
+            let session_db_path = std::env::current_exe()
+                .expect("Failed to get current exe path")
+                .parent()
+                .expect("Failed to get exe directory")
+                .join("session.db");
             let comment_store = Arc::new(Mutex::new(
-                comment_store::CommentStore::new().expect("Failed to create comment store"),
+                comment_store::CommentStore::new(&session_db_path)
+                    .expect("Failed to create comment store"),
             ));
 
             // イベントコールバックを設定

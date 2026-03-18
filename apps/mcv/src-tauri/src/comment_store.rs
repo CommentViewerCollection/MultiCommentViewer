@@ -1,5 +1,6 @@
 use rusqlite::{params, Connection, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 use crate::CommentRow;
 
@@ -20,8 +21,8 @@ pub struct CommentStore {
 }
 
 impl CommentStore {
-    pub fn new() -> SqliteResult<Self> {
-        let conn = Connection::open_in_memory()?;
+    pub fn new(db_path: &Path) -> SqliteResult<Self> {
+        let conn = Connection::open(db_path)?;
         conn.execute_batch(
             "
             CREATE TABLE IF NOT EXISTS comments (

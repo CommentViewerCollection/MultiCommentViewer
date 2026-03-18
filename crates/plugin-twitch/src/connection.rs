@@ -625,6 +625,106 @@ impl Connection {
             .map(|(_, url)| url)
     }
 
+    /// IRC `emotes` タグからエモートを解析し、テキストを MessagePart のリストに変換する。
+    ///
+    /// `emotes` タグ形式: `{emote_id}:{start}-{end},{start}-{end}/{emote_id}:{start}-{end}`
+    /// 位置はメッセージテキストの文字インデックス（包含）。
+    ///
+    /// エモート画像 URL: `https://static-cdn.jtvnw.net/emoticons/v2/{emote_id}/default/dark/2.0`
+    fn parse_emote_content(text: &str, emotes_tag: Option<&String>) -> Vec<MessagePart> {
+        let emotes_str = match emotes_tag {
+            Some(s) if !s.is_empty() => s,
+            _ => {
+                return vec![MessagePart::Text {
+                    text: text.to_string(),
+                }]
+            }
+        };
+
+        // (start, end_inclusive, emote_id) の一覧を構築
+        let mut positions: Vec<(usize, usize, String)> = Vec::new();
+        for emote_spec in emotes_str.split('/') {
+            let mut parts = emote_spec.splitn(2, ':');
+            let emote_id = match parts.next() {
+                Some(id) if !id.is_empty() => id.to_string(),
+                _ => continue,
+            };
+            let positions_str = match parts.next() {
+                Some(s) => s,
+                None => continue,
+            };
+            for pos_str in positions_str.split(',') {
+                let mut range = pos_str.splitn(2, '-');
+                let start: usize = match range.next().and_then(|s| s.parse().ok()) {
+                    Some(n) => n,
+                    None => continue,
+                };
+                let end: usize = match range.next().and_then(|s| s.parse().ok()) {
+                    Some(n) => n,
+                    None => continue,
+                };
+                positions.push((start, end, emote_id.clone()));
+            }
+        }
+
+        if positions.is_empty() {
+            return vec![MessagePart::Text {
+                text: text.to_string(),
+            }];
+        }
+
+        // 開始位置でソート
+        positions.sort_by_key(|(start, _, _)| *start);
+
+        // 文字単位で分割（Twitch IRC のエモート位置は文字インデックス）
+        let chars: Vec<char> = text.chars().collect();
+        let mut result: Vec<MessagePart> = Vec::new();
+        let mut cursor = 0usize;
+
+        for (start, end, emote_id) in &positions {
+            let start = *start;
+            let end = *end; // inclusive
+
+            // エモート前のテキスト
+            if cursor < start && start <= chars.len() {
+                let before: String = chars[cursor..start].iter().collect();
+                if !before.is_empty() {
+                    result.push(MessagePart::Text { text: before });
+                }
+            }
+
+            // エモート画像
+            if start <= end && end < chars.len() {
+                let alt: String = chars[start..=end].iter().collect();
+                result.push(MessagePart::Image {
+                    url: format!(
+                        "https://static-cdn.jtvnw.net/emoticons/v2/{}/default/dark/2.0",
+                        emote_id
+                    ),
+                    width: Some(28),
+                    height: Some(28),
+                    alt: Some(alt),
+                });
+                cursor = end + 1;
+            }
+        }
+
+        // 末尾の残りテキスト
+        if cursor < chars.len() {
+            let tail: String = chars[cursor..].iter().collect();
+            if !tail.is_empty() {
+                result.push(MessagePart::Text { text: tail });
+            }
+        }
+
+        if result.is_empty() {
+            result.push(MessagePart::Text {
+                text: text.to_string(),
+            });
+        }
+        result
+    }
+
     async fn handle_text_message(
         ctx: PluginContext,
         logical_plugin_id: PluginId,
@@ -693,9 +793,7 @@ impl Connection {
                         timestamp: chrono::Utc::now().timestamp(),
                         kind: ProviderMessageKind::Chat,
                         content: ProviderContent::Text {
-                            text: vec![MessagePart::Text {
-                                text: text.to_string(),
-                            }],
+                            text: Self::parse_emote_content(&text, tags.get("emotes")),
                         },
                         reply_to: None,
                         metadata: serde_json::Value::Null,

@@ -96,6 +96,49 @@ cargo xtask dist --channel beta --plugin bouyomi --plugin twitch
 
 **生成物:** `output/MultiCommentViewer_v{version}_{channel}.zip`
 
+---
+
+## フロントエンドへの feature フラグ連動
+
+`dist` / `install` でチャンネルを指定すると、xtask は `apps/mcv/src-tauri/Cargo.toml` の feature implies 関係を解析し、対応する `CARGO_FEATURE_*` 環境変数をフロントエンド（Vite）ビルドへ自動的に渡す。
+
+### 仕組み
+
+```
+Cargo.toml の feature 定義
+  alpha = ["comment-search", ...]
+          ↓ cargo metadata で解析（channel_implied_features）
+xtask が CARGO_FEATURE_COMMENT_SEARCH=1 を npm run build に渡す
+          ↓
+vite.config.ts が CARGO_FEATURE_COMMENT_SEARCH を読み取り
+  __IS_SEARCH_ENABLED__ = true としてビルド時定数を注入
+          ↓
+App.tsx で __IS_SEARCH_ENABLED__ が true の時のみ検索タブを表示
+```
+
+### 対象となる feature
+
+Cargo.toml の feature リスト内で、**純粋な feature 名**（`crate/feature` や `dep:crate` 形式でないもの）が自動的に `CARGO_FEATURE_<NAME>=1` に変換される。
+
+| Cargo.toml のエントリ | 変換結果 | 備考 |
+| --- | --- | --- |
+| `"comment-search"` | `CARGO_FEATURE_COMMENT_SEARCH=1` | 対象（ハイフン → アンダースコア、大文字化） |
+| `"mcv-log-core/alpha"` | （スキップ） | `crate/feature` 形式は除外 |
+| `"dep:some-crate"` | （スキップ） | `dep:` 形式は除外 |
+
+### 新しい alpha-only 機能を追加する場合
+
+`Cargo.toml` に feature を追加するだけでよい。xtask や vite.config.ts の変更は不要。
+
+```toml
+# Cargo.toml
+[features]
+new-feature = []
+alpha = ["comment-search", "new-feature", ...]  # ← ここに追加するだけ
+```
+
+フロントエンドでは `CARGO_FEATURE_NEW_FEATURE` 環境変数が自動的に渡されるため、`vite.config.ts` で参照できる。
+
 ```
 MultiCommentViewer_v1.0.0_alpha.zip
 ├── MultiCommentViewer.exe

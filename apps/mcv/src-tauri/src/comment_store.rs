@@ -119,6 +119,7 @@ impl CommentStore {
     }
 
     /// コメント検索（全フィールドOR検索、大文字小文字を区別しない）
+    #[cfg(feature = "comment-search")]
     pub fn search_comments(
         &self,
         query: &str,

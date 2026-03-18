@@ -40,6 +40,7 @@ rusqlite = { workspace = true }
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
-alpha = ["mcv-log-core/alpha", "mcv-updater/alpha"]
+comment-search = []
+alpha = ["comment-search", "mcv-log-core/alpha", "mcv-updater/alpha"]
 beta = ["mcv-log-core/beta", "mcv-updater/beta"]
 stable = ["mcv-log-core/stable", "mcv-updater/stable"]

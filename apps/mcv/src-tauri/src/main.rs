@@ -1416,6 +1416,7 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoRespons
 // コメント検索・ユーザー一覧コマンド
 // ============================================================
 
+#[cfg(feature = "comment-search")]
 #[tauri::command]
 fn search_comments(
     query: String,
@@ -2065,6 +2066,7 @@ fn main() {
             get_settings,
             update_settings,
             get_plugins,
+            #[cfg(feature = "comment-search")]
             search_comments,
             get_users,
             detect_url,

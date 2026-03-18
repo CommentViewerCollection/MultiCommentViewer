@@ -2011,16 +2011,18 @@ function App() {
             >
               設定
             </button>
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'search'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
-              onClick={() => setActiveTab('search')}
-            >
-              検索
-            </button>
+            {__IS_SEARCH_ENABLED__ && (
+              <button
+                className={`px-6 py-3 font-medium transition-colors ${
+                  activeTab === 'search'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+                onClick={() => setActiveTab('search')}
+              >
+                検索
+              </button>
+            )}
             <button
               className={`px-6 py-3 font-medium transition-colors ${
                 activeTab === 'users'
@@ -2338,7 +2340,7 @@ function App() {
             }} />
           )}
 
-          {activeTab === 'search' && (
+          {__IS_SEARCH_ENABLED__ && activeTab === 'search' && (
             <SearchTab
               columns={columns}
               renderCell={renderCell}
@@ -2368,12 +2370,14 @@ function App() {
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={e => e.stopPropagation()}
         >
-          <button
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            onClick={handleContextMenuSearch}
-          >
-            このユーザーのコメントを検索
-          </button>
+          {__IS_SEARCH_ENABLED__ && (
+            <button
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={handleContextMenuSearch}
+            >
+              このユーザーのコメントを検索
+            </button>
+          )}
           <button
             className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             onClick={handleContextMenuViewUser}

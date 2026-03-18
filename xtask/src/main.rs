@@ -399,6 +399,40 @@ fn dist(args: DistArgs) -> Result<()> {
 // ユーティリティ
 // =========================================================
 
+/// Cargo.toml の feature implies 関係を解析し、指定 channel が直接 implies する
+/// 純粋な feature 名（"crate/feature" や "dep:crate" 形式を除く）を返す。
+///
+/// 例: `alpha = ["comment-search", "mcv-log-core/alpha"]` の場合、
+/// `"comment-search"` のみを返す（`"mcv-log-core/alpha"` はスキップ）。
+fn channel_implied_features(manifest_dir: &Path, channel: &str) -> Result<Vec<String>> {
+    let abs_manifest = fs::canonicalize(manifest_dir.join("Cargo.toml"))
+        .map_err(|e| anyhow::anyhow!("Cargo.toml が見つかりません '{:?}': {}", manifest_dir, e))?;
+
+    let metadata = MetadataCommand::new().manifest_path(&abs_manifest).exec()?;
+
+    let pkg = metadata
+        .packages
+        .iter()
+        .find(|p| {
+            fs::canonicalize(p.manifest_path.as_std_path())
+                .map(|mp| mp == abs_manifest)
+                .unwrap_or(false)
+        })
+        .ok_or_else(|| anyhow::anyhow!("パッケージが見つかりません: {:?}", manifest_dir))?;
+
+    let features = pkg
+        .features
+        .get(channel)
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        // "crate/feature" や "dep:crate" 形式を除外し、純粋な feature 名のみ対象とする
+        .filter(|f| !f.contains('/') && !f.contains(':'))
+        .collect();
+
+    Ok(features)
+}
+
 /// Cargo.toml のパスからクレートのバージョンを取得する
 fn get_crate_version(path: &str) -> Result<String> {
     let abs_manifest = fs::canonicalize(PathBuf::from(path).join("Cargo.toml"))
@@ -557,7 +591,7 @@ fn build_frontend_if_needed(manifest_dir: &Path, channel: Option<&str>) -> Resul
         Some(m) => m,
         None => {
             println!("  フロントエンド: dist/ が存在しないため npm run build を実行");
-            return run_npm_build(frontend_dir, channel);
+            return run_npm_build(frontend_dir, manifest_dir, channel);
         }
     };
 
@@ -576,7 +610,7 @@ fn build_frontend_if_needed(manifest_dir: &Path, channel: Option<&str>) -> Resul
 
     if needs_build {
         println!("  フロントエンドに変更あり → npm run build を実行");
-        run_npm_build(frontend_dir, channel)?;
+        run_npm_build(frontend_dir, manifest_dir, channel)?;
     } else {
         println!("  フロントエンド: 変更なし (スキップ)");
     }
@@ -591,12 +625,17 @@ fn run_npm_install(dir: &Path) -> Result<()> {
     run(cmd)
 }
 
-fn run_npm_build(dir: &Path, channel: Option<&str>) -> Result<()> {
+fn run_npm_build(dir: &Path, manifest_dir: &Path, channel: Option<&str>) -> Result<()> {
     let mut cmd = npm_command();
     cmd.arg("run").arg("build");
     cmd.current_dir(dir);
     if let Some(ch) = channel {
         cmd.env("MCV_CHANNEL", ch);
+        // Cargo.toml の feature implies 関係を解析して CARGO_FEATURE_* 環境変数を自動設定
+        for feature in channel_implied_features(manifest_dir, ch)? {
+            let env_key = format!("CARGO_FEATURE_{}", feature.to_uppercase().replace('-', "_"));
+            cmd.env(env_key, "1");
+        }
     }
     run(cmd)
 }

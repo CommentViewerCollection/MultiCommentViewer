@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useReducer, useLayoutEffect, useMemo } fro
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, DataGridRef, Column } from 'my-dataview'
-import { LogViewer } from './components/LogViewer'
 import { SettingsScreen } from './components/SettingsScreen'
 import { ColorInfo } from './utils/ColorInfo'
 import { TitleBar } from './components/TitleBar'
@@ -163,7 +162,7 @@ interface InstalledPluginMeta {
 }
 
 
-type TabType = 'comments' | 'logs' | 'settings' | 'updates' | 'plugins' | 'search' | 'users'
+type TabType = 'comments' | 'settings' | 'updates' | 'plugins' | 'search' | 'users'
 
 // Render a single MessagePart (text or image)
 function RenderMessagePart({
@@ -1984,16 +1983,6 @@ function App() {
             </button>
             <button
               className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'logs'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
-              onClick={() => setActiveTab('logs')}
-            >
-              ログ
-            </button>
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
                 activeTab === 'updates'
                   ? 'text-blue-400 border-b-2 border-blue-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
@@ -2171,8 +2160,6 @@ function App() {
             </div>
           </div>
 
-          {/* ログタブ */}
-          {activeTab === 'logs' && <LogViewer themeColors={currentThemeColors} />}
 
           {/* アップデートタブ */}
           {activeTab === 'updates' && (

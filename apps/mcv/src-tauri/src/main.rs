@@ -2025,18 +2025,6 @@ fn main() {
                 });
             }
 
-            // ログ挿入時のイベント発行を設定
-            let log_app_handle = app.handle().clone();
-            mcv_log_core::set_log_insert_callback(move |entry| {
-                if let Err(e) = log_app_handle.emit("log-added", entry) {
-                    tracing::error!(
-                        target: "mcv::main",
-                        error = %e,
-                        "Failed to emit log-added event"
-                    );
-                }
-            });
-            tracing::debug!(target: "mcv::main", "Log insert callback set");
 
             // AppHandleを保存（ブロッキング操作）
             let handle = app.handle().clone();

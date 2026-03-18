@@ -15,4 +15,3 @@ serde_json = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
 tokio = { workspace = true }
-dirs = "5"

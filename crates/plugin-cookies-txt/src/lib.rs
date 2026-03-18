@@ -5,9 +5,9 @@
 
 use mcv_messages::{
     AddBrowserAckPayload, AddBrowserPayload, BrowserId, Cookie as McvCookie, GetCookieAckPayload,
-    GetCookiePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload, PluginId, RemoveBrowserPayload, SettingsDataPayload, SettingsSchemaPayload,
-    UpdateSettingsPayload,
+    GetCookiePayload, GetSettingsDirPayload, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, PluginHelloPayload, PluginId, RemoveBrowserPayload,
+    SettingsDataPayload, SettingsDirAckPayload, SettingsSchemaPayload, UpdateSettingsPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -38,6 +38,7 @@ struct CookiesTxtEntry {
 struct CookiesTxtPlugin {
     logical_plugin_id: PluginId,
     entries: Vec<CookiesTxtEntry>,
+    settings_dir: Option<PathBuf>,
 }
 
 // ============================================================================
@@ -56,49 +57,47 @@ fn file_browser_id(path: &str) -> BrowserId {
     BrowserId::new(filename, &hash.to_string())
 }
 
-/// 設定ファイルのパスを返す
-/// %LOCALAPPDATA%\MultiCommentViewer\settings\cookies-txt-browsers.json
-fn config_path() -> Option<PathBuf> {
-    let base = dirs::data_local_dir()?;
-    Some(
-        base.join("MultiCommentViewer")
-            .join("settings")
-            .join("cookies-txt-browsers.json"),
-    )
-}
-
-/// 設定ファイルからエントリを読み込む（失敗時は空）
-fn load_entries() -> Vec<CookiesTxtEntry> {
-    let path = match config_path() {
-        Some(p) => p,
-        None => return vec![],
-    };
-    let content = match std::fs::read_to_string(&path) {
-        Ok(c) => c,
-        Err(_) => return vec![],
-    };
-    serde_json::from_str(&content).unwrap_or_default()
-}
-
-/// エントリを設定ファイルに保存する
-fn save_entries(entries: &[CookiesTxtEntry]) {
-    let path = match config_path() {
-        Some(p) => p,
-        None => return,
-    };
-    if let Some(parent) = path.parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
-    if let Ok(content) = serde_json::to_string_pretty(entries) {
-        let _ = std::fs::write(&path, content);
-    }
-}
-
 // ============================================================================
 // CookiesTxtPlugin 実装
 // ============================================================================
 
 impl CookiesTxtPlugin {
+    /// 設定ファイルのパスを返す
+    fn config_path(&self) -> Option<PathBuf> {
+        Some(
+            self.settings_dir
+                .as_ref()?
+                .join("cookies-txt-browsers.json"),
+        )
+    }
+
+    /// 設定ファイルからエントリを読み込む（失敗時は空）
+    fn load_entries(&self) -> Vec<CookiesTxtEntry> {
+        let path = match self.config_path() {
+            Some(p) => p,
+            None => return vec![],
+        };
+        let content = match std::fs::read_to_string(&path) {
+            Ok(c) => c,
+            Err(_) => return vec![],
+        };
+        serde_json::from_str(&content).unwrap_or_default()
+    }
+
+    /// エントリを設定ファイルに保存する
+    fn save_entries(&self, entries: &[CookiesTxtEntry]) {
+        let path = match self.config_path() {
+            Some(p) => p,
+            None => return,
+        };
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        if let Ok(content) = serde_json::to_string_pretty(entries) {
+            let _ = std::fs::write(&path, content);
+        }
+    }
+
     /// 設定スキーマ（JSON Schema）を返す
     fn settings_schema(&self) -> serde_json::Value {
         serde_json::json!({
@@ -249,8 +248,44 @@ impl PluginImplV3Async for CookiesTxtPlugin {
             "plugin-hello 送信完了（role: browser-cookie）"
         );
 
+        // 設定ディレクトリを Core に問い合わせる
+        let get_settings_dir_msg = McvMessage::new_request(
+            MessageType::GetSettingsDir,
+            MessageSource::Plugin {
+                plugin_id: self.logical_plugin_id.clone(),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(GetSettingsDirPayload {}).unwrap(),
+        );
+        match ctx
+            .send_request(get_settings_dir_msg, Duration::from_secs(10))
+            .await
+        {
+            Ok(response) => {
+                match serde_json::from_value::<SettingsDirAckPayload>(response.payload) {
+                    Ok(ack) => {
+                        self.settings_dir = Some(PathBuf::from(ack.path));
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            target: "mcv::plugin-cookies-txt",
+                            error = %e,
+                            "SettingsDirAck のパースに失敗しました"
+                        );
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::error!(
+                    target: "mcv::plugin-cookies-txt",
+                    error = %e,
+                    "GetSettingsDir の問い合わせに失敗しました"
+                );
+            }
+        }
+
         // 設定ファイルからエントリを読み込む
-        self.entries = load_entries();
+        self.entries = self.load_entries();
 
         tracing::info!(
             target: "mcv::plugin-cookies-txt",
@@ -426,7 +461,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
                         );
 
                         self.entries.push(entry.clone());
-                        save_entries(&self.entries);
+                        self.save_entries(&self.entries);
 
                         // Core のキャッシュをアクションJSONではなく正しい entries データで更新する
                         // （Core の handle_update_settings はアクションJSONをキャッシュに保存してしまうため）
@@ -463,7 +498,7 @@ impl PluginImplV3Async for CookiesTxtPlugin {
                                 browser_id = %browser_id_str,
                                 "エントリを削除しました"
                             );
-                            save_entries(&self.entries);
+                            self.save_entries(&self.entries);
 
                             // Core のキャッシュを更新
                             let src = MessageSource::Plugin {

@@ -968,7 +968,9 @@ impl Handler<GetLogicalPlugins> for CoreActor {
     type Result = Vec<PluginInfo>;
 
     fn handle(&mut self, _msg: GetLogicalPlugins, _ctx: &mut Self::Context) -> Self::Result {
-        self.logical_plugins.values().cloned().collect()
+        let mut list: Vec<PluginInfo> = self.logical_plugins.values().cloned().collect();
+        list.sort_by(|a, b| a.plugin_id.as_str().cmp(b.plugin_id.as_str()));
+        list
     }
 }
 

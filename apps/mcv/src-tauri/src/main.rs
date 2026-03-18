@@ -38,6 +38,8 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
 use zip::ZipArchive;
 
+const API_BASE_URL: &str = "http://localhost";
+
 /// McvEnvelope をフロントエンド表示用に変換した行
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub(crate) struct CommentRow {
@@ -734,7 +736,6 @@ struct FrontendTraceSource {
 #[tauri::command]
 async fn check_for_updates() -> Result<Option<McvUpdateInfo>, String> {
     const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
-    const API_BASE_URL: &str = "http://localhost"; // TODO: 運用環境では実際のAPIサーバーURLに変更
 
     tracing::info!(current_version = CURRENT_VERSION, "Checking for updates");
 
@@ -771,7 +772,6 @@ async fn get_current_version() -> Result<String, String> {
 /// 配布サーバーのプラグイン一覧を取得
 #[tauri::command]
 async fn list_registry_plugins() -> Result<Vec<PluginListItem>, String> {
-    const API_BASE_URL: &str = "http://localhost";
     let updater = UpdateChecker::new(API_BASE_URL);
     updater
         .list_plugins()
@@ -864,7 +864,6 @@ async fn download_core_update(
     channel: String,
     sha256: String,
 ) -> Result<String, String> {
-    const API_BASE_URL: &str = "http://localhost";
     let updater = UpdateChecker::new(API_BASE_URL);
     let temp_dir = std::env::temp_dir().join("mcv-updater");
     std::fs::create_dir_all(&temp_dir)
@@ -943,7 +942,6 @@ async fn install_registry_plugin(
     channel: String,
     state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
-    const API_BASE_URL: &str = "http://localhost";
     let updater = UpdateChecker::new(API_BASE_URL);
     let plugin_detail = updater
         .get_plugin_detail(&plugin_id)
@@ -1649,7 +1647,6 @@ fn main() {
             tracing::info!(target: "mcv::main","Actix system thread started");
 
             // LogSenderActorを起動
-            const API_BASE_URL: &str = "http://localhost"; // TODO: 運用環境では実際のAPIサーバーURLに変更
             let _log_sender_addr = mcv_log_core::LogSenderActor::new(
                 log_storage,
                 API_BASE_URL.to_string(),

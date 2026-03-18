@@ -13,4 +13,9 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 futures-util = { workspace = true }
 
+[features]
+alpha = []
+beta = []
+stable = []
+
 [dev-dependencies]

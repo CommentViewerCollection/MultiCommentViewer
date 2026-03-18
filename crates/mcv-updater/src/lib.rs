@@ -158,9 +158,27 @@ impl UpdateChecker {
         &self,
         current_version: &str,
     ) -> Result<Option<InstallerUpdateInfo>, UpdateError> {
+        #[cfg(feature = "alpha")]
+        let url = format!("{}/api/mcv/installer/latest/alpha", self.api_base_url);
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        let url = format!("{}/api/mcv/installer/latest/beta", self.api_base_url);
+        #[cfg(not(any(feature = "alpha", feature = "beta")))]
         let url = format!("{}/api/mcv/installer/latest/stable", self.api_base_url);
         let response = self.client.get(&url).send().await?;
 
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            // サーバー仕様上、チャンネルにバージョンが存在しない場合も 404 を返す。
+            // ただし、エンドポイントのURL変更等による誤った 404 と区別するため、
+            // Content-Type が application/json のときのみ「バージョン未登録」と判断する。
+            // HTML 等が返った場合はエンドポイント不正とみなしてエラーにする。
+            let is_json = response
+                .headers()
+                .get(reqwest::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+                .map(|v| v.contains("application/json"))
+                .unwrap_or(false);
+            return if is_json { Ok(None) } else { Err(UpdateError::HttpError(response.error_for_status().unwrap_err())) };
+        }
         if !response.status().is_success() {
             return Err(UpdateError::HttpError(
                 response.error_for_status().unwrap_err(),
@@ -178,15 +196,14 @@ impl UpdateChecker {
         }
     }
     fn get_mcv_update_endpoint(&self, api_base_url: impl Into<String>) -> String {
-        #[cfg(debug_assertions)]
-        {
-            format!("{}/api/mcv/core/latest/beta", api_base_url.into())
-        }
+        #[cfg(feature = "alpha")]
+        { format!("{}/api/mcv/core/latest/alpha", api_base_url.into()) }
 
-        #[cfg(not(debug_assertions))]
-        {
-            format!("{}/api/mcv/core/latest/stable", api_base_url.into())
-        }
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        { format!("{}/api/mcv/core/latest/beta", api_base_url.into()) }
+
+        #[cfg(not(any(feature = "alpha", feature = "beta")))]
+        { format!("{}/api/mcv/core/latest/stable", api_base_url.into()) }
     }
     /// mcv本体の更新をチェック
     ///
@@ -207,6 +224,19 @@ impl UpdateChecker {
             .send()
             .await?;
 
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            // サーバー仕様上、チャンネルにバージョンが存在しない場合も 404 を返す。
+            // ただし、エンドポイントのURL変更等による誤った 404 と区別するため、
+            // Content-Type が application/json のときのみ「バージョン未登録」と判断する。
+            // HTML 等が返った場合はエンドポイント不正とみなしてエラーにする。
+            let is_json = response
+                .headers()
+                .get(reqwest::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+                .map(|v| v.contains("application/json"))
+                .unwrap_or(false);
+            return if is_json { Ok(None) } else { Err(UpdateError::HttpError(response.error_for_status().unwrap_err())) };
+        }
         if !response.status().is_success() {
             return Err(UpdateError::HttpError(
                 response.error_for_status().unwrap_err(),

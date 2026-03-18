@@ -1,7 +1,7 @@
 use crate::auth_token::AuthToken;
 use crate::client_id::ClientId;
 use crate::utils::{get_string, get_value, send_graphql_query};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde_json::Value;
 
 #[derive(Debug)]
@@ -114,7 +114,8 @@ pub async fn fetch_recent_chat_messages(
 
     //parse json to RecentChatMessage
     let mut messages = Vec::new();
-    let data = get_value(&json, &["data", "channel", "recentChatMessages"])?; //) &json["data"]["channel"]["recentChatMessages"];
+    let data = get_value(&json, &["data", "channel", "recentChatMessages"])
+        .with_context(|| format!("response body: {json}"))?;
     for message in data.as_array().unwrap_or(&Vec::new()) {
         let recent_message = RecentChatMessage::parse(message)?;
         messages.push(recent_message);

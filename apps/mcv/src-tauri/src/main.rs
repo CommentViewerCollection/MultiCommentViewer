@@ -1022,51 +1022,49 @@ struct InstalledPluginMeta {
     channel: Option<String>,
 }
 
-/// plugin.json からバージョンとチャンネルを読み取る（BOM 対応）
-fn read_installed_plugin_meta(
+/// pluginsディレクトリをスキャンしてインストール済みプラグイン一覧を返す
+///
+/// - ディレクトリ形式（{id}/plugin.json）: manifest の `id`・`version`・`channel` を使用
+/// - ZIP 形式（*.zip）: `.cache/{stem}/plugin.json` から `id`・`version`・`channel` を取得
+///   （ZIP ファイル名は `{id}-{version}-{channel}.zip` などで変わりうるため、
+///    ファイル名ステムではなく plugin.json の `id` フィールドを使用する）
+fn scan_installed_plugins(
     plugin_dir: &std::path::Path,
-    id: &str,
-) -> (Option<String>, Option<String>) {
+) -> Result<Vec<InstalledPluginMeta>, String> {
     #[derive(serde::Deserialize)]
-    struct PluginJsonMeta {
+    struct PluginJsonFull {
+        #[serde(default)]
+        id: Option<String>,
         #[serde(default)]
         version: Option<String>,
         #[serde(default)]
         channel: Option<String>,
     }
-    let try_read = |path: &std::path::Path| -> Option<(Option<String>, Option<String>)> {
-        let content = std::fs::read(path).ok()?;
-        let content = if content.starts_with(b"\xEF\xBB\xBF") {
-            &content[3..]
-        } else {
-            &content[..]
+    let try_read_full =
+        |path: &std::path::Path| -> Option<(String, Option<String>, Option<String>)> {
+            let content = std::fs::read(path).ok()?;
+            let content = if content.starts_with(b"\xEF\xBB\xBF") {
+                &content[3..]
+            } else {
+                &content[..]
+            };
+            let meta: PluginJsonFull = serde_json::from_slice(content).ok()?;
+            let id = meta.id.filter(|s| !s.is_empty())?;
+            Some((id, meta.version, meta.channel))
         };
-        let meta: PluginJsonMeta = serde_json::from_slice(content).ok()?;
-        Some((meta.version, meta.channel))
-    };
-    // ZIP 形式: .cache/{id}/plugin.json (起動時に展開済み)
-    let cache_path = plugin_dir.join(".cache").join(id).join("plugin.json");
-    if let Some(pair) = try_read(&cache_path) {
-        return pair;
-    }
-    // ディレクトリ形式: {id}/plugin.json
-    let dir_path = plugin_dir.join(id).join("plugin.json");
-    try_read(&dir_path).unwrap_or((None, None))
-}
 
-/// pluginsディレクトリを直接スキャンしてインストール済みプラグインIDの一覧を返す
-///
-/// - サブディレクトリ形式（plugin.json あり）: manifest の `id` フィールド、またはディレクトリ名
-/// - ZIP 形式: ZIPのファイル名（拡張子除く）
-fn scan_installed_plugin_ids(plugin_dir: &std::path::Path) -> Result<Vec<String>, String> {
     if !plugin_dir.exists() {
         return Ok(vec![]);
     }
-    let entries = std::fs::read_dir(plugin_dir)
-        .map_err(|e| format!("Failed to read plugin directory: {}", e))?;
 
-    let mut ids = std::collections::HashSet::new();
-    for entry in entries.flatten() {
+    // id → InstalledPluginMeta（重複時はディレクトリ形式を優先）
+    let mut result: std::collections::HashMap<String, InstalledPluginMeta> =
+        std::collections::HashMap::new();
+
+    for entry in std::fs::read_dir(plugin_dir)
+        .map_err(|e| format!("Failed to read plugin directory: {}", e))?
+        .flatten()
+    {
         let path = entry.path();
         if path.is_dir() {
             let dir_name = match path.file_name().and_then(|n| n.to_str()) {
@@ -1081,43 +1079,92 @@ fn scan_installed_plugin_ids(plugin_dir: &std::path::Path) -> Result<Vec<String>
             if !manifest_path.exists() {
                 continue;
             }
-            let id = read_plugin_id_from_manifest(&manifest_path).unwrap_or(dir_name);
-            // アンインストールマーカーがある場合はスキップ（次回起動時に削除予定）
+            let (id, version, channel) = match try_read_full(&manifest_path) {
+                Some(m) => m,
+                None => continue,
+            };
             let marker = plugin_dir.join(format!(".uninstall-{}", &id));
             if marker.exists() {
                 continue;
             }
-            ids.insert(id);
+            // ディレクトリ形式を優先して挿入
+            result.insert(
+                id.clone(),
+                InstalledPluginMeta {
+                    id,
+                    version,
+                    channel,
+                },
+            );
         } else if path
             .extension()
             .and_then(|e| e.to_str())
             .map(|e| e.eq_ignore_ascii_case("zip"))
             .unwrap_or(false)
         {
-            if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                ids.insert(stem.to_string());
+            let stem = match path.file_stem().and_then(|s| s.to_str()) {
+                Some(s) => s.to_string(),
+                None => continue,
+            };
+            // キャッシュから実際の id・version・channel を取得
+            // （起動時に展開済みのため .cache/{stem}/plugin.json が存在する）
+            let cache_manifest = plugin_dir.join(".cache").join(&stem).join("plugin.json");
+            let (id, version, channel) = match try_read_full(&cache_manifest) {
+                Some(m) => m,
+                // キャッシュ未展開（初回起動前）はスキップ
+                None => continue,
+            };
+            let marker = plugin_dir.join(format!(".uninstall-{}", &id));
+            if marker.exists() {
+                continue;
             }
+            // ディレクトリ形式がまだ挿入されていない場合のみ追加
+            result.entry(id.clone()).or_insert(InstalledPluginMeta {
+                id,
+                version,
+                channel,
+            });
         }
     }
-    Ok(ids.into_iter().collect())
+
+    Ok(result.into_values().collect())
+}
+
+/// .cache/ 以下を走査して plugin_id に対応する ZIP ステム（キャッシュサブディレクトリ名）を返す
+///
+/// ZIP ファイル名は `{id}-{version}-{channel}.zip` のように id 以外の情報を含む場合があるため、
+/// ファイル名ではなく .cache/{stem}/plugin.json の `id` フィールドで照合する。
+fn find_zip_stem_for_id(plugin_dir: &std::path::Path, plugin_id: &str) -> Option<String> {
+    let cache_root = plugin_dir.join(".cache");
+    if !cache_root.exists() {
+        return None;
+    }
+    for entry in std::fs::read_dir(&cache_root).ok()?.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let stem = path.file_name()?.to_str()?.to_string();
+        if stem.starts_with('.') {
+            continue;
+        }
+        let manifest = path.join("plugin.json");
+        if read_plugin_id_from_manifest(&manifest)
+            .as_deref()
+            .unwrap_or("")
+            == plugin_id
+        {
+            return Some(stem);
+        }
+    }
+    None
 }
 
 /// インストール済みプラグイン一覧をバージョン情報付きで取得
 #[tauri::command]
 async fn list_installed_plugins() -> Result<Vec<InstalledPluginMeta>, String> {
     let plugin_dir = get_plugin_dir();
-    let ids = scan_installed_plugin_ids(&plugin_dir)?;
-    Ok(ids
-        .into_iter()
-        .map(|id| {
-            let (version, channel) = read_installed_plugin_meta(&plugin_dir, &id);
-            InstalledPluginMeta {
-                id,
-                version,
-                channel,
-            }
-        })
-        .collect())
+    scan_installed_plugins(&plugin_dir)
 }
 
 /// インストール済みプラグインを削除する（ZIP形式・ディレクトリ形式の両方に対応）
@@ -1127,14 +1174,42 @@ async fn list_installed_plugins() -> Result<Vec<InstalledPluginMeta>, String> {
 #[tauri::command]
 async fn uninstall_registry_plugin(plugin_id: String) -> Result<(), String> {
     let plugin_dir = get_plugin_dir();
-    let zip_path = plugin_dir.join(format!("{}.zip", plugin_id));
     let dir_path = plugin_dir.join(&plugin_id);
-    let cache_dir = plugin_dir.join(".cache").join(&plugin_id);
+
+    // ZIP ファイルの探索:
+    //   1. レジストリ経由インストール: {plugin_id}.zip
+    //   2. 配布 ZIP 展開: {plugin_id}-{version}-{channel}.zip など
+    //      → .cache/ 内の plugin.json の id フィールドで照合
+    let zip_stem = find_zip_stem_for_id(&plugin_dir, &plugin_id);
+    let zip_path = if let Some(ref stem) = zip_stem {
+        let versioned = plugin_dir.join(format!("{}.zip", stem));
+        if versioned.exists() {
+            Some(versioned)
+        } else {
+            // {id}.zip（レジストリ名前形式）も確認
+            let simple = plugin_dir.join(format!("{}.zip", plugin_id));
+            if simple.exists() {
+                Some(simple)
+            } else {
+                None
+            }
+        }
+    } else {
+        let simple = plugin_dir.join(format!("{}.zip", plugin_id));
+        if simple.exists() {
+            Some(simple)
+        } else {
+            None
+        }
+    };
+    let cache_dir = plugin_dir
+        .join(".cache")
+        .join(zip_stem.unwrap_or_else(|| plugin_id.clone()));
 
     let mut found = false;
 
-    if zip_path.exists() {
-        std::fs::remove_file(&zip_path)
+    if let Some(ref zp) = zip_path {
+        std::fs::remove_file(zp)
             .map_err(|e| format!("Failed to remove plugin '{}': {}", plugin_id, e))?;
         found = true;
     }

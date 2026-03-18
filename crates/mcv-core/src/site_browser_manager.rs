@@ -112,19 +112,23 @@ impl SiteAndBrowserManager {
         self.browsers.get(browser_id)
     }
 
-    /// サイト一覧を取得
+    /// サイト一覧を取得（site_id 昇順）
     pub fn list_sites(&self) -> Vec<SiteInfo> {
-        self.sites.values().cloned().collect()
+        let mut list: Vec<SiteInfo> = self.sites.values().cloned().collect();
+        list.sort_by(|a, b| a.site_id.as_str().cmp(b.site_id.as_str()));
+        list
     }
 
-    /// ブラウザ一覧を取得（"なし"ブラウザを先頭に返す）
+    /// ブラウザ一覧を取得（"なし"ブラウザを先頭、残りは browser_id 昇順）
     pub fn list_browsers(&self) -> Vec<BrowserInfo> {
         let mut list: Vec<BrowserInfo> = self.browsers.values().cloned().collect();
-        list.sort_by_key(|b| {
-            if b.browser_id.is_none_browser() {
-                0u8
-            } else {
-                1u8
+        list.sort_by(|a, b| {
+            let a_none = a.browser_id.is_none_browser();
+            let b_none = b.browser_id.is_none_browser();
+            match (a_none, b_none) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => a.browser_id.as_str().cmp(b.browser_id.as_str()),
             }
         });
         list

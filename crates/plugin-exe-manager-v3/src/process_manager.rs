@@ -14,9 +14,6 @@ pub enum ProcessManagerError {
 
     #[error("Process spawn error: {0}")]
     SpawnError(String),
-
-    #[error("Plugin directory not found")]
-    PluginDirectoryNotFound,
 }
 
 /// プロセス管理
@@ -24,6 +21,7 @@ pub struct ProcessManager {
     websocket_port: u16,
     processes: HashMap<String, PluginProcess>, // plugin_id -> PluginProcess
     manifests: Vec<(PathBuf, PluginManifest)>, // (manifest_dir, manifest)
+    plugins_dir: PathBuf,
 }
 
 /// EXEプラグインのプロセス情報
@@ -41,7 +39,10 @@ struct PluginProcess {
 
 impl ProcessManager {
     /// 新しいプロセスマネージャーを作成
-    pub async fn new(websocket_port: u16) -> Result<Self, ProcessManagerError> {
+    pub async fn new(
+        websocket_port: u16,
+        plugins_dir: PathBuf,
+    ) -> Result<Self, ProcessManagerError> {
         tracing::info!(
             target: "mcv::plugin_exe_manager",
             websocket_port = websocket_port,
@@ -52,6 +53,7 @@ impl ProcessManager {
             websocket_port,
             processes: HashMap::new(),
             manifests: Vec::new(),
+            plugins_dir,
         };
 
         // pluginsディレクトリをスキャン
@@ -65,7 +67,7 @@ impl ProcessManager {
 
     /// pluginsディレクトリをスキャンしてplugin.jsonを検出
     async fn scan_plugins_directory(&mut self) -> Result<(), ProcessManagerError> {
-        let plugins_dir = Self::get_plugins_directory()?;
+        let plugins_dir = self.plugins_dir.clone();
         tracing::trace!(target: "mcv::plugin_exe_manager", "Plugins directory path: {}", plugins_dir.display());
         tracing::info!(target: "mcv::plugin_exe_manager", plugins_dir = %plugins_dir.display(), "Scanning plugins directory");
 
@@ -282,35 +284,5 @@ impl ProcessManager {
         }
 
         Ok(())
-    }
-
-    /// pluginsディレクトリのパスを取得
-    fn get_plugins_directory() -> Result<PathBuf, ProcessManagerError> {
-        // %LOCALAPPDATA%\MultiCommentViewer\plugins\
-        let appdata = std::env::var("LOCALAPPDATA")
-            .map_err(|_| ProcessManagerError::PluginDirectoryNotFound)?;
-
-        let plugins_dir = PathBuf::from(appdata)
-            .join("MultiCommentViewer")
-            .join("plugins");
-
-        Ok(plugins_dir)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_plugins_directory() {
-        let result = ProcessManager::get_plugins_directory();
-        // LOCALAPPDATA環境変数が設定されている場合のみ成功
-        if std::env::var("LOCALAPPDATA").is_ok() {
-            assert!(result.is_ok());
-            let path = result.unwrap();
-            assert!(path.to_string_lossy().contains("MultiCommentViewer"));
-            assert!(path.to_string_lossy().contains("plugins"));
-        }
     }
 }

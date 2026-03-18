@@ -4,8 +4,8 @@ pub mod routing;
 pub mod websocket_server;
 
 use mcv_messages::{
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginHelloPayload,
-    PluginId,
+    GetPluginsDirPayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
+    PluginHelloPayload, PluginId, PluginsDirAckPayload,
 };
 use mcv_plugin_interface::{PluginError, PluginHost};
 use plugin_abi_helper::v3::prelude::*;
@@ -149,11 +149,41 @@ impl ExePluginManagerV3Impl {
             })
             .await;
 
+        // GetPluginsDir を Core に問い合わせてプラグインディレクトリを取得
+        let get_plugins_dir_msg = McvMessage::new_request(
+            MessageType::GetPluginsDir,
+            MessageSource::Plugin {
+                plugin_id: self.logical_plugin_id.clone(),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(GetPluginsDirPayload {}).unwrap(),
+        );
+        let plugins_dir = match ctx
+            .send_request(get_plugins_dir_msg, Duration::from_secs(10))
+            .await
+        {
+            Ok(response) => {
+                let ack: PluginsDirAckPayload = serde_json::from_value(response.payload)
+                    .map_err(|e| format!("Failed to parse PluginsDirAck: {}", e))?;
+                std::path::PathBuf::from(ack.path)
+            }
+            Err(e) => {
+                return Err(format!("Failed to get plugins directory from Core: {}", e));
+            }
+        };
+        tracing::info!(
+            target: "mcv::plugin_exe_manager",
+            plugins_dir = %plugins_dir.display(),
+            "Plugins directory received from Core"
+        );
+
         // プロセスマネージャーを初期化
-        let process_manager =
-            ProcessManager::new(self.websocket_server.as_ref().unwrap().get_port())
-                .await
-                .map_err(|e| e.to_string())?;
+        let process_manager = ProcessManager::new(
+            self.websocket_server.as_ref().unwrap().get_port(),
+            plugins_dir,
+        )
+        .await
+        .map_err(|e| e.to_string())?;
 
         self.process_manager = Some(Arc::new(RwLock::new(process_manager)));
 

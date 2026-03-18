@@ -1910,6 +1910,9 @@ fn main() {
             // プラグインディレクトリパスを設定（GetPluginsDir への応答用）
             core_actor.set_plugins_dir(get_plugin_dir());
 
+            // 設定ディレクトリパスを設定（GetSettingsDir への応答用）
+            core_actor.set_settings_dir(settings_dir.clone());
+
             // 接続を復元（プラグイン読み込み前に実行）
             tracing::info!(
                 target: "mcv::main",

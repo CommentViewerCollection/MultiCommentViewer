@@ -72,6 +72,8 @@ pub struct CoreActor {
     pub(crate) logs_dir: Option<PathBuf>,
     /// プラグインディレクトリのパス（EXEプラグインへの通知用）
     pub(crate) plugins_dir: Option<PathBuf>,
+    /// 設定ディレクトリのパス（プラグインへの通知用）
+    pub(crate) settings_dir: Option<PathBuf>,
     /// URL自動検出: 個々のリクエスト (request_id → entry)
     url_check_entries: HashMap<Uuid, UrlCheckEntry>,
     /// URL自動検出: グループ状態 (group_id → group)
@@ -92,6 +94,7 @@ impl CoreActor {
             connections_file_path: None,
             logs_dir: None,
             plugins_dir: None,
+            settings_dir: None,
             url_check_entries: HashMap::new(),
             url_check_groups: HashMap::new(),
         }
@@ -125,6 +128,11 @@ impl CoreActor {
     /// プラグインディレクトリパスを設定
     pub fn set_plugins_dir(&mut self, path: PathBuf) {
         self.plugins_dir = Some(path);
+    }
+
+    /// 設定ディレクトリパスを設定
+    pub fn set_settings_dir(&mut self, path: PathBuf) {
+        self.settings_dir = Some(path);
     }
 
     /// 接続をファイルに保存
@@ -547,6 +555,7 @@ fn is_supported_plugin_request_type(message_type: &MessageType) -> bool {
             | MessageType::GetBrowserPlugin
             | MessageType::GetLogsDir
             | MessageType::GetPluginsDir
+            | MessageType::GetSettingsDir
     )
 }
 
@@ -667,6 +676,17 @@ fn handle_plugin_request_message(
             Ok(message.create_response(
                 MessageType::PluginsDirAck,
                 serde_json::to_value(PluginsDirAckPayload { path }).unwrap(),
+            ))
+        }
+        MessageType::GetSettingsDir => {
+            let path = core
+                .settings_dir
+                .as_ref()
+                .map(|p| p.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            Ok(message.create_response(
+                MessageType::SettingsDirAck,
+                serde_json::to_value(SettingsDirAckPayload { path }).unwrap(),
             ))
         }
         _ => Err(format!(

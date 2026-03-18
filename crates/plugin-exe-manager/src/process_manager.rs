@@ -308,17 +308,9 @@ impl ProcessManager {
         Ok(())
     }
 
-    /// pluginsディレクトリのパスを取得
+    /// pluginsディレクトリのパスを取得（実行ファイルと同じ場所の plugins/ サブディレクトリ）
     fn get_plugins_directory() -> Result<PathBuf, ProcessManagerError> {
-        // %LOCALAPPDATA%\MultiCommentViewer\plugins\
-        let appdata = std::env::var("LOCALAPPDATA")
-            .map_err(|_| ProcessManagerError::PluginDirectoryNotFound)?;
-
-        let plugins_dir = PathBuf::from(appdata)
-            .join("MultiCommentViewer")
-            .join("plugins");
-
-        Ok(plugins_dir)
+        Ok(mcv_common::get_base_dir().join("plugins"))
     }
 }
 
@@ -329,12 +321,8 @@ mod tests {
     #[test]
     fn test_get_plugins_directory() {
         let result = ProcessManager::get_plugins_directory();
-        // LOCALAPPDATA環境変数が設定されている場合のみ成功
-        if std::env::var("LOCALAPPDATA").is_ok() {
-            assert!(result.is_ok());
-            let path = result.unwrap();
-            assert!(path.to_string_lossy().contains("MultiCommentViewer"));
-            assert!(path.to_string_lossy().contains("plugins"));
-        }
+        assert!(result.is_ok());
+        let path = result.unwrap();
+        assert!(path.ends_with("plugins"));
     }
 }

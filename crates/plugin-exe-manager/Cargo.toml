@@ -13,6 +13,7 @@ stable = []
 
 [dependencies]
 # Core dependencies
+mcv-common = { path = "../mcv-common" }
 mcv-plugin-interface = { path = "../mcv-plugin-interface" }
 mcv-messages = { path = "../mcv-messages" }
 mcv-plugin-telemetry = { path = "../mcv-plugin-telemetry" }

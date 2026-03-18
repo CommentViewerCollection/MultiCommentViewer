@@ -16,6 +16,17 @@ pub use site_id::SiteId;
 pub const APP_NAME: &str = "MultiCommentViewer";
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// アプリケーションのベースディレクトリを返す（実行ファイルと同じディレクトリ）。
+///
+/// インストーラ配布・ZIP配布のいずれでも実行ファイルの隣にデータを配置するために使用する。
+pub fn get_base_dir() -> std::path::PathBuf {
+    std::env::current_exe()
+        .expect("failed to get current_exe")
+        .parent()
+        .expect("exe has no parent")
+        .to_path_buf()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

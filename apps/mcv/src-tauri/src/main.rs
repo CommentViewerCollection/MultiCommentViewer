@@ -1580,11 +1580,10 @@ fn save_column_settings(settings: ColumnSettings, state: tauri::State<'_, Settin
 
 fn main() {
     // ロガーを初期化
-    let local_app_data = std::env::var("LOCALAPPDATA").expect("Failed to get LOCALAPPDATA");
-    let app_data_dir = PathBuf::from(&local_app_data).join("MultiCommentViewer");
+    let app_data_dir = mcv_common::get_base_dir();
     let log_db_path = app_data_dir.join("logs.db");
 
-    // ログディレクトリを作成
+    // ベースディレクトリを作成（通常は既に存在するが念のため）
     std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
 
     mcv_log_core::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
@@ -2100,30 +2099,6 @@ fn get_build_profile() -> &'static str {
     #[cfg(all(not(feature = "alpha"), not(feature = "beta")))]
     return "stable";
 }
-fn exe_dir() -> PathBuf {
-    std::env::current_exe()
-        .expect("failed to get current_exe")
-        .parent()
-        .expect("exe has no parent")
-        .to_path_buf()
-}
-#[cfg(debug_assertions)]
 fn get_plugin_dir() -> PathBuf {
-    // デバッグ環境: exe と同じ場所にある plugins/ サブディレクトリ
-    exe_dir().join("plugins")
-}
-
-#[cfg(not(debug_assertions))]
-fn get_plugin_dir() -> PathBuf {
-    // 本番環境: %LOCALAPPDATA%\MultiCommentViewer\plugins\
-    let local_app_data = std::env::var("LOCALAPPDATA").unwrap_or_else(|_| {
-        tracing::warn!(
-            target: "mcv::main",
-            "LOCALAPPDATA not set, using fallback path"
-        );
-        String::from("C:\\Users\\Default\\AppData\\Local")
-    });
-    PathBuf::from(local_app_data)
-        .join("MultiCommentViewer")
-        .join("plugins")
+    mcv_common::get_base_dir().join("plugins")
 }

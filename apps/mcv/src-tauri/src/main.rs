@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod comment_store;
+mod crash_handler;
 
 use actix::prelude::*;
 use mcv_common::{BrowserId, SiteId};
@@ -1604,6 +1605,9 @@ fn main() {
     // パニックフックをインストール（SQLite 書き込み失敗時は panic.log へフォールバック）
     mcv_log_core::install_panic_hook(panic_log_path, env!("CARGO_PKG_VERSION").to_string());
 
+    // Windows SEH ハンドラを設置（panic! では捕捉できない 0xe0000008 等を crash_seh_*.txt に記録）
+    crash_handler::install(&app_data_dir);
+
     tracing::info!(
         target: "mcv::main",
         version = env!("CARGO_PKG_VERSION"),
@@ -1685,8 +1689,11 @@ fn main() {
                 let timing_clone = comment_timing_clone.clone();
                 let store_clone = comment_store_for_callback.clone();
                 actix::spawn(async move {
-                    if let Some(app_handle) = app_handle_clone2.lock().await.as_ref() {
-                        match message.message_type {
+                    // app_handle の Mutex を最小限の期間だけ保持してすぐに解放する
+                    let Some(app_handle) = app_handle_clone2.lock().await.as_ref().cloned() else {
+                        return;
+                    };
+                    match message.message_type {
                             MessageType::CommentReceived => {
                                 let payload: CommentReceivedPayload =
                                     match serde_json::from_value(message.payload) {
@@ -1709,10 +1716,16 @@ fn main() {
                                 // MessageDeleteAll を "delete-all-by-user" イベントとして即座に emit
                                 for msg in &payload.envelope.messages {
                                     if let ProviderMessageKind::System(SystemKind::MessageDeleteAll { user_id }) = &msg.kind {
-                                        // サイトNGフラグをストアに記録
-                                        if let Ok(store) = store_clone.lock() {
-                                            let _ = store.set_site_ng(user_id);
-                                        }
+                                        // サイトNGフラグをストアに記録（spawn_blocking で actix スレッドをブロックしない）
+                                        let store_for_ng = store_clone.clone();
+                                        let user_id_for_ng = user_id.clone();
+                                        tokio::task::spawn_blocking(move || {
+                                            if let Ok(store) = store_for_ng.lock() {
+                                                let _ = store.set_site_ng(&user_id_for_ng);
+                                            }
+                                        })
+                                        .await
+                                        .ok();
                                         let evt = DeleteAllByUserPayload {
                                             user_id: user_id.clone(),
                                             connection_id: payload.envelope.connection_id.to_string(),
@@ -1750,37 +1763,8 @@ fn main() {
                                 let event_id = payload.envelope.event_id;
 
                                 if !history_messages.is_empty() || !timed_messages.is_empty() {
-                                    // per-connection グローバル基準を取得または初期化
-                                    // 接続内の最初の通常メッセージ到着時に base_ts / base_instant を確定する
-                                    let base_timing = if timed_messages.is_empty() {
-                                        None
-                                    } else {
-                                        let mut map = timing_clone.lock().await;
-                                        Some(*map.entry(connection_id).or_insert_with(|| {
-                                            (
-                                                timed_messages[0].timestamp,
-                                                std::time::Instant::now(),
-                                            )
-                                        }))
-                                    };
-                                    let ah = app_handle.clone();
-                                    actix::spawn(async move {
-                                    // 最低送信間隔 32ms（フロントエンドのバッチ処理周期に合わせる）
-                                    let min_interval = std::time::Duration::from_millis(32);
-                                    // 最初のメッセージを即時送信できるよう 1 間隔分だけ前に設定
-                                    let mut last_instant = std::time::Instant::now()
-                                        .checked_sub(min_interval)
-                                        .unwrap_or_else(std::time::Instant::now);
-
-                                    // 履歴コメントは timestamp 差分を無視してバースト表示
-                                    for msg in history_messages {
-                                        let target = last_instant + min_interval;
-                                        let now = std::time::Instant::now();
-                                        if target > now {
-                                            tokio::time::sleep(target - now).await;
-                                        }
-                                        last_instant = std::time::Instant::now();
-
+                                    let mut all_rows = Vec::new();
+                                    for msg in history_messages.into_iter().chain(timed_messages) {
                                         let single_envelope = mcv_messages::McvEnvelope {
                                             event_id,
                                             connection_id,
@@ -1788,59 +1772,34 @@ fn main() {
                                             received_at,
                                             raw_message: None,
                                         };
-                                        let rows = envelope_to_comment_rows(&single_envelope);
-                                        if let Ok(store) = store_clone.lock() {
-                                            for row in &rows {
+                                        all_rows.extend(envelope_to_comment_rows(&single_envelope));
+                                    }
+                                    // SQLite 挿入を spawn_blocking で実行（actix スレッドをブロックしない）
+                                    let store_for_insert = store_clone.clone();
+                                    let all_rows = tokio::task::spawn_blocking(move || {
+                                        if let Ok(store) = store_for_insert.lock() {
+                                            for row in &all_rows {
                                                 let _ = store.insert_comment(row);
                                             }
                                         }
-                                        if let Err(e) = ah.emit("comment-received", rows) {
-                                            tracing::error!(
-                                                target: "mcv::main",
-                                                error = %e,
-                                                "Failed to emit comment-received event"
-                                            );
-                                        }
+                                        all_rows
+                                    })
+                                    .await
+                                    .unwrap_or_default();
+                                    tracing::info!(
+                                        target: "mcv::main",
+                                        batch_size = all_rows.len(),
+                                        connection_id = %connection_id,
+                                        working_set_mb = crash_handler::get_process_memory_mb(),
+                                        "Emitting comment-received batch"
+                                    );
+                                    if let Err(e) = app_handle.emit("comment-received", all_rows) {
+                                        tracing::error!(
+                                            target: "mcv::main",
+                                            error = %e,
+                                            "Failed to emit comment-received event"
+                                        );
                                     }
-
-                                    // 通常コメントは timestamp 差分で再生（従来挙動）
-                                    if let Some((_base_ts, _base_instant)) = base_timing {
-                                        for msg in timed_messages {
-                                            // TODO: ラグ調査中のため timestamp 差分を一時的に無効化
-                                            // 最低間隔（32ms）を守った送信予定時刻
-                                            let target_by_interval = last_instant + min_interval;
-                                            let target = target_by_interval;
-
-                                            let now = std::time::Instant::now();
-                                            if target > now {
-                                                tokio::time::sleep(target - now).await;
-                                            }
-                                            last_instant = std::time::Instant::now();
-
-                                            let single_envelope = mcv_messages::McvEnvelope {
-                                                event_id,
-                                                connection_id,
-                                                messages: vec![msg],
-                                                received_at,
-                                                raw_message: None,
-                                            };
-                                            let rows = envelope_to_comment_rows(&single_envelope);
-                                            if let Ok(store) = store_clone.lock() {
-                                                for row in &rows {
-                                                    let _ = store.insert_comment(row);
-                                                }
-                                            }
-                                            if let Err(e) = ah.emit("comment-received", rows) {
-                                                tracing::error!(
-                                                    target: "mcv::main",
-                                                    error = %e,
-                                                    "Failed to emit comment-received event"
-                                                );
-                                            }
-                                        }
-                                    }
-
-                                    }); // actix::spawn for timing loop
                                 } // if history or timed messages exist
                             }
                             MessageType::StreamMetadata => {
@@ -1931,7 +1890,6 @@ fn main() {
                             }
                             _ => {}
                         }
-                    }
                 });
             });
 
@@ -1996,6 +1954,22 @@ fn main() {
                     host_addr: loaded_info.host_addr,
                 });
             }
+
+            // 定期メモリ使用量ログ（60秒ごと）
+            actix::spawn(async {
+                let mut interval =
+                    tokio::time::interval(std::time::Duration::from_secs(60));
+                loop {
+                    interval.tick().await;
+                    if let Some(mb) = crash_handler::get_process_memory_mb() {
+                        tracing::info!(
+                            target: "mcv::main",
+                            working_set_mb = mb,
+                            "Periodic memory usage"
+                        );
+                    }
+                }
+            });
 
             // AppStateを作成してメインスレッドに送信
             let app_state = AppState {

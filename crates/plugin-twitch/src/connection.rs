@@ -4,12 +4,14 @@
 //! IRC 経由でコメントを取得します。
 //! また、定期的にストリームメタデータ（視聴者数・配信開始時刻）を取得します。
 
+use std::sync::Arc;
+
 use futures_util::{stream::SplitSink, FutureExt, SinkExt, StreamExt};
 use mcv_messages::{
     AccountInfo, ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart, MessageSource, MessageType, PluginId,
-    ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender, ServiceId,
-    StreamMetadataPayload, UpdateConnectionAccountPayload,
+    ProviderBadge, ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender,
+    ServiceId, StreamMetadataPayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::fs::OpenOptions;
@@ -24,6 +26,7 @@ use tokio_tungstenite::{
     MaybeTlsStream, WebSocketStream,
 };
 use twitch_lib::auth_token::AuthToken;
+use twitch_lib::badges::{fetch_channel_badges_gql, fetch_global_badges_gql, BadgeCache};
 use twitch_lib::irc::{parse_irc_line, to_twitch_event, TwitchEvent};
 use uuid::Uuid;
 
@@ -318,6 +321,78 @@ impl Connection {
                         }
                     }
 
+                    let client_id = twitch_lib::ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
+
+                    // グローバルバッジを GQL GlobalBadges で取得（認証不要）
+                    let mut merged_badges = match fetch_global_badges_gql(
+                        &client_id,
+                        auth_token.as_ref(),
+                    )
+                    .await
+                    {
+                        Ok(cache) => {
+                            tracing::info!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                badge_set_count = cache.len(),
+                                total_badge_count = cache.values().map(|v| v.len()).sum::<usize>(),
+                                "グローバルバッジを取得"
+                            );
+                            cache
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                error = %e,
+                                "グローバルバッジの取得に失敗（バッジなしで続行）"
+                            );
+                            BadgeCache::new()
+                        }
+                    };
+
+                    // チャンネルバッジを GQL ChatList_Badges で取得し、グローバルに重ねる
+                    match fetch_channel_badges_gql(
+                        &channel_login,
+                        &client_id,
+                        auth_token.as_ref(),
+                    )
+                    .await
+                    {
+                        Ok(channel_cache) => {
+                            tracing::info!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                channel = %channel_login,
+                                badge_set_count = channel_cache.len(),
+                                total_badge_count = channel_cache.values().map(|v| v.len()).sum::<usize>(),
+                                "チャンネルバッジを取得"
+                            );
+                            // チャンネル固有バッジでグローバルを上書き（subscriber カスタム画像等）
+                            for (set_id, versions) in channel_cache {
+                                merged_badges.entry(set_id).or_default().extend(versions);
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                channel = %channel_login,
+                                error = %e,
+                                "チャンネルバッジの取得に失敗（グローバルバッジのみで続行）"
+                            );
+                        }
+                    }
+
+                    tracing::debug!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        badge_set_count = merged_badges.len(),
+                        total_badge_count = merged_badges.values().map(|v| v.len()).sum::<usize>(),
+                        "バッジキャッシュ確定"
+                    );
+                    let badge_cache: Arc<BadgeCache> = Arc::new(merged_badges);
+
                     let mut ping_interval = interval(Duration::from_secs(300));
 
                     loop {
@@ -360,6 +435,7 @@ impl Connection {
                                             connection_id,
                                             &mut write,
                                             text.to_string(),
+                                            Arc::clone(&badge_cache),
                                         ).await;
                                         if !should_continue {
                                             break;
@@ -520,12 +596,42 @@ impl Connection {
         write.send(WsMessage::Text(payload.into())).await
     }
 
+    /// IRC バッジバージョンを BadgeCache のバージョン文字列に解決する。
+    ///
+    /// Twitch IRC は実際の月数やビッツ数をバージョンとして送る（例: `subscriber/36`）が、
+    /// `broadcastBadges` には `0`, `6`, `12` など段階的なバージョンしかない場合がある。
+    /// ブラウザと同様に「リクエスト以下の最大バージョン」に fallback する。
+    fn resolve_badge_version(
+        versions: &std::collections::HashMap<String, String>,
+        requested: &str,
+    ) -> Option<String> {
+        // 完全一致を優先
+        if let Some(url) = versions.get(requested) {
+            return Some(url.clone());
+        }
+        // 数値として解釈し、requested 以下の最大バージョンを探す
+        let requested_n: u64 = requested.parse().ok()?;
+        versions
+            .iter()
+            .filter_map(|(v, url)| {
+                let n: u64 = v.parse().ok()?;
+                if n <= requested_n {
+                    Some((n, url.clone()))
+                } else {
+                    None
+                }
+            })
+            .max_by_key(|(n, _)| *n)
+            .map(|(_, url)| url)
+    }
+
     async fn handle_text_message(
         ctx: PluginContext,
         logical_plugin_id: PluginId,
         connection_id: Uuid,
         write: &mut WsWrite,
         raw_text: String,
+        badge_cache: Arc<BadgeCache>,
     ) -> bool {
         // 1 WebSocket フレーム内の全 PrivMsg を収集して1つの McvEnvelope にまとめる
         let mut provider_messages = Vec::new();
@@ -547,8 +653,31 @@ impl Connection {
                     channel,
                     user,
                     text,
-                    tags: _,
+                    tags,
                 } => {
+                    // IRC tags の badges フィールドからバッジ情報を解析
+                    // 形式: "moderator/1,subscriber/36"
+                    let badges: Vec<ProviderBadge> = if let Some(badges_str) = tags.get("badges") {
+                        badges_str
+                            .split(',')
+                            .filter(|s| !s.is_empty())
+                            .map(|badge| {
+                                let mut parts = badge.splitn(2, '/');
+                                let set_id = parts.next().unwrap_or("").to_string();
+                                let version = parts.next().unwrap_or("1").to_string();
+                                let image_url = badge_cache.get(&set_id).and_then(|versions| {
+                                    Self::resolve_badge_version(versions, &version)
+                                });
+                                ProviderBadge {
+                                    id: set_id.clone(),
+                                    name: set_id,
+                                    image_url,
+                                }
+                            })
+                            .collect()
+                    } else {
+                        vec![]
+                    };
                     let provider_msg = ProviderMessage {
                         id: Uuid::new_v4().to_string(),
                         platform_message_id: None,
@@ -557,7 +686,7 @@ impl Connection {
                         sender: ProviderSender {
                             id: user.clone(),
                             display_name: vec![MessagePart::Text { text: user.clone() }],
-                            badges: vec![],
+                            badges,
                             role: None,
                             avatar_url: None,
                         },

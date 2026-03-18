@@ -114,6 +114,25 @@ async fn get_viewer_count_helix(
     Ok(viewer_count)
 }
 
+/// GQL Persisted Query でチャンネルの数値 ID（broadcaster_id）を取得する（認証不要）
+pub async fn fetch_broadcaster_id(
+    channel_login: &str,
+    client_id: &ClientId,
+    auth_token: Option<&AuthToken>,
+) -> Result<Option<String>> {
+    let query = format!(
+        r#"{{
+            "operationName":"StreamMetadata",
+            "variables":{{"channelLogin":"{}","includeIsDJ":true}},
+            "extensions":{{"persistedQuery":{{"version":1,"sha256Hash":"b57f9b910f8cd1a4659d894fe7550ccc81ec9052c01e438b290fd66a040b9b93"}}}}
+        }}"#,
+        channel_login
+    );
+    let json = send_graphql_query(&query, client_id, auth_token).await?;
+    let id = json["data"]["user"]["id"].as_str().map(|s| s.to_string());
+    Ok(id)
+}
+
 /// Twitch チャンネルのストリームメタデータ（タイトル・視聴者数・開始時刻）を取得する。
 ///
 /// - タイトル・開始時刻: GQL Persisted Query（認証不要）

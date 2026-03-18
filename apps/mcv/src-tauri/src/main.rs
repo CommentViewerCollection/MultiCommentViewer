@@ -1654,7 +1654,55 @@ fn save_column_settings(settings: ColumnSettings, state: tauri::State<'_, Settin
     }
 }
 
+/// 指定ディレクトリへの書き込み可否を確認する。
+/// テスト用ファイルを作成・削除することで確認し、成功した場合 true を返す。
+fn is_dir_writable(dir: &std::path::Path) -> bool {
+    let test_path = dir.join(".mcv_write_test");
+    match std::fs::File::create(&test_path) {
+        Ok(_) => {
+            let _ = std::fs::remove_file(&test_path);
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+/// 書き込み制限エラーをネイティブのメッセージボックスで表示する（Windows 専用）。
+#[cfg(windows)]
+fn show_write_restricted_error(dir: &std::path::Path) {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
+
+    let title: Vec<u16> = "MultiCommentViewer - 起動エラー\0"
+        .encode_utf16()
+        .collect();
+    let message = format!(
+        "アプリケーションが書き込み制限のあるフォルダーに配置されています。\n\n\
+        フォルダー: {}\n\n\
+        デスクトップや「ドキュメント」など書き込みが可能なフォルダーへ移動してから再起動してください。",
+        dir.display()
+    );
+    let message: Vec<u16> = message.encode_utf16().chain(std::iter::once(0)).collect();
+
+    unsafe {
+        MessageBoxW(
+            std::ptr::null_mut(),
+            message.as_ptr(),
+            title.as_ptr(),
+            MB_OK | MB_ICONERROR,
+        );
+    }
+}
+
 fn main() {
+    // 実行ファイルのあるディレクトリへの書き込み可否を確認する
+    // ZIP 配布で Program Files 等の書き込み制限フォルダーに展開された場合に早期終了する
+    let app_data_dir = mcv_common::get_base_dir();
+    if !is_dir_writable(&app_data_dir) {
+        #[cfg(windows)]
+        show_write_restricted_error(&app_data_dir);
+        std::process::exit(1);
+    }
+
     // ロガーを初期化
     let app_data_dir = mcv_common::get_base_dir();
     let log_db_path = app_data_dir.join("logs.db");

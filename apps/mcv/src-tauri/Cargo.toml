@@ -13,6 +13,7 @@ windows-sys = { version = "0.59", features = [
     "Win32_System_Kernel",
     "Win32_System_Threading",
     "Win32_System_ProcessStatus",
+    "Win32_UI_WindowsAndMessaging",
 ] }
 
 [dependencies]

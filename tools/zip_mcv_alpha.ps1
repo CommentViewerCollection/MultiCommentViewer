@@ -8,4 +8,5 @@ cargo xtask dist --channel alpha `
     --plugin youtubelive `
     --plugin dummy `
     --plugin sample-v3 `
-    --plugin exe-plugin-sample
+    --plugin exe-plugin-sample `
+    --plugin kick

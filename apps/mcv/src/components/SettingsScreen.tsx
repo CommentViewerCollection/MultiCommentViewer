@@ -497,11 +497,6 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const handleOk = async () => {
-    await applySettings()
-    onClose()
-  }
-
   const handleApply = async () => {
     await applySettings()
   }
@@ -550,6 +545,12 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   }
 
   const activeTabData = tabs.find(t => t.id === activeTab)
+
+  const hasChanges = tabs.some(
+    tab => JSON.stringify(currentData[tab.id]) !== JSON.stringify(originalData[tab.id])
+  )
+  const tabHasChanges = (tabId: string) =>
+    JSON.stringify(currentData[tabId]) !== JSON.stringify(originalData[tabId])
 
   // Core設定用の動的uiSchema生成（ColorPickerWidget適用）
   const getCoreUiSchema = () => {
@@ -710,24 +711,51 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex overflow-hidden">
       <style>{customStyles}</style>
 
-      {/* タブヘッダー */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 px-6 bg-white dark:bg-gray-800">
+      {/* 縦タブリスト */}
+      <div className="w-48 shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto bg-white dark:bg-gray-800">
         {tabs.map(tab => (
           <button
             key={tab.id}
-            className={`px-4 py-2 transition-colors ${
+            className={`w-full text-left px-4 py-2 text-sm transition-colors border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between ${
               activeTab === tab.id
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
             onClick={() => setActiveTab(tab.id)}
           >
-            {tab.name}
+            <span>{tab.name}</span>
+            {tabHasChanges(tab.id) && (
+              <span className="text-yellow-400 text-xs leading-none">●</span>
+            )}
           </button>
         ))}
+      </div>
+
+      {/* 右側: ヘッダー + フォームエリア */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+
+      {/* ヘッダー（適用・キャンセルボタン） */}
+      <div className="flex items-center justify-end px-4 py-2 gap-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
+        <button
+          onClick={handleApply}
+          disabled={loading || !hasChanges}
+          className={`px-3 py-1 text-sm rounded transition-colors ${
+            hasChanges
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          適用
+        </button>
+        <button
+          onClick={handleCancel}
+          className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
+        >
+          キャンセル
+        </button>
       </div>
 
       {/* フォームエリア */}
@@ -768,29 +796,6 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
           )
         )}
       </div>
-
-      {/* フッター（ボタン） */}
-      <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2 bg-white dark:bg-gray-800">
-        <button
-          onClick={handleOk}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-white"
-          disabled={loading}
-        >
-          OK
-        </button>
-        <button
-          onClick={handleApply}
-          className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
-          disabled={loading}
-        >
-          適用
-        </button>
-        <button
-          onClick={handleCancel}
-          className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
-        >
-          キャンセル
-        </button>
       </div>
     </div>
   )

@@ -1,0 +1,32 @@
+[package]
+name = "plugin-irc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+alpha = ["mcv-plugin-telemetry/alpha", "plugin-abi-helper/alpha"]
+beta = ["mcv-plugin-telemetry/beta", "plugin-abi-helper/beta"]
+stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
+
+[dependencies]
+mcv-common = { path = "../../crates/mcv-common" }
+mcv-messages = { path = "../../crates/mcv-messages" }
+mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
+async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+rand = "0.8"
+once_cell = { workspace = true }
+irc-lib = { path = "../../crates/irc-lib" }
+mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
+tracing = { workspace = true }
+plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
+regex = { workspace = true }
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+futures-util = { workspace = true }

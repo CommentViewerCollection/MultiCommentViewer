@@ -39,6 +39,8 @@ members = [
     "crates/twicas-lib",
     "crates/twicas-secret-extractor",
     "tools/extract-secret",
+    "crates/irc-lib",
+    "crates/plugin-irc",
 ]
 resolver = "2"
 

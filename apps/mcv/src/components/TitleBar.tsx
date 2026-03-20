@@ -60,7 +60,7 @@ export function TitleBar({ themeColors }: TitleBarProps) {
   })
 
   const handleDragMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0) {
+    if (e.button === 0 && e.detail < 2) {
       getCurrentWindow().startDragging().catch(() => {})
     }
   }
@@ -73,6 +73,7 @@ export function TitleBar({ themeColors }: TitleBarProps) {
     <div
       data-tauri-drag-region
       onMouseDown={handleDragMouseDown}
+      onDoubleClick={handleToggleMaximize}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -109,6 +110,7 @@ export function TitleBar({ themeColors }: TitleBarProps) {
       <div
         style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
         onMouseDown={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
       >
         {/* 最小化 */}
         <button

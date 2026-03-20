@@ -118,6 +118,21 @@ impl CommentStore {
         Ok(())
     }
 
+    /// サイトNGフラグを一括で立てる（ブロックユーザーリスト取得時）
+    ///
+    /// ユーザーが未登録の場合も INSERT して is_site_ng = 1 を設定する。
+    pub fn set_site_ng_batch(&self, user_ids: &[String]) -> SqliteResult<()> {
+        for user_id in user_ids {
+            self.conn.execute(
+                "INSERT INTO users (user_id, display_name_json, badges_json, connection_id, is_site_ng)
+                 VALUES (?1, '[]', '[]', '', 1)
+                 ON CONFLICT(user_id) DO UPDATE SET is_site_ng = 1",
+                params![user_id],
+            )?;
+        }
+        Ok(())
+    }
+
     /// コメント検索（全フィールドOR検索、大文字小文字を区別しない）
     #[cfg(feature = "comment-search")]
     pub fn search_comments(

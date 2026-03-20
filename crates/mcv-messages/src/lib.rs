@@ -196,6 +196,9 @@ pub enum MessageType {
 
     // 接続一覧取得
     GetConnections,
+
+    // サイトNG関連
+    SetSiteNgUsers,
 }
 
 // ============================================================================
@@ -899,6 +902,15 @@ pub struct CanHandleUrlPayload {
 pub struct CanHandleUrlResultPayload {
     pub supported: bool,
     pub site_id: Option<SiteId>,
+}
+
+/// set-site-ng-usersのpayload (Plugin → Core)
+///
+/// ログイン中アカウントのブロックユーザーリストをCoreに通知する。
+/// Coreはこれらのユーザーを `is_site_ng = true` としてストアに記録する。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetSiteNgUsersPayload {
+    pub user_ids: Vec<String>,
 }
 
 // ============================================================================

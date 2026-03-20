@@ -24,6 +24,7 @@ tokio = { workspace = true }
 rand = "0.8"
 once_cell = { workspace = true }
 irc-lib = { path = "../../crates/irc-lib" }
+twitch-lib = { path = "../../crates/twitch-lib" }
 mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
 tracing = { workspace = true }
 plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }

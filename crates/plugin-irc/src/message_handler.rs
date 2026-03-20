@@ -11,7 +11,7 @@ use mcv_messages::{
     ConnectionRemovedPayload, DisconnectPayload, FetchAccountInfoPayload,
     GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
     Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginId,
-    SetConnectionSitePayload, UpdateConnectionAccountPayload,
+    SetConnectionSitePayload, SetSiteNgUsersPayload, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -47,13 +47,52 @@ pub(crate) async fn on_message_impl(
         }
         MessageType::FetchAccountInfo => {
             let payload: FetchAccountInfoPayload = parse_payload(&message.payload)?;
-            let conn_id = payload.connection_id;
             let cookies = fetch_cookies_for_connect(
                 &ctx,
                 plugin.logical_plugin_id.clone(),
                 &payload.browser.id,
             )
             .await;
+
+            let auth_token = cookies
+                .iter()
+                .find(|c| c.name == "auth_token")
+                .map(|c| twitch_lib::auth_token::AuthToken::new(&c.value));
+
+            if let Some(token) = auth_token {
+                let client_id = twitch_lib::ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
+                match twitch_lib::fetch_blocked_users(&client_id, &token).await {
+                    Ok(user_ids) if !user_ids.is_empty() => {
+                        tracing::debug!(
+                            target: "mcv::plugin-irc",
+                            count = user_ids.len(),
+                            "Twitchブロックユーザーリスト取得完了"
+                        );
+                        let ng_msg = McvMessage::new_notification(
+                            MessageType::SetSiteNgUsers,
+                            MessageSource::Plugin {
+                                plugin_id: plugin.logical_plugin_id.clone(),
+                            },
+                            MessageDestination::Core,
+                            serde_json::to_value(SetSiteNgUsersPayload { user_ids }).unwrap(),
+                        );
+                        IrcPlugin::send_message(ctx, ng_msg).await;
+                    }
+                    Ok(_) => {
+                        tracing::debug!(
+                            target: "mcv::plugin-irc",
+                            "Twitchブロックユーザーリストが空"
+                        );
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            target: "mcv::plugin-irc",
+                            error = %e,
+                            "Twitchブロックユーザーリスト取得失敗"
+                        );
+                    }
+                }
+            }
         }
         MessageType::CanHandleUrl => {
             let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;

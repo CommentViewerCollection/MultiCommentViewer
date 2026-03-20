@@ -28,8 +28,8 @@ use mcv_messages::{
     ConnectionInputSchemaPayload, DisconnectPayload, DisconnectedPayload, FetchAccountInfoPayload,
     GetConnectionInputSchemaPayload, GetSendCommentSchemaPayload, InputInfo, Message as McvMessage,
     MessageDestination, MessageSource, MessageType, Money, PluginId, ProviderContent,
-    ProviderMessageKind, SendCommentPayload, SendCommentSchemaPayload, SiteInfo as MsgSiteInfo,
-    SystemKind,
+    ProviderMessageKind, SendCommentPayload, SendCommentSchemaPayload, SetSiteNgUsersPayload,
+    SiteInfo as MsgSiteInfo, SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
 use std::path::PathBuf;
@@ -1672,9 +1672,7 @@ fn is_dir_writable(dir: &std::path::Path) -> bool {
 fn show_write_restricted_error(dir: &std::path::Path) {
     use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
 
-    let title: Vec<u16> = "MultiCommentViewer - 起動エラー\0"
-        .encode_utf16()
-        .collect();
+    let title: Vec<u16> = "MultiCommentViewer - 起動エラー\0".encode_utf16().collect();
     let message = format!(
         "アプリケーションが書き込み制限のあるフォルダーに配置されています。\n\n\
         フォルダー: {}\n\n\
@@ -2012,6 +2010,25 @@ fn main() {
                                         error = %e,
                                         "Failed to emit connection-account-updated event"
                                     );
+                                }
+                            }
+                            MessageType::SetSiteNgUsers => {
+                                if let Ok(payload) = serde_json::from_value::<SetSiteNgUsersPayload>(message.payload) {
+                                    let store_for_ng = store_clone.clone();
+                                    tokio::task::spawn_blocking(move || {
+                                        if let Ok(store) = store_for_ng.lock() {
+                                            if let Err(e) = store.set_site_ng_batch(&payload.user_ids) {
+                                                tracing::warn!(
+                                                    target: "mcv::main",
+                                                    error = %e,
+                                                    "set_site_ng_batch failed"
+                                                );
+                                            }
+                                        }
+                                    })
+                                    .await
+                                    .ok();
+                                    let _ = app_handle.emit("site-ng-users-updated", ());
                                 }
                             }
                             _ => {}

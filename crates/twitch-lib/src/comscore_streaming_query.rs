@@ -44,15 +44,15 @@ async fn get_comscore_streaming_query(
     let json = send_graphql_query(&query, client_id, auth_token).await?;
 
     let video = get_value(&json, &["data", "video"])?;
-    let broadcast_type = get_string(&video, &["broadcastType"])?;
-    let created_at = get_string(&video, &["createdAt"])?;
-    let id = get_string(&video, &["id"])?;
-    let length_seconds = get_value(&video, &["lengthSeconds"])?
+    let broadcast_type = get_string(video, &["broadcastType"])?;
+    let created_at = get_string(video, &["createdAt"])?;
+    let id = get_string(video, &["id"])?;
+    let length_seconds = get_value(video, &["lengthSeconds"])?
         .as_u64()
         .ok_or_else(|| anyhow::anyhow!("Missing lengthSeconds"))? as u32;
-    let title = get_string(&video, &["title"])?;
-    let owner_display_name = get_string(&video, &["owner", "displayName"])?;
-    let owner_id = get_string(&video, &["owner", "id"])?;
+    let title = get_string(video, &["title"])?;
+    let owner_display_name = get_string(video, &["owner", "displayName"])?;
+    let owner_id = get_string(video, &["owner", "id"])?;
     Ok(ComscoreStreamingQueryVideo {
         broadcast_type,
         created_at,

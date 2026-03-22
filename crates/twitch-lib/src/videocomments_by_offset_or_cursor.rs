@@ -71,7 +71,7 @@ async fn get_video_comments(
         tokio::time::sleep(std::time::Duration::from_millis(interval_millis)).await;
         match comments {
             Ok(video_comments) => {
-                if video_comments.has_next_page == false {
+                if !video_comments.has_next_page {
                     break;
                 }
                 let num_comments = video_comments.comments.len();
@@ -123,8 +123,7 @@ async fn get_video_comments_by_offset_or_cursor(
         format!("OAuth {token}", token = auth_token.value()),
     );
     let res = if let Some(int) = integrity {
-        let res = res.header("client-integrity", int.token());
-        res
+        res.header("client-integrity", int.token())
     } else {
         res
     };
@@ -139,19 +138,19 @@ async fn get_video_comments_by_offset_or_cursor(
     for edge in edges.as_array().unwrap_or(&Vec::new()) {
         let cursor = get_string(edge, &["cursor"])?;
         let node = get_value(edge, &["node"])?;
-        let id = get_string(&node, &["id"])?;
-        let commenter = get_value(&node, &["commenter"])?;
-        let commenter_id = get_string(&commenter, &["id"])?;
-        let commenter_login = get_string(&commenter, &["login"])?;
-        let commenter_display_name = get_string(&commenter, &["displayName"])?;
+        let id = get_string(node, &["id"])?;
+        let commenter = get_value(node, &["commenter"])?;
+        let commenter_id = get_string(commenter, &["id"])?;
+        let commenter_login = get_string(commenter, &["login"])?;
+        let commenter_display_name = get_string(commenter, &["displayName"])?;
         let offset_seconds = node
             .get("contentOffsetSeconds")
             .and_then(|v| v.as_u64())
             .ok_or_else(|| anyhow::anyhow!("Failed to get contentOffsetSeconds"))?
             as u32;
-        let created_at = get_string(&node, &["createdAt"])?;
+        let created_at = get_string(node, &["createdAt"])?;
         let mut message_fragments = Vec::new();
-        let fragments = get_value(&node, &["message", "fragments"])?;
+        let fragments = get_value(node, &["message", "fragments"])?;
         for fragment in fragments.as_array().unwrap_or(&Vec::new()) {
             let text = get_string(fragment, &["text"])?;
             let emotes = Vec::new();
@@ -159,7 +158,7 @@ async fn get_video_comments_by_offset_or_cursor(
             message_fragments.push(fragment);
         }
         let mut user_badges = Vec::new();
-        let user_badges_value = get_value(&node, &["message", "userBadges"])?;
+        let user_badges_value = get_value(node, &["message", "userBadges"])?;
         for badge in user_badges_value.as_array().unwrap_or(&Vec::new()) {
             let id = get_string(badge, &["id"])?;
             let set_id = get_string(badge, &["setID"])?;

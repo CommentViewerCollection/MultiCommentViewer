@@ -65,7 +65,7 @@ pub fn to_twitch_event(msg: IrcMessage) -> TwitchEvent {
         }
 
         "JOIN" => {
-            if let Some(channel) = msg.params.get(0) {
+            if let Some(channel) = msg.params.first() {
                 let user = extract_user(&msg);
                 TwitchEvent::Join {
                     channel: channel.clone(),
@@ -77,7 +77,7 @@ pub fn to_twitch_event(msg: IrcMessage) -> TwitchEvent {
         }
 
         "PART" => {
-            if let Some(channel) = msg.params.get(0) {
+            if let Some(channel) = msg.params.first() {
                 let user = extract_user(&msg);
                 TwitchEvent::Part {
                     channel: channel.clone(),
@@ -89,7 +89,7 @@ pub fn to_twitch_event(msg: IrcMessage) -> TwitchEvent {
         }
 
         "ROOMSTATE" => {
-            if let Some(channel) = msg.params.get(0) {
+            if let Some(channel) = msg.params.first() {
                 TwitchEvent::RoomState {
                     channel: channel.clone(),
                     tags: msg.tags,
@@ -100,7 +100,7 @@ pub fn to_twitch_event(msg: IrcMessage) -> TwitchEvent {
         }
 
         "NOTICE" => {
-            let channel = msg.params.get(0).cloned();
+            let channel = msg.params.first().cloned();
             let message = msg.params.get(1).cloned().unwrap_or_default();
 
             TwitchEvent::Notice {
@@ -135,20 +135,20 @@ pub fn parse_irc_line(line: &str) -> IrcMessage {
     let mut prefix = None;
 
     // ---- Tags (@key=value;...)
-    if rest.starts_with('@') {
-        if let Some(space) = rest.find(' ') {
-            let tag_str = &rest[1..space];
-            tags = parse_tags(tag_str);
-            rest = &rest[space + 1..];
-        }
+    if rest.starts_with('@')
+        && let Some(space) = rest.find(' ')
+    {
+        let tag_str = &rest[1..space];
+        tags = parse_tags(tag_str);
+        rest = &rest[space + 1..];
     }
 
     // ---- Prefix (:prefix)
-    if rest.starts_with(':') {
-        if let Some(space) = rest.find(' ') {
-            prefix = Some(rest[1..space].to_string());
-            rest = &rest[space + 1..];
-        }
+    if rest.starts_with(':')
+        && let Some(space) = rest.find(' ')
+    {
+        prefix = Some(rest[1..space].to_string());
+        rest = &rest[space + 1..];
     }
 
     // ---- Command + Params
@@ -192,9 +192,9 @@ fn parse_command_and_params(input: &str) -> (String, Vec<String>) {
     let mut rest = input;
 
     while !rest.is_empty() {
-        if rest.starts_with(':') {
+        if let Some(stripped) = rest.strip_prefix(':') {
             // trailing parameter（最後まで）
-            parts.push(rest[1..].to_string());
+            parts.push(stripped.to_string());
             break;
         }
 
@@ -207,7 +207,7 @@ fn parse_command_and_params(input: &str) -> (String, Vec<String>) {
         }
     }
 
-    let command = parts.get(0).cloned().unwrap_or_default();
+    let command = parts.first().cloned().unwrap_or_default();
     let params = if parts.len() > 1 {
         parts[1..].to_vec()
     } else {

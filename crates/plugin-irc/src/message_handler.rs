@@ -7,14 +7,13 @@ use std::any::type_name;
 use std::time::Duration;
 
 use mcv_messages::{
-    AccountInfo, CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectPayload, ConnectedPayload,
-    ConnectionRemovedPayload, DisconnectPayload, FetchAccountInfoPayload,
-    GetBrowserPluginAckPayload, GetBrowserPluginPayload, GetCookieAckPayload, GetCookiePayload,
-    Message as McvMessage, MessageDestination, MessageSource, MessageType, PluginId,
-    SetConnectionSitePayload, SetSiteNgUsersPayload, UpdateConnectionAccountPayload,
+    CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectionRemovedPayload, DisconnectPayload,
+    FetchAccountInfoPayload, GetBrowserPluginAckPayload, GetBrowserPluginPayload,
+    GetCookieAckPayload, GetCookiePayload, Message as McvMessage, MessageDestination,
+    MessageSource, MessageType, PluginId, SetConnectionSitePayload, SetSiteNgUsersPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::de::DeserializeOwned;
 
 use crate::connection::Connection;
 use crate::IrcPlugin;
@@ -95,7 +94,7 @@ pub(crate) async fn on_message_impl(
             }
         }
         MessageType::CanHandleUrl => {
-            let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
+            let _payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
             let supported = false; // TODO: URLを解析して対応可能か判定する
             let site_id = supported
                 .then(|| mcv_common::SiteId::new("Twitch", "f3c2a1d7-6e4b-4f8c-9a21-5d7b3e2c9f64"));
@@ -109,6 +108,7 @@ pub(crate) async fn on_message_impl(
     }
     Ok(())
 }
+#[allow(clippy::result_large_err)]
 fn parse_payload<T>(payload: &serde_json::Value) -> Result<T, mcv_plugin_telemetry::TracingError>
 where
     T: DeserializeOwned,
@@ -128,10 +128,6 @@ where
     }
 }
 
-#[derive(Deserialize)]
-struct Input {
-    url: String,
-}
 async fn fetch_cookies_for_connect(
     ctx: &PluginContext,
     logical_plugin_id: PluginId,

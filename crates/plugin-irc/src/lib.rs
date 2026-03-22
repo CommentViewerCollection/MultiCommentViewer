@@ -119,7 +119,7 @@ impl PluginImplV3Async for IrcPlugin {
             .await;
     }
     async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {
-        let message: McvMessage = match serde_json::from_slice(&msg) {
+        let message: McvMessage = match serde_json::from_slice(msg) {
             Ok(m) => m,
             Err(e) => {
                 let error_text = e.to_string();

@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 pub struct Connection {
+    #[allow(dead_code)]
     id: Uuid,
 }
 impl Connection {

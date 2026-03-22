@@ -155,8 +155,8 @@ impl DummyPlugin {
         sender: tokio::sync::mpsc::UnboundedSender<Message>,
     ) {
         tokio::spawn(async move {
-            let names = vec!["太郎", "花子", "次郎", "さくら", "けん"];
-            let texts = vec![
+            let names = ["太郎", "花子", "次郎", "さくら", "けん"];
+            let texts = [
                 "こんにちは!",
                 "面白い配信ですね",
                 "草",
@@ -1398,6 +1398,7 @@ pub extern "C" fn plugin_on_loaded() -> i32 {
 /// # Safety
 /// この関数はCから呼び出されることを想定しています。
 #[no_mangle]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
     if message_json.is_null() {
         eprintln!("plugin_send_message: null message_json");

@@ -352,10 +352,10 @@ impl PluginImplV3Async for ExePluginManagerV3Impl {
         }
 
         // WebSocketServer shutdown
-        if let Some(websocket_server) = &self.websocket_server {
-            if let Err(e) = websocket_server.shutdown().await {
-                tracing::error!(error = %e, "WebSocketServer shutdown failed");
-            }
+        if let Some(websocket_server) = &self.websocket_server
+            && let Err(e) = websocket_server.shutdown().await
+        {
+            tracing::error!(error = %e, "WebSocketServer shutdown failed");
         }
 
         tracing::info!("ExePluginManager shutdown completed");

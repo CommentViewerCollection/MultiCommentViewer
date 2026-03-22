@@ -29,6 +29,9 @@ pub enum WebSocketError {
     SendError(String),
 }
 
+type PluginRegisteredCallback = Arc<RwLock<Option<Arc<dyn Fn(PluginId, PluginId) + Send + Sync>>>>;
+type PluginDisconnectedCallback = Arc<RwLock<Option<Arc<dyn Fn(PluginId) + Send + Sync>>>>;
+
 /// WebSocketサーバー
 pub struct WebSocketServer {
     port: u16,
@@ -36,9 +39,9 @@ pub struct WebSocketServer {
     router: Arc<MessageRouter>,
     shutdown_tx: Option<mpsc::Sender<()>>,
     /// plugin-hello受信時のコールバック (internal_physical_plugin_id, logical_plugin_id)
-    on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(PluginId, PluginId) + Send + Sync>>>>,
+    on_plugin_registered: PluginRegisteredCallback,
     /// プラグイン切断時のコールバック (logical_plugin_id)
-    on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(PluginId) + Send + Sync>>>>,
+    on_plugin_disconnected: PluginDisconnectedCallback,
 }
 
 impl WebSocketServer {
@@ -104,8 +107,8 @@ impl WebSocketServer {
         listener: TcpListener,
         clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
-        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(PluginId, PluginId) + Send + Sync>>>>,
-        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(PluginId) + Send + Sync>>>>,
+        on_plugin_registered: PluginRegisteredCallback,
+        on_plugin_disconnected: PluginDisconnectedCallback,
         mut shutdown_rx: mpsc::Receiver<()>,
     ) {
         loop {
@@ -151,8 +154,8 @@ impl WebSocketServer {
         stream: TcpStream,
         clients: Arc<RwLock<HashMap<PluginId, ClientInfo>>>,
         host: Arc<dyn PluginHost>,
-        on_plugin_registered: Arc<RwLock<Option<Arc<dyn Fn(PluginId, PluginId) + Send + Sync>>>>,
-        on_plugin_disconnected: Arc<RwLock<Option<Arc<dyn Fn(PluginId) + Send + Sync>>>>,
+        on_plugin_registered: PluginRegisteredCallback,
+        on_plugin_disconnected: PluginDisconnectedCallback,
     ) -> Result<(), WebSocketError> {
         let ws_stream = tokio_tungstenite::accept_async(stream)
             .await
@@ -217,56 +220,56 @@ impl WebSocketServer {
                                     );
 
                                     // plugin-helloの場合は登録
-                                    if mcv_message.message_type == MessageType::PluginHello {
-                                        if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
+                                    if mcv_message.message_type == MessageType::PluginHello
+                                        && let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
                                             mcv_message.payload.clone(),
-                                        ) {
-                                            let internal_physical_plugin_id = payload.plugin_id.clone();
+                                        )
+                                    {
+                                        let internal_physical_plugin_id = payload.plugin_id.clone();
 
-                                            // mcv_messageのsrcからlogical_plugin_idを取得
-                                            let log_pid = match &mcv_message.src {
-                                                mcv_messages::MessageSource::Plugin { plugin_id: pid } => pid.clone(),
-                                                _ => payload.plugin_id.clone(), // フォールバック
-                                            };
+                                        // mcv_messageのsrcからlogical_plugin_idを取得
+                                        let log_pid = match &mcv_message.src {
+                                            mcv_messages::MessageSource::Plugin { plugin_id: pid } => pid.clone(),
+                                            _ => payload.plugin_id.clone(), // フォールバック
+                                        };
 
-                                            plugin_id = Some(internal_physical_plugin_id.clone());
-                                            logical_plugin_id = Some(log_pid.clone());
+                                        plugin_id = Some(internal_physical_plugin_id.clone());
+                                        logical_plugin_id = Some(log_pid.clone());
 
-                                            let client = ClientInfo {
-                                                plugin_id: internal_physical_plugin_id.clone(),
-                                                sender: tx.clone(),
-                                                roles: payload.role.clone(),
-                                            };
+                                        let client = ClientInfo {
+                                            plugin_id: internal_physical_plugin_id.clone(),
+                                            sender: tx.clone(),
+                                            roles: payload.role.clone(),
+                                        };
 
-                                            clients
-                                                .write()
-                                                .await
-                                                .insert(internal_physical_plugin_id.clone(), client);
+                                        clients
+                                            .write()
+                                            .await
+                                            .insert(internal_physical_plugin_id.clone(), client);
 
-                                            println!(
-                                                "=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
-                                                internal_physical_plugin_id,
-                                                log_pid,
-                                                payload.name
-                                            );
-                                            tracing::info!(
+                                        println!(
+                                            "=== WebSocketServer: EXE plugin registered, internal_id: {}, logical_id: {}, name: {} ===",
+                                            internal_physical_plugin_id,
+                                            log_pid,
+                                            payload.name
+                                        );
+                                        tracing::info!(
+                                            target:"mcv::plugin-exe-manager::WebSocketServer",
+                                            internal_physical_plugin_id = %internal_physical_plugin_id,
+                                            logical_plugin_id = %log_pid,
+                                            plugin_name = %payload.name,
+                                            roles = ?payload.role,
+                                            "EXE plugin registered"
+                                        );
+
+                                        // コールバック呼び出し
+                                        let callback_guard = on_plugin_registered.read().await;
+                                        if let Some(callback) = callback_guard.as_ref() {
+                                            callback(internal_physical_plugin_id, log_pid);
+                                            tracing::debug!(
                                                 target:"mcv::plugin-exe-manager::WebSocketServer",
-                                                internal_physical_plugin_id = %internal_physical_plugin_id,
-                                                logical_plugin_id = %log_pid,
-                                                plugin_name = %payload.name,
-                                                roles = ?payload.role,
-                                                "EXE plugin registered"
+                                                "plugin-hello callback invoked"
                                             );
-
-                                            // コールバック呼び出し
-                                            let callback_guard = on_plugin_registered.read().await;
-                                            if let Some(callback) = callback_guard.as_ref() {
-                                                callback(internal_physical_plugin_id, log_pid);
-                                                tracing::debug!(
-                                                    target:"mcv::plugin-exe-manager::WebSocketServer",
-                                                    "plugin-hello callback invoked"
-                                                );
-                                            }
                                         }
                                     }
 

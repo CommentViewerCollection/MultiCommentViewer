@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_save_and_load_round_trip() {
-        let mut temp_file = NamedTempFile::new().unwrap();
+        let temp_file = NamedTempFile::new().unwrap();
         let path = temp_file.path();
 
         // 保存

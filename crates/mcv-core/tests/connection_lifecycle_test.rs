@@ -11,7 +11,7 @@ async fn test_full_connection_lifecycle() {
     let core_actor = CoreActor::new();
     let core_addr = core_actor.start();
 
-    let plugin_id = Uuid::new_v4();
+    let _plugin_id = Uuid::new_v4();
 
     // 1. 接続を作成
     let connection_id = core_addr
@@ -59,7 +59,7 @@ async fn test_multiple_connections_lifecycle() {
     let core_actor = CoreActor::new();
     let core_addr = core_actor.start();
 
-    let plugin_id = Uuid::new_v4();
+    let _plugin_id = Uuid::new_v4();
 
     // 複数の接続を作成
     let mut connection_ids = Vec::new();
@@ -133,7 +133,7 @@ async fn test_connection_status_lifecycle() {
     let core_actor = CoreActor::new();
     let core_addr = core_actor.start();
 
-    let plugin_id = Uuid::new_v4();
+    let _plugin_id = Uuid::new_v4();
 
     // 接続を作成
     let connection_id = core_addr

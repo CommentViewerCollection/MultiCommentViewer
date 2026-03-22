@@ -66,7 +66,7 @@ async fn test_connection_manager_integration() {
     let core_actor = CoreActor::new();
     let core_addr = core_actor.start();
 
-    let plugin_id = Uuid::new_v4();
+    let _plugin_id = Uuid::new_v4();
 
     // 接続を作成
     let connection_id = core_addr
@@ -90,7 +90,7 @@ async fn test_rename_connection() {
     let core_actor = CoreActor::new();
     let core_addr = core_actor.start();
 
-    let plugin_id = Uuid::new_v4();
+    let _plugin_id = Uuid::new_v4();
 
     // 接続を作成
     let connection_id = core_addr
@@ -122,7 +122,7 @@ async fn test_remove_disconnected_connection() {
     let core_actor = CoreActor::new();
     let core_addr = core_actor.start();
 
-    let plugin_id = Uuid::new_v4();
+    let _plugin_id = Uuid::new_v4();
 
     // 接続を作成
     let connection_id = core_addr
@@ -151,7 +151,7 @@ async fn test_multiple_connections() {
     let core_actor = CoreActor::new();
     let core_addr = core_actor.start();
 
-    let plugin_id = Uuid::new_v4();
+    let _plugin_id = Uuid::new_v4();
 
     // 3つの接続を作成
     let connection_id1 = core_addr

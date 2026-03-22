@@ -318,6 +318,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(invalid_value)]
     fn test_plugin_id_assignment_to_struct() {
         // PluginV3構造体へのplugin_id設定をテスト
         use plugin_abi_helper::abi::v3::PluginV3;

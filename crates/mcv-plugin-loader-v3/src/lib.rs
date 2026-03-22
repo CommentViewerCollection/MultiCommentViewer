@@ -68,6 +68,7 @@ impl PluginLoaderV3 {
     ///
     /// # Safety
     /// プラグインが正常にロードされている場合のみ安全
+    #[allow(clippy::mut_from_ref)]
     pub fn get_plugin_mut(&self) -> &mut PluginV3 {
         unsafe { &mut *self.plugin_ptr }
     }

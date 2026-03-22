@@ -10,9 +10,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 static GLOBAL_STORAGE: OnceLock<Arc<Mutex<storage::LogStorage>>> = OnceLock::new();
 
 // グローバルなログ挿入時コールバック
-static LOG_INSERT_CALLBACK: OnceLock<
-    Arc<Mutex<Option<Box<dyn Fn(&schema::LogEntry) + Send + Sync>>>>,
-> = OnceLock::new();
+type LogInsertCallback = Arc<Mutex<Option<Box<dyn Fn(&schema::LogEntry) + Send + Sync>>>>;
+static LOG_INSERT_CALLBACK: OnceLock<LogInsertCallback> = OnceLock::new();
 
 /// ロガーを初期化
 ///

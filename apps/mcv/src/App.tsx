@@ -1158,8 +1158,6 @@ function App() {
     const input = e.currentTarget
     // onPaste 時点では input.value にペースト後の値がまだ反映されていないため
     // 1tick待ってから取得する
-    // 既にサイトが選択されている場合はURL自動検出でサイトを上書きしない
-    const hasSite = connections.find((c) => c.connection_id === connectionId)?.site_id
     setTimeout(async () => {
       const url = input.value
       try {
@@ -1169,7 +1167,7 @@ function App() {
           browserId: null,
           advancedSettings: null,
         })
-        if (url && !hasSite) {
+        if (url) {
           const detectedSiteId = await invoke<string | null>('detect_url', { url })
           if (detectedSiteId) {
             await invoke('set_connection_site', { connectionId, siteId: detectedSiteId })

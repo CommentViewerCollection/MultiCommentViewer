@@ -26,7 +26,7 @@ impl PluginManifest {
         let content = std::fs::read_to_string(&path)?;
         //BOM付きの場合があるかもしれないので除去
         let content = content.trim_start_matches('\u{feff}');
-        let manifest: PluginManifest = serde_json::from_str(&content)?;
+        let manifest: PluginManifest = serde_json::from_str(content)?;
 
         // バリデーション
         manifest.validate()?;

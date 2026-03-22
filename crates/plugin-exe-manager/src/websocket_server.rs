@@ -157,31 +157,31 @@ impl WebSocketServer {
                     match serde_json::from_str::<McvMessage>(&text) {
                         Ok(mcv_message) => {
                             // plugin-helloの場合は登録
-                            if mcv_message.message_type == MessageType::PluginHello {
-                                if let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
+                            if mcv_message.message_type == MessageType::PluginHello
+                                && let Ok(payload) = serde_json::from_value::<PluginHelloPayload>(
                                     mcv_message.payload.clone(),
-                                ) {
-                                    plugin_id = Some(payload.plugin_id.clone());
+                                )
+                            {
+                                plugin_id = Some(payload.plugin_id.clone());
 
-                                    let client = ClientInfo {
-                                        plugin_id: payload.plugin_id.clone(),
-                                        sender: tx.clone(),
-                                        roles: payload.role.clone(),
-                                    };
+                                let client = ClientInfo {
+                                    plugin_id: payload.plugin_id.clone(),
+                                    sender: tx.clone(),
+                                    roles: payload.role.clone(),
+                                };
 
-                                    clients
-                                        .write()
-                                        .await
-                                        .insert(payload.plugin_id.clone(), client);
+                                clients
+                                    .write()
+                                    .await
+                                    .insert(payload.plugin_id.clone(), client);
 
-                                    tracing::info!(
-                                        target:"mcv::plugin-exe-manager::WebSocketServer",
-                                        plugin_id = %payload.plugin_id,
-                                        plugin_name = %payload.name,
-                                        roles = ?payload.role,
-                                        "EXE プラグイン登録完了"
-                                    );
-                                }
+                                tracing::info!(
+                                    target:"mcv::plugin-exe-manager::WebSocketServer",
+                                    plugin_id = %payload.plugin_id,
+                                    plugin_name = %payload.name,
+                                    roles = ?payload.role,
+                                    "EXE プラグイン登録完了"
+                                );
                             }
 
                             // Coreにメッセージをフォワード

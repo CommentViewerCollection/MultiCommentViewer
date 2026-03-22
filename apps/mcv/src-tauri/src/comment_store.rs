@@ -135,12 +135,7 @@ impl CommentStore {
 
     /// コメント検索（全フィールドOR検索、大文字小文字を区別しない）
     #[cfg(feature = "comment-search")]
-    pub fn search_comments(
-        &self,
-        query: &str,
-        limit: usize,
-        offset: usize,
-    ) -> SqliteResult<Vec<CommentRow>> {
+    pub fn search_comments(&self, query: &str) -> SqliteResult<Vec<CommentRow>> {
         let pattern = format!("%{}%", query);
         let mut stmt = self.conn.prepare(
             "SELECT id, user_id, user_name_json, text_json, timestamp, connection_id,
@@ -151,12 +146,11 @@ impl CommentStore {
                 OR user_id LIKE ?1
                 OR connection_id LIKE ?1
                 OR amount_text LIKE ?1
-             ORDER BY timestamp ASC
-             LIMIT ?2 OFFSET ?3",
+             ORDER BY timestamp ASC",
         )?;
 
         let rows = stmt
-            .query_map(params![pattern, limit as i64, offset as i64], |row| {
+            .query_map(params![pattern], |row| {
                 let user_name_json: String = row.get(2)?;
                 let text_json: String = row.get(3)?;
                 let badges_json: String = row.get(9)?;

@@ -30,8 +30,6 @@ export function SearchTab({ columns, renderCell, connections, themeColors, exter
     try {
       const rows = await invoke<Comment[]>('search_comments', {
         query: q,
-        limit: 500,
-        offset: 0,
       })
       // connection_id → connection_name に変換
       const withNames = rows.map(row => {

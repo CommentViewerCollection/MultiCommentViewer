@@ -1495,13 +1495,11 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoRespons
 #[tauri::command]
 fn search_comments(
     query: String,
-    limit: u32,
-    offset: u32,
     state: State<'_, AppState>,
 ) -> Result<Vec<CommentRow>, String> {
     let store = state.comment_store.lock().map_err(|e| e.to_string())?;
     store
-        .search_comments(&query, limit as usize, offset as usize)
+        .search_comments(&query)
         .map_err(|e| e.to_string())
 }
 

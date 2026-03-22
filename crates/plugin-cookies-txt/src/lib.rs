@@ -146,16 +146,15 @@ impl CookiesTxtPlugin {
             serde_json::to_value(&payload).unwrap(),
         );
         let result = ctx.send_request(message, Duration::from_secs(10)).await;
-        if let Ok(response) = result {
-            if response.message_type == MessageType::AddBrowserAck {
-                if let Ok(_ack) = serde_json::from_value::<AddBrowserAckPayload>(response.payload) {
-                    tracing::info!(
-                        target: "mcv::plugin-cookies-txt",
-                        browser_id = %entry.browser_id,
-                        "AddBrowser Ack 受信"
-                    );
-                }
-            }
+        if let Ok(response) = result
+            && response.message_type == MessageType::AddBrowserAck
+            && let Ok(_ack) = serde_json::from_value::<AddBrowserAckPayload>(response.payload)
+        {
+            tracing::info!(
+                target: "mcv::plugin-cookies-txt",
+                browser_id = %entry.browser_id,
+                "AddBrowser Ack 受信"
+            );
         }
     }
 

@@ -47,7 +47,7 @@ type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
 impl Connection {
     pub(crate) fn new(id: &Uuid) -> Self {
         Self {
-            id: id.clone(),
+            id: *id,
             cancel_tx: None,
             metadata_cancel_tx: None,
             task: None,
@@ -132,6 +132,7 @@ impl Connection {
         self.running = true;
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn start_connection_task(
         ctx: PluginContext,
         logical_plugin_id: PluginId,
@@ -801,29 +802,28 @@ impl Connection {
                     provider_messages.push(provider_msg);
                 }
                 TwitchEvent::GlobalUserState {
-                    display_name,
+                    display_name: Some(name),
                     user_id,
                 } => {
-                    if let Some(name) = display_name {
-                        let account_msg = McvMessage::new_notification(
-                            MessageType::UpdateConnectionAccount,
-                            MessageSource::Plugin {
-                                plugin_id: logical_plugin_id.clone(),
-                            },
-                            MessageDestination::Core,
-                            serde_json::to_value(UpdateConnectionAccountPayload {
-                                connection_id,
-                                account: Some(AccountInfo {
-                                    user_id: user_id.unwrap_or_default(),
-                                    display_name: name,
-                                    avatar_url: None,
-                                }),
-                            })
-                            .unwrap(),
-                        );
-                        TwitchPlugin::send_message(ctx.clone(), account_msg).await;
-                    }
+                    let account_msg = McvMessage::new_notification(
+                        MessageType::UpdateConnectionAccount,
+                        MessageSource::Plugin {
+                            plugin_id: logical_plugin_id.clone(),
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(UpdateConnectionAccountPayload {
+                            connection_id,
+                            account: Some(AccountInfo {
+                                user_id: user_id.unwrap_or_default(),
+                                display_name: name,
+                                avatar_url: None,
+                            }),
+                        })
+                        .unwrap(),
+                    );
+                    TwitchPlugin::send_message(ctx.clone(), account_msg).await;
                 }
+                TwitchEvent::GlobalUserState { .. } => {}
                 TwitchEvent::Ping => {
                     if let Err(e) = Self::send_irc_line(write, "PONG").await {
                         tracing::error!(

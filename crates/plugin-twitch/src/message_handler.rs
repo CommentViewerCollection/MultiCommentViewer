@@ -83,7 +83,7 @@ pub(crate) async fn on_message_impl(
                 ctx,
                 plugin.logical_plugin_id.clone(),
                 &input_extra.url,
-                &username,
+                username,
                 auth_token,
             );
         }
@@ -191,6 +191,7 @@ pub(crate) async fn on_message_impl(
     }
     Ok(())
 }
+#[allow(clippy::result_large_err)]
 fn parse_payload<T>(payload: &serde_json::Value) -> Result<T, mcv_plugin_telemetry::TracingError>
 where
     T: DeserializeOwned,

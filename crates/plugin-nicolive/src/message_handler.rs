@@ -355,6 +355,7 @@ async fn fetch_cookies_for_connect(
     }
 }
 
+#[allow(clippy::result_large_err)]
 fn parse_payload<T>(payload: &serde_json::Value) -> Result<T, mcv_plugin_telemetry::TracingError>
 where
     T: DeserializeOwned,

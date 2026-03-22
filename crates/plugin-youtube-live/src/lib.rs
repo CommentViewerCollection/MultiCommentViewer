@@ -1362,12 +1362,14 @@ mod tests {
 
     const LIVE_CHAT_HTML: &str = r#"<html><script>ytcfg.set({"INNERTUBE_CONTEXT":{"client":{"clientName":"WEB","clientVersion":"2.20250101.00.00"}},"INNERTUBE_API_KEY":"test_api_key","VISITOR_DATA":"visitor"});window["ytInitialData"] = {"contents":{"liveChatRenderer":{"continuations":[{"timedContinuationData":{"continuation":"CONT_1","timeoutMs":1000}}],"actions":[]}}};</script></html>"#;
 
+    #[allow(dead_code)]
     struct FakeServer {
         live_chat: LiveChat,
         poll_responses: Arc<Mutex<VecDeque<(Option<Continuation>, Vec<Action>, String)>>>,
     }
 
     impl FakeServer {
+        #[allow(dead_code)]
         fn new(poll_responses: Vec<(Option<Continuation>, Vec<Action>, String)>) -> Self {
             Self {
                 live_chat: LiveChat::new(LIVE_CHAT_HTML.to_string()),

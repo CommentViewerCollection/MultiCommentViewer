@@ -202,6 +202,7 @@ async fn get_video_comments_by_offset_or_cursor(
 }
 #[cfg(test)]
 mod tests {
+    use crate::integrity::get_integrity;
     use crate::utils::get_auth_token_from_env;
 
     use super::*;
@@ -220,7 +221,7 @@ mod tests {
         )
         .await;
         match result {
-            Ok(video_comments) => {
+            Ok(_video_comments) => {
                 // Add assertions based on expected video_comments structure
             }
             Err(e) => {
@@ -247,7 +248,7 @@ mod tests {
         )
         .await;
         match result {
-            Ok(all_comments) => {
+            Ok(_all_comments) => {
                 // Add assertions based on expected all_comments structure
             }
             Err(e) => {

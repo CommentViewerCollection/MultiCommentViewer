@@ -32,7 +32,7 @@ use mcv_messages::{
     SiteInfo as MsgSiteInfo, SystemKind,
 };
 use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
@@ -452,8 +452,7 @@ async fn set_connection_site(
             site_id: s_id,
         })
         .await
-        .map_err(|e| format!("Failed to set connection site: {}", e))?
-        .map_err(|e| e)?;
+        .map_err(|e| format!("Failed to set connection site: {}", e))??;
 
     Ok(())
 }
@@ -491,8 +490,7 @@ async fn update_connection_settings(
             input_state,
         })
         .await
-        .map_err(|e| format!("Failed to update connection settings: {}", e))?
-        .map_err(|e| e)?;
+        .map_err(|e| format!("Failed to update connection settings: {}", e))??;
 
     Ok(())
 }
@@ -783,7 +781,7 @@ fn ps_escape_single_quoted(input: &str) -> String {
     input.replace('\'', "''")
 }
 
-fn can_write_to_dir(dir: &PathBuf) -> Result<(), String> {
+fn can_write_to_dir(dir: &Path) -> Result<(), String> {
     let probe = dir.join(".mcv_write_probe.tmp");
     std::fs::write(&probe, b"probe").map_err(|e| {
         format!(
@@ -1027,7 +1025,7 @@ struct InstalledPluginMeta {
 /// - ディレクトリ形式（{id}/plugin.json）: manifest の `id`・`version`・`channel` を使用
 /// - ZIP 形式（*.zip）: `.cache/{stem}/plugin.json` から `id`・`version`・`channel` を取得
 ///   （ZIP ファイル名は `{id}-{version}-{channel}.zip` などで変わりうるため、
-///    ファイル名ステムではなく plugin.json の `id` フィールドを使用する）
+///   ファイル名ステムではなく plugin.json の `id` フィールドを使用する）
 fn scan_installed_plugins(
     plugin_dir: &std::path::Path,
 ) -> Result<Vec<InstalledPluginMeta>, String> {
@@ -1236,13 +1234,11 @@ async fn uninstall_registry_plugin(plugin_id: String) -> Result<(), String> {
     }
 
     // キャッシュも同様に処理（best-effort、失敗時はリネームして次回起動時にクリーンアップ）
-    if cache_dir.exists() {
-        if std::fs::remove_dir_all(&cache_dir).is_err() {
-            let pending_cache = plugin_dir
-                .join(".cache")
-                .join(format!(".uninstall-{}", plugin_id));
-            let _ = std::fs::rename(&cache_dir, &pending_cache);
-        }
+    if cache_dir.exists() && std::fs::remove_dir_all(&cache_dir).is_err() {
+        let pending_cache = plugin_dir
+            .join(".cache")
+            .join(format!(".uninstall-{}", plugin_id));
+        let _ = std::fs::rename(&cache_dir, &pending_cache);
     }
 
     if !found {
@@ -1493,14 +1489,9 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoRespons
 
 #[cfg(feature = "comment-search")]
 #[tauri::command]
-fn search_comments(
-    query: String,
-    state: State<'_, AppState>,
-) -> Result<Vec<CommentRow>, String> {
+fn search_comments(query: String, state: State<'_, AppState>) -> Result<Vec<CommentRow>, String> {
     let store = state.comment_store.lock().map_err(|e| e.to_string())?;
-    store
-        .search_comments(&query)
-        .map_err(|e| e.to_string())
+    store.search_comments(&query).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

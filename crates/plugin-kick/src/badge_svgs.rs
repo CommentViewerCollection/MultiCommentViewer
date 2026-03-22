@@ -23,8 +23,7 @@ fn svg_to_data_uri(svg: &str) -> String {
         .replace('>', "%3E")
         .replace('#', "%23")
         .replace(' ', "%20")
-        .replace('\n', "")
-        .replace('\r', "");
+        .replace(['\n', '\r'], "");
     format!("data:image/svg+xml,{encoded}")
 }
 

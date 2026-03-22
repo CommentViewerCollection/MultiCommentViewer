@@ -175,6 +175,7 @@ fn kick_badges_to_provider(
         .collect()
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn build_provider_message(
     channel_id: &str,
     platform_message_id: String,
@@ -267,6 +268,7 @@ impl Connection {
         self.running = true;
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn start_connection_task(
         ctx: PluginContext,
         logical_plugin_id: Uuid,

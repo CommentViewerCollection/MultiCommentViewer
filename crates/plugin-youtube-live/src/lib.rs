@@ -1223,14 +1223,14 @@ fn parse_money(text: &str) -> Money {
     let text = text.trim();
     let (currency, rest): (&str, &str) = if text.starts_with('¥') || text.starts_with('￥') {
         ("JPY", text.trim_start_matches(['¥', '￥']))
-    } else if text.starts_with("HK$") {
-        ("HKD", &text[3..])
-    } else if text.starts_with("NT$") {
-        ("TWD", &text[3..])
-    } else if text.starts_with("A$") {
-        ("AUD", &text[2..])
-    } else if text.starts_with("C$") {
-        ("CAD", &text[2..])
+    } else if let Some(stripped) = text.strip_prefix("HK$") {
+        ("HKD", stripped)
+    } else if let Some(stripped) = text.strip_prefix("NT$") {
+        ("TWD", stripped)
+    } else if let Some(stripped) = text.strip_prefix("A$") {
+        ("AUD", stripped)
+    } else if let Some(stripped) = text.strip_prefix("C$") {
+        ("CAD", stripped)
     } else if text.starts_with('$') {
         ("USD", text.trim_start_matches('$'))
     } else if text.starts_with('€') {

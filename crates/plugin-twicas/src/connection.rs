@@ -55,6 +55,7 @@ impl Connection {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn connect(
         &mut self,
         ctx: PluginContext,
@@ -79,7 +80,6 @@ impl Connection {
         let connection_id = self.id;
         let user_name = user_name.to_string();
         let wpass = wpass.map(|s| s.to_string());
-        let cs_session_id_from_wpass = cs_session_id_from_wpass;
         let running_flag = Arc::clone(&self.running);
         let comment_post = Arc::clone(&self.comment_post);
 
@@ -632,6 +632,7 @@ async fn send_stream_metadata(
     TwicasPlugin::send_message(ctx, message).await;
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn metadata_polling_loop(
     ctx: PluginContext,
     logical_plugin_id: PluginId,

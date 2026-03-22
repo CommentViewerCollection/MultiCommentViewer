@@ -11,7 +11,6 @@ use mcv_messages::Message as McvMessage;
 use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 
 /// ===== グローバル（static mut 禁止対応） =====
-
 static PLUGIN_INSTANCE: OnceCell<Arc<tokio::sync::Mutex<Box<dyn Plugin + Send>>>> = OnceCell::new();
 
 static MESSAGE_CALLBACK: OnceCell<extern "C" fn(*const c_char, *mut c_void)> = OnceCell::new();
@@ -21,7 +20,6 @@ static USERDATA: AtomicUsize = AtomicUsize::new(0);
 static RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
 /// ===== PluginHost 実装 =====
-
 pub struct CApiPluginHost;
 
 #[async_trait]
@@ -42,7 +40,6 @@ impl PluginHost for CApiPluginHost {
 }
 
 /// ===== ABI 公開関数 =====
-
 pub fn init_plugin(plugin: Box<dyn Plugin + Send>) -> i32 {
     let runtime = match Runtime::new() {
         Ok(rt) => rt,
@@ -83,6 +80,7 @@ pub fn call_on_loaded() -> i32 {
     .unwrap_or(-1)
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn call_on_message(json: *const c_char) -> i32 {
     if json.is_null() {
         return -1;
@@ -122,12 +120,12 @@ pub fn set_callback(cb: extern "C" fn(*const c_char, *mut c_void), userdata: *mu
 
 pub fn shutdown() {
     // プラグインのシャットダウンを実行
-    if let Some(plugin) = PLUGIN_INSTANCE.get() {
-        if let Some(runtime) = RUNTIME.get() {
-            runtime.block_on(async {
-                let mut p = plugin.lock().await;
-                let _ = p.on_shutdown().await;
-            });
-        }
+    if let Some(plugin) = PLUGIN_INSTANCE.get()
+        && let Some(runtime) = RUNTIME.get()
+    {
+        runtime.block_on(async {
+            let mut p = plugin.lock().await;
+            let _ = p.on_shutdown().await;
+        });
     }
 }

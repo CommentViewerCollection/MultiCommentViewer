@@ -72,10 +72,10 @@ pub unsafe extern "C" fn on_message_trampoline(
 
         let msg = std::slice::from_raw_parts(msg_ptr, msg_len).to_vec();
         // requestの応答はここで先に消化し、逐次on_message実行待ちによる自己待機を避ける。
-        if let Ok(parsed) = serde_json::from_slice::<mcv_messages::Message>(&msg) {
-            if state.context.try_resolve_pending_response(&parsed) {
-                return 0;
-            }
+        if let Ok(parsed) = serde_json::from_slice::<mcv_messages::Message>(&msg)
+            && state.context.try_resolve_pending_response(&parsed)
+        {
+            return 0;
         }
         // 互換維持: 解析不能/未解決メッセージは従来どおりon_messageへ渡す。
         map_runtime_send_result(

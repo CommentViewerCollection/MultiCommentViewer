@@ -60,6 +60,7 @@ pub mod prelude {
     pub use export_plugin_v3_macros::export_plugin_v3_async;
 }
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn validate_plugin_v3(p: *const PluginV3) -> Result<(), AbiError> {
     if p.is_null() {
         return Err(AbiError::NullPlugin);

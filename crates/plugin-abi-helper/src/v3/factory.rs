@@ -15,6 +15,7 @@ pub struct PluginState {
 pub struct PluginFactoryV3;
 
 impl PluginFactoryV3 {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new<T: PluginImplV3Async + Default>() -> *mut PluginV3 {
         // 1. Contextを作成
         let context = PluginContext::new();

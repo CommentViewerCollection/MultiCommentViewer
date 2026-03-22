@@ -64,7 +64,7 @@ fn decrypt_dpapi(data: &[u8]) -> Option<Vec<u8>> {
     use windows_sys::Win32::Security::Cryptography::{CryptUnprotectData, CRYPT_INTEGER_BLOB};
 
     let mut in_buf = data.to_vec();
-    let mut in_blob = CRYPT_INTEGER_BLOB {
+    let in_blob = CRYPT_INTEGER_BLOB {
         cbData: in_buf.len() as u32,
         pbData: in_buf.as_mut_ptr(),
     };
@@ -75,7 +75,7 @@ fn decrypt_dpapi(data: &[u8]) -> Option<Vec<u8>> {
 
     let ok = unsafe {
         CryptUnprotectData(
-            &mut in_blob,
+            &in_blob,
             std::ptr::null_mut(),
             std::ptr::null_mut(),
             std::ptr::null_mut(),

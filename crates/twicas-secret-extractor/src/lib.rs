@@ -47,13 +47,13 @@ fn twc_decode(encoded: &str) -> String {
         };
         let old_i = i;
         // グループ先頭なら n をリセット、それ以外は下位ビットとして追記
-        n = if old_i % 4 == 0 {
+        n = if old_i.is_multiple_of(4) {
             r as u64
         } else {
             64 * n + r as u64
         };
         i += 1;
-        if old_i % 4 != 0 {
+        if !old_i.is_multiple_of(4) {
             // JS の -2*i & 6 (i は increment 後の値) に相当するシフト量
             let shift = ((-2i64 * i as i64) & 6) as u32;
             bytes.push(((n >> shift) & 0xFF) as u8);
@@ -226,7 +226,7 @@ pub fn extract_secret(src: &str, verbose: bool) -> std::result::Result<String, S
             ));
 
             // fn(SALT_IDX): 短い英字識別子 (プロパティ名らしい)
-            let is_identifier = decoded1.chars().next().map_or(false, |c| c.is_alphabetic())
+            let is_identifier = decoded1.chars().next().is_some_and(|c| c.is_alphabetic())
                 && decoded1
                     .chars()
                     .all(|c| c.is_alphanumeric() || c == '_' || c == '$')
@@ -312,7 +312,7 @@ fn eval_checksum(
         None => substituted.trim().to_string(),
     };
 
-    eval_arithmetic(&arith).map_or(false, |v| (v - target).abs() < 0.5)
+    eval_arithmetic(&arith).is_some_and(|v| (v - target).abs() < 0.5)
 }
 
 // ─── 算術式評価器 (再帰降下パーサ) ──────────────────────────────────────────

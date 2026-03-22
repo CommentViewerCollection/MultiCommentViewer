@@ -11,9 +11,14 @@ use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
 use plugin_abi_helper::v2 as abi;
 
 /// ===== プラグイン本体 =====
-
 pub struct SamplePlugin {
     plugin_id: Uuid,
+}
+
+impl Default for SamplePlugin {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SamplePlugin {
@@ -65,7 +70,6 @@ impl Plugin for SamplePlugin {
 }
 
 /// ===== C ABI =====
-
 #[unsafe(no_mangle)]
 pub extern "C" fn plugin_init(_: *mut libc::c_void) -> i32 {
     abi::init_plugin(Box::new(SamplePlugin::new()))

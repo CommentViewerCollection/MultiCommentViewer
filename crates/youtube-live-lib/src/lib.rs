@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use anyhow::Result;
 use sha1::{Digest, Sha1};
 
@@ -149,7 +150,7 @@ pub async fn get_live_chat(
 pub fn get_yt_initial_data(
     live_chat: &LiveChat,
 ) -> Result<YtInitialData, mcv_plugin_telemetry::TracingError> {
-    let yt_initial_data = extract_yt_initial_data(&live_chat).map_err(|inner| {
+    let yt_initial_data = extract_yt_initial_data(live_chat).map_err(|inner| {
         mcv_plugin_telemetry::capture_context!(
             inner.to_string(),
             body = live_chat.value().to_owned(),
@@ -169,7 +170,7 @@ pub async fn get_live_chat_messages(
     obj["continuation"] = serde_json::Value::String(continuation.value().to_owned());
 
     let url =
-        format!("https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?prettyPrint=false");
+        "https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?prettyPrint=false".to_string();
     let client = reqwest::Client::new();
     let res = client.post(&url)
     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36")
@@ -215,20 +216,17 @@ pub async fn get_live_chat_messages(
     };
 
     let mut aabb = Vec::new();
-    match live_chat_continuation.get("actions") {
-        Some(actions) => {
-            let actions = actions.as_array().ok_or_else(|| {
-                mcv_plugin_telemetry::capture_context!(
-                    "Missing actions array in live chat continuation",
-                    json = json.to_string()
-                )
-            })?;
-            for action in actions {
-                let a = parse_action(&action);
-                aabb.push(a);
-            }
+    if let Some(actions) = live_chat_continuation.get("actions") {
+        let actions = actions.as_array().ok_or_else(|| {
+            mcv_plugin_telemetry::capture_context!(
+                "Missing actions array in live chat continuation",
+                json = json.to_string()
+            )
+        })?;
+        for action in actions {
+            let a = parse_action(action);
+            aabb.push(a);
         }
-        None => {}
     };
     aabb.sort_by_key(|a| action_timestamp_usec(a).unwrap_or(u64::MAX));
     let continuation = if let Some(k) = live_chat_continuation.get("continuations") {
@@ -250,11 +248,11 @@ pub async fn get_live_chat_messages(
     Ok((continuation, aabb, body))
 }
 #[allow(dead_code)]
-fn extract_ytcfg_raw<'a>(live_chat: &'a LiveChat) -> Option<&'a str> {
+fn extract_ytcfg_raw(live_chat: &LiveChat) -> Option<&str> {
     extract_ytcfg_raw_from_html(live_chat.value())
 }
 
-fn extract_ytcfg_raw_from_html<'a>(body: &'a str) -> Option<&'a str> {
+fn extract_ytcfg_raw_from_html(body: &str) -> Option<&str> {
     let before_part = "ytcfg.set({";
     let after_part = "});";
     let start = body.find(before_part)?;
@@ -303,7 +301,7 @@ pub fn extract_ytcfg(live_chat: &LiveChat) -> Result<Ytcfg, mcv_plugin_telemetry
     extract_ytcfg_from_html(live_chat.value())
 }
 
-fn extract_yt_initial_data_raw<'a>(body: &'a str) -> Option<&'a str> {
+fn extract_yt_initial_data_raw(body: &str) -> Option<&str> {
     //bodyからytInitialDataを抽出するロジックを実装する
     //window["ytInitialData"] = {
     //};</script>
@@ -366,7 +364,7 @@ fn extract_yt_initial_data(
             action = action.to_string(),
             "action received"
         );
-        let ret = parse_action(&action);
+        let ret = parse_action(action);
         if let Action::ParseError(a) = ret {
             tracing::error!(
                 target: "mcv::youtube-live-lib",
@@ -420,26 +418,26 @@ fn extract_yt_initial_data(
 fn try_parse_continuation(obj: &serde_json::Value) -> Option<Continuation> {
     // 通常の継続タイプ（needs_reload = false）
     for key in &["invalidationContinuationData", "timedContinuationData"] {
-        if let Some(data) = obj.get(key) {
-            if let Some(con) = data.get("continuation").and_then(|v| v.as_str()) {
-                let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
-                return Some(Continuation {
-                    value: con.to_string(),
-                    timeout_ms,
-                    needs_reload: false,
-                });
-            }
+        if let Some(data) = obj.get(key)
+            && let Some(con) = data.get("continuation").and_then(|v| v.as_str())
+        {
+            let timeout_ms = data.get("timeoutMs").and_then(|v| v.as_u64());
+            return Some(Continuation {
+                value: con.to_string(),
+                timeout_ms,
+                needs_reload: false,
+            });
         }
     }
     // reloadContinuationData: live_chatページを再取得してytcfg/continuationをリセットする必要がある
-    if let Some(data) = obj.get("reloadContinuationData") {
-        if let Some(con) = data.get("continuation").and_then(|v| v.as_str()) {
-            return Some(Continuation {
-                value: con.to_string(),
-                timeout_ms: None,
-                needs_reload: true,
-            });
-        }
+    if let Some(data) = obj.get("reloadContinuationData")
+        && let Some(con) = data.get("continuation").and_then(|v| v.as_str())
+    {
+        return Some(Continuation {
+            value: con.to_string(),
+            timeout_ms: None,
+            needs_reload: true,
+        });
     }
     None
 }
@@ -1005,6 +1003,7 @@ fn parse_gift_purchase_announcement(renderer: &serde_json::Value) -> Option<Live
     })
 }
 
+#[allow(clippy::needless_return)]
 fn parse_action(action: &serde_json::Value) -> Action {
     let obj = match action.as_object() {
         Some(o) => o,
@@ -1162,9 +1161,9 @@ fn parse_action(action: &serde_json::Value) -> Action {
         return Action::RemoveChatItemByAuthor(RemoveChatItemByAuthorAction {
             external_channel_id,
         });
-    } else if obj.contains_key("addBannerToLiveChatCommand") {
-        return Action::IgnoreAction;
-    } else if obj.contains_key("addLiveChatTickerItemAction") {
+    } else if obj.contains_key("addBannerToLiveChatCommand")
+        || obj.contains_key("addLiveChatTickerItemAction")
+    {
         return Action::IgnoreAction;
     } else if obj.contains_key("showLiveChatActionPanelAction") {
         match parse_show_action_panel_poll(action) {
@@ -1611,21 +1610,19 @@ pub async fn fetch_updated_metadata(
 
     if let Some(actions) = json.get("actions").and_then(|v| v.as_array()) {
         for action in actions {
-            if title.is_none() {
-                if let Some(t) = action
+            if title.is_none()
+                && let Some(t) = action
                     .pointer("/updateTitleAction/title/runs/0/text")
                     .and_then(|v| v.as_str())
-                {
-                    title = Some(t.to_string());
-                }
+            {
+                title = Some(t.to_string());
             }
-            if viewer_count.is_none() {
-                if let Some(count_str) = action
+            if viewer_count.is_none()
+                && let Some(count_str) = action
                     .pointer("/updateViewershipAction/viewCount/videoViewCountRenderer/originalViewCount")
                     .and_then(|v| v.as_str())
-                {
-                    viewer_count = count_str.parse::<u64>().ok();
-                }
+            {
+                viewer_count = count_str.parse::<u64>().ok();
             }
         }
     }

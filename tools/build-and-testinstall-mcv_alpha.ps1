@@ -10,6 +10,7 @@ cargo xtask install `
   --dir "$env:LOCALAPPDATA\MultiCommentViewer" `
   --plugin youtubelive `
   --plugin chrome-cookie `
+  --plugin firefox-cookie `
   --plugin bouyomi `
   --plugin twitch `
   --plugin cookies-txt `

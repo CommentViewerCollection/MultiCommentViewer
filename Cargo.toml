@@ -28,6 +28,7 @@ members = [
     "crates/export-plugin-v3-macros",
     "examples/youtube-live-lib-getcomments",
     "crates/plugin-chrome-cookie",
+    "crates/plugin-firefox-cookie",
     "crates/plugin-cookies-txt",
     "crates/plugin-bouyomi",
     "crates/plugin-twitch",

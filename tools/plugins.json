@@ -16,6 +16,14 @@
     "has_channel_feature": true
   },
   {
+    "path": "crates/plugin-firefox-cookie",
+    "id": "firefox-cookie",
+    "name": "Firefoxクッキー取得",
+    "description": "Firefoxのクッキーを取得するプラグインです",
+    "entry": "plugin_firefox_cookie.dll",
+    "has_channel_feature": true
+  },
+  {
     "path": "crates/plugin-cookies-txt",
     "id": "cookies-txt",
     "name": "cookies.txt",

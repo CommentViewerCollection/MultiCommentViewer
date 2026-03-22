@@ -19,6 +19,7 @@ struct DummyPluginHost {
     received_messages: Arc<Mutex<Vec<McvMessage>>>,
 }
 
+#[allow(dead_code)]
 impl DummyPluginHost {
     fn new() -> Self {
         Self {

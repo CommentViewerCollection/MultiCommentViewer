@@ -164,7 +164,7 @@ impl MessageRouter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mcv_messages::{MessageSource, MessageType};
+    use mcv_messages::{MessageDestination, MessageSource, MessageType};
 
     #[tokio::test]
     async fn test_router_creation() {

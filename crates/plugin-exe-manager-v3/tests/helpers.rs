@@ -16,6 +16,7 @@ pub struct MockExePlugin {
     logical_plugin_id: Uuid,
 }
 
+#[allow(dead_code)]
 impl MockExePlugin {
     /// WebSocketサーバーに接続
     pub async fn connect(port: u16) -> Result<Self, Box<dyn Error>> {

@@ -154,6 +154,7 @@ pub struct ChunkedMessage {
 
 pub mod chunked_message {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
+    #[allow(clippy::large_enum_variant)]
     pub enum Payload {
         /// コメント・ギフト・通知などのメッセージ本体。
         #[prost(message, tag = "2")]

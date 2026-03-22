@@ -1241,7 +1241,7 @@ fn handle_can_handle_url_result(core: &mut CoreActor, request_id: Uuid, message:
             let is_better = group
                 .best_match
                 .as_ref()
-                .map_or(true, |(best_order, _)| entry.order < *best_order);
+                .is_none_or(|(best_order, _)| entry.order < *best_order);
             if is_better {
                 group.best_match = Some((entry.order, site_id));
             }

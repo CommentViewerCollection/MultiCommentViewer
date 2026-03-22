@@ -288,6 +288,7 @@ impl PluginLoaderStrategy for V3LoaderStrategy {
         let host_actor = PhysicalPluginHostActorV3::new(
             physical_plugin_id.clone(),
             plugin_id,
+            #[allow(clippy::arc_with_non_send_sync)]
             Arc::new(plugin_loader_v3),
             Some(core_addr),
         );

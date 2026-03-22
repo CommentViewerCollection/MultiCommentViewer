@@ -1963,6 +1963,42 @@ fn main() {
                                     message.payload.clone(),
                                 ) {
                                     timing_clone.lock().await.remove(&disc.connection_id);
+                                    // 「切断されました」システム通知をコメント一覧に追加
+                                    let now_ts = std::time::SystemTime::now()
+                                        .duration_since(std::time::UNIX_EPOCH)
+                                        .map(|d| d.as_millis() as i64)
+                                        .unwrap_or(0);
+                                    let notice_row = CommentRow {
+                                        id: format!(
+                                            "disconnected-{}-{}",
+                                            disc.connection_id,
+                                            Uuid::new_v4()
+                                        ),
+                                        user_name: vec![mcv_messages::MessagePart::Text {
+                                            text: "システム".to_string(),
+                                        }],
+                                        user_id: String::new(),
+                                        badges: vec![],
+                                        text: vec![mcv_messages::MessagePart::Text {
+                                            text: "切断されました".to_string(),
+                                        }],
+                                        timestamp: now_ts,
+                                        connection_id: disc.connection_id.to_string(),
+                                        is_visible: true,
+                                        replaces_id: None,
+                                        kind: "system".to_string(),
+                                        avatar_url: None,
+                                        amount_text: None,
+                                    };
+                                    if let Err(e) =
+                                        app_handle.emit("comment-received", vec![notice_row])
+                                    {
+                                        tracing::error!(
+                                            target: "mcv::main",
+                                            error = %e,
+                                            "Failed to emit disconnected notice"
+                                        );
+                                    }
                                 }
                                 if let Err(e) = app_handle.emit("disconnected", message.payload) {
                                     tracing::error!(

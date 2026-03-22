@@ -717,6 +717,18 @@ impl PluginImplV3Async for YouTubeLiveStateMachinePlugin {
                         url = extra.url,
                         "failed to extract youtube video id"
                     );
+                    let disconnected = McvMessage::new_notification(
+                        MessageType::Disconnected,
+                        MessageSource::Plugin {
+                            plugin_id: self.logical_plugin_id.clone(),
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(DisconnectedPayload {
+                            connection_id: payload.connection_id,
+                        })
+                        .unwrap(),
+                    );
+                    Self::send_message(ctx, disconnected).await;
                     return;
                 };
                 let browser_id = payload.browser.id.clone();

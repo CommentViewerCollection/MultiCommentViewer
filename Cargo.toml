@@ -29,6 +29,7 @@ members = [
     "examples/youtube-live-lib-getcomments",
     "crates/chromium-cookie-lib",
     "crates/plugin-chrome-cookie",
+    "crates/plugin-edge-cookie",
     "crates/plugin-firefox-cookie",
     "crates/plugin-cookies-txt",
     "crates/plugin-bouyomi",

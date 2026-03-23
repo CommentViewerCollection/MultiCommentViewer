@@ -1,6 +1,13 @@
 import React, { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
+// 行の最小高さの構成要素
+const CELL_PADDING_PX = 8;          // padding: '8px' の上下分
+const CELL_BORDER_BOTTOM_PX = 1;    // borderBottom: '1px'
+const CELL_LINE_HEIGHT_PX = 24;     // ブラウザデフォルト: 16px × 1.5
+export const ROW_MIN_HEIGHT =
+  CELL_PADDING_PX * 2 + CELL_BORDER_BOTTOM_PX + CELL_LINE_HEIGHT_PX; // 41
+
 export interface Column<T> {
   key: keyof T;
   label: string;
@@ -53,7 +60,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   onColumnResize,
   onColumnVisibilityChange,
   onColumnOrderChange,
-  defaultItemHeight = 50,
+  defaultItemHeight = ROW_MIN_HEIGHT,
   alwaysShowScrollbar = false,
 }: DataGridProps<T>, ref: React.Ref<DataGridRef>) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -442,7 +449,8 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         onContextMenu={(e) => handleRowContextMenu(item, e)}
         style={{
           display: 'flex',
-          borderBottom: '1px solid #2a2a2a',
+          minHeight: ROW_MIN_HEIGHT,
+          borderBottom: `1px solid #2a2a2a`,
           backgroundColor,
           color: textColor,
           cursor: 'pointer',
@@ -451,7 +459,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         {visibleColumns.map((column) => {
           const cellStyle: React.CSSProperties = {
             width: column.width || 100,
-            padding: '8px',
+            padding: `${CELL_PADDING_PX}px`,
           };
           if (column.wrap) {
             cellStyle.whiteSpace = 'pre-wrap';

@@ -2082,7 +2082,6 @@ function App() {
                 onColumnResize={handleColumnResize}
                 onColumnVisibilityChange={handleColumnVisibilityChange}
                 onColumnOrderChange={handleColumnOrderChange}
-                defaultItemHeight={65}
                 onRowContextMenu={handleRowContextMenu}
                 alwaysShowScrollbar
               />

@@ -2222,31 +2222,66 @@ function App() {
               <div className="flex flex-1 min-h-0">
                 {/* 左: コンパクトリスト */}
                 <div className="w-56 shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-                  {registryPlugins.map((plugin) => {
-                    const installed = installedPlugins.has(plugin.id)
-                    const selected = selectedPluginId === plugin.id
-                    return (
-                      <button
-                        key={plugin.id}
-                        onClick={() => setSelectedPluginId(plugin.id)}
-                        className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                          selected ? 'bg-blue-50 dark:bg-blue-900/30' : ''
-                        }`}
-                      >
-                        <span
-                          className={`inline-block w-2 h-2 rounded-full shrink-0 ${
-                            installed ? 'bg-green-500' : 'bg-gray-400'
+                  {(() => {
+                    const installedList = registryPlugins.filter(p => installedPlugins.has(p.id))
+                    const notInstalledList = registryPlugins.filter(p => !installedPlugins.has(p.id))
+                    const renderItem = (plugin: RegistryPlugin) => {
+                      const selected = selectedPluginId === plugin.id
+                      const hasUpdate = isUpdateAvailable(plugin)
+                      const isPending = pendingUpdateIds.has(plugin.id)
+                      return (
+                        <button
+                          key={plugin.id}
+                          onClick={() => setSelectedPluginId(plugin.id)}
+                          className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                            selected ? 'bg-blue-50 dark:bg-blue-900/30' : ''
                           }`}
-                        />
-                        <span className="truncate">{plugin.name}</span>
-                        {isUpdateAvailable(plugin) && (
-                          <span className={`ml-auto text-xs shrink-0 ${pendingUpdateIds.has(plugin.id) ? 'text-gray-400' : 'text-yellow-400'}`}>
-                            {pendingUpdateIds.has(plugin.id) ? '↑*' : '↑'}
-                          </span>
+                        >
+                          <span className="text-green-500 shrink-0 w-3 text-center">✓</span>
+                          <span className="truncate">{plugin.name}</span>
+                          {hasUpdate && (
+                            <span className={`ml-auto text-xs shrink-0 ${isPending ? 'text-gray-400' : 'text-yellow-400'}`}>
+                              {isPending ? '再起動待ち' : '更新あり'}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    }
+                    return (
+                      <>
+                        {installedList.length > 0 && (
+                          <>
+                            <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700/50">
+                              インストール済み ({installedList.length})
+                            </div>
+                            {installedList.map(renderItem)}
+                          </>
                         )}
-                      </button>
+                        {notInstalledList.length > 0 && (
+                          <>
+                            <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700/50">
+                              未インストール ({notInstalledList.length})
+                            </div>
+                            {notInstalledList.map((plugin) => {
+                              const selected = selectedPluginId === plugin.id
+                              return (
+                                <button
+                                  key={plugin.id}
+                                  onClick={() => setSelectedPluginId(plugin.id)}
+                                  className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                    selected ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                                  }`}
+                                >
+                                  <span className="shrink-0 w-3" />
+                                  <span className="truncate text-gray-500 dark:text-gray-400">{plugin.name}</span>
+                                </button>
+                              )
+                            })}
+                          </>
+                        )}
+                      </>
                     )
-                  })}
+                  })()}
                 </div>
 
                 {/* 右: 詳細パネル */}

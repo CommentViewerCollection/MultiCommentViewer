@@ -1,0 +1,19 @@
+[package]
+name = "chromium-cookie-lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mcv-messages = { path = "../mcv-messages" }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+rusqlite = { workspace = true }
+base64 = "0.22"
+aes-gcm = "0.10"
+uuid = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_Security_Cryptography",
+] }

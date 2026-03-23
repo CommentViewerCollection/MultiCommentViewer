@@ -4,57 +4,68 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MultiCommentViewer (mcv) is a comment viewer application that aggregates comments from multiple live streaming platforms simultaneously. This is an MVP implementation with a Tauri + React frontend and Rust + actix backend using an actor-based plugin architecture.
+MultiCommentViewer (mcv) は複数の配信プラットフォームのコメントを同時に集約して表示するコメントビューアです。
+Tauri + React フロントエンドと Rust バックエンドで構成され、プラグインシステムによって YouTube Live / Twitch / ニコニコ生放送 / TwitCasting / Kick / IRC 等に対応しています。
 
 ## Development Commands
 
-### Initial Setup
-```bash
-# Install Rust dependencies (from project root)
-cargo build
+### 通常の開発（xtask 使用）
 
-# Install frontend dependencies
-cd apps/mcv
-npm install
+```bash
+# ローカルデバッグインストール（LOCALAPPDATA へ配置）
+cargo xtask install --dir "C:/Users/<user>/AppData/Local/MultiCommentViewer" --channel alpha
+
+# 特定プラグインだけインストール
+cargo xtask install --dir "..." --channel alpha --plugin youtube --plugin twitch
+
+# 配布用 ZIP 生成（全プラグイン）
+cargo xtask dist --channel alpha
+
+# 特定プラグインのみ ZIP 化
+cargo xtask pack --plugin bouyomi --channel beta
 ```
 
-### Running the Application
-```bash
-# Development mode with hot reload (from apps/mcv)
-npm run tauri dev
-```
+チャンネルは `alpha`（trace ログ、全機能）・`beta`（info ログ）・`stable`（error ログ）。
+**ログレベルは `--features alpha/beta/stable` で制御する。`RUST_LOG` は使わない。**
 
-### Building and Testing
+### 素の Cargo コマンド
+
 ```bash
-# Check Rust code without building
+# コード検査
 cargo check
 
-# Build Rust workspace
+# ビルド
 cargo build
-
-# Build for release
 cargo build --release
 
-# Run Rust tests
-cargo test
+# テスト
+cargo test --workspace
 
-# Build frontend
+# フォーマット（コミット前に必ず実行）
+cargo fmt -p <crate>
+```
+
+### フロントエンド
+
+```bash
 cd apps/mcv
-npm run build
+npm install
+npm run tauri dev   # ホットリロード開発
+npm run build       # フロントエンドのみビルド
 ```
 
 ## Architecture Overview
 
 ### Core Concepts
 
-- **core**: Main application handling UI management, plugin management, and comment aggregation
-- **plugin**: Modular components for specific streaming platform support
-- **plugin-host**: Actor-based isolation environment for plugins using actix
-- **connection**: Instance representing a connection to a single streaming URL
+- **core**: UI 管理・プラグイン管理・コメント集約
+- **plugin**: 各配信プラットフォーム向けのモジュール（DLL）
+- **plugin-host**: actix ベースのプラグイン分離実行環境
+- **connection**: 1 つの配信 URL への接続インスタンス
 
 ### Message Flow (Actor Model)
 
-The system uses actix's actor model for core-plugin communication:
+actix のアクターモデルで core ↔ plugin が通信します:
 
 1. **Plugin Registration**: `plugin-hello` → `plugin-added` broadcast
 2. **Connection Lifecycle**: `add-connection` → `connection-added` → `connect` → `connected`
@@ -62,355 +73,287 @@ The system uses actix's actor model for core-plugin communication:
 4. **Disconnection**: `disconnect` → `disconnected`
 5. **Comment Posting**: `send-comment` → post to platform → result via existing messages
 
-All messages follow kebab-case naming convention and include:
-- `type`: Message type (e.g., "add-connection")
-- `src`: Source (Core or Plugin with UUID)
-- `dst`: Destination (Core or Plugin with UUID)
-- `request_id`: Optional UUID for request-response pairing
-- `timestamp`: Unix timestamp
-- `payload`: JSON value with message-specific data
+すべてのメッセージは kebab-case 命名で以下を含みます:
+- `type`: メッセージ種別（例: "add-connection"）
+- `src`: 送信元（Core または Plugin with UUID）
+- `dst`: 送信先（Core または Plugin with UUID）
+- `request_id`: オプションの UUID（リクエスト/レスポンス対応）
+- `timestamp`: Unix タイムスタンプ
+- `payload`: メッセージ固有の JSON 値
 
 ### Crate Structure
 
 ```
 crates/
-├── mcv-messages/              # Message type definitions (MessageType, payloads)
-├── mcv-common/                # Shared utilities and constants
-├── mcv-plugin-interface/      # Plugin trait definitions (Plugin, PluginHost)
-├── mcv-log-schema/            # Shared logging types (SourceLocation, StackFrame, LogLevel)
-├── mcv-log-core/              # Core logging system (SQLite + remote sending)
-├── mcv-plugin-telemetry/      # Plugin telemetry (auto log forwarding to Core)
-├── mcv-core/                  # Core logic (CoreActor, PluginManager, ConnectionManager)
-├── plugin-dummy/              # Dummy plugin for testing and development
-├── plugin-exe-manager/        # EXE plugin manager (DLL plugin, WebSocket server)
-└── mcv-plugin-exe-interface/  # EXE plugin client library (WebSocket client)
+├── mcv-messages/              # メッセージ型定義（MessageType, payload）
+├── mcv-common/                # 共通ユーティリティ・定数
+├── mcv-plugin-interface/      # Plugin トレイト定義（旧 v1/v2 インターフェース）
+├── mcv-plugin-loader/         # DLL プラグインローダー（v1/v2）
+├── mcv-plugin-loader-v3/      # DLL プラグインローダー（v3, libloading）
+├── mcv-plugin-telemetry/      # プラグインテレメトリ（tracing → Core への自動転送）
+├── mcv-log-schema/            # ログ共通型（SourceLocation, StackFrame, LogLevel）
+├── mcv-log-core/              # ロギングシステム（SQLite + リモート送信）
+├── mcv-settings-core/         # 設定管理
+├── mcv-updater/               # 自動アップデート
+├── mcv-core/                  # Core ロジック（CoreActor, PluginManager, ConnectionManager）
+│
+├── plugin-abi-helper/         # プラグイン ABI ヘルパー（v2, v3 インターフェース）
+├── export-plugin-v3-macros/   # v3 プラグインエクスポート proc-macro
+│
+├── plugin-dummy/              # テスト・開発用ダミープラグイン
+├── plugin-sample-v2/          # v2 ABI サンプルプラグイン
+├── plugin-sample-v3/          # v3 ABI サンプルプラグイン
+│
+├── youtube-live-lib/          # YouTube Live API クライアント
+├── plugin-youtube-live/       # YouTube Live プラグイン
+│
+├── twitch-lib/                # Twitch API クライアント
+├── plugin-twitch/             # Twitch プラグイン
+│
+├── nicolive-lib/              # ニコニコ生放送 API クライアント
+├── plugin-nicolive/           # ニコニコ生放送プラグイン
+│
+├── twicas-lib/                # TwitCasting API クライアント
+├── twicas-secret-extractor/   # TwitCasting 認証情報取得
+├── plugin-twicas/             # TwitCasting プラグイン
+│
+├── kick-lib/                  # Kick.com API クライアント
+├── plugin-kick/               # Kick.com プラグイン
+│
+├── irc-lib/                   # IRC クライアントライブラリ
+├── plugin-irc/                # IRC プラグイン
+│
+├── plugin-bouyomi/            # 棒読みちゃん TTS プラグイン
+│
+├── chromium-cookie-lib/       # Chromium 系ブラウザ共通 Cookie 取得（DPAPI/AES-GCM）
+├── cookies_txt_reader/        # cookies.txt 形式読み取り
+├── plugin-chrome-cookie/      # Chrome Cookie プラグイン
+├── plugin-edge-cookie/        # Edge Cookie プラグイン
+├── plugin-firefox-cookie/     # Firefox Cookie プラグイン
+├── plugin-cookies-txt/        # cookies.txt プラグイン
+│
+├── plugin-exe-manager/        # EXE プラグインマネージャー（旧）
+└── plugin-exe-manager-v3/     # EXE プラグインマネージャー v3（WebSocket, port 28901）
 
 apps/
-├── mcv/                      # Main Tauri application
-└── exe-plugin-sample/        # EXE plugin debug tool (Tauri-based GUI)
+├── mcv/                       # メイン Tauri アプリケーション
+├── log-viewer/                # ログビューア（スタンドアロン Web アプリ）
+└── exe-plugin-sample/         # EXE プラグインデバッグツール（Tauri GUI）
 ```
 
-### Comment Posting System
+### Plugin ABI Versions
 
-The comment posting system uses the `send-comment` message type for posting comments to streaming platforms.
+#### v3（現在の標準）
 
-**Message Type:**
-- `send-comment`: Core → Plugin with comment text
-
-**Behavior:**
-- **Real streaming plugins**: Post the comment to the streaming platform, results via existing messages (`connected`, `disconnected`, etc.)
-- **DummyPlugin**: Reuses this for command execution to simulate various scenarios
-
-**DummyPlugin Commands (via send-comment):**
-- `disconnect` - Simulate server-side disconnection
-- `connect` - Request reconnection (requires UI action)
-- `pause` - Pause comment generation
-- `resume` - Resume comment generation
-- `rate <seconds>` - Set comment generation interval (0 = random)
-- `comment <user> <text>` - Generate manual comment
-- `help` - Show available commands
-- `status` - Show connection status
-
-**UI Implementation:**
-The main UI includes a comment posting section below the DataGrid with:
-- Connection selector (combobox)
-- Comment/command input field
-- Send button
-
-### Multiple Connection Management
-
-Plugins manage multiple connections independently using `HashMap<Uuid, Arc<AtomicBool>>`:
+`PluginImplV3Async` トレイトを実装し、`export_plugin_v3_async!` マクロでエクスポートします:
 
 ```rust
-pub struct DummyPlugin {
-    plugin_id: Uuid,
-    connections: HashMap<Uuid, Arc<AtomicBool>>,      // connection_id → running flag
-    comment_rates: HashMap<Uuid, Arc<RwLock<u64>>>,   // connection_id → rate
-    paused: HashMap<Uuid, Arc<AtomicBool>>,           // connection_id → paused flag
+use plugin_abi_helper::v3::prelude::*;
+use mcv_messages::{Message as McvMessage, MessageType, /* ... */};
+
+#[derive(Default)]
+struct MyPlugin {
+    plugin_id: PluginId,
+}
+
+#[async_trait]
+impl PluginImplV3Async for MyPlugin {
+    async fn on_loaded(&mut self, ctx: PluginContext) {
+        // plugin-hello を送信して core に登録
+    }
+
+    async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {
+        // 必ず McvMessage としてデシリアライズし MessageType でマッチ
+        let incoming: McvMessage = match serde_json::from_slice(msg) {
+            Ok(m) => m,
+            Err(e) => { tracing::error!(%e, "parse error"); return; }
+        };
+        match incoming.message_type {
+            MessageType::Connect => { /* ... */ }
+            MessageType::Disconnect => { /* ... */ }
+            _ => {}
+        }
+    }
+
+    async fn on_shutdown(&mut self, ctx: PluginContext) {
+        // クリーンアップ
+    }
+}
+
+export_plugin_v3_async!(MyPlugin);
+```
+
+**NG パターン（`serde_json::Value` の文字列マッチ）:**
+```rust
+// NG: シリアライズ形式の不一致でサイレントに失敗する
+let value: serde_json::Value = serde_json::from_slice(msg)?;
+match value["message_type"].as_str() {
+    Some("get-cookie") => { /* ... */ }  // ← 危険
 }
 ```
 
-This ensures that operations on one connection (pause, disconnect, rate change) do not affect other connections.
+#### v2（旧スタイル、既存プラグインに残存）
+
+`PluginImplV2` トレイトを実装します。新規プラグインは v3 を使うこと。
+
+### Cargo Features（ログレベル・機能フラグ）
+
+```toml
+# apps/mcv/src-tauri/Cargo.toml
+[features]
+alpha  = ["comment-search", "mcv-log-core/alpha", ...]  # trace ログ・全機能有効
+beta   = ["mcv-log-core/beta", ...]                     # info ログ
+stable = ["mcv-log-core/stable", ...]                   # error ログのみ
+```
+
+- `cargo xtask install --channel alpha` で自動的に `--features alpha` が付く
+- **`RUST_LOG=trace` 等の環境変数は使わない**
+- alpha-only 機能を追加するには `Cargo.toml` の `alpha = [...]` に feature 名を追加するだけ
+
+フロントエンド feature 連動:
+- xtask がチャンネルに対応する `CARGO_FEATURE_<NAME>=1` を npm ビルドへ自動的に渡す
+- `vite.config.ts` がこれを読み取りビルド時定数を注入（例: `__IS_SEARCH_ENABLED__`）
+
+### Actix Message Naming Conflict
+
+actix の `Message` トレイトと `mcv_messages::Message` 構造体が名前衝突します:
+```rust
+use actix::prelude::*;
+use mcv_messages::{Message as McvMessage, MessageSource, MessageDestination, MessageType, *};
+```
 
 ### Plugin Logging System (mcv-plugin-telemetry)
 
-Plugins can use standard tracing macros (`tracing::error!()`, `tracing::warn!()`, etc.) for logging, which are automatically forwarded to Core via LogEntry messages and integrated with mcv-log-core.
-
-**Setup in plugin:**
 ```rust
 use mcv_tracing;
 
-impl Plugin for MyPlugin {
-    async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
-        // Initialize tracing
-        mcv_tracing::init_tracing(
-            self.plugin_id,
-            Arc::clone(&host),
-            env!("CARGO_PKG_VERSION"),
-            "info", // or "debug", "trace", etc.
-        )?;
+// on_loaded で初期化
+mcv_tracing::init_tracing(
+    self.plugin_id,
+    Arc::clone(&host),
+    env!("CARGO_PKG_VERSION"),
+    "info",
+)?;
 
-        // Now you can use tracing macros
-        tracing::info!("Plugin loaded successfully");
-
-        // ... rest of initialization
-    }
-}
-```
-
-**Usage in plugin code:**
-```rust
-// Structured logging with fields
+// 構造化ログ
 tracing::debug!(connection_id = %conn_id, "Processing message");
-tracing::info!(user = %username, "User connected");
-tracing::warn!(count = connections.len(), "High connection count");
-tracing::error!(error = %e, "Failed to process request");
+tracing::error!(error = %e, "Failed");
 ```
 
-**Features:**
-- Automatic forwarding to Core via LogEntry messages
-- Structured logging support (fields, spans)
-- Works in plugin dependencies (any crate used by the plugin)
-- Error-level logs automatically capture stack traces
-- Integration with mcv-log-core (SQLite storage + remote sending)
-
-**Log-error/log-warn commands:**
-- The DummyPlugin's `log-error`, `log-warn`, `log-info`, `log-debug` commands are separate test features
-- They manually construct LogEntry messages for testing purposes
-- mcv-plugin-telemetry provides automatic logging for production use
+- Core へ LogEntry メッセージとして自動転送
+- error レベルはスタックトレース自動取得
+- mcv-log-core（SQLite + リモート送信）と統合
 
 ### EXE Plugin System
 
-MultiCommentViewer supports EXE plugins in addition to DLL plugins. EXE plugins run as independent processes and communicate with the core via WebSocket.
-
-**Architecture:**
 ```
 Core (CoreActor)
   ↕
-PluginHostActor (exe-plugin-manager)
-  ↕
-plugin-exe-manager (DLL plugin)
+plugin-exe-manager-v3 (DLL)
   ↕ WebSocket (JSON, port 28901)
-EXE plugin (independent process)
+EXE plugin (独立プロセス)
 ```
 
-**Components:**
+- port 28901 が使用中なら 28902+ を自動選択
+- `%APPDATA%\MultiCommentViewer\plugins\` の `plugin.json` をスキャン
+- 環境変数: `MCV_WEBSOCKET_PORT`, `MCV_WEBSOCKET_URL`
 
-1. **plugin-exe-manager** (DLL plugin)
-   - WebSocket server on port 28901 (auto-selects 28902+ if unavailable)
-   - Scans `%APPDATA%\MultiCommentViewer\plugins\` for plugin.json
-   - Auto-starts EXE plugins on mcv startup
-   - Message routing (unicast, broadcast, role-based)
-   - Process management (spawn, monitor, restart up to 3 times)
+### Comment Posting System
 
-2. **mcv-plugin-exe-interface** (Library for EXE plugin development)
-   - WebSocket client (`ExePluginClient`)
-   - Auto-reconnect support
-   - Message send/receive helpers
+`send-comment`: Core → Plugin でコメントテキストを送信。
+DummyPlugin では `disconnect` / `pause` / `resume` / `rate <sec>` / `comment <user> <text>` 等のコマンドとして再利用。
 
-3. **plugin.json schema:**
-   ```json
-   {
-     "schema_version": "1.0",
-     "plugin": {
-       "id": "com.example.my-plugin",
-       "name": "My EXE Plugin",
-       "version": "1.0.0",
-       "api_version": "v2",
-       "roles": ["comment-provider"]
-     },
-     "executable": {
-       "path": "bin/my-plugin.exe",
-       "args": [],
-       "working_directory": "."
-     },
-     "websocket": {
-       "auto_reconnect": true,
-       "reconnect_interval_ms": 5000,
-       "timeout_ms": 30000
-     }
-   }
-   ```
+### Cookie Plugins
 
-4. **Environment variables** (set by plugin-exe-manager):
-   - `MCV_WEBSOCKET_PORT`: WebSocket server port (e.g., "28901")
-   - `MCV_WEBSOCKET_URL`: Full WebSocket URL (e.g., "ws://127.0.0.1:28901")
+ブラウザから Cookie を取得するプラグイン群:
+- `plugin-chrome-cookie`: Chrome プロファイル検出 → AddBrowser / GetCookie 対応
+- `plugin-edge-cookie`: Edge 対応（chromium-cookie-lib 共用）
+- `plugin-firefox-cookie`: Firefox 対応
+- `plugin-cookies-txt`: cookies.txt 形式ファイル対応
 
-**EXE plugin example:**
-```rust
-use mcv_plugin_exe_interface::ExePluginClient;
-use mcv_messages::{Message, MessageType};
+Cookie 取得フロー:
+1. Cookie プラグインが起動時に `AddBrowser` を Core へ送信
+2. 接続時に Core/プラットフォームプラグインから `GetCookie` が届く
+3. Cookie プラグインがブラウザ DB を読み取り `GetCookieAck` で返答
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let url = std::env::var("MCV_WEBSOCKET_URL")?;
-    let mut client = ExePluginClient::connect(&url).await?;
+### Connection Flow
 
-    // Send plugin-hello
-    client.send_plugin_hello("My Plugin", vec!["comment-provider"]).await?;
-
-    // Register message handler
-    client.on_message(|msg| {
-        match msg.message_type {
-            MessageType::Connect => { /* handle connect */ },
-            MessageType::Disconnect => { /* handle disconnect */ },
-            _ => {}
-        }
-    });
-
-    // Run message loop
-    client.run().await?;
-    Ok(())
-}
-```
-
-**Debug tool (exe-plugin-sample):**
-- Tauri-based GUI for testing EXE plugins
-- 5 tabs: Plugin, Connection, Comment, Raw Message, Log
-- Real-time message monitoring with filtering
-- Template-based message sending
-- Run with: `cd apps/exe-plugin-sample && npm run tauri dev`
-
-**Broadcast messages:**
-The following message types are automatically broadcast to all EXE plugins:
-- `plugin-added`, `plugin-removed`
-- `connection-added`, `connection-removed`
-- `connected`, `disconnected`
-- `comment-received`
-
-### Plugin Implementation
-
-Plugins must implement the `Plugin` trait:
-```rust
-#[async_trait]
-pub trait Plugin: Send + Sync {
-    async fn on_loaded(&mut self, host: &dyn PluginHost) -> Result<(), PluginError>;
-    async fn on_message(&mut self, message: McvMessage, host: &dyn PluginHost) -> Result<(), PluginError>;
-    async fn on_shutdown(&mut self) -> Result<(), PluginError>;
-}
-```
-
-- Current implementation uses **static linking** for plugins (not dynamic loading)
-- Each plugin runs in its own `PluginHostActor` for isolation
-- Plugins communicate with core via `PluginHost::send_message()`
+1. ユーザーが "接続を追加" → `add_connection` → デフォルト名 (#1, #2, ...) で接続作成
+2. ユーザーが "接続" ボタン → `connect` → プラグインがコメント取得開始
+3. ユーザーが "切断" ボタン → `disconnect` → プラグインが停止
+4. 接続のリネーム・削除（切断時のみ）が可能
 
 ### Tauri Integration
 
-- `apps/mcv/src-tauri/src/main.rs`: Initializes actix system, CoreActor, and registers plugins
+- `apps/mcv/src-tauri/src/main.rs`: CoreActor 初期化・プラグイン登録
 - Tauri commands: `add_connection`, `remove_connection`, `rename_connection`, `connect`, `disconnect`, `get_connections`, `send_comment`
-- Events emitted to frontend: `comment-received`, `connected`, `disconnected`
-- Core actor events are forwarded to React UI via Tauri's event system
+- Frontend events: `comment-received`, `connected`, `disconnected`
 
 ### Frontend Structure
 
 React + TypeScript + Tailwind CSS:
-- `src/App.tsx`: Main component with connection controls and comment display
-- Uses `@tauri-apps/api` for backend communication
-- Listens to Tauri events for real-time comment updates
-- Uses `my-dataview` package (in `packages/`) for high-performance comment display with virtual scrolling
-- Comment posting section for posting comments (DummyPlugin uses this for commands)
-
-## Important Implementation Details
-
-### Actix Message Naming Conflict
-
-Be careful with actix's `Message` trait vs `mcv_messages::Message` struct:
-```rust
-// Always use explicit imports to avoid conflicts
-use actix::prelude::*;  // Brings in actix::Message trait
-use mcv_messages::{Message as McvMessage, MessageSource, MessageDestination, MessageType, *};
-```
-
-### Plugin Lifecycle
-
-1. Plugin registered via `PluginManager::register_plugin()`
-2. `PluginHostActor` created and started
-3. `Plugin::on_loaded()` called → sends `plugin-hello`
-4. Core responds with `plugin-added`
-5. Plugin ready to handle connection messages
-
-### Connection Flow
-
-1. User clicks "接続を追加" → `add_connection` command → Creates connection with default name (#1, #2, etc.)
-2. User clicks "接続" button → `connect` command → Plugin starts comment generation
-3. User clicks "切断" button → `disconnect` command → Plugin stops comment generation
-4. User can rename connections, and the name persists in the connection manager
-5. User can delete connections (only when disconnected)
-
-### Event-Driven Architecture
-
-The application uses an event-driven architecture to avoid polling:
-- Backend emits `connected`, `disconnected`, and `comment-received` events
-- Frontend listens to these events and updates UI accordingly
-- No polling intervals or timers are used for connection state synchronization
-
-## Current Limitations (MVP)
-
-- No browser management/cookie extraction
-- No complex input UI (URL/password fields)
-- No persistent storage or configuration
-- Limited real streaming platform plugins (only dummy plugin currently)
-
-## Test Coverage
-
-The project includes comprehensive tests for core functionality:
-
-### Unit Tests
-- **mcv-messages** (4 tests): Message serialization, payload validation, send-comment tests
-- **plugin-dummy** (11 tests): Command handling, connection management, pause/resume/rate control
-- **mcv-core** (3 tests): Plugin manager, connection manager, basic lifecycle tests
-
-### Integration Tests
-- **mcv-core/tests** (5 tests): Comment posting routing, connection lifecycle, multiple connections, rename/delete operations
-
-Run tests with:
-```bash
-# All tests
-cargo test --workspace
-
-# Specific package
-cargo test --package mcv-messages
-cargo test --package plugin-dummy
-cargo test --package mcv-core
-
-# Integration tests only
-cargo test --test command_system_test
-```
+- `src/App.tsx`: メインコンポーネント
+- `@tauri-apps/api` でバックエンド通信
+- `my-dataview` パッケージ（`packages/`）: 仮想スクロール付き高パフォーマンスコメント表示
+- コメント投稿セクション（接続セレクタ + 入力フィールド + 送信ボタン）
 
 ## mcv-messages 設計原則（重要）
 
 `crates/mcv-messages` はすべての配信サイト・プラグインが共通で使う型定義クレートです。
 **特定プラットフォーム固有の概念を追加してはならない。**
 
-### NG の例（やってはいけないこと）
+### NG の例
 
 ```rust
-// NG: YouTube 固有の概念をそのまま持ち込む
-AuthorDelete { external_channel_id: String }  // external_channel_id は YouTube 固有
+// NG: YouTube 固有の概念
+AuthorDelete { external_channel_id: String }
 ```
 
 ### OK の例
 
 ```rust
-// OK: 汎用的な概念で表現する
-MessageDeleteAll { user_id: String }  // user_id はどのプラットフォームでも意味をなす
+// OK: 汎用的な表現
+MessageDeleteAll { user_id: String }
 ```
 
-### 判断基準
+判断基準: **「YouTube 以外（Twitch, ニコ生等）でも意味をなすか？」**
+- YES → `mcv-messages` に追加
+- NO → プラグイン側で吸収し汎用的な表現に変換して送出
 
-新しい型・フィールド・バリアントを追加する前に必ず問う:
-- **「YouTube 以外の配信サイト（Twitch, ニコ生等）でも意味をなすか？」**
-- YES → `mcv-messages` に追加してよい
-- NO → プラグイン側（`plugin-youtube-live` 等）で吸収し、汎用的な表現に変換して送出する
+`CommentRow`（フロントエンド DTO）も同様。プラットフォーム固有概念は持ち込まない。
+また `CommentRow` は「コメントまたはコメント類似のもの」のみ保持する。
+制御メッセージ（全ユーザー削除等）は別の Tauri イベントとして扱う。
 
-`CommentRow`（`main.rs` のフロントエンド DTO）も同様。YouTube 固有の概念を持ち込まないこと。
+## xtask コマンド詳細
+
+`cargo xtask` がビルド・パッケージング・配布の全工程を管理します（詳細は `xtask/README.md`）。
+プラグインのメタデータは `tools/plugins.json` で管理されています。
+
+| コマンド | 用途 |
+| ------- | ---- |
+| `cargo xtask build [--release]` | ワークスペース全体ビルド（npm 変更も自動検知） |
+| `cargo xtask install --dir PATH [--channel] [--plugin ID...]` | ローカルデバッグインストール |
+| `cargo xtask pack --plugin ID [--channel]` | プラグイン単体 ZIP 化 |
+| `cargo xtask dist [--channel] [--plugin ID...]` | 配布用バンドル ZIP 生成 |
+
+## Test Coverage
+
+```bash
+# 全テスト
+cargo test --workspace
+
+# クレート指定
+cargo test --package mcv-messages
+cargo test --package plugin-dummy
+cargo test --package mcv-core
+
+# 統合テストのみ
+cargo test --test command_system_test
+```
 
 ## Future Extension Points
 
-See `docs/specifications.md` for detailed specifications including:
-- Real streaming platform plugins (YouTube Live, Twitch, Niconico)
-- Browser cookie integration
-- Plugin distribution system
-- Comment posting (bidirectional communication)
-- Bouyomi-chan TTS integration
-- Comment delay adjustment
+詳細は `docs/specifications.md` を参照:
+- プラグイン配布システム
+- コメント遅延調整
+- 各種 UI 改善

@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "",
     "frontendDist": "../dist"
   },
   "app": {
@@ -21,20 +21,7 @@
       }
     ],
     "security": {
-      "csp": null,
-      "capabilities": [
-        {
-          "identifier": "default",
-          "description": "Default capabilities for the main window",
-          "windows": ["main"],
-          "permissions": [
-            "core:default",
-            "core:event:allow-listen",
-            "core:event:allow-emit",
-            "shell:allow-open"
-          ]
-        }
-      ]
+      "csp": null
     }
   },
   "bundle": {

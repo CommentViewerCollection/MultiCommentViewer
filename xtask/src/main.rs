@@ -508,8 +508,7 @@ fn build_tauri(profile: &str, channel: Option<&str>) -> Result<()> {
 
             build_frontend_if_needed(&manifest_dir, channel)?;
 
-            // チャンネル指定時は feature 切り替え差分を確実に反映するため常にビルドする
-            if channel.is_none() && !should_build_tauri(&pkg, &manifest_dir, profile) {
+            if !should_build_tauri(&pkg, &manifest_dir, profile) {
                 continue;
             }
 
@@ -525,7 +524,6 @@ fn build_tauri(profile: &str, channel: Option<&str>) -> Result<()> {
             }
 
             cmd.current_dir(&manifest_dir);
-            cmd.envs(std::env::vars());
             run(cmd)?;
         }
     }
@@ -553,7 +551,6 @@ fn build_tauri_app(
         cmd.env("MCV_CHANNEL", ch);
     }
     cmd.current_dir(manifest_dir);
-    cmd.envs(std::env::vars());
     run(cmd)
 }
 

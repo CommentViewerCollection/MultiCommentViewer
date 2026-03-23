@@ -1668,7 +1668,6 @@ function App() {
         className="shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full relative"
       >
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-2xl font-bold mb-2">MultiCommentViewer</h1>
           <button
             onClick={handleAddConnection}
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"

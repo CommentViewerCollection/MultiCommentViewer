@@ -8,6 +8,7 @@ use mcv_messages::{
     StreamMetadataPayload, SystemKind, UpdateConnectionAccountPayload,
 };
 use nicolive_lib::{
+    domain_state_machine::{DomainCommand, DomainEvent, NicoLiveStateMachine},
     extract_live_id, fetch_websocket_url, try_pop_segment_event, try_pop_view_entry, SegmentEvent,
     ServerTimeCache, ViewEntry,
 };
@@ -52,24 +53,6 @@ impl Drop for PollEndGuard {
             "viewUri polling 終了"
         );
     }
-}
-
-// ─── MessageAction ───────────────────────────────────────────────────────────────
-
-/// `handle_text_message` の処理結果
-enum MessageAction {
-    Continue,
-    Stop,
-    Reconnect {
-        audience_token: String,
-        wait_secs: u64,
-    },
-    StartViewPolling {
-        view_uri: String,
-    },
-    Statistics {
-        viewers: u64,
-    },
 }
 
 // ─── Connection ──────────────────────────────────────────────────────────────────
@@ -340,17 +323,18 @@ impl Connection {
             NicoLivePlugin::send_message(ctx.clone(), msg).await;
         }
 
+        let mut machine = NicoLiveStateMachine::new();
         let mut keep_seat_interval: Option<Interval> = None;
         let mut reconnect_result: Option<(String, u64)> = None;
         let mut view_poll_guard: Option<AbortGuard> = None;
         let time_cache = Arc::new(ServerTimeCache::new());
 
-        loop {
+        'session: loop {
             tokio::select! {
                 _ = cancel_rx.changed() => {
                     if *cancel_rx.borrow() {
                         tracing::info!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "切断要求を受信");
-                        break;
+                        break 'session;
                     }
                 }
                 _ = async {
@@ -359,83 +343,74 @@ impl Connection {
                         None => std::future::pending::<()>().await,
                     }
                 } => {
-                    let keep_seat = serde_json::json!({"type": "keepSeat"});
-                    if let Err(e) = write.send(WsMessage::Text(keep_seat.to_string().into())).await {
-                        tracing::error!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "keepSeat 送信失敗");
-                        break;
+                    // KeepSeatTick は Active 状態でのみ有効で、常に [SendKeepSeat] を返す。
+                    // keep_seat_interval の借用を手放してから execute_commands を呼ぶことを
+                    // 避けるため、この分岐ではコマンド実行をインラインで行う。
+                    match machine.on_event(DomainEvent::KeepSeatTick) {
+                        Ok(cmds) => {
+                            for cmd in cmds {
+                                if let DomainCommand::SendKeepSeat = cmd {
+                                    let payload = serde_json::json!({"type": "keepSeat"});
+                                    if let Err(e) = write.send(WsMessage::Text(payload.to_string().into())).await {
+                                        tracing::error!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "keepSeat 送信失敗");
+                                        break 'session;
+                                    }
+                                    tracing::trace!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "keepSeat 送信");
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "KeepSeatTick: 無効な状態遷移");
+                        }
                     }
-                    tracing::trace!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "keepSeat 送信");
                 }
                 recv = read.next() => {
                     match recv {
                         Some(Ok(WsMessage::Text(text))) => {
-                            match Self::handle_text_message(&mut write, &mut keep_seat_interval, connection_id, &text, &time_cache).await {
-                                MessageAction::Continue => {}
-                                MessageAction::Stop => break,
-                                MessageAction::Reconnect { audience_token, wait_secs } => {
-                                    reconnect_result = Some((audience_token, wait_secs));
-                                    break;
+                            tracing::trace!(target: "mcv::plugin-nicolive", connection_id = %connection_id, raw = %text, "WS テキスト受信");
+                            let cmds = match machine.on_event(DomainEvent::WsText(text.to_string())) {
+                                Ok(c) => c,
+                                Err(e) => {
+                                    tracing::warn!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "WsText: 無効な状態遷移");
+                                    continue;
                                 }
-                                MessageAction::StartViewPolling { view_uri } => {
-                                    tracing::info!(
-                                        target: "mcv::plugin-nicolive",
-                                        connection_id = %connection_id,
-                                        view_uri = %view_uri,
-                                        "viewUri polling タスクを spawn"
-                                    );
-                                    let ctx_poll = ctx.clone();
-                                    view_poll_guard = Some(AbortGuard(
-                                        tokio::spawn(Self::poll_view_uri(
-                                            view_uri, connection_id,
-                                            ctx_poll, logical_plugin_id.clone(),
-                                        ))
-                                    ));
-                                }
-                                MessageAction::Statistics { viewers } => {
-                                    tracing::debug!(
-                                        target: "mcv::plugin-nicolive",
-                                        connection_id = %connection_id,
-                                        viewers,
-                                        "statistics 受信: StreamMetadata 送信"
-                                    );
-                                    let payload = StreamMetadataPayload {
-                                        connection_id,
-                                        title: title.clone(),
-                                        viewer_count: Some(viewers),
-                                        total_viewer_count: None,
-                                        start_time,
-                                        others: None,
-                                    };
-                                    let msg = McvMessage::new_notification(
-                                        MessageType::StreamMetadata,
-                                        MessageSource::Plugin {
-                                            plugin_id: logical_plugin_id.clone(),
-                                        },
-                                        MessageDestination::Core,
-                                        serde_json::to_value(payload).unwrap(),
-                                    );
-                                    NicoLivePlugin::send_message(ctx.clone(), msg).await;
-                                }
+                            };
+                            if Self::execute_commands(
+                                cmds,
+                                &mut write,
+                                &mut keep_seat_interval,
+                                &mut view_poll_guard,
+                                &mut reconnect_result,
+                                &time_cache,
+                                connection_id,
+                                &ctx,
+                                &logical_plugin_id,
+                                title.as_deref(),
+                                start_time,
+                            )
+                            .await
+                            {
+                                break 'session;
                             }
                         }
                         Some(Ok(WsMessage::Close(_))) => {
                             tracing::info!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "WebSocket Close フレーム受信");
-                            break;
+                            break 'session;
                         }
                         Some(Ok(WsMessage::Ping(data))) => {
                             if let Err(e) = write.send(WsMessage::Pong(data)).await {
                                 tracing::error!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "Pong 送信失敗");
-                                break;
+                                break 'session;
                             }
                         }
                         Some(Ok(_)) => {}
                         Some(Err(e)) => {
                             tracing::error!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "WebSocket 受信エラー");
-                            break;
+                            break 'session;
                         }
                         None => {
                             tracing::info!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "WebSocket ストリーム終了");
-                            break;
+                            break 'session;
                         }
                     }
                 }
@@ -444,6 +419,122 @@ impl Connection {
 
         drop(view_poll_guard);
         reconnect_result
+    }
+
+    // ── DomainCommand 実行ランナー ────────────────────────────────────────────
+
+    /// 状態機械から返されたコマンドリストを実行する。
+    ///
+    /// セッションを終了すべき場合（EmitDisconnected / ReconnectTo / 送信エラー）は
+    /// `true` を返す。呼び出し元はこの戻り値で 'session ループを抜けること。
+    #[allow(clippy::too_many_arguments)]
+    async fn execute_commands(
+        cmds: Vec<DomainCommand>,
+        write: &mut WsSink,
+        keep_seat_interval: &mut Option<Interval>,
+        view_poll_guard: &mut Option<AbortGuard>,
+        reconnect_result: &mut Option<(String, u64)>,
+        time_cache: &Arc<ServerTimeCache>,
+        connection_id: Uuid,
+        ctx: &PluginContext,
+        logical_plugin_id: &PluginId,
+        title: Option<&str>,
+        start_time: Option<i64>,
+    ) -> bool {
+        for cmd in cmds {
+            match cmd {
+                DomainCommand::SendPong => {
+                    let pong = serde_json::json!({"type": "pong"});
+                    if let Err(e) = write.send(WsMessage::Text(pong.to_string().into())).await {
+                        tracing::error!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "pong 送信失敗");
+                        return true;
+                    }
+                    tracing::trace!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "pong 送信");
+                }
+                DomainCommand::SendKeepSeat => {
+                    // KeepSeatTick 分岐ではインライン処理するためここには到達しない想定。
+                    // 念のため実装しておく。
+                    let payload = serde_json::json!({"type": "keepSeat"});
+                    if let Err(e) = write
+                        .send(WsMessage::Text(payload.to_string().into()))
+                        .await
+                    {
+                        tracing::error!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "keepSeat 送信失敗");
+                        return true;
+                    }
+                    tracing::trace!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "keepSeat 送信");
+                }
+                DomainCommand::SetKeepSeatInterval { interval_secs } => {
+                    let duration = Duration::from_secs(interval_secs);
+                    *keep_seat_interval = Some(interval_at(Instant::now() + duration, duration));
+                    tracing::info!(
+                        target: "mcv::plugin-nicolive",
+                        connection_id = %connection_id,
+                        keep_interval_secs = interval_secs,
+                        "seat 受信: keepSeat インターバル設定"
+                    );
+                }
+                DomainCommand::SpawnViewPolling { view_uri } => {
+                    tracing::info!(
+                        target: "mcv::plugin-nicolive",
+                        connection_id = %connection_id,
+                        view_uri = %view_uri,
+                        "viewUri polling タスクを spawn"
+                    );
+                    *view_poll_guard = Some(AbortGuard(tokio::spawn(Self::poll_view_uri(
+                        view_uri,
+                        connection_id,
+                        ctx.clone(),
+                        logical_plugin_id.clone(),
+                    ))));
+                }
+                DomainCommand::UpdateServerTime { server_secs } => {
+                    time_cache.update(server_secs);
+                    tracing::info!(
+                        target: "mcv::plugin-nicolive",
+                        connection_id = %connection_id,
+                        server_secs,
+                        "serverTime 受信: 時刻キャッシュ更新"
+                    );
+                }
+                DomainCommand::EmitStatistics { viewers } => {
+                    tracing::debug!(
+                        target: "mcv::plugin-nicolive",
+                        connection_id = %connection_id,
+                        viewers,
+                        "statistics 受信: StreamMetadata 送信"
+                    );
+                    let payload = StreamMetadataPayload {
+                        connection_id,
+                        title: title.map(str::to_string),
+                        viewer_count: Some(viewers),
+                        total_viewer_count: None,
+                        start_time,
+                        others: None,
+                    };
+                    let msg = McvMessage::new_notification(
+                        MessageType::StreamMetadata,
+                        MessageSource::Plugin {
+                            plugin_id: logical_plugin_id.clone(),
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(payload).unwrap(),
+                    );
+                    NicoLivePlugin::send_message(ctx.clone(), msg).await;
+                }
+                DomainCommand::ReconnectTo {
+                    audience_token,
+                    wait_secs,
+                } => {
+                    *reconnect_result = Some((audience_token, wait_secs));
+                    return true;
+                }
+                DomainCommand::EmitDisconnected => {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     // ── viewUri ポーリングタスク ──────────────────────────────────────────────
@@ -743,7 +834,6 @@ impl Connection {
         connection_id: Uuid,
     ) {
         use nicolive_lib::decode_segment_events;
-        use tokio::time::timeout;
 
         let response = match client
             .get(uri)
@@ -949,152 +1039,6 @@ impl Connection {
         }
 
         Ok(())
-    }
-
-    // ── アプリレベルメッセージ処理 ────────────────────────────────────────────
-    async fn handle_text_message(
-        write: &mut WsSink,
-        keep_seat_interval: &mut Option<Interval>,
-        connection_id: Uuid,
-        text: &str,
-        time_cache: &Arc<ServerTimeCache>,
-    ) -> MessageAction {
-        let json: serde_json::Value = match serde_json::from_str(text) {
-            Ok(v) => v,
-            Err(e) => {
-                tracing::warn!(
-                    target: "mcv::plugin-nicolive",
-                    connection_id = %connection_id,
-                    error = %e,
-                    raw = %text,
-                    "JSON パース失敗"
-                );
-                return MessageAction::Continue;
-            }
-        };
-
-        let msg_type = match json["type"].as_str() {
-            Some(t) => t,
-            None => return MessageAction::Continue,
-        };
-
-        match msg_type {
-            "ping" => {
-                let pong = serde_json::json!({"type": "pong"});
-                if let Err(e) = write.send(WsMessage::Text(pong.to_string().into())).await {
-                    tracing::error!(target: "mcv::plugin-nicolive", connection_id = %connection_id, error = %e, "pong 送信失敗");
-                    return MessageAction::Stop;
-                }
-                tracing::trace!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "pong 送信");
-            }
-            "seat" => {
-                let keep_interval_sec = json["data"]["keepIntervalSec"].as_u64().unwrap_or(30);
-                let duration = Duration::from_secs(keep_interval_sec);
-                *keep_seat_interval = Some(interval_at(Instant::now() + duration, duration));
-                tracing::info!(
-                    target: "mcv::plugin-nicolive",
-                    connection_id = %connection_id,
-                    keep_interval_sec = keep_interval_sec,
-                    "seat 受信: keepSeat インターバル設定"
-                );
-            }
-            "messageServer" => {
-                let view_uri = json["data"]["viewUri"]
-                    .as_str()
-                    .unwrap_or_default()
-                    .to_string();
-                let vpos_base_time = json["data"]["vposBaseTime"].as_str().unwrap_or_default();
-                // data の全フィールドをログ出力（未知フィールドの発見用）
-                tracing::info!(
-                    target: "mcv::plugin-nicolive",
-                    connection_id = %connection_id,
-                    view_uri = %view_uri,
-                    vpos_base_time = %vpos_base_time,
-                    raw_data = %json["data"],
-                    "messageServer 受信"
-                );
-                if !view_uri.is_empty() {
-                    return MessageAction::StartViewPolling { view_uri };
-                }
-            }
-            "reconnect" => {
-                let audience_token = json["data"]["audienceToken"]
-                    .as_str()
-                    .unwrap_or_default()
-                    .to_string();
-                let wait_secs = json["data"]["waitTimeSec"].as_u64().unwrap_or(0);
-                tracing::info!(
-                    target: "mcv::plugin-nicolive",
-                    connection_id = %connection_id,
-                    audience_token = %audience_token,
-                    wait_secs = wait_secs,
-                    "reconnect 受信"
-                );
-                return MessageAction::Reconnect {
-                    audience_token,
-                    wait_secs,
-                };
-            }
-            "disconnect" => {
-                tracing::info!(target: "mcv::plugin-nicolive", connection_id = %connection_id, "サーバーから disconnect を受信");
-                return MessageAction::Stop;
-            }
-            "serverTime" => {
-                if let Some(current_ms) = json["data"]["currentMs"].as_str() {
-                    match chrono::DateTime::parse_from_rfc3339(current_ms) {
-                        Ok(dt) => {
-                            time_cache.update(dt.timestamp());
-                            tracing::info!(
-                                target: "mcv::plugin-nicolive",
-                                connection_id = %connection_id,
-                                server_secs = dt.timestamp(),
-                                "serverTime 受信: 時刻キャッシュ更新"
-                            );
-                        }
-                        Err(e) => {
-                            tracing::warn!(
-                                target: "mcv::plugin-nicolive",
-                                connection_id = %connection_id,
-                                error = %e,
-                                raw = current_ms,
-                                "serverTime パース失敗"
-                            );
-                        }
-                    }
-                }
-            }
-            "statistics" => {
-                let viewers = json["data"]["viewers"].as_u64().unwrap_or(0);
-                tracing::debug!(
-                    target: "mcv::plugin-nicolive",
-                    connection_id = %connection_id,
-                    viewers,
-                    "statistics 受信"
-                );
-                return MessageAction::Statistics { viewers };
-            }
-            "error" => {
-                let code = json["data"]["code"].as_str().unwrap_or("unknown");
-                tracing::warn!(
-                    target: "mcv::plugin-nicolive",
-                    connection_id = %connection_id,
-                    error_code = %code,
-                    raw = %text,
-                    "サーバーからエラーメッセージ受信"
-                );
-            }
-            _ => {
-                tracing::debug!(
-                    target: "mcv::plugin-nicolive",
-                    connection_id = %connection_id,
-                    msg_type = msg_type,
-                    raw = %text,
-                    "未処理メッセージ受信"
-                );
-            }
-        }
-
-        MessageAction::Continue
     }
 
     // ── URL / WebSocket ユーティリティ ────────────────────────────────────────

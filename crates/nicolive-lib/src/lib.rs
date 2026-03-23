@@ -4,9 +4,11 @@
 //! - [`extract_live_id`] / [`fetch_websocket_url`] — URL ユーティリティ
 //! - [`decode_view_entries`] / [`decode_segment_messages`] — バイナリデコード (純粋関数、ユニットテスト容易)
 //! - [`ServerTimeCache`] — サーバー時刻補正
+//! - [`domain_state_machine`] — WebSocket セッション用ドメイン状態機械
 
 mod proto;
 
+pub mod domain_state_machine;
 pub mod time_cache;
 pub mod url;
 pub mod view;

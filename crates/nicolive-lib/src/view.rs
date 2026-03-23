@@ -302,9 +302,6 @@ pub fn try_pop_segment_event(data: &[u8]) -> (Option<SegmentEvent>, usize) {
 /// フィールドの絞り込みや変換は一切行わない純粋なパース関数。
 /// デコードに失敗したメッセージはスキップしてループを終了する。
 pub fn decode_chunked_messages(data: &[u8]) -> Vec<proto::ChunkedMessage> {
-    use prost::Message as _;
-    use prost::bytes::{Buf, Bytes};
-
     let mut buf = Bytes::copy_from_slice(data);
     let mut messages = Vec::new();
 

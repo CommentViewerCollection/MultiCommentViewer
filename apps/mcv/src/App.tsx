@@ -1947,13 +1947,6 @@ function App() {
           <div className="text-xs text-gray-600 dark:text-gray-500">
             <span>接続数: {connections.length}</span>
           </div>
-          <button
-            onClick={handleCheckForUpdates}
-            disabled={checkingUpdate}
-            className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 dark:text-white"
-          >
-            {checkingUpdate ? '確認中...' : '更新を確認'}
-          </button>
         </div>
 
         {/* リサイズハンドル */}

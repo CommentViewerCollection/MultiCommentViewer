@@ -15,6 +15,7 @@ stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
 mcv-common = { path = "../../crates/mcv-common" }
 mcv-messages = { path = "../../crates/mcv-messages" }
 mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
+chromium-cookie-lib = { path = "../../crates/chromium-cookie-lib" }
 async-trait = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -23,12 +24,3 @@ tokio = { workspace = true }
 mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
 tracing = { workspace = true }
 plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }
-rusqlite = { workspace = true }
-base64 = "0.22"
-aes-gcm = "0.10"
-
-[target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.59", features = [
-  "Win32_Foundation",
-  "Win32_Security_Cryptography",
-] }

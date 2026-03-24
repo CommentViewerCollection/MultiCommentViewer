@@ -7,7 +7,6 @@ use chrono::DateTime;
 /// Twitch ストリームのメタデータ
 pub struct TwitchStreamInfo {
     pub title: Option<String>,
-    pub viewer_count: Option<u64>,
     /// 配信開始時刻（Unix 秒）
     pub start_time: Option<i64>,
 }
@@ -21,7 +20,6 @@ struct StreamMetadata {
 async fn get_stream_metadata(
     channel_login: &str,
     client_id: &ClientId,
-    auth_token: Option<&AuthToken>,
 ) -> Result<StreamMetadata, reqwest::Error> {
     //{"operationName":"StreamMetadata","variables":{"channelLogin":"amauta_sau","includeIsDJ":true},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"b57f9b910f8cd1a4659d894fe7550ccc81ec9052c01e438b290fd66a040b9b93"}}}
 
@@ -78,7 +76,7 @@ async fn get_stream_metadata(
         }}"#,
         channel_login
     );
-    let json = send_graphql_query(&query, client_id, auth_token).await?;
+    let json = send_graphql_query(&query, client_id, None).await?;
     let data = &json["data"]["user"];
     let last_broadcast_title = data["lastBroadcast"]["title"]
         .as_str()
@@ -89,29 +87,6 @@ async fn get_stream_metadata(
         last_broadcast_title,
         stream_created_at,
     })
-}
-
-/// Helix API で視聴者数を取得する（OAuth トークン必要）
-///
-/// `GET https://api.twitch.tv/helix/streams?user_login={channel_login}`
-async fn get_viewer_count_helix(
-    channel_login: &str,
-    client_id: &ClientId,
-    auth_token: &AuthToken,
-) -> Result<Option<u64>> {
-    let client = reqwest::Client::new();
-    let resp = client
-        .get(format!(
-            "https://api.twitch.tv/helix/streams?user_login={}",
-            channel_login
-        ))
-        .header("Client-ID", client_id.value())
-        .header("Authorization", format!("Bearer {}", auth_token.value()))
-        .send()
-        .await?;
-    let json: serde_json::Value = resp.json().await?;
-    let viewer_count = json["data"][0]["viewer_count"].as_u64();
-    Ok(viewer_count)
 }
 
 /// GQL Persisted Query でチャンネルの数値 ID（broadcaster_id）を取得する（認証不要）
@@ -133,17 +108,14 @@ pub async fn fetch_broadcaster_id(
     Ok(id)
 }
 
-/// Twitch チャンネルのストリームメタデータ（タイトル・視聴者数・開始時刻）を取得する。
+/// Twitch チャンネルのストリームメタデータ（タイトル・開始時刻）を取得する。
 ///
-/// - タイトル・開始時刻: GQL Persisted Query（認証不要）
-/// - 視聴者数: Helix API（`auth_token` がある場合のみ取得、ない場合は `None`）
-pub async fn fetch_stream_info(
-    channel_login: &str,
-    auth_token: Option<&AuthToken>,
-) -> Result<TwitchStreamInfo> {
+/// GQL Persisted Query を使用（認証不要）。
+/// 視聴者数は Hermes WebSocket の video-playback-by-id トピックから取得するため、ここでは取得しない。
+pub async fn fetch_stream_info(channel_login: &str) -> Result<TwitchStreamInfo> {
     let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
 
-    let gql_meta = get_stream_metadata(channel_login, &client_id, auth_token)
+    let gql_meta = get_stream_metadata(channel_login, &client_id)
         .await
         .map_err(|e| anyhow::anyhow!("StreamMetadata GQL failed: {e}"))?;
 
@@ -153,19 +125,8 @@ pub async fn fetch_stream_info(
         .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
         .map(|dt| dt.timestamp());
 
-    let title = gql_meta.last_broadcast_title;
-
-    let viewer_count = if let Some(token) = auth_token {
-        get_viewer_count_helix(channel_login, &client_id, token)
-            .await
-            .unwrap_or(None)
-    } else {
-        None
-    };
-
     Ok(TwitchStreamInfo {
-        title,
-        viewer_count,
+        title: gql_meta.last_broadcast_title,
         start_time,
     })
 }
@@ -176,10 +137,9 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_stream_info() {
         let channel_login = "amauta_sau";
-        match fetch_stream_info(channel_login, None).await {
+        match fetch_stream_info(channel_login).await {
             Ok(info) => {
                 println!("Title: {:?}", info.title);
-                println!("Viewer Count: {:?}", info.viewer_count);
                 println!("Start Time: {:?}", info.start_time);
             }
             Err(e) => {

@@ -36,6 +36,8 @@ use crate::TwitchPlugin;
 pub(crate) struct Connection {
     pub(crate) id: Uuid,
     pub(crate) cancel_tx: Option<watch::Sender<bool>>,
+    /// Hermes WebSocket タスク用キャンセル送信側
+    pub(crate) hermes_cancel_tx: Option<watch::Sender<bool>>,
     /// メタデータポーリングタスク用キャンセル送信側
     pub(crate) metadata_cancel_tx: Option<watch::Sender<bool>>,
     pub(crate) task: Option<JoinHandle<()>>,
@@ -49,6 +51,7 @@ impl Connection {
         Self {
             id: *id,
             cancel_tx: None,
+            hermes_cancel_tx: None,
             metadata_cancel_tx: None,
             task: None,
             running: false,
@@ -115,18 +118,29 @@ impl Connection {
             None => return,
         };
 
-        // メタデータポーリングタスクを起動
+        // Hermes タスクを起動
+        let (hermes_cancel_tx, hermes_cancel_rx) = watch::channel(false);
+        Self::start_hermes_task(
+            ctx.clone(),
+            logical_plugin_id.clone(),
+            connection_id,
+            channel_login.clone(),
+            auth_token,
+            hermes_cancel_rx,
+        );
+
+        // メタデータポーリングタスクを起動（タイトル・開始時刻のみ。視聴者数は Hermes から取得）
         let (metadata_cancel_tx, metadata_cancel_rx) = watch::channel(false);
         Self::start_metadata_polling_task(
             ctx,
             logical_plugin_id,
             connection_id,
             channel_login,
-            auth_token,
             metadata_cancel_rx,
         );
 
         self.cancel_tx = Some(cancel_tx);
+        self.hermes_cancel_tx = Some(hermes_cancel_tx);
         self.metadata_cancel_tx = Some(metadata_cancel_tx);
         self.task = Some(task);
         self.running = true;
@@ -561,12 +575,41 @@ impl Connection {
         Some(task)
     }
 
-    fn start_metadata_polling_task(
+    fn start_hermes_task(
         ctx: PluginContext,
         logical_plugin_id: PluginId,
         connection_id: Uuid,
         channel_login: String,
         auth_token: Option<AuthToken>,
+        cancel_rx: watch::Receiver<bool>,
+    ) {
+        let runtime_handle = match tokio::runtime::Handle::try_current() {
+            Ok(handle) => handle,
+            Err(e) => {
+                tracing::error!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "Tokio runtime is not available; cannot spawn Hermes task"
+                );
+                return;
+            }
+        };
+        runtime_handle.spawn(crate::hermes::hermes_loop(
+            ctx,
+            logical_plugin_id,
+            connection_id,
+            channel_login,
+            auth_token,
+            cancel_rx,
+        ));
+    }
+
+    fn start_metadata_polling_task(
+        ctx: PluginContext,
+        logical_plugin_id: PluginId,
+        connection_id: Uuid,
+        channel_login: String,
         cancel_rx: watch::Receiver<bool>,
     ) {
         let runtime_handle = match tokio::runtime::Handle::try_current() {
@@ -587,7 +630,6 @@ impl Connection {
             logical_plugin_id,
             connection_id,
             channel_login,
-            auth_token,
             cancel_rx,
         ));
     }
@@ -637,9 +679,8 @@ impl Connection {
         gql_title: &str,
         badge_info: &std::collections::HashMap<String, String>,
     ) -> String {
-        let parse_months = |key: &str| -> Option<u32> {
-            badge_info.get(key).and_then(|v| v.parse().ok())
-        };
+        let parse_months =
+            |key: &str| -> Option<u32> { badge_info.get(key).and_then(|v| v.parse().ok()) };
 
         match set_id {
             "subscriber" => {
@@ -1052,25 +1093,30 @@ impl Connection {
         if let Some(tx) = &self.cancel_tx {
             let _ = tx.send(true);
         }
+        if let Some(tx) = &self.hermes_cancel_tx {
+            let _ = tx.send(true);
+        }
         if let Some(tx) = &self.metadata_cancel_tx {
             let _ = tx.send(true);
         }
         // abort()を使わず、cancel_txでタスクを正常終了させる
         // これにより、loopを抜けた後のDisconnectedメッセージ送信が実行される
         self.cancel_tx = None;
+        self.hermes_cancel_tx = None;
         self.metadata_cancel_tx = None;
         self.task = None;
         self.running = false;
     }
 }
 
-/// Twitch ストリームメタデータ（視聴者数・配信開始時刻・タイトル）を定期的に取得して Core に送信する
+/// Twitch ストリームメタデータ（タイトル・配信開始時刻）を定期的に取得して Core に送信する。
+///
+/// 視聴者数は Hermes WebSocket の video-playback-by-id トピックから取得するため、ここでは送信しない。
 async fn metadata_polling_loop(
     ctx: PluginContext,
     logical_plugin_id: PluginId,
     connection_id: Uuid,
     channel_login: String,
-    auth_token: Option<AuthToken>,
     mut cancel_rx: watch::Receiver<bool>,
 ) {
     const POLL_INTERVAL: Duration = Duration::from_secs(60);
@@ -1104,49 +1150,47 @@ async fn metadata_polling_loop(
             "メタデータポーリング: fetch_stream_info 呼び出し"
         );
 
-        let sleep_duration =
-            match twitch_lib::fetch_stream_info(&channel_login, auth_token.as_ref()).await {
-                Ok(info) => {
-                    tracing::info!(
-                        target: "mcv::plugin-twitch",
-                        connection_id = %connection_id,
-                        poll_count,
-                        title = ?info.title,
-                        viewer_count = ?info.viewer_count,
-                        start_time = ?info.start_time,
-                        "メタデータポーリング: 取得成功、StreamMetadata 送信"
-                    );
-                    let payload = StreamMetadataPayload {
-                        connection_id,
-                        title: info.title,
-                        viewer_count: info.viewer_count,
-                        total_viewer_count: None,
-                        start_time: info.start_time,
-                        others: None,
-                    };
-                    let msg = McvMessage::new_notification(
-                        MessageType::StreamMetadata,
-                        MessageSource::Plugin {
-                            plugin_id: logical_plugin_id.clone(),
-                        },
-                        MessageDestination::Core,
-                        serde_json::to_value(payload).unwrap(),
-                    );
-                    TwitchPlugin::send_message(ctx.clone(), msg).await;
-                    POLL_INTERVAL
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        target: "mcv::plugin-twitch",
-                        connection_id = %connection_id,
-                        poll_count,
-                        error = %e,
-                        "メタデータポーリング: 取得失敗、{}秒後にリトライ",
-                        RETRY_INTERVAL.as_secs()
-                    );
-                    RETRY_INTERVAL
-                }
-            };
+        let sleep_duration = match twitch_lib::fetch_stream_info(&channel_login).await {
+            Ok(info) => {
+                tracing::info!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    poll_count,
+                    title = ?info.title,
+                    start_time = ?info.start_time,
+                    "メタデータポーリング: 取得成功、StreamMetadata 送信"
+                );
+                let payload = StreamMetadataPayload {
+                    connection_id,
+                    title: info.title,
+                    viewer_count: None,
+                    total_viewer_count: None,
+                    start_time: info.start_time,
+                    others: None,
+                };
+                let msg = McvMessage::new_notification(
+                    MessageType::StreamMetadata,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id.clone(),
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+                TwitchPlugin::send_message(ctx.clone(), msg).await;
+                POLL_INTERVAL
+            }
+            Err(e) => {
+                tracing::warn!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    poll_count,
+                    error = %e,
+                    "メタデータポーリング: 取得失敗、{}秒後にリトライ",
+                    RETRY_INTERVAL.as_secs()
+                );
+                RETRY_INTERVAL
+            }
+        };
 
         tokio::select! {
             _ = tokio::time::sleep(sleep_duration) => {}
@@ -1177,6 +1221,7 @@ mod tests {
         assert_eq!(conn.id, id);
         assert!(!conn.running);
         assert!(conn.cancel_tx.is_none());
+        assert!(conn.hermes_cancel_tx.is_none());
         assert!(conn.metadata_cancel_tx.is_none());
         assert!(conn.task.is_none());
     }
@@ -1191,6 +1236,7 @@ mod tests {
 
         assert!(!conn.running);
         assert!(conn.cancel_tx.is_none());
+        assert!(conn.hermes_cancel_tx.is_none());
         assert!(conn.metadata_cancel_tx.is_none());
         assert!(conn.task.is_none());
     }

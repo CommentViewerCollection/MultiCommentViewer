@@ -9,6 +9,7 @@
 //! - `video_id`: YouTube動画ID抽出ユーティリティ
 
 mod connection;
+mod hermes;
 mod message_handler;
 
 use std::{collections::HashMap, sync::Arc};

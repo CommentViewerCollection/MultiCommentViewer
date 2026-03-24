@@ -11,7 +11,8 @@ pub async fn send_graphql_query(
     let res = client
         .post("https://gql.twitch.tv/gql")
         .header("Client-ID", client_id.value())
-        .header("Content-Type", "application/json");
+        .header("Content-Type", "application/json")
+        .header("Accept-Language", "ja-JP");
     let res = if let Some(token) = auth_token {
         res.header("Authorization", format!("OAuth {}", token.value()))
     } else {

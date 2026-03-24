@@ -4,8 +4,8 @@ use anyhow::Result;
 
 use crate::{auth_token::AuthToken, client_id::ClientId, utils::send_graphql_query};
 
-/// バッジキャッシュ: set_id → version_id → image_url
-pub type BadgeCache = HashMap<String, HashMap<String, String>>;
+/// バッジキャッシュ: set_id → version_id → (image_url, title)
+pub type BadgeCache = HashMap<String, HashMap<String, (String, String)>>;
 
 /// グローバルバッジを GQL `GlobalBadges` で取得する（認証不要）
 ///
@@ -63,7 +63,7 @@ pub async fn fetch_channel_badges_gql(
     Ok(parse_badge_array(badges))
 }
 
-/// バッジ配列（`[{ setID, version, image2x, image1x }]` 形式）を BadgeCache に変換する
+/// バッジ配列（`[{ setID, version, image2x, image1x, title }]` 形式）を BadgeCache に変換する
 fn parse_badge_array(badges: &[serde_json::Value]) -> BadgeCache {
     let mut cache = BadgeCache::new();
     for badge in badges {
@@ -80,10 +80,11 @@ fn parse_badge_array(badges: &[serde_json::Value]) -> BadgeCache {
             .unwrap_or("")
             .to_string();
         if !image_url.is_empty() {
+            let title = badge["title"].as_str().unwrap_or("").to_string();
             cache
                 .entry(set_id.to_string())
                 .or_default()
-                .insert(version.to_string(), image_url);
+                .insert(version.to_string(), (image_url, title));
         }
     }
     cache

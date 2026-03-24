@@ -603,27 +603,96 @@ impl Connection {
     /// `broadcastBadges` には `0`, `6`, `12` など段階的なバージョンしかない場合がある。
     /// ブラウザと同様に「リクエスト以下の最大バージョン」に fallback する。
     fn resolve_badge_version(
-        versions: &std::collections::HashMap<String, String>,
+        versions: &std::collections::HashMap<String, (String, String)>,
         requested: &str,
-    ) -> Option<String> {
+    ) -> Option<(String, String)> {
         // 完全一致を優先
-        if let Some(url) = versions.get(requested) {
-            return Some(url.clone());
+        if let Some(entry) = versions.get(requested) {
+            return Some(entry.clone());
         }
         // 数値として解釈し、requested 以下の最大バージョンを探す
         let requested_n: u64 = requested.parse().ok()?;
         versions
             .iter()
-            .filter_map(|(v, url)| {
+            .filter_map(|(v, entry)| {
                 let n: u64 = v.parse().ok()?;
                 if n <= requested_n {
-                    Some((n, url.clone()))
+                    Some((n, entry.clone()))
                 } else {
                     None
                 }
             })
             .max_by_key(|(n, _)| *n)
-            .map(|(_, url)| url)
+            .map(|(_, entry)| entry)
+    }
+
+    /// バッジ名を決定する。
+    ///
+    /// subscriber/founder は badge-info タグの実際の月数を使って動的に生成する。
+    /// bits は IRC バージョン（ビット数）から日本語フォーマットで生成する。
+    /// ブラウザはバッジ定義の汎用タイトルではなく、これらの値を表示する。
+    fn build_badge_name(
+        set_id: &str,
+        irc_version: &str,
+        gql_title: &str,
+        badge_info: &std::collections::HashMap<String, String>,
+    ) -> String {
+        let parse_months = |key: &str| -> Option<u32> {
+            badge_info.get(key).and_then(|v| v.parse().ok())
+        };
+
+        match set_id {
+            "subscriber" => {
+                if let Some(n) = parse_months("subscriber") {
+                    return format!("{n}ヶ月のサブスクライバー");
+                }
+            }
+            "founder" => {
+                let base = if gql_title.is_empty() {
+                    "Founder".to_string()
+                } else {
+                    gql_title.to_string()
+                };
+                if let Some(n) = parse_months("founder") {
+                    return format!("{base}、{n}ヶ月のサブスクライバー");
+                }
+                return base;
+            }
+            "bits" => {
+                if let Ok(n) = irc_version.parse::<u64>() {
+                    return format!("cheer {}", Self::format_bits_number(n));
+                }
+            }
+            "premium" => return "Prime".to_string(),
+            _ => {}
+        }
+
+        if gql_title.is_empty() {
+            set_id.to_string()
+        } else {
+            gql_title.to_string()
+        }
+    }
+
+    /// ビット数を日本語ロケールの表記に変換する。
+    ///
+    /// - 10000 の倍数: 万単位（例: 10000 → "1万"、50000 → "5万"）
+    /// - それ以外: カンマ区切り（例: 5000 → "5,000"、1500 → "1,500"）
+    fn format_bits_number(n: u64) -> String {
+        if n >= 10_000 && n % 10_000 == 0 {
+            format!("{}万", n / 10_000)
+        } else {
+            // 3桁ごとにカンマ区切り
+            let s = n.to_string();
+            let mut result = String::new();
+            for (i, c) in s.chars().rev().enumerate() {
+                if i > 0 && i % 3 == 0 {
+                    result.push(',');
+                }
+                result.push(c);
+            }
+            result.chars().rev().collect()
+        }
     }
 
     /// IRC `emotes` タグからエモートを解析し、テキストを MessagePart のリストに変換する。
@@ -756,6 +825,23 @@ impl Connection {
                     text,
                     tags,
                 } => {
+                    // badge-info タグから set_id → 値のマップを構築
+                    // 形式: "subscriber/10" または "founder/0,subscriber/30" 等
+                    let badge_info: std::collections::HashMap<String, String> = tags
+                        .get("badge-info")
+                        .map(|s| {
+                            s.split(',')
+                                .filter(|s| !s.is_empty())
+                                .filter_map(|entry| {
+                                    let mut parts = entry.splitn(2, '/');
+                                    let k = parts.next()?.to_string();
+                                    let v = parts.next()?.to_string();
+                                    Some((k, v))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default();
+
                     // IRC tags の badges フィールドからバッジ情報を解析
                     // 形式: "moderator/1,subscriber/36"
                     let badges: Vec<ProviderBadge> = if let Some(badges_str) = tags.get("badges") {
@@ -766,12 +852,21 @@ impl Connection {
                                 let mut parts = badge.splitn(2, '/');
                                 let set_id = parts.next().unwrap_or("").to_string();
                                 let version = parts.next().unwrap_or("1").to_string();
-                                let image_url = badge_cache.get(&set_id).and_then(|versions| {
+                                let resolved = badge_cache.get(&set_id).and_then(|versions| {
                                     Self::resolve_badge_version(versions, &version)
                                 });
+                                let (image_url, gql_title) = resolved
+                                    .map(|(url, t)| (Some(url), t))
+                                    .unwrap_or_else(|| (None, String::new()));
+                                let name = Self::build_badge_name(
+                                    &set_id,
+                                    &version,
+                                    &gql_title,
+                                    &badge_info,
+                                );
                                 ProviderBadge {
-                                    id: set_id.clone(),
-                                    name: set_id,
+                                    id: set_id,
+                                    name,
                                     image_url,
                                 }
                             })

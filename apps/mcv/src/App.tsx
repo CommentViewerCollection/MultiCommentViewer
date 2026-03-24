@@ -411,6 +411,9 @@ function App() {
   const sidebarWidthRef = useRef(sidebarWidth)
   const sidebarWidthInitialized = useRef(false)
 
+  // サイドバー折りたたみ（起動時は常に展開）
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
   const isResizingMetadata = useRef(false)
   const metadataResizeStartY = useRef(0)
   const metadataResizeStartHeight = useRef(0)
@@ -442,6 +445,7 @@ function App() {
       }
     }
   }, [coreSettings])
+
 
   // coreSettings が初めてロードされたとき、metadata_height を反映（以降は変更しない）
   useEffect(() => {
@@ -522,6 +526,11 @@ function App() {
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
     e.preventDefault()
+  }
+
+  const handleToggleSidebar = () => {
+    const next = !isSidebarCollapsed
+    setIsSidebarCollapsed(next)
   }
 
   // DataGridのカラム定義
@@ -1664,16 +1673,38 @@ function App() {
       <div className="flex-1 flex overflow-hidden min-h-0">
       {/* サイドバー: 接続一覧 */}
       <div
-        style={{ width: sidebarWidth }}
-        className="shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full relative"
+        style={{ width: isSidebarCollapsed ? 32 : sidebarWidth }}
+        className="shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full relative overflow-hidden"
       >
+        {isSidebarCollapsed ? (
+          /* 折りたたみ時: 展開ボタンのみ */
+          <div className="flex flex-col items-center pt-3">
+            <button
+              onClick={handleToggleSidebar}
+              title="接続一覧を展開"
+              className="w-6 h-6 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-xl leading-none"
+            >
+              ›
+            </button>
+          </div>
+        ) : (
+        <>
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={handleAddConnection}
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
-          >
-            + 接続を追加
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAddConnection}
+              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
+            >
+              + 接続を追加
+            </button>
+            <button
+              onClick={handleToggleSidebar}
+              title="接続一覧を折りたたむ"
+              className="w-6 h-6 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-xl leading-none"
+            >
+              ‹
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-scroll p-4 space-y-2">
@@ -1954,6 +1985,8 @@ function App() {
           onMouseDown={handleResizeMouseDown}
           className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 transition-colors"
         />
+        </>
+        )}
       </div>
 
       {/* メインエリア */}

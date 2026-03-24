@@ -1247,6 +1247,7 @@ async fn metadata_polling_loop(
                     total_viewer_count: None,
                     start_time: info.start_time,
                     others: None,
+                    clear: None,
                 };
                 let msg = McvMessage::new_notification(
                     MessageType::StreamMetadata,

@@ -208,6 +208,7 @@ pub(crate) async fn on_message_impl(
                         total_viewer_count: None,
                         start_time,
                         others: None,
+                        clear: None,
                     })
                     .unwrap(),
                 );

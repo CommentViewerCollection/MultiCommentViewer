@@ -457,6 +457,7 @@ async fn handle_notification(
                     total_viewer_count: None,
                     start_time: None,
                     others: None,
+                    clear: None,
                 };
                 let msg = McvMessage::new_notification(
                     MessageType::StreamMetadata,

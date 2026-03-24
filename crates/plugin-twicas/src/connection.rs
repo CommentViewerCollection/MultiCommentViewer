@@ -678,6 +678,7 @@ async fn metadata_polling_loop(
                     total_viewer_count: None,
                     start_time: Some(info.started_at),
                     others: None,
+                    clear: None,
                 },
             )
             .await;
@@ -719,6 +720,7 @@ async fn metadata_polling_loop(
                         total_viewer_count: Some(status.movie.viewers.total),
                         start_time: None,
                         others: None,
+                        clear: None,
                     },
                 )
                 .await;

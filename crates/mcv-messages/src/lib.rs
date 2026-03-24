@@ -712,6 +712,10 @@ pub struct StreamMetadataPayload {
     /// その他：プラグインが任意の表示文字列を設定する。
     #[serde(skip_serializing_if = "Option::is_none")]
     pub others: Option<String>,
+    /// true の場合、フロントエンドはすべてのメタデータフィールドをリセットしてから
+    /// 同ペイロード内の値を適用する。配信終了など「クリーンスレート」が必要な場面で使う。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub clear: Option<bool>,
 }
 
 /// log-entryのpayload（プラグインからCoreへログ送信）

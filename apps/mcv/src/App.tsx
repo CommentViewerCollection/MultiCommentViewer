@@ -104,6 +104,7 @@ interface StreamMetadataPayload {
   total_viewer_count?: number
   start_time?: number
   others?: string
+  clear?: boolean
 }
 
 // メタデータビュー用の行データ
@@ -885,8 +886,9 @@ function App() {
       const p = event.payload
       setMetadataMap(prev => {
         const next = new Map(prev)
-        const existing = next.get(p.connection_id) ?? {}
-        next.set(p.connection_id, { ...existing, ...p })
+        // clear: true の場合は既存値を破棄してからマージ（配信終了など全フィールドリセット）
+        const base = p.clear ? {} : (next.get(p.connection_id) ?? {})
+        next.set(p.connection_id, { ...base, ...p })
         return next
       })
     })

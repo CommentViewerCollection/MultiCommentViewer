@@ -470,6 +470,76 @@ async fn handle_notification(
                 TwitchPlugin::send_message(ctx, msg).await;
             }
         }
+        "stream-up" => {
+            let server_time = pubsub["server_time"]
+                .as_i64()
+                .unwrap_or_else(|| chrono::Utc::now().timestamp());
+
+            // 配信開始時刻をメタデータとして即時送信
+            let metadata_payload = StreamMetadataPayload {
+                connection_id,
+                title: None,
+                viewer_count: None,
+                total_viewer_count: None,
+                start_time: Some(server_time),
+                others: None,
+                clear: None,
+            };
+            let metadata_msg = McvMessage::new_notification(
+                MessageType::StreamMetadata,
+                MessageSource::Plugin {
+                    plugin_id: logical_plugin_id.clone(),
+                },
+                MessageDestination::Core,
+                serde_json::to_value(metadata_payload).unwrap(),
+            );
+            TwitchPlugin::send_message(ctx.clone(), metadata_msg).await;
+
+            send_notice_message(
+                ctx,
+                logical_plugin_id,
+                connection_id,
+                channel_login,
+                server_time,
+                "配信が開始されました",
+            )
+            .await;
+        }
+        "stream-down" => {
+            let server_time = pubsub["server_time"]
+                .as_i64()
+                .unwrap_or_else(|| chrono::Utc::now().timestamp());
+
+            // 全メタデータを即時クリア（ポーリング周期を待たずに）
+            let clear_payload = StreamMetadataPayload {
+                connection_id,
+                title: None,
+                viewer_count: None,
+                total_viewer_count: None,
+                start_time: None,
+                others: None,
+                clear: Some(true),
+            };
+            let clear_msg = McvMessage::new_notification(
+                MessageType::StreamMetadata,
+                MessageSource::Plugin {
+                    plugin_id: logical_plugin_id.clone(),
+                },
+                MessageDestination::Core,
+                serde_json::to_value(clear_payload).unwrap(),
+            );
+            TwitchPlugin::send_message(ctx.clone(), clear_msg).await;
+
+            send_notice_message(
+                ctx,
+                logical_plugin_id,
+                connection_id,
+                channel_login,
+                server_time,
+                "配信が終了しました",
+            )
+            .await;
+        }
         "reward-redeemed" => {
             let redemption = &pubsub["data"]["redemption"];
             let user_id = redemption["user"]["id"].as_str().unwrap_or("").to_string();
@@ -541,4 +611,57 @@ async fn handle_notification(
             );
         }
     }
+}
+
+/// ユーザーなしのシステム通知メッセージを CommentReceived として送信する。
+async fn send_notice_message(
+    ctx: PluginContext,
+    logical_plugin_id: PluginId,
+    connection_id: Uuid,
+    channel_login: &str,
+    timestamp: i64,
+    text: &str,
+) {
+    let provider_msg = ProviderMessage {
+        id: Uuid::new_v4().to_string(),
+        platform_message_id: None,
+        service: ServiceId("twitch".to_string()),
+        channel: ChannelId(channel_login.to_string()),
+        sender: ProviderSender {
+            id: String::new(),
+            display_name: vec![],
+            badges: vec![],
+            role: None,
+            avatar_url: None,
+        },
+        timestamp,
+        kind: ProviderMessageKind::System(SystemKind::Notice),
+        content: ProviderContent::Text {
+            text: vec![MessagePart::Text {
+                text: text.to_string(),
+            }],
+        },
+        reply_to: None,
+        metadata: serde_json::Value::Null,
+    };
+    let envelope = McvEnvelope {
+        event_id: Uuid::new_v4(),
+        connection_id,
+        messages: vec![provider_msg],
+        received_at: chrono::Utc::now().timestamp(),
+        raw_message: None,
+    };
+    let msg = McvMessage::new_notification(
+        MessageType::CommentReceived,
+        MessageSource::Plugin {
+            plugin_id: logical_plugin_id,
+        },
+        MessageDestination::Core,
+        serde_json::to_value(CommentReceivedPayload {
+            connection_id,
+            envelope,
+        })
+        .unwrap(),
+    );
+    TwitchPlugin::send_message(ctx, msg).await;
 }

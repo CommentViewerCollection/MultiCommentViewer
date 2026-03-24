@@ -11,7 +11,7 @@ use mcv_messages::{
     AccountInfo, ChannelId, CommentReceivedPayload, DisconnectedPayload, McvEnvelope,
     Message as McvMessage, MessageDestination, MessagePart, MessageSource, MessageType, PluginId,
     ProviderBadge, ProviderContent, ProviderMessage, ProviderMessageKind, ProviderSender,
-    ServiceId, StreamMetadataPayload, UpdateConnectionAccountPayload,
+    ServiceId, StreamMetadataPayload, SystemKind, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::fs::OpenOptions;
@@ -937,6 +937,15 @@ impl Connection {
                     };
                     provider_messages.push(provider_msg);
                 }
+                TwitchEvent::UserNotice { channel, tags } => {
+                    if let Some(msg_id) = tags.get("msg-id") {
+                        if let Some(provider_msg) =
+                            build_usernotice_message(msg_id, &channel, &tags, connection_id)
+                        {
+                            provider_messages.push(provider_msg);
+                        }
+                    }
+                }
                 TwitchEvent::GlobalUserState {
                     display_name: Some(name),
                     user_id,
@@ -1106,6 +1115,77 @@ impl Connection {
         self.metadata_cancel_tx = None;
         self.task = None;
         self.running = false;
+    }
+}
+
+/// IRC USERNOTICE メッセージを ProviderMessage に変換する。
+///
+/// 対応している msg-id:
+/// - `viewermilestone` + `msg-param-category=watch-streak`: 連続視聴記録達成
+fn build_usernotice_message(
+    msg_id: &str,
+    channel: &str,
+    tags: &std::collections::HashMap<String, String>,
+    connection_id: Uuid,
+) -> Option<ProviderMessage> {
+    let _ = connection_id; // 将来の拡張用
+    match msg_id {
+        "viewermilestone" => {
+            let category = tags.get("msg-param-category").map(|s| s.as_str());
+            if category != Some("watch-streak") {
+                return None;
+            }
+            let display_name = tags.get("display-name").cloned().unwrap_or_default();
+            let user_id = tags.get("user-id").cloned().unwrap_or_default();
+            let streak: u64 = tags
+                .get("msg-param-value")
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0);
+            let copo_reward: u64 = tags
+                .get("msg-param-copoReward")
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(0);
+
+            let mut sender_parts = vec![MessagePart::Text {
+                text: display_name.clone(),
+            }];
+            if copo_reward > 0 {
+                sender_parts.push(MessagePart::Text {
+                    text: format!(" + ⭕ {}", copo_reward),
+                });
+            }
+
+            Some(ProviderMessage {
+                id: Uuid::new_v4().to_string(),
+                platform_message_id: tags.get("id").cloned(),
+                service: ServiceId("twitch".to_string()),
+                channel: ChannelId(channel.trim_start_matches('#').to_string()),
+                sender: ProviderSender {
+                    id: user_id,
+                    display_name: sender_parts,
+                    badges: vec![],
+                    role: None,
+                    avatar_url: None,
+                },
+                timestamp: tags
+                    .get("tmi-sent-ts")
+                    .and_then(|v| v.parse::<i64>().ok())
+                    .map(|ms| ms / 1000)
+                    .unwrap_or_else(|| chrono::Utc::now().timestamp()),
+                kind: ProviderMessageKind::System(SystemKind::Notice),
+                content: ProviderContent::Text {
+                    text: vec![MessagePart::Text {
+                        text: format!(
+                            "連続視聴記録達成！：{}さんは現在、{}連続視聴中です！",
+                            display_name, streak
+                        ),
+                    }],
+                },
+                reply_to: None,
+                metadata: serde_json::Value::Null,
+            })
+        }
+        _ => None,
     }
 }
 

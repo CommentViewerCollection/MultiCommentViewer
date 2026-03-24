@@ -29,6 +29,10 @@ pub enum TwitchEvent {
         display_name: Option<String>,
         user_id: Option<String>,
     },
+    UserNotice {
+        channel: String,
+        tags: HashMap<String, String>,
+    },
     Ping,
     Pong,
     Other(IrcMessage),
@@ -114,6 +118,17 @@ pub fn to_twitch_event(msg: IrcMessage) -> TwitchEvent {
             display_name: msg.tags.get("display-name").cloned(),
             user_id: msg.tags.get("user-id").cloned(),
         },
+
+        "USERNOTICE" => {
+            if let Some(channel) = msg.params.first() {
+                TwitchEvent::UserNotice {
+                    channel: channel.clone(),
+                    tags: msg.tags,
+                }
+            } else {
+                TwitchEvent::Other(msg)
+            }
+        }
 
         _ => TwitchEvent::Other(msg),
     }

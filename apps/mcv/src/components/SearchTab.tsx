@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 import { DataGrid, Column } from 'my-dataview'
-import type { Comment, ConnectionInfo } from '../App'
+import type { Comment, ConnectionInfo, MessagePart } from '../App'
 import type { ThemeColors } from '../theme'
 
 // @ts-ignore
@@ -50,6 +51,40 @@ export function SearchTab({ columns, renderCell, connections, themeColors, exter
       setIsSearching(false)
     }
   }, [connections])
+
+  // リアルタイムで届いたコメントを検索結果に追加
+  useEffect(() => {
+    if (!query.trim()) return
+
+    const qLower = query.toLowerCase()
+    const matchingConnectionIds = connections
+      .filter(c => c.name.toLowerCase().includes(qLower))
+      .map(c => c.connection_id)
+    const extractText = (parts: MessagePart[]) =>
+      parts.map(p => p.type === 'text' ? p.text : '').join('').toLowerCase()
+
+    const unlistenPromise = listen<Comment[]>('comment-received', event => {
+      const newMatches = event.payload
+        .filter(row =>
+          extractText(row.user_name).includes(qLower) ||
+          extractText(row.text).includes(qLower) ||
+          row.user_id.toLowerCase().includes(qLower) ||
+          (row.amount_text ?? '').toLowerCase().includes(qLower) ||
+          (row.connection_id != null && matchingConnectionIds.includes(row.connection_id))
+        )
+        .map(row => {
+          const conn = connections.find(c => c.connection_id === row.connection_id)
+          return { ...row, connection_name: conn?.name ?? row.connection_id }
+        })
+      if (newMatches.length > 0) {
+        setResults(prev => [...prev, ...newMatches])
+      }
+    })
+
+    return () => {
+      unlistenPromise.then(fn => fn())
+    }
+  }, [query, connections])
 
   useEffect(() => {
     if (externalQuery !== undefined) {

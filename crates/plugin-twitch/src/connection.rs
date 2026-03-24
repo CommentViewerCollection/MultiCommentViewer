@@ -922,7 +922,17 @@ impl Connection {
                         channel: ChannelId(channel.clone()),
                         sender: ProviderSender {
                             id: user.clone(),
-                            display_name: vec![MessagePart::Text { text: user.clone() }],
+                            display_name: vec![MessagePart::Text {
+                                // display-name が login と異なる（日本語名など）場合は
+                                // ブラウザ同様に "DisplayName (loginname)" と表示する
+                                text: match tags.get("display-name").filter(|s| !s.is_empty()) {
+                                    Some(dn) if dn.to_lowercase() != user => {
+                                        format!("{} ({})", dn, user)
+                                    }
+                                    Some(dn) => dn.clone(),
+                                    None => user.clone(),
+                                },
+                            }],
                             badges,
                             role: None,
                             avatar_url: None,

@@ -1489,9 +1489,15 @@ async fn get_plugins(state: State<'_, AppState>) -> Result<Vec<PluginInfoRespons
 
 #[cfg(feature = "comment-search")]
 #[tauri::command]
-fn search_comments(query: String, state: State<'_, AppState>) -> Result<Vec<CommentRow>, String> {
+fn search_comments(
+    query: String,
+    connection_ids: Vec<String>,
+    state: State<'_, AppState>,
+) -> Result<Vec<CommentRow>, String> {
     let store = state.comment_store.lock().map_err(|e| e.to_string())?;
-    store.search_comments(&query).map_err(|e| e.to_string())
+    store
+        .search_comments(&query, &connection_ids)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

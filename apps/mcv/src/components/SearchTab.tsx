@@ -28,8 +28,15 @@ export function SearchTab({ columns, renderCell, connections, themeColors, exter
     }
     setIsSearching(true)
     try {
+      // クエリに部分一致する接続名の接続IDを収集（接続名検索に対応）
+      const qLower = q.toLowerCase()
+      const matchingConnectionIds = connections
+        .filter(c => c.name.toLowerCase().includes(qLower))
+        .map(c => c.connection_id)
+
       const rows = await invoke<Comment[]>('search_comments', {
         query: q,
+        connectionIds: matchingConnectionIds,
       })
       // connection_id → connection_name に変換
       const withNames = rows.map(row => {

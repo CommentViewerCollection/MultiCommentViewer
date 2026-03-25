@@ -38,6 +38,25 @@ pub struct PluginChannels {
     pub alpha: Option<String>,
 }
 
+/// チャンネルごとの最小バージョン要件
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginMinVersion {
+    #[serde(default)]
+    pub stable: Option<String>,
+    #[serde(default)]
+    pub beta: Option<String>,
+    #[serde(default)]
+    pub alpha: Option<String>,
+}
+
+/// ブロックされたバージョン情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BlockedVersion {
+    pub version: String,
+    pub channel: String,
+    pub reason: Option<String>,
+}
+
 /// プラグイン一覧の各アイテム
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginListItem {
@@ -47,6 +66,12 @@ pub struct PluginListItem {
     pub channels: PluginChannels,
     #[serde(default)]
     pub download_count: u64,
+    /// チャンネルごとの最小バージョン要件（これ未満は強制アップデート対象）
+    #[serde(default)]
+    pub min_version: Option<PluginMinVersion>,
+    /// ブロックされたバージョン一覧（該当バージョンは強制アップデート対象）
+    #[serde(default)]
+    pub blocked_versions: Vec<BlockedVersion>,
 }
 
 /// プラグイン詳細レスポンス
@@ -177,7 +202,13 @@ impl UpdateChecker {
                 .and_then(|v| v.to_str().ok())
                 .map(|v| v.contains("application/json"))
                 .unwrap_or(false);
-            return if is_json { Ok(None) } else { Err(UpdateError::HttpError(response.error_for_status().unwrap_err())) };
+            return if is_json {
+                Ok(None)
+            } else {
+                Err(UpdateError::HttpError(
+                    response.error_for_status().unwrap_err(),
+                ))
+            };
         }
         if !response.status().is_success() {
             return Err(UpdateError::HttpError(
@@ -197,13 +228,19 @@ impl UpdateChecker {
     }
     fn get_mcv_update_endpoint(&self, api_base_url: impl Into<String>) -> String {
         #[cfg(feature = "alpha")]
-        { format!("{}/api/mcv/core/latest/alpha", api_base_url.into()) }
+        {
+            format!("{}/api/mcv/core/latest/alpha", api_base_url.into())
+        }
 
         #[cfg(all(feature = "beta", not(feature = "alpha")))]
-        { format!("{}/api/mcv/core/latest/beta", api_base_url.into()) }
+        {
+            format!("{}/api/mcv/core/latest/beta", api_base_url.into())
+        }
 
         #[cfg(not(any(feature = "alpha", feature = "beta")))]
-        { format!("{}/api/mcv/core/latest/stable", api_base_url.into()) }
+        {
+            format!("{}/api/mcv/core/latest/stable", api_base_url.into())
+        }
     }
     /// mcv本体の更新をチェック
     ///
@@ -235,7 +272,13 @@ impl UpdateChecker {
                 .and_then(|v| v.to_str().ok())
                 .map(|v| v.contains("application/json"))
                 .unwrap_or(false);
-            return if is_json { Ok(None) } else { Err(UpdateError::HttpError(response.error_for_status().unwrap_err())) };
+            return if is_json {
+                Ok(None)
+            } else {
+                Err(UpdateError::HttpError(
+                    response.error_for_status().unwrap_err(),
+                ))
+            };
         }
         if !response.status().is_success() {
             return Err(UpdateError::HttpError(

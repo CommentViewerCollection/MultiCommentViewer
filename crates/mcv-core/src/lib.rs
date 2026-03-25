@@ -149,6 +149,19 @@ impl PluginManager {
             return None;
         }
 
+        // .deleted.plugin.json が存在する → 強制アップデートで plugin.json がリネームされた
+        // この時点では DLL がアンロード済みなので、ディレクトリごと削除してクリーンアップ
+        let deleted_manifest = dir_path.join(".deleted.plugin.json");
+        if deleted_manifest.exists() {
+            tracing::info!(
+                target: "mcv::core::PluginManager",
+                dir = %dir_path.display(),
+                "Found .deleted.plugin.json — removing directory to complete forced update"
+            );
+            let _ = std::fs::remove_dir_all(&dir_path);
+            return None;
+        }
+
         let manifest_path = dir_path.join("plugin.json");
         if !manifest_path.exists() {
             return None;
@@ -193,8 +206,16 @@ impl PluginManager {
         let plugins_dir = zip_path.parent()?;
         let cache_dir = plugins_dir.join(".cache").join(&stem);
 
-        // キャッシュが存在しない場合はZIPを展開する
-        if !cache_dir.exists() {
+        // キャッシュが存在しない場合、または強制アップデートマーカーが存在する場合はZIPを展開する
+        let marker_path = plugins_dir.join(format!(".force-update-{}", &stem));
+        let need_extract = !cache_dir.exists() || marker_path.exists();
+        if need_extract {
+            if cache_dir.exists() {
+                tracing::info!(target: "mcv::core::PluginManager", cache = %cache_dir.display(), "Removing stale cache to re-extract updated ZIP");
+                if let Err(e) = std::fs::remove_dir_all(&cache_dir) {
+                    tracing::warn!(target: "mcv::core::PluginManager", error = %e, cache = %cache_dir.display(), "Failed to remove stale cache");
+                }
+            }
             tracing::info!(target: "mcv::core::PluginManager", zip = %zip_path.display(), cache = %cache_dir.display(), "Extracting plugin ZIP to cache");
             if let Err(e) = std::fs::create_dir_all(&cache_dir) {
                 tracing::error!(target: "mcv::core::PluginManager", error = %e, "Failed to create cache directory");
@@ -247,6 +268,8 @@ impl PluginManager {
                     }
                 }
             }
+            // 展開完了 → マーカーを削除（ZIP のみインストールの場合はここで削除）
+            let _ = std::fs::remove_file(&marker_path);
         }
 
         let manifest_path = cache_dir.join("plugin.json");

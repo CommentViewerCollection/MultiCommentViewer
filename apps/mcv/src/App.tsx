@@ -260,6 +260,14 @@ function App() {
   const [elapsedTick, setElapsedTick] = useState(0)
   const [metadataHeight, setMetadataHeight] = useState(150)
 
+  type ConstraintNotificationItem = {
+    id: number
+    action: 'updated' | 'update_failed' | 'no_update_available'
+    pluginId: string
+    reason: string | null
+  }
+  const [constraintNotifications, setConstraintNotifications] = useState<ConstraintNotificationItem[]>([])
+
   type FrontendTraceSource = {
     file: string
     line: number
@@ -893,6 +901,25 @@ function App() {
       })
     })
 
+    // プラグイン強制アップデート結果イベントをリッスン
+    const unlistenConstraints = listen<{ id: string; action: string; reason: string | null }[]>(
+      'plugin-constraints-applied',
+      (event) => {
+        const items = event.payload.map((r, i) => ({
+          id: Date.now() + i,
+          action: r.action as ConstraintNotificationItem['action'],
+          pluginId: r.id,
+          reason: r.reason,
+        }))
+        setConstraintNotifications((prev) => [...prev, ...items])
+        // 8秒後に自動消去
+        setTimeout(() => {
+          const ids = new Set(items.map((it) => it.id))
+          setConstraintNotifications((prev) => prev.filter((n) => !ids.has(n.id)))
+        }, 8000)
+      }
+    )
+
     return () => {
       unlistenComment.then((fn) => fn())
       unlistenDeleteAll.then((fn) => fn())
@@ -904,6 +931,7 @@ function App() {
       unlistenBrowserRemoved.then((fn) => fn())
       unlistenAccountUpdated.then((fn) => fn())
       unlistenStreamMetadata.then((fn) => fn())
+      unlistenConstraints.then((fn) => fn())
       startupRetryTimers.forEach((timerId) => clearTimeout(timerId))
       if (flushTimerRef.current !== null) {
         clearTimeout(flushTimerRef.current)
@@ -1671,6 +1699,48 @@ function App() {
       className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden"
       onClick={() => contextMenu && setContextMenu(null)}
     >
+      {/* プラグイン強制アップデート通知 */}
+      {constraintNotifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs">
+          {constraintNotifications.map((n) => (
+            <div
+              key={n.id}
+              className={`flex items-start gap-2 px-3 py-2 rounded shadow-lg text-sm text-white ${
+                n.action === 'updated'
+                  ? 'bg-green-600'
+                  : n.action === 'update_failed'
+                    ? 'bg-red-600'
+                    : 'bg-yellow-600'
+              }`}
+            >
+              <span className="mt-0.5">
+                {n.action === 'updated' ? '✓' : n.action === 'update_failed' ? '✗' : '⚠'}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">{n.pluginId}</div>
+                <div className="opacity-90">
+                  {n.action === 'updated'
+                    ? '強制アップデートしました'
+                    : n.action === 'update_failed'
+                      ? `アップデート失敗: ${n.reason ?? ''}`
+                      : 'アップデート先が存在しません'}
+                </div>
+                {n.reason && n.action !== 'update_failed' && (
+                  <div className="opacity-75 text-xs mt-0.5">{n.reason}</div>
+                )}
+              </div>
+              <button
+                onClick={() =>
+                  setConstraintNotifications((prev) => prev.filter((x) => x.id !== n.id))
+                }
+                className="opacity-75 hover:opacity-100 ml-1 shrink-0"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <TitleBar themeColors={currentThemeColors} />
       <div className="flex-1 flex overflow-hidden min-h-0">
       {/* サイドバー: 接続一覧 */}

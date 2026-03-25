@@ -31,7 +31,10 @@ use mcv_messages::{
     ProviderMessageKind, SendCommentPayload, SendCommentSchemaPayload, SetSiteNgUsersPayload,
     SiteInfo as MsgSiteInfo, SystemKind,
 };
-use mcv_updater::{McvUpdateInfo, PluginListItem, PluginVersionDetail, UpdateChecker};
+use mcv_updater::{
+    BlockedVersion, McvUpdateInfo, PluginListItem, PluginMinVersion, PluginVersionDetail,
+    UpdateChecker,
+};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -154,6 +157,65 @@ struct AppState {
     core_addr: Addr<CoreActor>,
     plugin_manager: Arc<tokio::sync::Mutex<PluginManager>>,
     comment_store: Arc<Mutex<comment_store::CommentStore>>,
+}
+
+// ---- プラグイン制約キャッシュ ----
+
+/// キャッシュファイル内の1プラグイン分の制約情報
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct PluginConstraintEntry {
+    id: String,
+    #[serde(default)]
+    min_version: Option<PluginMinVersion>,
+    #[serde(default)]
+    blocked_versions: Vec<BlockedVersion>,
+    /// このチャンネルの最新バージョン（強制アップデート先として使用）
+    #[serde(default)]
+    channels: Option<mcv_updater::PluginChannels>,
+}
+
+/// settings/plugin-constraints.json に保存するキャッシュ全体
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct PluginConstraintsCache {
+    fetched_at: String,
+    constraints: Vec<PluginConstraintEntry>,
+}
+
+/// フロントエンドへ返す制約ステータス（インストール済みプラグインごと）
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct PluginConstraintStatus {
+    pub id: String,
+    /// "ok" | "blocked" | "below_min_version"
+    pub status: String,
+    pub reason: Option<String>,
+}
+
+/// settings/plugin-constraints.json を読み込む
+fn load_plugin_constraints(settings_dir: &std::path::Path) -> Option<PluginConstraintsCache> {
+    let path = settings_dir.join("plugin-constraints.json");
+    let content = std::fs::read(&path).ok()?;
+    serde_json::from_slice(&content).ok()
+}
+
+/// settings/plugin-constraints.json に書き込む
+fn save_plugin_constraints(settings_dir: &std::path::Path, cache: &PluginConstraintsCache) {
+    let path = settings_dir.join("plugin-constraints.json");
+    if let Ok(json) = serde_json::to_string_pretty(cache) {
+        let _ = std::fs::write(&path, json);
+    }
+}
+
+/// "X.Y.Z" 形式のバージョン文字列を比較する
+fn compare_semver(a: &str, b: &str) -> std::cmp::Ordering {
+    let parse = |s: &str| -> (u64, u64, u64) {
+        let parts: Vec<u64> = s.split('.').filter_map(|p| p.parse().ok()).collect();
+        (
+            parts.first().copied().unwrap_or(0),
+            parts.get(1).copied().unwrap_or(0),
+            parts.get(2).copied().unwrap_or(0),
+        )
+    };
+    parse(a).cmp(&parse(b))
 }
 
 // ヘルパー関数
@@ -932,13 +994,13 @@ async fn apply_core_update(zip_path: String, app_handle: AppHandle) -> Result<()
     Ok(())
 }
 
-/// レジストリからプラグインZIPをダウンロードしてインストール
-#[tauri::command]
-async fn install_registry_plugin(
+/// プラグインインストールの共通実装
+async fn install_registry_plugin_internal(
     plugin_id: String,
     version: String,
     channel: String,
-    state: tauri::State<'_, AppState>,
+    core_addr: Addr<CoreActor>,
+    plugin_manager: Arc<tokio::sync::Mutex<PluginManager>>,
 ) -> Result<(), String> {
     let updater = UpdateChecker::new(API_BASE_URL);
     let plugin_detail = updater
@@ -980,19 +1042,319 @@ async fn install_registry_plugin(
     let cache_dir = plugin_dir.join(".cache").join(&plugin_id);
     let _ = std::fs::remove_dir_all(&cache_dir);
 
+    // ディレクトリ形式で同じ plugin_id のプラグインが存在する場合は
+    // plugin.json を .deleted.plugin.json にリネームして削除待ちとしてマーク
+    // （plugin.json は DLL と異なりロックされないため実行中でもリネーム可能）
+    if let Ok(entries) = std::fs::read_dir(&plugin_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+            let manifest = path.join("plugin.json");
+            if let Some((id, _, _)) = read_plugin_manifest(&manifest) {
+                if id == plugin_id {
+                    let deleted = path.join(".deleted.plugin.json");
+                    if let Err(e) = std::fs::rename(&manifest, &deleted) {
+                        tracing::warn!(
+                            target: "mcv::main",
+                            error = %e,
+                            path = %manifest.display(),
+                            "Failed to rename plugin.json to .deleted.plugin.json"
+                        );
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    // ZIP 形式でインストール済みの場合にキャッシュ強制再展開を促すマーカーを作成
+    // （上記キャッシュ削除が DLL ロックで失敗した場合のフォールバック）
+    let marker = plugin_dir.join(format!(".force-update-{}", plugin_id));
+    let _ = std::fs::write(&marker, version.as_bytes());
+
     let _ = std::fs::remove_file(&zip_path);
 
     // actix コンテキスト内で新プラグインをスキャン・ロードする
-    state
-        .core_addr
+    core_addr
         .send(ScanAndLoadNewPlugins {
-            plugin_manager: Arc::clone(&state.plugin_manager),
+            plugin_manager,
             plugins_dir: plugin_dir,
         })
         .await
         .map_err(|e| format!("Failed to load plugin after install: {}", e))?;
 
     Ok(())
+}
+
+/// レジストリからプラグインZIPをダウンロードしてインストール
+#[tauri::command]
+async fn install_registry_plugin(
+    plugin_id: String,
+    version: String,
+    channel: String,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    install_registry_plugin_internal(
+        plugin_id,
+        version,
+        channel,
+        state.core_addr.clone(),
+        Arc::clone(&state.plugin_manager),
+    )
+    .await
+}
+
+/// 制約違反プラグインの強制アップデートチェックを実行する（バックグラウンド用）
+///
+/// 1. レジストリからプラグイン一覧（制約情報込み）を取得してキャッシュに保存
+/// 2. インストール済みプラグインと照合
+/// 3. ブロック済み・min_version 未満のプラグインを強制アップデート
+/// 4. 結果を "plugin-constraints-applied" イベントでフロントエンドへ通知
+async fn run_plugin_constraint_check(
+    settings_dir: &std::path::Path,
+    app_handle: &AppHandle,
+    core_addr: Addr<CoreActor>,
+    plugin_manager: Arc<tokio::sync::Mutex<PluginManager>>,
+) {
+    let updater = UpdateChecker::new(API_BASE_URL);
+
+    // レジストリからプラグイン一覧を取得
+    let plugins = match updater.list_plugins().await {
+        Ok(p) => {
+            // キャッシュに保存
+            let cache = PluginConstraintsCache {
+                fetched_at: {
+                    use std::time::{SystemTime, UNIX_EPOCH};
+                    let secs = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs();
+                    format!("{}", secs)
+                },
+                constraints: p
+                    .iter()
+                    .map(|item| PluginConstraintEntry {
+                        id: item.id.clone(),
+                        min_version: item.min_version.clone(),
+                        blocked_versions: item.blocked_versions.clone(),
+                        channels: Some(item.channels.clone()),
+                    })
+                    .collect(),
+            };
+            save_plugin_constraints(settings_dir, &cache);
+            p
+        }
+        Err(e) => {
+            tracing::warn!(
+                target: "mcv::main",
+                error = %e,
+                "制約チェック: レジストリへの接続に失敗。キャッシュを使用します"
+            );
+            // オフライン時はキャッシュから読み込むが、ダウンロードが必要な強制アップデートは実行不可
+            return;
+        }
+    };
+
+    // インストール済みプラグインを取得
+    let plugin_dir = get_plugin_dir();
+    let installed = match scan_installed_plugins(&plugin_dir) {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::warn!(target: "mcv::main", error = %e, "制約チェック: インストール済みプラグインの取得に失敗");
+            return;
+        }
+    };
+
+    #[derive(serde::Serialize, Clone)]
+    struct ConstraintResult {
+        id: String,
+        /// "updated" | "update_failed" | "no_update_available"
+        action: String,
+        reason: Option<String>,
+    }
+
+    let mut results: Vec<ConstraintResult> = Vec::new();
+
+    for inst in &installed {
+        let Some(registry) = plugins.iter().find(|p| p.id == inst.id) else {
+            continue;
+        };
+
+        let channel = inst.channel.as_deref().unwrap_or("stable");
+        let version = inst.version.as_deref().unwrap_or("0.0.0");
+
+        // ブロックチェック
+        let blocked = registry
+            .blocked_versions
+            .iter()
+            .find(|b| b.version == version && b.channel == channel);
+
+        // min_version チェック
+        let below_min = registry.min_version.as_ref().and_then(|mv| {
+            let min = match channel {
+                "stable" => mv.stable.as_deref(),
+                "beta" => mv.beta.as_deref(),
+                "alpha" => mv.alpha.as_deref(),
+                _ => None,
+            };
+            min.filter(|min_str| compare_semver(version, min_str) == std::cmp::Ordering::Less)
+        });
+
+        if blocked.is_none() && below_min.is_none() {
+            continue;
+        }
+
+        let reason = blocked
+            .and_then(|b| b.reason.as_deref())
+            .or(below_min.map(|_| "最小バージョン要件を満たしていません"))
+            .map(|s| s.to_string());
+
+        tracing::warn!(
+            target: "mcv::main",
+            id = %inst.id,
+            version = %version,
+            channel = %channel,
+            reason = ?reason,
+            "制約違反プラグインを強制アップデートします"
+        );
+
+        // アップデート先バージョンを決定（そのチャンネルの最新版）
+        let latest = match channel {
+            "stable" => registry.channels.stable.as_deref(),
+            "beta" => registry.channels.beta.as_deref(),
+            "alpha" => registry.channels.alpha.as_deref(),
+            _ => None,
+        };
+
+        match latest {
+            Some(new_version) => {
+                match install_registry_plugin_internal(
+                    inst.id.clone(),
+                    new_version.to_string(),
+                    channel.to_string(),
+                    core_addr.clone(),
+                    Arc::clone(&plugin_manager),
+                )
+                .await
+                {
+                    Ok(()) => {
+                        tracing::info!(
+                            target: "mcv::main",
+                            id = %inst.id,
+                            from = %version,
+                            to = %new_version,
+                            "強制アップデート完了"
+                        );
+                        results.push(ConstraintResult {
+                            id: inst.id.clone(),
+                            action: "updated".to_string(),
+                            reason,
+                        });
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            target: "mcv::main",
+                            id = %inst.id,
+                            error = %e,
+                            "強制アップデート失敗"
+                        );
+                        results.push(ConstraintResult {
+                            id: inst.id.clone(),
+                            action: "update_failed".to_string(),
+                            reason: Some(e),
+                        });
+                    }
+                }
+            }
+            None => {
+                tracing::warn!(
+                    target: "mcv::main",
+                    id = %inst.id,
+                    channel = %channel,
+                    "制約違反だがアップデート先バージョンが存在しません"
+                );
+                results.push(ConstraintResult {
+                    id: inst.id.clone(),
+                    action: "no_update_available".to_string(),
+                    reason,
+                });
+            }
+        }
+    }
+
+    if !results.is_empty() {
+        let _ = app_handle.emit("plugin-constraints-applied", &results);
+    }
+}
+
+/// キャッシュを元にインストール済みプラグインの制約ステータスを返す
+#[tauri::command]
+async fn get_plugin_constraint_status(
+    state: tauri::State<'_, SettingsDirState>,
+) -> Result<Vec<PluginConstraintStatus>, String> {
+    let settings_dir = state.settings_dir.clone();
+    let cache = match load_plugin_constraints(&settings_dir) {
+        Some(c) => c,
+        None => return Ok(vec![]),
+    };
+
+    let plugin_dir = get_plugin_dir();
+    let installed = match scan_installed_plugins(&plugin_dir) {
+        Ok(p) => p,
+        Err(_) => return Ok(vec![]),
+    };
+
+    let mut results = Vec::new();
+    for inst in &installed {
+        let Some(entry) = cache.constraints.iter().find(|c| c.id == inst.id) else {
+            continue;
+        };
+
+        let channel = inst.channel.as_deref().unwrap_or("stable");
+        let version = inst.version.as_deref().unwrap_or("0.0.0");
+
+        if let Some(b) = entry
+            .blocked_versions
+            .iter()
+            .find(|b| b.version == version && b.channel == channel)
+        {
+            results.push(PluginConstraintStatus {
+                id: inst.id.clone(),
+                status: "blocked".to_string(),
+                reason: b.reason.clone(),
+            });
+            continue;
+        }
+
+        let below_min = entry.min_version.as_ref().and_then(|mv| {
+            let min = match channel {
+                "stable" => mv.stable.as_deref(),
+                "beta" => mv.beta.as_deref(),
+                "alpha" => mv.alpha.as_deref(),
+                _ => None,
+            };
+            min.filter(|min_str| compare_semver(version, min_str) == std::cmp::Ordering::Less)
+        });
+
+        if let Some(min_str) = below_min {
+            results.push(PluginConstraintStatus {
+                id: inst.id.clone(),
+                status: "below_min_version".to_string(),
+                reason: Some(format!("v{} 以上が必要です", min_str)),
+            });
+            continue;
+        }
+
+        results.push(PluginConstraintStatus {
+            id: inst.id.clone(),
+            status: "ok".to_string(),
+            reason: None,
+        });
+    }
+
+    Ok(results)
 }
 
 /// plugin.json から id フィールドを読み取る（BOM 対応）
@@ -1020,15 +1382,11 @@ struct InstalledPluginMeta {
     channel: Option<String>,
 }
 
-/// pluginsディレクトリをスキャンしてインストール済みプラグイン一覧を返す
-///
-/// - ディレクトリ形式（{id}/plugin.json）: manifest の `id`・`version`・`channel` を使用
-/// - ZIP 形式（*.zip）: `.cache/{stem}/plugin.json` から `id`・`version`・`channel` を取得
-///   （ZIP ファイル名は `{id}-{version}-{channel}.zip` などで変わりうるため、
-///   ファイル名ステムではなく plugin.json の `id` フィールドを使用する）
-fn scan_installed_plugins(
-    plugin_dir: &std::path::Path,
-) -> Result<Vec<InstalledPluginMeta>, String> {
+/// plugin.json を読んで (id, version, channel) を返す（BOM 対応）
+/// id が空文字列の場合は None を返す
+fn read_plugin_manifest(
+    path: &std::path::Path,
+) -> Option<(String, Option<String>, Option<String>)> {
     #[derive(serde::Deserialize)]
     struct PluginJsonFull {
         #[serde(default)]
@@ -1038,18 +1396,27 @@ fn scan_installed_plugins(
         #[serde(default)]
         channel: Option<String>,
     }
-    let try_read_full =
-        |path: &std::path::Path| -> Option<(String, Option<String>, Option<String>)> {
-            let content = std::fs::read(path).ok()?;
-            let content = if content.starts_with(b"\xEF\xBB\xBF") {
-                &content[3..]
-            } else {
-                &content[..]
-            };
-            let meta: PluginJsonFull = serde_json::from_slice(content).ok()?;
-            let id = meta.id.filter(|s| !s.is_empty())?;
-            Some((id, meta.version, meta.channel))
-        };
+    let content = std::fs::read(path).ok()?;
+    let content = if content.starts_with(b"\xEF\xBB\xBF") {
+        &content[3..]
+    } else {
+        &content[..]
+    };
+    let meta: PluginJsonFull = serde_json::from_slice(content).ok()?;
+    let id = meta.id.filter(|s| !s.is_empty())?;
+    Some((id, meta.version, meta.channel))
+}
+
+/// pluginsディレクトリをスキャンしてインストール済みプラグイン一覧を返す
+///
+/// - ディレクトリ形式（{id}/plugin.json）: manifest の `id`・`version`・`channel` を使用
+/// - ZIP 形式（*.zip）: `.cache/{stem}/plugin.json` から `id`・`version`・`channel` を取得
+///   （ZIP ファイル名は `{id}-{version}-{channel}.zip` などで変わりうるため、
+///   ファイル名ステムではなく plugin.json の `id` フィールドを使用する）
+fn scan_installed_plugins(
+    plugin_dir: &std::path::Path,
+) -> Result<Vec<InstalledPluginMeta>, String> {
+    let try_read_full = read_plugin_manifest;
 
     if !plugin_dir.exists() {
         return Ok(vec![]);
@@ -1071,6 +1438,12 @@ fn scan_installed_plugins(
             };
             // 隠しディレクトリ（.cache 等）はスキップ
             if dir_name.starts_with('.') {
+                continue;
+            }
+            // .deleted.plugin.json が存在する → plugin.json がリネームされた削除待ち状態
+            // plugin.json が存在しないためこの後の exists() チェックで自然にスキップされるが、
+            // 明示的にここでスキップして意図を示す
+            if path.join(".deleted.plugin.json").exists() {
                 continue;
             }
             let manifest_path = path.join("plugin.json");
@@ -1686,6 +2059,13 @@ fn show_write_restricted_error(dir: &std::path::Path) {
     }
 }
 
+/// プラグインロードフェーズ。watch チャンネルで状態遷移を通知する。
+#[derive(Debug, Clone, PartialEq)]
+enum PluginsPhase {
+    Loading,
+    Ready,
+}
+
 fn main() {
     // 実行ファイルのあるディレクトリへの書き込み可否を確認する
     // ZIP 配布で Program Files 等の書き込み制限フォルダーに展開された場合に早期終了する
@@ -1751,6 +2131,10 @@ fn main() {
     // ログディレクトリを作成（EXEプラグインのセッションDB保存先）
     let logs_dir = app_data_dir.join("logs");
     std::fs::create_dir_all(&logs_dir).expect("Failed to create logs directory");
+
+    // プラグインロード完了を通知する watch チャンネル
+    let (plugins_phase_tx, mut plugins_phase_rx) =
+        tokio::sync::watch::channel(PluginsPhase::Loading);
 
     // actixのシステムをセットアップするためのチャネル
     let (tx, rx) = std::sync::mpsc::channel();
@@ -2119,6 +2503,9 @@ fn main() {
 
             tracing::info!(target: "mcv::main", count = loaded_plugins.len(), "Loaded DLL plugins");
 
+            // プラグインロード完了を通知
+            let _ = plugins_phase_tx.send(PluginsPhase::Ready);
+
             // ロードされた物理プラグインをCoreActorに登録
             for loaded_info in loaded_plugins {
                 tracing::debug!(
@@ -2210,6 +2597,34 @@ fn main() {
                     tracing::debug!(target: "mcv::main", "AppHandle set successfully");
                 });
             });
+
+            // 起動時プラグイン制約チェック（バックグラウンド）
+            {
+                let constraint_handle = app.handle().clone();
+                let constraint_settings_dir = settings_dir_for_tauri.clone();
+                let (constraint_core_addr, constraint_plugin_manager) = {
+                    let s = app.state::<AppState>();
+                    (s.core_addr.clone(), Arc::clone(&s.plugin_manager))
+                };
+                std::thread::spawn(move || {
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    rt.block_on(async move {
+                        // プラグインロード完了を watch チャンネルで待機
+                        let _ = plugins_phase_rx
+                            .wait_for(|p| *p == PluginsPhase::Ready)
+                            .await;
+                        tracing::info!(target: "mcv::main", "プラグイン制約チェックを開始");
+                        run_plugin_constraint_check(
+                            &constraint_settings_dir,
+                            &constraint_handle,
+                            constraint_core_addr,
+                            constraint_plugin_manager,
+                        )
+                        .await;
+                    });
+                });
+            }
+
             Ok(())
         })
         .manage(app_state)
@@ -2248,7 +2663,8 @@ fn main() {
             get_users,
             detect_url,
             get_column_settings,
-            save_column_settings
+            save_column_settings,
+            get_plugin_constraint_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

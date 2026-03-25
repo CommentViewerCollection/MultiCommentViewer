@@ -268,6 +268,15 @@ function App() {
   }
   const [constraintNotifications, setConstraintNotifications] = useState<ConstraintNotificationItem[]>([])
 
+  type CoreUpdateRequired = {
+    target_version: string
+    channel: string
+    sha256: string
+  }
+  const [coreUpdateRequired, setCoreUpdateRequired] = useState<CoreUpdateRequired | null>(null)
+  const [coreUpdating, setCoreUpdating] = useState(false)
+  const [coreUpdateError, setCoreUpdateError] = useState<string | null>(null)
+
   type FrontendTraceSource = {
     file: string
     line: number
@@ -920,6 +929,12 @@ function App() {
       }
     )
 
+    // core 強制アップデート要求イベントをリッスン
+    const unlistenCoreUpdate = listen<CoreUpdateRequired>('core-update-required', (event) => {
+      setCoreUpdateRequired(event.payload)
+      setCoreUpdateError(null)
+    })
+
     return () => {
       unlistenComment.then((fn) => fn())
       unlistenDeleteAll.then((fn) => fn())
@@ -932,12 +947,23 @@ function App() {
       unlistenAccountUpdated.then((fn) => fn())
       unlistenStreamMetadata.then((fn) => fn())
       unlistenConstraints.then((fn) => fn())
+      unlistenCoreUpdate.then((fn) => fn())
       startupRetryTimers.forEach((timerId) => clearTimeout(timerId))
       if (flushTimerRef.current !== null) {
         clearTimeout(flushTimerRef.current)
         flushTimerRef.current = null
       }
     }
+  }, [])
+
+  useEffect(() => {
+    // 起動時に pending な core アップデートを取得（イベントより先に制約チェックが完了した場合のフォールバック）
+    invoke<CoreUpdateRequired | null>('get_pending_core_update').then((payload) => {
+      if (payload) {
+        setCoreUpdateRequired(payload)
+        setCoreUpdateError(null)
+      }
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -1441,6 +1467,26 @@ function App() {
     }
   }
 
+  // core 強制アップデート: ダウンロード → 適用 → 再起動
+  const handleForcedCoreUpdate = async () => {
+    if (!coreUpdateRequired) return
+    setCoreUpdating(true)
+    setCoreUpdateError(null)
+    try {
+      const zipPath = await invoke<string>('download_core_update', {
+        version: coreUpdateRequired.target_version,
+        channel: coreUpdateRequired.channel,
+        sha256: coreUpdateRequired.sha256,
+      })
+      await invoke('apply_core_update', { zipPath })
+    } catch (error) {
+      console.error('Failed to apply forced core update:', error)
+      setCoreUpdateError(`${error}`)
+      setCoreUpdating(false)
+      setCoreUpdateRequired(null)
+    }
+  }
+
   const compareVersions = (a: string, b: string): number => {
     const aParts = a.split('.').map(Number)
     const bParts = b.split('.').map(Number)
@@ -1699,6 +1745,36 @@ function App() {
       className="h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden"
       onClick={() => contextMenu && setContextMenu(null)}
     >
+      {/* core 強制アップデートモーダル（他操作をすべてブロック） */}
+      {coreUpdateRequired && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 flex flex-col gap-4">
+            <div className="text-lg font-bold text-red-600 dark:text-red-400">
+              アップデートが必要です
+            </div>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              現在のバージョンには重大な問題があるため、アップデートが必要です。
+              アップデートして再起動してください。
+            </p>
+            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-100 dark:bg-gray-700 rounded px-3 py-2">
+              v{coreUpdateRequired.target_version} ({coreUpdateRequired.channel}) へ更新
+            </div>
+            {coreUpdateError && (
+              <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded px-3 py-2">
+                失敗: {coreUpdateError}
+              </div>
+            )}
+            <button
+              onClick={handleForcedCoreUpdate}
+              disabled={coreUpdating}
+              className="w-full py-2.5 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {coreUpdating ? 'ダウンロード中...' : 'アップデートして再起動'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* プラグイン強制アップデート通知 */}
       {constraintNotifications.length > 0 && (
         <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs">

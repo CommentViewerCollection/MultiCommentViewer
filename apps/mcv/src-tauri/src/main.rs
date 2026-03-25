@@ -157,6 +157,15 @@ struct AppState {
     core_addr: Addr<CoreActor>,
     plugin_manager: Arc<tokio::sync::Mutex<PluginManager>>,
     comment_store: Arc<Mutex<comment_store::CommentStore>>,
+    /// 起動時の core 制約チェック結果（フロントエンドが未ロードのまま emit されるのを防ぐためキャッシュ）
+    pending_core_update: Arc<tokio::sync::Mutex<Option<CoreUpdatePayload>>>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct CoreUpdatePayload {
+    target_version: String,
+    channel: String,
+    sha256: String,
 }
 
 // ---- プラグイン制約キャッシュ ----
@@ -1104,6 +1113,112 @@ async fn install_registry_plugin(
         Arc::clone(&state.plugin_manager),
     )
     .await
+}
+
+/// ビルドチャンネルを返す
+fn get_current_channel() -> &'static str {
+    #[cfg(feature = "alpha")]
+    {
+        "alpha"
+    }
+    #[cfg(all(feature = "beta", not(feature = "alpha")))]
+    {
+        "beta"
+    }
+    #[cfg(not(any(feature = "alpha", feature = "beta")))]
+    {
+        "stable"
+    }
+}
+
+/// core 本体の強制アップデートチェックを実行する（バックグラウンド用）
+///
+/// 1. レジストリから core 制約情報を取得
+/// 2. 現在バージョンがブロック済みまたは min_version 未満の場合に
+///    結果を pending_core_update に格納し "core-update-required" イベントも emit する
+async fn run_core_constraint_check(
+    app_handle: &AppHandle,
+    pending: Arc<tokio::sync::Mutex<Option<CoreUpdatePayload>>>,
+) {
+    let channel = get_current_channel();
+    let current_version = env!("CARGO_PKG_VERSION");
+    let updater = UpdateChecker::new(API_BASE_URL);
+
+    let constraints = match updater.get_core_constraints(channel).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::warn!(
+                target: "mcv::main",
+                error = %e,
+                "core 制約チェック: レジストリへの接続に失敗"
+            );
+            return;
+        }
+    };
+
+    // ブロックチェック
+    let is_blocked = constraints
+        .blocked_versions
+        .iter()
+        .any(|b| b.version == current_version);
+
+    // min_version チェック
+    let below_min = constraints
+        .min_version
+        .as_deref()
+        .filter(|min| compare_semver(current_version, min) == std::cmp::Ordering::Less)
+        .is_some();
+
+    if !is_blocked && !below_min {
+        tracing::info!(
+            target: "mcv::main",
+            version = current_version,
+            channel = channel,
+            "core 制約チェック: 問題なし"
+        );
+        return;
+    }
+
+    let Some(target_version) = constraints.latest else {
+        tracing::warn!(
+            target: "mcv::main",
+            version = current_version,
+            channel = channel,
+            "core 制約違反だがアップデート先バージョンが存在しません"
+        );
+        return;
+    };
+
+    tracing::warn!(
+        target: "mcv::main",
+        current = current_version,
+        target = %target_version,
+        channel = channel,
+        is_blocked = is_blocked,
+        below_min = below_min,
+        "core 強制アップデートが必要です"
+    );
+
+    let payload = CoreUpdatePayload {
+        target_version,
+        channel: channel.to_string(),
+        sha256: constraints.latest_sha256.unwrap_or_default(),
+    };
+
+    // フロントエンドが未ロードでも取得できるようキャッシュに保存
+    *pending.lock().await = Some(payload.clone());
+
+    // フロントエンドがすでにリスナーを登録済みであれば即時受信できる
+    let _ = app_handle.emit("core-update-required", payload);
+}
+
+/// フロントエンド起動時に pending な core アップデートを取得する
+/// イベントを受け取る前に UI が表示された場合のフォールバック
+#[tauri::command]
+async fn get_pending_core_update(
+    state: tauri::State<'_, AppState>,
+) -> Result<Option<CoreUpdatePayload>, String> {
+    Ok(state.pending_core_update.lock().await.clone())
 }
 
 /// 制約違反プラグインの強制アップデートチェックを実行する（バックグラウンド用）
@@ -2543,6 +2658,7 @@ fn main() {
                 core_addr,
                 plugin_manager: Arc::new(tokio::sync::Mutex::new(plugin_manager)),
                 comment_store,
+                pending_core_update: Arc::new(tokio::sync::Mutex::new(None)),
             };
 
             tracing::debug!(target: "mcv::main", "Sending AppState to main thread");
@@ -2602,9 +2718,13 @@ fn main() {
             {
                 let constraint_handle = app.handle().clone();
                 let constraint_settings_dir = settings_dir_for_tauri.clone();
-                let (constraint_core_addr, constraint_plugin_manager) = {
+                let (constraint_core_addr, constraint_plugin_manager, constraint_pending) = {
                     let s = app.state::<AppState>();
-                    (s.core_addr.clone(), Arc::clone(&s.plugin_manager))
+                    (
+                        s.core_addr.clone(),
+                        Arc::clone(&s.plugin_manager),
+                        Arc::clone(&s.pending_core_update),
+                    )
                 };
                 std::thread::spawn(move || {
                     let rt = tokio::runtime::Runtime::new().unwrap();
@@ -2613,6 +2733,10 @@ fn main() {
                         let _ = plugins_phase_rx
                             .wait_for(|p| *p == PluginsPhase::Ready)
                             .await;
+                        // core 本体の制約チェック（ブロック / min_version）
+                        tracing::info!(target: "mcv::main", "core 制約チェックを開始");
+                        run_core_constraint_check(&constraint_handle, constraint_pending).await;
+                        // プラグインの制約チェック
                         tracing::info!(target: "mcv::main", "プラグイン制約チェックを開始");
                         run_plugin_constraint_check(
                             &constraint_settings_dir,
@@ -2664,7 +2788,8 @@ fn main() {
             detect_url,
             get_column_settings,
             save_column_settings,
-            get_plugin_constraint_status
+            get_plugin_constraint_status,
+            get_pending_core_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

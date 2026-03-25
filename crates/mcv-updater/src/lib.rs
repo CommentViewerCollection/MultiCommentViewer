@@ -126,6 +126,29 @@ pub struct McvUpdateInfo {
     pub uploaded_at: String,
 }
 
+/// core のブロックされたバージョン情報
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CoreBlockedVersion {
+    pub version: String,
+    pub reason: Option<String>,
+}
+
+/// GET /api/mcv/core/{channel} のレスポンス
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CoreConstraintInfo {
+    pub channel: String,
+    /// ブロックされていない最新バージョン（存在しない場合は None）
+    pub latest: Option<String>,
+    /// latest バージョンの SHA-256（latest が None の場合は None）
+    pub latest_sha256: Option<String>,
+    /// latest バージョンのファイルサイズ（バイト）
+    pub latest_file_size: Option<u64>,
+    /// このチャンネルの最小バージョン要件
+    pub min_version: Option<String>,
+    /// ブロックされたバージョン一覧
+    pub blocked_versions: Vec<CoreBlockedVersion>,
+}
+
 /// アップデートエラー
 #[derive(Error, Debug)]
 pub enum UpdateError {
@@ -296,6 +319,30 @@ impl UpdateChecker {
         } else {
             Ok(None)
         }
+    }
+
+    /// core の制約情報（latest, min_version, blocked_versions）を取得
+    ///
+    /// # Arguments
+    /// * `channel` - チャンネル（"stable", "beta", "alpha"）
+    pub async fn get_core_constraints(
+        &self,
+        channel: &str,
+    ) -> Result<CoreConstraintInfo, UpdateError> {
+        let url = format!("{}/api/mcv/core/{}", self.api_base_url, channel);
+        let response = self.client.get(&url).send().await?;
+
+        if !response.status().is_success() {
+            return Err(UpdateError::HttpError(
+                response.error_for_status().unwrap_err(),
+            ));
+        }
+
+        let info: CoreConstraintInfo = response
+            .json()
+            .await
+            .map_err(|e| UpdateError::JsonParseError(e.to_string()))?;
+        Ok(info)
     }
 
     /// プラグイン一覧を取得

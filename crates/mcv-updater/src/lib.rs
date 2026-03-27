@@ -432,19 +432,31 @@ impl UpdateChecker {
     where
         F: FnMut(u64, u64),
     {
-        println!("Downloading from: {}", url);
-        println!("Saving to: {:?}", dest);
+        tracing::info!(url, dest = ?dest, "ダウンロード開始");
 
         let response = self.client.get(url).send().await?;
 
         if !response.status().is_success() {
-            return Err(UpdateError::HttpError(
-                response.error_for_status().unwrap_err(),
-            ));
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "(ボディ読み取り失敗)".to_string());
+            tracing::error!(
+                url,
+                status = %status,
+                response_body = %body.chars().take(500).collect::<String>(),
+                "ダウンロードHTTPエラー"
+            );
+            return Err(UpdateError::InvalidUrl(format!(
+                "HTTP {}: {}",
+                status,
+                body.chars().take(200).collect::<String>()
+            )));
         }
 
         let total_size = response.content_length().unwrap_or(0);
-        println!("Total size: {} bytes", total_size);
+        tracing::debug!(url, total_size, "ダウンロードサイズ取得");
 
         // 親ディレクトリが存在しない場合は作成
         if let Some(parent) = dest.parent() {
@@ -465,7 +477,7 @@ impl UpdateChecker {
         }
 
         file.flush().await?;
-        println!("Download completed: {} bytes", downloaded);
+        tracing::info!(downloaded, dest = ?dest, "ダウンロード完了");
 
         Ok(())
     }
@@ -483,7 +495,7 @@ impl UpdateChecker {
         file_path: &Path,
         expected_sha256: &str,
     ) -> Result<bool, UpdateError> {
-        println!("Verifying checksum for: {:?}", file_path);
+        tracing::debug!(file_path = ?file_path, "チェックサム検証開始");
 
         let mut file = tokio::fs::File::open(file_path).await?;
         let mut hasher = Sha256::new();
@@ -502,11 +514,10 @@ impl UpdateChecker {
         let result = hasher.finalize();
         let actual_sha256 = format!("{:x}", result);
 
-        println!("Expected SHA-256: {}", expected_sha256);
-        println!("Actual SHA-256:   {}", actual_sha256);
+        tracing::debug!(expected_sha256, actual_sha256 = %actual_sha256, "SHA-256 比較");
 
         if actual_sha256.to_lowercase() == expected_sha256.to_lowercase() {
-            println!("Checksum verification: OK");
+            tracing::debug!(file_path = ?file_path, "チェックサム検証: OK");
             Ok(true)
         } else {
             Err(UpdateError::ChecksumMismatch {
@@ -550,6 +561,8 @@ mod tests {
                 beta: None,
                 alpha: None,
             },
+            min_version: None,
+            blocked_versions: vec![],
         };
 
         let json = serde_json::to_string(&plugin).unwrap();

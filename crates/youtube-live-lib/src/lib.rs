@@ -1427,9 +1427,15 @@ pub async fn fetch_account_info_from_home(
     );
 
     if !response.status().is_success() {
+        let status = response.status();
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "(ボディ読み取り失敗)".to_string());
         tracing::warn!(
             target: "mcv::youtube-live-lib",
-            status = %response.status(),
+            status = %status,
+            response_body = %body.chars().take(500).collect::<String>(),
             "fetch_account_info_from_home: account_menu returned non-success"
         );
         return Ok(None);

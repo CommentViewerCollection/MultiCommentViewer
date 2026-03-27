@@ -30,10 +30,16 @@ pub async fn validate_token(token: &str) -> Result<ValidateTokenResponse, String
         .await
         .map_err(|e| e.to_string())?;
 
-    if !response.status().is_success() {
+    let status = response.status();
+    if !status.is_success() {
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "(ボディ読み取り失敗)".to_string());
         return Err(format!(
-            "Token validation failed: HTTP {}",
-            response.status()
+            "Token validation failed: HTTP {} - {}",
+            status,
+            body.chars().take(200).collect::<String>()
         ));
     }
 

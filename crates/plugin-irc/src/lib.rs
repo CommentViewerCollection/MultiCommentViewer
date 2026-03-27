@@ -96,7 +96,9 @@ impl PluginImplV3Async for IrcPlugin {
             Ok(_) => {
                 tracing::trace!(target:"mcv::plugin-irc::TwitchPlugin", "init_tracing() success");
             }
-            Err(_e) => {}
+            Err(e) => {
+                eprintln!("[plugin-irc] init_tracing 失敗: {e}");
+            }
         }
         self.initialize(logical_plugin_id);
         // plugin-hello送信

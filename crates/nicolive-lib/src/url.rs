@@ -57,9 +57,27 @@ pub struct NicoLiveAccountInfo {
 pub async fn fetch_websocket_url(live_id: &str) -> Result<NicoLiveConnectionData, String> {
     let page_url = format!("https://live.nicovideo.jp/watch/{live_id}");
 
-    let html = reqwest::get(&page_url)
+    let response = reqwest::get(&page_url)
         .await
-        .map_err(|e| format!("HTTP request failed: {e}"))?
+        .map_err(|e| format!("HTTP request failed: {e}"))?;
+
+    let status = response.status();
+    if !status.is_success() {
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "(ボディ読み取り失敗)".to_string());
+        tracing::error!(
+            target: "mcv::nicolive-lib",
+            url = %page_url,
+            status = %status,
+            response_body = %body.chars().take(500).collect::<String>(),
+            "fetch_websocket_url: HTTP エラー"
+        );
+        return Err(format!("HTTP エラー: {status}"));
+    }
+
+    let html = response
         .text()
         .await
         .map_err(|e| format!("Failed to read response body: {e}"))?;
@@ -148,10 +166,28 @@ pub async fn fetch_account_info_from_top(
         req = req.header("Cookie", cookie_header);
     }
 
-    let html = req
+    let response = req
         .send()
         .await
-        .map_err(|e| format!("HTTP request failed: {e}"))?
+        .map_err(|e| format!("HTTP request failed: {e}"))?;
+
+    let status = response.status();
+    if !status.is_success() {
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "(ボディ読み取り失敗)".to_string());
+        tracing::error!(
+            target: "mcv::nicolive-lib",
+            url = "https://live.nicovideo.jp/",
+            status = %status,
+            response_body = %body.chars().take(500).collect::<String>(),
+            "fetch_account_info_from_top: HTTP エラー"
+        );
+        return Err(format!("HTTP エラー: {status}"));
+    }
+
+    let html = response
         .text()
         .await
         .map_err(|e| format!("Failed to read response body: {e}"))?;

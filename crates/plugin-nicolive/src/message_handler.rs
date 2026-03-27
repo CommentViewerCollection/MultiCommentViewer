@@ -114,10 +114,15 @@ pub(crate) async fn on_message_impl(
                     serde_json::to_value(UpdateConnectionAccountPayload {
                         connection_id: connect.connection_id,
                         account: Some(AccountInfo {
-                            user_id: conn_data
-                                .viewer_id
-                                .clone()
-                                .unwrap_or_else(|| viewer_name.to_string()),
+                            user_id: conn_data.viewer_id.clone().unwrap_or_else(|| {
+                                tracing::debug!(
+                                    target: "mcv::plugin-nicolive",
+                                    connection_id = %connect.connection_id,
+                                    viewer_name = %viewer_name,
+                                    "viewer_id が取得できなかったため display_name を user_id として使用します"
+                                );
+                                viewer_name.to_string()
+                            }),
                             display_name: viewer_name.to_string(),
                             avatar_url: conn_data.viewer_icon_url.clone(),
                         }),

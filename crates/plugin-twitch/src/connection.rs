@@ -14,8 +14,6 @@ use mcv_messages::{
     ServiceId, StreamMetadataPayload, SystemKind, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
-use tokio::fs::OpenOptions;
-use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
@@ -848,15 +846,6 @@ impl Connection {
         let mut provider_messages = Vec::new();
         for line in raw_text.lines() {
             let irc = parse_irc_line(line);
-            let mut text_log_file = OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(format!("twitch_{}.txt", &irc.command))
-                .await
-                .unwrap();
-            let _ = text_log_file
-                .write_all(format!("{line}\n").as_bytes())
-                .await;
             let event = to_twitch_event(irc);
 
             match event {

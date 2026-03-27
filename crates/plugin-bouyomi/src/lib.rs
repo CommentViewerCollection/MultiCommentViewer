@@ -339,24 +339,22 @@ impl PluginImplV3Async for BouyomiPlugin {
     }
 
     async fn on_message(&mut self, ctx: PluginContext, msg: &[u8]) {
-        let value: serde_json::Value = match serde_json::from_slice(msg) {
-            Ok(v) => v,
+        let incoming: McvMessage = match serde_json::from_slice(msg) {
+            Ok(m) => m,
             Err(e) => {
                 tracing::error!(error = %e, "メッセージのパースに失敗しました");
                 return;
             }
         };
 
-        let msg_type = value["message_type"].as_str().unwrap_or("");
-
-        match msg_type {
-            "comment-received" => {
+        match incoming.message_type {
+            MessageType::CommentReceived => {
                 if !self.settings.is_enabled {
                     return;
                 }
 
                 let payload: CommentReceivedPayload =
-                    match serde_json::from_value(value["payload"].clone()) {
+                    match serde_json::from_value(incoming.payload.clone()) {
                         Ok(p) => p,
                         Err(e) => {
                             tracing::error!(
@@ -389,11 +387,7 @@ impl PluginImplV3Async for BouyomiPlugin {
                 ));
             }
 
-            "get-settings-schema" => {
-                let incoming: McvMessage = match serde_json::from_slice(msg) {
-                    Ok(m) => m,
-                    Err(_) => return,
-                };
+            MessageType::GetSettingsSchema => {
                 let response = incoming.create_response(
                     MessageType::SettingsSchema,
                     serde_json::json!({
@@ -404,11 +398,7 @@ impl PluginImplV3Async for BouyomiPlugin {
                 let _ = ctx.send_notification(response).await;
             }
 
-            "get-settings" => {
-                let incoming: McvMessage = match serde_json::from_slice(msg) {
-                    Ok(m) => m,
-                    Err(_) => return,
-                };
+            MessageType::GetSettings => {
                 let data = serde_json::to_value(&self.settings).unwrap_or_default();
                 let response = incoming.create_response(
                     MessageType::SettingsData,
@@ -420,16 +410,18 @@ impl PluginImplV3Async for BouyomiPlugin {
                 let _ = ctx.send_notification(response).await;
             }
 
-            "update-settings" => {
-                let payload: UpdateSettingsPayload = match serde_json::from_value(
-                    value["payload"].clone(),
-                ) {
-                    Ok(p) => p,
-                    Err(e) => {
-                        tracing::warn!(error = %e, "UpdateSettingsPayload のパースに失敗しました");
-                        return;
-                    }
-                };
+            MessageType::UpdateSettings => {
+                let payload: UpdateSettingsPayload =
+                    match serde_json::from_value(incoming.payload.clone()) {
+                        Ok(p) => p,
+                        Err(e) => {
+                            tracing::warn!(
+                                error = %e,
+                                "UpdateSettingsPayload のパースに失敗しました"
+                            );
+                            return;
+                        }
+                    };
                 match serde_json::from_value::<BouyomiSettings>(payload.data) {
                     Ok(new_settings) => {
                         self.settings = new_settings;

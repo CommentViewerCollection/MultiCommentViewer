@@ -55,12 +55,34 @@ pub(crate) async fn on_message_impl(
 
             // twitcasting.tv / frontendapi.twitcasting.tv で共有するクッキージャー
             let jar = Arc::new(reqwest::cookie::Jar::default());
-            let session_client = Arc::new(
-                reqwest::Client::builder()
-                    .cookie_provider(Arc::clone(&jar))
-                    .build()
-                    .unwrap(),
-            );
+            let session_client = match reqwest::Client::builder()
+                .cookie_provider(Arc::clone(&jar))
+                .build()
+            {
+                Ok(c) => Arc::new(c),
+                Err(e) => {
+                    tracing::error!(
+                        target: "mcv::plugin-twicas",
+                        connection_id = %connect.connection_id,
+                        error = %e,
+                        "HTTPクライアントの構築に失敗しました"
+                    );
+                    let failed_msg = McvMessage::new_notification(
+                        MessageType::ConnectFailed,
+                        MessageSource::Plugin {
+                            plugin_id: plugin.logical_plugin_id.clone(),
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(ConnectFailedPayload {
+                            connection_id: connect.connection_id,
+                            reason: format!("HTTPクライアントの構築に失敗しました: {}", e),
+                        })
+                        .unwrap(),
+                    );
+                    TwicasPlugin::send_message(ctx, failed_msg).await;
+                    return Ok(());
+                }
+            };
 
             // ブラウザcookieを取得して jar に追加する
             // GetBrowserPlugin → GetCookie の2ステップで取得する（YouTube live と同じフロー）
@@ -86,7 +108,15 @@ pub(crate) async fn on_message_impl(
                     Ok(resp) if resp.message_type == MessageType::GetBrowserPluginAck => {
                         match serde_json::from_value::<GetBrowserPluginAckPayload>(resp.payload) {
                             Ok(p) => Some(p.plugin_id),
-                            Err(_) => None,
+                            Err(e) => {
+                                tracing::warn!(
+                                    target: "mcv::plugin-twicas",
+                                    connection_id = %connect.connection_id,
+                                    error = %e,
+                                    "GetBrowserPluginAck payload のパースに失敗"
+                                );
+                                None
+                            }
                         }
                     }
                     _ => None,
@@ -110,23 +140,31 @@ pub(crate) async fn on_message_impl(
                         .await
                     {
                         Ok(resp) if resp.message_type == MessageType::GetCookieAck => {
-                            if let Ok(p) =
-                                serde_json::from_value::<GetCookieAckPayload>(resp.payload)
-                            {
-                                let twitcasting_url: reqwest::Url =
-                                    "https://twitcasting.tv/".parse().unwrap();
-                                for cookie in &p.cookies {
-                                    jar.add_cookie_str(
-                                        &format!("{}={}", cookie.name, cookie.value),
-                                        &twitcasting_url,
+                            match serde_json::from_value::<GetCookieAckPayload>(resp.payload) {
+                                Ok(p) => {
+                                    let twitcasting_url: reqwest::Url =
+                                        "https://twitcasting.tv/".parse().unwrap();
+                                    for cookie in &p.cookies {
+                                        jar.add_cookie_str(
+                                            &format!("{}={}", cookie.name, cookie.value),
+                                            &twitcasting_url,
+                                        );
+                                    }
+                                    tracing::info!(
+                                        target: "mcv::plugin-twicas",
+                                        connection_id = %connect.connection_id,
+                                        cookie_count = p.cookies.len(),
+                                        "ブラウザcookieをjarに追加しました"
                                     );
                                 }
-                                tracing::info!(
-                                    target: "mcv::plugin-twicas",
-                                    connection_id = %connect.connection_id,
-                                    cookie_count = p.cookies.len(),
-                                    "ブラウザcookieをjarに追加しました"
-                                );
+                                Err(e) => {
+                                    tracing::warn!(
+                                        target: "mcv::plugin-twicas",
+                                        connection_id = %connect.connection_id,
+                                        error = %e,
+                                        "GetCookieAck payload のパースに失敗"
+                                    );
+                                }
                             }
                         }
                         _ => {

@@ -146,13 +146,23 @@ pub fn resolve_cookie_db_path(profile_dir: &Path) -> Option<PathBuf> {
 pub fn query_cookies(db_path: &Path, domain: &str, master_key: Option<&[u8]>) -> Vec<McvCookie> {
     let temp_db_path =
         std::env::temp_dir().join(format!("mcv_chromium_cookie_{}.db", Uuid::new_v4()));
-    if fs::copy(db_path, &temp_db_path).is_err() {
+    if let Err(e) = fs::copy(db_path, &temp_db_path) {
+        tracing::warn!(
+            db_path = %db_path.display(),
+            error = %e,
+            "Chromium cookie DB のコピーに失敗しました"
+        );
         return vec![];
     }
 
     let conn = match Connection::open(&temp_db_path) {
         Ok(c) => c,
-        Err(_) => {
+        Err(e) => {
+            tracing::warn!(
+                temp_db_path = %temp_db_path.display(),
+                error = %e,
+                "Chromium cookie DB のオープンに失敗しました"
+            );
             let _ = fs::remove_file(&temp_db_path);
             return vec![];
         }
@@ -169,7 +179,11 @@ pub fn query_cookies(db_path: &Path, domain: &str, master_key: Option<&[u8]>) ->
          WHERE host_key = ?1 OR host_key = ?2 OR host_key LIKE ?3",
     ) {
         Ok(s) => s,
-        Err(_) => {
+        Err(e) => {
+            tracing::warn!(
+                error = %e,
+                "Chromium cookie DB クエリのプリペアに失敗しました"
+            );
             let _ = fs::remove_file(&temp_db_path);
             return vec![];
         }
@@ -189,7 +203,17 @@ pub fn query_cookies(db_path: &Path, domain: &str, master_key: Option<&[u8]>) ->
         for row in iter.flatten() {
             let (host_key, name, value, encrypted_value, path) = row;
             let resolved_value = if value.is_empty() {
-                decrypt_cookie_value(&encrypted_value, master_key).unwrap_or_default()
+                match decrypt_cookie_value(&encrypted_value, master_key) {
+                    Some(v) => v,
+                    None => {
+                        tracing::warn!(
+                            cookie_name = %name,
+                            encrypted_len = encrypted_value.len(),
+                            "Chromium cookie の復号に失敗しました（スキップ）"
+                        );
+                        continue;
+                    }
+                }
             } else {
                 value
             };

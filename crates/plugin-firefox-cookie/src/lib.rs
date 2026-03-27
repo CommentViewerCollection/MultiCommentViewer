@@ -42,13 +42,23 @@ fn load_cookies(browser_id: &BrowserId, domain: &str) -> Vec<McvCookie> {
     // Firefox がロックしている可能性があるためテンポラリにコピー
     let temp_db_path =
         std::env::temp_dir().join(format!("mcv_firefox_cookie_{}.db", Uuid::new_v4()));
-    if fs::copy(&cookie_db_path, &temp_db_path).is_err() {
+    if let Err(e) = fs::copy(&cookie_db_path, &temp_db_path) {
+        tracing::warn!(
+            db_path = %cookie_db_path.display(),
+            error = %e,
+            "Firefox cookie DB のコピーに失敗しました"
+        );
         return vec![];
     }
 
     let conn = match Connection::open(&temp_db_path) {
         Ok(c) => c,
-        Err(_) => {
+        Err(e) => {
+            tracing::warn!(
+                temp_db_path = %temp_db_path.display(),
+                error = %e,
+                "Firefox cookie DB のオープンに失敗しました"
+            );
             let _ = fs::remove_file(&temp_db_path);
             return vec![];
         }
@@ -65,7 +75,11 @@ fn load_cookies(browser_id: &BrowserId, domain: &str) -> Vec<McvCookie> {
          WHERE host = ?1 OR host = ?2 OR host LIKE ?3",
     ) {
         Ok(s) => s,
-        Err(_) => {
+        Err(e) => {
+            tracing::warn!(
+                error = %e,
+                "Firefox cookie DB クエリのプリペアに失敗しました"
+            );
             let _ = fs::remove_file(&temp_db_path);
             return vec![];
         }

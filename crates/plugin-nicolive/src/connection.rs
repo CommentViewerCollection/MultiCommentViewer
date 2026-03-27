@@ -983,7 +983,11 @@ impl Connection {
             .map_err(|e| format!("セグメント GET 失敗: {e}"))?;
 
         if !response.status().is_success() {
-            return Err(format!("セグメント HTTP エラー: {}", response.status()));
+            return Err(format!(
+                "セグメント HTTP エラー: {} (url={})",
+                response.status(),
+                segment_uri
+            ));
         }
 
         // ストリーミング読み取り: チャンクが届くたびに ChunkedMessage をデコードして即時送信
@@ -1028,13 +1032,25 @@ impl Connection {
                     connection_id,
                     envelope,
                 };
+                let payload_value = match serde_json::to_value(&payload) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tracing::error!(
+                            target: "mcv::plugin-nicolive",
+                            connection_id = %connection_id,
+                            error = %e,
+                            "CommentReceivedPayload のシリアライズに失敗しました"
+                        );
+                        continue;
+                    }
+                };
                 let mcv_msg = McvMessage::new_notification(
                     MessageType::CommentReceived,
                     MessageSource::Plugin {
                         plugin_id: logical_plugin_id.clone(),
                     },
                     MessageDestination::Core,
-                    serde_json::to_value(&payload).unwrap_or_default(),
+                    payload_value,
                 );
                 NicoLivePlugin::send_message(ctx.clone(), mcv_msg).await;
             }

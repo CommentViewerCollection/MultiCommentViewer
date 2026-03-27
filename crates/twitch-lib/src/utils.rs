@@ -1,15 +1,18 @@
 use crate::auth_token::AuthToken;
 use crate::client_id::ClientId;
 use anyhow::Result;
+use mcv_plugin_telemetry::{TracingError, capture_context};
+
+const GQL_URL: &str = "https://gql.twitch.tv/gql";
 
 pub async fn send_graphql_query(
     query: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
-) -> Result<serde_json::Value, reqwest::Error> {
+) -> Result<serde_json::Value, TracingError> {
     let client = reqwest::Client::new();
     let res = client
-        .post("https://gql.twitch.tv/gql")
+        .post(GQL_URL)
         .header("Client-ID", client_id.value())
         .header("Content-Type", "application/json")
         .header("Accept-Language", "ja-JP");
@@ -18,9 +21,73 @@ pub async fn send_graphql_query(
     } else {
         res
     };
-    let res = res.body(query.to_string()).send().await?;
-    let json: serde_json::Value = res.json().await.unwrap();
-    Ok(json)
+    let res = res.body(query.to_string()).send().await.map_err(|e| {
+        tracing::error!(
+            target: "mcv::twitch-lib",
+            url = GQL_URL,
+            error = %e,
+            "GraphQL リクエスト送信失敗"
+        );
+        capture_context!(
+            "GraphQL リクエスト送信失敗",
+            url = GQL_URL,
+            error = e.to_string()
+        )
+    })?;
+
+    let status = res.status();
+    let body = res.text().await.map_err(|e| {
+        tracing::error!(
+            target: "mcv::twitch-lib",
+            url = GQL_URL,
+            status = %status,
+            error = %e,
+            "GraphQL レスポンスボディ読み取り失敗"
+        );
+        capture_context!(
+            "GraphQL レスポンスボディ読み取り失敗",
+            url = GQL_URL,
+            status = status.as_u16(),
+            error = e.to_string()
+        )
+    })?;
+
+    if !status.is_success() {
+        tracing::error!(
+            target: "mcv::twitch-lib",
+            url = GQL_URL,
+            status = %status,
+            response_body = %body.chars().take(500).collect::<String>(),
+            "GraphQL HTTP エラー"
+        );
+        return Err(capture_context!(
+            "GraphQL HTTP エラー",
+            url = GQL_URL,
+            status = status.as_u16(),
+            response_body = body.chars().take(500).collect::<String>()
+        )
+        .into());
+    }
+
+    serde_json::from_str::<serde_json::Value>(&body)
+        .map_err(|e| {
+            tracing::error!(
+                target: "mcv::twitch-lib",
+                url = GQL_URL,
+                status = %status,
+                error = %e,
+                response_body = %body.chars().take(500).collect::<String>(),
+                "GraphQL レスポンス JSON パース失敗"
+            );
+            capture_context!(
+                "GraphQL レスポンス JSON パース失敗",
+                url = GQL_URL,
+                status = status.as_u16(),
+                error = e.to_string(),
+                response_body = body.chars().take(500).collect::<String>()
+            )
+        })
+        .map_err(TracingError::from)
 }
 pub fn get_string(value: &serde_json::Value, path: &[&str]) -> Result<String> {
     path.iter()

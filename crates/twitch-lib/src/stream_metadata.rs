@@ -20,7 +20,7 @@ struct StreamMetadata {
 async fn get_stream_metadata(
     channel_login: &str,
     client_id: &ClientId,
-) -> Result<StreamMetadata, reqwest::Error> {
+) -> anyhow::Result<StreamMetadata> {
     //{"operationName":"StreamMetadata","variables":{"channelLogin":"amauta_sau","includeIsDJ":true},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"b57f9b910f8cd1a4659d894fe7550ccc81ec9052c01e438b290fd66a040b9b93"}}}
 
     //response
@@ -115,9 +115,7 @@ pub async fn fetch_broadcaster_id(
 pub async fn fetch_stream_info(channel_login: &str) -> Result<TwitchStreamInfo> {
     let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
 
-    let gql_meta = get_stream_metadata(channel_login, &client_id)
-        .await
-        .map_err(|e| anyhow::anyhow!("StreamMetadata GQL failed: {e}"))?;
+    let gql_meta = get_stream_metadata(channel_login, &client_id).await?;
 
     let start_time = gql_meta
         .stream_created_at

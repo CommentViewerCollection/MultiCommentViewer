@@ -225,7 +225,7 @@ mod tests {
     #[actix::test]
     async fn test_sender_actor_creation() {
         let storage = Arc::new(Mutex::new(LogStorage::new(":memory:").unwrap()));
-        let actor = LogSenderActor::new(storage, "http://localhost:8080".to_string());
+        let actor = LogSenderActor::new(storage, "https://int-main.net".to_string());
         let _addr = actor.start();
         // Actor が正常に起動できることを確認
     }
@@ -233,7 +233,7 @@ mod tests {
     #[actix::test]
     async fn test_send_immediately() {
         let storage = Arc::new(Mutex::new(LogStorage::new(":memory:").unwrap()));
-        let actor = LogSenderActor::new(storage.clone(), "http://localhost:8080".to_string());
+        let actor = LogSenderActor::new(storage.clone(), "https://int-main.net".to_string());
         let addr = actor.start();
 
         let entry = create_test_entry();

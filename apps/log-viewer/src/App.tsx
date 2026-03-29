@@ -7,7 +7,7 @@ import type { LogEntry, LogQueryFilters } from "./types/log";
 
 function App() {
   const [dataSource, setDataSource] = useState<DataSource>("local");
-  const [apiUrl, setApiUrl] = useState("http://localhost");
+  const [apiUrl, setApiUrl] = useState("https://int-main.net");
   const [filters, setFilters] = useState<LogQueryFilters>({});
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [limit] = useState(100);

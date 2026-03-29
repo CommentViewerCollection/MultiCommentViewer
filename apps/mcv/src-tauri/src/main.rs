@@ -41,7 +41,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
 use zip::ZipArchive;
 
-const API_BASE_URL: &str = "http://localhost";
+const API_BASE_URL: &str = "https://int-main.net";
 
 /// McvEnvelope をフロントエンド表示用に変換した行
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

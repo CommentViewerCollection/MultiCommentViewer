@@ -478,13 +478,13 @@ SELECT COUNT(*) FROM logs WHERE sent = 0;
 
 ```bash
 # ログ件数確認
-curl "http://localhost/api/mcv/logs?limit=1" | jq '.total'
+curl "https://int-main.net/api/mcv/logs?limit=1" | jq '.total'
 
 # エラーログのみ取得
-curl "http://localhost/api/mcv/logs?level=error&limit=10" | jq '.logs[] | {level, message, timestamp}'
+curl "https://int-main.net/api/mcv/logs?level=error&limit=10" | jq '.logs[] | {level, message, timestamp}'
 
 # 特定キーワードで検索
-curl "http://localhost/api/mcv/logs?search=plugin&limit=5" | jq
+curl "https://int-main.net/api/mcv/logs?search=plugin&limit=5" | jq
 ```
 
 ### 4. ログ送信の動作確認
@@ -518,7 +518,7 @@ mcvを起動して意図的にエラーを発生させ、以下を確認:
 3. mcv起動時のログ出力を確認
    ```
    INFO mcv started, log_db_path=C:\Users\...\logs.db
-   INFO LogSenderActor started, api_base_url=http://localhost
+   INFO LogSenderActor started, api_base_url=https://int-main.net
    ```
 
 ### 送信が失敗する
@@ -528,13 +528,13 @@ mcvを起動して意図的にエラーを発生させ、以下を確認:
 **確認事項**:
 1. APIサーバーが起動しているか確認
    ```bash
-   curl http://localhost/api/mcv/health
+   curl https://int-main.net/api/mcv/health
    # {"status":"ok"}
    ```
 
 2. API URLが正しいか確認（mcv/src-tauri/src/main.rs:323）
    ```rust
-   const API_BASE_URL: &str = "http://localhost";
+   const API_BASE_URL: &str = "https://int-main.net";
    ```
 
 3. 未送信ログの件数確認
@@ -552,10 +552,10 @@ mcvを起動して意図的にエラーを発生させ、以下を確認:
 **症状**: ログビューアーを開いてもログが表示されない
 
 **Server API モード**:
-1. API URLが正しいか確認（デフォルト: `http://localhost`）
+1. API URLが正しいか確認（デフォルト: `https://int-main.net`）
 2. curlでAPIレスポンスを確認
    ```bash
-   curl "http://localhost/api/mcv/logs?limit=1"
+   curl "https://int-main.net/api/mcv/logs?limit=1"
    ```
 3. ブラウザのDevToolsでエラーを確認
 
@@ -629,4 +629,4 @@ MCVエラーロギングシステムは、開発者がエラーを迅速に発�
 3. ログビューアーを起動してログを確認
 
 **問題報告**:
-- GitHub Issues: https://github.com/your-repo/mcv/issues
+- GitHub Issues: <https://github.com/your-repo/mcv/issues>

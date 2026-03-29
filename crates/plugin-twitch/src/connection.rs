@@ -17,7 +17,7 @@ use plugin_abi_helper::v3::prelude::*;
 use tokio::net::TcpStream;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
-use tokio::time::{interval, timeout, Duration};
+use tokio::time::{interval, timeout, Duration, Instant};
 use tokio_tungstenite::{
     connect_async,
     tungstenite::{Error as WsError, Message as WsMessage},
@@ -409,14 +409,10 @@ impl Connection {
                     let mut ping_interval = interval(Duration::from_secs(300));
 
                     loop {
-                        tracing::trace!(
-                            target: "mcv::plugin-twitch",
-                            connection_id = %connection_id,
-                            "loop is ok"
-                        );
                         tokio::select! {
-                            _ = cancel_rx.changed() => {
-                                if *cancel_rx.borrow() {
+                            result = cancel_rx.changed() => {
+                                // Err は送信側がドロップされた（stop()後）= 終了
+                                if result.is_err() || *cancel_rx.borrow() {
                                     tracing::info!(
                                         target: "mcv::plugin-twitch",
                                         connection_id = %connection_id,
@@ -1211,6 +1207,9 @@ async fn metadata_polling_loop(
     let mut poll_count: u64 = 0;
 
     loop {
+        // ループ開始時刻を記録。API呼び出し時間を含めても規定間隔以上を保証するため
+        let loop_start = Instant::now();
+
         if *cancel_rx.borrow() {
             tracing::info!(
                 target: "mcv::plugin-twitch",
@@ -1229,7 +1228,7 @@ async fn metadata_polling_loop(
             "メタデータポーリング: fetch_stream_info 呼び出し"
         );
 
-        let sleep_duration = match twitch_lib::fetch_stream_info(&channel_login).await {
+        let desired_interval = match twitch_lib::fetch_stream_info(&channel_login).await {
             Ok(info) => {
                 tracing::info!(
                     target: "mcv::plugin-twitch",
@@ -1272,8 +1271,11 @@ async fn metadata_polling_loop(
             }
         };
 
+        // API呼び出しにかかった時間を差し引いた残り時間だけ待機する。
+        // changed() が想定外に即座に返っても 0 秒ループにならないよう規定間隔を保証する。
+        let wait = desired_interval.saturating_sub(loop_start.elapsed());
         tokio::select! {
-            _ = tokio::time::sleep(sleep_duration) => {}
+            _ = tokio::time::sleep(wait) => {}
             result = cancel_rx.changed() => {
                 if result.is_err() || *cancel_rx.borrow() {
                     tracing::info!(

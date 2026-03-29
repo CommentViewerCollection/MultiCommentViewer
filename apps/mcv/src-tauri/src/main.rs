@@ -2150,6 +2150,34 @@ fn is_dir_writable(dir: &std::path::Path) -> bool {
     }
 }
 
+/// 指定ディレクトリ以下の `.old` ファイルをサブフォルダも含めて全て削除する。
+/// `.old` ファイルしか存在しなかったディレクトリは空になるため合わせて削除する。
+/// 元から空だったディレクトリは削除しない。
+/// 戻り値: このディレクトリ内（再帰含む）で `.old` ファイルを1件以上削除した場合 true。
+fn cleanup_old_files(dir: &std::path::Path) -> bool {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return false;
+    };
+    let mut deleted_something = false;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let deleted_in_sub = cleanup_old_files(&path);
+            if deleted_in_sub {
+                // .old ファイルが削除された結果、空になっていれば削除する
+                if std::fs::read_dir(&path).map_or(false, |mut e| e.next().is_none()) {
+                    let _ = std::fs::remove_dir(&path);
+                }
+                deleted_something = true;
+            }
+        } else if path.extension().map_or(false, |ext| ext == "old") {
+            let _ = std::fs::remove_file(&path);
+            deleted_something = true;
+        }
+    }
+    deleted_something
+}
+
 /// 書き込み制限エラーをネイティブのメッセージボックスで表示する（Windows 専用）。
 #[cfg(windows)]
 fn show_write_restricted_error(dir: &std::path::Path) {
@@ -2190,6 +2218,8 @@ fn main() {
         show_write_restricted_error(&app_data_dir);
         std::process::exit(1);
     }
+
+    cleanup_old_files(&app_data_dir);
 
     // ロガーを初期化
     let app_data_dir = mcv_common::get_base_dir();

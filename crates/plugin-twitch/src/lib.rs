@@ -10,7 +10,9 @@
 
 mod connection;
 mod hermes;
+mod irc_session;
 mod message_handler;
+mod metadata_polling;
 
 use std::{collections::HashMap, sync::Arc};
 

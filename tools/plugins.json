@@ -102,5 +102,13 @@
     "description": "ニコ生のコメント取得・投稿をするプラグインです",
     "entry": "plugin_nicolive.dll",
     "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-irc",
+    "id": "irc",
+    "name": "IRC",
+    "description": "IRC サーバーのコメント取得をするプラグインです",
+    "entry": "plugin_irc.dll",
+    "has_channel_feature": true
   }
 ]

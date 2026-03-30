@@ -1,22 +1,62 @@
-//! メッセージハンドリングとペイロード解析
-//!
-//! Coreから受信したメッセージの処理と、
-//! JSONペイロードの型安全なデシリアライゼーションを提供します。
+//! Core から受信したメッセージの処理
 
 use std::any::type_name;
-use std::time::Duration;
 
 use mcv_messages::{
-    CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectionRemovedPayload, DisconnectPayload,
-    FetchAccountInfoPayload, GetBrowserPluginAckPayload, GetBrowserPluginPayload,
-    GetCookieAckPayload, GetCookiePayload, Message as McvMessage, MessageDestination,
-    MessageSource, MessageType, PluginId, SetConnectionSitePayload, SetSiteNgUsersPayload,
+    CanHandleUrlPayload, CanHandleUrlResultPayload, ConnectPayload, ConnectionInputSchemaPayload,
+    ConnectionRemovedPayload, DisconnectPayload, GetConnectionInputSchemaPayload,
+    Message as McvMessage, MessageType, SetConnectionSitePayload,
 };
 use plugin_abi_helper::v3::prelude::*;
 use serde::de::DeserializeOwned;
 
-use crate::connection::Connection;
-use crate::IrcPlugin;
+use crate::{
+    connection::{Connection, ServerType},
+    IrcPlugin,
+};
+
+/// 接続入力フォームの JSON Schema
+const INPUT_SCHEMA: &str = r#"{
+  "type": "object",
+  "properties": {
+    "server_host": {
+      "type": "string",
+      "title": "サーバーホスト",
+      "default": "irc.libera.chat"
+    },
+    "server_port": {
+      "type": "integer",
+      "title": "ポート",
+      "default": 6697,
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "use_tls": {
+      "type": "boolean",
+      "title": "TLS 使用",
+      "default": true
+    },
+    "nick": {
+      "type": "string",
+      "title": "ニックネーム"
+    },
+    "password": {
+      "type": "string",
+      "title": "パスワード（省略可）"
+    },
+    "channel": {
+      "type": "string",
+      "title": "チャンネル（例: #channel）"
+    },
+    "server_type": {
+      "type": "string",
+      "title": "サーバー種別",
+      "enum": ["rfc", "twitch"],
+      "default": "rfc"
+    }
+  },
+  "required": ["server_host", "server_port", "nick", "channel"]
+}"#;
 
 /// 受信メッセージの処理を行う
 pub(crate) async fn on_message_impl(
@@ -26,219 +66,114 @@ pub(crate) async fn on_message_impl(
 ) -> Result<(), mcv_plugin_telemetry::TracingError> {
     match message.message_type {
         MessageType::SetConnectionSite => {
-            let set_conn_site: SetConnectionSitePayload = parse_payload(&message.payload)?;
-            let conn_id = set_conn_site.connection_id;
-            let conn = Connection::new(&conn_id);
-            plugin.connections.insert(conn_id, conn);
+            let payload: SetConnectionSitePayload = parse_payload(&message.payload)?;
+            plugin.connections.insert(
+                payload.connection_id,
+                Connection::new(payload.connection_id),
+            );
         }
-        MessageType::Connect => {}
+
+        MessageType::GetConnectionInputSchema => {
+            let payload: GetConnectionInputSchemaPayload = parse_payload(&message.payload)?;
+            let response = message.create_response(
+                MessageType::ConnectionInputSchema,
+                serde_json::to_value(ConnectionInputSchemaPayload {
+                    connection_id: payload.connection_id,
+                    schema: serde_json::from_str(INPUT_SCHEMA).unwrap(),
+                    ui_schema: None,
+                    initial_data: None,
+                })
+                .unwrap(),
+            );
+            IrcPlugin::send_message(ctx, response).await;
+        }
+
+        MessageType::Connect => {
+            let payload: ConnectPayload = parse_payload(&message.payload)?;
+            let conn_id = payload.connection_id;
+            let extra = &payload.input.extra;
+
+            let server_host = extra["server_host"]
+                .as_str()
+                .unwrap_or("irc.libera.chat")
+                .to_string();
+            let server_port = extra["server_port"].as_u64().unwrap_or(6697) as u16;
+            let use_tls = extra["use_tls"].as_bool().unwrap_or(true);
+            let nick = extra["nick"].as_str().unwrap_or("mcv_viewer").to_string();
+            let password = extra["password"]
+                .as_str()
+                .filter(|s| !s.is_empty())
+                .map(str::to_string);
+            let channel = extra["channel"].as_str().unwrap_or("#channel").to_string();
+            let server_type_str = extra["server_type"].as_str().unwrap_or("rfc");
+            let server_type = ServerType::from_str(server_type_str);
+
+            if let Some(conn) = plugin.connections.get_mut(&conn_id) {
+                conn.connect(
+                    ctx,
+                    plugin.logical_plugin_id.clone(),
+                    server_host,
+                    server_port,
+                    nick,
+                    password,
+                    channel,
+                    use_tls,
+                    server_type,
+                );
+            } else {
+                tracing::warn!(
+                    target: "mcv::plugin-irc",
+                    conn_id = %conn_id,
+                    "Connect: 未登録の connection_id"
+                );
+            }
+        }
+
         MessageType::Disconnect => {
-            let disconnect: DisconnectPayload = parse_payload(&message.payload)?;
-            if let Some(conn) = plugin.connections.get_mut(&disconnect.connection_id) {
+            let payload: DisconnectPayload = parse_payload(&message.payload)?;
+            if let Some(conn) = plugin.connections.get_mut(&payload.connection_id) {
                 conn.stop();
             }
         }
+
         MessageType::ConnectionRemoved => {
-            let removed: ConnectionRemovedPayload = parse_payload(&message.payload)?;
-            if let Some(mut conn) = plugin.connections.remove(&removed.connection_id) {
+            let payload: ConnectionRemovedPayload = parse_payload(&message.payload)?;
+            if let Some(mut conn) = plugin.connections.remove(&payload.connection_id) {
                 conn.stop();
             }
         }
-        MessageType::FetchAccountInfo => {
-            let payload: FetchAccountInfoPayload = parse_payload(&message.payload)?;
-            let cookies = fetch_cookies_for_connect(
-                &ctx,
-                plugin.logical_plugin_id.clone(),
-                &payload.browser.id,
-            )
-            .await;
 
-            let auth_token = cookies
-                .iter()
-                .find(|c| c.name == "auth_token")
-                .map(|c| twitch_lib::auth_token::AuthToken::new(&c.value));
-
-            if let Some(token) = auth_token {
-                let client_id = twitch_lib::ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
-                match twitch_lib::fetch_blocked_users(&client_id, &token).await {
-                    Ok(user_ids) if !user_ids.is_empty() => {
-                        tracing::debug!(
-                            target: "mcv::plugin-irc",
-                            count = user_ids.len(),
-                            "Twitchブロックユーザーリスト取得完了"
-                        );
-                        let ng_msg = McvMessage::new_notification(
-                            MessageType::SetSiteNgUsers,
-                            MessageSource::Plugin {
-                                plugin_id: plugin.logical_plugin_id.clone(),
-                            },
-                            MessageDestination::Core,
-                            serde_json::to_value(SetSiteNgUsersPayload { user_ids }).unwrap(),
-                        );
-                        IrcPlugin::send_message(ctx, ng_msg).await;
-                    }
-                    Ok(_) => {
-                        tracing::debug!(
-                            target: "mcv::plugin-irc",
-                            "Twitchブロックユーザーリストが空"
-                        );
-                    }
-                    Err(e) => {
-                        tracing::warn!(
-                            target: "mcv::plugin-irc",
-                            error = %e,
-                            "Twitchブロックユーザーリスト取得失敗"
-                        );
-                    }
-                }
-            }
-        }
         MessageType::CanHandleUrl => {
-            let _payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
-            let supported = false; // TODO: URLを解析して対応可能か判定する
+            let payload: CanHandleUrlPayload = parse_payload(&message.payload)?;
+            let url = &payload.url;
+            // irc:// または ircs:// スキームを対応とする
+            let supported = url.starts_with("irc://") || url.starts_with("ircs://");
             let site_id = supported
-                .then(|| mcv_common::SiteId::new("Twitch", "f3c2a1d7-6e4b-4f8c-9a21-5d7b3e2c9f64"));
+                .then(|| mcv_common::SiteId::new("IRC", "b1c2d3e4-1234-5678-abcd-000000000001"));
             let response = message.create_response(
                 MessageType::CanHandleUrlResult,
                 serde_json::to_value(CanHandleUrlResultPayload { supported, site_id }).unwrap(),
             );
             IrcPlugin::send_message(ctx, response).await;
         }
+
         _ => {}
     }
     Ok(())
 }
+
 #[allow(clippy::result_large_err)]
 fn parse_payload<T>(payload: &serde_json::Value) -> Result<T, mcv_plugin_telemetry::TracingError>
 where
     T: DeserializeOwned,
 {
-    let result = T::deserialize(payload);
-
-    match result {
-        Ok(v) => Ok(v),
-        Err(e) => Err(mcv_plugin_telemetry::capture_context!(
+    T::deserialize(payload).map_err(|e| {
+        mcv_plugin_telemetry::capture_context!(
             "payloadが復元できない",
-            type =   type_name::<T>(),
+            type = type_name::<T>(),
             error = format!("{:#?}", e),
             raw = format!("{:#?}", payload),
-
         )
-        .into()),
-    }
-}
-
-async fn fetch_cookies_for_connect(
-    ctx: &PluginContext,
-    logical_plugin_id: PluginId,
-    browser_id: &mcv_messages::BrowserId,
-) -> Vec<mcv_messages::Cookie> {
-    let get_browser_plugin_message = McvMessage::new_request(
-        MessageType::GetBrowserPlugin,
-        MessageSource::Plugin {
-            plugin_id: logical_plugin_id.clone(),
-        },
-        MessageDestination::Core,
-        serde_json::to_value(GetBrowserPluginPayload {
-            browser_id: browser_id.clone(),
-        })
-        .unwrap(),
-    );
-    let browser_plugin_id = match ctx
-        .send_request(get_browser_plugin_message, Duration::from_secs(10))
-        .await
-    {
-        Ok(response) if response.message_type == MessageType::GetBrowserPluginAck => {
-            match serde_json::from_value::<GetBrowserPluginAckPayload>(response.payload) {
-                Ok(payload) => Some(payload.plugin_id),
-                Err(e) => {
-                    tracing::warn!(
-                        target: "mcv::plugin-irc",
-                        error = %e,
-                        "GetBrowserPluginAck payload parse failed"
-                    );
-                    None
-                }
-            }
-        }
-        Ok(response) => {
-            tracing::warn!(
-                target: "mcv::plugin-irc",
-                message_type = ?response.message_type,
-                payload = ?response.payload,
-                "GetBrowserPlugin returned non-ack response"
-            );
-            None
-        }
-        Err(e) => {
-            tracing::warn!(
-                target: "mcv::plugin-irc",
-                error = %e,
-                "GetBrowserPlugin request failed"
-            );
-            None
-        }
-    };
-
-    let Some(browser_plugin_id) = browser_plugin_id else {
-        return vec![];
-    };
-
-    let get_cookie_message = McvMessage::new_request(
-        MessageType::GetCookie,
-        MessageSource::Plugin {
-            plugin_id: logical_plugin_id.clone(),
-        },
-        MessageDestination::Plugin {
-            plugin_id: browser_plugin_id,
-        },
-        serde_json::to_value(GetCookiePayload {
-            browser_id: browser_id.clone(),
-            domain: ".twitch.tv".to_string(),
-        })
-        .unwrap(),
-    );
-
-    match ctx
-        .send_request(get_cookie_message, Duration::from_secs(10))
-        .await
-    {
-        Ok(response) if response.message_type == MessageType::GetCookieAck => {
-            match serde_json::from_value::<GetCookieAckPayload>(response.payload) {
-                Ok(payload) => {
-                    tracing::debug!(
-                        target: "mcv::plugin-irc",
-                        cookie_count = payload.cookies.len(),
-                        "GetCookie request succeeded"
-                    );
-                    payload.cookies
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        target: "mcv::plugin-irc",
-                        error = %e,
-                        "GetCookieAck payload parse failed"
-                    );
-                    vec![]
-                }
-            }
-        }
-        Ok(response) => {
-            tracing::warn!(
-                target: "mcv::plugin-irc",
-                message_type = ?response.message_type,
-                payload = ?response.payload,
-                "GetCookie returned non-ack response"
-            );
-            vec![]
-        }
-        Err(e) => {
-            tracing::warn!(
-                target: "mcv::plugin-irc",
-                error = %e,
-                "GetCookie request failed"
-            );
-            vec![]
-        }
-    }
+        .into()
+    })
 }

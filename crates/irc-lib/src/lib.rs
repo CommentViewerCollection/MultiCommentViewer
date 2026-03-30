@@ -1,14 +1,10 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+pub mod client;
+pub mod error;
+pub mod message;
+pub mod profile;
+pub mod session;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use error::IrcError;
+pub use message::{IrcCommand, IrcMessage, Prefix};
+pub use profile::{ParsedChat, ProfileEvent, RfcProfile, ServerProfile};
+pub use session::IrcSession;

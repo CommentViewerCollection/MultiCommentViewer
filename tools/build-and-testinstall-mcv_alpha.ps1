@@ -18,4 +18,6 @@ cargo xtask install `
   --plugin exe-manager-v3 `
   --plugin nicolive `
   --plugin exe-plugin-sample `
-  --plugin kick
+  --plugin kick `
+  --plugin irc
+  

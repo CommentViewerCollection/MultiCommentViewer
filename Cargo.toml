@@ -44,6 +44,8 @@ members = [
     "tools/extract-secret",
     "crates/irc-lib",
     "crates/plugin-irc",
+    "crates/openrec-lib",
+    "crates/plugin-openrec",
 ]
 resolver = "2"
 

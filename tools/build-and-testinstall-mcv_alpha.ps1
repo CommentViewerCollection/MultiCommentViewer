@@ -19,5 +19,6 @@ cargo xtask install `
   --plugin nicolive `
   --plugin exe-plugin-sample `
   --plugin kick `
-  --plugin irc
+  --plugin irc `
+  --plugin openrec
   

@@ -110,5 +110,13 @@
     "description": "IRC サーバーのコメント取得をするプラグインです",
     "entry": "plugin_irc.dll",
     "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-openrec",
+    "id": "openrec",
+    "name": "OPENREC.tv",
+    "description": "OPENREC.tv のコメント取得をするプラグインです",
+    "entry": "plugin_openrec.dll",
+    "has_channel_feature": true
   }
 ]

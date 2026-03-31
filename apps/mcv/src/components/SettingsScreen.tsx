@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
 import Form from '@rjsf/core'
@@ -110,33 +110,33 @@ function CookiesTxtSettings({
   return (
     <div className="space-y-6">
       {/* ファイル追加フォーム */}
-      <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">新しいファイルを登録</h3>
+      <div className="border border-[var(--theme-border)] rounded-lg p-4 bg-[var(--theme-bg-sidebar)] space-y-3">
+        <h3 className="text-sm font-semibold text-[var(--theme-text-main)]">新しいファイルを登録</h3>
 
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">名前（任意）</label>
+          <label className="block text-xs text-gray-500 mb-1">名前（任意）</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="例: My YouTube Cookie"
-            className="w-full px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-500 rounded focus:outline-none focus:border-blue-500 text-gray-900 dark:text-gray-100"
+            className="w-full px-3 py-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 text-[var(--theme-text-main)]"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">cookies.txt ファイル</label>
+          <label className="block text-xs text-gray-500 mb-1">cookies.txt ファイル</label>
           <div className="flex gap-2">
             <input
               type="text"
               value={path}
               readOnly
               placeholder="ファイルを選択してください"
-              className="flex-1 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-500 rounded text-gray-600 dark:text-gray-300 cursor-default"
+              className="flex-1 px-3 py-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border)] rounded text-gray-500 cursor-default"
             />
             <button
               onClick={handlePickFile}
-              className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded transition-colors text-gray-700 dark:text-gray-200"
+              className="px-3 py-1.5 text-sm bg-[var(--theme-bg-button)] hover:bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded transition-colors text-[var(--theme-text-main)]"
             >
               選択...
             </button>
@@ -154,11 +154,11 @@ function CookiesTxtSettings({
 
       {/* 登録済みファイル一覧 */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+        <h3 className="text-sm font-semibold text-[var(--theme-text-main)] mb-2">
           登録済みファイル（{entries.length}件）
         </h3>
         {entries.length === 0 ? (
-          <div className="text-sm text-gray-600 dark:text-gray-500 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="text-sm text-gray-500 py-4 text-center border border-[var(--theme-border)] rounded-lg">
             登録済みのファイルはありません
           </div>
         ) : (
@@ -166,14 +166,14 @@ function CookiesTxtSettings({
             {entries.map(entry => (
               <div
                 key={entry.browser_id}
-                className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="flex items-center gap-3 px-3 py-2 bg-[var(--theme-bg-sidebar)] border border-[var(--theme-border)] rounded-lg"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-700 dark:text-gray-200 font-medium truncate">
+                  <div className="text-sm text-[var(--theme-text-main)] font-medium truncate">
                     {entry.name || entry.path}
                   </div>
                   {entry.name && (
-                    <div className="text-xs text-gray-600 dark:text-gray-500 truncate">{entry.path}</div>
+                    <div className="text-xs text-gray-500 truncate">{entry.path}</div>
                   )}
                 </div>
                 <button
@@ -206,7 +206,7 @@ interface PluginInfo {
   name: string
 }
 
-export function SettingsScreen({ onClose }: { onClose: () => void }) {
+export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onApply?: () => void }) {
   const [tabs, setTabs] = useState<SettingsTab[]>([])
   const [activeTab, setActiveTab] = useState<string>('core')
   const [originalData, setOriginalData] = useState<{ [key: string]: any }>({})
@@ -214,30 +214,36 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // RJSF用のカスタムスタイル（ライト/ダーク両対応）
+  // アンマウント時のテーマ復元用に最新の originalData を ref で追跡
+  const originalDataRef = useRef<{ [key: string]: any }>({})
+  useEffect(() => {
+    originalDataRef.current = originalData
+  })
+
+  // アンマウント時（Cancel未クリックでタブ移動した場合）に元のテーマを復元する
+  useEffect(() => {
+    return () => {
+      const coreData = originalDataRef.current?.['core']
+      if (coreData?.theme) {
+        const colors = resolveThemeColors(coreData.theme, coreData?.custom_theme_colors)
+        applyThemeColors(colors)
+      }
+    }
+  }, [])
+
+  // RJSF用のカスタムスタイル（全テーマ CSS変数対応）
   const customStyles = `
-    /* 入力フィールドとセレクトボックスのスタイル（ライトモードデフォルト） */
+    /* 入力フィールドとセレクトボックスのスタイル（全テーマ共通） */
     .rjsf input[type="text"],
     .rjsf input[type="number"],
     .rjsf input[type="email"],
     .rjsf select,
     .rjsf textarea {
-      background-color: #f3f4f6 !important;
-      border: 1px solid #d1d5db !important;
-      color: #111827 !important;
+      background-color: var(--theme-bg-input) !important;
+      border: 1px solid var(--theme-border) !important;
+      color: var(--theme-text-main) !important;
       border-radius: 0.375rem;
       padding: 0.5rem 0.75rem;
-    }
-
-    /* ダークモード: 入力フィールド */
-    .dark .rjsf input[type="text"],
-    .dark .rjsf input[type="number"],
-    .dark .rjsf input[type="email"],
-    .dark .rjsf select,
-    .dark .rjsf textarea {
-      background-color: #374151 !important;
-      border: 1px solid #4b5563 !important;
-      color: #f3f4f6 !important;
     }
 
     .rjsf input[type="text"]:focus,
@@ -265,55 +271,35 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       margin-right: 0.5rem;
     }
 
-    /* ラベルのスタイル（ライトモードデフォルト） */
+    /* ラベルのスタイル */
     .rjsf label {
-      color: #374151 !important;
+      color: var(--theme-text-main) !important;
       font-weight: 500;
       margin-bottom: 0.25rem;
       display: block;
     }
 
-    /* ダークモード: ラベル */
-    .dark .rjsf label {
-      color: #e5e7eb !important;
-    }
-
-    /* 説明文のスタイル（ライトモードデフォルト） */
+    /* 説明文のスタイル */
     .rjsf .field-description {
-      color: #6b7280 !important;
+      color: #9ca3af !important;
       font-size: 0.875rem;
       margin-top: 0.25rem;
     }
 
-    /* ダークモード: 説明文 */
-    .dark .rjsf .field-description {
-      color: #9ca3af !important;
-    }
-
-    /* 条件付きフィールドのグループ化（ライトモードデフォルト） */
+    /* 条件付きフィールドのグループ化 */
     .rjsf .field-object > fieldset {
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--theme-border);
       border-radius: 0.5rem;
       padding: 1rem;
       margin-top: 0.5rem;
-      background-color: rgba(209, 213, 219, 0.3);
-    }
-
-    /* ダークモード: fieldset */
-    .dark .rjsf .field-object > fieldset {
-      border: 1px solid #4b5563;
-      background-color: rgba(55, 65, 81, 0.3);
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
     .rjsf .field-object > fieldset > legend {
-      color: #6b7280 !important;
+      color: #9ca3af !important;
       font-size: 0.875rem;
       font-weight: 600;
       padding: 0 0.5rem;
-    }
-
-    .dark .rjsf .field-object > fieldset > legend {
-      color: #9ca3af !important;
     }
 
     /* 条件付きフィールドを視覚的に区別 */
@@ -329,12 +315,8 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
     /* 条件付きフィールドのラベルを強調 */
     .rjsf .conditional-field > label {
-      color: #2563eb !important;
+      color: #60a5fa !important;
       font-weight: 600;
-    }
-
-    .dark .rjsf .conditional-field > label {
-      color: #93c5fd !important;
     }
 
     /* readOnlyフィールド（disabled状態）のスタイル */
@@ -343,27 +325,14 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     .rjsf .conditional-field-disabled {
       opacity: 0.5;
       pointer-events: none;
-      background-color: rgba(209, 213, 219, 0.2) !important;
+      background-color: rgba(0, 0, 0, 0.1) !important;
       border-left-color: #9ca3af !important;
-    }
-
-    .dark .rjsf .conditional-field:has(input[readonly]),
-    .dark .rjsf .conditional-field:has(select[disabled]),
-    .dark .rjsf .conditional-field-disabled {
-      background-color: rgba(55, 65, 81, 0.2) !important;
-      border-left-color: #6b7280 !important;
     }
 
     .rjsf .conditional-field:has(input[readonly]) > label,
     .rjsf .conditional-field:has(select[disabled]) > label,
     .rjsf .conditional-field-disabled > label {
       color: #9ca3af !important;
-    }
-
-    .dark .rjsf .conditional-field:has(input[readonly]) > label,
-    .dark .rjsf .conditional-field:has(select[disabled]) > label,
-    .dark .rjsf .conditional-field-disabled > label {
-      color: #6b7280 !important;
     }
 
     /* readOnlyの入力フィールド */
@@ -374,33 +343,22 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       opacity: 0.6;
     }
 
-    /* 配信サイト毎の色設定 - サイトカード（ライトモードデフォルト） */
+    /* 配信サイト毎の色設定 - サイトカード */
     .rjsf .site-color-item {
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--theme-border);
       border-radius: 0.5rem;
       padding: 0.75rem 1rem;
       margin-bottom: 0.75rem;
-      background-color: rgba(209, 213, 219, 0.3);
-    }
-
-    /* ダークモード: サイトカード */
-    .dark .rjsf .site-color-item {
-      border: 1px solid #4b5563;
-      background-color: rgba(55, 65, 81, 0.3);
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
     .rjsf .site-color-item-title {
-      color: #2563eb;
+      color: #60a5fa;
       font-weight: 600;
       font-size: 0.9rem;
       margin-bottom: 0.5rem;
       padding-bottom: 0.375rem;
-      border-bottom: 1px solid #d1d5db;
-    }
-
-    .dark .rjsf .site-color-item-title {
-      color: #93c5fd;
-      border-bottom: 1px solid #374151;
+      border-bottom: 1px solid var(--theme-border);
     }
 
     .rjsf .site-color-item-fields {
@@ -499,6 +457,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
   const handleApply = async () => {
     await applySettings()
+    onApply?.()
   }
 
   const handleCancel = () => {
@@ -527,8 +486,6 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
 
   // テーマをhtmlタグに即座に適用するヘルパー
   const applyThemeToHtml = (theme: string, customColors?: any) => {
-    const isDark = theme !== 'light'
-    document.documentElement.classList.toggle('dark', isDark)
     const colors = resolveThemeColors(theme, customColors)
     applyThemeColors(colors)
   }
@@ -715,14 +672,14 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       <style>{customStyles}</style>
 
       {/* 縦タブリスト */}
-      <div className="w-48 shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto bg-white dark:bg-gray-800">
+      <div className="w-48 shrink-0 border-r border-[var(--theme-border)] overflow-y-auto bg-[var(--theme-bg-sidebar)]">
         {tabs.map(tab => (
           <button
             key={tab.id}
-            className={`w-full text-left px-4 py-2 text-sm transition-colors border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between ${
+            className={`w-full text-left px-4 py-2 text-sm transition-colors border-b border-[var(--theme-border)] flex items-center justify-between ${
               activeTab === tab.id
-                ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-50'
+                : 'text-gray-500 hover:bg-[var(--theme-bg-input)]'
             }`}
             onClick={() => setActiveTab(tab.id)}
           >
@@ -738,21 +695,21 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       <div className="flex-1 flex flex-col overflow-hidden">
 
       {/* ヘッダー（適用・キャンセルボタン） */}
-      <div className="flex items-center justify-end px-4 py-2 gap-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
+      <div className="flex items-center justify-end px-4 py-2 gap-2 border-b border-[var(--theme-border)] bg-[var(--theme-bg-sidebar)] shrink-0">
         <button
           onClick={handleApply}
           disabled={loading || !hasChanges}
           className={`px-3 py-1 text-sm rounded transition-colors ${
             hasChanges
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+              : 'bg-[var(--theme-bg-input)] text-gray-400 cursor-not-allowed'
           }`}
         >
           適用
         </button>
         <button
           onClick={handleCancel}
-          className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition-colors text-gray-900 dark:text-white"
+          className="px-3 py-1 text-sm bg-[var(--theme-bg-button)] hover:bg-[var(--theme-bg-input)] rounded transition-colors text-[var(--theme-text-main)]"
         >
           キャンセル
         </button>
@@ -762,7 +719,7 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {loading && (
           <div className="flex items-center justify-center h-full">
-            <div className="text-gray-500 dark:text-gray-400">読み込み中...</div>
+            <div className="text-gray-500">読み込み中...</div>
           </div>
         )}
 

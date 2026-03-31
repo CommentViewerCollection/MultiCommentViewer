@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { DataGrid, Column } from 'my-dataview'
 import type { Comment, ConnectionInfo, MessagePart } from '../App'
-import type { ThemeColors } from '../theme'
+import { type ThemeColors, THEME_CSS_VARS } from '../theme'
 
 // @ts-ignore
 const DataGridComponent = DataGrid as any
@@ -137,9 +137,11 @@ export function SearchTab({ columns, renderCell, connections, themeColors, exter
             columns={columns}
             renderCell={renderCell}
             height="100%"
-            backgroundColor={themeColors.bg_main}
-            headerBackgroundColor={themeColors.bg_sidebar}
-            border={`1px solid ${themeColors.border}`}
+            backgroundColor={THEME_CSS_VARS.bg_main}
+            headerBackgroundColor={THEME_CSS_VARS.bg_sidebar}
+            border={THEME_CSS_VARS.border_1px}
+            textColor={THEME_CSS_VARS.text_main}
+            rowBorderColor={THEME_CSS_VARS.border}
             autoScrollEnabled={false}
             defaultItemHeight={65}
           />

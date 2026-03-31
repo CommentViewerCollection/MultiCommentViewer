@@ -42,73 +42,31 @@ input[type="color"]:focus {
 }
 
 /* ============================================================
-   ダーク系テーマ共通 CSS変数ルール
-   html.dark が付与された場合に CSS変数 (--theme-*) で色を上書き
-   各テーマのデフォルト色は JS側 (src/theme.ts) で管理
+   テーマ共通 CSS変数ルール
+   applyThemeColors() が --theme-* 変数を全テーマに設定する
    ============================================================ */
 
-/* メイン背景 */
-html.dark .dark\:bg-gray-900 {
-  background-color: var(--theme-bg-main) !important;
-}
-
-/* サイドバー・カード */
-html.dark .dark\:bg-gray-800 {
-  background-color: var(--theme-bg-sidebar) !important;
-}
-
-/* 入力フィールド・ホバー */
-html.dark .dark\:bg-gray-700 {
-  background-color: var(--theme-bg-input) !important;
-}
-
-/* ボタン・薄い要素 */
-html.dark .dark\:bg-gray-600 {
-  background-color: var(--theme-bg-button) !important;
-}
-
-/* ホバー */
-html.dark .dark\:hover\:bg-gray-700:hover {
-  background-color: var(--theme-bg-input) !important;
-}
-html.dark .dark\:hover\:bg-gray-600:hover {
-  background-color: var(--theme-bg-button) !important;
-}
-
-/* テキスト（メイン） */
-html.dark .dark\:text-white {
-  color: var(--theme-text-main) !important;
-}
-
-/* ボーダー */
-html.dark .dark\:border-gray-700 {
-  border-color: var(--theme-border) !important;
-}
-html.dark .dark\:border-gray-600 {
-  border-color: var(--theme-border) !important;
-}
-
 /* SettingsScreen の RJSF フォームフィールド */
-html.dark .rjsf input[type="text"],
-html.dark .rjsf input[type="number"],
-html.dark .rjsf input[type="email"],
-html.dark .rjsf select,
-html.dark .rjsf textarea {
+.rjsf input[type="text"],
+.rjsf input[type="number"],
+.rjsf input[type="email"],
+.rjsf select,
+.rjsf textarea {
   background-color: var(--theme-bg-input) !important;
   border: 1px solid var(--theme-border) !important;
   color: var(--theme-text-main) !important;
 }
 
-html.dark .rjsf .field-object > fieldset {
+.rjsf .field-object > fieldset {
   border: 1px solid var(--theme-border) !important;
-  background-color: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-html.dark .rjsf .site-color-item {
+.rjsf .site-color-item {
   border: 1px solid var(--theme-border) !important;
-  background-color: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-html.dark .rjsf .site-color-item-title {
-  border-bottom: 1px solid var(--theme-bg-input) !important;
+.rjsf .site-color-item-title {
+  border-bottom: 1px solid var(--theme-border) !important;
 }

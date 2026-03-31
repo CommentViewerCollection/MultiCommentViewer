@@ -31,25 +31,37 @@ export const PRESET_THEME_COLORS: Record<string, ThemeColors> = {
     titlebar_text: '#e5e7eb',
   },
   light: {
-    bg_main: '#f9fafb',
-    bg_sidebar: '#f3f4f6',
-    bg_input: '#e5e7eb',
-    bg_button: '#d1d5db',
-    text_main: '#1f2937',
-    border: '#d1d5db',
-    titlebar_bg: '#e5e7eb',
-    titlebar_text: '#1f2937',
+    bg_main: '#ffffff',
+    bg_sidebar: '#f5f5f5',
+    bg_input: '#ffffff',
+    bg_button: '#efefef',
+    text_main: '#000000',
+    border: '#cccccc',
+    titlebar_bg: '#f5f5f5',
+    titlebar_text: '#000000',
   },
 }
 
 export function applyThemeColors(colors: ThemeColors): void {
   const el = document.documentElement
-  el.style.setProperty('--theme-bg-main',    colors.bg_main)
+  el.style.setProperty('--theme-bg-main', colors.bg_main)
   el.style.setProperty('--theme-bg-sidebar', colors.bg_sidebar)
-  el.style.setProperty('--theme-bg-input',   colors.bg_input)
-  el.style.setProperty('--theme-bg-button',  colors.bg_button)
-  el.style.setProperty('--theme-text-main',  colors.text_main)
-  el.style.setProperty('--theme-border',     colors.border)
+  el.style.setProperty('--theme-bg-input', colors.bg_input)
+  el.style.setProperty('--theme-bg-button', colors.bg_button)
+  el.style.setProperty('--theme-text-main', colors.text_main)
+  el.style.setProperty('--theme-border', colors.border)
+}
+
+export const THEME_CSS_VARS = {
+  bg_main: 'var(--theme-bg-main)',
+  bg_sidebar: 'var(--theme-bg-sidebar)',
+  text_main: 'var(--theme-text-main)',
+  border: 'var(--theme-border)',
+  border_1px: '1px solid var(--theme-border)',
+} as const
+
+export function isDarkTheme(theme: string): boolean {
+  return theme !== 'light' && theme !== 'classic'
 }
 
 export function resolveThemeColors(theme: string, customColors?: Partial<ThemeColors>): ThemeColors {

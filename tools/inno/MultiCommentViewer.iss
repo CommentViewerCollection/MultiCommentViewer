@@ -59,8 +59,18 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 Filename: "{app}\{#AppExeName}"; Description: "{#AppName} を起動"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; インストーラで配置したキャッシュのみ削除（ユーザーデータは保持）
+; ZIP展開でインストールしたファイル（Inno Setup の [Files] 管理外）
+Type: files; Name: "{app}\MultiCommentViewer.exe"
+Type: files; Name: "{app}\MultiCommentViewer.pdb"
+Type: filesandordirs; Name: "{app}\plugins"
+; アプリ実行時に生成されるファイル・ディレクトリ
+Type: filesandordirs; Name: "{app}\logs"
+Type: filesandordirs; Name: "{app}\settings"
 Type: filesandordirs; Name: "{app}\cache"
+Type: files; Name: "{app}\logs.db"
+Type: files; Name: "{app}\session.db"
+; 上記削除後にディレクトリ自体を削除
+Type: dirifempty; Name: "{app}"
 
 [Code]
 procedure ExpandCoreZipOrFail();

@@ -88,6 +88,6 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  if CurStep = ssInstall then
+  if CurStep = ssPostInstall then
     ExpandCoreZipOrFail();
 end;

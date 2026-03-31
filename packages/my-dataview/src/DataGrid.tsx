@@ -27,6 +27,8 @@ export interface DataGridProps<T> {
   backgroundColor?: string;
   headerBackgroundColor?: string;
   border?: string;
+  textColor?: string;
+  rowBorderColor?: string;
   onAtBottomChange?: (atBottom: boolean) => void;
   autoScrollEnabled?: boolean;
   onUserDetachedFromBottom?: () => void;
@@ -52,6 +54,8 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   backgroundColor = '#1a1a1a',
   headerBackgroundColor = '#333',
   border = '2px solid red',
+  textColor = 'inherit',
+  rowBorderColor = '#2a2a2a',
   onAtBottomChange,
   autoScrollEnabled = true,
   onUserDetachedFromBottom,
@@ -233,10 +237,11 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
       style={{
         display: 'flex',
         backgroundColor: headerBackgroundColor,
-        borderBottom: '1px solid #555',
+        borderBottom: `1px solid ${rowBorderColor}`,
         fontWeight: 'bold',
         position: 'relative',
         width: totalWidth,
+        color: textColor,
       }}
     >
       {visibleColumns.map((column) => (
@@ -309,7 +314,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
                   backgroundColor:
                     resizing?.column.key === column.key || resizeHoverKey === column.key
                       ? '#4a9eff'
-                      : 'rgba(255,255,255,0.2)',
+                      : rowBorderColor,
                   transition: 'background-color 0.15s',
                   pointerEvents: 'none',
                 }}
@@ -450,7 +455,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         style={{
           display: 'flex',
           minHeight: ROW_MIN_HEIGHT,
-          borderBottom: `1px solid #2a2a2a`,
+          borderBottom: `1px solid ${rowBorderColor}`,
           backgroundColor,
           color: textColor,
           cursor: 'pointer',
@@ -481,7 +486,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         })}
       </div>
     );
-  }, [visibleColumns, selectedIndex, handleItemSelect, handleRowContextMenu, renderCellFunc]);
+  }, [visibleColumns, selectedIndex, handleItemSelect, handleRowContextMenu, renderCellFunc, rowBorderColor]);
 
   const totalWidth = visibleColumns.reduce((sum, col) => sum + (col.width || 100), 0);
 

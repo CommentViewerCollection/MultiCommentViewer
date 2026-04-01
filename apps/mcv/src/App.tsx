@@ -838,27 +838,14 @@ function App() {
     })
 
     // 接続失敗イベントをリッスン
-    const unlistenConnectFailed = listen<{ connection_id: string; reason: string }>('connect-failed', (event) => {
-      const { connection_id, reason } = event.payload
+    const unlistenConnectFailed = listen<{ connection_id: string }>('connect-failed', (event) => {
+      const { connection_id } = event.payload
       setConnectingIds((prev) => {
         const next = new Set(prev)
         next.delete(connection_id)
         return next
       })
       loadConnections()
-      // エラーをコメント欄にシステムメッセージとして表示
-      const errorComment: Comment = {
-        id: `connect-failed-${connection_id}-${Date.now()}`,
-        user_name: [{ type: 'text', text: 'システム' }],
-        user_id: '',
-        badges: [],
-        text: [{ type: 'text', text: `接続に失敗しました: ${reason}` }],
-        timestamp: Date.now(),
-        connection_id,
-        is_visible: true,
-        kind: 'system',
-      }
-      setComments((prev) => [...prev, errorComment])
     })
 
     // サイト追加イベントをリッスン

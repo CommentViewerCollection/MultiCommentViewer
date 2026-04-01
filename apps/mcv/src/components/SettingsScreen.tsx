@@ -518,7 +518,6 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
       'ui:order': [
         'theme',
         'custom_theme_colors',
-        'max_comments',
         'enable_color_by_plugin_or_connection',
         'color_mode',
         'site_colors',
@@ -526,17 +525,17 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
       ],
       color_mode: {
         'ui:classNames': `conditional-field ${!currentData[activeTab]?.enable_color_by_plugin_or_connection
-            ? 'conditional-field-disabled'
-            : ''
+          ? 'conditional-field-disabled'
+          : ''
           }`.trim(),
         'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection,
         'ui:enumNames': ['配信サイト毎', '接続毎']
       },
       site_colors: {
         'ui:classNames': `conditional-field ${!currentData[activeTab]?.enable_color_by_plugin_or_connection ||
-            currentData[activeTab]?.color_mode === 'connection'
-            ? 'conditional-field-disabled'
-            : ''
+          currentData[activeTab]?.color_mode === 'connection'
+          ? 'conditional-field-disabled'
+          : ''
           }`.trim(),
         'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
           currentData[activeTab]?.color_mode === 'connection',
@@ -673,8 +672,8 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
           <button
             key={tab.id}
             className={`w-full text-left px-4 py-2 text-sm transition-colors border-b border-[var(--theme-border)] flex items-center justify-between ${activeTab === tab.id
-                ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-50'
-                : 'text-gray-500 hover:bg-[var(--theme-bg-input)]'
+              ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-50'
+              : 'text-gray-500 hover:bg-[var(--theme-bg-input)]'
               }`}
             onClick={() => setActiveTab(tab.id)}
           >
@@ -695,8 +694,8 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
             onClick={handleApply}
             disabled={loading || !hasChanges}
             className={`px-3 py-1 text-sm rounded transition-colors ${hasChanges
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-[var(--theme-bg-input)] text-gray-400 cursor-not-allowed'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-[var(--theme-bg-input)] text-gray-400 cursor-not-allowed'
               }`}
           >
             適用

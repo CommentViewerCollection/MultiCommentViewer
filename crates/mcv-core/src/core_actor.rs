@@ -313,14 +313,6 @@ impl CoreActor {
                         "titlebar_text": { "type": "string", "title": "タイトルバーテキスト色",      "default": "#e5e7eb" }
                     }
                 },
-                "max_comments": {
-                    "type": "integer",
-                    "title": "最大コメント数",
-                    "description": "保持する最大コメント数（メモリ使用量に影響）",
-                    "default": 1000,
-                    "minimum": 100,
-                    "maximum": 10000
-                },
                 "enable_color_by_plugin_or_connection": {
                     "type": "boolean",
                     "title": "サイト毎または接続毎に色を付ける",

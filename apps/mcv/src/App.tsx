@@ -553,11 +553,11 @@ function App() {
 
   // DataGridのカラム定義
   const [columns, setColumns] = useState<Column<Comment>[]>([
-    { key: 'connection_name', label: '接続', width: 150, visible: true, resizable: true },
+    { key: 'connection_name', label: '接続名', width: 150, visible: true, resizable: true },
     { key: 'avatar_url', label: 'サムネ', width: 48, visible: true, resizable: true },
     { key: 'user_name', label: 'ユーザー名', width: 150, visible: true, resizable: true },
     { key: 'text', label: 'コメント', width: 400, visible: true, resizable: true, wrap: true, hideable: false },
-    { key: 'timestamp', label: '時刻', width: 150, visible: true, resizable: true },
+    { key: 'timestamp', label: '投稿日時', width: 150, visible: true, resizable: true },
   ])
 
   // 列設定の保存・復元

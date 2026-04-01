@@ -1654,6 +1654,187 @@ pub async fn fetch_updated_metadata(
     })
 }
 
+/// ライブ配信1本分の情報
+pub struct LiveStreamInfo {
+    pub video_id: String,
+    pub title: String,
+}
+
+/// チャンネルのライブ配信一覧
+pub struct ChannelLiveVideos {
+    pub streams: Vec<LiveStreamInfo>,
+}
+
+/// チャンネルURLからライブ配信中の動画一覧（video ID とタイトル）を取得する。
+///
+/// `{channel_url}/streams` にリクエストを送り、`ytInitialData` の `videoRenderer` の中から
+/// `thumbnailOverlayTimeStatusRenderer.style == "LIVE"` のものを抽出する。
+pub async fn get_channel_live_videos(
+    channel_url: &str,
+    cookies: &[Cookie],
+) -> Result<ChannelLiveVideos, mcv_plugin_telemetry::TracingError> {
+    let streams_url = format!("{}/streams", channel_url.trim_end_matches('/'));
+
+    let cookie_header = cookies
+        .iter()
+        .map(|c| format!("{}={}", c.name, c.value))
+        .collect::<Vec<_>>()
+        .join("; ");
+
+    let client = reqwest::Client::new();
+    let mut req_builder = client
+        .get(&streams_url)
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0",
+        )
+        .header(
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        )
+        .header("Accept-Encoding", "gzip, deflate")
+        .header("Sec-Fetch-Site", "none")
+        .header("Sec-Fetch-Dest", "document")
+        .header("Sec-Fetch-Mode", "navigate")
+        .header("Upgrade-Insecure-Requests", "1");
+    if !cookie_header.is_empty() {
+        req_builder = req_builder.header("Cookie", cookie_header);
+    }
+
+    let res = req_builder.send().await.map_err(|e| {
+        mcv_plugin_telemetry::capture_context!(
+            "channel /streams ページの取得に失敗",
+            channel_url = channel_url.to_owned(),
+            error = e.to_string()
+        )
+    })?;
+
+    let body = res.text().await.map_err(|e| {
+        mcv_plugin_telemetry::capture_context!(
+            "channel /streams ページの本文読み取りに失敗",
+            error = e.to_string()
+        )
+    })?;
+
+    let Some(initial_data_json) = extract_json_var_from_page(&body, "ytInitialData") else {
+        tracing::warn!(
+            target: "mcv::youtube-live-lib",
+            channel_url = %channel_url,
+            "channel /streams: ytInitialData が見つかりません"
+        );
+        tracing::trace!(
+            target: "mcv::youtube-live-lib",
+            body = %body,
+            "channel /streams: レスポンス本文（デバッグ用）"
+        );
+        return Ok(ChannelLiveVideos { streams: vec![] });
+    };
+
+    let json: serde_json::Value = match serde_json::from_str(&initial_data_json) {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::warn!(
+                target: "mcv::youtube-live-lib",
+                error = %e,
+                "channel /streams: ytInitialData のパースに失敗"
+            );
+            return Ok(ChannelLiveVideos { streams: vec![] });
+        }
+    };
+
+    let mut streams: Vec<LiveStreamInfo> = Vec::new();
+    collect_live_video_renderers(&json, &mut streams);
+
+    // videoId で重複排除
+    let mut seen = std::collections::HashSet::new();
+    streams.retain(|s| seen.insert(s.video_id.clone()));
+
+    tracing::info!(
+        target: "mcv::youtube-live-lib",
+        channel_url = %channel_url,
+        count = streams.len(),
+        "channel /streams: ライブ配信一覧取得完了"
+    );
+
+    Ok(ChannelLiveVideos { streams })
+}
+
+/// HTML 本文から JavaScript 変数の JSON 値を抽出する。
+/// `var NAME = {...};` または `window["NAME"] = {...};` の形式に対応。
+fn extract_json_var_from_page(body: &str, var_name: &str) -> Option<String> {
+    let prefixes = [
+        format!("var {var_name} = "),
+        format!("window[\"{var_name}\"] = "),
+    ];
+    for prefix in &prefixes {
+        if let Some(start) = body.find(prefix.as_str()) {
+            let json_start = start + prefix.len();
+            if let Some(end) = body[json_start..].find(";</script>") {
+                return Some(body[json_start..json_start + end].to_string());
+            }
+            if let Some(end) = body[json_start..].find(";\n") {
+                return Some(body[json_start..json_start + end].to_string());
+            }
+        }
+    }
+    None
+}
+
+/// JSON ツリーを再帰的に走査し、LIVE バッジを持つ `videoRenderer` を収集する。
+///
+/// 判定条件:
+/// - `videoId` フィールドを持つ
+/// - `thumbnailOverlays[].thumbnailOverlayTimeStatusRenderer.style == "LIVE"`
+fn collect_live_video_renderers(value: &serde_json::Value, results: &mut Vec<LiveStreamInfo>) {
+    match value {
+        serde_json::Value::Object(map) => {
+            if let Some(vid) = map.get("videoId").and_then(|v| v.as_str()) {
+                if let Some(overlays) = map.get("thumbnailOverlays").and_then(|v| v.as_array()) {
+                    let is_live = overlays.iter().any(|overlay| {
+                        overlay
+                            .pointer("/thumbnailOverlayTimeStatusRenderer/style")
+                            .and_then(|v| v.as_str())
+                            == Some("LIVE")
+                    });
+                    if is_live {
+                        let title =
+                            extract_text_runs(map.get("title").unwrap_or(&serde_json::Value::Null));
+                        results.push(LiveStreamInfo {
+                            video_id: vid.to_string(),
+                            title,
+                        });
+                        // この videoRenderer の内部は走査しない
+                        return;
+                    }
+                }
+            }
+            for v in map.values() {
+                collect_live_video_renderers(v, results);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for v in arr {
+                collect_live_video_renderers(v, results);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// `title` オブジェクトからテキストを抽出する（`runs` 配列または `simpleText`）。
+fn extract_text_runs(value: &serde_json::Value) -> String {
+    if let Some(runs) = value.get("runs").and_then(|v| v.as_array()) {
+        runs.iter()
+            .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+            .collect::<Vec<_>>()
+            .join("")
+    } else if let Some(simple) = value.get("simpleText").and_then(|v| v.as_str()) {
+        simple.to_string()
+    } else {
+        String::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

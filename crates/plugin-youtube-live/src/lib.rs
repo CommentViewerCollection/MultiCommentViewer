@@ -552,6 +552,24 @@ async fn channel_mode_loop(
                 connection_id = %connection_id,
                 "配信終了を検出、次の配信を待機"
             );
+            let waiting_msg = McvMessage::new_notification(
+                MessageType::StreamMetadata,
+                MessageSource::Plugin {
+                    plugin_id: logical_plugin_id.clone(),
+                },
+                MessageDestination::Core,
+                serde_json::to_value(StreamMetadataPayload {
+                    connection_id,
+                    title: Some("（次の配信が始まるまで待機中...）".to_string()),
+                    viewer_count: None,
+                    total_viewer_count: None,
+                    start_time: None,
+                    others: None,
+                    clear: Some(true),
+                })
+                .unwrap(),
+            );
+            YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), waiting_msg).await;
             // 配信終了後は短い待機を挟んでから再チェック
             tokio::select! {
                 _ = cancel_rx.changed() => break 'outer,
@@ -564,6 +582,24 @@ async fn channel_mode_loop(
                 channel_url = %channel_url,
                 "ライブ配信なし、60秒後に再チェック"
             );
+            let waiting_msg = McvMessage::new_notification(
+                MessageType::StreamMetadata,
+                MessageSource::Plugin {
+                    plugin_id: logical_plugin_id.clone(),
+                },
+                MessageDestination::Core,
+                serde_json::to_value(StreamMetadataPayload {
+                    connection_id,
+                    title: Some("（次の配信が始まるまで待機中...）".to_string()),
+                    viewer_count: None,
+                    total_viewer_count: None,
+                    start_time: None,
+                    others: None,
+                    clear: Some(true),
+                })
+                .unwrap(),
+            );
+            YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), waiting_msg).await;
             tokio::select! {
                 _ = cancel_rx.changed() => break 'outer,
                 _ = sleep(Duration::from_secs(60)) => {}

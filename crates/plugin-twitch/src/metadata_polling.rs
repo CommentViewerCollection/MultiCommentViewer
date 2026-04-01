@@ -58,22 +58,36 @@ pub(crate) async fn metadata_polling_loop(
 
         let desired_interval = match twitch_lib::fetch_stream_info(&channel_login).await {
             Ok(info) => {
+                let is_live = info.start_time.is_some();
                 tracing::info!(
                     target: "mcv::plugin-twitch",
                     connection_id = %connection_id,
                     poll_count,
                     title = ?info.title,
                     start_time = ?info.start_time,
+                    is_live,
                     "メタデータポーリング: 取得成功、StreamMetadata 送信"
                 );
-                let payload = StreamMetadataPayload {
-                    connection_id,
-                    title: info.title,
-                    viewer_count: None,
-                    total_viewer_count: None,
-                    start_time: info.start_time,
-                    others: None,
-                    clear: None,
+                let payload = if is_live {
+                    StreamMetadataPayload {
+                        connection_id,
+                        title: info.title,
+                        viewer_count: None,
+                        total_viewer_count: None,
+                        start_time: info.start_time,
+                        others: None,
+                        clear: None,
+                    }
+                } else {
+                    StreamMetadataPayload {
+                        connection_id,
+                        title: Some("（次の配信が始まるまで待機中...）".to_string()),
+                        viewer_count: None,
+                        total_viewer_count: None,
+                        start_time: None,
+                        others: None,
+                        clear: Some(true),
+                    }
                 };
                 let msg = McvMessage::new_notification(
                     MessageType::StreamMetadata,

@@ -313,12 +313,6 @@ impl CoreActor {
                         "titlebar_text": { "type": "string", "title": "タイトルバーテキスト色",      "default": "#e5e7eb" }
                     }
                 },
-                "auto_scroll": {
-                    "type": "boolean",
-                    "title": "自動スクロール",
-                    "description": "新しいコメントが届いたときに自動的にスクロールします",
-                    "default": true
-                },
                 "max_comments": {
                     "type": "integer",
                     "title": "最大コメント数",

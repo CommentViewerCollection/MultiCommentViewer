@@ -593,7 +593,7 @@ function App() {
           }))
         })
       }
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   // 接続一覧を読み込む
@@ -695,15 +695,8 @@ function App() {
     setCurrentThemeColors(colors)
   }, [coreSettings])
 
-  // AutoScroll の真のON/OFF状態（設定値）を同期
-  useEffect(() => {
-    setIsAutoScrollEnabled(coreSettings?.auto_scroll ?? true)
-  }, [coreSettings?.auto_scroll])
-
   const handleAtBottomChange = (isAtBottom: boolean) => {
     if (!isAtBottom) return
-    // 設定で auto_scroll が無効化されている場合は自動復帰しない
-    if ((coreSettings?.auto_scroll ?? true) === false) return
     setIsAutoScrollEnabled(true)
   }
 
@@ -948,7 +941,7 @@ function App() {
         setCoreUpdateRequired(payload)
         setCoreUpdateError(null)
       }
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   useEffect(() => {
@@ -1003,12 +996,12 @@ function App() {
   }, [connections, metadataMap, elapsedTick])
 
   const metadataColumns: Column<MetadataRow>[] = [
-    { key: 'connection_name',   label: '接続名',   width: 120, visible: true, resizable: true },
-    { key: 'title',             label: 'タイトル', width: 300, visible: true, resizable: true },
-    { key: 'elapsed_time',      label: '経過時間', width: 90,  visible: true, resizable: true },
-    { key: 'viewer_count',      label: '視聴者数', width: 90,  visible: true, resizable: true },
-    { key: 'total_viewer_count',label: '総視聴者数', width: 100, visible: true, resizable: true },
-    { key: 'others',            label: 'その他',   width: 200, visible: true, resizable: true },
+    { key: 'connection_name', label: '接続名', width: 120, visible: true, resizable: true },
+    { key: 'title', label: 'タイトル', width: 300, visible: true, resizable: true },
+    { key: 'elapsed_time', label: '経過時間', width: 90, visible: true, resizable: true },
+    { key: 'viewer_count', label: '視聴者数', width: 90, visible: true, resizable: true },
+    { key: 'total_viewer_count', label: '総視聴者数', width: 100, visible: true, resizable: true },
+    { key: 'others', label: 'その他', width: 200, visible: true, resizable: true },
   ]
 
   const renderMetadataCell = (item: MetadataRow, column: Column<MetadataRow>) => (
@@ -1766,13 +1759,12 @@ function App() {
           {constraintNotifications.map((n) => (
             <div
               key={n.id}
-              className={`flex items-start gap-2 px-3 py-2 rounded shadow-lg text-sm text-white ${
-                n.action === 'updated'
+              className={`flex items-start gap-2 px-3 py-2 rounded shadow-lg text-sm text-white ${n.action === 'updated'
                   ? 'bg-green-600'
                   : n.action === 'update_failed'
                     ? 'bg-red-600'
                     : 'bg-yellow-600'
-              }`}
+                }`}
             >
               <span className="mt-0.5">
                 {n.action === 'updated' ? '✓' : n.action === 'update_failed' ? '✗' : '⚠'}
@@ -1804,762 +1796,754 @@ function App() {
       )}
       <TitleBar themeColors={currentThemeColors} />
       <div className="flex-1 flex overflow-hidden min-h-0">
-      {/* サイドバー: 接続一覧 */}
-      <div
-        style={{ width: isSidebarCollapsed ? 32 : sidebarWidth }}
-        className="shrink-0 bg-[var(--theme-bg-sidebar)] border-r border-[var(--theme-border)] flex flex-col h-full relative overflow-hidden"
-      >
-        {isSidebarCollapsed ? (
-          /* 折りたたみ時: 展開ボタンのみ */
-          <div className="flex flex-col items-center pt-3">
-            <button
-              onClick={handleToggleSidebar}
-              title="接続一覧を展開"
-              className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-[var(--theme-text-main)] hover:bg-[var(--theme-bg-input)] rounded transition-colors text-xl leading-none"
-            >
-              ›
-            </button>
-          </div>
-        ) : (
-        <>
-        <div className="p-4 border-b border-[var(--theme-border)]">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAddConnection}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
-            >
-              + 接続を追加
-            </button>
-            <button
-              onClick={handleToggleSidebar}
-              title="接続一覧を折りたたむ"
-              className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-[var(--theme-text-main)] hover:bg-[var(--theme-bg-input)] rounded transition-colors text-xl leading-none"
-            >
-              ‹
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-scroll p-4 space-y-2">
-          <h2 className="text-sm font-semibold text-gray-500 mb-2">接続一覧</h2>
-          {connections.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 text-sm">
-              接続がありません
+        {/* サイドバー: 接続一覧 */}
+        <div
+          style={{ width: isSidebarCollapsed ? 32 : sidebarWidth }}
+          className="shrink-0 bg-[var(--theme-bg-sidebar)] border-r border-[var(--theme-border)] flex flex-col h-full relative overflow-hidden"
+        >
+          {isSidebarCollapsed ? (
+            /* 折りたたみ時: 展開ボタンのみ */
+            <div className="flex flex-col items-center pt-3">
+              <button
+                onClick={handleToggleSidebar}
+                title="接続一覧を展開"
+                className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-[var(--theme-text-main)] hover:bg-[var(--theme-bg-input)] rounded transition-colors text-xl leading-none"
+              >
+                ›
+              </button>
             </div>
           ) : (
-            connections.map((conn) => {
-              const isConnected = conn.status.type === 'Connected'
-              const isDisconnected = conn.status.type === 'Disconnected' || conn.status.type === 'Created'
-              const isConnecting = connectingIds.has(conn.connection_id)
-              const canModify = isDisconnected
-              const canModifyUrl = true  // URLは常に編集可能
-              const canModifyColors = true  // 色は常に編集可能
-              const canConnect = conn.site_id && conn.url
-
-              return (
-                <div
-                  key={conn.connection_id}
-                  className="p-3 bg-[var(--theme-bg-input)] rounded transition-colors space-y-1.5"
-                >
-                  {/* 接続名 */}
-                  <div className="flex items-center justify-between">
-                    <input
-                      type="text"
-                      value={editingNames[conn.connection_id] ?? conn.name}
-                      onChange={(e) => handleNameChange(conn.connection_id, e.target.value)}
-                      onBlur={() => handleNameBlur(conn.connection_id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-400 focus:border-blue-500 focus:outline-none flex-1 mr-2"
-                    />
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
-                      />
-                      <span className="text-xs text-gray-500">
-                        {getStatusText(conn.status)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* アカウント情報 */}
-                  {conn.account_info && (
-                    <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-black/5">
-                      {conn.account_info.avatar_url ? (
-                        <img
-                          src={conn.account_info.avatar_url}
-                          alt=""
-                          className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs flex-shrink-0">
-                          {conn.account_info.display_name[0]}
-                        </div>
-                      )}
-                      <span className="text-xs truncate text-gray-500">
-                        {conn.account_info.display_name}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* サイト選択 + ブラウザ選択 */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-0.5">配信サイト</label>
-                      <select
-                        value={conn.site_id || ''}
-                        onChange={(e) => handleSiteChange(conn.connection_id, e.target.value)}
-                        disabled={!canModify}
-                        className="w-full px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
-                      >
-                        <option value="">選択してください</option>
-                        {sites.map((site) => (
-                          <option key={site.site_id} value={site.site_id}>
-                            {site.display_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-0.5">ブラウザ</label>
-                      <select
-                        value={conn.browser_id || browsers[0]?.browser_id || ''}
-                        onChange={(e) => handleBrowserChange(conn.connection_id, e.target.value)}
-                        disabled={!canModify}
-                        className="w-full px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
-                      >
-                        {browsers.map((browser) => (
-                          <option key={browser.browser_id} value={browser.browser_id}>
-                            {browser.display_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* URL入力 */}
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-0.5">URL</label>
-                    <input
-                      type="text"
-                      value={conn.url || ''}
-                      onChange={(e) => handleUrlChange(conn.connection_id, e.target.value)}
-                      onPaste={(e) => handleUrlPaste(conn.connection_id, e)}
-                      onBlur={() => handleUrlBlur(conn.connection_id)}
-                      disabled={!canModifyUrl}
-                      placeholder="https://..."
-                      className="w-full px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
-                    />
-                  </div>
-
-                  {/* 合言葉入力（ツイキャス（プライベート）のみ） */}
-                  {conn.site_id === TWICAS_PRIVATE_SITE_ID && (
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-0.5">合言葉</label>
-                      <div className="relative">
-                        <input
-                          type={showPasswordIds.has(conn.connection_id) ? 'text' : 'password'}
-                          value={conn.input_state?.password ?? ''}
-                          onChange={(e) => handlePasswordChange(conn.connection_id, e.target.value)}
-                          onBlur={() => handlePasswordBlur(conn.connection_id)}
-                          placeholder=""
-                          className="w-full px-2 py-1 pr-7 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 text-[var(--theme-text-main)]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswordIds((prev) => {
-                            const next = new Set(prev)
-                            if (next.has(conn.connection_id)) next.delete(conn.connection_id)
-                            else next.add(conn.connection_id)
-                            return next
-                          })}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[var(--theme-text-main)]"
-                          tabIndex={-1}
-                        >
-                          {showPasswordIds.has(conn.connection_id) ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                            </svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                              <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.064 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 接続毎の色設定（color_mode="connection" の時のみ表示） */}
-                  {coreSettings?.enable_color_by_plugin_or_connection &&
-                    coreSettings?.color_mode === 'connection' && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                        <div>
-                          <label className="text-xs text-gray-500 block mb-0.5">背景色</label>
-                          <div className="flex gap-1 items-center">
-                            <input
-                              type="color"
-                              value={conn.advanced_settings?.bgColor || '#1f2937'}
-                              onChange={(e) =>
-                                handleConnectionColorChange(
-                                  conn.connection_id,
-                                  'bgColor',
-                                  e.target.value
-                                )
-                              }
-                              disabled={!canModifyColors}
-                              className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
-                            />
-                            <input
-                              type="text"
-                              value={conn.advanced_settings?.bgColor || '#1f2937'}
-                              onChange={(e) =>
-                                handleConnectionColorChange(
-                                  conn.connection_id,
-                                  'bgColor',
-                                  e.target.value
-                                )
-                              }
-                              disabled={!canModifyColors}
-                              className="w-20 px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
-                              pattern="^#[0-9A-Fa-f]{6}$"
-                              maxLength={7}
-                              placeholder="#1f2937"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-xs text-gray-500 block mb-0.5">文字色</label>
-                          <div className="flex gap-1 items-center">
-                            <input
-                              type="color"
-                              value={conn.advanced_settings?.textColor || '#ffffff'}
-                              onChange={(e) =>
-                                handleConnectionColorChange(
-                                  conn.connection_id,
-                                  'textColor',
-                                  e.target.value
-                                )
-                              }
-                              disabled={!canModifyColors}
-                              className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
-                            />
-                            <input
-                              type="text"
-                              value={conn.advanced_settings?.textColor || '#ffffff'}
-                              onChange={(e) =>
-                                handleConnectionColorChange(
-                                  conn.connection_id,
-                                  'textColor',
-                                  e.target.value
-                                )
-                              }
-                              disabled={!canModifyColors}
-                              className="w-20 px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
-                              pattern="^#[0-9A-Fa-f]{6}$"
-                              maxLength={7}
-                              placeholder="#ffffff"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                  {/* アクションボタン */}
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleConnect(conn.connection_id)
-                      }}
-                      disabled={isConnected || isConnecting || !canConnect}
-                      className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      接続
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDisconnect(conn.connection_id)
-                      }}
-                      disabled={isDisconnected || isConnecting}
-                      className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      切断
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleRemoveConnection(conn.connection_id)
-                      }}
-                      disabled={isConnected || conn.status.type === 'Connecting'}
-                      className="px-2 py-1 text-xs bg-[var(--theme-bg-button)] hover:bg-[var(--theme-bg-button)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
-                    >
-                      削除
-                    </button>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
-
-        <div className="p-4 border-t border-[var(--theme-border)] space-y-2">
-          <div className="text-xs text-gray-500">
-            <span>接続数: {connections.length}</span>
-          </div>
-        </div>
-
-        {/* リサイズハンドル */}
-        <div
-          onMouseDown={handleResizeMouseDown}
-          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 transition-colors"
-        />
-        </>
-        )}
-      </div>
-
-      {/* メインエリア */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* タブヘッダー */}
-        <div className="bg-[var(--theme-bg-sidebar)] border-b border-[var(--theme-border)]">
-          <div className="flex">
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'comments'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-[var(--theme-text-main)]'
-              }`}
-              onClick={() => setActiveTab('comments')}
-            >
-              コメント
-            </button>
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'updates'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-[var(--theme-text-main)]'
-              }`}
-              onClick={() => setActiveTab('updates')}
-            >
-              アップデート
-            </button>
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'plugins'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-[var(--theme-text-main)]'
-              }`}
-              onClick={() => setActiveTab('plugins')}
-            >
-              プラグイン
-            </button>
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'settings'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-[var(--theme-text-main)]'
-              }`}
-              onClick={() => setActiveTab('settings')}
-            >
-              設定
-            </button>
-            {__IS_SEARCH_ENABLED__ && (
-              <button
-                className={`px-6 py-3 font-medium transition-colors ${
-                  activeTab === 'search'
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-gray-400 hover:text-[var(--theme-text-main)]'
-                }`}
-                onClick={() => setActiveTab('search')}
-              >
-                検索
-              </button>
-            )}
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'users'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-400 hover:text-[var(--theme-text-main)]'
-              }`}
-              onClick={() => setActiveTab('users')}
-            >
-              ユーザー
-            </button>
-          </div>
-        </div>
-
-        {/* タブコンテンツ */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {/* コメントタブ - 常にレンダリング、CSS で表示/非表示 */}
-          <div className={activeTab === 'comments' ? 'flex-1 overflow-hidden flex flex-col' : 'hidden'}>
-            {/* メタデータビュー */}
-            {connections.length > 0 && (
-              <>
-                <div
-                  className="shrink-0"
-                  style={{ height: `${metadataHeight}px` }}
-                >
-                  <DataGridComponent
-                    data={metadataRows}
-                    columns={metadataColumns}
-                    renderCell={renderMetadataCell}
-                    height="100%"
-                    backgroundColor={THEME_CSS_VARS.bg_sidebar}
-                    headerBackgroundColor={THEME_CSS_VARS.bg_main}
-                    border={THEME_CSS_VARS.border_1px}
-                    textColor={THEME_CSS_VARS.text_main}
-                    rowBorderColor={THEME_CSS_VARS.border}
-                    defaultItemHeight={44}
-                    alwaysShowScrollbar
-                  />
-                </div>
-                {/* 高さリサイズハンドル */}
-                <div
-                  className="shrink-0 border-b border-[var(--theme-border)]"
-                  style={{ height: '6px', cursor: 'row-resize', flexShrink: 0 }}
-                  onMouseDown={(e) => {
-                    isResizingMetadata.current = true
-                    metadataResizeStartY.current = e.clientY
-                    metadataResizeStartHeight.current = metadataHeightRef.current
-                    document.body.style.cursor = 'row-resize'
-                    document.body.style.userSelect = 'none'
-                    e.preventDefault()
-                  }}
-                />
-              </>
-            )}
-
-            {/* コメント表示 */}
-            <div className="flex-1 min-h-0 p-4">
-              <DataGridComponent
-                ref={dataGridRef}
-                data={visibleComments}
-                columns={columns}
-                renderCell={renderCell}
-                height="100%"
-                backgroundColor={THEME_CSS_VARS.bg_main}
-                headerBackgroundColor={THEME_CSS_VARS.bg_sidebar}
-                border={THEME_CSS_VARS.border_1px}
-                textColor={THEME_CSS_VARS.text_main}
-                rowBorderColor={THEME_CSS_VARS.border}
-                onAtBottomChange={handleAtBottomChange}
-                autoScrollEnabled={isAutoScrollEnabled}
-                onUserDetachedFromBottom={() => setIsAutoScrollEnabled(false)}
-                onColumnResize={handleColumnResize}
-                onColumnVisibilityChange={handleColumnVisibilityChange}
-                onColumnOrderChange={handleColumnOrderChange}
-                onRowContextMenu={handleRowContextMenu}
-                alwaysShowScrollbar
-              />
-            </div>
-
-            {/* コメント投稿セクション */}
-            <div className="p-3 bg-[var(--theme-bg-sidebar)] border-t border-[var(--theme-border)]">
-              <div className="flex gap-2 items-center">
-                <div className="flex-shrink-0">
-                  <label className="block text-xs font-medium mb-1 text-gray-500">接続選択</label>
-                  <select
-                    value={selectedConnectionForCommand}
-                    onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
-                    className="px-2 py-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 text-[var(--theme-text-main)]"
+            <>
+              <div className="p-4 border-b border-[var(--theme-border)]">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAddConnection}
+                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition-colors"
                   >
-                    <option value="">選択してください</option>
-                    {connections.map((conn) => (
-                      <option key={conn.connection_id} value={conn.connection_id}>
-                        {conn.name}
-                      </option>
-                    ))}
-                  </select>
+                    + 接続を追加
+                  </button>
+                  <button
+                    onClick={handleToggleSidebar}
+                    title="接続一覧を折りたたむ"
+                    className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-[var(--theme-text-main)] hover:bg-[var(--theme-bg-input)] rounded transition-colors text-xl leading-none"
+                  >
+                    ‹
+                  </button>
                 </div>
+              </div>
 
-                {/* テキスト入力（スキーマ有無にかかわらず共通） */}
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={(commentFormData.text as string) ?? ''}
-                    onChange={(e) => setCommentFormData(prev => ({ ...prev, text: e.target.value }))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSendComment()
-                    }}
-                    placeholder="コメントを入力してください"
-                    className="w-full px-3 py-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 text-[var(--theme-text-main)] placeholder-gray-400"
-                  />
-                </div>
+              <div className="flex-1 overflow-y-scroll p-4 space-y-2">
+                <h2 className="text-sm font-semibold text-gray-500 mb-2">接続一覧</h2>
+                {connections.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-sm">
+                    接続がありません
+                  </div>
+                ) : (
+                  connections.map((conn) => {
+                    const isConnected = conn.status.type === 'Connected'
+                    const isDisconnected = conn.status.type === 'Disconnected' || conn.status.type === 'Created'
+                    const isConnecting = connectingIds.has(conn.connection_id)
+                    const canModify = isDisconnected
+                    const canModifyUrl = true  // URLは常に編集可能
+                    const canModifyColors = true  // 色は常に編集可能
+                    const canConnect = conn.site_id && conn.url
 
-                {/* スキーマで定義された追加フィールド（text 以外）をインラインで表示 */}
-                {commentFormSchema && Object.keys((commentFormSchema.properties as Record<string, unknown>) ?? {})
-                  .filter(key => key !== 'text')
-                  .map(key => {
-                    const fieldDef = (commentFormSchema.properties as Record<string, { type?: string; title?: string }>)[key]
-                    if (fieldDef?.type === 'boolean') {
-                      return (
-                        <label key={key} className="flex-shrink-0 flex items-center gap-1 text-sm text-gray-500 cursor-pointer select-none">
+                    return (
+                      <div
+                        key={conn.connection_id}
+                        className="p-3 bg-[var(--theme-bg-input)] rounded transition-colors space-y-1.5"
+                      >
+                        {/* 接続名 */}
+                        <div className="flex items-center justify-between">
                           <input
-                            type="checkbox"
-                            checked={(commentFormData[key] as boolean) ?? false}
-                            onChange={(e) => setCommentFormData(prev => ({ ...prev, [key]: e.target.checked }))}
-                            className="w-4 h-4 accent-blue-600"
+                            type="text"
+                            value={editingNames[conn.connection_id] ?? conn.name}
+                            onChange={(e) => handleNameChange(conn.connection_id, e.target.value)}
+                            onBlur={() => handleNameBlur(conn.connection_id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-semibold text-sm bg-transparent border-b border-transparent hover:border-gray-400 focus:border-blue-500 focus:outline-none flex-1 mr-2"
                           />
-                          {fieldDef.title ?? key}
-                        </label>
-                      )
-                    }
-                    return null
-                  })}
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-2 h-2 rounded-full ${getStatusColor(conn.status)}`}
+                            />
+                            <span className="text-xs text-gray-500">
+                              {getStatusText(conn.status)}
+                            </span>
+                          </div>
+                        </div>
 
-                <button
-                  onClick={handleSendComment}
-                  className="flex-shrink-0 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold transition-colors text-white"
-                >
-                  送信
-                </button>
-              </div>
-            </div>
-          </div>
+                        {/* アカウント情報 */}
+                        {conn.account_info && (
+                          <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-black/5">
+                            {conn.account_info.avatar_url ? (
+                              <img
+                                src={conn.account_info.avatar_url}
+                                alt=""
+                                className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs flex-shrink-0">
+                                {conn.account_info.display_name[0]}
+                              </div>
+                            )}
+                            <span className="text-xs truncate text-gray-500">
+                              {conn.account_info.display_name}
+                            </span>
+                          </div>
+                        )}
 
+                        {/* サイト選択 + ブラウザ選択 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-0.5">配信サイト</label>
+                            <select
+                              value={conn.site_id || ''}
+                              onChange={(e) => handleSiteChange(conn.connection_id, e.target.value)}
+                              disabled={!canModify}
+                              className="w-full px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
+                            >
+                              <option value="">選択してください</option>
+                              {sites.map((site) => (
+                                <option key={site.site_id} value={site.site_id}>
+                                  {site.display_name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-          {/* アップデートタブ */}
-          {activeTab === 'updates' && (
-            <div className="flex-1 overflow-auto p-6 bg-[var(--theme-bg-sidebar)] space-y-4">
-              <h2 className="text-lg font-semibold">アップデート</h2>
-              <div className="text-sm text-gray-500">
-                {updateMessage || '更新状態を確認できます。'}
-              </div>
-              <div className="border border-[var(--theme-border)] rounded p-4 space-y-2">
-                <div className="text-sm">
-                  <span className="text-gray-500">現在の状態: </span>
-                  {checkingUpdate ? '確認中...' : updateInfo ? '更新あり' : '最新'}
-                </div>
-                {updateInfo && (
-                  <>
-                    <div className="text-sm">
-                      <span className="text-gray-500">新バージョン: </span>
-                      {updateInfo.version} ({updateInfo.channel})
-                    </div>
-                    <div className="text-sm">
-                      <span className="text-gray-500">公開日: </span>
-                      {new Date(updateInfo.uploadedAt).toLocaleString('ja-JP')}
-                    </div>
-                  </>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-0.5">ブラウザ</label>
+                            <select
+                              value={conn.browser_id || browsers[0]?.browser_id || ''}
+                              onChange={(e) => handleBrowserChange(conn.connection_id, e.target.value)}
+                              disabled={!canModify}
+                              className="w-full px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
+                            >
+                              {browsers.map((browser) => (
+                                <option key={browser.browser_id} value={browser.browser_id}>
+                                  {browser.display_name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* URL入力 */}
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-0.5">URL</label>
+                          <input
+                            type="text"
+                            value={conn.url || ''}
+                            onChange={(e) => handleUrlChange(conn.connection_id, e.target.value)}
+                            onPaste={(e) => handleUrlPaste(conn.connection_id, e)}
+                            onBlur={() => handleUrlBlur(conn.connection_id)}
+                            disabled={!canModifyUrl}
+                            placeholder="https://..."
+                            className="w-full px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
+                          />
+                        </div>
+
+                        {/* 合言葉入力（ツイキャス（プライベート）のみ） */}
+                        {conn.site_id === TWICAS_PRIVATE_SITE_ID && (
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-0.5">合言葉</label>
+                            <div className="relative">
+                              <input
+                                type={showPasswordIds.has(conn.connection_id) ? 'text' : 'password'}
+                                value={conn.input_state?.password ?? ''}
+                                onChange={(e) => handlePasswordChange(conn.connection_id, e.target.value)}
+                                onBlur={() => handlePasswordBlur(conn.connection_id)}
+                                placeholder=""
+                                className="w-full px-2 py-1 pr-7 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 text-[var(--theme-text-main)]"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPasswordIds((prev) => {
+                                  const next = new Set(prev)
+                                  if (next.has(conn.connection_id)) next.delete(conn.connection_id)
+                                  else next.add(conn.connection_id)
+                                  return next
+                                })}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[var(--theme-text-main)]"
+                                tabIndex={-1}
+                              >
+                                {showPasswordIds.has(conn.connection_id) ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.064 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 接続毎の色設定（color_mode="connection" の時のみ表示） */}
+                        {coreSettings?.enable_color_by_plugin_or_connection &&
+                          coreSettings?.color_mode === 'connection' && (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                              <div>
+                                <label className="text-xs text-gray-500 block mb-0.5">背景色</label>
+                                <div className="flex gap-1 items-center">
+                                  <input
+                                    type="color"
+                                    value={conn.advanced_settings?.bgColor || '#1f2937'}
+                                    onChange={(e) =>
+                                      handleConnectionColorChange(
+                                        conn.connection_id,
+                                        'bgColor',
+                                        e.target.value
+                                      )
+                                    }
+                                    disabled={!canModifyColors}
+                                    className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={conn.advanced_settings?.bgColor || '#1f2937'}
+                                    onChange={(e) =>
+                                      handleConnectionColorChange(
+                                        conn.connection_id,
+                                        'bgColor',
+                                        e.target.value
+                                      )
+                                    }
+                                    disabled={!canModifyColors}
+                                    className="w-20 px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
+                                    pattern="^#[0-9A-Fa-f]{6}$"
+                                    maxLength={7}
+                                    placeholder="#1f2937"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="text-xs text-gray-500 block mb-0.5">文字色</label>
+                                <div className="flex gap-1 items-center">
+                                  <input
+                                    type="color"
+                                    value={conn.advanced_settings?.textColor || '#ffffff'}
+                                    onChange={(e) =>
+                                      handleConnectionColorChange(
+                                        conn.connection_id,
+                                        'textColor',
+                                        e.target.value
+                                      )
+                                    }
+                                    disabled={!canModifyColors}
+                                    className="w-10 h-6 rounded cursor-pointer disabled:opacity-50 border-0"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={conn.advanced_settings?.textColor || '#ffffff'}
+                                    onChange={(e) =>
+                                      handleConnectionColorChange(
+                                        conn.connection_id,
+                                        'textColor',
+                                        e.target.value
+                                      )
+                                    }
+                                    disabled={!canModifyColors}
+                                    className="w-20 px-2 py-1 text-xs bg-[var(--theme-bg-button)] border border-[var(--theme-border)] rounded font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
+                                    pattern="^#[0-9A-Fa-f]{6}$"
+                                    maxLength={7}
+                                    placeholder="#ffffff"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                        {/* アクションボタン */}
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleConnect(conn.connection_id)
+                            }}
+                            disabled={isConnected || isConnecting || !canConnect}
+                            className="flex-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            接続
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDisconnect(conn.connection_id)
+                            }}
+                            disabled={isDisconnected || isConnecting}
+                            className="flex-1 px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            切断
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveConnection(conn.connection_id)
+                            }}
+                            disabled={isConnected || conn.status.type === 'Connecting'}
+                            className="px-2 py-1 text-xs bg-[var(--theme-bg-button)] hover:bg-[var(--theme-bg-button)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[var(--theme-text-main)]"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })
                 )}
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCheckForUpdates}
-                  disabled={checkingUpdate}
-                  className="px-4 py-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-button)] rounded text-sm disabled:opacity-50"
-                >
-                  {checkingUpdate ? '確認中...' : '更新を確認'}
-                </button>
-                <button
-                  onClick={handleDownloadUpdate}
-                  disabled={!updateInfo || downloadingUpdate}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm disabled:opacity-50"
-                >
-                  {downloadingUpdate ? 'ダウンロード中...' : 'ダウンロード'}
-                </button>
-                <button
-                  onClick={handleApplyUpdate}
-                  disabled={!downloadedUpdatePath}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm disabled:opacity-50"
-                >
-                  適用して再起動
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* プラグインタブ */}
-          {activeTab === 'plugins' && (
-            <div className="flex flex-col h-full bg-[var(--theme-bg-sidebar)]">
-              {/* ヘッダー */}
-              <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--theme-border)] shrink-0">
-                <h2 className="text-base font-semibold">プラグイン</h2>
-                <button
-                  onClick={loadRegistryPlugins}
-                  className="px-2 py-1 text-xs bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-button)] rounded"
-                >
-                  再読み込み
-                </button>
-              </div>
-
-              {/* 2カラムレイアウト */}
-              <div className="flex flex-1 min-h-0">
-                {/* 左: コンパクトリスト */}
-                <div className="w-56 shrink-0 border-r border-[var(--theme-border)] overflow-y-auto">
-                  {(() => {
-                    const installedList = registryPlugins.filter(p => installedPlugins.has(p.id))
-                    const notInstalledList = registryPlugins.filter(p => !installedPlugins.has(p.id))
-                    const renderItem = (plugin: RegistryPlugin) => {
-                      const selected = selectedPluginId === plugin.id
-                      const hasUpdate = isUpdateAvailable(plugin)
-                      const isPending = pendingUpdateIds.has(plugin.id)
-                      return (
-                        <button
-                          key={plugin.id}
-                          onClick={() => setSelectedPluginId(plugin.id)}
-                          className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-[var(--theme-border)] hover:bg-[var(--theme-bg-input)] ${
-                            selected ? 'bg-blue-50' : ''
-                          }`}
-                        >
-                          <span className="text-green-500 shrink-0 w-3 text-center">✓</span>
-                          <span className="truncate">{plugin.name}</span>
-                          {hasUpdate && (
-                            <span className={`ml-auto text-xs shrink-0 ${isPending ? 'text-gray-400' : 'text-yellow-400'}`}>
-                              {isPending ? '再起動待ち' : '更新あり'}
-                            </span>
-                          )}
-                        </button>
-                      )
-                    }
-                    return (
-                      <>
-                        {installedList.length > 0 && (
-                          <>
-                            <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 bg-[var(--theme-bg-main)]/50 border-b border-[var(--theme-border)]">
-                              インストール済み ({installedList.length})
-                            </div>
-                            {installedList.map(renderItem)}
-                          </>
-                        )}
-                        {notInstalledList.length > 0 && (
-                          <>
-                            <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 bg-[var(--theme-bg-main)]/50 border-b border-[var(--theme-border)]">
-                              未インストール ({notInstalledList.length})
-                            </div>
-                            {notInstalledList.map((plugin) => {
-                              const selected = selectedPluginId === plugin.id
-                              return (
-                                <button
-                                  key={plugin.id}
-                                  onClick={() => setSelectedPluginId(plugin.id)}
-                                  className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-[var(--theme-border)] hover:bg-[var(--theme-bg-input)] ${
-                                    selected ? 'bg-blue-50' : ''
-                                  }`}
-                                >
-                                  <span className="shrink-0 w-3" />
-                                  <span className="truncate text-gray-500">{plugin.name}</span>
-                                </button>
-                              )
-                            })}
-                          </>
-                        )}
-                      </>
-                    )
-                  })()}
-                </div>
-
-                {/* 右: 詳細パネル */}
-                <div className="flex-1 overflow-y-auto p-4">
-                  {(() => {
-                    const plugin = registryPlugins.find(p => p.id === selectedPluginId)
-                    if (!plugin) {
-                      return (
-                        <div className="h-full flex items-center justify-center text-sm text-gray-400">
-                          左のリストからプラグインを選択してください
-                        </div>
-                      )
-                    }
-                    const installed = installedPlugins.has(plugin.id)
-                    const installedMeta = installedPlugins.get(plugin.id)
-                    const target = getPreferredChannel(plugin)
-                    return (
-                      <div className="space-y-3">
-                        <div>
-                          <div className="text-lg font-semibold">{plugin.name}</div>
-                          <div className="text-xs text-gray-500">{plugin.id}</div>
-                        </div>
-                        <p className="text-sm text-gray-500">{plugin.description}</p>
-                        <div className="text-xs text-gray-500 space-y-1">
-                          <div>ダウンロード数: {plugin.download_count.toLocaleString('ja-JP')}</div>
-                          <div>対象バージョン: {target ? `${target.version} (${target.channel})` : 'なし'}</div>
-                          {installedMeta?.version && (
-                            <div>インストール済みバージョン: {installedMeta.version}</div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 pt-2 flex-wrap">
-                          <span className={`text-xs px-2 py-1 rounded text-white ${installed ? 'bg-green-700' : 'bg-gray-600'}`}>
-                            {installed ? 'インストール済み' : '未インストール'}
-                          </span>
-                          {installed && isUpdateAvailable(plugin) && (
-                            pendingUpdateIds.has(plugin.id) ? (
-                              <span className="text-xs text-gray-400 italic">
-                                再起動後にアップデートされます
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleUpdatePlugin(plugin)}
-                                disabled={pluginBusyId === plugin.id}
-                                className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-500 rounded disabled:opacity-50"
-                              >
-                                {pluginBusyId === plugin.id ? '処理中...' : 'アップデート'}
-                              </button>
-                            )
-                          )}
-                          {installed ? (
-                            <button
-                              onClick={() => handleUninstallPlugin(plugin)}
-                              disabled={pluginBusyId === plugin.id}
-                              className="px-3 py-1.5 text-sm bg-red-700 hover:bg-red-600 rounded disabled:opacity-50"
-                            >
-                              {pluginBusyId === plugin.id ? '処理中...' : 'アンインストール'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleInstallPlugin(plugin)}
-                              disabled={!target || pluginBusyId === plugin.id}
-                              className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
-                            >
-                              {pluginBusyId === plugin.id ? '処理中...' : 'インストール'}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })()}
+              <div className="p-4 border-t border-[var(--theme-border)] space-y-2">
+                <div className="text-xs text-gray-500">
+                  <span>接続数: {connections.length}</span>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* 設定タブ */}
-          {activeTab === 'settings' && (
-            <SettingsScreen
-              onClose={() => {
-                setActiveTab('comments')
-                loadCoreSettings()
-              }}
-              onApply={() => {
-                loadCoreSettings()
-              }}
-            />
-          )}
-
-          {__IS_SEARCH_ENABLED__ && activeTab === 'search' && (
-            <SearchTab
-              columns={columns}
-              renderCell={renderCell}
-              connections={connections}
-              themeColors={currentThemeColors}
-              externalQuery={searchQuery}
-            />
-          )}
-
-          {activeTab === 'users' && (
-            <UserListTab
-              userSettings={userSettings}
-              connections={connections}
-              onNicknameChange={handleUserNicknameChange}
-              onMcvNgChange={handleUserMcvNgChange}
-              focusUserId={focusUserId}
-            />
+              {/* リサイズハンドル */}
+              <div
+                onMouseDown={handleResizeMouseDown}
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 transition-colors"
+              />
+            </>
           )}
         </div>
-      </div>
+
+        {/* メインエリア */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          {/* タブヘッダー */}
+          <div className="bg-[var(--theme-bg-sidebar)] border-b border-[var(--theme-border)]">
+            <div className="flex">
+              <button
+                className={`px-6 py-3 font-medium transition-colors ${activeTab === 'comments'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-[var(--theme-text-main)]'
+                  }`}
+                onClick={() => setActiveTab('comments')}
+              >
+                コメント
+              </button>
+              <button
+                className={`px-6 py-3 font-medium transition-colors ${activeTab === 'updates'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-[var(--theme-text-main)]'
+                  }`}
+                onClick={() => setActiveTab('updates')}
+              >
+                アップデート
+              </button>
+              <button
+                className={`px-6 py-3 font-medium transition-colors ${activeTab === 'plugins'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-[var(--theme-text-main)]'
+                  }`}
+                onClick={() => setActiveTab('plugins')}
+              >
+                プラグイン
+              </button>
+              <button
+                className={`px-6 py-3 font-medium transition-colors ${activeTab === 'settings'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-[var(--theme-text-main)]'
+                  }`}
+                onClick={() => setActiveTab('settings')}
+              >
+                設定
+              </button>
+              {__IS_SEARCH_ENABLED__ && (
+                <button
+                  className={`px-6 py-3 font-medium transition-colors ${activeTab === 'search'
+                      ? 'text-blue-400 border-b-2 border-blue-400'
+                      : 'text-gray-400 hover:text-[var(--theme-text-main)]'
+                    }`}
+                  onClick={() => setActiveTab('search')}
+                >
+                  検索
+                </button>
+              )}
+              <button
+                className={`px-6 py-3 font-medium transition-colors ${activeTab === 'users'
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-[var(--theme-text-main)]'
+                  }`}
+                onClick={() => setActiveTab('users')}
+              >
+                ユーザー
+              </button>
+            </div>
+          </div>
+
+          {/* タブコンテンツ */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {/* コメントタブ - 常にレンダリング、CSS で表示/非表示 */}
+            <div className={activeTab === 'comments' ? 'flex-1 overflow-hidden flex flex-col' : 'hidden'}>
+              {/* メタデータビュー */}
+              {connections.length > 0 && (
+                <>
+                  <div
+                    className="shrink-0"
+                    style={{ height: `${metadataHeight}px` }}
+                  >
+                    <DataGridComponent
+                      data={metadataRows}
+                      columns={metadataColumns}
+                      renderCell={renderMetadataCell}
+                      height="100%"
+                      backgroundColor={THEME_CSS_VARS.bg_sidebar}
+                      headerBackgroundColor={THEME_CSS_VARS.bg_main}
+                      border={THEME_CSS_VARS.border_1px}
+                      textColor={THEME_CSS_VARS.text_main}
+                      rowBorderColor={THEME_CSS_VARS.border}
+                      defaultItemHeight={44}
+                      alwaysShowScrollbar
+                    />
+                  </div>
+                  {/* 高さリサイズハンドル */}
+                  <div
+                    className="shrink-0 border-b border-[var(--theme-border)]"
+                    style={{ height: '6px', cursor: 'row-resize', flexShrink: 0 }}
+                    onMouseDown={(e) => {
+                      isResizingMetadata.current = true
+                      metadataResizeStartY.current = e.clientY
+                      metadataResizeStartHeight.current = metadataHeightRef.current
+                      document.body.style.cursor = 'row-resize'
+                      document.body.style.userSelect = 'none'
+                      e.preventDefault()
+                    }}
+                  />
+                </>
+              )}
+
+              {/* コメント表示 */}
+              <div className="flex-1 min-h-0 p-4">
+                <DataGridComponent
+                  ref={dataGridRef}
+                  data={visibleComments}
+                  columns={columns}
+                  renderCell={renderCell}
+                  height="100%"
+                  backgroundColor={THEME_CSS_VARS.bg_main}
+                  headerBackgroundColor={THEME_CSS_VARS.bg_sidebar}
+                  border={THEME_CSS_VARS.border_1px}
+                  textColor={THEME_CSS_VARS.text_main}
+                  rowBorderColor={THEME_CSS_VARS.border}
+                  onAtBottomChange={handleAtBottomChange}
+                  autoScrollEnabled={isAutoScrollEnabled}
+                  onUserDetachedFromBottom={() => setIsAutoScrollEnabled(false)}
+                  onColumnResize={handleColumnResize}
+                  onColumnVisibilityChange={handleColumnVisibilityChange}
+                  onColumnOrderChange={handleColumnOrderChange}
+                  onRowContextMenu={handleRowContextMenu}
+                  alwaysShowScrollbar
+                />
+              </div>
+
+              {/* コメント投稿セクション */}
+              <div className="p-3 bg-[var(--theme-bg-sidebar)] border-t border-[var(--theme-border)]">
+                <div className="flex gap-2 items-center">
+                  <div className="flex-shrink-0">
+                    <label className="block text-xs font-medium mb-1 text-gray-500">接続選択</label>
+                    <select
+                      value={selectedConnectionForCommand}
+                      onChange={(e) => setSelectedConnectionForCommand(e.target.value)}
+                      className="px-2 py-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 text-[var(--theme-text-main)]"
+                    >
+                      <option value="">選択してください</option>
+                      {connections.map((conn) => (
+                        <option key={conn.connection_id} value={conn.connection_id}>
+                          {conn.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* テキスト入力（スキーマ有無にかかわらず共通） */}
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={(commentFormData.text as string) ?? ''}
+                      onChange={(e) => setCommentFormData(prev => ({ ...prev, text: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSendComment()
+                      }}
+                      placeholder="コメントを入力してください"
+                      className="w-full px-3 py-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border)] rounded focus:outline-none focus:border-blue-500 text-[var(--theme-text-main)] placeholder-gray-400"
+                    />
+                  </div>
+
+                  {/* スキーマで定義された追加フィールド（text 以外）をインラインで表示 */}
+                  {commentFormSchema && Object.keys((commentFormSchema.properties as Record<string, unknown>) ?? {})
+                    .filter(key => key !== 'text')
+                    .map(key => {
+                      const fieldDef = (commentFormSchema.properties as Record<string, { type?: string; title?: string }>)[key]
+                      if (fieldDef?.type === 'boolean') {
+                        return (
+                          <label key={key} className="flex-shrink-0 flex items-center gap-1 text-sm text-gray-500 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={(commentFormData[key] as boolean) ?? false}
+                              onChange={(e) => setCommentFormData(prev => ({ ...prev, [key]: e.target.checked }))}
+                              className="w-4 h-4 accent-blue-600"
+                            />
+                            {fieldDef.title ?? key}
+                          </label>
+                        )
+                      }
+                      return null
+                    })}
+
+                  <button
+                    onClick={handleSendComment}
+                    className="flex-shrink-0 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold transition-colors text-white"
+                  >
+                    送信
+                  </button>
+                </div>
+              </div>
+            </div>
+
+
+            {/* アップデートタブ */}
+            {activeTab === 'updates' && (
+              <div className="flex-1 overflow-auto p-6 bg-[var(--theme-bg-sidebar)] space-y-4">
+                <h2 className="text-lg font-semibold">アップデート</h2>
+                <div className="text-sm text-gray-500">
+                  {updateMessage || '更新状態を確認できます。'}
+                </div>
+                <div className="border border-[var(--theme-border)] rounded p-4 space-y-2">
+                  <div className="text-sm">
+                    <span className="text-gray-500">現在の状態: </span>
+                    {checkingUpdate ? '確認中...' : updateInfo ? '更新あり' : '最新'}
+                  </div>
+                  {updateInfo && (
+                    <>
+                      <div className="text-sm">
+                        <span className="text-gray-500">新バージョン: </span>
+                        {updateInfo.version} ({updateInfo.channel})
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-gray-500">公開日: </span>
+                        {new Date(updateInfo.uploadedAt).toLocaleString('ja-JP')}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCheckForUpdates}
+                    disabled={checkingUpdate}
+                    className="px-4 py-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-button)] rounded text-sm disabled:opacity-50"
+                  >
+                    {checkingUpdate ? '確認中...' : '更新を確認'}
+                  </button>
+                  <button
+                    onClick={handleDownloadUpdate}
+                    disabled={!updateInfo || downloadingUpdate}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm disabled:opacity-50"
+                  >
+                    {downloadingUpdate ? 'ダウンロード中...' : 'ダウンロード'}
+                  </button>
+                  <button
+                    onClick={handleApplyUpdate}
+                    disabled={!downloadedUpdatePath}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm disabled:opacity-50"
+                  >
+                    適用して再起動
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* プラグインタブ */}
+            {activeTab === 'plugins' && (
+              <div className="flex flex-col h-full bg-[var(--theme-bg-sidebar)]">
+                {/* ヘッダー */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--theme-border)] shrink-0">
+                  <h2 className="text-base font-semibold">プラグイン</h2>
+                  <button
+                    onClick={loadRegistryPlugins}
+                    className="px-2 py-1 text-xs bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-button)] rounded"
+                  >
+                    再読み込み
+                  </button>
+                </div>
+
+                {/* 2カラムレイアウト */}
+                <div className="flex flex-1 min-h-0">
+                  {/* 左: コンパクトリスト */}
+                  <div className="w-56 shrink-0 border-r border-[var(--theme-border)] overflow-y-auto">
+                    {(() => {
+                      const installedList = registryPlugins.filter(p => installedPlugins.has(p.id))
+                      const notInstalledList = registryPlugins.filter(p => !installedPlugins.has(p.id))
+                      const renderItem = (plugin: RegistryPlugin) => {
+                        const selected = selectedPluginId === plugin.id
+                        const hasUpdate = isUpdateAvailable(plugin)
+                        const isPending = pendingUpdateIds.has(plugin.id)
+                        return (
+                          <button
+                            key={plugin.id}
+                            onClick={() => setSelectedPluginId(plugin.id)}
+                            className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-[var(--theme-border)] hover:bg-[var(--theme-bg-input)] ${selected ? 'bg-blue-50' : ''
+                              }`}
+                          >
+                            <span className="text-green-500 shrink-0 w-3 text-center">✓</span>
+                            <span className="truncate">{plugin.name}</span>
+                            {hasUpdate && (
+                              <span className={`ml-auto text-xs shrink-0 ${isPending ? 'text-gray-400' : 'text-yellow-400'}`}>
+                                {isPending ? '再起動待ち' : '更新あり'}
+                              </span>
+                            )}
+                          </button>
+                        )
+                      }
+                      return (
+                        <>
+                          {installedList.length > 0 && (
+                            <>
+                              <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 bg-[var(--theme-bg-main)]/50 border-b border-[var(--theme-border)]">
+                                インストール済み ({installedList.length})
+                              </div>
+                              {installedList.map(renderItem)}
+                            </>
+                          )}
+                          {notInstalledList.length > 0 && (
+                            <>
+                              <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 bg-[var(--theme-bg-main)]/50 border-b border-[var(--theme-border)]">
+                                未インストール ({notInstalledList.length})
+                              </div>
+                              {notInstalledList.map((plugin) => {
+                                const selected = selectedPluginId === plugin.id
+                                return (
+                                  <button
+                                    key={plugin.id}
+                                    onClick={() => setSelectedPluginId(plugin.id)}
+                                    className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm border-b border-[var(--theme-border)] hover:bg-[var(--theme-bg-input)] ${selected ? 'bg-blue-50' : ''
+                                      }`}
+                                  >
+                                    <span className="shrink-0 w-3" />
+                                    <span className="truncate text-gray-500">{plugin.name}</span>
+                                  </button>
+                                )
+                              })}
+                            </>
+                          )}
+                        </>
+                      )
+                    })()}
+                  </div>
+
+                  {/* 右: 詳細パネル */}
+                  <div className="flex-1 overflow-y-auto p-4">
+                    {(() => {
+                      const plugin = registryPlugins.find(p => p.id === selectedPluginId)
+                      if (!plugin) {
+                        return (
+                          <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                            左のリストからプラグインを選択してください
+                          </div>
+                        )
+                      }
+                      const installed = installedPlugins.has(plugin.id)
+                      const installedMeta = installedPlugins.get(plugin.id)
+                      const target = getPreferredChannel(plugin)
+                      return (
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-lg font-semibold">{plugin.name}</div>
+                            <div className="text-xs text-gray-500">{plugin.id}</div>
+                          </div>
+                          <p className="text-sm text-gray-500">{plugin.description}</p>
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <div>ダウンロード数: {plugin.download_count.toLocaleString('ja-JP')}</div>
+                            <div>対象バージョン: {target ? `${target.version} (${target.channel})` : 'なし'}</div>
+                            {installedMeta?.version && (
+                              <div>インストール済みバージョン: {installedMeta.version}</div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 pt-2 flex-wrap">
+                            <span className={`text-xs px-2 py-1 rounded text-white ${installed ? 'bg-green-700' : 'bg-gray-600'}`}>
+                              {installed ? 'インストール済み' : '未インストール'}
+                            </span>
+                            {installed && isUpdateAvailable(plugin) && (
+                              pendingUpdateIds.has(plugin.id) ? (
+                                <span className="text-xs text-gray-400 italic">
+                                  再起動後にアップデートされます
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleUpdatePlugin(plugin)}
+                                  disabled={pluginBusyId === plugin.id}
+                                  className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-500 rounded disabled:opacity-50"
+                                >
+                                  {pluginBusyId === plugin.id ? '処理中...' : 'アップデート'}
+                                </button>
+                              )
+                            )}
+                            {installed ? (
+                              <button
+                                onClick={() => handleUninstallPlugin(plugin)}
+                                disabled={pluginBusyId === plugin.id}
+                                className="px-3 py-1.5 text-sm bg-red-700 hover:bg-red-600 rounded disabled:opacity-50"
+                              >
+                                {pluginBusyId === plugin.id ? '処理中...' : 'アンインストール'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleInstallPlugin(plugin)}
+                                disabled={!target || pluginBusyId === plugin.id}
+                                className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+                              >
+                                {pluginBusyId === plugin.id ? '処理中...' : 'インストール'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 設定タブ */}
+            {activeTab === 'settings' && (
+              <SettingsScreen
+                onClose={() => {
+                  setActiveTab('comments')
+                  loadCoreSettings()
+                }}
+                onApply={() => {
+                  loadCoreSettings()
+                }}
+              />
+            )}
+
+            {__IS_SEARCH_ENABLED__ && activeTab === 'search' && (
+              <SearchTab
+                columns={columns}
+                renderCell={renderCell}
+                connections={connections}
+                themeColors={currentThemeColors}
+                externalQuery={searchQuery}
+              />
+            )}
+
+            {activeTab === 'users' && (
+              <UserListTab
+                userSettings={userSettings}
+                connections={connections}
+                onNicknameChange={handleUserNicknameChange}
+                onMcvNgChange={handleUserMcvNgChange}
+                focusUserId={focusUserId}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       {/* コンテキストメニュー */}

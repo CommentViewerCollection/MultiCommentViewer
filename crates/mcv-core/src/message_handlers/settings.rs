@@ -94,7 +94,6 @@ pub fn handle_get_settings(
                     // 設定がない場合はデフォルト値を返す
                     serde_json::json!({
                         "theme": "dark",
-                        "auto_scroll": true,
                         "max_comments": 1000,
                         "enable_color_by_plugin_or_connection": false,
                         "color_mode": "site",

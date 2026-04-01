@@ -518,7 +518,6 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
       'ui:order': [
         'theme',
         'custom_theme_colors',
-        'auto_scroll',
         'max_comments',
         'enable_color_by_plugin_or_connection',
         'color_mode',
@@ -526,39 +525,36 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
         '*'
       ],
       color_mode: {
-        'ui:classNames': `conditional-field ${
-          !currentData[activeTab]?.enable_color_by_plugin_or_connection
+        'ui:classNames': `conditional-field ${!currentData[activeTab]?.enable_color_by_plugin_or_connection
             ? 'conditional-field-disabled'
             : ''
-        }`.trim(),
+          }`.trim(),
         'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection,
         'ui:enumNames': ['配信サイト毎', '接続毎']
       },
       site_colors: {
-        'ui:classNames': `conditional-field ${
-          !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
-          currentData[activeTab]?.color_mode === 'connection'
+        'ui:classNames': `conditional-field ${!currentData[activeTab]?.enable_color_by_plugin_or_connection ||
+            currentData[activeTab]?.color_mode === 'connection'
             ? 'conditional-field-disabled'
             : ''
-        }`.trim(),
+          }`.trim(),
         'ui:readonly': !currentData[activeTab]?.enable_color_by_plugin_or_connection ||
-                       currentData[activeTab]?.color_mode === 'connection',
+          currentData[activeTab]?.color_mode === 'connection',
         'ui:options': {
           orderable: false
         }
       },
       custom_theme_colors: {
-        'ui:classNames': `conditional-field ${
-          currentData[activeTab]?.theme !== 'custom' ? 'conditional-field-disabled' : ''
-        }`.trim(),
+        'ui:classNames': `conditional-field ${currentData[activeTab]?.theme !== 'custom' ? 'conditional-field-disabled' : ''
+          }`.trim(),
         'ui:readonly': currentData[activeTab]?.theme !== 'custom',
-        bg_main:       { 'ui:widget': 'ColorPickerWidget' },
-        bg_sidebar:    { 'ui:widget': 'ColorPickerWidget' },
-        bg_input:      { 'ui:widget': 'ColorPickerWidget' },
-        bg_button:     { 'ui:widget': 'ColorPickerWidget' },
-        text_main:     { 'ui:widget': 'ColorPickerWidget' },
-        border:        { 'ui:widget': 'ColorPickerWidget' },
-        titlebar_bg:   { 'ui:widget': 'ColorPickerWidget' },
+        bg_main: { 'ui:widget': 'ColorPickerWidget' },
+        bg_sidebar: { 'ui:widget': 'ColorPickerWidget' },
+        bg_input: { 'ui:widget': 'ColorPickerWidget' },
+        bg_button: { 'ui:widget': 'ColorPickerWidget' },
+        text_main: { 'ui:widget': 'ColorPickerWidget' },
+        border: { 'ui:widget': 'ColorPickerWidget' },
+        titlebar_bg: { 'ui:widget': 'ColorPickerWidget' },
         titlebar_text: { 'ui:widget': 'ColorPickerWidget' },
       }
     };
@@ -676,11 +672,10 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
         {tabs.map(tab => (
           <button
             key={tab.id}
-            className={`w-full text-left px-4 py-2 text-sm transition-colors border-b border-[var(--theme-border)] flex items-center justify-between ${
-              activeTab === tab.id
+            className={`w-full text-left px-4 py-2 text-sm transition-colors border-b border-[var(--theme-border)] flex items-center justify-between ${activeTab === tab.id
                 ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-50'
                 : 'text-gray-500 hover:bg-[var(--theme-bg-input)]'
-            }`}
+              }`}
             onClick={() => setActiveTab(tab.id)}
           >
             <span>{tab.name}</span>
@@ -694,65 +689,64 @@ export function SettingsScreen({ onClose, onApply }: { onClose: () => void; onAp
       {/* 右側: ヘッダー + フォームエリア */}
       <div className="flex-1 flex flex-col overflow-hidden">
 
-      {/* ヘッダー（適用・キャンセルボタン） */}
-      <div className="flex items-center justify-end px-4 py-2 gap-2 border-b border-[var(--theme-border)] bg-[var(--theme-bg-sidebar)] shrink-0">
-        <button
-          onClick={handleApply}
-          disabled={loading || !hasChanges}
-          className={`px-3 py-1 text-sm rounded transition-colors ${
-            hasChanges
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-[var(--theme-bg-input)] text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          適用
-        </button>
-        <button
-          onClick={handleCancel}
-          className="px-3 py-1 text-sm bg-[var(--theme-bg-button)] hover:bg-[var(--theme-bg-input)] rounded transition-colors text-[var(--theme-text-main)]"
-        >
-          キャンセル
-        </button>
-      </div>
+        {/* ヘッダー（適用・キャンセルボタン） */}
+        <div className="flex items-center justify-end px-4 py-2 gap-2 border-b border-[var(--theme-border)] bg-[var(--theme-bg-sidebar)] shrink-0">
+          <button
+            onClick={handleApply}
+            disabled={loading || !hasChanges}
+            className={`px-3 py-1 text-sm rounded transition-colors ${hasChanges
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-[var(--theme-bg-input)] text-gray-400 cursor-not-allowed'
+              }`}
+          >
+            適用
+          </button>
+          <button
+            onClick={handleCancel}
+            className="px-3 py-1 text-sm bg-[var(--theme-bg-button)] hover:bg-[var(--theme-bg-input)] rounded transition-colors text-[var(--theme-text-main)]"
+          >
+            キャンセル
+          </button>
+        </div>
 
-      {/* フォームエリア */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        {loading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-gray-500">読み込み中...</div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-900 bg-opacity-50 border border-red-700 rounded p-4 mb-4">
-            <div className="text-red-200">エラー: {error}</div>
-          </div>
-        )}
-
-        {!loading && !error && activeTabData && (
-          activeTabData.name === 'cookie.txt読み込み' ? (
-            <CookiesTxtSettings
-              pluginId={activeTab}
-              data={activeTabData.data}
-            />
-          ) : (
-            <div className="rjsf">
-              <Form
-                schema={getEffectiveSchema()}
-                formData={currentData[activeTab]}
-                validator={validator}
-                onChange={(e) => handleFormChange(activeTab, e.formData)}
-                uiSchema={activeTab === 'core' ? getCoreUiSchema() : getPluginUiSchema(activeTab)}
-                widgets={{
-                  ColorPickerWidget: ColorPickerWidget
-                }}
-              >
-                <></>  {/* ボタンを非表示 */}
-              </Form>
+        {/* フォームエリア */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {loading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-gray-500">読み込み中...</div>
             </div>
-          )
-        )}
-      </div>
+          )}
+
+          {error && (
+            <div className="bg-red-900 bg-opacity-50 border border-red-700 rounded p-4 mb-4">
+              <div className="text-red-200">エラー: {error}</div>
+            </div>
+          )}
+
+          {!loading && !error && activeTabData && (
+            activeTabData.name === 'cookie.txt読み込み' ? (
+              <CookiesTxtSettings
+                pluginId={activeTab}
+                data={activeTabData.data}
+              />
+            ) : (
+              <div className="rjsf">
+                <Form
+                  schema={getEffectiveSchema()}
+                  formData={currentData[activeTab]}
+                  validator={validator}
+                  onChange={(e) => handleFormChange(activeTab, e.formData)}
+                  uiSchema={activeTab === 'core' ? getCoreUiSchema() : getPluginUiSchema(activeTab)}
+                  widgets={{
+                    ColorPickerWidget: ColorPickerWidget
+                  }}
+                >
+                  <></>  {/* ボタンを非表示 */}
+                </Form>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </div>
   )

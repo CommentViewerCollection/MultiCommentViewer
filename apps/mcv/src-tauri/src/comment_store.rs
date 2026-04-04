@@ -2,7 +2,7 @@ use rusqlite::{params, Connection, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use crate::CommentRow;
+use crate::types::CommentRow;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserInfo {

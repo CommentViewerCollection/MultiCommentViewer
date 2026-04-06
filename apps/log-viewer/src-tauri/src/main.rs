@@ -538,6 +538,138 @@ async fn export_server_logs(
     Ok(Some(save_path.to_string_lossy().to_string()))
 }
 
+/// ローカルDBからログをJSON文字列として返す（クリップボードコピー用）
+#[tauri::command]
+async fn get_local_logs_json(filters: LogQueryFilters) -> Result<String, String> {
+    let log_db_path = get_log_db_path()?;
+    let conn =
+        Connection::open(&log_db_path).map_err(|e| format!("Failed to open database: {}", e))?;
+
+    let mut where_clauses = Vec::new();
+    let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    if let Some(level) = &filters.level {
+        where_clauses.push("level = ?".to_string());
+        params_vec.push(Box::new(level.clone()));
+    }
+    if let Some(from) = filters.from {
+        where_clauses.push("timestamp >= ?".to_string());
+        params_vec.push(Box::new(from));
+    }
+    if let Some(to) = filters.to {
+        where_clauses.push("timestamp <= ?".to_string());
+        params_vec.push(Box::new(to));
+    }
+    if let Some(search) = &filters.search {
+        let default_fields = SearchFields {
+            message: true,
+            source_location: true,
+            context: true,
+            stacktrace: true,
+        };
+        let fields = filters.search_fields.as_ref().unwrap_or(&default_fields);
+        let parsed = parse_search(search);
+        if let Some(sql) = build_search_sql(&parsed, fields, &mut params_vec) {
+            where_clauses.push(sql);
+        }
+    }
+
+    let where_clause = if where_clauses.is_empty() {
+        String::new()
+    } else {
+        format!("WHERE {}", where_clauses.join(" AND "))
+    };
+
+    let query = format!(
+        "SELECT id, level, timestamp, message, file, line, column, module_path, \
+         stacktrace, context, mcv_version, platform, arch, build_profile \
+         FROM logs {} ORDER BY timestamp DESC",
+        where_clause
+    );
+
+    let mut stmt = conn
+        .prepare(&query)
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+
+    let logs = stmt
+        .query_map(params_refs.as_slice(), |row| {
+            let stacktrace_json: Option<String> = row.get(8)?;
+            let stacktrace = stacktrace_json.and_then(|s| serde_json::from_str(&s).ok());
+
+            let context_json: Option<String> = row.get(9)?;
+            let context = context_json.and_then(|s| serde_json::from_str(&s).ok());
+
+            Ok(LogEntry {
+                id: row.get(0)?,
+                level: serde_json::from_str(&format!("\"{}\"", row.get::<_, String>(1)?)).unwrap(),
+                timestamp: row.get(2)?,
+                message: row.get(3)?,
+                source: mcv_log_core::schema::SourceLocation {
+                    file: row.get(4)?,
+                    line: row.get(5)?,
+                    column: row.get(6)?,
+                    module_path: row.get(7)?,
+                },
+                stacktrace,
+                context,
+                system_info: mcv_log_core::schema::SystemInfo {
+                    mcv_version: row.get(10)?,
+                    platform: row.get(11)?,
+                    arch: row.get(12)?,
+                    build_profile: row.get(13)?,
+                },
+            })
+        })
+        .map_err(|e| format!("Failed to query logs: {}", e))?
+        .collect::<SqliteResult<Vec<_>>>()
+        .map_err(|e| format!("Failed to collect logs: {}", e))?;
+
+    serde_json::to_string_pretty(&logs).map_err(|e| format!("Failed to serialize logs: {}", e))
+}
+
+/// サーバーAPIからログをJSON文字列として返す（クリップボードコピー用）
+#[tauri::command]
+async fn get_server_logs_json(api_url: String, filters: LogQueryFilters) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let mut url = format!("{}/api/mcv/logs?limit=1000000&offset=0", api_url);
+
+    if let Some(level) = &filters.level {
+        url.push_str(&format!("&level={}", level));
+    }
+    if let Some(from) = filters.from {
+        url.push_str(&format!("&from={}", from));
+    }
+    if let Some(to) = filters.to {
+        url.push_str(&format!("&to={}", to));
+    }
+    if let Some(search) = &filters.search {
+        url.push_str(&format!("&search={}", urlencoding::encode(search)));
+    }
+
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch logs from server: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Server returned error: {}", response.status()));
+    }
+
+    let logs: Vec<serde_json::Value> = response
+        .json::<serde_json::Value>()
+        .await
+        .map_err(|e| format!("Failed to parse server response: {}", e))?
+        .get("logs")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+
+    serde_json::to_string_pretty(&logs).map_err(|e| format!("Failed to serialize logs: {}", e))
+}
+
 /// サーバーAPIでログを削除
 #[tauri::command]
 async fn delete_server_logs(api_url: String, ids: Vec<String>) -> Result<usize, String> {
@@ -585,6 +717,8 @@ fn main() {
             delete_server_logs,
             export_local_logs,
             export_server_logs,
+            get_local_logs_json,
+            get_server_logs_json,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

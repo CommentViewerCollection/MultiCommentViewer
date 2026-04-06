@@ -2,7 +2,7 @@ import { useState } from "react";
 import FilterBar from "./components/FilterBar";
 import LogTable from "./components/LogTable";
 import LogDetail from "./components/LogDetail";
-import { useLogs, deleteLogs, exportLogs, type DataSource } from "./hooks/useLogs";
+import { useLogs, deleteLogs, exportLogs, fetchLogsJson, type DataSource } from "./hooks/useLogs";
 import type { LogEntry, LogQueryFilters } from "./types/log";
 
 function App() {
@@ -14,6 +14,7 @@ function App() {
   const [offset, setOffset] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [exportLoading, setExportLoading] = useState(false);
+  const [copyLoading, setCopyLoading] = useState(false);
 
   const { logs, total, loading, error } = useLogs(
     dataSource,
@@ -50,6 +51,18 @@ function App() {
       alert(`Failed to export logs: ${err}`);
     } finally {
       setExportLoading(false);
+    }
+  };
+
+  const handleCopyToClipboard = async () => {
+    setCopyLoading(true);
+    try {
+      const json = await fetchLogsJson(dataSource, apiUrl, filters);
+      await navigator.clipboard.writeText(json);
+    } catch (err) {
+      alert(`Failed to copy logs: ${err}`);
+    } finally {
+      setCopyLoading(false);
     }
   };
 
@@ -127,6 +140,8 @@ function App() {
         }}
         onExport={handleExport}
         exportLoading={exportLoading}
+        onCopyToClipboard={handleCopyToClipboard}
+        copyLoading={copyLoading}
       />
 
       {/* Main Content */}

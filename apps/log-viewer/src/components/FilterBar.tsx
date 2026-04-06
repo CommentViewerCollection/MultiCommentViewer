@@ -6,9 +6,11 @@ interface FilterBarProps {
   onFiltersChange: (filters: LogQueryFilters) => void;
   onExport?: () => void;
   exportLoading?: boolean;
+  onCopyToClipboard?: () => void;
+  copyLoading?: boolean;
 }
 
-export default function FilterBar({ filters, onFiltersChange, onExport, exportLoading }: FilterBarProps) {
+export default function FilterBar({ filters, onFiltersChange, onExport, exportLoading, onCopyToClipboard, copyLoading }: FilterBarProps) {
   const [level, setLevel] = useState(filters.level || "");
   const [search, setSearch] = useState(filters.search || "");
   const [fromDate, setFromDate] = useState("");
@@ -183,6 +185,19 @@ export default function FilterBar({ filters, onFiltersChange, onExport, exportLo
               }`}
             >
               {exportLoading ? "Exporting..." : "Export JSON"}
+            </button>
+          )}
+          {onCopyToClipboard && (
+            <button
+              onClick={onCopyToClipboard}
+              disabled={copyLoading}
+              className={`px-4 py-2 rounded-md text-sm ${
+                copyLoading
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-500 text-white hover:bg-green-600"
+              }`}
+            >
+              {copyLoading ? "Copying..." : "Copy JSON"}
             </button>
           )}
         </div>

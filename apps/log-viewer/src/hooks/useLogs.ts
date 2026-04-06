@@ -79,3 +79,15 @@ export async function exportLogs(
     return await invoke<string | null>("export_server_logs", { apiUrl, filters });
   }
 }
+
+export async function fetchLogsJson(
+  dataSource: DataSource,
+  apiUrl: string,
+  filters: LogQueryFilters
+): Promise<string> {
+  if (dataSource === "local") {
+    return await invoke<string>("get_local_logs_json", { filters });
+  } else {
+    return await invoke<string>("get_server_logs_json", { apiUrl, filters });
+  }
+}

@@ -85,102 +85,23 @@ impl Connection {
         let comment_post = Arc::clone(&self.comment_post);
 
         let task = tokio::spawn(async move {
-            let task_result = std::panic::AssertUnwindSafe(async {
-                let run_result: Result<(), ()> = async {
+            let task_result =
+                std::panic::AssertUnwindSafe(async {
+                    let run_result: Result<(), ()> = async {
                     let client = session_client;
+                    let mut sent_waiting_metadata = false;
 
-                    let (session_id, cs_session_id, movie_id_from_html) =
-                        match fetch_session_ids(&client, &user_name).await {
-                            Ok(v) => v,
-                            Err(e) => {
-                                tracing::error!(
-                                    target: "mcv::plugin-twicas",
-                                    connection_id = %connection_id,
-                                    user_name = %user_name,
-                                    error = %e,
-                                    "Failed to fetch session IDs"
-                                );
-                                return Err(());
-                            }
-                        };
-
-                    // twitcasting.tv で得たクッキー（did 等）を
-                    // frontendapi.twitcasting.tv 用にコピーする。
-                    // did はホスト専用クッキーの可能性があるため、明示的に登録する。
-                    {
-                        let src: reqwest::Url = "https://twitcasting.tv/".parse().unwrap();
-                        let dst: reqwest::Url =
-                            "https://frontendapi.twitcasting.tv/".parse().unwrap();
-
-                        let src_cookies = session_jar
-                            .cookies(&src)
-                            .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
-                            .unwrap_or_else(|| "(なし)".to_string());
-                        tracing::debug!(
-                            target: "mcv::plugin-twicas",
-                            connection_id = %connection_id,
-                            cookies = %src_cookies,
-                            "コピー前 twitcasting.tv jar"
-                        );
-
-                        if let Some(header) = session_jar.cookies(&src) {
-                            if let Ok(s) = header.to_str() {
-                                for part in s.split(';') {
-                                    let part = part.trim();
-                                    if !part.is_empty() {
-                                        session_jar.add_cookie_str(part, &dst);
-                                    }
-                                }
-                            }
+                    // 配信開始/終了に対応するリトライループ。
+                    // 配信中でない場合は待機し、配信開始を検知したら自動接続する。
+                    // 配信終了時は切断せず、次の配信開始まで待機状態に戻る。
+                    'retry: loop {
+                        // キャンセルチェック
+                        if *cancel_rx.borrow() {
+                            break 'retry;
                         }
 
-                        let dst_cookies = session_jar
-                            .cookies(&dst)
-                            .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
-                            .unwrap_or_else(|| "(なし)".to_string());
-                        tracing::debug!(
-                            target: "mcv::plugin-twicas",
-                            connection_id = %connection_id,
-                            cookies = %dst_cookies,
-                            "コピー後 frontendapi.twitcasting.tv jar"
-                        );
-                    }
-
-                    // movie_id の取得: HTML の data-movie-id を優先する。
-                    // ログイン済み・非ログインともに配信中であれば HTML に含まれる。
-                    // HTML にない場合のみ fetch_latest_movie（非ログインユーザー向け）にフォールバックする。
-                    let movie = match movie_id_from_html {
-                        Some(mid) => {
-                            tracing::info!(
-                                target: "mcv::plugin-twicas",
-                                connection_id = %connection_id,
-                                user_name = %user_name,
-                                movie_id = mid,
-                                "HTML から movie_id を取得しました"
-                            );
-                            MovieInfo { id: mid, is_on_live: true }
-                        }
-                        None => {
-                            // HTML に movie_id がない = 配信中でないか、非ログインで wpass が必要
-                            if session_id.is_empty() {
-                                tracing::info!(
-                                    target: "mcv::plugin-twicas",
-                                    connection_id = %connection_id,
-                                    user_name = %user_name,
-                                    "movie_id が HTML から取得できません。配信中でない可能性があります"
-                                );
-                                return Ok(());
-                            }
-                            // 非ログインユーザー向け: fetch_latest_movie で movie_id を取得
-                            let latest_movie = match fetch_latest_movie(
-                                &client,
-                                &session_id,
-                                SECRET,
-                                &user_name,
-                                wpass.as_deref(),
-                            )
-                            .await
-                            {
+                        let (session_id, cs_session_id, movie_id_from_html) =
+                            match fetch_session_ids(&client, &user_name).await {
                                 Ok(v) => v,
                                 Err(e) => {
                                     tracing::error!(
@@ -188,217 +109,375 @@ impl Connection {
                                         connection_id = %connection_id,
                                         user_name = %user_name,
                                         error = %e,
-                                        "Failed to fetch latest movie"
+                                        "Failed to fetch session IDs"
                                     );
                                     return Err(());
                                 }
                             };
 
-                            match latest_movie.movie {
-                                Some(v) if v.is_on_live => v,
-                                Some(_) => {
-                                    tracing::info!(
-                                        target: "mcv::plugin-twicas",
-                                        connection_id = %connection_id,
-                                        user_name = %user_name,
-                                        "User is not on live"
-                                    );
-                                    return Ok(());
-                                }
-                                None => {
-                                    tracing::info!(
-                                        target: "mcv::plugin-twicas",
-                                        connection_id = %connection_id,
-                                        user_name = %user_name,
-                                        "No movie found"
-                                    );
-                                    return Ok(());
+                        // twitcasting.tv で得たクッキー（did 等）を
+                        // frontendapi.twitcasting.tv 用にコピーする。
+                        // did はホスト専用クッキーの可能性があるため、明示的に登録する。
+                        {
+                            let src: reqwest::Url = "https://twitcasting.tv/".parse().unwrap();
+                            let dst: reqwest::Url =
+                                "https://frontendapi.twitcasting.tv/".parse().unwrap();
+
+                            let src_cookies = session_jar
+                                .cookies(&src)
+                                .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
+                                .unwrap_or_else(|| "(なし)".to_string());
+                            tracing::debug!(
+                                target: "mcv::plugin-twicas",
+                                connection_id = %connection_id,
+                                cookies = %src_cookies,
+                                "コピー前 twitcasting.tv jar"
+                            );
+
+                            if let Some(header) = session_jar.cookies(&src) {
+                                if let Ok(s) = header.to_str() {
+                                    for part in s.split(';') {
+                                        let part = part.trim();
+                                        if !part.is_empty() {
+                                            session_jar.add_cookie_str(part, &dst);
+                                        }
+                                    }
                                 }
                             }
+
+                            let dst_cookies = session_jar
+                                .cookies(&dst)
+                                .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
+                                .unwrap_or_else(|| "(なし)".to_string());
+                            tracing::debug!(
+                                target: "mcv::plugin-twicas",
+                                connection_id = %connection_id,
+                                cookies = %dst_cookies,
+                                "コピー後 frontendapi.twitcasting.tv jar"
+                            );
                         }
-                    };
 
-                    // コメント投稿用の状態を保存
-                    // cs_session_id: 認証済みページでは None になる場合があるため、
-                    // resolve_wpass 時に取得したものをフォールバックとして使用する
-                    let effective_cs_session_id = cs_session_id
-                        .or_else(|| cs_session_id_from_wpass.clone())
-                        .unwrap_or_default();
-                    tracing::debug!(
-                        target: "mcv::plugin-twicas",
-                        connection_id = %connection_id,
-                        cs_session_id = %effective_cs_session_id,
-                        "cs_session_id 確定"
-                    );
-                    {
-                        let mut state = comment_post.write().await;
-                        *state = Some(CommentPostState {
-                            movie_id: movie.id,
-                            screen_name: user_name.clone(),
-                            cs_session_id: effective_cs_session_id,
-                            client: Arc::clone(&client),
-                            jar: Arc::clone(&session_jar),
-                        });
-                    }
-
-                    // wpass が未解決の場合、ブラウザ Cookie の jar から wpass を抽出する。
-                    // jar の Cookie はリクエスト時に自動送信されるが、
-                    // password パラメータにも明示的に渡すことで確実に認証する。
-                    let twicas_url: reqwest::Url = "https://twitcasting.tv/".parse().unwrap();
-                    let wpass_from_jar: Option<String> = if wpass.is_none() {
-                        session_jar
-                            .cookies(&twicas_url)
-                            .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
-                            .and_then(|s| {
-                                s.split(';')
-                                    .map(|c| c.trim())
-                                    .find(|c| c.starts_with("wpass="))
-                                    .and_then(|c| {
-                                        c.strip_prefix("wpass=").map(|v| v.to_string())
-                                    })
-                            })
-                    } else {
-                        None
-                    };
-                    let effective_wpass = wpass.as_deref().or(wpass_from_jar.as_deref());
-                    let effective_wpass_owned: Option<String> =
-                        effective_wpass.map(|s| s.to_string());
-
-                    {
-                        let jar_cookies = session_jar
-                            .cookies(&twicas_url)
-                            .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
-                            .unwrap_or_else(|| "(なし)".to_string());
-                        tracing::debug!(
-                            target: "mcv::plugin-twicas",
-                            connection_id = %connection_id,
-                            cookies = %jar_cookies,
-                            has_wpass = wpass.is_some(),
-                            has_wpass_from_jar = wpass_from_jar.is_some(),
-                            effective_has_wpass = effective_wpass.is_some(),
-                            "fetch_event_pubsub_url 呼び出し前の twitcasting.tv jar cookies"
-                        );
-                    }
-
-                    let ws_url =
-                        match fetch_event_pubsub_url(&client, movie.id, effective_wpass).await {
-                            Ok(v) => v,
-                            Err(e) => {
-                                tracing::error!(
+                        // movie_id の取得: HTML の data-movie-id を優先する。
+                        // ログイン済み・非ログインともに配信中であれば HTML に含まれる。
+                        // HTML にない場合のみ fetch_latest_movie（非ログインユーザー向け）にフォールバックする。
+                        let movie = match movie_id_from_html {
+                            Some(mid) => {
+                                tracing::info!(
                                     target: "mcv::plugin-twicas",
                                     connection_id = %connection_id,
-                                    movie_id = movie.id,
-                                    error = %e,
-                                    "Failed to fetch event pubsub URL"
+                                    user_name = %user_name,
+                                    movie_id = mid,
+                                    "HTML から movie_id を取得しました"
                                 );
-                                return Err(());
+                                MovieInfo { id: mid, is_on_live: true }
                             }
-                        };
-
-                    tracing::info!(
-                        target: "mcv::plugin-twicas",
-                        connection_id = %connection_id,
-                        movie_id = movie.id,
-                        "Connecting to Twicas event pubsub websocket"
-                    );
-
-                    let connect_result =
-                        timeout(Duration::from_secs(15), connect_async(&ws_url)).await;
-                    let (ws_stream, _response) = match connect_result {
-                        Err(_) => {
-                            tracing::error!(
-                                target: "mcv::plugin-twicas",
-                                connection_id = %connection_id,
-                                "Timed out while connecting websocket"
-                            );
-                            return Err(());
-                        }
-                        Ok(Err(e)) => {
-                            tracing::error!(
-                                target: "mcv::plugin-twicas",
-                                connection_id = %connection_id,
-                                error = %e,
-                                "Failed to connect websocket"
-                            );
-                            return Err(());
-                        }
-                        Ok(Ok(v)) => v,
-                    };
-
-                    // メタデータポーリングタスクを起動
-                    let metadata_cancel_rx = cancel_rx.clone();
-                    let metadata_handle = tokio::spawn(metadata_polling_loop(
-                        ctx.clone(),
-                        logical_plugin_id.clone(),
-                        connection_id,
-                        Arc::clone(&client),
-                        movie.id,
-                        user_name.clone(),
-                        effective_wpass_owned,
-                        session_id.clone(),
-                        metadata_cancel_rx,
-                    ));
-
-                    let (_write, mut read) = ws_stream.split();
-                    loop {
-                        tokio::select! {
-                            _ = cancel_rx.changed() => {
-                                if *cancel_rx.borrow() {
+                            None => {
+                                if session_id.is_empty() {
+                                    // ログイン済みユーザー、かつ HTML に movie_id がない
+                                    // → 配信中でないため待機
                                     tracing::info!(
                                         target: "mcv::plugin-twicas",
                                         connection_id = %connection_id,
-                                        "Twicas websocket loop cancelled"
+                                        user_name = %user_name,
+                                        "movie_id が HTML から取得できません。配信開始を待機します"
                                     );
-                                    break;
-                                }
-                            }
-                            recv = read.next() => {
-                                match recv {
-                                    Some(Ok(WsMessage::Text(text))) => {
-                                        handle_text_message(
+                                    if !sent_waiting_metadata {
+                                        send_stream_metadata(
                                             ctx.clone(),
                                             logical_plugin_id.clone(),
-                                            connection_id,
-                                            &text,
-                                        ).await;
+                                            StreamMetadataPayload {
+                                                connection_id,
+                                                title: Some(
+                                                    "（次の配信が始まるまで待機中...）"
+                                                        .to_string(),
+                                                ),
+                                                viewer_count: None,
+                                                total_viewer_count: None,
+                                                start_time: None,
+                                                others: None,
+                                                clear: Some(true),
+                                            },
+                                        )
+                                        .await;
+                                        sent_waiting_metadata = true;
                                     }
-                                    Some(Ok(WsMessage::Close(frame))) => {
-                                        tracing::info!(
-                                            target: "mcv::plugin-twicas",
-                                            connection_id = %connection_id,
-                                            close_frame = ?frame,
-                                            "WebSocket closed by server"
-                                        );
-                                        break;
+                                    if wait_or_cancel(&mut cancel_rx, 5000).await {
+                                        break 'retry;
                                     }
-                                    Some(Ok(_)) => {}
-                                    Some(Err(e)) => {
+                                    continue 'retry;
+                                }
+
+                                // 非ログインユーザー向け: fetch_latest_movie で movie_id と配信状態を確認
+                                let latest_movie = match fetch_latest_movie(
+                                    &client,
+                                    &session_id,
+                                    SECRET,
+                                    &user_name,
+                                    wpass.as_deref(),
+                                )
+                                .await
+                                {
+                                    Ok(v) => v,
+                                    Err(e) => {
                                         tracing::error!(
                                             target: "mcv::plugin-twicas",
                                             connection_id = %connection_id,
+                                            user_name = %user_name,
                                             error = %e,
-                                            "Error while receiving websocket message"
+                                            "Failed to fetch latest movie"
                                         );
-                                        break;
+                                        return Err(());
                                     }
-                                    None => {
+                                };
+
+                                match latest_movie.movie {
+                                    Some(v) if v.is_on_live => {
                                         tracing::info!(
                                             target: "mcv::plugin-twicas",
                                             connection_id = %connection_id,
-                                            "WebSocket stream ended"
+                                            user_name = %user_name,
+                                            movie_id = v.id,
+                                            "fetch_latest_movie: 配信中を確認"
                                         );
-                                        break;
+                                        v
+                                    }
+                                    _ => {
+                                        // 配信中でない → 待機
+                                        tracing::info!(
+                                            target: "mcv::plugin-twicas",
+                                            connection_id = %connection_id,
+                                            user_name = %user_name,
+                                            "配信中でないため配信開始を待機します"
+                                        );
+                                        if !sent_waiting_metadata {
+                                            send_stream_metadata(
+                                                ctx.clone(),
+                                                logical_plugin_id.clone(),
+                                                StreamMetadataPayload {
+                                                    connection_id,
+                                                    title: Some(
+                                                        "（次の配信が始まるまで待機中...）"
+                                                            .to_string(),
+                                                    ),
+                                                    viewer_count: None,
+                                                    total_viewer_count: None,
+                                                    start_time: None,
+                                                    others: None,
+                                                    clear: Some(true),
+                                                },
+                                            )
+                                            .await;
+                                            sent_waiting_metadata = true;
+                                        }
+                                        if wait_or_cancel(&mut cancel_rx, 5000).await {
+                                            break 'retry;
+                                        }
+                                        continue 'retry;
                                     }
                                 }
                             }
+                        };
+
+                        // ── 以下は配信中 ──
+
+                        // コメント投稿用の状態を保存
+                        // cs_session_id: 認証済みページでは None になる場合があるため、
+                        // resolve_wpass 時に取得したものをフォールバックとして使用する
+                        let effective_cs_session_id = cs_session_id
+                            .or_else(|| cs_session_id_from_wpass.clone())
+                            .unwrap_or_default();
+                        tracing::debug!(
+                            target: "mcv::plugin-twicas",
+                            connection_id = %connection_id,
+                            cs_session_id = %effective_cs_session_id,
+                            "cs_session_id 確定"
+                        );
+                        {
+                            let mut state = comment_post.write().await;
+                            *state = Some(CommentPostState {
+                                movie_id: movie.id,
+                                screen_name: user_name.clone(),
+                                cs_session_id: effective_cs_session_id,
+                                client: Arc::clone(&client),
+                                jar: Arc::clone(&session_jar),
+                            });
                         }
-                    }
 
-                    metadata_handle.abort();
+                        // wpass が未解決の場合、ブラウザ Cookie の jar から wpass を抽出する。
+                        // jar の Cookie はリクエスト時に自動送信されるが、
+                        // password パラメータにも明示的に渡すことで確実に認証する。
+                        let twicas_url: reqwest::Url = "https://twitcasting.tv/".parse().unwrap();
+                        let wpass_from_jar: Option<String> = if wpass.is_none() {
+                            session_jar
+                                .cookies(&twicas_url)
+                                .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
+                                .and_then(|s| {
+                                    s.split(';')
+                                        .map(|c| c.trim())
+                                        .find(|c| c.starts_with("wpass="))
+                                        .and_then(|c| {
+                                            c.strip_prefix("wpass=").map(|v| v.to_string())
+                                        })
+                                })
+                        } else {
+                            None
+                        };
+                        let effective_wpass = wpass.as_deref().or(wpass_from_jar.as_deref());
+                        let effective_wpass_owned: Option<String> =
+                            effective_wpass.map(|s| s.to_string());
 
-                    // サーバー側からの切断（配信終了）の場合はメタデータをリセットする。
-                    // ユーザーが手動で切断した場合（cancel_rx が true）はリセットしない。
-                    if !*cancel_rx.borrow() {
+                        {
+                            let jar_cookies = session_jar
+                                .cookies(&twicas_url)
+                                .and_then(|h| h.to_str().ok().map(|s| s.to_string()))
+                                .unwrap_or_else(|| "(なし)".to_string());
+                            tracing::debug!(
+                                target: "mcv::plugin-twicas",
+                                connection_id = %connection_id,
+                                cookies = %jar_cookies,
+                                has_wpass = wpass.is_some(),
+                                has_wpass_from_jar = wpass_from_jar.is_some(),
+                                effective_has_wpass = effective_wpass.is_some(),
+                                "fetch_event_pubsub_url 呼び出し前の twitcasting.tv jar cookies"
+                            );
+                        }
+
+                        let ws_url =
+                            match fetch_event_pubsub_url(&client, movie.id, effective_wpass).await
+                            {
+                                Ok(v) => v,
+                                Err(e) => {
+                                    tracing::error!(
+                                        target: "mcv::plugin-twicas",
+                                        connection_id = %connection_id,
+                                        movie_id = movie.id,
+                                        error = %e,
+                                        "Failed to fetch event pubsub URL"
+                                    );
+                                    return Err(());
+                                }
+                            };
+
+                        tracing::info!(
+                            target: "mcv::plugin-twicas",
+                            connection_id = %connection_id,
+                            movie_id = movie.id,
+                            "Connecting to Twicas event pubsub websocket"
+                        );
+
+                        let connect_result =
+                            timeout(Duration::from_secs(15), connect_async(&ws_url)).await;
+                        let (ws_stream, _response) = match connect_result {
+                            Err(_) => {
+                                tracing::error!(
+                                    target: "mcv::plugin-twicas",
+                                    connection_id = %connection_id,
+                                    "Timed out while connecting websocket"
+                                );
+                                return Err(());
+                            }
+                            Ok(Err(e)) => {
+                                tracing::error!(
+                                    target: "mcv::plugin-twicas",
+                                    connection_id = %connection_id,
+                                    error = %e,
+                                    "Failed to connect websocket"
+                                );
+                                return Err(());
+                            }
+                            Ok(Ok(v)) => v,
+                        };
+
+                        // メタデータポーリングタスクを起動
+                        let metadata_cancel_rx = cancel_rx.clone();
+                        let metadata_handle = tokio::spawn(metadata_polling_loop(
+                            ctx.clone(),
+                            logical_plugin_id.clone(),
+                            connection_id,
+                            Arc::clone(&client),
+                            movie.id,
+                            user_name.clone(),
+                            effective_wpass_owned,
+                            session_id.clone(),
+                            metadata_cancel_rx,
+                        ));
+
+                        let (_write, mut read) = ws_stream.split();
+                        // true: サーバー側からの正常終了（配信終了）
+                        // false: キャンセルまたは受信エラー
+                        let stream_ended_by_server = loop {
+                            tokio::select! {
+                                _ = cancel_rx.changed() => {
+                                    if *cancel_rx.borrow() {
+                                        tracing::info!(
+                                            target: "mcv::plugin-twicas",
+                                            connection_id = %connection_id,
+                                            "Twicas websocket loop cancelled"
+                                        );
+                                        break false;
+                                    }
+                                }
+                                recv = read.next() => {
+                                    match recv {
+                                        Some(Ok(WsMessage::Text(text))) => {
+                                            handle_text_message(
+                                                ctx.clone(),
+                                                logical_plugin_id.clone(),
+                                                connection_id,
+                                                &text,
+                                            ).await;
+                                        }
+                                        Some(Ok(WsMessage::Close(frame))) => {
+                                            tracing::info!(
+                                                target: "mcv::plugin-twicas",
+                                                connection_id = %connection_id,
+                                                close_frame = ?frame,
+                                                "WebSocket closed by server"
+                                            );
+                                            break true;
+                                        }
+                                        Some(Ok(_)) => {}
+                                        Some(Err(e)) => {
+                                            tracing::error!(
+                                                target: "mcv::plugin-twicas",
+                                                connection_id = %connection_id,
+                                                error = %e,
+                                                "Error while receiving websocket message"
+                                            );
+                                            break false;
+                                        }
+                                        None => {
+                                            tracing::info!(
+                                                target: "mcv::plugin-twicas",
+                                                connection_id = %connection_id,
+                                                "WebSocket stream ended"
+                                            );
+                                            break true;
+                                        }
+                                    }
+                                }
+                            }
+                        };
+
+                        metadata_handle.abort();
+
+                        // コメント投稿状態をクリア
+                        {
+                            let mut state = comment_post.write().await;
+                            *state = None;
+                        }
+
+                        if !stream_ended_by_server {
+                            // ユーザーキャンセルまたはエラー → ループを抜けて切断
+                            break 'retry;
+                        }
+
+                        // 配信終了 → 待機状態へ遷移し、次の配信開始を待つ
+                        tracing::info!(
+                            target: "mcv::plugin-twicas",
+                            connection_id = %connection_id,
+                            "配信終了。次の配信開始を待機します"
+                        );
                         send_stream_metadata(
                             ctx.clone(),
                             logical_plugin_id.clone(),
@@ -413,42 +492,48 @@ impl Connection {
                             },
                         )
                         .await;
+                        sent_waiting_metadata = true;
+
+                        if wait_or_cancel(&mut cancel_rx, 5000).await {
+                            break 'retry;
+                        }
+                        // continue 'retry: 次の配信を待つ
                     }
 
                     Ok(())
                 }
                 .await;
 
-                if run_result.is_err() {
-                    tracing::debug!(
-                        target: "mcv::plugin-twicas",
-                        connection_id = %connection_id,
-                        "Twicas connection task terminated due to earlier error"
+                    if run_result.is_err() {
+                        tracing::debug!(
+                            target: "mcv::plugin-twicas",
+                            connection_id = %connection_id,
+                            "Twicas connection task terminated due to earlier error"
+                        );
+                    }
+
+                    // running フラグを先にクリアすることで、Disconnected 受信後の
+                    // 即時再接続要求が connect() で弾かれないようにする
+                    running_flag.store(false, Ordering::Relaxed);
+
+                    // コメント投稿状態をクリア
+                    {
+                        let mut state = comment_post.write().await;
+                        *state = None;
+                    }
+
+                    let message = McvMessage::new_notification(
+                        MessageType::Disconnected,
+                        MessageSource::Plugin {
+                            plugin_id: logical_plugin_id.clone(),
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
                     );
-                }
-
-                // running フラグを先にクリアすることで、Disconnected 受信後の
-                // 即時再接続要求が connect() で弾かれないようにする
-                running_flag.store(false, Ordering::Relaxed);
-
-                // コメント投稿状態をクリア
-                {
-                    let mut state = comment_post.write().await;
-                    *state = None;
-                }
-
-                let message = McvMessage::new_notification(
-                    MessageType::Disconnected,
-                    MessageSource::Plugin {
-                        plugin_id: logical_plugin_id.clone(),
-                    },
-                    MessageDestination::Core,
-                    serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
-                );
-                TwicasPlugin::send_message(ctx, message).await;
-            })
-            .catch_unwind()
-            .await;
+                    TwicasPlugin::send_message(ctx, message).await;
+                })
+                .catch_unwind()
+                .await;
 
             if let Err(panic_payload) = task_result {
                 let panic_message = if let Some(s) = panic_payload.downcast_ref::<&str>() {
@@ -534,6 +619,17 @@ impl Connection {
         self.cancel_tx = None;
         self.task = None;
         self.running.store(false, Ordering::Relaxed);
+    }
+}
+
+/// キャンセルを待つか、指定ミリ秒タイムアウトする。
+/// Returns `true` if cancelled, `false` if timed out.
+async fn wait_or_cancel(cancel_rx: &mut watch::Receiver<bool>, ms: u64) -> bool {
+    tokio::select! {
+        _ = tokio::time::sleep(Duration::from_millis(ms)) => false,
+        result = cancel_rx.changed() => {
+            result.is_err() || *cancel_rx.borrow()
+        }
     }
 }
 

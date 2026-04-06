@@ -599,6 +599,8 @@ fn build_frontend_if_needed(manifest_dir: &Path, channel: Option<&str>) -> Resul
         frontend_dir.join("package.json"),
         frontend_dir.join("tailwind.config.js"),
         frontend_dir.join("tsconfig.json"),
+        // ワークスペースのローカルパッケージ（my-dataview 等）の変更も検知する
+        PathBuf::from("packages"),
     ];
 
     let needs_build = src_paths

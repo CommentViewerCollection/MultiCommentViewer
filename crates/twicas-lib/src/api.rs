@@ -121,7 +121,10 @@ async fn send_request_inner(
         )
         .header(reqwest::header::ORIGIN, TWICAS_ORIGIN)
         .header(reqwest::header::REFERER, format!("{}/", TWICAS_ORIGIN))
-        .header(reqwest::header::USER_AGENT, user_agent());
+        .header(reqwest::header::USER_AGENT, user_agent())
+        .header("Sec-Fetch-Dest", "empty")
+        .header("Sec-Fetch-Mode", "cors")
+        .header("Sec-Fetch-Site", "same-site");
 
     if let (Some(sid), Some(sec)) = (session_id, secret) {
         let key = generate_authorize_key(method, path, sid, "", sec);
@@ -228,6 +231,7 @@ pub async fn fetch_session_ids(
     let cs_session_id =
         extract_cs_session_id(&html).or_else(|| get_tc_variable(&html, "csrf_token"));
     let movie_id_from_html = extract_movie_id_from_html(&html);
+
     tracing::debug!(
         target: "mcv::twicas-lib",
         session_id = %session_id,
@@ -414,8 +418,18 @@ pub async fn fetch_movie_token(
     secret: &str,
 ) -> Result<MovieTokenResponse, TwicasApiError> {
     let url = format!("{}/movies/{}/token", FRONTEND_API, movie_id);
-    let fields = vec![("password".to_string(), pass.to_string())];
-    let req_body_log = format!("password={}", urlencoding::encode(pass));
+    // ブラウザは公開配信時に空の multipart ボディを送る。
+    // password フィールドはパスワードが指定された場合のみ含める。
+    let fields: Vec<(String, String)> = if pass.is_empty() {
+        vec![]
+    } else {
+        vec![("password".to_string(), pass.to_string())]
+    };
+    let req_body_log = if pass.is_empty() {
+        "(empty)".to_string()
+    } else {
+        format!("password={}", urlencoding::encode(pass))
+    };
 
     let (sid_opt, sec_opt) = if session_id.is_empty() {
         (None, None)

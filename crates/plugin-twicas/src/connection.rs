@@ -15,15 +15,16 @@ use std::sync::{
 };
 use tokio::sync::{watch, RwLock};
 use tokio::task::JoinHandle;
-use tokio::time::{timeout, Duration};
+use tokio::time::{timeout, Duration, Instant};
 use tokio_tungstenite::{connect_async, tungstenite::Message as WsMessage};
 use twicas_lib::{
     fetch_event_pubsub_url, fetch_latest_movie, fetch_movie_info, fetch_movie_token,
     fetch_session_ids, fetch_viewer_status, MovieInfo,
 };
 
-/// JS の PlayerPage から抽出したシークレット（r(333) = "ngg71ob7okuk3ngk"）
-const SECRET: &str = "ngg71ob7okuk3ngk";
+/// JS の PlayerPage から抽出したシークレット（extract-secret ツールで取得: 2026-04-05 時点）
+/// SECRET は JS 更新のたびに変わるため、`cargo run -p extract-secret` で最新値を確認すること
+const SECRET: &str = "b0k5hdsh1bob1iog";
 use uuid::Uuid;
 
 /// コメント投稿に必要な接続状態
@@ -332,6 +333,7 @@ impl Connection {
                         connection_id,
                         Arc::clone(&client),
                         movie.id,
+                        user_name.clone(),
                         effective_wpass_owned,
                         session_id.clone(),
                         metadata_cancel_rx,
@@ -393,6 +395,25 @@ impl Connection {
                     }
 
                     metadata_handle.abort();
+
+                    // サーバー側からの切断（配信終了）の場合はメタデータをリセットする。
+                    // ユーザーが手動で切断した場合（cancel_rx が true）はリセットしない。
+                    if !*cancel_rx.borrow() {
+                        send_stream_metadata(
+                            ctx.clone(),
+                            logical_plugin_id.clone(),
+                            StreamMetadataPayload {
+                                connection_id,
+                                title: Some("（次の配信が始まるまで待機中...）".to_string()),
+                                viewer_count: None,
+                                total_viewer_count: None,
+                                start_time: None,
+                                others: None,
+                                clear: Some(true),
+                            },
+                        )
+                        .await;
+                    }
 
                     Ok(())
                 }
@@ -639,35 +660,110 @@ async fn metadata_polling_loop(
     connection_id: Uuid,
     client: Arc<reqwest::Client>,
     movie_id: i64,
+    user_name: String,
     wpass: Option<String>,
     session_id: String,
     mut cancel_rx: watch::Receiver<bool>,
 ) {
-    // トークン取得
-    let token: Option<String> = match fetch_movie_token(
-        &client,
+    tracing::info!(
+        target: "mcv::plugin-twicas",
+        connection_id = %connection_id,
         movie_id,
-        wpass.as_deref().unwrap_or(""),
-        &session_id,
-        SECRET,
-    )
-    .await
-    {
-        Ok(t) => Some(t.token),
+        has_session_id = !session_id.is_empty(),
+        "メタデータポーリング開始"
+    );
+
+    // 接続時点で実際に配信中かどうかを確認する。
+    // movie_id_from_html はアーカイブページでも存在するため、
+    // is_on_live をハードコードせず fetch_latest_movie で確認する。
+    match fetch_latest_movie(&client, &session_id, SECRET, &user_name, wpass.as_deref()).await {
+        Ok(resp) => {
+            let is_live = resp.movie.map(|m| m.is_on_live).unwrap_or(false);
+            if !is_live {
+                tracing::info!(
+                    target: "mcv::plugin-twicas",
+                    connection_id = %connection_id,
+                    "配信中でないため待機中メタデータを送信してポーリングを終了"
+                );
+                send_stream_metadata(
+                    ctx,
+                    logical_plugin_id,
+                    StreamMetadataPayload {
+                        connection_id,
+                        title: Some("（次の配信が始まるまで待機中...）".to_string()),
+                        viewer_count: None,
+                        total_viewer_count: None,
+                        start_time: None,
+                        others: None,
+                        clear: Some(true),
+                    },
+                )
+                .await;
+                return;
+            }
+        }
         Err(e) => {
             tracing::warn!(
                 target: "mcv::plugin-twicas",
                 connection_id = %connection_id,
                 error = %e,
-                "fetch_movie_token failed"
+                "fetch_latest_movie 失敗、配信中と仮定してポーリングを続行"
             );
-            None
+        }
+    }
+
+    let mut poll_count: u64 = 0;
+
+    // /movies/{id}/token エンドポイントから視聴用トークンを取得する。
+    // session_id が空（ログイン済みユーザー）の場合はトークンなしで続行。
+    let token: Option<String> = if session_id.is_empty() {
+        tracing::info!(
+            target: "mcv::plugin-twicas",
+            connection_id = %connection_id,
+            "session_id が空のためトークンなしで続行（ログイン済み cookie で認証）"
+        );
+        None
+    } else {
+        match fetch_movie_token(
+            &client,
+            movie_id,
+            wpass.as_deref().unwrap_or(""),
+            &session_id,
+            SECRET,
+        )
+        .await
+        {
+            Ok(t) => {
+                tracing::info!(
+                    target: "mcv::plugin-twicas",
+                    connection_id = %connection_id,
+                    "fetch_movie_token 成功"
+                );
+                Some(t.token)
+            }
+            Err(e) => {
+                tracing::warn!(
+                    target: "mcv::plugin-twicas",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "fetch_movie_token 失敗、トークンなしで続行"
+                );
+                None
+            }
         }
     };
 
     // 配信開始時刻を取得して即時送信
-    match fetch_movie_info(&client, movie_id, token.as_deref(), &session_id, SECRET).await {
+    // ブラウザは /info に token を URL パラメータとして渡すだけで認証ヘッダーを送らないため
+    // session_id は渡さない。
+    match fetch_movie_info(&client, movie_id, token.as_deref(), "", SECRET).await {
         Ok(info) => {
+            tracing::info!(
+                target: "mcv::plugin-twicas",
+                connection_id = %connection_id,
+                started_at = info.started_at,
+                "fetch_movie_info 成功、start_time を送信"
+            );
             send_stream_metadata(
                 ctx.clone(),
                 logical_plugin_id.clone(),
@@ -688,7 +784,7 @@ async fn metadata_polling_loop(
                 target: "mcv::plugin-twicas",
                 connection_id = %connection_id,
                 error = %e,
-                "fetch_movie_info failed"
+                "fetch_movie_info 失敗"
             );
         }
     }
@@ -696,20 +792,41 @@ async fn metadata_polling_loop(
     // 視聴者数ポーリングループ
     loop {
         if *cancel_rx.borrow() {
+            tracing::info!(
+                target: "mcv::plugin-twicas",
+                connection_id = %connection_id,
+                poll_count,
+                "メタデータポーリング: キャンセル受信、終了"
+            );
             break;
         }
 
+        poll_count += 1;
+        let loop_start = Instant::now();
+
+        // ブラウザは /status/viewer にも token を URL パラメータとして渡すだけで
+        // 認証ヘッダーを送らないため session_id は渡さない。
         let interval_secs = match fetch_viewer_status(
             &client,
             movie_id,
             token.as_deref(),
             "ja",
-            &session_id,
+            "",
             SECRET,
         )
         .await
         {
             Ok(status) => {
+                tracing::info!(
+                    target: "mcv::plugin-twicas",
+                    connection_id = %connection_id,
+                    poll_count,
+                    title = %status.movie.title,
+                    viewer_count = status.movie.viewers.current,
+                    total_viewer_count = status.movie.viewers.total,
+                    next_poll_secs = status.update_interval_sec,
+                    "メタデータポーリング: 取得成功、StreamMetadata 送信"
+                );
                 send_stream_metadata(
                     ctx.clone(),
                     logical_plugin_id.clone(),
@@ -730,17 +847,25 @@ async fn metadata_polling_loop(
                 tracing::warn!(
                     target: "mcv::plugin-twicas",
                     connection_id = %connection_id,
+                    poll_count,
                     error = %e,
-                    "fetch_viewer_status failed"
+                    "メタデータポーリング: fetch_viewer_status 失敗、30秒後にリトライ"
                 );
-                30 // エラー時は30秒後にリトライ
+                30
             }
         };
 
+        let wait = Duration::from_secs(interval_secs).saturating_sub(loop_start.elapsed());
         tokio::select! {
-            _ = tokio::time::sleep(Duration::from_secs(interval_secs)) => {}
+            _ = tokio::time::sleep(wait) => {}
             result = cancel_rx.changed() => {
                 if result.is_err() || *cancel_rx.borrow() {
+                    tracing::info!(
+                        target: "mcv::plugin-twicas",
+                        connection_id = %connection_id,
+                        poll_count,
+                        "メタデータポーリング: 待機中にキャンセル受信、終了"
+                    );
                     break;
                 }
             }

@@ -184,7 +184,7 @@ async fn get_local_logs(
     // Get logs
     let query = format!(
         "SELECT id, level, timestamp, message, file, line, column, module_path, \
-         stacktrace, context, mcv_version, platform, arch, build_profile \
+         stacktrace, context, mcv_version, platform, arch, build_profile, plugin_version \
          FROM logs {} ORDER BY timestamp DESC LIMIT ? OFFSET ?",
         where_clause
     );
@@ -224,6 +224,7 @@ async fn get_local_logs(
                     platform: row.get(11)?,
                     arch: row.get(12)?,
                     build_profile: row.get(13)?,
+                    plugin_version: row.get(14)?,
                 },
             })
         })
@@ -412,7 +413,7 @@ async fn export_local_logs(
 
     let query = format!(
         "SELECT id, level, timestamp, message, file, line, column, module_path, \
-         stacktrace, context, mcv_version, platform, arch, build_profile \
+         stacktrace, context, mcv_version, platform, arch, build_profile, plugin_version \
          FROM logs {} ORDER BY timestamp DESC",
         where_clause
     );
@@ -449,6 +450,7 @@ async fn export_local_logs(
                     platform: row.get(11)?,
                     arch: row.get(12)?,
                     build_profile: row.get(13)?,
+                    plugin_version: row.get(14)?,
                 },
             })
         })
@@ -582,7 +584,7 @@ async fn get_local_logs_json(filters: LogQueryFilters) -> Result<String, String>
 
     let query = format!(
         "SELECT id, level, timestamp, message, file, line, column, module_path, \
-         stacktrace, context, mcv_version, platform, arch, build_profile \
+         stacktrace, context, mcv_version, platform, arch, build_profile, plugin_version \
          FROM logs {} ORDER BY timestamp DESC",
         where_clause
     );
@@ -619,6 +621,7 @@ async fn get_local_logs_json(filters: LogQueryFilters) -> Result<String, String>
                     platform: row.get(11)?,
                     arch: row.get(12)?,
                     build_profile: row.get(13)?,
+                    plugin_version: row.get(14)?,
                 },
             })
         })

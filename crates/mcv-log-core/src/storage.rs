@@ -41,10 +41,14 @@ impl LogStorage {
                 arch TEXT NOT NULL,
                 build_profile TEXT NOT NULL,
                 sent INTEGER DEFAULT 0,
-                created_at INTEGER DEFAULT (strftime('%s','now'))
+                created_at INTEGER DEFAULT (strftime('%s','now')),
+                plugin_version TEXT
             )",
             [],
         )?;
+
+        // 既存DBへのマイグレーション（plugin_version カラムが存在しない場合に追加）
+        let _ = conn.execute("ALTER TABLE logs ADD COLUMN plugin_version TEXT", []);
 
         // インデックス作成
         conn.execute(
@@ -64,8 +68,8 @@ impl LogStorage {
         self.conn.execute(
             "INSERT INTO logs (
                 id, level, timestamp, message, file, line, column, module_path,
-                stacktrace, context, mcv_version, platform, arch, build_profile
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+                stacktrace, context, mcv_version, platform, arch, build_profile, plugin_version
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
             params![
                 entry.id,
                 entry.level.to_string(),
@@ -87,6 +91,7 @@ impl LogStorage {
                 entry.system_info.platform,
                 entry.system_info.arch,
                 entry.system_info.build_profile,
+                entry.system_info.plugin_version,
             ],
         )?;
 
@@ -97,7 +102,7 @@ impl LogStorage {
     pub fn get_unsent(&self, limit: usize) -> SqliteResult<Vec<LogEntry>> {
         let mut stmt = self.conn.prepare(
             "SELECT id, level, timestamp, message, file, line, column, module_path,
-                    stacktrace, context, mcv_version, platform, arch, build_profile
+                    stacktrace, context, mcv_version, platform, arch, build_profile, plugin_version
              FROM logs
              WHERE sent = 0
              ORDER BY timestamp ASC
@@ -128,6 +133,7 @@ impl LogStorage {
                         platform: row.get(11)?,
                         arch: row.get(12)?,
                         build_profile: row.get(13)?,
+                        plugin_version: row.get(14)?,
                     },
                 })
             })?
@@ -224,7 +230,7 @@ impl LogStorage {
         // クエリ構築（新しいログが先頭、降順ソート）
         let mut query = format!(
             "SELECT id, level, timestamp, message, file, line, column, module_path, \
-             stacktrace, context, mcv_version, platform, arch, build_profile \
+             stacktrace, context, mcv_version, platform, arch, build_profile, plugin_version \
              FROM logs {} ORDER BY timestamp DESC",
             where_clause
         );
@@ -266,6 +272,7 @@ impl LogStorage {
                         platform: row.get(11)?,
                         arch: row.get(12)?,
                         build_profile: row.get(13)?,
+                        plugin_version: row.get(14)?,
                     },
                 })
             })?
@@ -298,6 +305,7 @@ mod tests {
                 platform: "windows".to_string(),
                 arch: "x86_64".to_string(),
                 build_profile: "alpha".to_string(),
+                plugin_version: None,
             },
         }
     }

@@ -78,6 +78,8 @@ pub struct CoreActor {
     url_check_entries: HashMap<Uuid, UrlCheckEntry>,
     /// URL自動検出: グループ状態 (group_id → group)
     url_check_groups: HashMap<Uuid, UrlCheckGroup>,
+    /// アプリバージョン（system_info の mcv_version に使用）
+    pub(crate) mcv_version: String,
 }
 
 impl CoreActor {
@@ -97,7 +99,13 @@ impl CoreActor {
             settings_dir: None,
             url_check_entries: HashMap::new(),
             url_check_groups: HashMap::new(),
+            mcv_version: String::new(),
         }
+    }
+
+    /// アプリバージョンを設定
+    pub fn set_mcv_version(&mut self, version: &str) {
+        self.mcv_version = version.to_string();
     }
 
     /// イベントコールバックを設定

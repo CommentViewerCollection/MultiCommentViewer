@@ -27,6 +27,7 @@ pub fn init_subscriber(
             platform,
             arch,
             build_profile,
+            plugin_version: None,
         },
     };
 

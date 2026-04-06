@@ -146,6 +146,12 @@ export default function LogDetail({ log, onDelete }: LogDetailProps) {
             <span className="font-medium">Build Profile:</span>{" "}
             {log.system_info.build_profile}
           </div>
+          {log.system_info.plugin_version && (
+            <div>
+              <span className="font-medium">Plugin Version:</span>{" "}
+              {log.system_info.plugin_version}
+            </div>
+          )}
         </div>
       </div>
 

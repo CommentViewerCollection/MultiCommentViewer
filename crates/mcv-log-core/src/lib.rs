@@ -233,6 +233,7 @@ fn build_panic_log_entry(
             platform: std::env::consts::OS.to_string(),
             arch: std::env::consts::ARCH.to_string(),
             build_profile: get_build_profile().to_string(),
+            plugin_version: None,
         },
     }
 }

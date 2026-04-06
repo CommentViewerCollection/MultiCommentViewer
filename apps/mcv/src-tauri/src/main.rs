@@ -154,6 +154,7 @@ fn main() {
             core_actor.set_event_callback(event_callback);
             core_actor.set_log_storage(mcv_log_core::get_storage());
             core_actor.set_settings_storage(settings_storage.clone());
+            core_actor.set_mcv_version(env!("CARGO_PKG_VERSION"));
 
             let connections_file_path = settings_dir.join("connections.json");
             core_actor.set_connections_file_path(connections_file_path.clone());

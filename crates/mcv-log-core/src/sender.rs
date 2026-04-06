@@ -218,6 +218,7 @@ mod tests {
                 platform: "windows".to_string(),
                 arch: "x86_64".to_string(),
                 build_profile: "alpha".to_string(),
+                plugin_version: None,
             },
         }
     }

@@ -268,12 +268,13 @@ pub fn handle_log_entry(
         stacktrace,
         context,
         system_info: LoggerSystemInfo {
-            mcv_version: env!("CARGO_PKG_VERSION").to_string(),
+            mcv_version: actor.mcv_version.clone(),
             platform: std::env::consts::OS.to_string(),
             arch: std::env::consts::ARCH.to_string(),
             build_profile: payload
                 .plugin_build_profile
                 .unwrap_or_else(|| "unknown".to_string()),
+            plugin_version: payload.plugin_version,
         },
     };
 

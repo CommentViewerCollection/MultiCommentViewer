@@ -47,6 +47,10 @@ pub struct SystemInfo {
 
     /// ビルドプロファイル（"alpha", "beta", "stable"）
     pub build_profile: String,
+
+    /// プラグインバージョン（プラグイン起源のログのみ）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugin_version: Option<String>,
 }
 
 // capture_stacktrace() は mcv-log-schema から re-export
@@ -100,6 +104,7 @@ mod tests {
                 platform: "windows".to_string(),
                 arch: "x86_64".to_string(),
                 build_profile: "alpha".to_string(),
+                plugin_version: None,
             },
         };
 

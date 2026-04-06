@@ -17,6 +17,7 @@ export interface SystemInfo {
   platform: string;
   arch: string;
   build_profile: string;
+  plugin_version?: string;
 }
 
 export interface LogEntry {

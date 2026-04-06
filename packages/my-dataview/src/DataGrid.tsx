@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { createPortal } from 'react-dom';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
 // 行の最小高さの構成要素
@@ -323,41 +324,6 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
           )}
         </div>
       ))}
-      {rightClickedColumn && menuPosition && (
-        <div
-          style={{
-            position: 'fixed',
-            left: menuPosition.x,
-            top: menuPosition.y,
-            backgroundColor: '#444',
-            border: '1px solid #555',
-            borderRadius: '4px',
-            padding: '8px',
-            zIndex: 1000,
-            minWidth: '150px',
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div style={{ marginBottom: '8px', fontSize: '12px', color: '#ccc' }}>
-            列の表示設定
-          </div>
-          {columns.map((column) => (
-            <label key={String(column.key)} style={{ display: 'block', marginBottom: '4px' }}>
-              <input
-                type="checkbox"
-                checked={column.visible !== false}
-                disabled={column.hideable === false}
-                onChange={(e) => {
-                  if (column.hideable !== false) {
-                    onColumnVisibilityChange?.(column.key, e.target.checked);
-                  }
-                }}
-              />
-              {column.label}
-            </label>
-          ))}
-        </div>
-      )}
     </div>
   );
 
@@ -568,6 +534,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
   }, [markUserIntent]);
 
   return (
+    <>
     <div
       ref={(el: HTMLElement | null) => {
         scrollerRef.current = el;
@@ -615,5 +582,42 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps<any>>(function Dat
         />
       )}
     </div>
+    {rightClickedColumn && menuPosition && createPortal(
+      <div
+        style={{
+          position: 'fixed',
+          left: menuPosition.x,
+          top: menuPosition.y,
+          backgroundColor: '#444',
+          border: '1px solid #555',
+          borderRadius: '4px',
+          padding: '8px',
+          zIndex: 9999,
+          minWidth: '150px',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ marginBottom: '8px', fontSize: '12px', color: '#ccc' }}>
+          列の表示設定
+        </div>
+        {columns.map((column) => (
+          <label key={String(column.key)} style={{ display: 'block', marginBottom: '4px' }}>
+            <input
+              type="checkbox"
+              checked={column.visible !== false}
+              disabled={column.hideable === false}
+              onChange={(e) => {
+                if (column.hideable !== false) {
+                  onColumnVisibilityChange?.(column.key, e.target.checked);
+                }
+              }}
+            />
+            {column.label}
+          </label>
+        ))}
+      </div>,
+      document.body
+    )}
+    </>
   );
 });

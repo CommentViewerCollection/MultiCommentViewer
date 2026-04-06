@@ -16,6 +16,25 @@ const CUSTOM_ALPHA: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 
 const HTTP_VERBS: &[&str] = &["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 
+/// よく知られた「秘密鍵ではない」文字列（プロパティ値として現れやすいもの）
+const KNOWN_NON_SECRETS: &[&str] = &[
+    "application",
+    "json",
+    "html",
+    "xml",
+    "text",
+    "method",
+    "url",
+    "body",
+    "headers",
+    "credentials",
+    "include",
+    "cors",
+    "no-cors",
+    "same-origin",
+    "omit",
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// PlayerPage2.js を HTTP で取得する
@@ -198,50 +217,67 @@ pub fn extract_secret(src: &str, verbose: bool) -> std::result::Result<String, S
 
     // ⑦ SECRET インデックスを特定
     //
-    // 認証キー生成の呼び出しサイトを探す。fetch() 近傍に:
-    //   null != (VAR = obj[fn(SALT_IDX)]) ? VAR : fn(SECRET_IDX)
-    // というパターンがある。fn(SALT_IDX) は "salt" などのプロパティ名に
-    // デコードされ、fn(SECRET_IDX) がデフォルト SECRET。
+    // 認証キー生成コードで使われる fallback SECRET を探す。
+    //
+    // パターン: null != (VAR = obj[fn(SALT_IDX)]) ? VAR : fn(SECRET_IDX)
+    //   - fn(SALT_IDX) は "salt" などのプロパティ名にデコードされる
+    //   - fn(SECRET_IDX) がデフォルト SECRET
+    //
+    // 戦略 1: fetch() 近傍 (±10000 バイト) を検索
+    // 戦略 2: フォールバック — JS 全体から候補を収集してスコアリング
     let fetch_re = Regex::new(r"\bfetch\s*\(").map_err(|e| e.to_string())?;
+
+    // 変数名に複数文字・$ を許容して将来の難読化変化に対応
     let salt_re = Regex::new(
-        r"null\s*!=\s*\([a-z]\s*=\s*[a-z]\[[a-zA-Z]\((\d+)\)\]\)\s*\?[^:]+:\s*[a-zA-Z]\((\d+)\)",
+        r"null\s*!=\s*\(([a-zA-Z_$]\w*)\s*=\s*([a-zA-Z_$]\w*)\[([a-zA-Z_$]\w*)\((\d+)\)\]\)\s*\?[^:]+:\s*([a-zA-Z_$]\w*)\((\d+)\)",
     )
     .map_err(|e| e.to_string())?;
 
     let mut secret_index: Option<usize> = None;
 
+    // 戦略 1: fetch() 近傍を拡大窓で検索
     'outer: for mat in fetch_re.find_iter(src) {
-        let start = mat.start().saturating_sub(2000);
-        let end = (mat.end() + 50).min(src.len());
+        let start = mat.start().saturating_sub(10_000);
+        let end = (mat.end() + 500).min(src.len());
         let snippet = &src[start..end];
 
         for caps in salt_re.captures_iter(snippet) {
-            let n1: usize = caps[1].parse().unwrap_or(0);
-            let n2: usize = caps[2].parse().unwrap_or(0);
+            let n1: usize = caps[4].parse().unwrap_or(0);
+            let n2: usize = caps[6].parse().unwrap_or(0);
             let decoded1 = lookup(&arr, n1, base_offset);
             let decoded2 = lookup(&arr, n2, base_offset);
 
             log(&format!(
-                "  候補: fn({n1})=\"{decoded1}\" ? ... : fn({n2})=\"{decoded2}\""
+                "  [fetch近傍] 候補: fn({n1})=\"{decoded1}\" ? ... : fn({n2})=\"{decoded2}\""
             ));
 
-            // fn(SALT_IDX): 短い英字識別子 (プロパティ名らしい)
-            let is_identifier = decoded1.chars().next().is_some_and(|c| c.is_alphabetic())
-                && decoded1
-                    .chars()
-                    .all(|c| c.is_alphanumeric() || c == '_' || c == '$')
-                && decoded1.len() <= 12;
-
-            // fn(SECRET_IDX): HTTP メソッドでない 8 文字以上の英数字
-            let looks_like_secret = decoded2.len() >= 8
-                && decoded2
-                    .chars()
-                    .all(|c| c.is_alphanumeric() || matches!(c, '+' | '/' | '=' | '-' | '_'))
-                && !HTTP_VERBS.contains(&decoded2.as_str());
-
-            if is_identifier && looks_like_secret {
+            if is_property_name(&decoded1) && is_secret_candidate(&decoded2) {
                 secret_index = Some(n2);
                 break 'outer;
+            }
+        }
+    }
+
+    // 戦略 2: フォールバック — JS 全体から候補を収集
+    if secret_index.is_none() {
+        log("  [fetch近傍] 見つからず。JS 全体を検索します...");
+
+        for caps in salt_re.captures_iter(src) {
+            let n1: usize = caps[4].parse().unwrap_or(0);
+            let n2: usize = caps[6].parse().unwrap_or(0);
+            let decoded1 = lookup(&arr, n1, base_offset);
+            let decoded2 = lookup(&arr, n2, base_offset);
+
+            log(&format!(
+                "  [全体] 候補: fn({n1})=\"{decoded1}\" ? ... : fn({n2})=\"{decoded2}\""
+            ));
+
+            if is_property_name(&decoded1) && is_secret_candidate(&decoded2) {
+                log(&format!(
+                    "  [全体] 採用: fn({n2})=\"{decoded2}\" (プロパティ: \"{decoded1}\")"
+                ));
+                secret_index = Some(n2);
+                break;
             }
         }
     }
@@ -254,6 +290,34 @@ pub fn extract_secret(src: &str, verbose: bool) -> std::result::Result<String, S
     log(&format!("SECRET: {secret}"));
 
     Ok(secret)
+}
+
+// ─── SECRET 候補フィルタ ──────────────────────────────────────────────────────
+
+/// fn(SALT_IDX) のデコード結果がプロパティ名らしいかどうか
+///
+/// 短い英字識別子 (例: "salt", "key") である場合に true
+fn is_property_name(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 20
+        && s.chars().next().is_some_and(|c| c.is_alphabetic())
+        && s.chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '$')
+}
+
+/// fn(SECRET_IDX) のデコード結果が秘密鍵候補らしいかどうか
+///
+/// 8 文字以上の英数字で、HTTP 動詞や既知の非秘密文字列でない場合に true
+fn is_secret_candidate(s: &str) -> bool {
+    s.len() >= 8
+        && s.chars()
+            .all(|c| c.is_alphanumeric() || matches!(c, '+' | '/' | '=' | '-' | '_'))
+        && !HTTP_VERBS.iter().any(|&v| v == s)
+        && !KNOWN_NON_SECRETS.iter().any(|&v| v == s)
+        // URL らしい文字列を除外 (http で始まる、ドットを含む、スラッシュで始まる)
+        && !s.starts_with("http")
+        && !s.starts_with('/')
+        && !s.contains('.')
 }
 
 // ─── if (...) の括弧内を抽出 (括弧カウンタ使用) ─────────────────────────────

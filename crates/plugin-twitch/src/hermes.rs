@@ -18,7 +18,7 @@ use mcv_messages::{
 };
 use plugin_abi_helper::v3::prelude::*;
 use tokio::sync::watch;
-use tokio::time::{timeout, Duration};
+use tokio::time::{sleep, timeout, Duration};
 use tokio_tungstenite::{connect_async, tungstenite::Message as WsMessage};
 use uuid::Uuid;
 
@@ -87,260 +87,308 @@ pub(crate) async fn hermes_loop(
     auth_token: Option<AuthToken>,
     mut cancel_rx: watch::Receiver<bool>,
 ) {
-    // broadcaster_id（数値チャンネル ID）を取得
     let client_id = twitch_lib::ClientId::new(HERMES_CLIENT_ID);
-    let channel_id =
-        match twitch_lib::fetch_broadcaster_id(&channel_login, &client_id, auth_token.as_ref())
-            .await
-        {
-            Ok(Some(id)) => id,
-            Ok(None) => {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    channel = %channel_login,
-                    "Hermes: broadcaster_id が取得できなかった（チャンネルが存在しない可能性）"
-                );
-                return;
-            }
-            Err(e) => {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    error = %e,
-                    "Hermes: broadcaster_id の取得に失敗"
-                );
-                return;
-            }
-        };
+    let now = || chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
 
-    // 認証時のみ user_id を取得（validate_token は auth_token が Some の場合のみ呼ぶ）
-    let user_id = if let Some(token) = &auth_token {
-        match twitch_lib::auth_token::validate_token(token.value()).await {
-            Ok(info) => {
-                tracing::debug!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    user_id = %info.user_id,
-                    "Hermes: user_id 取得成功"
-                );
-                Some(info.user_id)
-            }
-            Err(e) => {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    error = %e,
-                    "Hermes: トークン検証失敗、匿名モードで接続"
-                );
-                None
-            }
+    // ユーザーによる切断またはパニック以外ではループを継続する。
+    'retry: loop {
+        if *cancel_rx.borrow() {
+            break 'retry;
         }
-    } else {
-        None
-    };
 
-    // WebSocket 接続
-    let connect_result = timeout(Duration::from_secs(15), connect_async(HERMES_URL)).await;
-    let (ws_stream, _) = match connect_result {
-        Err(_) => {
-            tracing::error!(
-                target: "mcv::plugin-twitch",
-                connection_id = %connection_id,
-                "Hermes: 接続タイムアウト"
-            );
-            return;
-        }
-        Ok(Err(e)) => {
-            tracing::error!(
-                target: "mcv::plugin-twitch",
-                connection_id = %connection_id,
-                error = %e,
-                "Hermes: 接続失敗"
-            );
-            return;
-        }
-        Ok(Ok(v)) => v,
-    };
-
-    tracing::info!(
-        target: "mcv::plugin-twitch",
-        connection_id = %connection_id,
-        channel_id = %channel_id,
-        has_user_id = user_id.is_some(),
-        "Hermes: WebSocket 接続成功"
-    );
-
-    let (mut write, mut read) = ws_stream.split();
-
-    // welcome メッセージを待つ（Ping が来たら Pong を返して待ち続ける）
-    loop {
-        let msg = tokio::select! {
-            result = cancel_rx.changed() => {
-                if result.is_err() || *cancel_rx.borrow() {
-                    tracing::info!(
+        // broadcaster_id（数値チャンネル ID）を取得
+        let channel_id =
+            match twitch_lib::fetch_broadcaster_id(&channel_login, &client_id, auth_token.as_ref())
+                .await
+            {
+                Ok(Some(id)) => id,
+                Ok(None) => {
+                    tracing::warn!(
                         target: "mcv::plugin-twitch",
                         connection_id = %connection_id,
-                        "Hermes: welcome 待機中にキャンセル"
+                        channel = %channel_login,
+                        "Hermes: broadcaster_id が取得できなかった。5秒後にリトライします"
                     );
-                    return;
+                    if wait_or_cancel(&mut cancel_rx, 5000).await {
+                        break 'retry;
+                    }
+                    continue 'retry;
                 }
-                continue;
-            }
-            msg = read.next() => msg,
-        };
-
-        match msg {
-            Some(Ok(WsMessage::Text(ref text))) => {
-                tracing::debug!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    raw = %text,
-                    "Hermes: welcome 受信"
-                );
-                break;
-            }
-            Some(Ok(WsMessage::Ping(data))) => {
-                tracing::trace!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    "Hermes: welcome 待機中に Ping 受信、Pong を返送"
-                );
-                if let Err(e) = write.send(WsMessage::Pong(data)).await {
-                    tracing::error!(
+                Err(e) => {
+                    tracing::warn!(
                         target: "mcv::plugin-twitch",
                         connection_id = %connection_id,
                         error = %e,
-                        "Hermes: Pong 送信失敗"
+                        "Hermes: broadcaster_id の取得に失敗。5秒後にリトライします"
                     );
-                    return;
+                    if wait_or_cancel(&mut cancel_rx, 5000).await {
+                        break 'retry;
+                    }
+                    continue 'retry;
                 }
-            }
-            other => {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    raw = ?other,
-                    "Hermes: welcome として予期しないメッセージを受信"
-                );
-                return;
-            }
-        }
-    }
+            };
 
-    let now = || chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-
-    // authenticate（認証済みの場合のみ）
-    if let Some(token) = &auth_token {
-        let auth_msg = serde_json::json!({
-            "id": Uuid::new_v4().to_string(),
-            "type": "authenticate",
-            "authenticate": { "token": token.value() },
-            "timestamp": now()
-        });
-        if let Err(e) = write
-            .send(WsMessage::Text(auth_msg.to_string().into()))
-            .await
-        {
-            tracing::error!(
-                target: "mcv::plugin-twitch",
-                connection_id = %connection_id,
-                error = %e,
-                "Hermes: authenticate 送信失敗"
-            );
-            return;
-        }
-    }
-
-    // subscribe（ack を待たずに全トピック送信）
-    let topics = build_topics(&channel_id, user_id.as_deref());
-    for topic in &topics {
-        let sub_msg = serde_json::json!({
-            "type": "subscribe",
-            "id": Uuid::new_v4().to_string(),
-            "subscribe": {
-                "id": Uuid::new_v4().to_string(),
-                "type": "pubsub",
-                "pubsub": { "topic": topic }
-            },
-            "timestamp": now()
-        });
-        if let Err(e) = write
-            .send(WsMessage::Text(sub_msg.to_string().into()))
-            .await
-        {
-            tracing::error!(
-                target: "mcv::plugin-twitch",
-                connection_id = %connection_id,
-                error = %e,
-                topic = %topic,
-                "Hermes: subscribe 送信失敗"
-            );
-            return;
-        }
-    }
-
-    tracing::info!(
-        target: "mcv::plugin-twitch",
-        connection_id = %connection_id,
-        topic_count = topics.len(),
-        "Hermes: 全トピックの subscribe 送信完了"
-    );
-
-    // メインループ
-    loop {
-        tokio::select! {
-            result = cancel_rx.changed() => {
-                if result.is_err() || *cancel_rx.borrow() {
-                    tracing::info!(
+        // 認証時のみ user_id を取得（validate_token は auth_token が Some の場合のみ呼ぶ）
+        let user_id = if let Some(token) = &auth_token {
+            match twitch_lib::auth_token::validate_token(token.value()).await {
+                Ok(info) => {
+                    tracing::debug!(
                         target: "mcv::plugin-twitch",
                         connection_id = %connection_id,
-                        "Hermes: キャンセル受信、終了"
+                        user_id = %info.user_id,
+                        "Hermes: user_id 取得成功"
                     );
-                    break;
+                    Some(info.user_id)
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        error = %e,
+                        "Hermes: トークン検証失敗、匿名モードで接続"
+                    );
+                    None
                 }
             }
-            msg = read.next() => {
-                match msg {
-                    Some(Ok(WsMessage::Text(text))) => {
-                        handle_hermes_message(
-                            ctx.clone(),
-                            logical_plugin_id.clone(),
-                            connection_id,
-                            &channel_login,
-                            &text,
-                        )
-                        .await;
-                    }
-                    Some(Ok(WsMessage::Close(frame))) => {
+        } else {
+            None
+        };
+
+        // WebSocket 接続
+        let connect_result = timeout(Duration::from_secs(15), connect_async(HERMES_URL)).await;
+        let (ws_stream, _) = match connect_result {
+            Err(_) => {
+                tracing::error!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    "Hermes: 接続タイムアウト。5秒後にリトライします"
+                );
+                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                    break 'retry;
+                }
+                continue 'retry;
+            }
+            Ok(Err(e)) => {
+                tracing::error!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "Hermes: 接続失敗。5秒後にリトライします"
+                );
+                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                    break 'retry;
+                }
+                continue 'retry;
+            }
+            Ok(Ok(v)) => v,
+        };
+
+        tracing::info!(
+            target: "mcv::plugin-twitch",
+            connection_id = %connection_id,
+            channel_id = %channel_id,
+            has_user_id = user_id.is_some(),
+            "Hermes: WebSocket 接続成功"
+        );
+
+        let (mut write, mut read) = ws_stream.split();
+
+        // welcome メッセージを待つ（Ping が来たら Pong を返して待ち続ける）
+        'welcome: loop {
+            let msg = tokio::select! {
+                result = cancel_rx.changed() => {
+                    if result.is_err() || *cancel_rx.borrow() {
                         tracing::info!(
                             target: "mcv::plugin-twitch",
                             connection_id = %connection_id,
-                            close_frame = ?frame,
-                            "Hermes: サーバーから切断"
+                            "Hermes: welcome 待機中にキャンセル"
                         );
-                        break;
+                        break 'retry;
                     }
-                    Some(Err(e)) => {
+                    continue;
+                }
+                msg = read.next() => msg,
+            };
+
+            match msg {
+                Some(Ok(WsMessage::Text(ref text))) => {
+                    tracing::debug!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        raw = %text,
+                        "Hermes: welcome 受信"
+                    );
+                    break 'welcome;
+                }
+                Some(Ok(WsMessage::Ping(data))) => {
+                    tracing::trace!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        "Hermes: welcome 待機中に Ping 受信、Pong を返送"
+                    );
+                    if let Err(e) = write.send(WsMessage::Pong(data)).await {
                         tracing::error!(
                             target: "mcv::plugin-twitch",
                             connection_id = %connection_id,
                             error = %e,
-                            "Hermes: WebSocket エラー"
+                            "Hermes: Pong 送信失敗。5秒後にリトライします"
                         );
-                        break;
+                        if wait_or_cancel(&mut cancel_rx, 5000).await {
+                            break 'retry;
+                        }
+                        continue 'retry;
                     }
-                    None => {
+                }
+                other => {
+                    tracing::warn!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        raw = ?other,
+                        "Hermes: welcome として予期しないメッセージを受信。5秒後にリトライします"
+                    );
+                    if wait_or_cancel(&mut cancel_rx, 5000).await {
+                        break 'retry;
+                    }
+                    continue 'retry;
+                }
+            }
+        }
+
+        // authenticate（認証済みの場合のみ）
+        if let Some(token) = &auth_token {
+            let auth_msg = serde_json::json!({
+                "id": Uuid::new_v4().to_string(),
+                "type": "authenticate",
+                "authenticate": { "token": token.value() },
+                "timestamp": now()
+            });
+            if let Err(e) = write
+                .send(WsMessage::Text(auth_msg.to_string().into()))
+                .await
+            {
+                tracing::error!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "Hermes: authenticate 送信失敗。5秒後にリトライします"
+                );
+                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                    break 'retry;
+                }
+                continue 'retry;
+            }
+        }
+
+        // subscribe（ack を待たずに全トピック送信）
+        let topics = build_topics(&channel_id, user_id.as_deref());
+        for topic in &topics {
+            let sub_msg = serde_json::json!({
+                "type": "subscribe",
+                "id": Uuid::new_v4().to_string(),
+                "subscribe": {
+                    "id": Uuid::new_v4().to_string(),
+                    "type": "pubsub",
+                    "pubsub": { "topic": topic }
+                },
+                "timestamp": now()
+            });
+            if let Err(e) = write
+                .send(WsMessage::Text(sub_msg.to_string().into()))
+                .await
+            {
+                tracing::error!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    error = %e,
+                    topic = %topic,
+                    "Hermes: subscribe 送信失敗。5秒後にリトライします"
+                );
+                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                    break 'retry;
+                }
+                continue 'retry;
+            }
+        }
+
+        tracing::info!(
+            target: "mcv::plugin-twitch",
+            connection_id = %connection_id,
+            topic_count = topics.len(),
+            "Hermes: 全トピックの subscribe 送信完了"
+        );
+
+        // メインループ
+        loop {
+            tokio::select! {
+                result = cancel_rx.changed() => {
+                    if result.is_err() || *cancel_rx.borrow() {
                         tracing::info!(
                             target: "mcv::plugin-twitch",
                             connection_id = %connection_id,
-                            "Hermes: ストリーム終了"
+                            "Hermes: キャンセル受信、終了"
                         );
-                        break;
+                        break 'retry;
                     }
-                    _ => {}
+                }
+                msg = read.next() => {
+                    match msg {
+                        Some(Ok(WsMessage::Text(text))) => {
+                            handle_hermes_message(
+                                ctx.clone(),
+                                logical_plugin_id.clone(),
+                                connection_id,
+                                &channel_login,
+                                &text,
+                            )
+                            .await;
+                        }
+                        Some(Ok(WsMessage::Close(frame))) => {
+                            tracing::info!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                close_frame = ?frame,
+                                "Hermes: サーバーから切断。再接続します"
+                            );
+                            break;
+                        }
+                        Some(Err(e)) => {
+                            tracing::error!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                error = %e,
+                                "Hermes: WebSocket エラー。再接続します"
+                            );
+                            break;
+                        }
+                        None => {
+                            tracing::info!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                "Hermes: ストリーム終了。再接続します"
+                            );
+                            break;
+                        }
+                        _ => {}
+                    }
                 }
             }
+        }
+
+        // メインループを抜けた（キャンセルではない）→ 再接続待機
+        if wait_or_cancel(&mut cancel_rx, 5000).await {
+            break 'retry;
+        }
+        // continue 'retry（暗黙）
+    }
+}
+
+/// キャンセルを待つか、指定ミリ秒タイムアウトする。
+/// Returns `true` if cancelled, `false` if timed out.
+async fn wait_or_cancel(cancel_rx: &mut watch::Receiver<bool>, ms: u64) -> bool {
+    tokio::select! {
+        _ = sleep(Duration::from_millis(ms)) => false,
+        result = cancel_rx.changed() => {
+            result.is_err() || *cancel_rx.borrow()
         }
     }
 }

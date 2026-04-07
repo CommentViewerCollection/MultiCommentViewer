@@ -56,7 +56,7 @@ pub(crate) async fn run_irc_session(
     join_command: String,
     channel_login: String,
     auth_token: Option<AuthToken>,
-    mut cancel_rx: watch::Receiver<bool>,
+    cancel_rx: &mut watch::Receiver<bool>,
 ) -> Result<(), ()> {
     let ws_stream = connect_ws(connection_id, &url).await?;
     let (mut write, mut read) = ws_stream.split();
@@ -95,7 +95,7 @@ pub(crate) async fn run_irc_session(
         &mut write,
         &mut read,
         badge_cache,
-        &mut cancel_rx,
+        cancel_rx,
     )
     .await;
 

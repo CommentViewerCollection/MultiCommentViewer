@@ -15,6 +15,17 @@ use tokio::task::JoinHandle;
 use twitch_lib::auth_token::AuthToken;
 use uuid::Uuid;
 
+/// キャンセルを待つか、指定ミリ秒タイムアウトする。
+/// Returns `true` if cancelled, `false` if timed out.
+async fn wait_or_cancel(cancel_rx: &mut watch::Receiver<bool>, ms: u64) -> bool {
+    tokio::select! {
+        _ = tokio::time::sleep(std::time::Duration::from_millis(ms)) => false,
+        result = cancel_rx.changed() => {
+            result.is_err() || *cancel_rx.borrow()
+        }
+    }
+}
+
 use crate::{hermes, irc_session, metadata_polling, TwitchPlugin};
 
 /// Twitch チャンネルへの接続を表す構造体
@@ -98,26 +109,56 @@ impl Connection {
             let auth_token = auth_token.clone();
             async move {
                 let task_result = std::panic::AssertUnwindSafe(async {
-                    let run_result = irc_session::run_irc_session(
-                        ctx.clone(),
-                        logical_plugin_id.clone(),
-                        connection_id,
-                        ws_url,
-                        username,
-                        password,
-                        join_command,
-                        channel_login,
-                        auth_token,
-                        cancel_rx,
-                    )
-                    .await;
+                    let mut cancel_rx = cancel_rx;
 
-                    if run_result.is_err() {
-                        tracing::debug!(
+                    // 配信開始/終了・ネットワーク障害に対応するリトライループ。
+                    // ユーザーによる切断またはパニック以外ではループを継続する。
+                    'retry: loop {
+                        if *cancel_rx.borrow() {
+                            break 'retry;
+                        }
+
+                        let result = irc_session::run_irc_session(
+                            ctx.clone(),
+                            logical_plugin_id.clone(),
+                            connection_id,
+                            ws_url.clone(),
+                            username.clone(),
+                            password.clone(),
+                            join_command.clone(),
+                            channel_login.clone(),
+                            auth_token.clone(),
+                            &mut cancel_rx,
+                        )
+                        .await;
+
+                        if result.is_err() {
+                            tracing::debug!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                "Twitch IRC session ended with error"
+                            );
+                        }
+
+                        // キャンセル済みなら再接続しない
+                        if *cancel_rx.borrow() {
+                            tracing::info!(
+                                target: "mcv::plugin-twitch",
+                                connection_id = %connection_id,
+                                "Twitch IRC: ユーザーキャンセルを検出、切断します"
+                            );
+                            break 'retry;
+                        }
+
+                        // エラーまたはサーバー切断 → 5秒後に再接続
+                        tracing::info!(
                             target: "mcv::plugin-twitch",
                             connection_id = %connection_id,
-                            "Twitch IRC task terminated due to earlier error"
+                            "Twitch IRC接続が切断されました。5秒後に再接続します"
                         );
+                        if wait_or_cancel(&mut cancel_rx, 5000).await {
+                            break 'retry;
+                        }
                     }
 
                     // 切断時にアカウント情報をクリアして Disconnected を通知

@@ -109,9 +109,12 @@ impl Connection {
                                         connection_id = %connection_id,
                                         user_name = %user_name,
                                         error = %e,
-                                        "Failed to fetch session IDs"
+                                        "Failed to fetch session IDs. Retrying in 5s"
                                     );
-                                    return Err(());
+                                    if wait_or_cancel(&mut cancel_rx, 5000).await {
+                                        break 'retry;
+                                    }
+                                    continue 'retry;
                                 }
                             };
 
@@ -224,9 +227,12 @@ impl Connection {
                                             connection_id = %connection_id,
                                             user_name = %user_name,
                                             error = %e,
-                                            "Failed to fetch latest movie"
+                                            "Failed to fetch latest movie. Retrying in 5s"
                                         );
-                                        return Err(());
+                                        if wait_or_cancel(&mut cancel_rx, 5000).await {
+                                            break 'retry;
+                                        }
+                                        continue 'retry;
                                     }
                                 };
 
@@ -352,9 +358,12 @@ impl Connection {
                                         connection_id = %connection_id,
                                         movie_id = movie.id,
                                         error = %e,
-                                        "Failed to fetch event pubsub URL"
+                                        "Failed to fetch event pubsub URL. Retrying in 5s"
                                     );
-                                    return Err(());
+                                    if wait_or_cancel(&mut cancel_rx, 5000).await {
+                                        break 'retry;
+                                    }
+                                    continue 'retry;
                                 }
                             };
 
@@ -372,18 +381,24 @@ impl Connection {
                                 tracing::error!(
                                     target: "mcv::plugin-twicas",
                                     connection_id = %connection_id,
-                                    "Timed out while connecting websocket"
+                                    "Timed out while connecting websocket. Retrying in 5s"
                                 );
-                                return Err(());
+                                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                                    break 'retry;
+                                }
+                                continue 'retry;
                             }
                             Ok(Err(e)) => {
                                 tracing::error!(
                                     target: "mcv::plugin-twicas",
                                     connection_id = %connection_id,
                                     error = %e,
-                                    "Failed to connect websocket"
+                                    "Failed to connect websocket. Retrying in 5s"
                                 );
-                                return Err(());
+                                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                                    break 'retry;
+                                }
+                                continue 'retry;
                             }
                             Ok(Ok(v)) => v,
                         };
@@ -403,8 +418,9 @@ impl Connection {
                         ));
 
                         let (_write, mut read) = ws_stream.split();
-                        // true: サーバー側からの正常終了（配信終了）
-                        // false: キャンセルまたは受信エラー
+                        // true: サーバー側からの終了（配信終了 or 受信エラー）
+                        // false: ユーザーによるキャンセル
+                        let mut ws_recv_error = false;
                         let stream_ended_by_server = loop {
                             tokio::select! {
                                 _ = cancel_rx.changed() => {
@@ -442,9 +458,10 @@ impl Connection {
                                                 target: "mcv::plugin-twicas",
                                                 connection_id = %connection_id,
                                                 error = %e,
-                                                "Error while receiving websocket message"
+                                                "Error while receiving websocket message. Will retry"
                                             );
-                                            break false;
+                                            ws_recv_error = true;
+                                            break true;
                                         }
                                         None => {
                                             tracing::info!(
@@ -468,16 +485,24 @@ impl Connection {
                         }
 
                         if !stream_ended_by_server {
-                            // ユーザーキャンセルまたはエラー → ループを抜けて切断
+                            // ユーザーキャンセル → ループを抜けて切断
                             break 'retry;
                         }
 
-                        // 配信終了 → 待機状態へ遷移し、次の配信開始を待つ
-                        tracing::info!(
-                            target: "mcv::plugin-twicas",
-                            connection_id = %connection_id,
-                            "配信終了。次の配信開始を待機します"
-                        );
+                        // 配信終了 or 受信エラー → 待機状態へ遷移し、次の配信開始を待つ
+                        if ws_recv_error {
+                            tracing::warn!(
+                                target: "mcv::plugin-twicas",
+                                connection_id = %connection_id,
+                                "WebSocket受信エラーにより切断されました。再接続を試みます"
+                            );
+                        } else {
+                            tracing::info!(
+                                target: "mcv::plugin-twicas",
+                                connection_id = %connection_id,
+                                "配信終了。次の配信開始を待機します"
+                            );
+                        }
                         send_stream_metadata(
                             ctx.clone(),
                             logical_plugin_id.clone(),
@@ -951,6 +976,8 @@ async fn metadata_polling_loop(
             }
         };
 
+        // サーバーが 0 を返した場合のビジーループを防ぐため最低 5 秒を保証する
+        let interval_secs = interval_secs.max(5);
         let wait = Duration::from_secs(interval_secs).saturating_sub(loop_start.elapsed());
         tokio::select! {
             _ = tokio::time::sleep(wait) => {}

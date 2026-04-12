@@ -172,6 +172,10 @@ impl Connection {
                         }
                     }
 
+                    // running フラグを先にクリアすることで、Disconnected 受信後の
+                    // 即時再接続要求が connect() で弾かれないようにする
+                    running_flag.store(false, Ordering::Relaxed);
+
                     // 切断時にアカウント情報をクリアして Disconnected を通知
                     TwitchPlugin::send_message(
                         ctx.clone(),

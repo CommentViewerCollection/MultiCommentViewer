@@ -10,6 +10,10 @@ use mcv_messages::{
     PluginId, UpdateConnectionAccountPayload,
 };
 use plugin_abi_helper::v3::prelude::*;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use twitch_lib::auth_token::AuthToken;
@@ -35,7 +39,7 @@ pub(crate) struct Connection {
     hermes_cancel_tx: Option<watch::Sender<bool>>,
     metadata_cancel_tx: Option<watch::Sender<bool>>,
     task: Option<JoinHandle<()>>,
-    pub(crate) running: bool,
+    pub(crate) running: Arc<AtomicBool>,
 }
 
 impl Connection {
@@ -46,7 +50,7 @@ impl Connection {
             hermes_cancel_tx: None,
             metadata_cancel_tx: None,
             task: None,
-            running: false,
+            running: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -58,7 +62,7 @@ impl Connection {
         username: &str,
         auth_token: Option<AuthToken>,
     ) {
-        if self.running {
+        if self.running.load(Ordering::Relaxed) {
             tracing::debug!(
                 target: "mcv::plugin-twitch",
                 connection_id = %self.id,
@@ -101,6 +105,8 @@ impl Connection {
         let (hermes_cancel_tx, hermes_cancel_rx) = watch::channel(false);
         let (metadata_cancel_tx, metadata_cancel_rx) = watch::channel(false);
 
+        let running_flag = Arc::clone(&self.running);
+
         // IRC セッションタスク（パニックハンドリング付き）
         let task = rt.spawn({
             let ctx = ctx.clone();
@@ -108,6 +114,11 @@ impl Connection {
             let channel_login = channel_login.clone();
             let auth_token = auth_token.clone();
             async move {
+                // パニックハンドラー用にクローンを確保する
+                let ctx_panic = ctx.clone();
+                let plugin_id_panic = logical_plugin_id.clone();
+                let running_flag_panic = Arc::clone(&running_flag);
+
                 let task_result = std::panic::AssertUnwindSafe(async {
                     let mut cancel_rx = cancel_rx;
 
@@ -209,6 +220,37 @@ impl Connection {
                         panic = %msg,
                         "Twitch IRC task panicked"
                     );
+                    // パニック時も running をクリアし Disconnected を送信する。
+                    // そうしないとフロントエンドが接続済みのまま残る。
+                    running_flag_panic.store(false, Ordering::Relaxed);
+                    TwitchPlugin::send_message(
+                        ctx_panic.clone(),
+                        McvMessage::new_notification(
+                            MessageType::UpdateConnectionAccount,
+                            MessageSource::Plugin {
+                                plugin_id: plugin_id_panic.clone(),
+                            },
+                            MessageDestination::Core,
+                            serde_json::to_value(UpdateConnectionAccountPayload {
+                                connection_id,
+                                account: None,
+                            })
+                            .unwrap(),
+                        ),
+                    )
+                    .await;
+                    TwitchPlugin::send_message(
+                        ctx_panic,
+                        McvMessage::new_notification(
+                            MessageType::Disconnected,
+                            MessageSource::Plugin {
+                                plugin_id: plugin_id_panic,
+                            },
+                            MessageDestination::Core,
+                            serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
+                        ),
+                    )
+                    .await;
                 }
             }
         });
@@ -236,7 +278,7 @@ impl Connection {
         self.hermes_cancel_tx = Some(hermes_cancel_tx);
         self.metadata_cancel_tx = Some(metadata_cancel_tx);
         self.task = Some(task);
-        self.running = true;
+        self.running.store(true, Ordering::Relaxed);
     }
 
     pub(crate) fn stop(&mut self) {
@@ -255,7 +297,7 @@ impl Connection {
         self.hermes_cancel_tx = None;
         self.metadata_cancel_tx = None;
         self.task = None;
-        self.running = false;
+        self.running.store(false, Ordering::Relaxed);
     }
 
     pub(crate) fn extract_channel_id(url: &str) -> Option<String> {
@@ -295,7 +337,7 @@ mod tests {
         let conn = Connection::new(&id);
 
         assert_eq!(conn.id, id);
-        assert!(!conn.running);
+        assert!(!conn.running.load(Ordering::Relaxed));
         assert!(conn.cancel_tx.is_none());
         assert!(conn.hermes_cancel_tx.is_none());
         assert!(conn.metadata_cancel_tx.is_none());
@@ -307,7 +349,7 @@ mod tests {
         let id = Uuid::new_v4();
         let mut conn = Connection::new(&id);
         conn.stop(); // パニックしないことを確認
-        assert!(!conn.running);
+        assert!(!conn.running.load(Ordering::Relaxed));
     }
 
     #[test]

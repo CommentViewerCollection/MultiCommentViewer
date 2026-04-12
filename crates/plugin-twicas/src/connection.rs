@@ -85,6 +85,11 @@ impl Connection {
         let comment_post = Arc::clone(&self.comment_post);
 
         let task = tokio::spawn(async move {
+            // パニックハンドラー用にクローンを確保する
+            let ctx_panic = ctx.clone();
+            let plugin_id_panic = logical_plugin_id.clone();
+            let running_flag_panic = Arc::clone(&running_flag);
+
             let task_result =
                 std::panic::AssertUnwindSafe(async {
                     let run_result: Result<(), ()> = async {
@@ -575,6 +580,21 @@ impl Connection {
                     panic = %panic_message,
                     "Twicas task panicked"
                 );
+                // パニック時も running をクリアし Disconnected を送信する。
+                // そうしないとフロントエンドが接続済みのまま残る。
+                running_flag_panic.store(false, Ordering::Relaxed);
+                TwicasPlugin::send_message(
+                    ctx_panic,
+                    McvMessage::new_notification(
+                        MessageType::Disconnected,
+                        MessageSource::Plugin {
+                            plugin_id: plugin_id_panic,
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
+                    ),
+                )
+                .await;
             }
         });
 

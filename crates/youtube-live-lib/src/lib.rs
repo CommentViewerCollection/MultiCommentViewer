@@ -1616,12 +1616,13 @@ pub async fn fetch_updated_metadata(
 
     if let Some(actions) = json.get("actions").and_then(|v| v.as_array()) {
         for action in actions {
-            if title.is_none()
-                && let Some(t) = action
-                    .pointer("/updateTitleAction/title/runs/0/text")
-                    .and_then(|v| v.as_str())
-            {
-                title = Some(t.to_string());
+            if title.is_none() {
+                if let Some(title_obj) = action.pointer("/updateTitleAction/title") {
+                    let t = extract_text_runs(title_obj);
+                    if !t.is_empty() {
+                        title = Some(t);
+                    }
+                }
             }
             if viewer_count.is_none()
                 && let Some(count_str) = action

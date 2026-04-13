@@ -226,7 +226,7 @@ async fn run_video_state_machine(
     let mut cancelled = false;
     let mut ytcfg_notified = false;
 
-    loop {
+    'outer: loop {
         if queue.is_empty() {
             tokio::select! {
                 _ = cancel_rx.changed() => {
@@ -285,7 +285,15 @@ async fn run_video_state_machine(
                                 YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), log_msg)
                                     .await;
                             }
-                            sleep(Duration::from_secs(5)).await;
+                            tokio::select! {
+                                _ = sleep(Duration::from_secs(5)) => {}
+                                _ = cancel_rx.changed() => {
+                                    cancelled = true;
+                                    queue.clear();
+                                    queue.push_back(DomainEvent::Disconnect);
+                                    continue 'outer;
+                                }
+                            }
                             queue.push_back(DomainEvent::Start);
                         }
                     },
@@ -298,7 +306,15 @@ async fn run_video_state_machine(
                             let _ = ytcfg_tx.send(Some(ytcfg.clone()));
                             ytcfg_notified = true;
                         }
-                        sleep(Duration::from_millis(delay_ms)).await;
+                        tokio::select! {
+                            _ = sleep(Duration::from_millis(delay_ms)) => {}
+                            _ = cancel_rx.changed() => {
+                                cancelled = true;
+                                queue.clear();
+                                queue.push_back(DomainEvent::Disconnect);
+                                continue 'outer;
+                            }
+                        }
                         match server
                             .get_live_chat_messages(&vid, &ytcfg, &continuation)
                             .await
@@ -330,7 +346,15 @@ async fn run_video_state_machine(
                                     )
                                     .await;
                                 }
-                                sleep(Duration::from_secs(5)).await;
+                                tokio::select! {
+                                    _ = sleep(Duration::from_secs(5)) => {}
+                                    _ = cancel_rx.changed() => {
+                                        cancelled = true;
+                                        queue.clear();
+                                        queue.push_back(DomainEvent::Disconnect);
+                                        continue 'outer;
+                                    }
+                                }
                                 queue.push_back(DomainEvent::Start);
                             }
                         }

@@ -19,12 +19,8 @@ use tokio::time::{timeout, Duration, Instant};
 use tokio_tungstenite::{connect_async, tungstenite::Message as WsMessage};
 use twicas_lib::{
     fetch_event_pubsub_url, fetch_latest_movie, fetch_movie_info, fetch_movie_token,
-    fetch_session_ids, fetch_viewer_status, MovieInfo,
+    fetch_session_ids, fetch_viewer_status, MovieInfo, TwicasApiError,
 };
-
-/// JS の PlayerPage から抽出したシークレット（extract-secret ツールで取得: 2026-04-05 時点）
-/// SECRET は JS 更新のたびに変わるため、`cargo run -p extract-secret` で最新値を確認すること
-const SECRET: &str = "b0k5hdsh1bob1iog";
 use uuid::Uuid;
 
 /// コメント投稿に必要な接続状態
@@ -67,6 +63,8 @@ impl Connection {
         cs_session_id_from_wpass: Option<String>,
         session_client: Arc<reqwest::Client>,
         session_jar: Arc<reqwest::cookie::Jar>,
+        secret: Arc<RwLock<String>>,
+        extraction_attempted: Arc<AtomicBool>,
     ) {
         if self.running.load(Ordering::Relaxed) {
             tracing::debug!(
@@ -216,16 +214,29 @@ impl Connection {
                                 }
 
                                 // 非ログインユーザー向け: fetch_latest_movie で movie_id と配信状態を確認
+                                let current_secret = { secret.read().await.clone() };
                                 let latest_movie = match fetch_latest_movie(
                                     &client,
                                     &session_id,
-                                    SECRET,
+                                    &current_secret,
                                     &user_name,
                                     wpass.as_deref(),
                                 )
                                 .await
                                 {
                                     Ok(v) => v,
+                                    Err(e) if is_unauthorized(&e) => {
+                                        tracing::warn!(
+                                            target: "mcv::plugin-twicas",
+                                            connection_id = %connection_id,
+                                            "fetch_latest_movie: 認証エラー (401)。SECRET の自動取得を試みます"
+                                        );
+                                        if try_refresh_secret(&secret, &extraction_attempted).await {
+                                            continue 'retry;
+                                        } else {
+                                            break 'retry;
+                                        }
+                                    }
                                     Err(e) => {
                                         tracing::error!(
                                             target: "mcv::plugin-twicas",
@@ -420,6 +431,7 @@ impl Connection {
                             effective_wpass_owned,
                             session_id.clone(),
                             metadata_cancel_rx,
+                            Arc::clone(&secret),
                         ));
 
                         let (_write, mut read) = ws_stream.split();
@@ -667,6 +679,73 @@ impl Connection {
     }
 }
 
+/// 401 Unauthorized エラーかどうかを判定する
+fn is_unauthorized(e: &TwicasApiError) -> bool {
+    matches!(
+        e,
+        TwicasApiError::Http(re) if re.status() == Some(reqwest::StatusCode::UNAUTHORIZED)
+    )
+}
+
+/// SECRET を PlayerPage2.js から自動取得して更新する。
+///
+/// 既に取得を試みていた場合（フラグが立っている場合）は即座に `false` を返す。
+/// 取得成功時は secret を更新して `true` を返す。
+/// 取得失敗時はフラグが立ったまま `false` を返す（以降の再試行を防ぐ）。
+async fn try_refresh_secret(
+    secret: &Arc<RwLock<String>>,
+    extraction_attempted: &Arc<AtomicBool>,
+) -> bool {
+    if extraction_attempted
+        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        tracing::warn!(
+            target: "mcv::plugin-twicas",
+            "SECRET 自動取得は既に試行済みのため、再取得をスキップします"
+        );
+        return false;
+    }
+
+    tracing::warn!(
+        target: "mcv::plugin-twicas",
+        "SECRET が無効な可能性があります。PlayerPage2.js から自動取得を試みます"
+    );
+
+    let result = tokio::task::spawn_blocking(|| -> Result<String, String> {
+        let src = twicas_secret_extractor::fetch_player_js().map_err(|e| e.to_string())?;
+        twicas_secret_extractor::extract_secret(&src, false)
+    })
+    .await;
+
+    match result {
+        Ok(Ok(new_secret)) => {
+            tracing::info!(
+                target: "mcv::plugin-twicas",
+                "SECRET の自動取得に成功しました"
+            );
+            *secret.write().await = new_secret;
+            true
+        }
+        Ok(Err(e)) => {
+            tracing::error!(
+                target: "mcv::plugin-twicas",
+                error = %e,
+                "SECRET の自動取得（抽出）に失敗しました"
+            );
+            false
+        }
+        Err(e) => {
+            tracing::error!(
+                target: "mcv::plugin-twicas",
+                error = %e,
+                "SECRET 取得タスクがパニックしました"
+            );
+            false
+        }
+    }
+}
+
 /// キャンセルを待つか、指定ミリ秒タイムアウトする。
 /// Returns `true` if cancelled, `false` if timed out.
 async fn wait_or_cancel(cancel_rx: &mut watch::Receiver<bool>, ms: u64) -> bool {
@@ -805,6 +884,7 @@ async fn metadata_polling_loop(
     wpass: Option<String>,
     session_id: String,
     mut cancel_rx: watch::Receiver<bool>,
+    secret: Arc<RwLock<String>>,
 ) {
     tracing::info!(
         target: "mcv::plugin-twicas",
@@ -817,7 +897,16 @@ async fn metadata_polling_loop(
     // 接続時点で実際に配信中かどうかを確認する。
     // movie_id_from_html はアーカイブページでも存在するため、
     // is_on_live をハードコードせず fetch_latest_movie で確認する。
-    match fetch_latest_movie(&client, &session_id, SECRET, &user_name, wpass.as_deref()).await {
+    let current_secret = { secret.read().await.clone() };
+    match fetch_latest_movie(
+        &client,
+        &session_id,
+        &current_secret,
+        &user_name,
+        wpass.as_deref(),
+    )
+    .await
+    {
         Ok(resp) => {
             let is_live = resp.movie.map(|m| m.is_on_live).unwrap_or(false);
             if !is_live {
@@ -865,12 +954,13 @@ async fn metadata_polling_loop(
         );
         None
     } else {
+        let current_secret = { secret.read().await.clone() };
         match fetch_movie_token(
             &client,
             movie_id,
             wpass.as_deref().unwrap_or(""),
             &session_id,
-            SECRET,
+            &current_secret,
         )
         .await
         {
@@ -897,7 +987,8 @@ async fn metadata_polling_loop(
     // 配信開始時刻を取得して即時送信
     // ブラウザは /info に token を URL パラメータとして渡すだけで認証ヘッダーを送らないため
     // session_id は渡さない。
-    match fetch_movie_info(&client, movie_id, token.as_deref(), "", SECRET).await {
+    let current_secret = { secret.read().await.clone() };
+    match fetch_movie_info(&client, movie_id, token.as_deref(), "", &current_secret).await {
         Ok(info) => {
             tracing::info!(
                 target: "mcv::plugin-twicas",
@@ -947,13 +1038,14 @@ async fn metadata_polling_loop(
 
         // ブラウザは /status/viewer にも token を URL パラメータとして渡すだけで
         // 認証ヘッダーを送らないため session_id は渡さない。
+        let current_secret = { secret.read().await.clone() };
         let interval_secs = match fetch_viewer_status(
             &client,
             movie_id,
             token.as_deref(),
             "ja",
             "",
-            SECRET,
+            &current_secret,
         )
         .await
         {

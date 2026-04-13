@@ -284,6 +284,8 @@ pub(crate) async fn on_message_impl(
                 cs_session_id_from_wpass,
                 session_client,
                 jar,
+                Arc::clone(&plugin.secret),
+                Arc::clone(&plugin.extraction_attempted),
             );
         }
         MessageType::Disconnect => {

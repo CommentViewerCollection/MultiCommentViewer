@@ -5,7 +5,11 @@
 mod connection;
 mod message_handler;
 
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{atomic::AtomicBool, Arc},
+};
+use tokio::sync::RwLock;
 
 use connection::Connection;
 use mcv_common::SiteId;
@@ -17,11 +21,30 @@ use message_handler::on_message_impl;
 use plugin_abi_helper::v3::prelude::*;
 use uuid::Uuid;
 
-#[derive(Default)]
+/// JS の PlayerPage から抽出したシークレットの初期値（extract-secret ツールで取得: 2026-04-05 時点）
+/// SECRET は JS 更新のたびに変わるため、認証失敗時に自動取得を試みる
+const DEFAULT_SECRET: &str = "b0k5hdsh1bob1iog";
+
 struct TwicasPlugin {
     logical_plugin_id: PluginId,
     is_initialized: bool,
     connections: HashMap<Uuid, Connection>,
+    /// 現在の SECRET（認証キー生成用）
+    secret: Arc<RwLock<String>>,
+    /// 自動取得を既に試みたかどうか（ループ防止フラグ）
+    extraction_attempted: Arc<AtomicBool>,
+}
+
+impl Default for TwicasPlugin {
+    fn default() -> Self {
+        Self {
+            logical_plugin_id: PluginId::default(),
+            is_initialized: false,
+            connections: HashMap::new(),
+            secret: Arc::new(RwLock::new(DEFAULT_SECRET.to_string())),
+            extraction_attempted: Arc::new(AtomicBool::new(false)),
+        }
+    }
 }
 
 impl TwicasPlugin {

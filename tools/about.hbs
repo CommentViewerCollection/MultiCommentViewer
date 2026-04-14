@@ -1,0 +1,14 @@
+THIRD-PARTY LICENSES (Rust)
+============================
+
+This application uses the following open source Rust packages.
+
+{{#each overview}}
+================================================================================
+{{{name}}} ({{{id}}})
+
+Used by:
+{{#each indices}}  - {{#with (lookup @root.crates this)}}{{{package.name}}} {{{package.version}}}{{/with}}
+{{/each}}
+{{{text}}}
+{{/each}}

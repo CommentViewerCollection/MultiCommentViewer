@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
 use cargo_metadata::MetadataCommand;
 use clap::{Args, Parser, Subcommand};
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -383,6 +384,9 @@ fn dist(args: DistArgs) -> Result<()> {
         println!("  + plugins/{}", zip.file_name().unwrap().to_string_lossy());
     }
 
+    // THIRD_PARTY_LICENSES を生成してステージングディレクトリに配置
+    generate_licenses(&stage_dir)?;
+
     // 最終 ZIP 化
     println!("== Creating final ZIP ==");
     if zip_path.exists() {
@@ -745,6 +749,293 @@ fn add_dir_to_zip(
         zip.write_all(&buffer)?;
     }
     Ok(())
+}
+
+// =========================================================
+// ライセンス生成
+// =========================================================
+
+struct PackageWithCopyright {
+    name: String,
+    version: String,
+    copyright: Option<String>,
+}
+
+struct LicenseGroup {
+    display_name: String,
+    text: String,
+    packages: Vec<PackageWithCopyright>,
+}
+
+/// Rust クレートと npm パッケージのライセンス情報をマージして
+/// stage_dir/THIRD_PARTY_LICENSES.txt に書き出す。
+/// cargo-about が未インストールの場合はエラーで終了する。
+fn generate_licenses(stage_dir: &Path) -> Result<()> {
+    println!("== Generating THIRD_PARTY_LICENSES ==");
+
+    // cargo about が利用可能か確認
+    let available = Command::new("cargo")
+        .args(["about", "--version"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if !available {
+        bail!("cargo-about が未インストールです。\n  インストール: cargo install cargo-about");
+    }
+
+    let data_template = PathBuf::from("tools/about-data.hbs");
+    if !data_template.exists() {
+        bail!("tools/about-data.hbs が見つかりません");
+    }
+
+    // cargo about でライセンスデータを一時ファイルに生成
+    let tmp_path = stage_dir.join("_about_tmp.txt");
+    let status = Command::new("cargo")
+        .args([
+            "about",
+            "generate",
+            "--workspace",
+            "-o",
+            tmp_path.to_str().unwrap(),
+            data_template.to_str().unwrap(),
+        ])
+        .status()?;
+    if !status.success() {
+        bail!("cargo about generate に失敗しました");
+    }
+
+    let about_output = fs::read_to_string(&tmp_path)?;
+    fs::remove_file(&tmp_path)?;
+
+    // Rust ライセンスをパース
+    let mut groups: BTreeMap<String, LicenseGroup> = BTreeMap::new();
+    collect_rust_licenses(&about_output, &mut groups);
+
+    // npm ライセンスを追加
+    if let Err(e) = collect_npm_licenses_grouped(&mut groups) {
+        println!("  警告: npm ライセンス収集に失敗しました: {}", e);
+    }
+
+    // 出力フォーマットして書き出し
+    let output = format_license_output(&groups);
+    let output_path = stage_dir.join("THIRD_PARTY_LICENSES.txt");
+    fs::write(&output_path, output)?;
+
+    println!("  -> {}", output_path.display());
+    Ok(())
+}
+
+/// cargo-about がパース用テンプレートで生成した出力から、ライセンスグループを収集する。
+fn collect_rust_licenses(data: &str, groups: &mut BTreeMap<String, LicenseGroup>) {
+    let mut current_id: Option<String> = None;
+    let mut current_name: Option<String> = None;
+    let mut current_packages: Vec<PackageWithCopyright> = Vec::new();
+    let mut in_text = false;
+    let mut text_buf = String::new();
+
+    for line in data.lines() {
+        if let Some(id) = line.strip_prefix("MCV_LICENSE_ID=") {
+            current_id = Some(id.to_string());
+        } else if let Some(name) = line.strip_prefix("MCV_LICENSE_NAME=") {
+            current_name = Some(name.to_string());
+        } else if let Some(pkg) = line.strip_prefix("MCV_PACKAGE=") {
+            let mut parts = pkg.splitn(2, '\t');
+            let name = parts.next().unwrap_or("").to_string();
+            let version = parts.next().unwrap_or("").to_string();
+            current_packages.push(PackageWithCopyright {
+                name,
+                version,
+                copyright: None,
+            });
+        } else if line.trim() == "MCV_LICENSE_TEXT_START" {
+            in_text = true;
+        } else if line.trim() == "MCV_LICENSE_TEXT_END" {
+            in_text = false;
+            if let (Some(id), Some(name)) = (current_id.take(), current_name.take()) {
+                let clean_text = strip_copyright_lines(&text_buf);
+                let group = groups.entry(id).or_insert_with(|| LicenseGroup {
+                    display_name: name,
+                    text: clean_text.clone(),
+                    packages: Vec::new(),
+                });
+                if group.text.trim().is_empty() {
+                    group.text = clean_text;
+                }
+                group.packages.extend(current_packages.drain(..));
+            }
+            text_buf.clear();
+        } else if in_text {
+            text_buf.push_str(line);
+            text_buf.push('\n');
+        }
+    }
+}
+
+/// apps/mcv/node_modules の npm パッケージのライセンス情報を groups に追加する。
+fn collect_npm_licenses_grouped(groups: &mut BTreeMap<String, LicenseGroup>) -> Result<()> {
+    let node_modules = PathBuf::from("apps/mcv/node_modules");
+    if !node_modules.exists() {
+        return Ok(());
+    }
+
+    let mut entries: Vec<(String, String, String, Option<String>)> = Vec::new();
+    collect_npm_from_dir(&node_modules, &mut entries)?;
+
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+    entries.dedup_by(|a, b| a.0 == b.0);
+
+    for (name, version, license_id, text) in entries {
+        let copyrights = text
+            .as_deref()
+            .map(extract_copyright_lines)
+            .unwrap_or_default();
+        let copyright = if copyrights.is_empty() {
+            None
+        } else {
+            Some(copyrights.join("  "))
+        };
+        let clean_text = text
+            .as_deref()
+            .map(strip_copyright_lines)
+            .unwrap_or_default();
+
+        let group = groups
+            .entry(license_id.clone())
+            .or_insert_with(|| LicenseGroup {
+                display_name: license_id.clone(),
+                text: clean_text.clone(),
+                packages: Vec::new(),
+            });
+        if group.text.trim().is_empty() && !clean_text.trim().is_empty() {
+            group.text = clean_text;
+        }
+        group.packages.push(PackageWithCopyright {
+            name,
+            version,
+            copyright,
+        });
+    }
+    Ok(())
+}
+
+/// ライセンスグループをフォーマットして文字列として返す。
+fn format_license_output(groups: &BTreeMap<String, LicenseGroup>) -> String {
+    let mut result = String::new();
+    result.push_str("THIRD-PARTY LICENSES\n");
+    result.push_str("====================\n\n");
+    result.push_str("This application uses the following open source packages.\n\n");
+
+    for group in groups.values() {
+        result.push_str(
+            "================================================================================\n",
+        );
+        result.push_str(&group.display_name);
+        result.push_str("\n\n");
+
+        let text = group.text.trim();
+        if !text.is_empty() {
+            result.push_str(text);
+            result.push_str("\n\n");
+        }
+
+        for pkg in &group.packages {
+            if let Some(c) = &pkg.copyright {
+                result.push_str(&format!("  {} {}  {}\n", pkg.name, pkg.version, c));
+            } else {
+                result.push_str(&format!("  {} {}\n", pkg.name, pkg.version));
+            }
+        }
+        result.push('\n');
+    }
+
+    result
+}
+
+/// テキストから著作権表示行を抽出する。
+fn extract_copyright_lines(text: &str) -> Vec<String> {
+    text.lines()
+        .filter(|line| {
+            let l = line.trim().to_lowercase();
+            l.starts_with("copyright") || line.contains('©')
+        })
+        .map(|l| l.trim().to_string())
+        .collect()
+}
+
+/// テキストから著作権表示行を除去した本文を返す。
+fn strip_copyright_lines(text: &str) -> String {
+    text.lines()
+        .filter(|line| {
+            let l = line.trim().to_lowercase();
+            !l.starts_with("copyright") && !line.contains('©')
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn collect_npm_from_dir(
+    dir: &Path,
+    entries: &mut Vec<(String, String, String, Option<String>)>,
+) -> Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+
+        let dir_name = entry.file_name().to_string_lossy().to_string();
+
+        if dir_name.starts_with('@') {
+            // スコープパッケージ (@org/pkg) — 1 段階だけ再帰
+            for sub in fs::read_dir(&path)? {
+                let sub = sub?;
+                let sub_path = sub.path();
+                if sub_path.is_dir() {
+                    let full_name = format!("{}/{}", dir_name, sub.file_name().to_string_lossy());
+                    if let Some(info) = read_npm_pkg(&sub_path, &full_name) {
+                        entries.push(info);
+                    }
+                }
+            }
+        } else {
+            if let Some(info) = read_npm_pkg(&path, &dir_name) {
+                entries.push(info);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// package.json を読み取り (name, version, license, license_text) を返す。
+fn read_npm_pkg(dir: &Path, name: &str) -> Option<(String, String, String, Option<String>)> {
+    let content = fs::read_to_string(dir.join("package.json")).ok()?;
+    let pkg: serde_json::Value = serde_json::from_str(&content).ok()?;
+
+    let version = pkg.get("version")?.as_str()?.to_string();
+    let license = pkg
+        .get("license")
+        .and_then(|l| l.as_str())
+        .unwrap_or("Unknown")
+        .to_string();
+
+    // よく使われるライセンスファイル名を優先順で検索
+    let license_text = [
+        "LICENSE",
+        "LICENSE.md",
+        "LICENSE.txt",
+        "License",
+        "License.md",
+        "licence",
+        "licence.md",
+        "license",
+        "license.md",
+        "license.txt",
+    ]
+    .iter()
+    .find_map(|f| fs::read_to_string(dir.join(f)).ok());
+
+    Some((name.to_string(), version, license, license_text))
 }
 
 fn run(mut cmd: Command) -> Result<()> {

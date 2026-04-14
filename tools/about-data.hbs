@@ -1,0 +1,12 @@
+{{#each overview}}
+MCV_LICENSE_ID={{{id}}}
+MCV_LICENSE_NAME={{{name}}}
+{{#each indices}}
+{{#with (lookup @root.crates this)}}
+MCV_PACKAGE={{{package.name}}}	{{{package.version}}}
+{{/with}}
+{{/each}}
+MCV_LICENSE_TEXT_START
+{{{text}}}
+MCV_LICENSE_TEXT_END
+{{/each}}

@@ -85,6 +85,11 @@ impl CommentStore {
             ],
         )?;
 
+        // システムコメントはユーザーとして登録しない
+        if row.kind == "system" {
+            return Ok(());
+        }
+
         // ユーザー情報をUPSERT（コメント数と最終コメント時刻を更新）
         self.conn.execute(
             "INSERT INTO users (user_id, display_name_json, avatar_url, badges_json, connection_id, comment_count, last_seen)

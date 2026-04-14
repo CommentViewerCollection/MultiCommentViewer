@@ -243,7 +243,6 @@ function App() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [downloadingUpdate, setDownloadingUpdate] = useState(false)
-  const [downloadedUpdatePath, setDownloadedUpdatePath] = useState<string | null>(null)
   const [updateMessage, setUpdateMessage] = useState<string>('')
   const [registryPlugins, setRegistryPlugins] = useState<RegistryPlugin[]>([])
   const [installedPlugins, setInstalledPlugins] = useState<Map<string, InstalledPluginMeta>>(new Map())
@@ -1415,7 +1414,7 @@ function App() {
     }
   }
 
-  const handleDownloadUpdate = async () => {
+  const handleDownloadAndApplyUpdate = async () => {
     if (!updateInfo) return
     setDownloadingUpdate(true)
     setUpdateMessage('アップデートをダウンロード中...')
@@ -1425,23 +1424,13 @@ function App() {
         channel: updateInfo.channel,
         sha256: updateInfo.sha256,
       })
-      setDownloadedUpdatePath(zipPath)
-      setUpdateMessage('ダウンロード完了。適用して再起動できます。')
+      setUpdateMessage('適用中...')
+      await invoke('apply_core_update', { zipPath })
     } catch (error) {
-      console.error('Failed to download update:', error)
-      setUpdateMessage(`アップデートのダウンロードに失敗しました: ${error}`)
+      console.error('Failed to download or apply update:', error)
+      setUpdateMessage(`アップデートに失敗しました: ${error}`)
     } finally {
       setDownloadingUpdate(false)
-    }
-  }
-
-  const handleApplyUpdate = async () => {
-    if (!downloadedUpdatePath) return
-    try {
-      await invoke('apply_core_update', { zipPath: downloadedUpdatePath })
-    } catch (error) {
-      console.error('Failed to apply update:', error)
-      setUpdateMessage(`アップデート適用失敗: ${error}`)
     }
   }
 
@@ -2342,18 +2331,11 @@ function App() {
                     {checkingUpdate ? '確認中...' : '更新を確認'}
                   </button>
                   <button
-                    onClick={handleDownloadUpdate}
+                    onClick={handleDownloadAndApplyUpdate}
                     disabled={!updateInfo || downloadingUpdate}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm disabled:opacity-50"
                   >
-                    {downloadingUpdate ? 'ダウンロード中...' : 'ダウンロード'}
-                  </button>
-                  <button
-                    onClick={handleApplyUpdate}
-                    disabled={!downloadedUpdatePath}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm disabled:opacity-50"
-                  >
-                    適用して再起動
+                    {downloadingUpdate ? '処理中...' : 'ダウンロードして再起動'}
                   </button>
                 </div>
               </div>

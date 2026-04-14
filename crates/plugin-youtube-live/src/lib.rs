@@ -696,6 +696,7 @@ async fn metadata_polling_loop(
 
     let vid = youtube_live_lib::Vid::new(video_id);
     let mut poll_count: u64 = 0;
+    let mut next_continuation: Option<String> = None;
 
     loop {
         if *cancel_rx.borrow() {
@@ -713,52 +714,62 @@ async fn metadata_polling_loop(
             target: "mcv::plugin-youtube-live",
             connection_id = %connection_id,
             poll_count,
+            has_continuation = next_continuation.is_some(),
             "metadata_polling_loop: fetch_updated_metadata 呼び出し"
         );
 
-        let interval_ms =
-            match youtube_live_lib::fetch_updated_metadata(&vid, &ytcfg, &cookies).await {
-                Ok(meta) => {
-                    tracing::info!(
-                        target: "mcv::plugin-youtube-live",
-                        connection_id = %connection_id,
-                        poll_count,
-                        title = ?meta.title,
-                        viewer_count = ?meta.viewer_count,
-                        next_poll_ms = meta.timeout_ms,
-                        "metadata_polling_loop: メタデータ取得成功、StreamMetadata 送信"
-                    );
-                    let payload = StreamMetadataPayload {
-                        connection_id,
-                        title: meta.title,
-                        viewer_count: meta.viewer_count,
-                        total_viewer_count: None,
-                        start_time: None,
-                        others: None,
-                        clear: None,
-                    };
-                    let msg = McvMessage::new_notification(
-                        MessageType::StreamMetadata,
-                        MessageSource::Plugin {
-                            plugin_id: logical_plugin_id.clone(),
-                        },
-                        MessageDestination::Core,
-                        serde_json::to_value(payload).unwrap(),
-                    );
-                    YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), msg).await;
-                    meta.timeout_ms.clamp(5_000, 120_000)
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        target: "mcv::plugin-youtube-live",
-                        connection_id = %connection_id,
-                        poll_count,
-                        error = %e,
-                        "metadata_polling_loop: fetch_updated_metadata 失敗、30秒後にリトライ"
-                    );
-                    30_000
-                }
-            };
+        let interval_ms = match youtube_live_lib::fetch_updated_metadata(
+            &vid,
+            &ytcfg,
+            &cookies,
+            next_continuation.as_deref(),
+        )
+        .await
+        {
+            Ok(meta) => {
+                tracing::info!(
+                    target: "mcv::plugin-youtube-live",
+                    connection_id = %connection_id,
+                    poll_count,
+                    title = ?meta.title,
+                    viewer_count = ?meta.viewer_count,
+                    next_poll_ms = meta.timeout_ms,
+                    "metadata_polling_loop: メタデータ取得成功、StreamMetadata 送信"
+                );
+                let payload = StreamMetadataPayload {
+                    connection_id,
+                    title: meta.title,
+                    viewer_count: meta.viewer_count,
+                    total_viewer_count: None,
+                    start_time: None,
+                    others: None,
+                    clear: None,
+                };
+                let msg = McvMessage::new_notification(
+                    MessageType::StreamMetadata,
+                    MessageSource::Plugin {
+                        plugin_id: logical_plugin_id.clone(),
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+                YouTubeLiveStateMachinePlugin::send_message(ctx.clone(), msg).await;
+                next_continuation = meta.next_continuation;
+                meta.timeout_ms.clamp(5_000, 120_000)
+            }
+            Err(e) => {
+                tracing::warn!(
+                    target: "mcv::plugin-youtube-live",
+                    connection_id = %connection_id,
+                    poll_count,
+                    error = %e,
+                    "metadata_polling_loop: fetch_updated_metadata 失敗、30秒後にリトライ"
+                );
+                // エラー時は continuation をリセットして次回初回リクエストから再試行する
+                next_continuation = None;
+                30_000
+            }
+        };
 
         tracing::debug!(
             target: "mcv::plugin-youtube-live",

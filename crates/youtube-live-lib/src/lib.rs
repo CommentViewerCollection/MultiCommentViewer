@@ -1494,6 +1494,9 @@ pub struct UpdatedMetadata {
     pub title: Option<String>,
     pub viewer_count: Option<u64>,
     pub timeout_ms: u64,
+    /// 次回リクエストで使う continuation トークン。
+    /// `Some` の場合は `videoId` の代わりにこのトークンをリクエストボディに含める。
+    pub next_continuation: Option<String>,
 }
 
 /// `updated_metadata` API を呼び出してライブ配信のメタデータ（視聴者数・タイトル）を取得する。
@@ -1501,6 +1504,7 @@ pub async fn fetch_updated_metadata(
     vid: &Vid,
     ytcfg: &Ytcfg,
     cookies: &[Cookie],
+    continuation: Option<&str>,
 ) -> Result<UpdatedMetadata, mcv_plugin_telemetry::TracingError> {
     let cookie_header = cookies
         .iter()
@@ -1508,12 +1512,19 @@ pub async fn fetch_updated_metadata(
         .collect::<Vec<_>>()
         .join("; ");
 
-    let body = serde_json::json!({
-        "context": {
-            "client": ytcfg.client
-        },
-        "videoId": vid.value()
-    });
+    // 2回目以降は continuation トークンを使う（Chrome の実際の挙動に合わせる）。
+    // 初回は videoId で呼び出す。
+    let body = if let Some(token) = continuation {
+        serde_json::json!({
+            "context": { "client": ytcfg.client },
+            "continuation": token
+        })
+    } else {
+        serde_json::json!({
+            "context": { "client": ytcfg.client },
+            "videoId": vid.value()
+        })
+    };
 
     let url = "https://www.youtube.com/youtubei/v1/updated_metadata?prettyPrint=false";
 
@@ -1639,12 +1650,18 @@ pub async fn fetch_updated_metadata(
         .and_then(|v| v.as_u64())
         .unwrap_or(30_000);
 
+    let next_continuation = json
+        .pointer("/continuation/timedContinuationData/continuation")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
     tracing::info!(
         target: "mcv::youtube-live-lib",
         video_id = vid.value(),
         title = ?title,
         viewer_count = ?viewer_count,
         next_poll_ms = timeout_ms,
+        has_next_continuation = next_continuation.is_some(),
         "fetch_updated_metadata: 完了"
     );
 
@@ -1652,6 +1669,7 @@ pub async fn fetch_updated_metadata(
         title,
         viewer_count,
         timeout_ms,
+        next_continuation,
     })
 }
 

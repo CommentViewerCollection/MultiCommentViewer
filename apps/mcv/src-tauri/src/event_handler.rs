@@ -6,8 +6,9 @@ use tauri::{AppHandle, Emitter};
 use uuid::Uuid;
 
 use mcv_messages::{
-    CommentReceivedPayload, ConnectFailedPayload, DisconnectedPayload, Message as McvMessage,
-    MessagePart, MessageType, ProviderMessageKind, SetSiteNgUsersPayload, SystemKind,
+    CommentReceivedPayload, ConnectFailedPayload, ConnectedPayload, DisconnectedPayload,
+    Message as McvMessage, MessagePart, MessageType, ProviderMessageKind, SetSiteNgUsersPayload,
+    SystemKind,
 };
 
 use crate::comment::{envelope_to_comment_rows, DeleteAllByUserPayload};
@@ -52,7 +53,7 @@ async fn handle_message(
             emit_event(app_handle, "stream-metadata", message.payload);
         }
         MessageType::Connected => {
-            emit_event(app_handle, "connected", message.payload);
+            handle_connected(message.payload, app_handle);
         }
         MessageType::ConnectFailed => {
             handle_connect_failed(message.payload, app_handle);
@@ -193,6 +194,27 @@ async fn handle_comment_received(
             );
         }
     }
+}
+
+/// connected メッセージを処理し、「接続しました」システム通知をコメント一覧に追加する
+fn handle_connected(payload: serde_json::Value, app_handle: &AppHandle) {
+    if let Ok(conn) = serde_json::from_value::<ConnectedPayload>(payload.clone()) {
+        let now_ts = unix_now_secs();
+        let notice_row = system_notice_row(
+            &format!("connected-{}-{}", conn.connection_id, Uuid::new_v4()),
+            &conn.connection_id.to_string(),
+            "接続しました",
+            now_ts,
+        );
+        if let Err(e) = app_handle.emit("comment-received", vec![notice_row]) {
+            tracing::error!(
+                target: "mcv::main",
+                error = %e,
+                "Failed to emit connected notice"
+            );
+        }
+    }
+    emit_event(app_handle, "connected", payload);
 }
 
 /// connect-failed メッセージを処理し、システム通知もコメント一覧に追加する

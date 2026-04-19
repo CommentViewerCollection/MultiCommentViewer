@@ -442,6 +442,13 @@ function App() {
   // 新規: forceUpdate のための useReducer
   const [, forceUpdate] = useReducer(x => x + 1, 0)
 
+  // デフォルトのコンテキストメニューを無効化
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault()
+    document.addEventListener('contextmenu', handleContextMenu)
+    return () => document.removeEventListener('contextmenu', handleContextMenu)
+  }, [])
+
   // 経過時間を1秒ごとに再計算するタイマー
   useEffect(() => {
     const timer = setInterval(() => setElapsedTick(t => t + 1), 1000)

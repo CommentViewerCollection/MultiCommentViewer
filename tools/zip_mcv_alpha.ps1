@@ -10,4 +10,5 @@ cargo xtask dist --channel alpha `
     --plugin dummy `
     --plugin sample-v3 `
     --plugin exe-plugin-sample `
-    --plugin kick
+    --plugin kick `
+    --plugin whowatch

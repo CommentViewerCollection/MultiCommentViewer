@@ -118,5 +118,13 @@
     "description": "OPENREC.tv のコメント取得をするプラグインです",
     "entry": "plugin_openrec.dll",
     "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-whowatch",
+    "id": "whowatch",
+    "name": "ふわっち",
+    "description": "ふわっちのコメント取得をするプラグインです",
+    "entry": "plugin_whowatch.dll",
+    "has_channel_feature": true
   }
 ]

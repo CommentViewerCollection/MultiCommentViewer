@@ -46,6 +46,8 @@ members = [
     "crates/plugin-irc",
     "crates/openrec-lib",
     "crates/plugin-openrec",
+    "crates/plugin-whowatch",
+    "crates/whowatch-lib",
 ]
 resolver = "2"
 

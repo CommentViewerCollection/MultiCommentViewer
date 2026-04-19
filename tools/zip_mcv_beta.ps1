@@ -7,4 +7,5 @@ cargo xtask dist --channel beta `
     --plugin twitch `
     --plugin twicas `
     --plugin youtubelive `
-    --plugin kick
+    --plugin kick `
+    --plugin whowatch

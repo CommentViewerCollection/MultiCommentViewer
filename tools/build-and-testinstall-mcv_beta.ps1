@@ -20,5 +20,6 @@ cargo xtask install `
   --plugin exe-plugin-sample `
   --plugin kick `
   --plugin irc `
-  --plugin openrec
+  --plugin openrec `
+  --plugin whowatch
   

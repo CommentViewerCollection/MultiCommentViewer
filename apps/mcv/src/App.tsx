@@ -178,7 +178,9 @@ function RenderMessagePart({
   }
 
   // Image part
-  const size = isUsername ? 16 : 22  // Badges smaller than emojis
+  const defaultSize = isUsername ? 16 : 22  // Badges smaller than emojis
+  const displayWidth = part.width ?? defaultSize
+  const displayHeight = part.height ?? defaultSize
   const [error, setError] = useState(false)
 
   if (error) {
@@ -191,13 +193,13 @@ function RenderMessagePart({
       src={part.url}
       alt={part.alt || ''}
       title={part.alt || undefined}
-      width={part.width || size}
-      height={part.height || size}
+      width={displayWidth}
+      height={displayHeight}
       onError={() => setError(true)}
       className={`inline-block mx-0.5 ${isUsername ? 'align-middle' : 'align-text-bottom'}`}
       style={{
-        maxWidth: `${size}px`,
-        maxHeight: `${size}px`,
+        maxWidth: `${displayWidth}px`,
+        maxHeight: `${displayHeight}px`,
         objectFit: 'contain'
       }}
       loading="lazy"
@@ -1652,7 +1654,15 @@ function App() {
                 className="inline-block align-middle ml-0.5"
                 style={{ maxWidth: '16px', maxHeight: '16px' }}
               />
-            ) : null
+            ) : (
+              <span
+                key={i}
+                className="text-xs rounded px-1 ml-0.5 align-middle"
+                style={{ backgroundColor: 'var(--color-bg-sidebar)', opacity: 0.85 }}
+              >
+                {badge.name}
+              </span>
+            )
           )}
         </span>
       )

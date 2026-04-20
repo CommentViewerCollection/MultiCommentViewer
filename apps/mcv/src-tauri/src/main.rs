@@ -61,8 +61,9 @@ fn main() {
     window::cleanup_old_files(&app_data_dir);
 
     // ロガーを初期化
-    let log_db_path = app_data_dir.join("logs.db");
-    std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
+    let logs_dir = mcv_common::get_logs_dir();
+    std::fs::create_dir_all(&logs_dir).expect("Failed to create logs directory");
+    let log_db_path = logs_dir.join("logs.db");
     mcv_log_core::init_logger(&log_db_path, env!("CARGO_PKG_VERSION"))
         .expect("Failed to initialize logger");
 
@@ -101,8 +102,6 @@ fn main() {
     );
 
     let settings_dir_for_tauri = settings_dir.clone();
-    let logs_dir = app_data_dir.join("logs");
-    std::fs::create_dir_all(&logs_dir).expect("Failed to create logs directory");
 
     // プラグインロード完了を通知する watch チャンネル
     let (plugins_phase_tx, mut plugins_phase_rx) =
@@ -133,12 +132,8 @@ fn main() {
             let comment_timing: Arc<tokio::sync::Mutex<HashMap<Uuid, (i64, Instant)>>> =
                 Arc::new(tokio::sync::Mutex::new(HashMap::new()));
 
-            // コメントストアを作成（exe と同じディレクトリに session.db を配置）
-            let session_db_path = std::env::current_exe()
-                .expect("Failed to get current exe path")
-                .parent()
-                .expect("Failed to get exe directory")
-                .join("session.db");
+            // コメントストアを作成（logs ディレクトリに session.db を配置）
+            let session_db_path = logs_dir.join("session.db");
             let comment_store = Arc::new(Mutex::new(
                 comment_store::CommentStore::new(&session_db_path)
                     .expect("Failed to create comment store"),

@@ -27,6 +27,16 @@ pub fn get_base_dir() -> std::path::PathBuf {
         .to_path_buf()
 }
 
+/// ログディレクトリのサブディレクトリ名。
+pub const LOGS_DIR_NAME: &str = "logs";
+
+/// ログディレクトリのパスを返す。
+///
+/// プラグインが `GetLogsDir` で取得するパスと同一。
+pub fn get_logs_dir() -> std::path::PathBuf {
+    get_base_dir().join(LOGS_DIR_NAME)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

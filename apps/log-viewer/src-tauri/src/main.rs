@@ -3,7 +3,6 @@
 use mcv_log_core::schema::LogEntry;
 use rusqlite::{Connection, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SearchFields {
@@ -235,17 +234,50 @@ async fn get_local_logs(
     Ok(LogQueryResult { logs, total })
 }
 
-/// ログDBのパスを取得
+/// デフォルトのログDBパスを返す（LOCALAPPDATA\MultiCommentViewer\logs\logs.db）
 #[tauri::command]
 fn get_log_db_path() -> Result<String, String> {
     let local_app_data =
         std::env::var("LOCALAPPDATA").map_err(|_| "Failed to get LOCALAPPDATA".to_string())?;
-
-    let db_path = PathBuf::from(local_app_data)
+    let db_path = std::path::PathBuf::from(local_app_data)
         .join("MultiCommentViewer")
+        .join("logs")
         .join("logs.db");
-
     Ok(db_path.to_string_lossy().to_string())
+}
+
+/// ファイルピッカーで任意のログDBファイルを選択し、パスを返す
+#[tauri::command]
+async fn select_log_db_path(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let default_dir = std::env::var("LOCALAPPDATA").ok().map(|d| {
+        std::path::PathBuf::from(d)
+            .join("MultiCommentViewer")
+            .join("logs")
+    });
+
+    let (tx, rx) = tokio::sync::oneshot::channel();
+
+    let mut builder = app
+        .dialog()
+        .file()
+        .set_title("ログDBファイルを選択")
+        .add_filter("SQLite Database", &["db"]);
+
+    if let Some(dir) = default_dir {
+        builder = builder.set_directory(dir);
+    }
+
+    builder.pick_file(move |path| {
+        let _ = tx.send(path);
+    });
+
+    let path = rx.await.map_err(|e| format!("Dialog error: {}", e))?;
+
+    Ok(path
+        .and_then(|p| p.into_path().ok())
+        .map(|p| p.to_string_lossy().to_string()))
 }
 
 /// サーバーAPIからログを取得
@@ -715,6 +747,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_local_logs,
             get_log_db_path,
+            select_log_db_path,
             get_server_logs,
             delete_local_logs,
             delete_server_logs,

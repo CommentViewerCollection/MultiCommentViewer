@@ -13,6 +13,7 @@ pub type BadgeCache = HashMap<String, HashMap<String, (String, String)>>;
 pub async fn fetch_global_badges_gql(
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> Result<BadgeCache> {
     let query = r#"{
         "operationName": "GlobalBadges",
@@ -24,7 +25,7 @@ pub async fn fetch_global_badges_gql(
             }
         }
     }"#;
-    let json = send_graphql_query(query, client_id, auth_token).await?;
+    let json = send_graphql_query(query, client_id, auth_token, user_agent).await?;
 
     let Some(badges) = json["data"]["badges"].as_array() else {
         return Ok(BadgeCache::new());
@@ -39,6 +40,7 @@ pub async fn fetch_channel_badges_gql(
     channel_login: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> Result<BadgeCache> {
     let query = format!(
         r#"{{
@@ -55,7 +57,7 @@ pub async fn fetch_channel_badges_gql(
         }}"#,
         channel_login
     );
-    let json = send_graphql_query(&query, client_id, auth_token).await?;
+    let json = send_graphql_query(&query, client_id, auth_token, user_agent).await?;
 
     let Some(badges) = json["data"]["user"]["broadcastBadges"].as_array() else {
         return Ok(BadgeCache::new());

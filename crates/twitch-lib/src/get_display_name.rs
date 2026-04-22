@@ -7,6 +7,7 @@ async fn get_display_name(
     channel_login: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> Result<String, anyhow::Error> {
     let query = format!(
         r#"{{
@@ -23,7 +24,7 @@ async fn get_display_name(
 }}"#
     );
 
-    let json = send_graphql_query(&query, client_id, auth_token).await?;
+    let json = send_graphql_query(&query, client_id, auth_token, user_agent).await?;
     println!("{:#}", json);
     let display_name = get_string(&json, &["data", "user"])?;
 
@@ -37,7 +38,7 @@ mod tests {
         let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
         let channel_login = "amauta_sau";
         let auth_token = None;
-        match get_display_name(channel_login, &client_id, auth_token).await {
+        match get_display_name(channel_login, &client_id, auth_token, "test-agent").await {
             Ok(display_name) => {
                 println!("Display Name: {}", display_name);
             }

@@ -550,6 +550,7 @@ fn is_supported_plugin_request_type(message_type: &MessageType) -> bool {
             | MessageType::GetLogsDir
             | MessageType::GetPluginsDir
             | MessageType::GetSettingsDir
+            | MessageType::GetUserAgent
     )
 }
 
@@ -681,6 +682,16 @@ fn handle_plugin_request_message(
             Ok(message.create_response(
                 MessageType::SettingsDirAck,
                 serde_json::to_value(SettingsDirAckPayload { path }).unwrap(),
+            ))
+        }
+        MessageType::GetUserAgent => {
+            let user_agent = format!(
+                "MultiCommentViewer/{} contact-> twitter.com/kv510k",
+                core.mcv_version
+            );
+            Ok(message.create_response(
+                MessageType::GetUserAgentAck,
+                serde_json::to_value(GetUserAgentAckPayload { user_agent }).unwrap(),
             ))
         }
         _ => Err(format!(

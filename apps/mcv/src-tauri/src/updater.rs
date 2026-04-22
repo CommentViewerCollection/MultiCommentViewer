@@ -113,7 +113,7 @@ pub(crate) async fn install_registry_plugin_internal(
     core_addr: Addr<CoreActor>,
     plugin_manager: std::sync::Arc<tokio::sync::Mutex<PluginManager>>,
 ) -> Result<(), String> {
-    let updater = UpdateChecker::new(crate::API_BASE_URL);
+    let updater = UpdateChecker::new(crate::API_BASE_URL, crate::get_user_agent());
     let plugin_detail = updater
         .get_plugin_detail(&plugin_id)
         .await

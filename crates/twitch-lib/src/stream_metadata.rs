@@ -20,6 +20,7 @@ struct StreamMetadata {
 async fn get_stream_metadata(
     channel_login: &str,
     client_id: &ClientId,
+    user_agent: &str,
 ) -> anyhow::Result<StreamMetadata> {
     //{"operationName":"StreamMetadata","variables":{"channelLogin":"amauta_sau","includeIsDJ":true},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"b57f9b910f8cd1a4659d894fe7550ccc81ec9052c01e438b290fd66a040b9b93"}}}
 
@@ -76,7 +77,7 @@ async fn get_stream_metadata(
         }}"#,
         channel_login
     );
-    let json = send_graphql_query(&query, client_id, None).await?;
+    let json = send_graphql_query(&query, client_id, None, user_agent).await?;
     let data = &json["data"]["user"];
     let last_broadcast_title = data["lastBroadcast"]["title"]
         .as_str()
@@ -94,6 +95,7 @@ pub async fn fetch_broadcaster_id(
     channel_login: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> Result<Option<String>> {
     let query = format!(
         r#"{{
@@ -103,7 +105,7 @@ pub async fn fetch_broadcaster_id(
         }}"#,
         channel_login
     );
-    let json = send_graphql_query(&query, client_id, auth_token).await?;
+    let json = send_graphql_query(&query, client_id, auth_token, user_agent).await?;
     let id = json["data"]["user"]["id"].as_str().map(|s| s.to_string());
     Ok(id)
 }
@@ -112,10 +114,10 @@ pub async fn fetch_broadcaster_id(
 ///
 /// GQL Persisted Query を使用（認証不要）。
 /// 視聴者数は Hermes WebSocket の video-playback-by-id トピックから取得するため、ここでは取得しない。
-pub async fn fetch_stream_info(channel_login: &str) -> Result<TwitchStreamInfo> {
+pub async fn fetch_stream_info(channel_login: &str, user_agent: &str) -> Result<TwitchStreamInfo> {
     let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
 
-    let gql_meta = get_stream_metadata(channel_login, &client_id).await?;
+    let gql_meta = get_stream_metadata(channel_login, &client_id, user_agent).await?;
 
     let start_time = gql_meta
         .stream_created_at
@@ -135,7 +137,7 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_stream_info() {
         let channel_login = "amauta_sau";
-        match fetch_stream_info(channel_login).await {
+        match fetch_stream_info(channel_login, "test-agent").await {
             Ok(info) => {
                 println!("Title: {:?}", info.title);
                 println!("Start Time: {:?}", info.start_time);

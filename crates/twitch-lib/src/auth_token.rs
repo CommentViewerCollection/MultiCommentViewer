@@ -21,8 +21,14 @@ pub struct ValidateTokenResponse {
 }
 
 /// auth-token を Twitch の OAuth 検証エンドポイントで確認し、ユーザー情報を返す
-pub async fn validate_token(token: &str) -> Result<ValidateTokenResponse, String> {
-    let client = reqwest::Client::new();
+pub async fn validate_token(
+    token: &str,
+    user_agent: &str,
+) -> Result<ValidateTokenResponse, String> {
+    let client = reqwest::Client::builder()
+        .user_agent(user_agent)
+        .build()
+        .map_err(|e| e.to_string())?;
     let response = client
         .get("https://id.twitch.tv/oauth2/validate")
         .header("Authorization", format!("OAuth {}", token))

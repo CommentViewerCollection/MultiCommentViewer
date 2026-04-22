@@ -24,6 +24,7 @@ pub(crate) async fn metadata_polling_loop(
     connection_id: Uuid,
     channel_login: String,
     mut cancel_rx: watch::Receiver<bool>,
+    user_agent: String,
 ) {
     tracing::info!(
         target: "mcv::plugin-twitch",
@@ -56,62 +57,63 @@ pub(crate) async fn metadata_polling_loop(
             "メタデータポーリング: fetch_stream_info 呼び出し"
         );
 
-        let desired_interval = match twitch_lib::fetch_stream_info(&channel_login).await {
-            Ok(info) => {
-                let is_live = info.start_time.is_some();
-                tracing::info!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    poll_count,
-                    title = ?info.title,
-                    start_time = ?info.start_time,
-                    is_live,
-                    "メタデータポーリング: 取得成功、StreamMetadata 送信"
-                );
-                let payload = if is_live {
-                    StreamMetadataPayload {
-                        connection_id,
-                        title: info.title,
-                        viewer_count: None,
-                        total_viewer_count: None,
-                        start_time: info.start_time,
-                        others: None,
-                        clear: None,
-                    }
-                } else {
-                    StreamMetadataPayload {
-                        connection_id,
-                        title: Some("（次の配信が始まるまで待機中...）".to_string()),
-                        viewer_count: None,
-                        total_viewer_count: None,
-                        start_time: None,
-                        others: None,
-                        clear: Some(true),
-                    }
-                };
-                let msg = McvMessage::new_notification(
-                    MessageType::StreamMetadata,
-                    MessageSource::Plugin {
-                        plugin_id: logical_plugin_id.clone(),
-                    },
-                    MessageDestination::Core,
-                    serde_json::to_value(payload).unwrap(),
-                );
-                TwitchPlugin::send_message(ctx.clone(), msg).await;
-                POLL_INTERVAL
-            }
-            Err(e) => {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    poll_count,
-                    error = %e,
-                    "メタデータポーリング: 取得失敗、{}秒後にリトライ",
-                    RETRY_INTERVAL.as_secs()
-                );
-                RETRY_INTERVAL
-            }
-        };
+        let desired_interval =
+            match twitch_lib::fetch_stream_info(&channel_login, &user_agent).await {
+                Ok(info) => {
+                    let is_live = info.start_time.is_some();
+                    tracing::info!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        poll_count,
+                        title = ?info.title,
+                        start_time = ?info.start_time,
+                        is_live,
+                        "メタデータポーリング: 取得成功、StreamMetadata 送信"
+                    );
+                    let payload = if is_live {
+                        StreamMetadataPayload {
+                            connection_id,
+                            title: info.title,
+                            viewer_count: None,
+                            total_viewer_count: None,
+                            start_time: info.start_time,
+                            others: None,
+                            clear: None,
+                        }
+                    } else {
+                        StreamMetadataPayload {
+                            connection_id,
+                            title: Some("（次の配信が始まるまで待機中...）".to_string()),
+                            viewer_count: None,
+                            total_viewer_count: None,
+                            start_time: None,
+                            others: None,
+                            clear: Some(true),
+                        }
+                    };
+                    let msg = McvMessage::new_notification(
+                        MessageType::StreamMetadata,
+                        MessageSource::Plugin {
+                            plugin_id: logical_plugin_id.clone(),
+                        },
+                        MessageDestination::Core,
+                        serde_json::to_value(payload).unwrap(),
+                    );
+                    TwitchPlugin::send_message(ctx.clone(), msg).await;
+                    POLL_INTERVAL
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        target: "mcv::plugin-twitch",
+                        connection_id = %connection_id,
+                        poll_count,
+                        error = %e,
+                        "メタデータポーリング: 取得失敗、{}秒後にリトライ",
+                        RETRY_INTERVAL.as_secs()
+                    );
+                    RETRY_INTERVAL
+                }
+            };
 
         // API呼び出しにかかった時間を差し引いた残り時間だけ待機する。
         // changed() が想定外に即座に返っても 0 秒ループにならないよう規定間隔を保証する。

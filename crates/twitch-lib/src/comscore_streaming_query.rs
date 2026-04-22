@@ -18,6 +18,7 @@ async fn get_comscore_streaming_query(
     video_id: &VideoId,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> Result<ComscoreStreamingQueryVideo> {
     //本来のAPIでは生配信の情報も取れるけど、他のAPIでも取れるからここでは動画だけにする
     //ちなみに生配信の情報を取るにはchannelに配信者のIDを入れてisLiveをtrueにする
@@ -41,7 +42,7 @@ async fn get_comscore_streaming_query(
 }}"#,
         video_id = video_id.value()
     );
-    let json = send_graphql_query(&query, client_id, auth_token).await?;
+    let json = send_graphql_query(&query, client_id, auth_token, user_agent).await?;
 
     let video = get_value(&json, &["data", "video"])?;
     let broadcast_type = get_string(video, &["broadcastType"])?;
@@ -71,7 +72,7 @@ mod tests {
         let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
         let video_id = VideoId::new("2672403100");
         let auth_token = None;
-        match get_comscore_streaming_query(&video_id, &client_id, auth_token).await {
+        match get_comscore_streaming_query(&video_id, &client_id, auth_token, "test-agent").await {
             Ok(comscore_data) => {
                 println!("{}", comscore_data.title);
             }

@@ -86,6 +86,7 @@ pub(crate) async fn hermes_loop(
     channel_login: String,
     auth_token: Option<AuthToken>,
     mut cancel_rx: watch::Receiver<bool>,
+    user_agent: String,
 ) {
     let client_id = twitch_lib::ClientId::new(HERMES_CLIENT_ID);
     let now = || chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
@@ -97,40 +98,44 @@ pub(crate) async fn hermes_loop(
         }
 
         // broadcaster_id（数値チャンネル ID）を取得
-        let channel_id =
-            match twitch_lib::fetch_broadcaster_id(&channel_login, &client_id, auth_token.as_ref())
-                .await
-            {
-                Ok(Some(id)) => id,
-                Ok(None) => {
-                    tracing::warn!(
-                        target: "mcv::plugin-twitch",
-                        connection_id = %connection_id,
-                        channel = %channel_login,
-                        "Hermes: broadcaster_id が取得できなかった。5秒後にリトライします"
-                    );
-                    if wait_or_cancel(&mut cancel_rx, 5000).await {
-                        break 'retry;
-                    }
-                    continue 'retry;
+        let channel_id = match twitch_lib::fetch_broadcaster_id(
+            &channel_login,
+            &client_id,
+            auth_token.as_ref(),
+            &user_agent,
+        )
+        .await
+        {
+            Ok(Some(id)) => id,
+            Ok(None) => {
+                tracing::warn!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    channel = %channel_login,
+                    "Hermes: broadcaster_id が取得できなかった。5秒後にリトライします"
+                );
+                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                    break 'retry;
                 }
-                Err(e) => {
-                    tracing::warn!(
-                        target: "mcv::plugin-twitch",
-                        connection_id = %connection_id,
-                        error = %e,
-                        "Hermes: broadcaster_id の取得に失敗。5秒後にリトライします"
-                    );
-                    if wait_or_cancel(&mut cancel_rx, 5000).await {
-                        break 'retry;
-                    }
-                    continue 'retry;
+                continue 'retry;
+            }
+            Err(e) => {
+                tracing::warn!(
+                    target: "mcv::plugin-twitch",
+                    connection_id = %connection_id,
+                    error = %e,
+                    "Hermes: broadcaster_id の取得に失敗。5秒後にリトライします"
+                );
+                if wait_or_cancel(&mut cancel_rx, 5000).await {
+                    break 'retry;
                 }
-            };
+                continue 'retry;
+            }
+        };
 
         // 認証時のみ user_id を取得（validate_token は auth_token が Some の場合のみ呼ぶ）
         let user_id = if let Some(token) = &auth_token {
-            match twitch_lib::auth_token::validate_token(token.value()).await {
+            match twitch_lib::auth_token::validate_token(token.value(), &user_agent).await {
                 Ok(info) => {
                     tracing::debug!(
                         target: "mcv::plugin-twitch",

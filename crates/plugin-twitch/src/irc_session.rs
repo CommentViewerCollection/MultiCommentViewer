@@ -57,6 +57,7 @@ pub(crate) async fn run_irc_session(
     channel_login: String,
     auth_token: Option<AuthToken>,
     cancel_rx: &mut watch::Receiver<bool>,
+    user_agent: &str,
 ) -> Result<(), ()> {
     let ws_stream = connect_ws(connection_id, &url).await?;
     let (mut write, mut read) = ws_stream.split();
@@ -82,11 +83,19 @@ pub(crate) async fn run_irc_session(
         connection_id,
         &channel_login,
         auth_token.as_ref(),
+        user_agent,
     )
     .await;
 
-    let badge_cache =
-        Arc::new(build_badge_cache(connection_id, &channel_login, auth_token.as_ref()).await);
+    let badge_cache = Arc::new(
+        build_badge_cache(
+            connection_id,
+            &channel_login,
+            auth_token.as_ref(),
+            user_agent,
+        )
+        .await,
+    );
 
     run_irc_loop(
         ctx,
@@ -191,21 +200,28 @@ async fn fetch_and_send_history(
     connection_id: Uuid,
     channel_login: &str,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) {
     let client_id = twitch_lib::ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
-    let history =
-        match twitch_lib::fetch_recent_chat_messages(channel_login, &client_id, auth_token).await {
-            Ok(h) => h,
-            Err(e) => {
-                tracing::warn!(
-                    target: "mcv::plugin-twitch",
-                    connection_id = %connection_id,
-                    error = %e,
-                    "直近コメント履歴の取得に失敗"
-                );
-                return;
-            }
-        };
+    let history = match twitch_lib::fetch_recent_chat_messages(
+        channel_login,
+        &client_id,
+        auth_token,
+        user_agent,
+    )
+    .await
+    {
+        Ok(h) => h,
+        Err(e) => {
+            tracing::warn!(
+                target: "mcv::plugin-twitch",
+                connection_id = %connection_id,
+                error = %e,
+                "直近コメント履歴の取得に失敗"
+            );
+            return;
+        }
+    };
 
     let provider_messages: Vec<ProviderMessage> = history
         .into_iter()
@@ -270,10 +286,11 @@ async fn build_badge_cache(
     connection_id: Uuid,
     channel_login: &str,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> BadgeCache {
     let client_id = twitch_lib::ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
 
-    let mut merged = match fetch_global_badges_gql(&client_id, auth_token).await {
+    let mut merged = match fetch_global_badges_gql(&client_id, auth_token, user_agent).await {
         Ok(cache) => {
             tracing::info!(
                 target: "mcv::plugin-twitch",
@@ -295,7 +312,7 @@ async fn build_badge_cache(
         }
     };
 
-    match fetch_channel_badges_gql(channel_login, &client_id, auth_token).await {
+    match fetch_channel_badges_gql(channel_login, &client_id, auth_token, user_agent).await {
         Ok(channel_cache) => {
             tracing::info!(
                 target: "mcv::plugin-twitch",

@@ -54,6 +54,7 @@ async fn get_video_comments(
     client_id: &ClientId,
     integrity: &Integrity,
     interval_millis: u64,
+    user_agent: &str,
 ) -> Result<Vec<VideoCommentEdge>> {
     let mut all_comments = Vec::new();
 
@@ -65,6 +66,7 @@ async fn get_video_comments(
             auth_token,
             Some(integrity),
             client_id,
+            user_agent,
         )
         .await;
 
@@ -95,6 +97,7 @@ async fn get_video_comments_by_offset_or_cursor(
     auth_token: &AuthToken,
     integrity: Option<&Integrity>,
     client_id: &ClientId,
+    user_agent: &str,
 ) -> Result<VideoComments> {
     let query = match offset_or_cursor {
         OffsetOrCursor::Offset(offset) => format!(
@@ -114,7 +117,9 @@ async fn get_video_comments_by_offset_or_cursor(
         ),
     };
 
-    let res = reqwest::Client::new()
+    let res = reqwest::Client::builder()
+        .user_agent(user_agent)
+        .build()?
         .post("https://gql.twitch.tv/gql")
         .header("Client-Id", client_id.value())
         .header("Content-Type", "application/json");

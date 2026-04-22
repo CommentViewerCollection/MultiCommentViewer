@@ -5,6 +5,7 @@ use anyhow::Result;
 pub async fn fetch_blocked_users(
     client_id: &ClientId,
     auth_token: &AuthToken,
+    user_agent: &str,
 ) -> Result<Vec<String>> {
     let query = r#"{
         "operationName": "BlockedUsers",
@@ -16,7 +17,7 @@ pub async fn fetch_blocked_users(
             }
         }
     }"#;
-    let json = send_graphql_query(query, client_id, Some(auth_token)).await?;
+    let json = send_graphql_query(query, client_id, Some(auth_token), user_agent).await?;
 
     let user_ids = json["data"]["currentUser"]["blockedUsers"]
         .as_array()

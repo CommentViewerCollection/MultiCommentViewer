@@ -21,11 +21,17 @@ impl Integrity {
     }
 }
 #[allow(dead_code)]
-pub async fn get_integrity(client_id: &ClientId, auth_token: &AuthToken) -> Result<Integrity> {
+pub async fn get_integrity(
+    client_id: &ClientId,
+    auth_token: &AuthToken,
+    user_agent: &str,
+) -> Result<Integrity> {
     let url = "https://gql.twitch.tv/integrity";
 
     let query = "";
-    let res = reqwest::Client::new()
+    let res = reqwest::Client::builder()
+        .user_agent(user_agent)
+        .build()?
         .post(url)
         .header("Client-Id", client_id.value())
         .header("Authorization", format!("OAuth {}", auth_token.value()))
@@ -54,7 +60,7 @@ mod tests {
     async fn test_get_integrity() {
         let auth_token = AuthToken::new(&get_auth_token_from_env().unwrap());
         let client_id = ClientId::new("kimne78kx3ncx6brgo4mv6wki5h1ko");
-        let result = get_integrity(&client_id, &auth_token).await;
+        let result = get_integrity(&client_id, &auth_token, "test-agent").await;
         match result {
             Ok(integrity) => {
                 println!("client_id: {}", integrity.client_id);

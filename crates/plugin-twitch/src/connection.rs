@@ -61,6 +61,7 @@ impl Connection {
         url: &str,
         username: &str,
         auth_token: Option<AuthToken>,
+        user_agent: String,
     ) {
         if self.running.load(Ordering::Relaxed) {
             tracing::debug!(
@@ -113,6 +114,7 @@ impl Connection {
             let logical_plugin_id = logical_plugin_id.clone();
             let channel_login = channel_login.clone();
             let auth_token = auth_token.clone();
+            let user_agent = user_agent.clone();
             async move {
                 // パニックハンドラー用にクローンを確保する
                 let ctx_panic = ctx.clone();
@@ -140,6 +142,7 @@ impl Connection {
                             channel_login.clone(),
                             auth_token.clone(),
                             &mut cancel_rx,
+                            &user_agent,
                         )
                         .await;
 
@@ -267,6 +270,7 @@ impl Connection {
             channel_login.clone(),
             auth_token.clone(),
             hermes_cancel_rx,
+            user_agent.clone(),
         ));
 
         // メタデータポーリングタスク（タイトル・開始時刻のみ。視聴者数は Hermes から取得）
@@ -276,6 +280,7 @@ impl Connection {
             connection_id,
             channel_login,
             metadata_cancel_rx,
+            user_agent,
         ));
 
         self.cancel_tx = Some(cancel_tx);

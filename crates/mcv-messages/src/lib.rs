@@ -162,6 +162,8 @@ pub enum MessageType {
     // その他
     GetAppName,
     GetAppVersion,
+    GetUserAgent,
+    GetUserAgentAck,
     GetLogsDir,
     LogsDirAck,
     GetPluginsDir,
@@ -742,6 +744,16 @@ pub struct LogEntryPayload {
     /// プラグインのビルドプロファイル（"alpha", "beta", "stable"、オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plugin_build_profile: Option<String>,
+}
+
+/// get-user-agentのpayload (Plugin → Core)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetUserAgentPayload {}
+
+/// get-user-agent-ackのpayload (Core → Plugin)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetUserAgentAckPayload {
+    pub user_agent: String,
 }
 
 /// get-logs-dirのpayload (Plugin → Core)

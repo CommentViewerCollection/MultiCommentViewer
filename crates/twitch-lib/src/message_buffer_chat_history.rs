@@ -93,6 +93,7 @@ pub async fn fetch_recent_chat_messages(
     channel_login: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> Result<Vec<RecentChatMessage>> {
     let query = format!(
         r#"{{
@@ -110,7 +111,7 @@ pub async fn fetch_recent_chat_messages(
     );
 
     //send query and parse response
-    let json = send_graphql_query(&query, client_id, auth_token).await?;
+    let json = send_graphql_query(&query, client_id, auth_token, user_agent).await?;
 
     //parse json to RecentChatMessage
     let mut messages = Vec::new();

@@ -78,7 +78,7 @@ pub(crate) async fn run_core_constraint_check(
 ) {
     let channel = get_current_channel();
     let current_version = env!("CARGO_PKG_VERSION");
-    let updater = mcv_updater::UpdateChecker::new(crate::API_BASE_URL);
+    let updater = mcv_updater::UpdateChecker::new(crate::API_BASE_URL, crate::get_user_agent());
 
     let constraints = match updater.get_core_constraints(channel).await {
         Ok(c) => c,
@@ -160,7 +160,7 @@ pub(crate) async fn run_plugin_constraint_check(
     core_addr: Addr<CoreActor>,
     plugin_manager: std::sync::Arc<tokio::sync::Mutex<mcv_core::PluginManager>>,
 ) {
-    let updater = mcv_updater::UpdateChecker::new(crate::API_BASE_URL);
+    let updater = mcv_updater::UpdateChecker::new(crate::API_BASE_URL, crate::get_user_agent());
 
     // レジストリからプラグイン一覧を取得
     let plugins = match updater.list_plugins().await {

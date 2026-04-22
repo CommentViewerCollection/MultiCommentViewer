@@ -23,6 +23,14 @@ use types::{AppState, PluginsPhase, SettingsDirState};
 
 pub(crate) const API_BASE_URL: &str = "https://int-main.net";
 
+/// アプリ固有のUser-Agent文字列を返す
+pub(crate) fn get_user_agent() -> String {
+    format!(
+        "MultiCommentViewer/{} contact-> twitter.com/kv510k",
+        env!("CARGO_PKG_VERSION")
+    )
+}
+
 /// ビルドプロファイルを返す（ログレベルフィルタ等で使用）
 pub(crate) fn get_build_profile() -> &'static str {
     #[cfg(feature = "alpha")]

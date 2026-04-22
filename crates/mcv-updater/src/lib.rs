@@ -185,11 +185,12 @@ impl UpdateChecker {
     ///
     /// # Arguments
     /// * `api_base_url` - 配布APIのベースURL（例: "https://api.example.com"）
-    pub fn new(api_base_url: impl Into<String>) -> Self {
+    /// * `user_agent` - HTTPリクエストに使用するUser-Agent文字列
+    pub fn new(api_base_url: impl Into<String>, user_agent: impl Into<String>) -> Self {
         Self {
             api_base_url: api_base_url.into(),
             client: Client::builder()
-                .user_agent("McvUpdater/1.0.0")
+                .user_agent(user_agent.into())
                 .build()
                 .expect("Failed to create HTTP client"),
         }

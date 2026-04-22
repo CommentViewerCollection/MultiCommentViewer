@@ -9,8 +9,12 @@ pub async fn send_graphql_query(
     query: &str,
     client_id: &ClientId,
     auth_token: Option<&AuthToken>,
+    user_agent: &str,
 ) -> Result<serde_json::Value, TracingError> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .user_agent(user_agent)
+        .build()
+        .unwrap_or_default();
     let res = client
         .post(GQL_URL)
         .header("Client-ID", client_id.value())

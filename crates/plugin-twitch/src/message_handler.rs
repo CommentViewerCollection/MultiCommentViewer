@@ -85,6 +85,7 @@ pub(crate) async fn on_message_impl(
                 &input_extra.url,
                 username,
                 auth_token,
+                plugin.user_agent.clone(),
             );
         }
         MessageType::Disconnect => {
@@ -114,7 +115,7 @@ pub(crate) async fn on_message_impl(
                 .map(|c| c.value.clone());
 
             if let Some(token) = auth_token {
-                match twitch_lib::auth_token::validate_token(&token).await {
+                match twitch_lib::auth_token::validate_token(&token, &plugin.user_agent).await {
                     Ok(info) => {
                         tracing::debug!(
                             target: "mcv::plugin-twitch",

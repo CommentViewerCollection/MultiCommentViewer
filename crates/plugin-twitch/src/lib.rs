@@ -19,8 +19,8 @@ use std::{collections::HashMap, sync::Arc};
 use connection::Connection;
 use mcv_common::SiteId;
 use mcv_messages::{
-    AddSitePayload, Message as McvMessage, MessageDestination, MessageSource, MessageType,
-    PluginHelloPayload, PluginId,
+    AddSitePayload, GetUserAgentAckPayload, GetUserAgentPayload, Message as McvMessage,
+    MessageDestination, MessageSource, MessageType, PluginHelloPayload, PluginId,
 };
 use message_handler::on_message_impl;
 use plugin_abi_helper::v3::prelude::*;
@@ -32,6 +32,7 @@ struct TwitchPlugin {
     logical_plugin_id: PluginId, //現在の実装ではplugin-helloは1回しか送らないから1つで良い。
     is_initialized: bool,
     connections: HashMap<Uuid, Connection>,
+    user_agent: String,
 }
 impl TwitchPlugin {
     pub fn initialize(&mut self, logical_plugin_id: PluginId) {
@@ -113,6 +114,34 @@ impl PluginImplV3Async for TwitchPlugin {
         };
         self.send_plugin_hello(ctx.clone(), hello_payload, self.logical_plugin_id.clone())
             .await;
+
+        // Coreにカスタムユーザーエージェントを問い合わせる
+        let get_ua_msg = McvMessage::new_request(
+            MessageType::GetUserAgent,
+            MessageSource::Plugin {
+                plugin_id: self.logical_plugin_id.clone(),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(GetUserAgentPayload {}).unwrap(),
+        );
+        match ctx
+            .send_request(get_ua_msg, std::time::Duration::from_secs(10))
+            .await
+        {
+            Ok(response) if response.message_type == MessageType::GetUserAgentAck => {
+                if let Ok(payload) =
+                    serde_json::from_value::<GetUserAgentAckPayload>(response.payload)
+                {
+                    self.user_agent = payload.user_agent;
+                }
+            }
+            _ => {
+                tracing::warn!(
+                    target: "mcv::plugin-twitch",
+                    "GetUserAgent request failed, using empty user agent"
+                );
+            }
+        }
 
         let add_site = AddSitePayload {
             site_id: SiteId::new("Twitch", "f3c2a1d7-6e4b-4f8c-9a21-5d7b3e2c9f64"),

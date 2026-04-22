@@ -13,7 +13,7 @@ pub(crate) async fn check_for_updates() -> Result<Option<McvUpdateInfo>, String>
     const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
     tracing::info!(current_version = CURRENT_VERSION, "Checking for updates");
 
-    let updater = UpdateChecker::new(crate::API_BASE_URL);
+    let updater = UpdateChecker::new(crate::API_BASE_URL, crate::get_user_agent());
     match updater.check_mcv_update(CURRENT_VERSION).await {
         Ok(update_info) => {
             if let Some(ref info) = update_info {
@@ -43,7 +43,7 @@ pub(crate) async fn get_current_version() -> Result<String, String> {
 /// 配布サーバーのプラグイン一覧を取得
 #[tauri::command]
 pub(crate) async fn list_registry_plugins() -> Result<Vec<PluginListItem>, String> {
-    let updater = UpdateChecker::new(crate::API_BASE_URL);
+    let updater = UpdateChecker::new(crate::API_BASE_URL, crate::get_user_agent());
     updater
         .list_plugins()
         .await
@@ -57,7 +57,7 @@ pub(crate) async fn download_core_update(
     channel: String,
     sha256: String,
 ) -> Result<String, String> {
-    let updater = UpdateChecker::new(crate::API_BASE_URL);
+    let updater = UpdateChecker::new(crate::API_BASE_URL, crate::get_user_agent());
     let temp_dir = std::env::temp_dir().join("mcv-updater");
     std::fs::create_dir_all(&temp_dir)
         .map_err(|e| format!("Failed to create temp directory: {}", e))?;

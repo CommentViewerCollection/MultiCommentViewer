@@ -1,0 +1,19 @@
+[package]
+name = "twicas-lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+reqwest = { version = "0.12", features = ["json", "multipart", "cookies"] }
+sha2 = "0.10"
+hex = "0.4"
+url = "*"
+scraper = "0.25.0"
+html-escape = "*"
+thiserror = { workspace = true }
+urlencoding = "2"
+tracing = { workspace = true }

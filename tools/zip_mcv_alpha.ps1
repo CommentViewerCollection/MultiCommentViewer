@@ -1,0 +1,14 @@
+cargo xtask dist --channel alpha `
+    --plugin bouyomi `
+    --plugin chrome-cookie `
+    --plugin firefox-cookie `
+    --plugin cookies-txt `
+    --plugin exe-manager-v3 `
+    --plugin twitch `
+    --plugin twicas `
+    --plugin youtubelive `
+    --plugin dummy `
+    --plugin sample-v3 `
+    --plugin exe-plugin-sample `
+    --plugin kick `
+    --plugin whowatch

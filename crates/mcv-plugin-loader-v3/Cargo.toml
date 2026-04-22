@@ -1,0 +1,15 @@
+[package]
+name = "mcv-plugin-loader-v3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+plugin-abi-helper = { path = "../plugin-abi-helper" }
+libloading = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+[features]
+alpha = ["plugin-abi-helper/alpha"]
+beta = ["plugin-abi-helper/beta"]
+stable = ["plugin-abi-helper/stable"]

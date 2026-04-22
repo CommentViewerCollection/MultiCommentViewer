@@ -1,0 +1,9 @@
+[package]
+name = "twicas-secret-extractor"
+version = "0.1.0"
+edition = "2021"
+description = "TwitCasting PlayerPage2.js から x-web-authorizekey 生成に使う SECRET を抽出するライブラリ"
+
+[dependencies]
+reqwest = { version = "0.12", features = ["blocking"] }
+regex = { workspace = true }

@@ -1,0 +1,288 @@
+use crate::manifest::{ManifestError, PluginManifest};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::process::{Child, Command};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ProcessManagerError {
+    #[error("Manifest error: {0}")]
+    Manifest(#[from] ManifestError),
+
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Process spawn error: {0}")]
+    SpawnError(String),
+}
+
+/// プロセス管理
+pub struct ProcessManager {
+    websocket_port: u16,
+    processes: HashMap<String, PluginProcess>, // plugin_id -> PluginProcess
+    manifests: Vec<(PathBuf, PluginManifest)>, // (manifest_dir, manifest)
+    plugins_dir: PathBuf,
+}
+
+/// EXEプラグインのプロセス情報
+struct PluginProcess {
+    #[allow(dead_code)]
+    manifest: PluginManifest,
+    #[allow(dead_code)]
+    manifest_dir: PathBuf,
+    child: Option<Child>,
+    #[allow(dead_code)]
+    restart_count: u32,
+    #[allow(dead_code)]
+    auto_started: bool, // 自動起動されたプラグインかどうか
+}
+
+impl ProcessManager {
+    /// 新しいプロセスマネージャーを作成
+    pub async fn new(
+        websocket_port: u16,
+        plugins_dir: PathBuf,
+    ) -> Result<Self, ProcessManagerError> {
+        tracing::info!(
+            target: "mcv::plugin_exe_manager",
+            websocket_port = websocket_port,
+            "ProcessManager::new called"
+        );
+
+        let mut manager = Self {
+            websocket_port,
+            processes: HashMap::new(),
+            manifests: Vec::new(),
+            plugins_dir,
+        };
+
+        // pluginsディレクトリをスキャン
+        manager.scan_plugins_directory().await?;
+
+        // 検出したプラグインを自動起動
+        manager.start_auto_plugins().await?;
+
+        Ok(manager)
+    }
+
+    /// pluginsディレクトリをスキャンしてplugin.jsonを検出
+    async fn scan_plugins_directory(&mut self) -> Result<(), ProcessManagerError> {
+        let plugins_dir = self.plugins_dir.clone();
+        tracing::trace!(target: "mcv::plugin_exe_manager", "Plugins directory path: {}", plugins_dir.display());
+        tracing::info!(target: "mcv::plugin_exe_manager", plugins_dir = %plugins_dir.display(), "Scanning plugins directory");
+
+        if !plugins_dir.exists() {
+            tracing::warn!(
+                target: "mcv::plugin_exe_manager",
+                "Plugins directory does not exist, creating it"
+            );
+            std::fs::create_dir_all(&plugins_dir)?;
+            return Ok(());
+        }
+
+        // pluginsディレクトリ内のサブディレクトリを走査
+        for entry in std::fs::read_dir(&plugins_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if !path.is_dir() {
+                continue;
+            }
+
+            // plugin.jsonを検索
+            let manifest_path = path.join("plugin.json");
+            if manifest_path.exists() {
+                match PluginManifest::load(&manifest_path) {
+                    Ok(manifest) => {
+                        let plugin_name = manifest.get_plugin_name();
+                        let plugin_id = manifest.get_plugin_id(&path);
+                        tracing::info!(
+                            target: "mcv::plugin_exe_manager",
+                            plugin_name = %plugin_name,
+                            plugin_id = %plugin_id,
+                            manifest_path = %manifest_path.display(),
+                            "Found plugin manifest"
+                        );
+                        self.manifests.push((path, manifest));
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            target: "mcv::plugin_exe_manager",
+                            manifest_path = %manifest_path.display(),
+                            error = %e,
+                            "Failed to load manifest"
+                        );
+                    }
+                }
+            }
+        }
+
+        tracing::info!(target: "mcv::plugin_exe_manager", targetcount = self.manifests.len(), "Plugins scanned");
+
+        Ok(())
+    }
+
+    /// 検出したプラグインを自動起動
+    async fn start_auto_plugins(&mut self) -> Result<(), ProcessManagerError> {
+        // 借用エラーを避けるためにclone
+        let manifests_clone = self.manifests.clone();
+
+        for (manifest_dir, manifest) in manifests_clone {
+            let plugin_name = manifest.get_plugin_name();
+            let plugin_id = manifest.get_plugin_id(&manifest_dir);
+
+            tracing::info!(
+                target: "mcv::plugin_exe_manager",
+                plugin_name = %plugin_name,
+                plugin_id = %plugin_id,
+                "Starting auto plugin"
+            );
+
+            match self.start_plugin(&manifest_dir, &manifest, true).await {
+                Ok(_) => {
+                    tracing::info!(
+                        target: "mcv::plugin_exe_manager",
+                        plugin_name = %plugin_name,
+                        plugin_id = %plugin_id,
+                        "Plugin started"
+                    );
+                }
+                Err(e) => {
+                    tracing::error!(
+                        target: "mcv::plugin_exe_manager",
+                        plugin_name = %plugin_name,
+                        plugin_id = %plugin_id,
+                        error = %e,
+                        "Failed to start plugin"
+                    );
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// プラグインを起動
+    async fn start_plugin(
+        &mut self,
+        manifest_dir: &Path,
+        manifest: &PluginManifest,
+        auto_started: bool,
+    ) -> Result<(), ProcessManagerError> {
+        let exe_path = manifest.get_executable_path(manifest_dir);
+        let working_dir = manifest.get_working_directory(manifest_dir);
+
+        // .exe 以外のファイル（DLL など）はEXEプラグインマネージャーの対象外
+        let is_exe = exe_path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("exe"))
+            .unwrap_or(false);
+        if !is_exe {
+            tracing::debug!(
+                target: "mcv::plugin_exe_manager",
+                exe_path = %exe_path.display(),
+                ".exe 以外のファイルは EXE プラグインマネージャー対象外のためスキップ"
+            );
+            return Ok(());
+        }
+
+        // 実行ファイルの存在チェック
+        if !exe_path.exists() {
+            return Err(ProcessManagerError::SpawnError(format!(
+                "Executable not found: {}",
+                exe_path.display()
+            )));
+        }
+
+        tracing::debug!(
+            target: "mcv::plugin_exe_manager",
+            exe_path = %exe_path.display(),
+            working_dir = %working_dir.display(),
+            "Starting plugin process"
+        );
+
+        // プロセスを起動
+        let mut cmd = Command::new(&exe_path);
+        cmd.current_dir(&working_dir);
+        cmd.env("MCV_WEBSOCKET_PORT", self.websocket_port.to_string());
+        cmd.env(
+            "MCV_WEBSOCKET_URL",
+            format!("ws://127.0.0.1:{}", self.websocket_port),
+        );
+
+        let child = cmd.spawn().map_err(|e| {
+            ProcessManagerError::SpawnError(format!("Failed to spawn process: {}", e))
+        })?;
+
+        let plugin_id = manifest.get_plugin_id(manifest_dir);
+
+        tracing::info!(
+                target: "mcv::plugin_exe_manager",
+            plugin_id = %plugin_id,
+            pid = child.id(),
+            "Plugin process started"
+        );
+
+        let plugin_process = PluginProcess {
+            manifest: manifest.clone(),
+            manifest_dir: manifest_dir.to_path_buf(),
+            child: Some(child),
+            restart_count: 0,
+            auto_started,
+        };
+
+        self.processes.insert(plugin_id, plugin_process);
+
+        Ok(())
+    }
+
+    /// プラグインをシャットダウン
+    pub async fn shutdown(&mut self) -> Result<(), ProcessManagerError> {
+        tracing::info!(
+            target: "mcv::plugin_exe_manager",
+            "ProcessManager::shutdown called"
+        );
+
+        // すべてのプロセスを終了
+        for (plugin_id, mut process) in self.processes.drain() {
+            tracing::info!(target: "mcv::plugin_exe_manager", plugin_id = %plugin_id, "Stopping plugin process");
+            if let Some(mut child) = process.child.take() {
+                // グレースフルシャットダウン（TODO: シグナル送信）
+                match child.kill() {
+                    Ok(_) => {
+                        // プロセスの終了を待つ
+                        match child.wait() {
+                            Ok(status) => {
+                                tracing::info!(
+                                    target: "mcv::plugin_exe_manager",
+                                    plugin_id = %plugin_id,
+                                    exit_code = ?status.code(),
+                                    "Plugin process stopped"
+                                );
+                            }
+                            Err(e) => {
+                                tracing::error!(
+                                    target: "mcv::plugin_exe_manager",
+                                    plugin_id = %plugin_id,
+                                    error = %e,
+                                    "Failed to wait for plugin process"
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            target: "mcv::plugin_exe_manager",
+                            plugin_id = %plugin_id,
+                            error = %e,
+                            "Failed to kill plugin process"
+                        );
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+}

@@ -1,0 +1,26 @@
+[package]
+name = "plugin-chrome-cookie"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+alpha = ["mcv-plugin-telemetry/alpha", "plugin-abi-helper/alpha"]
+beta = ["mcv-plugin-telemetry/beta", "plugin-abi-helper/beta"]
+stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
+
+[dependencies]
+mcv-common = { path = "../../crates/mcv-common" }
+mcv-messages = { path = "../../crates/mcv-messages" }
+mcv-plugin-interface = { path = "../../crates/mcv-plugin-interface" }
+chromium-cookie-lib = { path = "../../crates/chromium-cookie-lib" }
+async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true, features = ["v5"] }
+tokio = { workspace = true }
+mcv-plugin-telemetry = { path = "../../crates/mcv-plugin-telemetry" }
+tracing = { workspace = true }
+plugin-abi-helper = { path = "../../crates/plugin-abi-helper" }

@@ -1,0 +1,22 @@
+[package]
+name = "plugin-bouyomi"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+mcv-messages = { path = "../../crates/mcv-messages" }
+plugin-abi-helper = { path = "../plugin-abi-helper" }
+async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+tokio = { workspace = true }
+
+[features]
+alpha = []
+beta = []
+stable = []

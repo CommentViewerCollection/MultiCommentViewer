@@ -1,0 +1,25 @@
+[package]
+name = "youtube-live-lib-getcomments"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "youtube-live-lib-getcomments"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+reqwest = { version = "0.11", features = ["json", "gzip", "stream", "deflate"] }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+mcv-log-core = { path = "../../crates/mcv-log-core" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+youtube-live-lib = { path = "../../crates/youtube-live-lib" }
+clap = { version = "4.0", features = ["derive"] }
+
+[features]
+alpha = ["mcv-log-core/alpha", "youtube-live-lib/alpha"]
+beta = ["mcv-log-core/beta", "youtube-live-lib/beta"]
+stable = ["mcv-log-core/stable", "youtube-live-lib/stable"]

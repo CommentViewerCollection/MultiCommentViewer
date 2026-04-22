@@ -1,0 +1,1047 @@
+use anyhow::{bail, Result};
+use cargo_metadata::MetadataCommand;
+use clap::{Args, Parser, Subcommand};
+use std::collections::BTreeMap;
+use std::fs;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::time::SystemTime;
+use zip::write::SimpleFileOptions;
+use zip::{CompressionMethod, ZipWriter};
+
+// =========================================================
+// CLI 定義
+// =========================================================
+
+#[derive(Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// ワークスペース全体をビルドする（フロントエンド変更検知 + Tauri ビルド含む）
+    Build(BuildArgs),
+    /// デバッグビルドしてローカルにインストールする
+    Install(InstallArgs),
+    /// 単一プラグインをリリースビルドして ZIP 化する
+    Pack(PackArgs),
+    /// apps/mcv と指定プラグインをリリースビルドして配布用 ZIP を生成する
+    Dist(DistArgs),
+}
+
+#[derive(Args)]
+struct BuildArgs {
+    /// リリースビルド（省略時はデバッグビルド）
+    #[arg(long)]
+    release: bool,
+}
+
+#[derive(Args)]
+struct InstallArgs {
+    /// インストール先ディレクトリ
+    #[arg(long)]
+    dir: PathBuf,
+
+    /// リリースビルド（省略時はデバッグビルド）
+    #[arg(long)]
+    release: bool,
+
+    /// 配布チャンネル
+    #[arg(long, default_value = "alpha", value_parser = ["stable", "beta", "alpha"])]
+    channel: String,
+
+    /// インストールするプラグインの ID（複数指定可、plugins.json に定義）
+    #[arg(long = "plugin")]
+    plugins: Vec<String>,
+}
+
+#[derive(Args)]
+struct PackArgs {
+    /// プラグイン ID（plugins.json に定義）
+    #[arg(long)]
+    plugin: String,
+
+    /// 配布チャンネル
+    #[arg(long, default_value = "alpha", value_parser = ["stable", "beta", "alpha"])]
+    channel: String,
+}
+
+#[derive(Args)]
+struct DistArgs {
+    /// 配布チャンネル
+    #[arg(long, default_value = "alpha", value_parser = ["stable", "beta", "alpha"])]
+    channel: String,
+
+    /// 対象プラグイン ID（省略時は plugins.json の全プラグイン）
+    #[arg(long = "plugin")]
+    plugins: Vec<String>,
+}
+
+// =========================================================
+// plugins.json
+// =========================================================
+
+#[derive(serde::Deserialize, Clone)]
+struct PluginInfo {
+    /// Cargo.toml があるディレクトリ（ワークスペースルートからの相対パス）
+    path: String,
+    id: String,
+    name: String,
+    description: String,
+    entry: String,
+    has_channel_feature: bool,
+}
+
+fn read_plugins_json() -> Result<Vec<PluginInfo>> {
+    let path = Path::new("tools/plugins.json");
+    let content = fs::read_to_string(path)
+        .map_err(|e| anyhow::anyhow!("tools/plugins.json を読み込めません: {}", e))?;
+    let plugins: Vec<PluginInfo> = serde_json::from_str(&content)
+        .map_err(|e| anyhow::anyhow!("tools/plugins.json のパースに失敗しました: {}", e))?;
+    Ok(plugins)
+}
+
+fn find_plugin<'a>(plugins: &'a [PluginInfo], id: &str) -> Result<&'a PluginInfo> {
+    plugins
+        .iter()
+        .find(|p| p.id == id)
+        .ok_or_else(|| anyhow::anyhow!("plugins.json にプラグイン '{}' が見つかりません", id))
+}
+
+/// entry が .exe かどうかを判定する（EXE プラグインは DLL と扱いが異なる）
+fn is_exe(info: &PluginInfo) -> bool {
+    info.entry.ends_with(".exe")
+}
+
+// =========================================================
+// エントリポイント
+// =========================================================
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+    match cli.command {
+        Commands::Build(args) => build(args),
+        Commands::Install(args) => install(args),
+        Commands::Pack(args) => pack(args),
+        Commands::Dist(args) => dist(args),
+    }
+}
+
+// =========================================================
+// build コマンド
+// =========================================================
+
+fn build(args: BuildArgs) -> Result<()> {
+    let profile = if args.release { "release" } else { "debug" };
+    build_non_tauri(profile)?;
+    build_tauri(profile, None)?;
+    Ok(())
+}
+
+// =========================================================
+// install コマンド
+// =========================================================
+
+fn install(args: InstallArgs) -> Result<()> {
+    let channel = args.channel.as_str();
+    let profile = if args.release { "release" } else { "debug" };
+    let target_dir = PathBuf::from(format!("target/{}", profile));
+
+    // mcv 本体のみをビルド（Tauri）
+    let mcv_manifest_dir = PathBuf::from("apps/mcv/src-tauri");
+    println!(
+        "== Build MultiCommentViewer (channel: {}, profile: {}) ==",
+        channel, profile
+    );
+    build_tauri_app(&mcv_manifest_dir, profile, Some(channel), true)?;
+
+    let plugins = read_plugins_json()?;
+
+    // 指定プラグインをビルドしてデプロイ
+    for plugin_id in &args.plugins {
+        let info = find_plugin(&plugins, plugin_id)?;
+        println!("== Install plugin: {} ==", info.id);
+
+        // プラグイン個別ビルド（指定されたもののみ）
+        if is_exe(info) {
+            build_tauri_app(
+                Path::new(&info.path),
+                profile,
+                if info.has_channel_feature {
+                    Some(channel)
+                } else {
+                    None
+                },
+                false,
+            )?;
+        } else {
+            let mut cmd = Command::new("cargo");
+            cmd.arg("build")
+                .arg("--manifest-path")
+                .arg(format!("{}/Cargo.toml", info.path));
+            if args.release {
+                cmd.arg("--release");
+            }
+            if info.has_channel_feature {
+                cmd.arg("--features").arg(channel);
+            }
+            run(cmd)?;
+        }
+
+        // {dir}/plugins/{id}/ にデプロイ
+        let dest_dir = args.dir.join("plugins").join(&info.id);
+        fs::create_dir_all(&dest_dir)?;
+
+        let src = target_dir.join(&info.entry);
+        if !src.exists() {
+            bail!("{} が見つかりません", src.display());
+        }
+        fs::copy(&src, dest_dir.join(&info.entry))?;
+
+        // PDB のコピー（DLL のみ）
+        if !is_exe(info) {
+            let pdb_name = info.entry.replace(".dll", ".pdb");
+            let pdb_src = target_dir.join(&pdb_name);
+            if pdb_src.exists() {
+                fs::copy(&pdb_src, dest_dir.join(&pdb_name))?;
+            }
+        }
+
+        // 新形式 plugin.json (id 付き)
+        let version = get_crate_version(&info.path).unwrap_or_else(|_| "0.0.0".to_string());
+        write_plugin_json_v2(&dest_dir, info, &version, channel)?;
+        println!("  -> {:?}", dest_dir);
+    }
+
+    // mcv 本体 (MultiCommentViewer.exe) をコピー
+    let exe_src = target_dir.join("MultiCommentViewer.exe");
+    if exe_src.exists() {
+        fs::copy(&exe_src, args.dir.join("MultiCommentViewer.exe"))?;
+        println!("  -> {:?}", args.dir.join("MultiCommentViewer.exe"));
+    }
+
+    println!("Done: install to {:?}", args.dir);
+    Ok(())
+}
+
+// =========================================================
+// pack コマンド
+// =========================================================
+
+fn pack(args: PackArgs) -> Result<()> {
+    let plugins = read_plugins_json()?;
+    let info = find_plugin(&plugins, &args.plugin)?;
+    pack_plugin(info, &args.channel)?;
+    Ok(())
+}
+
+/// 単一プラグインをリリースビルドして ZIP 化し、output/ に出力する。
+/// ZIP パスを返す。
+fn pack_plugin(info: &PluginInfo, channel: &str) -> Result<PathBuf> {
+    println!("== Pack plugin: {} (channel: {}) ==", info.id, channel);
+
+    // リリースビルド
+    // EXE プラグイン（Tauri アプリ等）は cargo xtask build --release で別途ビルド済みを前提とする
+    if !is_exe(info) {
+        let mut cmd = Command::new("cargo");
+        cmd.arg("build")
+            .arg("--manifest-path")
+            .arg(format!("{}/Cargo.toml", info.path))
+            .arg("--release");
+        if info.has_channel_feature {
+            cmd.arg("--features").arg(channel);
+        }
+        run(cmd)?;
+    }
+
+    // バージョン取得
+    let version = get_crate_version(&info.path)?;
+
+    // ステージングディレクトリ
+    let output_dir = PathBuf::from("output");
+    fs::create_dir_all(&output_dir)?;
+    let work_dir = output_dir.join(format!("{}-{}-{}", info.id, version, channel));
+    if work_dir.exists() {
+        fs::remove_dir_all(&work_dir)?;
+    }
+    fs::create_dir_all(&work_dir)?;
+
+    // エントリファイルをコピー
+    let target_release = PathBuf::from("target/release");
+    let entry_src = target_release.join(&info.entry);
+    if !entry_src.exists() {
+        if is_exe(info) {
+            bail!(
+                "{} が見つかりません（先に cargo xtask build --release を実行してください）",
+                entry_src.display()
+            );
+        } else {
+            bail!("{} が見つかりません", entry_src.display());
+        }
+    }
+    fs::copy(&entry_src, work_dir.join(&info.entry))?;
+
+    // PDB のコピー（DLL のみ）
+    if !is_exe(info) {
+        let pdb_name = info.entry.replace(".dll", ".pdb");
+        let pdb_src = target_release.join(&pdb_name);
+        if pdb_src.exists() {
+            fs::copy(&pdb_src, work_dir.join(&pdb_name))?;
+        }
+    }
+
+    // 新形式 plugin.json
+    write_plugin_json_v2(&work_dir, info, &version, channel)?;
+
+    // ZIP 化
+    let zip_path = output_dir.join(format!("{}-{}-{}.zip", info.id, version, channel));
+    if zip_path.exists() {
+        fs::remove_file(&zip_path)?;
+    }
+    create_zip_from_dir(&work_dir, &zip_path)?;
+    fs::remove_dir_all(&work_dir)?;
+
+    println!("Done: {}", zip_path.display());
+    Ok(zip_path)
+}
+
+// =========================================================
+// dist コマンド
+// =========================================================
+
+fn dist(args: DistArgs) -> Result<()> {
+    let all_plugins = read_plugins_json()?;
+
+    // 対象プラグインを解決（指定なし = 全プラグイン）
+    let target_plugins: Vec<&PluginInfo> = if args.plugins.is_empty() {
+        all_plugins.iter().collect()
+    } else {
+        args.plugins
+            .iter()
+            .map(|id| find_plugin(&all_plugins, id))
+            .collect::<Result<Vec<_>>>()?
+    };
+
+    let channel = args.channel.as_str();
+
+    // フロントエンドビルド
+    let mcv_manifest_dir = PathBuf::from("apps/mcv/src-tauri");
+    build_frontend_if_needed(&mcv_manifest_dir, Some(channel))?;
+
+    // mcv 本体リリースビルド
+    println!("== Build MultiCommentViewer (channel: {}) ==", channel);
+    let mut build_mcv = Command::new("cargo");
+    build_mcv
+        .arg("build")
+        .arg("--manifest-path")
+        .arg("apps/mcv/src-tauri/Cargo.toml")
+        .arg("--release")
+        .arg("--features")
+        .arg(channel);
+    run(build_mcv)?;
+
+    // mcv バージョン取得
+    let mcv_version = get_crate_version("apps/mcv/src-tauri")?;
+
+    // 各プラグインをビルドして ZIP 化
+    let mut plugin_zips: Vec<PathBuf> = Vec::new();
+    for info in &target_plugins {
+        let zip_path = pack_plugin(info, channel)?;
+        plugin_zips.push(zip_path);
+    }
+
+    // ステージングディレクトリ
+    let bundle_name = format!("MultiCommentViewer_v{}_{}", mcv_version, channel);
+    let output_dir = PathBuf::from("output");
+    let stage_dir = output_dir.join(&bundle_name);
+    let zip_path = output_dir.join(format!("{}.zip", bundle_name));
+
+    if stage_dir.exists() {
+        fs::remove_dir_all(&stage_dir)?;
+    }
+    fs::create_dir_all(stage_dir.join("plugins"))?;
+
+    // mcv 本体コピー
+    let target_release = PathBuf::from("target/release");
+    let exe_src = target_release.join("MultiCommentViewer.exe");
+    if !exe_src.exists() {
+        bail!("{} が見つかりません", exe_src.display());
+    }
+    fs::copy(&exe_src, stage_dir.join("MultiCommentViewer.exe"))?;
+
+    let pdb_src = target_release.join("MultiCommentViewer.pdb");
+    if pdb_src.exists() {
+        fs::copy(&pdb_src, stage_dir.join("MultiCommentViewer.pdb"))?;
+    }
+
+    // プラグイン ZIP を plugins/ にコピー
+    for zip in &plugin_zips {
+        let dest = stage_dir.join("plugins").join(zip.file_name().unwrap());
+        fs::copy(zip, &dest)?;
+        println!("  + plugins/{}", zip.file_name().unwrap().to_string_lossy());
+    }
+
+    // THIRD_PARTY_LICENSES を生成してステージングディレクトリに配置
+    generate_licenses(&stage_dir)?;
+
+    // 最終 ZIP 化
+    println!("== Creating final ZIP ==");
+    if zip_path.exists() {
+        fs::remove_file(&zip_path)?;
+    }
+    create_zip_from_dir(&stage_dir, &zip_path)?;
+    fs::remove_dir_all(&stage_dir)?;
+
+    println!("Done: {}", zip_path.display());
+    Ok(())
+}
+
+// =========================================================
+// ユーティリティ
+// =========================================================
+
+/// Cargo.toml の feature implies 関係を解析し、指定 channel が直接 implies する
+/// 純粋な feature 名（"crate/feature" や "dep:crate" 形式を除く）を返す。
+///
+/// 例: `alpha = ["comment-search", "mcv-log-core/alpha"]` の場合、
+/// `"comment-search"` のみを返す（`"mcv-log-core/alpha"` はスキップ）。
+fn channel_implied_features(manifest_dir: &Path, channel: &str) -> Result<Vec<String>> {
+    let abs_manifest = fs::canonicalize(manifest_dir.join("Cargo.toml"))
+        .map_err(|e| anyhow::anyhow!("Cargo.toml が見つかりません '{:?}': {}", manifest_dir, e))?;
+
+    let metadata = MetadataCommand::new().manifest_path(&abs_manifest).exec()?;
+
+    let pkg = metadata
+        .packages
+        .iter()
+        .find(|p| {
+            fs::canonicalize(p.manifest_path.as_std_path())
+                .map(|mp| mp == abs_manifest)
+                .unwrap_or(false)
+        })
+        .ok_or_else(|| anyhow::anyhow!("パッケージが見つかりません: {:?}", manifest_dir))?;
+
+    let features = pkg
+        .features
+        .get(channel)
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        // "crate/feature" や "dep:crate" 形式を除外し、純粋な feature 名のみ対象とする
+        .filter(|f| !f.contains('/') && !f.contains(':'))
+        .collect();
+
+    Ok(features)
+}
+
+/// Cargo.toml のパスからクレートのバージョンを取得する
+fn get_crate_version(path: &str) -> Result<String> {
+    let abs_manifest = fs::canonicalize(PathBuf::from(path).join("Cargo.toml"))
+        .map_err(|e| anyhow::anyhow!("マニフェストが見つかりません '{}': {}", path, e))?;
+    let metadata = MetadataCommand::new().exec()?;
+    metadata
+        .packages
+        .iter()
+        .find(|p| {
+            fs::canonicalize(p.manifest_path.as_std_path())
+                .map(|mp| mp == abs_manifest)
+                .unwrap_or(false)
+        })
+        .map(|p| p.version.to_string())
+        .ok_or_else(|| anyhow::anyhow!("パス '{}' のクレートが見つかりません", path))
+}
+
+/// 新形式 plugin.json を書く（id, name, description, version, channel, entry）
+fn write_plugin_json_v2(
+    dest: &Path,
+    plugin: &PluginInfo,
+    version: &str,
+    channel: &str,
+) -> Result<()> {
+    let manifest = serde_json::json!({
+        "id":          plugin.id,
+        "name":        plugin.name,
+        "description": plugin.description,
+        "version":     version,
+        "channel":     channel,
+        "entry":       plugin.entry,
+    });
+    let json = serde_json::to_string_pretty(&manifest)?;
+    fs::write(dest.join("plugin.json"), json + "\n")?;
+    Ok(())
+}
+
+fn build_non_tauri(profile: &str) -> Result<()> {
+    println!("== Non-Tauri build ({}) ==", profile);
+
+    // Tauri アプリは cargo tauri build で別途ビルドするため除外する。
+    let metadata = MetadataCommand::new().exec()?;
+    let tauri_packages: Vec<String> = metadata
+        .packages
+        .iter()
+        .filter(|pkg| tauri_project_dir(pkg).is_some())
+        .map(|pkg| pkg.name.clone())
+        .collect();
+
+    let mut cmd = Command::new("cargo");
+    cmd.arg("build")
+        .arg("--workspace")
+        .arg("--exclude")
+        .arg("xtask");
+
+    for tauri_pkg in &tauri_packages {
+        cmd.arg("--exclude").arg(tauri_pkg);
+    }
+
+    if profile == "release" {
+        cmd.arg("--release");
+    }
+
+    run(cmd)
+}
+
+fn build_tauri(profile: &str, channel: Option<&str>) -> Result<()> {
+    let metadata = MetadataCommand::new().exec()?;
+
+    for pkg in metadata.packages {
+        if let Some(manifest_dir) = tauri_project_dir(&pkg) {
+            println!("== Tauri build: {} ==", pkg.name);
+
+            build_frontend_if_needed(&manifest_dir, channel)?;
+
+            if !should_build_tauri(&pkg, &manifest_dir, profile) {
+                continue;
+            }
+
+            let mut cmd = Command::new("cargo");
+            cmd.arg("tauri").arg("build");
+
+            if profile == "debug" {
+                cmd.arg("--debug");
+            }
+            if let Some(ch) = channel {
+                cmd.arg("--features").arg(ch);
+                cmd.env("MCV_CHANNEL", ch);
+            }
+
+            cmd.current_dir(&manifest_dir);
+            run(cmd)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn build_tauri_app(
+    manifest_dir: &Path,
+    profile: &str,
+    channel: Option<&str>,
+    build_frontend: bool,
+) -> Result<()> {
+    if build_frontend {
+        build_frontend_if_needed(manifest_dir, channel)?;
+    }
+
+    let mut cmd = Command::new("cargo");
+    cmd.arg("tauri").arg("build");
+    if profile == "debug" {
+        cmd.arg("--debug");
+    }
+    if let Some(ch) = channel {
+        cmd.arg("--features").arg(ch);
+        cmd.env("MCV_CHANNEL", ch);
+    }
+    cmd.current_dir(manifest_dir);
+    run(cmd)
+}
+
+/// フロントエンドの依存関係・ソースを確認し、必要に応じて npm install / npm run build を実行する
+fn build_frontend_if_needed(manifest_dir: &Path, channel: Option<&str>) -> Result<()> {
+    // manifest_dir = apps/mcv/src-tauri/  →  parent = apps/mcv/
+    let frontend_dir = match manifest_dir.parent() {
+        Some(p) => p,
+        None => return Ok(()),
+    };
+
+    // ① npm install が必要か判定
+    let installed_marker = frontend_dir.join("node_modules/.package-lock.json");
+    let installed_mtime = latest_mtime(&installed_marker);
+
+    let dep_files: Vec<PathBuf> = vec![
+        frontend_dir.join("package.json"),
+        frontend_dir.join("package-lock.json"),
+    ];
+    let needs_install = match installed_mtime {
+        None => true,
+        Some(installed) => dep_files
+            .iter()
+            .any(|p| latest_mtime(p).map(|m| m > installed).unwrap_or(false)),
+    };
+
+    if needs_install {
+        println!("  依存関係に変更あり → npm install を実行");
+        run_npm_install(frontend_dir)?;
+    }
+
+    // ② npm run build が必要か判定
+    let dist_dir = frontend_dir.join("dist");
+    let dist_mtime = match latest_mtime(&dist_dir) {
+        Some(m) => m,
+        None => {
+            println!("  フロントエンド: dist/ が存在しないため npm run build を実行");
+            return run_npm_build(frontend_dir, manifest_dir, channel);
+        }
+    };
+
+    let src_paths: Vec<PathBuf> = vec![
+        frontend_dir.join("src"),
+        frontend_dir.join("index.html"),
+        frontend_dir.join("vite.config.ts"),
+        frontend_dir.join("package.json"),
+        frontend_dir.join("tailwind.config.js"),
+        frontend_dir.join("tsconfig.json"),
+        // ワークスペースのローカルパッケージ（my-dataview 等）の変更も検知する
+        PathBuf::from("packages"),
+    ];
+
+    let needs_build = src_paths
+        .iter()
+        .any(|p| latest_mtime(p).map(|m| m > dist_mtime).unwrap_or(false));
+
+    if needs_build {
+        println!("  フロントエンドに変更あり → npm run build を実行");
+        run_npm_build(frontend_dir, manifest_dir, channel)?;
+    } else {
+        println!("  フロントエンド: 変更なし (スキップ)");
+    }
+
+    Ok(())
+}
+
+fn run_npm_install(dir: &Path) -> Result<()> {
+    let mut cmd = npm_command();
+    cmd.arg("install");
+    cmd.current_dir(dir);
+    run(cmd)
+}
+
+fn run_npm_build(dir: &Path, manifest_dir: &Path, channel: Option<&str>) -> Result<()> {
+    let mut cmd = npm_command();
+    cmd.arg("run").arg("build");
+    cmd.current_dir(dir);
+    if let Some(ch) = channel {
+        cmd.env("MCV_CHANNEL", ch);
+        // Cargo.toml の feature implies 関係を解析して CARGO_FEATURE_* 環境変数を自動設定
+        for feature in channel_implied_features(manifest_dir, ch)? {
+            let env_key = format!("CARGO_FEATURE_{}", feature.to_uppercase().replace('-', "_"));
+            cmd.env(env_key, "1");
+        }
+    }
+    run(cmd)
+}
+
+/// Windows では `cmd /C npm`、それ以外では `npm` を返す
+fn npm_command() -> Command {
+    if cfg!(windows) {
+        let mut cmd = Command::new("cmd");
+        cmd.args(["/C", "npm"]);
+        cmd
+    } else {
+        Command::new("npm")
+    }
+}
+
+/// ソースの最新更新日時と出力 exe の更新日時を比較し、ビルドが必要かどうかを返す
+fn should_build_tauri(pkg: &cargo_metadata::Package, manifest_dir: &Path, profile: &str) -> bool {
+    let exe_path = PathBuf::from("target")
+        .join(profile)
+        .join(format!("{}.exe", pkg.name));
+
+    let exe_mtime = match fs::metadata(&exe_path) {
+        Ok(m) => m.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+        Err(_) => return true,
+    };
+
+    let watch_paths: Vec<PathBuf> = vec![
+        manifest_dir.join("src"),
+        manifest_dir.join("tauri.conf.json"),
+        manifest_dir.join("Cargo.toml"),
+        manifest_dir.parent().unwrap().join("dist"),
+    ];
+
+    for path in &watch_paths {
+        if let Some(mtime) = latest_mtime(path) {
+            if mtime > exe_mtime {
+                return true;
+            }
+        }
+    }
+
+    println!("  (skipped: no changes)");
+    false
+}
+
+/// ディレクトリまたはファイルの最新更新日時を再帰的に取得する
+fn latest_mtime(path: &Path) -> Option<SystemTime> {
+    if path.is_file() {
+        return fs::metadata(path).ok()?.modified().ok();
+    }
+    if path.is_dir() {
+        return fs::read_dir(path)
+            .ok()?
+            .filter_map(|e| e.ok())
+            .filter_map(|e| latest_mtime(&e.path()))
+            .max();
+    }
+    None
+}
+
+fn tauri_project_dir(pkg: &cargo_metadata::Package) -> Option<PathBuf> {
+    let manifest_dir = pkg.manifest_path.parent()?;
+
+    let candidates = ["tauri.conf.json", "tauri.conf.json5", "Tauri.toml"];
+
+    for file in candidates {
+        if manifest_dir.join(file).exists() {
+            return Some(manifest_dir.to_path_buf().into());
+        }
+    }
+
+    None
+}
+
+fn create_zip_from_dir(src_dir: &Path, zip_path: &Path) -> Result<()> {
+    let zip_file = fs::File::create(zip_path)?;
+    let mut zip = ZipWriter::new(zip_file);
+    let options = SimpleFileOptions::default()
+        .compression_method(CompressionMethod::Deflated)
+        .compression_level(Some(9));
+
+    add_dir_to_zip(&mut zip, src_dir, src_dir, options)?;
+    zip.finish()?;
+    Ok(())
+}
+
+fn add_dir_to_zip(
+    zip: &mut ZipWriter<fs::File>,
+    root: &Path,
+    current: &Path,
+    options: SimpleFileOptions,
+) -> Result<()> {
+    for entry in fs::read_dir(current)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            add_dir_to_zip(zip, root, &path, options)?;
+            continue;
+        }
+
+        let rel = path.strip_prefix(root)?;
+        let rel_name = rel.to_string_lossy().replace('\\', "/");
+        zip.start_file(rel_name, options)?;
+
+        let mut f = fs::File::open(&path)?;
+        let mut buffer = Vec::new();
+        f.read_to_end(&mut buffer)?;
+        zip.write_all(&buffer)?;
+    }
+    Ok(())
+}
+
+// =========================================================
+// ライセンス生成
+// =========================================================
+
+struct PackageWithCopyright {
+    name: String,
+    version: String,
+    copyright: Option<String>,
+}
+
+struct LicenseGroup {
+    display_name: String,
+    text: String,
+    packages: Vec<PackageWithCopyright>,
+}
+
+/// Rust クレートと npm パッケージのライセンス情報をマージして
+/// stage_dir/THIRD_PARTY_LICENSES.txt に書き出す。
+/// cargo-about が未インストールの場合はエラーで終了する。
+fn generate_licenses(stage_dir: &Path) -> Result<()> {
+    println!("== Generating THIRD_PARTY_LICENSES ==");
+
+    // cargo about が利用可能か確認
+    let available = Command::new("cargo")
+        .args(["about", "--version"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if !available {
+        bail!("cargo-about が未インストールです。\n  インストール: cargo install cargo-about");
+    }
+
+    let data_template = PathBuf::from("tools/about-data.hbs");
+    if !data_template.exists() {
+        bail!("tools/about-data.hbs が見つかりません");
+    }
+
+    // cargo about でライセンスデータを一時ファイルに生成
+    let tmp_path = stage_dir.join("_about_tmp.txt");
+    let status = Command::new("cargo")
+        .args([
+            "about",
+            "generate",
+            "--workspace",
+            "-o",
+            tmp_path.to_str().unwrap(),
+            data_template.to_str().unwrap(),
+        ])
+        .status()?;
+    if !status.success() {
+        bail!("cargo about generate に失敗しました");
+    }
+
+    let about_output = fs::read_to_string(&tmp_path)?;
+    fs::remove_file(&tmp_path)?;
+
+    // Rust ライセンスをパース
+    let mut groups: BTreeMap<String, LicenseGroup> = BTreeMap::new();
+    collect_rust_licenses(&about_output, &mut groups);
+
+    // npm ライセンスを追加
+    if let Err(e) = collect_npm_licenses_grouped(&mut groups) {
+        println!("  警告: npm ライセンス収集に失敗しました: {}", e);
+    }
+
+    // 出力フォーマットして書き出し
+    let output = format_license_output(&groups);
+    let output_path = stage_dir.join("THIRD_PARTY_LICENSES.txt");
+    fs::write(&output_path, output)?;
+
+    println!("  -> {}", output_path.display());
+    Ok(())
+}
+
+/// cargo-about がパース用テンプレートで生成した出力から、ライセンスグループを収集する。
+fn collect_rust_licenses(data: &str, groups: &mut BTreeMap<String, LicenseGroup>) {
+    let mut current_id: Option<String> = None;
+    let mut current_name: Option<String> = None;
+    let mut current_packages: Vec<PackageWithCopyright> = Vec::new();
+    let mut in_text = false;
+    let mut text_buf = String::new();
+
+    for line in data.lines() {
+        if let Some(id) = line.strip_prefix("MCV_LICENSE_ID=") {
+            current_id = Some(id.to_string());
+        } else if let Some(name) = line.strip_prefix("MCV_LICENSE_NAME=") {
+            current_name = Some(name.to_string());
+        } else if let Some(pkg) = line.strip_prefix("MCV_PACKAGE=") {
+            let mut parts = pkg.splitn(2, '\t');
+            let name = parts.next().unwrap_or("").to_string();
+            let version = parts.next().unwrap_or("").to_string();
+            current_packages.push(PackageWithCopyright {
+                name,
+                version,
+                copyright: None,
+            });
+        } else if line.trim() == "MCV_LICENSE_TEXT_START" {
+            in_text = true;
+        } else if line.trim() == "MCV_LICENSE_TEXT_END" {
+            in_text = false;
+            if let (Some(id), Some(name)) = (current_id.take(), current_name.take()) {
+                let clean_text = strip_copyright_lines(&text_buf);
+                let group = groups.entry(id).or_insert_with(|| LicenseGroup {
+                    display_name: name,
+                    text: clean_text.clone(),
+                    packages: Vec::new(),
+                });
+                if group.text.trim().is_empty() {
+                    group.text = clean_text;
+                }
+                group.packages.extend(current_packages.drain(..));
+            }
+            text_buf.clear();
+        } else if in_text {
+            text_buf.push_str(line);
+            text_buf.push('\n');
+        }
+    }
+}
+
+/// apps/mcv/node_modules の npm パッケージのライセンス情報を groups に追加する。
+fn collect_npm_licenses_grouped(groups: &mut BTreeMap<String, LicenseGroup>) -> Result<()> {
+    let node_modules = PathBuf::from("apps/mcv/node_modules");
+    if !node_modules.exists() {
+        return Ok(());
+    }
+
+    let mut entries: Vec<(String, String, String, Option<String>)> = Vec::new();
+    collect_npm_from_dir(&node_modules, &mut entries)?;
+
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+    entries.dedup_by(|a, b| a.0 == b.0);
+
+    for (name, version, license_id, text) in entries {
+        let copyrights = text
+            .as_deref()
+            .map(extract_copyright_lines)
+            .unwrap_or_default();
+        let copyright = if copyrights.is_empty() {
+            None
+        } else {
+            Some(copyrights.join("  "))
+        };
+        let clean_text = text
+            .as_deref()
+            .map(strip_copyright_lines)
+            .unwrap_or_default();
+
+        let group = groups
+            .entry(license_id.clone())
+            .or_insert_with(|| LicenseGroup {
+                display_name: license_id.clone(),
+                text: clean_text.clone(),
+                packages: Vec::new(),
+            });
+        if group.text.trim().is_empty() && !clean_text.trim().is_empty() {
+            group.text = clean_text;
+        }
+        group.packages.push(PackageWithCopyright {
+            name,
+            version,
+            copyright,
+        });
+    }
+    Ok(())
+}
+
+/// ライセンスグループをフォーマットして文字列として返す。
+fn format_license_output(groups: &BTreeMap<String, LicenseGroup>) -> String {
+    let mut result = String::new();
+    result.push_str("THIRD-PARTY LICENSES\n");
+    result.push_str("====================\n\n");
+    result.push_str("This application uses the following open source packages.\n\n");
+
+    for group in groups.values() {
+        result.push_str(
+            "================================================================================\n",
+        );
+        result.push_str(&group.display_name);
+        result.push_str("\n\n");
+
+        let text = group.text.trim();
+        if !text.is_empty() {
+            result.push_str(text);
+            result.push_str("\n\n");
+        }
+
+        for pkg in &group.packages {
+            if let Some(c) = &pkg.copyright {
+                result.push_str(&format!("  {} {}  {}\n", pkg.name, pkg.version, c));
+            } else {
+                result.push_str(&format!("  {} {}\n", pkg.name, pkg.version));
+            }
+        }
+        result.push('\n');
+    }
+
+    result
+}
+
+/// テキストから著作権表示行を抽出する。
+fn extract_copyright_lines(text: &str) -> Vec<String> {
+    text.lines()
+        .filter(|line| {
+            let l = line.trim().to_lowercase();
+            l.starts_with("copyright") || line.contains('©')
+        })
+        .map(|l| l.trim().to_string())
+        .collect()
+}
+
+/// テキストから著作権表示行を除去した本文を返す。
+fn strip_copyright_lines(text: &str) -> String {
+    text.lines()
+        .filter(|line| {
+            let l = line.trim().to_lowercase();
+            !l.starts_with("copyright") && !line.contains('©')
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn collect_npm_from_dir(
+    dir: &Path,
+    entries: &mut Vec<(String, String, String, Option<String>)>,
+) -> Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+
+        let dir_name = entry.file_name().to_string_lossy().to_string();
+
+        if dir_name.starts_with('@') {
+            // スコープパッケージ (@org/pkg) — 1 段階だけ再帰
+            for sub in fs::read_dir(&path)? {
+                let sub = sub?;
+                let sub_path = sub.path();
+                if sub_path.is_dir() {
+                    let full_name = format!("{}/{}", dir_name, sub.file_name().to_string_lossy());
+                    if let Some(info) = read_npm_pkg(&sub_path, &full_name) {
+                        entries.push(info);
+                    }
+                }
+            }
+        } else {
+            if let Some(info) = read_npm_pkg(&path, &dir_name) {
+                entries.push(info);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// package.json を読み取り (name, version, license, license_text) を返す。
+fn read_npm_pkg(dir: &Path, name: &str) -> Option<(String, String, String, Option<String>)> {
+    let content = fs::read_to_string(dir.join("package.json")).ok()?;
+    let pkg: serde_json::Value = serde_json::from_str(&content).ok()?;
+
+    let version = pkg.get("version")?.as_str()?.to_string();
+    let license = pkg
+        .get("license")
+        .and_then(|l| l.as_str())
+        .unwrap_or("Unknown")
+        .to_string();
+
+    // よく使われるライセンスファイル名を優先順で検索
+    let license_text = [
+        "LICENSE",
+        "LICENSE.md",
+        "LICENSE.txt",
+        "License",
+        "License.md",
+        "licence",
+        "licence.md",
+        "license",
+        "license.md",
+        "license.txt",
+    ]
+    .iter()
+    .find_map(|f| fs::read_to_string(dir.join(f)).ok());
+
+    Some((name.to_string(), version, license, license_text))
+}
+
+fn run(mut cmd: Command) -> Result<()> {
+    let status = cmd.status()?;
+    if !status.success() {
+        bail!("Command failed");
+    }
+    Ok(())
+}

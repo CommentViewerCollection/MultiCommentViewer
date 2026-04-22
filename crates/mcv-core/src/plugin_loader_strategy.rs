@@ -1,0 +1,335 @@
+use actix::prelude::*;
+use async_trait::async_trait;
+use mcv_common::PhysicalPluginId;
+use mcv_plugin_loader::{PluginLoader, PluginLoaderError};
+use mcv_plugin_loader_v3::PluginLoaderV3;
+use plugin_abi_helper::abi::v3::PluginV3;
+use std::path::Path;
+use std::sync::Arc;
+
+use crate::core_actor::CoreActor;
+use crate::plugin_host_actor::PhysicalPluginHostActor;
+use crate::plugin_host_actor_v3::PhysicalPluginHostActorV3;
+
+/// プラグインHost Actorのアドレス（バージョン別）
+#[derive(Debug, Clone)]
+pub enum PluginHostAddr {
+    V2(Addr<PhysicalPluginHostActor>),
+    V3(Addr<PhysicalPluginHostActorV3>),
+    /// テスト専用バリアント。SendMessageToPlugin を受信できる任意のアクターを指定する。
+    #[cfg(test)]
+    Test(actix::Recipient<crate::plugin_host_actor::SendMessageToPlugin>),
+}
+
+impl PluginHostAddr {
+    /// メッセージを送信（do_send）
+    pub fn do_send<M>(&self, msg: M)
+    where
+        M: actix::Message + Send + 'static,
+        M::Result: Send,
+        PhysicalPluginHostActor: actix::Handler<M>,
+        PhysicalPluginHostActorV3: actix::Handler<M>,
+    {
+        match self {
+            PluginHostAddr::V2(addr) => addr.do_send(msg),
+            PluginHostAddr::V3(addr) => addr.do_send(msg),
+            #[cfg(test)]
+            PluginHostAddr::Test(_) => {
+                panic!("Test variant: use send_plugin_message instead of do_send");
+            }
+        }
+    }
+
+    /// プラグインに SendMessageToPlugin を送信する（型特化版）。
+    ///
+    /// `do_send` の代わりにこちらを使うことで、テスト用の `Test` バリアントもサポートできる。
+    pub(crate) fn send_plugin_message(&self, msg: crate::plugin_host_actor::SendMessageToPlugin) {
+        match self {
+            PluginHostAddr::V2(addr) => addr.do_send(msg),
+            PluginHostAddr::V3(addr) => addr.do_send(msg),
+            #[cfg(test)]
+            PluginHostAddr::Test(recipient) => {
+                let _ = recipient.do_send(msg);
+            }
+        }
+    }
+
+    /// メッセージを送信（send）
+    pub async fn send<M>(&self, msg: M) -> Result<M::Result, actix::MailboxError>
+    where
+        M: actix::Message + Send + 'static,
+        M::Result: Send,
+        PhysicalPluginHostActor: actix::Handler<M>,
+        PhysicalPluginHostActorV3: actix::Handler<M>,
+    {
+        match self {
+            PluginHostAddr::V2(addr) => addr.send(msg).await,
+            PluginHostAddr::V3(addr) => addr.send(msg).await,
+            #[cfg(test)]
+            PluginHostAddr::Test(_) => {
+                panic!("Test variant does not support async send");
+            }
+        }
+    }
+}
+
+/// プラグインロード後の情報
+#[derive(Debug)]
+pub struct LoadedPluginInfo {
+    pub physical_plugin_id: PhysicalPluginId,
+    pub abi_version: u32,
+    pub host_addr: PluginHostAddr,
+    pub plugin_name: Option<String>,
+}
+
+/// プラグインローダーの戦略インターフェース
+#[async_trait]
+pub trait PluginLoaderStrategy: Send + Sync {
+    /// ABI バージョン番号
+    fn abi_version(&self) -> u32;
+
+    /// DLL がこのバージョンに対応しているか確認
+    fn can_load(&self, dll_path: &Path) -> bool;
+
+    /// プラグインをロード
+    async fn load_plugin(
+        &self,
+        dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
+        core_addr: Addr<CoreActor>,
+    ) -> Result<LoadedPluginInfo, PluginLoaderError>;
+}
+
+/// プラグインローダーのレジストリ
+pub struct PluginLoaderRegistry {
+    strategies: Vec<Box<dyn PluginLoaderStrategy>>,
+}
+
+impl PluginLoaderRegistry {
+    /// 新しいレジストリを作成
+    pub fn new() -> Self {
+        Self {
+            strategies: Vec::new(),
+        }
+    }
+
+    /// 戦略を登録
+    pub fn register(&mut self, strategy: Box<dyn PluginLoaderStrategy>) {
+        self.strategies.push(strategy);
+    }
+
+    /// プラグインをロード（バージョン自動検出）
+    pub async fn load_plugin(
+        &self,
+        dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
+        core_addr: Addr<CoreActor>,
+    ) -> Result<LoadedPluginInfo, PluginLoaderError> {
+        // .exe ファイルは EXE プラグインマネージャーが扱うため DLL ローダーではスキップ
+        if dll_path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("exe"))
+            .unwrap_or(false)
+        {
+            tracing::debug!(
+                target: "mcv::core::PluginLoaderRegistry",
+                dll_path = %dll_path.display(),
+                ".exe は DLL ローダー対象外のためスキップ"
+            );
+            return Err(PluginLoaderError::NotApplicable);
+        }
+
+        // 各戦略を試す（最後に登録されたものから = 新しいバージョン優先）
+        for strategy in self.strategies.iter().rev() {
+            if strategy.can_load(dll_path) {
+                tracing::debug!(
+                    target: "mcv::core::PluginLoaderRegistry",
+                    abi_version = strategy.abi_version(),
+                    dll_path = %dll_path.display(),
+                    "Detected plugin ABI version"
+                );
+                return strategy
+                    .load_plugin(dll_path, physical_plugin_id, core_addr)
+                    .await;
+            }
+        }
+
+        tracing::error!(
+            target: "mcv::core::PluginLoaderRegistry",
+            dll_path = %dll_path.display(),
+            "No compatible loader strategy found for plugin"
+        );
+        Err(PluginLoaderError::UnsupportedAbiVersion)
+    }
+}
+
+impl Default for PluginLoaderRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// V2プラグインローダー戦略
+pub struct V2LoaderStrategy;
+
+#[async_trait]
+impl PluginLoaderStrategy for V2LoaderStrategy {
+    fn abi_version(&self) -> u32 {
+        2
+    }
+
+    fn can_load(&self, dll_path: &Path) -> bool {
+        // v2のシンボル（plugin_init）をチェック
+        use libloading::{Library, Symbol};
+
+        let lib: Library = match unsafe { Library::new(dll_path) } {
+            Ok(lib) => lib,
+            Err(_) => return false,
+        };
+
+        // plugin_init シンボルが存在するか確認
+        unsafe {
+            lib.get::<Symbol<'_, unsafe extern "C" fn() -> i32>>(b"plugin_init\0")
+                .is_ok()
+        }
+    }
+
+    async fn load_plugin(
+        &self,
+        dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
+        core_addr: Addr<CoreActor>,
+    ) -> Result<LoadedPluginInfo, PluginLoaderError> {
+        // 既存のコードを再利用
+        let plugin_loader = PluginLoader::load(dll_path)?;
+        plugin_loader.validate_plugin_exports()?;
+
+        // プラグイン名をDLLファイル名から取得
+        let plugin_name = dll_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| s.to_string());
+
+        tracing::info!(
+            target: "mcv::core::V2LoaderStrategy",
+            physical_plugin_id = %physical_plugin_id,
+            plugin_name = ?plugin_name,
+            "Loading v2 plugin"
+        );
+
+        let mut host_actor =
+            PhysicalPluginHostActor::new_from_dll(physical_plugin_id.clone(), plugin_loader);
+        host_actor.set_core_addr(core_addr);
+
+        let host_addr = host_actor.start();
+
+        Ok(LoadedPluginInfo {
+            physical_plugin_id,
+            abi_version: 2,
+            host_addr: PluginHostAddr::V2(host_addr),
+            plugin_name,
+        })
+    }
+}
+
+/// V3プラグインローダー戦略
+pub struct V3LoaderStrategy;
+
+#[async_trait]
+impl PluginLoaderStrategy for V3LoaderStrategy {
+    fn abi_version(&self) -> u32 {
+        3
+    }
+
+    fn can_load(&self, dll_path: &Path) -> bool {
+        // v3のシンボル（create_plugin_v3）をチェック
+        use libloading::{Library, Symbol};
+
+        let lib: Library = match unsafe { Library::new(dll_path) } {
+            Ok(lib) => lib,
+            Err(_) => return false,
+        };
+
+        // create_plugin_v3 シンボルが存在するか確認
+        unsafe {
+            lib.get::<Symbol<'_, unsafe extern "C" fn() -> *mut PluginV3>>(b"create_plugin_v3\0")
+                .is_ok()
+        }
+    }
+
+    async fn load_plugin(
+        &self,
+        dll_path: &Path,
+        physical_plugin_id: PhysicalPluginId,
+        core_addr: Addr<CoreActor>,
+    ) -> Result<LoadedPluginInfo, PluginLoaderError> {
+        // v3プラグインをロード
+        let plugin_loader_v3 = PluginLoaderV3::load(dll_path)
+            .map_err(|e| PluginLoaderError::LoadFailed(e.to_string()))?;
+
+        // V3 プロトコル用 plugin_id は PhysicalPluginId とは独立して生成する UUID
+        let plugin_id = uuid::Uuid::new_v4();
+
+        // プラグイン名をDLLファイル名から取得
+        let plugin_name = dll_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| s.to_string());
+
+        tracing::info!(
+            target: "mcv::core::V3LoaderStrategy",
+            physical_plugin_id = %physical_plugin_id,
+            plugin_id = %plugin_id,
+            plugin_name = ?plugin_name,
+            "Loading v3 plugin"
+        );
+
+        let host_actor = PhysicalPluginHostActorV3::new(
+            physical_plugin_id.clone(),
+            plugin_id,
+            #[allow(clippy::arc_with_non_send_sync)]
+            Arc::new(plugin_loader_v3),
+            Some(core_addr),
+        );
+
+        let host_addr = host_actor.start();
+
+        Ok(LoadedPluginInfo {
+            physical_plugin_id,
+            abi_version: 3,
+            host_addr: PluginHostAddr::V3(host_addr),
+            plugin_name,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_registry_creation() {
+        let registry = PluginLoaderRegistry::new();
+        assert_eq!(registry.strategies.len(), 0);
+    }
+
+    #[test]
+    fn test_registry_registration() {
+        let mut registry = PluginLoaderRegistry::new();
+        registry.register(Box::new(V2LoaderStrategy));
+        assert_eq!(registry.strategies.len(), 1);
+    }
+
+    #[test]
+    fn test_v2_strategy_abi_version() {
+        let strategy = V2LoaderStrategy;
+        assert_eq!(strategy.abi_version(), 2);
+    }
+
+    #[test]
+    fn test_v3_strategy_abi_version() {
+        let strategy = V3LoaderStrategy;
+        assert_eq!(strategy.abi_version(), 3);
+    }
+}

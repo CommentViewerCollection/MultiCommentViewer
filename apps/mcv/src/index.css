@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* カラーピッカーのブラウザデフォルトスタイルを除去 */
+input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  padding: 2px;
+  background: transparent;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+input[type="color"]:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ============================================================
+   テーマ共通 CSS変数ルール
+   applyThemeColors() が --theme-* 変数を全テーマに設定する
+   ============================================================ */
+
+/* SettingsScreen の RJSF フォームフィールド */
+.rjsf input[type="text"],
+.rjsf input[type="number"],
+.rjsf input[type="email"],
+.rjsf select,
+.rjsf textarea {
+  background-color: var(--theme-bg-input) !important;
+  border: 1px solid var(--theme-border) !important;
+  color: var(--theme-text-main) !important;
+}
+
+.rjsf .field-object > fieldset {
+  border: 1px solid var(--theme-border) !important;
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.rjsf .site-color-item {
+  border: 1px solid var(--theme-border) !important;
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.rjsf .site-color-item-title {
+  border-bottom: 1px solid var(--theme-border) !important;
+}

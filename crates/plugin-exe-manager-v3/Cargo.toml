@@ -1,0 +1,49 @@
+[package]
+name = "plugin-exe-manager-v3"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Core dependencies
+mcv-plugin-interface = { path = "../mcv-plugin-interface" }
+mcv-messages = { path = "../mcv-messages" }
+mcv-plugin-telemetry = { path = "../mcv-plugin-telemetry" }
+plugin-abi-helper = { path = "../plugin-abi-helper" }
+export-plugin-v3-macros = { path = "../export-plugin-v3-macros" }
+
+# Async runtime
+tokio = { workspace = true }
+tokio-tungstenite = "0.26"
+futures-util = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# UUID
+uuid = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Async trait
+async-trait = { workspace = true }
+
+# File watching (optional for now)
+# notify = "7.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.14"
+
+[features]
+alpha = ["mcv-plugin-telemetry/alpha","plugin-abi-helper/alpha"]
+beta = ["mcv-plugin-telemetry/beta","plugin-abi-helper/beta"]
+stable = ["mcv-plugin-telemetry/stable","plugin-abi-helper/stable"]

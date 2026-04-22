@@ -1,0 +1,28 @@
+[package]
+name = "plugin-abi-helper"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+mcv-common = { path = "../mcv-common" }
+mcv-messages = { path = "../mcv-messages" }
+mcv-plugin-interface = { path = "../mcv-plugin-interface" }
+mcv-plugin-loader = { path = "../mcv-plugin-loader" }
+export-plugin-v3-macros = {path = "../export-plugin-v3-macros"}
+actix = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+once_cell = { workspace = true }
+libc = { workspace = true }
+
+[features]
+alpha = []
+beta = []
+stable = []
+

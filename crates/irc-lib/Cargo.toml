@@ -1,0 +1,12 @@
+[package]
+name = "irc-lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true }
+native-tls = "0.2"
+tokio-native-tls = "0.3"
+thiserror = { workspace = true }
+tracing = { workspace = true }
+serde_json = { workspace = true }

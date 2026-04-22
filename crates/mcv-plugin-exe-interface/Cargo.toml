@@ -1,0 +1,34 @@
+[package]
+name = "mcv-plugin-exe-interface"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Core dependencies
+mcv-messages = { path = "../mcv-messages" }
+
+# Async runtime
+tokio = { workspace = true }
+tokio-tungstenite = "0.26"
+
+# WebSocket
+tungstenite = "0.26"
+futures-util = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# UUID
+uuid = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"

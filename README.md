@@ -1,32 +1,120 @@
-# MultiCommentViewer
-### 概要
-ニコ生、YouTubeライブ、Twitchなど複数サイトのコメントを同時に一つのウィンドウに表示することのできるコメビュです。  
-![MultiCommentViewr](https://raw.githubusercontent.com/wiki/CommentViewerCollection/MultiCommentViewer/images/mcv.png)
+# MultiCommentViewer (mcv)
 
-### 追加機能の要望、不具合報告大歓迎！
-まだまだ完成には程遠く、実装できていない機能、不具合等がたくさんあります。  
-もし何か気づいたことがあったら[Twitter](https://twitter.com/kv510k)かGithubの[issue](https://github.com/CommentViewerCollection/MultiCommentViewer/issues/new)やプルリクエストで教えていただけると助かります。どんなに小さなことでも構いません。  
+複数の配信サイトのコメントを同時に取得・表示できるコメントビューアアプリケーション。
 
-### 使い方
-- ダウンロードからコメントを表示できるようにするまで→[導入手順](https://github.com/CommentViewerCollection/MultiCommentViewer/wiki/導入手順)
-- 各種機能の使い方→[機能説明](https://github.com/CommentViewerCollection/MultiCommentViewer/wiki/機能説明)
+## 現在の実装状況
 
-### 実装状況
-xは未実装、空欄は未確認  
+このMVP（最小実行可能製品）版では、以下の機能を実装しています:
 
-||ニコ生|YouTube|OPENREC|ふわっち|Twitch|Twicas|Mirrativ|
-|----|----|----|----|----|----|----|----|
-|NGユーザ||||||||
-|コメントコピー||||||||
-|URLを開く||||||||
-|コメント投稿||||||||
-|初コメフォント||||||||
-|@コテハン||||||||
-|未ログインでコメント取得||||||||
-|経過時間|x|||||||
-|視聴者数|x|○||||||
-|総視聴者数|x|||||||
-|アクティブ|x|x|x|x|x|x|x|
-|184非表示||||||||
-|コメント投稿時刻||○||||||
-|コメント投稿経過時間||||||||
+- **Core機能**: プラグイン管理、メッセージング、コメント統合表示
+- **Plugin-Host**: actixベースのプラグイン隔離実行環境
+- **ダミープラグイン**: ランダムにコメントを生成する動作確認用プラグイン
+- **Tauri + React UI**: 接続コントロールとコメント表示
+
+## 必要な環境
+
+- Rust 1.70以上
+- Node.js 18以上
+- npm または yarn
+
+## セットアップ
+
+### 1. プロジェクトのクローン
+
+```bash
+cd C:\Users\ryu\Downloads\mcv
+```
+
+### 2. 依存関係のインストール
+
+#### Rust依存関係
+プロジェクトルートで:
+```bash
+cargo build
+```
+
+#### フロントエンド依存関係
+```bash
+cd apps/mcv
+npm install
+```
+
+## 開発モードで実行
+
+```bash
+cd apps/mcv
+npm run tauri dev
+```
+
+これにより、以下が実行されます:
+1. Reactアプリケーションが起動（ホットリロード有効）
+2. Tauriアプリケーションが起動
+3. ダミープラグインが自動的に登録される
+
+## 使い方
+
+1. アプリケーションが起動したら、「接続」ボタンをクリック
+2. 1-5秒間隔でランダムにコメントが生成されて表示される
+3. 「切断」ボタンでコメント生成を停止
+
+## プロジェクト構成
+
+```
+mcv/
+├── Cargo.toml              # Rust Workspace設定
+├── .gitignore
+├── docs/
+│   └── specifications.md   # 仕様書
+├── crates/                 # Rustクレート群
+│   ├── mcv-messages/      # メッセージ型定義
+│   ├── mcv-common/        # 共通ユーティリティ
+│   ├── mcv-plugin-interface/  # プラグインインターフェース定義
+│   └── mcv-core/          # Core機能
+├── apps/
+│   └── mcv/               # Tauriアプリケーション
+│       ├── src-tauri/     # Rustバックエンド
+│       └── src/           # Reactフロントエンド
+└── packages/              # プラグイン置き場
+    └── plugin-dummy/      # ダミーコメント生成プラグイン
+```
+
+## 技術スタック
+
+- **フロントエンド**: Tauri 2.x + React + TypeScript + Vite + Tailwind CSS
+- **バックエンド**: Rust + actix（Actor model） + Tauri
+- **メッセージング**: actixメッセージパッシング、JSON（serde_json）
+- **非同期ランタイム**: tokio
+
+## トラブルシューティング
+
+### ビルドエラー
+
+Rustのバージョンが古い場合、以下でアップデートしてください:
+```bash
+rustup update
+```
+
+### フロントエンドエラー
+
+node_modulesを削除して再インストール:
+```bash
+cd apps/mcv
+rm -rf node_modules
+npm install
+```
+
+## 今後の実装予定
+
+- 実配信サイトプラグイン（YouTube Live、ツイキャス、ニコ生等）
+- ブラウザ管理・Cookie取得機能
+- 複雑なinput UI（URL入力、パスワード入力フォーム）
+- プラグイン動的ロード
+- コメント投稿機能
+- 棒読みちゃん連携
+- コメント遅延表示
+- プラグイン配布サイト
+- インストーラ/アップデータ
+
+## ライセンス
+
+未定

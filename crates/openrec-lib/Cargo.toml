@@ -1,0 +1,13 @@
+[package]
+name = "openrec-lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+regex = { workspace = true }
+rquest = { version = "1.5" }
+tokio = { workspace = true }
+tracing = { workspace = true }

@@ -1,0 +1,31 @@
+[package]
+name = "plugin-youtube-live"
+version = "0.1.1"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+alpha = ["mcv-plugin-telemetry/alpha", "plugin-abi-helper/alpha"]
+beta = ["mcv-plugin-telemetry/beta", "plugin-abi-helper/beta"]
+stable = ["mcv-plugin-telemetry/stable", "plugin-abi-helper/stable"]
+
+[dependencies]
+async-trait = { workspace = true }
+chrono = { workspace = true }
+mcv-common = { path = "../mcv-common" }
+mcv-messages = { path = "../mcv-messages" }
+mcv-plugin-telemetry = { path = "../mcv-plugin-telemetry" }
+once_cell = { workspace = true }
+plugin-abi-helper = { path = "../plugin-abi-helper" }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+youtube-live-lib = { path = "../youtube-live-lib" }
+
+[dev-dependencies]
+tokio = { workspace = true }

@@ -1,0 +1,27 @@
+[package]
+name = "youtube-live-lib"
+version = "0.1.1"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+reqwest = { version = "0.11", features = ["json", "gzip", "stream", "deflate"] }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+futures = "0.3"
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+log = "0.4"
+env_logger = "0.11"
+uuid = { workspace = true }
+chrono = { workspace = true }
+mcv-plugin-telemetry = { path = "../mcv-plugin-telemetry" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+sha1 = "0.10"
+
+[features]
+alpha = ["mcv-plugin-telemetry/alpha"]
+beta = ["mcv-plugin-telemetry/beta"]
+stable = ["mcv-plugin-telemetry/stable"]

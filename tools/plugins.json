@@ -1,0 +1,130 @@
+[
+  {
+    "path": "crates/plugin-bouyomi",
+    "id": "bouyomi",
+    "name": "棒読みちゃん連携",
+    "description": "棒読みちゃんとの連携プラグインです",
+    "entry": "plugin_bouyomi.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-chrome-cookie",
+    "id": "chrome-cookie",
+    "name": "Chromeクッキー取得",
+    "description": "Chromeのクッキーを取得するプラグインです",
+    "entry": "plugin_chrome_cookie.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-firefox-cookie",
+    "id": "firefox-cookie",
+    "name": "Firefoxクッキー取得",
+    "description": "Firefoxのクッキーを取得するプラグインです",
+    "entry": "plugin_firefox_cookie.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-cookies-txt",
+    "id": "cookies-txt",
+    "name": "cookies.txt",
+    "description": "cookies.txtからcookieを取得するプラグインです",
+    "entry": "plugin_cookies_txt.dll",
+    "has_channel_feature": false
+  },
+  {
+    "path": "crates/plugin-exe-manager-v3",
+    "id": "exe-manager-v3",
+    "name": "EXEプラグインマネージャー v3",
+    "description": "EXEプラグインを管理するプラグインです",
+    "entry": "plugin_exe_manager_v3.dll",
+    "has_channel_feature": false
+  },
+  {
+    "path": "crates/plugin-twicas",
+    "id": "twicas",
+    "name": "ツイキャス",
+    "description": "ツイキャスのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_twicas.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-twitch",
+    "id": "twitch",
+    "name": "Twitch",
+    "description": "Twitchのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_twitch.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-youtube-live",
+    "id": "youtubelive",
+    "name": "YouTubeLive",
+    "description": "YouTubeLiveのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_youtube_live.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-dummy",
+    "id": "dummy",
+    "name": "ダミープラグイン",
+    "description": "テスト・開発用のダミープラグインです",
+    "entry": "plugin_dummy.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-sample-v3",
+    "id": "sample-v3",
+    "name": "サンプルプラグイン v3",
+    "description": "v3 API のサンプルプラグインです",
+    "entry": "plugin_sample_v3.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "apps/exe-plugin-sample/src-tauri",
+    "id": "exe-plugin-sample",
+    "name": "EXEプラグインサンプル",
+    "description": "EXEプラグインのデバッグ・開発用サンプルツールです",
+    "entry": "exe-plugin-sample.exe",
+    "has_channel_feature": false
+  },
+  {
+    "path": "crates/plugin-kick",
+    "id": "kick",
+    "name": "Kick",
+    "description": "Kickのコメント取得・投稿をするプラグインです",
+    "entry": "plugin_kick.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-nicolive",
+    "id": "nicolive",
+    "name": "ニコ生",
+    "description": "ニコ生のコメント取得・投稿をするプラグインです",
+    "entry": "plugin_nicolive.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-irc",
+    "id": "irc",
+    "name": "IRC",
+    "description": "IRC サーバーのコメント取得をするプラグインです",
+    "entry": "plugin_irc.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-openrec",
+    "id": "openrec",
+    "name": "OPENREC.tv",
+    "description": "OPENREC.tv のコメント取得をするプラグインです",
+    "entry": "plugin_openrec.dll",
+    "has_channel_feature": true
+  },
+  {
+    "path": "crates/plugin-whowatch",
+    "id": "whowatch",
+    "name": "ふわっち",
+    "description": "ふわっちのコメント取得をするプラグインです",
+    "entry": "plugin_whowatch.dll",
+    "has_channel_feature": true
+  }
+]

@@ -1,0 +1,1480 @@
+use async_trait::async_trait;
+use mcv_messages::*;
+use mcv_plugin_interface::{Plugin, PluginError, PluginHost};
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use tokio::time::{sleep, Duration};
+use uuid::Uuid;
+
+/// DummyPlugin の設定
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DummyPluginSettings {
+    /// デフォルトコメント生成間隔（秒）
+    pub default_interval: u64,
+    /// ランダムな名前を使用するか
+    pub use_random_names: bool,
+    /// デバッグモード
+    pub enable_debug: bool,
+    /// 高度な設定
+    pub advanced_settings: AdvancedSettings,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedSettings {
+    /// 高度な設定を有効にする
+    pub enabled: bool,
+    /// カスタムプレフィックス（有効時のみ）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_prefix: Option<String>,
+}
+
+impl Default for DummyPluginSettings {
+    fn default() -> Self {
+        Self {
+            default_interval: 0,
+            use_random_names: true,
+            enable_debug: false,
+            advanced_settings: AdvancedSettings {
+                enabled: false,
+                custom_prefix: None,
+            },
+        }
+    }
+}
+
+/// ダミープラグイン
+///
+/// ランダムにコメントを生成するテスト用プラグイン
+pub struct DummyPlugin {
+    plugin_id: Uuid,
+    // 複数の接続を管理するためのHashMap
+    connections: HashMap<Uuid, Arc<AtomicBool>>,
+    // コメント生成間隔（connection_id -> 秒数）
+    comment_rates: HashMap<Uuid, Arc<tokio::sync::RwLock<u64>>>,
+    // 一時停止フラグ（connection_id -> paused）
+    paused: HashMap<Uuid, Arc<AtomicBool>>,
+    // 設定
+    settings: Arc<tokio::sync::RwLock<DummyPluginSettings>>,
+}
+
+impl DummyPlugin {
+    /// 新しいダミープラグインを作成
+    pub fn new() -> Self {
+        Self::with_plugin_id(Uuid::new_v4())
+    }
+
+    /// plugin_idを指定してダミープラグインを作成
+    pub fn with_plugin_id(plugin_id: Uuid) -> Self {
+        Self {
+            plugin_id,
+            connections: HashMap::new(),
+            comment_rates: HashMap::new(),
+            paused: HashMap::new(),
+            settings: Arc::new(tokio::sync::RwLock::new(DummyPluginSettings::default())),
+        }
+    }
+
+    /// 設定スキーマを取得
+    fn get_schema() -> serde_json::Value {
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "default_interval": {
+                    "type": "integer",
+                    "title": "デフォルト生成間隔（秒）",
+                    "description": "新規接続時のデフォルトコメント生成間隔を秒単位で指定します。0の場合はランダム（1-5秒）",
+                    "default": 0,
+                    "minimum": 0,
+                    "maximum": 60
+                },
+                "use_random_names": {
+                    "type": "boolean",
+                    "title": "ランダムな名前を使用",
+                    "description": "コメント生成時にランダムな名前を使用します",
+                    "default": true
+                },
+                "enable_debug": {
+                    "type": "boolean",
+                    "title": "デバッグモード",
+                    "description": "詳細なデバッグログを出力します",
+                    "default": false
+                },
+                "advanced_settings": {
+                    "type": "object",
+                    "title": "高度な設定",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "title": "高度な設定を有効にする",
+                            "default": false
+                        }
+                    },
+                    "dependencies": {
+                        "enabled": {
+                            "oneOf": [
+                                {
+                                    "properties": {
+                                        "enabled": {
+                                            "enum": [false]
+                                        }
+                                    }
+                                },
+                                {
+                                    "properties": {
+                                        "enabled": {
+                                            "enum": [true]
+                                        },
+                                        "custom_prefix": {
+                                            "type": "string",
+                                            "title": "カスタムプレフィックス",
+                                            "description": "コメントユーザー名の前に付けるプレフィックス",
+                                            "default": "[Dummy]"
+                                        }
+                                    },
+                                    "required": ["custom_prefix"]
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    /// コメント生成タスク（静的メソッドとして実装）
+    fn spawn_comment_generator(
+        plugin_id: Uuid,
+        connection_id: Uuid,
+        is_running: Arc<AtomicBool>,
+        is_paused: Arc<AtomicBool>,
+        rate: Arc<tokio::sync::RwLock<u64>>,
+        sender: tokio::sync::mpsc::UnboundedSender<Message>,
+    ) {
+        tokio::spawn(async move {
+            let names = ["太郎", "花子", "次郎", "さくら", "けん"];
+            let texts = [
+                "こんにちは!",
+                "面白い配信ですね",
+                "草",
+                "888888",
+                "次回も楽しみです",
+                "いいね!",
+                "すごい!",
+                "www",
+            ];
+
+            let mut rng = StdRng::from_entropy();
+            tracing::info!(target: "mcv::plugin-dummy", connection_id = %connection_id, "コメント生成開始");
+
+            while is_running.load(Ordering::SeqCst) {
+                // rateに基づいた間隔（デフォルトは1-5秒のランダム）
+                let rate_value = *rate.read().await;
+                let interval = if rate_value > 0 {
+                    rate_value
+                } else {
+                    rng.gen_range(1..=5)
+                };
+                sleep(Duration::from_secs(interval)).await;
+
+                if !is_running.load(Ordering::SeqCst) {
+                    break;
+                }
+
+                // pausedの場合はスキップ
+                if is_paused.load(Ordering::SeqCst) {
+                    continue;
+                }
+
+                // ランダムなコメントを生成
+                let user_name = names[rng.gen_range(0..names.len())].to_string();
+                let text = texts[rng.gen_range(0..texts.len())].to_string();
+                let provider_msg = make_dummy_provider_message(&user_name, &text);
+
+                tracing::debug!(
+                    target: "mcv::plugin-dummy",
+                    connection_id = %connection_id,
+                    user_name = %user_name,
+                    text = %text,
+                    "コメント生成"
+                );
+
+                let envelope = McvEnvelope {
+                    event_id: Uuid::new_v4(),
+                    connection_id,
+                    messages: vec![provider_msg],
+                    received_at: chrono::Utc::now().timestamp(),
+                    raw_message: None,
+                };
+
+                let message = Message::new_notification(
+                    MessageType::CommentReceived,
+                    MessageSource::Plugin {
+                        plugin_id: PluginId::new(plugin_id.to_string()),
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(CommentReceivedPayload {
+                        connection_id,
+                        envelope,
+                    })
+                    .unwrap(),
+                );
+
+                if sender.send(message).is_err() {
+                    tracing::error!(target: "mcv::plugin-dummy", connection_id = %connection_id, "コメント送信失敗 (receiver dropped)");
+                    break;
+                }
+            }
+
+            tracing::info!(target: "mcv::plugin-dummy", connection_id = %connection_id, "コメント生成停止");
+        });
+    }
+}
+
+impl Default for DummyPlugin {
+    fn default() -> Self {
+        Self {
+            plugin_id: Uuid::new_v4(),
+            connections: HashMap::new(),
+            comment_rates: HashMap::new(),
+            paused: HashMap::new(),
+            settings: Arc::new(tokio::sync::RwLock::new(DummyPluginSettings::default())),
+        }
+    }
+}
+
+impl DummyPlugin {
+    /// コマンドを処理
+    async fn handle_command(
+        &mut self,
+        connection_id: Uuid,
+        command: &str,
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        let parts: Vec<&str> = command.split_whitespace().collect();
+        if parts.is_empty() {
+            return Err("Empty command".to_string());
+        }
+
+        match parts[0] {
+            "help" => Ok(Self::get_help()),
+            "status" => Ok(self.get_status(connection_id)),
+            "disconnect" => self.command_disconnect(connection_id, host).await,
+            "connect" => self.command_connect(connection_id, host).await,
+            "pause" => self.command_pause(connection_id),
+            "resume" => self.command_resume(connection_id),
+            "rate" => self.command_rate(connection_id, &parts[1..]),
+            "comment" => self.command_comment(connection_id, &parts[1..], host).await,
+            "log-error" => {
+                self.command_log(connection_id, "error", &parts[1..], host)
+                    .await
+            }
+            "log-warn" => {
+                self.command_log(connection_id, "warn", &parts[1..], host)
+                    .await
+            }
+            "log-info" => {
+                self.command_log(connection_id, "info", &parts[1..], host)
+                    .await
+            }
+            "log-debug" => {
+                self.command_log(connection_id, "debug", &parts[1..], host)
+                    .await
+            }
+            "error-context-test" => {
+                self.command_error_context_test(connection_id, &parts[1..], host)
+                    .await
+            }
+            "error-context-nested" => {
+                self.command_error_context_nested(connection_id, &parts[1..], host)
+                    .await
+            }
+            _ => Err(format!("Unknown command: {}", parts[0])),
+        }
+    }
+
+    fn get_help() -> String {
+        r#"Available commands:
+- help: Show this help message
+- status: Show connection status
+- disconnect: Simulate disconnection from site
+- connect: Simulate reconnection to site
+- pause: Pause comment generation
+- resume: Resume comment generation
+- rate <seconds>: Set comment interval (0 = random)
+- comment <user> <text>: Generate a manual comment
+- log-error <message>: Send error log to mcv
+- log-warn <message>: Send warning log to mcv
+- log-info <message>: Send info log to mcv
+- log-debug <message>: Send debug log to mcv
+- error-context-test <value>: Test error context capture (use 0 to trigger error)
+- error-context-nested <operation>: Test nested error contexts (operations: fetch, parse, process)"#
+            .to_string()
+    }
+
+    fn get_status(&self, connection_id: Uuid) -> String {
+        let is_connected = self.connections.contains_key(&connection_id);
+        let is_paused = self
+            .paused
+            .get(&connection_id)
+            .map(|p| p.load(Ordering::SeqCst))
+            .unwrap_or(false);
+
+        format!(
+            "Connection {}: Connected={}, Paused={}",
+            connection_id, is_connected, is_paused
+        )
+    }
+
+    async fn command_disconnect(
+        &mut self,
+        connection_id: Uuid,
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if !self.connections.contains_key(&connection_id) {
+            return Err("Connection not found".to_string());
+        }
+
+        // disconnectedメッセージを送信（配信サイト側からの切断をシミュレート）
+        let message = Message::new_notification(
+            MessageType::Disconnected,
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(DisconnectedPayload { connection_id }).unwrap(),
+        );
+
+        host.send_message(message)
+            .await
+            .map_err(|e| format!("Failed to send disconnect: {}", e))?;
+
+        // ローカルで停止
+        if let Some(is_running) = self.connections.get(&connection_id) {
+            is_running.store(false, Ordering::SeqCst);
+            self.connections.remove(&connection_id);
+            self.paused.remove(&connection_id);
+            self.comment_rates.remove(&connection_id);
+        }
+
+        Ok("Disconnected".to_string())
+    }
+
+    async fn command_connect(
+        &mut self,
+        connection_id: Uuid,
+        _host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        // 既に接続されている場合はエラー
+        if self.connections.contains_key(&connection_id) {
+            return Err("Already connected".to_string());
+        }
+
+        // 再接続は手動でUIから行う必要がある
+        Ok("Use UI to reconnect".to_string())
+    }
+
+    fn command_pause(&mut self, connection_id: Uuid) -> Result<String, String> {
+        if let Some(is_paused) = self.paused.get(&connection_id) {
+            is_paused.store(true, Ordering::SeqCst);
+            Ok("Paused".to_string())
+        } else {
+            Err("Connection not found".to_string())
+        }
+    }
+
+    fn command_resume(&mut self, connection_id: Uuid) -> Result<String, String> {
+        if let Some(is_paused) = self.paused.get(&connection_id) {
+            is_paused.store(false, Ordering::SeqCst);
+            Ok("Resumed".to_string())
+        } else {
+            Err("Connection not found".to_string())
+        }
+    }
+
+    fn command_rate(&mut self, connection_id: Uuid, args: &[&str]) -> Result<String, String> {
+        if args.is_empty() {
+            return Err("Usage: rate <seconds>".to_string());
+        }
+
+        let new_rate: u64 = args[0].parse().map_err(|_| "Invalid number".to_string())?;
+
+        if let Some(rate_lock) = self.comment_rates.get(&connection_id) {
+            let rate_lock_clone = rate_lock.clone();
+            tokio::spawn(async move {
+                *rate_lock_clone.write().await = new_rate;
+            });
+            Ok(format!("Rate set to {}s", new_rate))
+        } else {
+            Err("Connection not found".to_string())
+        }
+    }
+
+    async fn command_comment(
+        &mut self,
+        connection_id: Uuid,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.len() < 2 {
+            return Err("Usage: comment <user> <text>".to_string());
+        }
+
+        let user_name = args[0];
+        let text = args[1..].join(" ");
+
+        let provider_msg = make_dummy_provider_message(user_name, &text);
+        let envelope = McvEnvelope {
+            event_id: Uuid::new_v4(),
+            connection_id,
+            messages: vec![provider_msg],
+            received_at: chrono::Utc::now().timestamp(),
+            raw_message: None,
+        };
+
+        let message = Message::new_notification(
+            MessageType::CommentReceived,
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(CommentReceivedPayload {
+                connection_id,
+                envelope,
+            })
+            .unwrap(),
+        );
+
+        host.send_message(message)
+            .await
+            .map_err(|e| format!("Failed to send comment: {}", e))?;
+
+        Ok("Comment sent".to_string())
+    }
+
+    async fn command_log(
+        &mut self,
+        connection_id: Uuid,
+        level: &str,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.is_empty() {
+            return Err(format!("Usage: log-{} <message>", level));
+        }
+
+        let message_text = args.join(" ");
+
+        let message = Message::new_notification(
+            MessageType::LogEntry,
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(LogEntryPayload {
+                level: level.to_string(),
+                message: message_text.clone(),
+                context: Some(serde_json::json!({
+                    "test_command": true,
+                    "connection_id": connection_id.to_string(),
+                })),
+                connection_id: Some(connection_id),
+                plugin_version: Some(env!("CARGO_PKG_VERSION").to_string()),
+                plugin_build_profile: Self::get_build_profile(),
+            })
+            .unwrap(),
+        );
+
+        host.send_message(message)
+            .await
+            .map_err(|e| format!("Failed to send log: {}", e))?;
+
+        Ok(format!(
+            "Log sent: [{}] {}",
+            level.to_uppercase(),
+            message_text
+        ))
+    }
+
+    /// error-context-test コマンド: ErrorContext の使用例を示す
+    ///
+    /// この関数は capture_context! マクロの使用方法と、
+    /// ErrorContext から LogEntry への変換、送信までの流れを示します。
+    async fn command_error_context_test(
+        &mut self,
+        connection_id: Uuid,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.is_empty() {
+            return Err("Usage: error-context-test <value>".to_string());
+        }
+
+        let value: i32 = args[0]
+            .parse()
+            .map_err(|_| "Invalid value: must be a number".to_string())?;
+
+        // ヘルパー関数を呼び出してエラーを発生させる
+        match Self::process_value(value, connection_id).await {
+            Ok(result) => Ok(format!("Success: {}", result)),
+            Err(tracing_error) => {
+                // TracingError から ErrorContext を取得
+                let error_context = tracing_error.context();
+
+                // ErrorContext から LogEntryPayload を作成
+                let mut payload = error_context.to_log_entry_payload();
+                payload.connection_id = Some(connection_id);
+                payload.plugin_version = Some(env!("CARGO_PKG_VERSION").to_string());
+                payload.plugin_build_profile = Self::get_build_profile();
+
+                // LogEntry メッセージを送信
+                let message = Message::new_notification(
+                    MessageType::LogEntry,
+                    MessageSource::Plugin {
+                        plugin_id: PluginId::new(self.plugin_id.to_string()),
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+
+                host.send_message(message)
+                    .await
+                    .map_err(|e| format!("Failed to send log entry: {}", e))?;
+
+                // エラーを PluginError に変換して返す（From trait でサポート）
+                // 注: この例では String を返すため手動で変換
+                Err(format!("Error captured and logged: {}", tracing_error))
+            }
+        }
+    }
+
+    /// 値を処理するヘルパー関数（capture_context! の使用例）
+    async fn process_value(
+        value: i32,
+        connection_id: Uuid,
+    ) -> Result<String, mcv_plugin_telemetry::TracingError> {
+        if value == 0 {
+            // エラーコンテキストをキャプチャ（構造化フィールド付き）
+            let ctx = mcv_plugin_telemetry::capture_context!(
+                "Invalid value: cannot be zero",
+                value = value,
+                connection_id = connection_id.to_string(),
+                operation = "process_value",
+            );
+
+            // TracingError に変換して返す
+            return Err(ctx.into());
+        }
+
+        if value < 0 {
+            // シンプルなエラーコンテキスト
+            let ctx = mcv_plugin_telemetry::capture_context!("Invalid value: must be positive");
+            return Err(ctx.into());
+        }
+
+        Ok(format!("Processed value: {}", value * 2))
+    }
+
+    /// error-context-nested コマンド: 入れ子エラーコンテキストの使用例
+    ///
+    /// この関数は複数のレイヤーでエラーが発生した場合の
+    /// InnerException パターンの使用方法を示します。
+    async fn command_error_context_nested(
+        &mut self,
+        connection_id: Uuid,
+        args: &[&str],
+        host: Arc<dyn PluginHost>,
+    ) -> Result<String, String> {
+        if args.is_empty() {
+            return Err(
+                "Usage: error-context-nested <operation> (fetch|parse|process)".to_string(),
+            );
+        }
+
+        let operation = args[0];
+
+        // 実際のアプリケーションの階層構造をシミュレート
+        match Self::simulate_nested_operation(operation, connection_id).await {
+            Ok(result) => Ok(format!("Success: {}", result)),
+            Err(tracing_error) => {
+                // TracingError から ErrorContext を取得
+                let error_context = tracing_error.context();
+
+                // ErrorContext から LogEntryPayload を作成
+                let mut payload = error_context.to_log_entry_payload();
+                payload.connection_id = Some(connection_id);
+                payload.plugin_version = Some(env!("CARGO_PKG_VERSION").to_string());
+                payload.plugin_build_profile = Self::get_build_profile();
+
+                // LogEntry メッセージを送信
+                let message = Message::new_notification(
+                    MessageType::LogEntry,
+                    MessageSource::Plugin {
+                        plugin_id: PluginId::new(self.plugin_id.to_string()),
+                    },
+                    MessageDestination::Core,
+                    serde_json::to_value(payload).unwrap(),
+                );
+
+                host.send_message(message)
+                    .await
+                    .map_err(|e| format!("Failed to send log entry: {}", e))?;
+
+                Err(format!("Nested error logged: {}", tracing_error))
+            }
+        }
+    }
+
+    /// 入れ子のエラーをシミュレート
+    ///
+    /// この関数は実際のアプリケーションでよくある
+    /// 階層的なエラー処理パターンを示します：
+    /// - データ取得 (fetch)
+    /// - データ解析 (parse)
+    /// - ビジネスロジック処理 (process)
+    async fn simulate_nested_operation(
+        operation: &str,
+        connection_id: Uuid,
+    ) -> Result<String, mcv_plugin_telemetry::TracingError> {
+        match operation {
+            "fetch" => Self::layer_fetch(connection_id).await,
+            "parse" => Self::layer_parse(connection_id).await,
+            "process" => Self::layer_process(connection_id).await,
+            _ => {
+                let ctx = mcv_plugin_telemetry::capture_context!(
+                    "Unknown operation",
+                    operation = operation,
+                    connection_id = connection_id.to_string(),
+                );
+                Err(ctx.into())
+            }
+        }
+    }
+
+    /// レイヤー1: データ取得（最下層でのエラー）
+    async fn layer_fetch(
+        connection_id: Uuid,
+    ) -> Result<String, mcv_plugin_telemetry::TracingError> {
+        // ネットワークエラーをシミュレート
+        let network_ctx = mcv_plugin_telemetry::capture_context!(
+            "Network connection failed",
+            error_code = "ETIMEDOUT",
+            host = "api.example.com",
+            port = 443,
+        );
+
+        // API層でのエラー
+        let mut api_ctx = mcv_plugin_telemetry::capture_context!(
+            "Failed to fetch data from API",
+            endpoint = "/api/v1/comments",
+            connection_id = connection_id.to_string(),
+        );
+        api_ctx.add_inner_error(network_ctx.clone());
+
+        Err(api_ctx.into())
+    }
+
+    /// レイヤー2: データ解析（中間層でのエラー）
+    async fn layer_parse(
+        connection_id: Uuid,
+    ) -> Result<String, mcv_plugin_telemetry::TracingError> {
+        // まず fetch を試みる
+        match Self::layer_fetch(connection_id).await {
+            Ok(_) => {
+                // 仮にデータが取得できたとして、パースエラーをシミュレート
+                let parse_ctx = mcv_plugin_telemetry::capture_context!(
+                    "JSON parse error",
+                    position = 42,
+                    expected = "closing brace",
+                    found = "EOF",
+                );
+                Err(parse_ctx.into())
+            }
+            Err(fetch_error) => {
+                // fetch エラーをinner errorとして含める
+                let mut parse_ctx = mcv_plugin_telemetry::capture_context!(
+                    "Failed to parse API response",
+                    connection_id = connection_id.to_string(),
+                    parser = "serde_json",
+                );
+                parse_ctx.add_inner_error(fetch_error.context().clone());
+
+                Err(parse_ctx.into())
+            }
+        }
+    }
+
+    /// レイヤー3: ビジネスロジック処理（最上層でのエラー）
+    async fn layer_process(
+        connection_id: Uuid,
+    ) -> Result<String, mcv_plugin_telemetry::TracingError> {
+        // parse を試みる
+        match Self::layer_parse(connection_id).await {
+            Ok(data) => Ok(data),
+            Err(parse_error) => {
+                // parse エラーをinner errorとして含める
+                let mut process_ctx = mcv_plugin_telemetry::capture_context!(
+                    "Failed to process comments",
+                    connection_id = connection_id.to_string(),
+                    operation = "process_comments",
+                    retry_count = 3,
+                );
+                process_ctx.add_inner_error(parse_error.context().clone());
+
+                Err(process_ctx.into())
+            }
+        }
+    }
+
+    fn get_build_profile() -> Option<String> {
+        #[cfg(feature = "alpha")]
+        return Some("alpha".to_string());
+
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        return Some("beta".to_string());
+
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
+        return Some("stable".to_string());
+
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
+        None
+    }
+}
+
+#[async_trait]
+impl Plugin for DummyPlugin {
+    async fn on_loaded(&mut self, host: Arc<dyn PluginHost>) -> Result<(), PluginError> {
+        // プラグイン tracing を初期化
+        #[cfg(feature = "alpha")]
+        let log_level = "trace";
+        #[cfg(all(feature = "beta", not(feature = "alpha")))]
+        let log_level = "info";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), feature = "stable"))]
+        let log_level = "error";
+        #[cfg(all(not(feature = "alpha"), not(feature = "beta"), not(feature = "stable")))]
+        let log_level = "trace";
+        mcv_plugin_telemetry::init_tracing(
+            self.plugin_id,
+            Arc::clone(&host),
+            env!("CARGO_PKG_VERSION"),
+            log_level,
+        )
+        .map_err(|e| PluginError::InitializationFailed(format!("Failed to init tracing: {}", e)))?;
+
+        tracing::info!(target: "mcv::plugin-dummy", plugin_id = %self.plugin_id, "Dummy プラグイン初期化完了");
+
+        // plugin-helloを送信
+        let logical_plugin_id = PluginId::new(format!("DummyPlugin_logical_{}", self.plugin_id));
+        let message = Message::new_request(
+            MessageType::PluginHello,
+            MessageSource::Plugin {
+                plugin_id: logical_plugin_id.clone(),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(PluginHelloPayload {
+                name: "Dummy Plugin".to_string(),
+                plugin_id: logical_plugin_id,
+                role: vec!["dummy".to_string()],
+                api_version: "v2".to_string(),
+                send_comment_schema: None,
+            })
+            .unwrap(),
+        );
+
+        tracing::debug!(target: "mcv::plugin-dummy", "plugin-hello 送信中");
+        host.send_message(message).await?;
+        tracing::info!(target: "mcv::plugin-dummy", "plugin-hello 送信完了");
+
+        // ダミーサイトを登録
+        tracing::debug!(target: "mcv::plugin-dummy", "ダミーサイト・ブラウザ登録中");
+        let dummy_site_message = Message::new_notification(
+            MessageType::AddSite,
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(AddSitePayload {
+                site_id: SiteId::new("dummy", "00000000-0000-0000-0000-000000000001"),
+                display_name: "ダミーサイト".to_string(),
+                options_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "interval": {
+                            "type": "integer",
+                            "title": "コメント生成間隔（秒）",
+                            "description": "コメント生成間隔を秒単位で指定します。0の場合はランダム",
+                            "default": 0,
+                            "minimum": 0
+                        }
+                    }
+                }),
+            })
+            .map_err(|e| PluginError::MessageHandlingFailed(format!("Failed to serialize AddSitePayload: {}", e)))?,
+        );
+        host.send_message(dummy_site_message).await?;
+
+        // ダミーブラウザを登録（「なし」オプション）
+        let dummy_browser_message = Message::new_notification(
+            MessageType::AddBrowser,
+            MessageSource::Plugin {
+                plugin_id: PluginId::new(self.plugin_id.to_string()),
+            },
+            MessageDestination::Core,
+            serde_json::to_value(AddBrowserPayload {
+                browser_id: BrowserId::from_string(
+                    "none_00000000-0000-0000-0000-000000000000".to_string(),
+                ),
+                browser_name: "none".to_string(),
+                display_name: "なし".to_string(),
+            })
+            .map_err(|e| {
+                PluginError::MessageHandlingFailed(format!(
+                    "Failed to serialize AddBrowserPayload: {}",
+                    e
+                ))
+            })?,
+        );
+        host.send_message(dummy_browser_message).await?;
+
+        tracing::info!(target: "mcv::plugin-dummy", "ダミーサイト・ブラウザ登録完了");
+
+        Ok(())
+    }
+
+    async fn on_message(
+        &mut self,
+        message: Message,
+        host: Arc<dyn PluginHost>,
+    ) -> Result<(), PluginError> {
+        tracing::debug!(target: "mcv::plugin-dummy", message_type = ?message.message_type, "メッセージ受信");
+
+        match message.message_type {
+            MessageType::PluginAdded => {
+                tracing::info!(target: "mcv::plugin-dummy", "plugin-added 受信");
+            }
+            MessageType::Connect => {
+                // connectメッセージからconnection_idを取得
+                let payload: ConnectPayload = serde_json::from_value(message.payload.clone())
+                    .map_err(|e| {
+                        PluginError::MessageHandlingFailed(format!(
+                            "Failed to parse connect payload: {}",
+                            e
+                        ))
+                    })?;
+
+                let conn_id = payload.connection_id;
+
+                tracing::info!(target: "mcv::plugin-dummy", connection_id = %conn_id, "コメント生成タスク開始");
+
+                // この接続用のフラグを作成
+                let is_running = Arc::new(AtomicBool::new(true));
+                let is_paused = Arc::new(AtomicBool::new(false));
+                let rate = Arc::new(tokio::sync::RwLock::new(0u64)); // 0 = ランダム
+
+                self.connections.insert(conn_id, is_running.clone());
+                self.paused.insert(conn_id, is_paused.clone());
+                self.comment_rates.insert(conn_id, rate.clone());
+
+                // connectedを返信
+                let response = Message::create_response(
+                    &message,
+                    MessageType::Connected,
+                    serde_json::to_value(ConnectedPayload {
+                        connection_id: conn_id,
+                    })
+                    .unwrap(),
+                );
+
+                host.send_message(response.clone()).await?;
+
+                // メッセージチャネルを作成
+                let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+
+                // コメント生成タスクを起動
+                Self::spawn_comment_generator(
+                    self.plugin_id,
+                    conn_id,
+                    is_running,
+                    is_paused,
+                    rate,
+                    tx,
+                );
+
+                // メッセージ転送タスクを起動（hostをクローンして使用）
+                let host_clone = host.clone();
+                tokio::spawn(async move {
+                    while let Some(msg) = rx.recv().await {
+                        if let Err(e) = host_clone.send_message(msg).await {
+                            tracing::error!(target: "mcv::plugin-dummy", error = %e, "コメントメッセージ送信失敗");
+                            break;
+                        }
+                    }
+                });
+            }
+            MessageType::Disconnect => {
+                // disconnectメッセージからconnection_idを取得
+                let payload: DisconnectPayload = serde_json::from_value(message.payload.clone())
+                    .map_err(|e| {
+                        PluginError::MessageHandlingFailed(format!(
+                            "Failed to parse disconnect payload: {}",
+                            e
+                        ))
+                    })?;
+
+                let conn_id = payload.connection_id;
+
+                // この接続のis_runningフラグを停止
+                if let Some(is_running) = self.connections.get(&conn_id) {
+                    tracing::info!(target: "mcv::plugin-dummy", connection_id = %conn_id, "コメント生成停止");
+                    is_running.store(false, Ordering::SeqCst);
+                    self.connections.remove(&conn_id);
+                    self.paused.remove(&conn_id);
+                    self.comment_rates.remove(&conn_id);
+
+                    // disconnectedを返信
+                    let response = Message::create_response(
+                        &message,
+                        MessageType::Disconnected,
+                        serde_json::to_value(DisconnectedPayload {
+                            connection_id: conn_id,
+                        })
+                        .unwrap(),
+                    );
+
+                    host.send_message(response.clone()).await?;
+                }
+            }
+            MessageType::SendComment => {
+                // send-commentメッセージからpayloadを取得
+                let payload: SendCommentPayload = serde_json::from_value(message.payload.clone())
+                    .map_err(|e| {
+                    PluginError::MessageHandlingFailed(format!(
+                        "Failed to parse send-comment payload: {}",
+                        e
+                    ))
+                })?;
+
+                let conn_id = payload.connection_id;
+                let command = payload.text.trim();
+
+                tracing::debug!(target: "mcv::plugin-dummy", connection_id = %conn_id, command = %command, "send-comment コマンド受信");
+
+                // コマンドをパースして実行（結果は既存のメッセージタイプで通知される）
+                let result = self.handle_command(conn_id, command, host.clone()).await;
+
+                if let Err(e) = result {
+                    tracing::warn!(target: "mcv::plugin-dummy", connection_id = %conn_id, error = %e, "コマンド実行エラー");
+                }
+            }
+            MessageType::SetConnectionSite => {
+                tracing::debug!(
+                    target: "mcv::plugin-dummy",
+                    connection_id = ?message.payload.get("connection_id"),
+                    site_id = ?message.payload.get("site_id"),
+                    "SetConnectionSite 受信"
+                );
+                // DummyPluginは特に準備処理不要
+            }
+            MessageType::DiscardConnectionSite => {
+                tracing::debug!(
+                    target: "mcv::plugin-dummy",
+                    connection_id = ?message.payload.get("connection_id"),
+                    site_id = ?message.payload.get("site_id"),
+                    "DiscardConnectionSite 受信"
+                );
+                // DummyPluginは特にクリーンアップ不要
+            }
+            MessageType::GetSettingsSchema => {
+                tracing::debug!(target: "mcv::plugin-dummy", "GetSettingsSchema 受信");
+
+                // スキーマを取得して応答
+                if let Some(schema) = self.get_settings_schema().await {
+                    let response = Message::create_response(
+                        &message,
+                        MessageType::SettingsSchema,
+                        serde_json::json!({
+                            "target": self.plugin_id.to_string(),
+                            "schema": schema
+                        }),
+                    );
+
+                    host.send_message(response).await?;
+                }
+            }
+            MessageType::GetSettings => {
+                tracing::debug!(target: "mcv::plugin-dummy", "GetSettings 受信");
+
+                // 設定値を取得して応答
+                if let Some(data) = self.get_settings().await {
+                    let response = Message::create_response(
+                        &message,
+                        MessageType::SettingsData,
+                        serde_json::json!({
+                            "target": self.plugin_id.to_string(),
+                            "data": data
+                        }),
+                    );
+
+                    host.send_message(response).await?;
+                }
+            }
+            MessageType::UpdateSettings => {
+                tracing::debug!(target: "mcv::plugin-dummy", "UpdateSettings 受信");
+
+                // ペイロードから設定データを取得
+                let payload: UpdateSettingsPayload =
+                    serde_json::from_value(message.payload.clone()).map_err(|e| {
+                        PluginError::MessageHandlingFailed(format!(
+                            "Failed to parse update-settings payload: {}",
+                            e
+                        ))
+                    })?;
+
+                // 設定を更新
+                self.update_settings(payload.data).await?;
+
+                tracing::info!(target: "mcv::plugin-dummy", "設定を更新 (UpdateSettings)");
+            }
+            _ => {
+                tracing::debug!(target: "mcv::plugin-dummy", message_type = ?message.message_type, "未処理のメッセージタイプ");
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn on_shutdown(&mut self) -> Result<(), PluginError> {
+        tracing::info!(target: "mcv::plugin-dummy", "Dummy プラグインシャットダウン開始");
+        // 全ての接続を停止
+        for (conn_id, is_running) in &self.connections {
+            tracing::info!(target: "mcv::plugin-dummy", connection_id = %conn_id, "接続停止");
+            is_running.store(false, Ordering::SeqCst);
+        }
+        self.connections.clear();
+        self.paused.clear();
+        self.comment_rates.clear();
+        Ok(())
+    }
+
+    async fn get_settings_schema(&self) -> Option<serde_json::Value> {
+        Some(Self::get_schema())
+    }
+
+    async fn get_settings(&self) -> Option<serde_json::Value> {
+        let settings = self.settings.read().await;
+        serde_json::to_value(&*settings).ok()
+    }
+
+    async fn update_settings(&mut self, data: serde_json::Value) -> Result<(), PluginError> {
+        let new_settings: DummyPluginSettings = serde_json::from_value(data)
+            .map_err(|e| PluginError::Other(format!("Invalid settings data: {}", e)))?;
+
+        let mut settings = self.settings.write().await;
+        *settings = new_settings;
+
+        tracing::info!(target: "mcv::plugin-dummy", "設定更新完了");
+        Ok(())
+    }
+}
+
+/// ダミープラグイン用の ProviderMessage を構築するヘルパー
+fn make_dummy_provider_message(user_name: &str, text: &str) -> ProviderMessage {
+    ProviderMessage {
+        id: Uuid::new_v4().to_string(),
+        platform_message_id: None,
+        service: ServiceId("dummy".to_string()),
+        channel: ChannelId("test".to_string()),
+        sender: ProviderSender {
+            id: format!("user_{}", rand::thread_rng().gen_range(1000..9999)),
+            display_name: vec![mcv_messages::MessagePart::Text {
+                text: user_name.to_string(),
+            }],
+            badges: vec![],
+            role: None,
+            avatar_url: None,
+        },
+        timestamp: chrono::Utc::now().timestamp(),
+        kind: ProviderMessageKind::Chat,
+        content: ProviderContent::Text {
+            text: vec![mcv_messages::MessagePart::Text {
+                text: text.to_string(),
+            }],
+        },
+        reply_to: None,
+        metadata: serde_json::Value::Null,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+
+    #[test]
+    fn test_dummy_plugin_creation() {
+        let plugin = DummyPlugin::new();
+        assert!(plugin.connections.is_empty());
+    }
+
+    #[test]
+    fn test_get_help() {
+        let help = DummyPlugin::get_help();
+        assert!(help.contains("help"));
+        assert!(help.contains("disconnect"));
+        assert!(help.contains("pause"));
+        assert!(help.contains("resume"));
+        assert!(help.contains("rate"));
+        assert!(help.contains("comment"));
+    }
+
+    #[test]
+    fn test_get_status_no_connection() {
+        let plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+        let status = plugin.get_status(connection_id);
+        assert!(status.contains("Connected=false"));
+        assert!(status.contains("Paused=false"));
+    }
+
+    #[test]
+    fn test_get_status_with_connection() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        plugin
+            .connections
+            .insert(connection_id, Arc::new(AtomicBool::new(true)));
+        plugin
+            .paused
+            .insert(connection_id, Arc::new(AtomicBool::new(false)));
+
+        let status = plugin.get_status(connection_id);
+        assert!(status.contains("Connected=true"));
+        assert!(status.contains("Paused=false"));
+    }
+
+    #[test]
+    fn test_command_pause() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        plugin
+            .paused
+            .insert(connection_id, Arc::new(AtomicBool::new(false)));
+
+        let result = plugin.command_pause(connection_id);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Paused");
+
+        // pausedフラグが設定されていることを確認
+        let is_paused = plugin.paused.get(&connection_id).unwrap();
+        assert!(is_paused.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_command_resume() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加（paused状態で）
+        plugin
+            .paused
+            .insert(connection_id, Arc::new(AtomicBool::new(true)));
+
+        let result = plugin.command_resume(connection_id);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Resumed");
+
+        // pausedフラグが解除されていることを確認
+        let is_paused = plugin.paused.get(&connection_id).unwrap();
+        assert!(!is_paused.load(Ordering::SeqCst));
+    }
+
+    #[tokio::test]
+    async fn test_command_rate_valid() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        let rate_lock = Arc::new(tokio::sync::RwLock::new(0));
+        plugin
+            .comment_rates
+            .insert(connection_id, rate_lock.clone());
+
+        let result = plugin.command_rate(connection_id, &["5"]);
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Rate set to 5s"));
+
+        // 少し待機してtokio::spawnが完了するのを待つ
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        // レートが設定されたことを確認
+        let rate_value = *rate_lock.read().await;
+        assert_eq!(rate_value, 5);
+    }
+
+    #[test]
+    fn test_command_rate_invalid() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        // 接続を追加
+        plugin
+            .comment_rates
+            .insert(connection_id, Arc::new(tokio::sync::RwLock::new(0)));
+
+        let result = plugin.command_rate(connection_id, &["invalid"]);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid number");
+    }
+
+    #[test]
+    fn test_command_rate_no_args() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        let result = plugin.command_rate(connection_id, &[]);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Usage: rate <seconds>"));
+    }
+
+    #[test]
+    fn test_command_pause_no_connection() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id = Uuid::new_v4();
+
+        let result = plugin.command_pause(connection_id);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Connection not found");
+    }
+
+    #[test]
+    fn test_multiple_connections() {
+        let mut plugin = DummyPlugin::new();
+        let connection_id1 = Uuid::new_v4();
+        let connection_id2 = Uuid::new_v4();
+
+        // 2つの接続を追加
+        plugin
+            .connections
+            .insert(connection_id1, Arc::new(AtomicBool::new(true)));
+        plugin
+            .connections
+            .insert(connection_id2, Arc::new(AtomicBool::new(true)));
+        plugin
+            .paused
+            .insert(connection_id1, Arc::new(AtomicBool::new(false)));
+        plugin
+            .paused
+            .insert(connection_id2, Arc::new(AtomicBool::new(false)));
+
+        // connection1をpause
+        let result1 = plugin.command_pause(connection_id1);
+        assert!(result1.is_ok());
+
+        // connection1がpausedでconnection2がpausedでないことを確認
+        assert!(plugin
+            .paused
+            .get(&connection_id1)
+            .unwrap()
+            .load(Ordering::SeqCst));
+        assert!(!plugin
+            .paused
+            .get(&connection_id2)
+            .unwrap()
+            .load(Ordering::SeqCst));
+    }
+}
+
+// ============================================================================
+// C ABI エクスポート関数（DLL化用）
+// ============================================================================
+
+use once_cell::sync::Lazy;
+use std::ffi::{c_char, c_void, CStr, CString};
+use std::sync::atomic::AtomicUsize;
+use std::sync::Mutex;
+
+// グローバルステート
+static PLUGIN_INSTANCE: Lazy<Mutex<Option<DummyPlugin>>> = Lazy::new(|| Mutex::new(None));
+static MESSAGE_CALLBACK: Lazy<Mutex<Option<extern "C" fn(*const c_char, *mut c_void)>>> =
+    Lazy::new(|| Mutex::new(None));
+static USERDATA: AtomicUsize = AtomicUsize::new(0);
+static RUNTIME: Lazy<tokio::runtime::Runtime> =
+    Lazy::new(|| tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime"));
+
+/// PluginHost実装（コールバック経由でmcvにメッセージ送信）
+struct CApiPluginHost;
+
+#[async_trait]
+impl PluginHost for CApiPluginHost {
+    async fn send_message(&self, message: Message) -> Result<(), PluginError> {
+        let message_json = serde_json::to_string(&message).map_err(|e| {
+            PluginError::MessageHandlingFailed(format!("Failed to serialize message: {}", e))
+        })?;
+
+        let message_cstr = CString::new(message_json).map_err(|e| {
+            PluginError::MessageHandlingFailed(format!("Failed to create CString: {}", e))
+        })?;
+
+        let callback_guard = MESSAGE_CALLBACK.lock().unwrap();
+        if let Some(cb) = *callback_guard {
+            let userdata = USERDATA.load(Ordering::SeqCst) as *mut c_void;
+            cb(message_cstr.as_ptr(), userdata);
+        }
+
+        Ok(())
+    }
+}
+
+/// プラグインメタデータ取得
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_get_metadata() -> *const c_char {
+    let metadata = r#"{
+  "id": "plugin-dummy",
+  "name": "Dummy Plugin",
+  "version": "0.1.0",
+  "api_version": "v2",
+  "roles": ["dummy"]
+}"#;
+
+    CString::new(metadata).unwrap().into_raw()
+}
+
+/// プラグイン初期化
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_init(_host_context: *mut c_void) -> i32 {
+    println!("=== C ABI: plugin_init called ===");
+
+    // プラグイン側でplugin_idを生成（host_contextは使用しない）
+    let mut instance = PLUGIN_INSTANCE.lock().unwrap();
+    let plugin = DummyPlugin::new();
+
+    println!("=== C ABI: Generated plugin_id: {} ===", plugin.plugin_id);
+
+    *instance = Some(plugin);
+    println!("=== C ABI: plugin_init completed successfully ===");
+    0 // 成功
+}
+
+/// プラグインon_loaded呼び出し
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_on_loaded() -> i32 {
+    println!("=== C ABI: plugin_on_loaded called ===");
+
+    let mut instance_guard = PLUGIN_INSTANCE.lock().unwrap();
+    if let Some(ref mut plugin) = *instance_guard {
+        let host = Arc::new(CApiPluginHost);
+        let result = RUNTIME.block_on(plugin.on_loaded(host));
+
+        if let Err(e) = result {
+            eprintln!("plugin_on_loaded: on_loaded failed: {}", e);
+            return -1;
+        }
+        println!("=== C ABI: plugin_on_loaded completed successfully ===");
+        0
+    } else {
+        eprintln!("plugin_on_loaded: Plugin not initialized");
+        -1
+    }
+}
+
+/// メッセージ送信（mcv→プラグイン）
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
+pub extern "C" fn plugin_send_message(message_json: *const c_char) -> i32 {
+    if message_json.is_null() {
+        eprintln!("plugin_send_message: null message_json");
+        return -1;
+    }
+
+    let message_json_cstr = unsafe { CStr::from_ptr(message_json) };
+    let message_json_str = match message_json_cstr.to_str() {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("plugin_send_message: Invalid UTF-8: {}", e);
+            return -1;
+        }
+    };
+
+    // JSONをパース
+    let message: Message = match serde_json::from_str(message_json_str) {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("plugin_send_message: Failed to parse JSON: {}", e);
+            return -1;
+        }
+    };
+
+    // プラグインインスタンスを取得
+    let mut instance_guard = PLUGIN_INSTANCE.lock().unwrap();
+    if let Some(ref mut plugin) = *instance_guard {
+        let host = Arc::new(CApiPluginHost);
+        let result = RUNTIME.block_on(plugin.on_message(message, host));
+
+        if let Err(e) = result {
+            eprintln!("plugin_send_message: on_message failed: {}", e);
+            return -1;
+        }
+    } else {
+        eprintln!("plugin_send_message: Plugin not initialized");
+        return -1;
+    }
+
+    0 // 成功
+}
+
+/// メッセージ受信コールバック設定（プラグイン→mcv）
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_set_callback(
+    callback: extern "C" fn(*const c_char, *mut c_void),
+    userdata: *mut c_void,
+) -> i32 {
+    println!("=== C ABI: plugin_set_callback called ===");
+    let mut cb = MESSAGE_CALLBACK.lock().unwrap();
+    *cb = Some(callback);
+    USERDATA.store(userdata as usize, Ordering::SeqCst);
+    0 // 成功
+}
+
+/// プラグイン終了
+///
+/// # Safety
+/// この関数はCから呼び出されることを想定しています。
+#[no_mangle]
+pub extern "C" fn plugin_shutdown() -> i32 {
+    println!("=== C ABI: plugin_shutdown called ===");
+
+    let mut instance = PLUGIN_INSTANCE.lock().unwrap();
+    if let Some(ref mut plugin) = *instance {
+        let result = RUNTIME.block_on(plugin.on_shutdown());
+
+        if let Err(e) = result {
+            eprintln!("plugin_shutdown: on_shutdown failed: {}", e);
+            return -1;
+        }
+    }
+
+    *instance = None;
+    0 // 成功
+}

@@ -1,0 +1,17 @@
+[package]
+name = "plugin-cookies-txt"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+mcv-messages = { path = "../mcv-messages" }
+plugin-abi-helper = { path = "../plugin-abi-helper" }
+cookies-txt = { path = "../cookies_txt_reader" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+tokio = { workspace = true }
